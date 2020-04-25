@@ -43,4 +43,18 @@ tap.same(stopwatch.toJSON(), {
   running: false,
 });
 
+stopwatch.onUpdate = sinon.stub();
+
+stopwatch.start();
+tap.equal(stopwatch.onUpdate.callCount, 1);
+
+clock.tick(1000 /* 1 second */);
+tap.equal(stopwatch.onUpdate.callCount, 2);
+
+stopwatch.stop();
+tap.equal(stopwatch.onUpdate.callCount, 3);
+
+stopwatch.reset();
+tap.equal(stopwatch.onUpdate.callCount, 4);
+
 clock.restore();
