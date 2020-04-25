@@ -2,9 +2,9 @@
 set -e
 
 if [[ $# -eq 0 || $1 == "domain" ]]; then
-  $(npm bin)/tap test/domain
+  npx tap test/domain
 fi
 
 if [[ $# -eq 0 || $1 == "browser" ]]; then
-  $(npm bin)/karma start
+  npx karma start
 fi

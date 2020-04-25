@@ -3,30 +3,41 @@
 module.exports = function Stopwatch() {
   let seconds = 0;
   let interval;
+  const stopwatch = {};
 
-  function start() {
+  function notifyUpdate() {
+    if (stopwatch.onUpdate) {
+      stopwatch.onUpdate(stopwatch);
+    }
+  }
+
+  stopwatch.start = function () {
     interval = setInterval(function () {
       seconds += 1;
+      notifyUpdate();
     }, 1000);
-  }
+    notifyUpdate();
+  };
 
-  function stop() {
+  stopwatch.stop = function () {
     clearInterval(interval);
     interval = null;
-  }
+    notifyUpdate();
+  };
 
-  function reset() {
+  stopwatch.reset = function () {
     seconds = 0;
-  }
+    notifyUpdate();
+  };
 
-  function toJSON() {
+  stopwatch.toJSON = function () {
     return {
       time: formatTime(seconds),
       running: Boolean(interval),
     };
-  }
+  };
 
-  return { start, stop, reset, toJSON };
+  return stopwatch;
 };
 
 function formatTime(seconds) {
