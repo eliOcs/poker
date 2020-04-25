@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-$(npm bin)/tap test/domain
-$(npm bin)/karma start
+if [[ $# -eq 0 || $1 == "domain" ]]; then
+  $(npm bin)/tap test/domain
+fi
+
+if [[ $# -eq 0 || $1 == "browser" ]]; then
+  $(npm bin)/karma start
+fi
