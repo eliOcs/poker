@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -e
+
+$(npm bin)/tap test/domain
+$(npm bin)/karma start

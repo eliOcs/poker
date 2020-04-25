@@ -1,15 +1,5 @@
 "use strict";
 
-function formatTime(seconds) {
-  const time = [];
-  let remainder = seconds;
-  for (const unitInSecs of [3600, 60, 1]) {
-    time.push(String(Math.floor(remainder / unitInSecs)).padStart(2, "0"));
-    remainder %= unitInSecs;
-  }
-  return time.join(":");
-}
-
 module.exports = function Stopwatch() {
   let seconds = 0;
   let interval;
@@ -38,3 +28,17 @@ module.exports = function Stopwatch() {
 
   return { start, stop, reset, toJSON };
 };
+
+function formatTime(seconds) {
+  const time = [];
+  let remainder = seconds;
+  for (const unitInSecs of [
+    3600 /* hours */,
+    60 /* minutes */,
+    1 /*seconds */,
+  ]) {
+    time.push(String(Math.floor(remainder / unitInSecs)).padStart(2, "0"));
+    remainder %= unitInSecs;
+  }
+  return time.join(":");
+}

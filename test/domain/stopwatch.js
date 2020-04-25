@@ -2,9 +2,10 @@
 
 const tap = require("tap");
 const sinon = require("sinon");
-const Stopwatch = require("../src/stopwatch");
-const stopwatch = Stopwatch();
+const Stopwatch = require("../../src/domain/stopwatch");
+
 const clock = sinon.useFakeTimers();
+const stopwatch = Stopwatch();
 
 tap.same(stopwatch.toJSON(), {
   time: "00:00:00",
@@ -41,3 +42,5 @@ tap.same(stopwatch.toJSON(), {
   time: "00:00:00",
   running: false,
 });
+
+clock.restore();
