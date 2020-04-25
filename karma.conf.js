@@ -12,7 +12,9 @@ module.exports = function (config) {
       type: "module",
     },
   ];
+  options.reporters.push("coverage-istanbul");
   options.esm.nodeResolve = true;
+  options.esm.coverage = true;
   config.set(options);
   return config;
 };
