@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+npx es-dev-server --node-resolve --open src/index.html

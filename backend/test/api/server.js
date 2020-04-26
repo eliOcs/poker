@@ -3,7 +3,7 @@
 const tap = require("tap");
 const sinon = require("sinon");
 const WebSocket = require("ws");
-const Server = require("../../src/backend/server");
+const Server = require("../../src/api/server");
 
 const stopwatch = {
   start: sinon.stub(),

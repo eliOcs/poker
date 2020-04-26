@@ -8,7 +8,7 @@ module.exports = function (config) {
   const options = createDefaultConfig(config);
   options.files = [
     {
-      pattern: config.grep ? config.grep : "test/browser/**/*.js",
+      pattern: config.grep ? config.grep : "test/**/*.js",
       type: "module",
     },
   ];
