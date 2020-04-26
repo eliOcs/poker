@@ -8,3 +8,7 @@ fi
 if [[ $# -eq 0 || $1 == "browser" ]]; then
   npx karma start
 fi
+
+if [[ $# -eq 0 || $1 == "backend" ]]; then
+  npx tap test/backend
+fi
