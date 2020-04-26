@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
-npx nodemon src/backend/index.js &
+(cd backend && ./tools/start) &
 BACKEND=$!
 
-npx es-dev-server --node-resolve --open src/browser/index.html &
+(cd browser && ./tools/start) &
 BROWSER=$!
 wait $BACKEND $BROWSER

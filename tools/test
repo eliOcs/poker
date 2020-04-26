@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-if [[ $# -eq 0 || $1 == "domain" ]]; then
-  npx tap test/domain
+if [[ $# -eq 0 || $1 == "backend" ]]; then
+  (cd backend && ./tools/test)
 fi
 
 if [[ $# -eq 0 || $1 == "browser" ]]; then
-  npx karma start
-fi
-
-if [[ $# -eq 0 || $1 == "backend" ]]; then
-  npx tap test/backend
+  (cd browser && ./tools/test)
 fi
