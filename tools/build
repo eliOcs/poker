@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -e
+
+(cd frontend && ./tools/build)
