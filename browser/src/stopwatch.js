@@ -1,9 +1,10 @@
 import { LitElement, html } from "lit-element";
+import { API_URL } from "config";
 
 export class Stopwatch extends LitElement {
   constructor() {
     super();
-    this.websocket = new WebSocket("ws://localhost:8080");
+    this.websocket = new WebSocket(API_URL);
     this.websocket.onmessage = (event) => {
       this.data = JSON.parse(event.data);
     };
