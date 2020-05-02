@@ -2,4 +2,4 @@
 set -e
 
 (cd backend && ./tools/setup)
-(cd browser && ./tools/setup)
+(cd frontend && ./tools/setup)
