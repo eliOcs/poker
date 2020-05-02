@@ -4,6 +4,6 @@ set -e
 (cd backend && ./tools/start) &
 BACKEND=$!
 
-(cd browser && ./tools/start) &
+(cd frontend && ./tools/start) &
 BROWSER=$!
 wait $BACKEND $BROWSER
