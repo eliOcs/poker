@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - ./tools/setup
+  build:
+    commands:
+      - ./tools/build
+
+artifacts:
+  files:
+    - frontend/build/**/*
+
+cache:
+  - frontend/node_modules/**/*
+  - backend/node_modules/**/*
