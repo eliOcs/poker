@@ -9,9 +9,9 @@ phases:
       - ./tools/build
 
 artifacts:
-  base-directory: frontend/build
   files:
     - **/*
+  base-directory: "frontend/build"
 
 cache:
   paths:
