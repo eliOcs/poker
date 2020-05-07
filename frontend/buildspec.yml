@@ -3,16 +3,16 @@ version: 0.2
 phases:
   install:
     commands:
-      - "./tools/setup"
+      - "./frontend/tools/setup"
   build:
     commands:
-      - "./tools/build"
+      - "./frontend/tools/build"
 
 artifacts:
-  base-directory: "build"
+  base-directory: "frontend/build"
   files:
     - "**/*"
 
 cache:
   paths:
-    - "node_modules/**/*"
+    - "frontend/node_modules/**/*"
