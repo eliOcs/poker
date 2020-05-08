@@ -3,10 +3,13 @@ version: 0.2
 phases:
   install:
     commands:
-      - "./frontend/tools/setup"
+      - "echo \"$CODEBUILD_SRC_DIR\""
+      - "cd frontend"
+      - "./tools/setup"
   build:
     commands:
-      - "./frontend/tools/build"
+      - "cd frontend"
+      - "./tools/build"
 
 artifacts:
   base-directory: "frontend/build"
