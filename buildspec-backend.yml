@@ -1,0 +1,22 @@
+version: 0.2
+
+env:
+  variables:
+    ENV: "prod"
+
+phases:
+  install:
+    commands:
+      - "./tools/setup backend"
+  build:
+    commands:
+      - "./tools/test backend"
+
+artifacts:
+  base-directory: "backend"
+  files:
+    - "**/*"
+
+cache:
+  paths:
+    - "backend/node_modules/**/*"
