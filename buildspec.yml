@@ -13,13 +13,15 @@ phases:
       - "./tools/build"
 
 artifacts:
-  base-directory: "frontend/build"
-  files:
-    - "**/*"
-
-  base-directory: "backend"
-  files:
-    - "**/*"
+  secondary-artifacts:
+    frontend:
+      base-directory: "frontend/build"
+      files:
+        - "**/*"
+    backend:
+      base-directory: "backend"
+      files:
+        - "**/*"
 
 cache:
   paths:
