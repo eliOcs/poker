@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 set -e
 
-(cd backend && ./tools/setup)
-(cd frontend && ./tools/setup)
+if [[ $# -eq 0 || $1 == "backend" ]]; then
+  (cd backend && ./tools/setup)
+fi
+
+if [[ $# -eq 0 || $1 == "frontend" ]]; then
+  (cd frontend && ./tools/setup)
+fi
