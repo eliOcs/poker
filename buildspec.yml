@@ -1,14 +1,15 @@
 version: 0.2
 
 phases:
+  env:
+    variables:
+      ENV: "prod"
   install:
     commands:
-      - "echo \"$CODEBUILD_SRC_DIR\""
-      - "cd frontend"
       - "./tools/setup"
   build:
     commands:
-      - "cd frontend"
+      - "./tools/test"
       - "./tools/build"
 
 artifacts:
@@ -16,6 +17,11 @@ artifacts:
   files:
     - "**/*"
 
+  base-directory: "backend"
+  files:
+    - "**/*"
+
 cache:
   paths:
     - "frontend/node_modules/**/*"
+    - "backend/node_modules/**/*"
