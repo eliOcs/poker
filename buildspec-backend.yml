@@ -6,6 +6,8 @@ env:
 
 phases:
   install:
+    runtime-versions:
+      nodejs: 12
     commands:
       - "./tools/setup backend"
   build:
