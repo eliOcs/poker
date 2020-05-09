@@ -6,7 +6,6 @@
   "author": "Elio Capella",
   "license": "UNLICENSED",
   "private": true,
-  "engines": { "node" : "12" },
   "scripts": {
     "start": "node src/api"
   },

@@ -6,7 +6,6 @@
   "author": "Elio Capella",
   "license": "UNLICENSED",
   "private": true,
-  "engines": { "node" : "12" },
   "devDependencies": {
     "@open-wc/testing": "2.5.16",
     "@rollup/plugin-alias": "3.1.0",
