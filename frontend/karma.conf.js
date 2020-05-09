@@ -10,7 +10,13 @@ process.env.CHROME_BIN = require("puppeteer").executablePath();
 module.exports = function (config) {
   const testFiles = config.grep ? config.grep : "test/**/*.js";
   config.set({
-    browsers: ["ChromeHeadless"],
+    browsers: ["ChromeHeadlessNoSandbox"],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: "ChromeHeadless",
+        flags: ["--no-sandbox"],
+      },
+    },
     files: [testFiles],
     plugins: [
       "karma-mocha",
