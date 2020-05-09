@@ -17,6 +17,8 @@ phases:
 artifacts:
   base-directory: "backend"
   files:
+    - ".ebextensions"
+    - "config/**/*"
     - "src/**/*"
     - "package.json"
 
