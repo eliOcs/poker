@@ -6,6 +6,9 @@
   "author": "Elio Capella",
   "license": "UNLICENSED",
   "private": true,
+  "scripts": {
+    "start": "node src/api"
+  },
   "devDependencies": {
     "eslint": "6.8.0",
     "eslint-config-prettier": "6.11.0",
