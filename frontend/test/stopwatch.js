@@ -1,6 +1,5 @@
 import { html, fixture, elementUpdated, expect } from "@open-wc/testing";
 import sinon from "sinon";
-
 import "../src/stopwatch.js";
 
 describe("Stopwatch", function () {

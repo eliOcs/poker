@@ -12,6 +12,13 @@ phases:
     commands:
       - "./tools/test backend"
 
+artifacts:
+  base-directory: "backend"
+  files:
+    - "src/**/*"
+    - "package.json"
+    - "node_modules/**/*"
+
 cache:
   paths:
     - "backend/node_modules/**/*"
