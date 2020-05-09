@@ -1,2 +1,2 @@
 "use strict";
-module.exports = { port: 443 };
+module.exports = { port: 80 };
