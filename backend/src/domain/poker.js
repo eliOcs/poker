@@ -35,24 +35,30 @@ class Deck extends Array {
   deal(numberOfCards) {
     const cards = [];
     for (let i = 0; i < numberOfCards; i += 1) {
-      cards.push(this.splice(Math.floor(Math.random() * this.length)));
+      const randomIndex = Math.floor(Math.random() * this.length);
+      cards.push(this[randomIndex]);
+      this.splice(randomIndex, 1);
     }
     return cards;
   }
 }
 
 class Game {
-  constructor() {
-    this.state = "waiting for players";
-    this.blinds = {
+  constructor({ state, blinds, deck, seats }) {
+    this.state = state || "waiting for players";
+    this.blinds = blinds || {
       ante: 25,
       small: 100,
       big: 200,
     };
-    this.deck = new Deck();
-    this.seats = [];
-    for (let i = 0; i < 9; i += 1) {
-      this.seats.push({ state: "empty" });
+    this.deck = new Deck(deck);
+    if (seats) {
+      this.seats = seats;
+    } else {
+      this.seats = [];
+      for (let i = 0; i < 9; i += 1) {
+        this.seats.push({ state: "empty" });
+      }
     }
   }
 
@@ -85,6 +91,24 @@ function prevSeatedIndex(seats, index) {
     prevIndex = (prevIndex - 1 + seats.length) % seats.length;
   } while (seats[prevIndex].state !== "seated");
   return prevIndex;
+}
+
+function placeBet(game, { seat: seatIndex, amount }) {
+  const seat = game.seats[seatIndex];
+  const previousSeat = game.seats[prevSeatedIndex(game.seats, seatIndex)];
+  seat.stack -= amount;
+  seat.bet = seat.bet || 0;
+  seat.bet += amount;
+  game.pot += amount;
+  if (seat.stack === 0) {
+    seat.action = "all-in";
+  } else if (amount === 0) {
+    seat.action = "check";
+  } else if (seat.bet === previousSeat.bet) {
+    seat.action = "call";
+  } else {
+    seat.action = "raise";
+  }
 }
 
 const states = {
@@ -122,14 +146,17 @@ const states = {
       game.turn = game.dealer;
       do {
         game.seats[game.turn].cards = game.deck.deal(2);
-        game.bet({ seat: game.turn, amount: game.blinds.ante, forced: true });
+        placeBet(game, { seat: game.turn, amount: game.blinds.ante });
+        game.turn = nextSeatedIndex(game.seats, game.turn);
       } while (game.turn !== game.dealer);
       game.turn = nextSeatedIndex(game.seats, game.dealer);
-      game.bet({ seat: game.turn, amount: game.blinds.small, forced: true });
-      game.bet({ seat: game.turn, amount: game.blinds.big, forced: true });
+      placeBet(game, { seat: game.turn, amount: game.blinds.small });
+      game.turn = nextSeatedIndex(game.seats, game.turn);
+      placeBet(game, { seat: game.turn, amount: game.blinds.big });
+      game.turn = nextSeatedIndex(game.seats, game.turn);
     },
 
-    bet(game, { seat: seatIndex, amount, forced }) {
+    bet(game, { seat: seatIndex, amount }) {
       const seat = game.seats[seatIndex];
 
       if (seat.state !== "seated") {
@@ -143,28 +170,36 @@ const states = {
         });
       }
 
-      if (!forced) {
-        if (amount % game.blinds.small !== 0) {
-          throw new DomainError(
-            "bet amount must be a multiple of the small blind",
-            { amount, smallBlind: game.blinds.small }
-          );
-        }
-
-        const previousSeat = game.seats[prevSeatedIndex(game.seats, seatIndex)];
-        if (previousSeat.bet > amount + seat.bet) {
-          throw new DomainError("bet amount is too small", {
-            amount,
-            atLeast: previousSeat.bet - seat.bet,
-          });
-        }
+      if (amount % game.blinds.small !== 0) {
+        throw new DomainError(
+          "bet amount must be a multiple of the small blind",
+          { amount, smallBlind: game.blinds.small }
+        );
       }
 
-      seat.stack -= amount;
-      seat.bet = seat.bet || 0;
-      seat.bet += amount;
-      game.pot += amount;
-      game.turn = nextSeatedIndex(game.seats, seatIndex);
+      const previousSeat = game.seats[prevSeatedIndex(game.seats, seatIndex)];
+      if (previousSeat.bet && previousSeat.bet > amount + seat.bet) {
+        throw new DomainError("bet amount is too small", {
+          amount,
+          atLeast: previousSeat.bet - seat.bet,
+        });
+      }
+
+      placeBet(game, { seat: seatIndex, amount });
+
+      const nextSeatIndex = nextSeatedIndex(game.seats, seatIndex);
+      const nextSeat = game.seats[nextSeatIndex];
+      if (!nextSeat.action || nextSeat.bet < seat.bet) {
+        game.turn = nextSeatIndex;
+      } else {
+        transition(game, "flop");
+      }
+    },
+  },
+  flop: {
+    onEnter: function (game) {
+      game.board = game.deck.deal(3);
+      game.turn = nextSeatedIndex(game.seats, game.dealer);
     },
   },
 };
