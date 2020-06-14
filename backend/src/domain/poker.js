@@ -66,8 +66,89 @@ class Game {
     states[this.state].sit(this, params);
   }
 
-  bet(params) {
-    states[this.state].bet(this, params);
+  bet({ seat: seatIndex, amount }) {
+    if (this.state === "waiting for players") {
+      throw new DomainError("hand has not started yet", { state: this.state });
+    }
+
+    const seat = this.seats[seatIndex];
+
+    if (seat.state !== "seated") {
+      throw new DomainError("no player is seated", { state: seat.state });
+    }
+
+    if (seatIndex !== this.turn) {
+      throw new DomainError("it isn't the player's turn to act", {
+        player: seat.player,
+        turnOf: this.seats[this.turn].player,
+      });
+    }
+
+    if (amount % this.blinds.small !== 0) {
+      throw new DomainError(
+        "bet amount must be a multiple of the small blind",
+        { amount, smallBlind: this.blinds.small }
+      );
+    }
+
+    const previousSeat = this.seats[prevIndex(this.seats, seatIndex, isSeated)];
+    if (previousSeat.bet && previousSeat.bet > amount + seat.bet) {
+      throw new DomainError("bet amount is too small", {
+        amount,
+        atLeast: previousSeat.bet - seat.bet,
+      });
+    }
+
+    placeBet(this, { seat: seatIndex, amount });
+
+    advanceTurn(this);
+  }
+
+  fold({ seat: seatIndex }) {
+    const seat = this.seats[seatIndex];
+
+    if (seatIndex !== this.turn) {
+      throw new DomainError("it isn't the player's turn to act", {
+        player: seat.player,
+        turnOf: this.seats[this.turn].player,
+      });
+    }
+
+    seat.action = "folded";
+    seat.muck = seat.cards;
+    delete seat.cards;
+
+    advanceTurn(this);
+  }
+}
+
+function advanceTurn(game) {
+  const nextTurn = nextIndex(
+    game.seats,
+    game.turn,
+    (seat) =>
+      seat.cards &&
+      seat.action !== "all-in" &&
+      (!seat.action || seat.bet < game.seats[game.turn].bet)
+  );
+  if (nextTurn === -1) {
+    if (game.seats.filter((seat) => seat.cards).length === 1) {
+      const winner = game.seats[game.turn];
+      winner.stack += game.pot;
+      delete game.pot;
+      delete game.board;
+      for (const seat of game.seats) {
+        delete seat.bet;
+        delete seat.cards;
+        delete seat.muck;
+        delete seat.action;
+      }
+      transition(game, "preflop");
+    } else {
+      transition(game, states[game.state].next);
+    }
+  } else {
+    game.turn = nextTurn;
   }
 }
 
@@ -77,25 +158,33 @@ function transition(game, state) {
   return game;
 }
 
-function nextSeatedIndex(seats, index) {
-  let nextIndex = index;
-  do {
-    nextIndex = (nextIndex + 1) % seats.length;
-  } while (seats[nextIndex].state !== "seated");
-  return nextIndex;
+function nextIndex(seats, start, predicate) {
+  let current = start;
+  while ((current = (current + 1) % seats.length) !== start) {
+    if (predicate(seats[current])) {
+      return current;
+    }
+  }
+  return -1;
 }
 
-function prevSeatedIndex(seats, index) {
-  let prevIndex = index;
-  do {
-    prevIndex = (prevIndex - 1 + seats.length) % seats.length;
-  } while (seats[prevIndex].state !== "seated");
-  return prevIndex;
+function prevIndex(seats, start, predicate) {
+  let current = start;
+  while ((current = (current - 1 + seats.length) % seats.length) !== start) {
+    if (predicate(seats[current])) {
+      return current;
+    }
+  }
+  return -1;
+}
+
+function isSeated(seat) {
+  return seat.state === "seated";
 }
 
 function placeBet(game, { seat: seatIndex, amount }) {
   const seat = game.seats[seatIndex];
-  const previousSeat = game.seats[prevSeatedIndex(game.seats, seatIndex)];
+  const previousSeat = game.seats[prevIndex(game.seats, seatIndex, isSeated)];
   seat.stack -= amount;
   seat.bet = seat.bet || 0;
   seat.bet += amount;
@@ -130,7 +219,7 @@ const states = {
       seat.player = player;
       seat.stack = buyin;
 
-      if (game.seats.filter((s) => s.state === "seated").length >= 2) {
+      if (game.seats.filter(isSeated).length >= 2) {
         transition(game, "preflop");
       }
     },
@@ -138,70 +227,75 @@ const states = {
   preflop: {
     onEnter(game) {
       if (game.dealer) {
-        game.dealer = nextSeatedIndex(game.seats, game.dealer);
+        game.dealer = nextIndex(game.seats, game.dealer, isSeated);
       } else {
-        game.dealer = game.seats.findIndex((s) => s.state === "seated");
+        game.dealer = game.seats.findIndex(isSeated);
       }
       game.pot = 0;
       game.turn = game.dealer;
+
+      // antes + deal
       do {
         game.seats[game.turn].cards = game.deck.deal(2);
         placeBet(game, { seat: game.turn, amount: game.blinds.ante });
-        game.turn = nextSeatedIndex(game.seats, game.turn);
+        game.turn = nextIndex(game.seats, game.turn, isSeated);
       } while (game.turn !== game.dealer);
-      game.turn = nextSeatedIndex(game.seats, game.dealer);
+
+      // blinds
+      game.turn = nextIndex(game.seats, game.dealer, isSeated);
       placeBet(game, { seat: game.turn, amount: game.blinds.small });
-      game.turn = nextSeatedIndex(game.seats, game.turn);
+      game.turn = nextIndex(game.seats, game.turn, isSeated);
       placeBet(game, { seat: game.turn, amount: game.blinds.big });
-      game.turn = nextSeatedIndex(game.seats, game.turn);
+      game.turn = nextIndex(game.seats, game.turn, isSeated);
     },
 
-    bet(game, { seat: seatIndex, amount }) {
-      const seat = game.seats[seatIndex];
-
-      if (seat.state !== "seated") {
-        throw new DomainError("no player is seated", { state: seat.state });
-      }
-
-      if (seatIndex !== game.turn) {
-        throw new DomainError("it isn't the player's turn to act", {
-          player: seat.player,
-          turnOf: game.seats[game.turn].player,
-        });
-      }
-
-      if (amount % game.blinds.small !== 0) {
-        throw new DomainError(
-          "bet amount must be a multiple of the small blind",
-          { amount, smallBlind: game.blinds.small }
-        );
-      }
-
-      const previousSeat = game.seats[prevSeatedIndex(game.seats, seatIndex)];
-      if (previousSeat.bet && previousSeat.bet > amount + seat.bet) {
-        throw new DomainError("bet amount is too small", {
-          amount,
-          atLeast: previousSeat.bet - seat.bet,
-        });
-      }
-
-      placeBet(game, { seat: seatIndex, amount });
-
-      const nextSeatIndex = nextSeatedIndex(game.seats, seatIndex);
-      const nextSeat = game.seats[nextSeatIndex];
-      if (!nextSeat.action || nextSeat.bet < seat.bet) {
-        game.turn = nextSeatIndex;
-      } else {
-        transition(game, "flop");
-      }
-    },
+    next: "flop",
   },
+
   flop: {
     onEnter: function (game) {
+      for (const seat of game.seats) {
+        delete seat.bet;
+        if (seat.action !== "all-in") {
+          delete seat.action;
+        }
+      }
       game.board = game.deck.deal(3);
-      game.turn = nextSeatedIndex(game.seats, game.dealer);
+      game.turn = nextIndex(game.seats, game.dealer, isSeated);
+    },
+
+    next: "turn",
+  },
+
+  turn: {
+    onEnter: function (game) {
+      for (const seat of game.seats) {
+        delete seat.bet;
+        if (seat.action !== "all-in") {
+          delete seat.action;
+        }
+      }
+      game.board.push(game.deck.deal(1));
+      game.turn = nextIndex(game.seats, game.dealer, isSeated);
+    },
+
+    next: "river",
+  },
+
+  river: {
+    onEnter: function (game) {
+      for (const seat of game.seats) {
+        delete seat.bet;
+        if (seat.action !== "all-in") {
+          delete seat.action;
+        }
+      }
+      game.board.push(game.deck.deal(1));
+      game.turn = nextIndex(game.seats, game.dealer, isSeated);
     },
   },
 };
 
-module.exports = Game;
+const seat = { nextIndex, prevIndex };
+
+module.exports = { Game, seat };
