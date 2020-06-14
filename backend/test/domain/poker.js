@@ -1,7 +1,47 @@
 "use strict";
 
 const tap = require("tap");
-const Game = require("../../src/domain/poker");
+const { Game, seat } = require("../../src/domain/poker");
+
+tap.equal(
+  seat.nextIndex(
+    [{ state: "seated" }, { state: "empty" }, { state: "seated" }],
+    2,
+    (s) => s.state === "seated"
+  ),
+  0,
+  "should find next index that matches"
+);
+
+tap.equal(
+  seat.nextIndex(
+    [{ state: "empty" }, { state: "empty" }, { state: "seated" }],
+    2,
+    (s) => s.state === "seated"
+  ),
+  -1,
+  "should return -1 if there is no match"
+);
+
+tap.equal(
+  seat.prevIndex(
+    [{ state: "seated" }, { state: "empty" }, { state: "seated" }],
+    0,
+    (s) => s.state === "seated"
+  ),
+  2,
+  "should find previous index that matches"
+);
+
+tap.equal(
+  seat.prevIndex(
+    [{ state: "empty" }, { state: "empty" }, { state: "seated" }],
+    2,
+    (s) => s.state === "seated"
+  ),
+  -1,
+  "should return -1 if there is no match"
+);
 
 const game = new Game({});
 game.sit({ player: "player 1", seat: 0, buyin: 20000 });
@@ -13,6 +53,17 @@ tap.same(
     stack: 20000,
   },
   "should seat player"
+);
+
+tap.throw(
+  function () {
+    game.bet({ seat: 0, amount: 100 });
+  },
+  {
+    message: "hand has not started yet",
+    info: { state: "waiting for players" },
+  },
+  "when hand has not started yet throw error if player tries to bet"
 );
 
 tap.throw(
@@ -114,7 +165,7 @@ tap.throw(
     message: "bet amount is too small",
     info: { amount: 200, atLeast: 500 },
   },
-  "when previous player bets should throw error if bet amount isn't atleast equal"
+  "when previous player bets should throw error if bet amount isn't at least equal"
 );
 
 game.bet({ seat: 0, amount: 500 });
@@ -127,5 +178,34 @@ tap.contains(
   },
   "when preflop betting round is over start flop"
 );
+
+game.bet({ seat: 1, amount: 0 });
+game.bet({ seat: 0, amount: 0 });
+tap.contains(
+  game,
+  {
+    state: "turn",
+    board: { length: 4 },
+    turn: 1,
+  },
+  "when flop betting round is over start turn"
+);
+
+game.bet({ seat: 1, amount: 700 });
+game.bet({ seat: 0, amount: 1400 });
+game.bet({ seat: 1, amount: 2100 });
+
+tap.throw(
+  function () {
+    game.fold({ seat: 1 });
+  },
+  {
+    message: "it isn't the player's turn to act",
+    info: { player: "player 2", turnOf: "player 1" },
+  },
+  "should throw if it isn't the players turn to act"
+);
+
+game.fold({ seat: 0 });
 
 console.log(JSON.stringify(game, null, 2));
