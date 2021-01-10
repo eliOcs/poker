@@ -56,13 +56,11 @@ const turn = {
       if (seat.button) {
         buttonIndex = i;
       }
-      if (seat.bet > highestBet) {
-        highestBet = seat.pot;
+      if (seat.hasOwnProperty("bet") && seat.bet > highestBet) {
+        highestBet = seat.bet;
         highestBetIndex = i;
       }
     }
-
-    console.dir({ buttonIndex, highestBet, highestBetIndex });
 
     return circularArray.findIndex(
       game.seats,
@@ -76,31 +74,6 @@ const turn = {
         highestBetIndex >= 0 ? highestBetIndex : buttonIndex
       )
     );
-  },
-
-  antes: {
-    next: function (game) {
-      const buttonIndex = game.seats.findIndex((seat) => seat.button);
-      return circularArray.findIndex(
-        game.seats,
-        (seat) => seat.state === "seated" && !seat.hasOwnProperty("bet"),
-        circularArray.nextIndex(game.seats, buttonIndex)
-      );
-    },
-  },
-  preflop: {
-    next: function (game) {
-      const buttonIndex = game.seats.findIndex((seat) => seat.button);
-      return circularArray.findIndex(
-        game.seats,
-        (seat) =>
-          seat !== "empty" &&
-          seat.hasOwnProperty("cards") &&
-          !seat.hasOwnProperty("bet") &&
-          !seat.allin,
-        circularArray.nextIndex(game.seats, buttonIndex)
-      );
-    },
   },
 };
 
@@ -120,7 +93,7 @@ function bet(game, seatIndex, amount, description = "bet") {
 const bettingRound = {
   antes: {
     next: function (game) {
-      const nextToAct = turn.antes.next(game);
+      const nextToAct = turn.next(game);
       if (nextToAct === -1) {
         for (const seat of game.seats.filter((seats) =>
           seats.hasOwnProperty("bet")
@@ -148,7 +121,7 @@ const bettingRound = {
         return index === circularArray.nextIndex(game.seats, buttonIndex, 2);
       }
 
-      const nextToAct = turn.preflop.next(game);
+      const nextToAct = turn.next(game);
       if (!game.seats[nextToAct].hasOwnProperty("bet")) {
         if (isSmallBlind(game, nextToAct)) {
           bet(game, nextToAct, game.blinds.small, "small blind");
