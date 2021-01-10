@@ -1,7 +1,7 @@
 "use strict";
 const tap = require("tap");
 const handStrength = require("../../src/domain/hand-strength");
-/*
+
 tap.same(
   handStrength([
     { rank: "ace", suit: "clubs" },
@@ -111,4 +111,3 @@ tap.same(
   ]),
   { name: "high card", rank: "king", kickers: ["jack", "9", "4", "3"] }
 );
-*/

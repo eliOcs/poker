@@ -44,21 +44,16 @@ class Deck extends Array {
 }
 
 class Game {
-  constructor({ state, blinds, deck, seats }) {
-    this.state = state || "waiting for players";
-    this.blinds = blinds || {
+  constructor() {
+    this.state = "waiting for players";
+    this.blinds = {
       ante: 25,
       small: 100,
       big: 200,
     };
-    this.deck = new Deck(deck);
-    if (seats) {
-      this.seats = seats;
-    } else {
-      this.seats = [];
-      for (let i = 0; i < 9; i += 1) {
-        this.seats.push({ state: "empty" });
-      }
+    this.seats = [];
+    for (let i = 0; i < 9; i += 1) {
+      this.seats.push({ state: "empty" });
     }
   }
 
@@ -133,23 +128,26 @@ function advanceTurn(game) {
   );
   if (nextTurn === -1) {
     if (game.seats.filter((seat) => seat.cards).length === 1) {
-      const winner = game.seats[game.turn];
-      winner.stack += game.pot;
-      delete game.pot;
-      delete game.board;
-      for (const seat of game.seats) {
-        delete seat.bet;
-        delete seat.cards;
-        delete seat.muck;
-        delete seat.action;
-      }
-      transition(game, "preflop");
-    } else {
+      endHand(game, game.seats[game.turn]);
+    } else if (states[game.state]) {
       transition(game, states[game.state].next);
     }
   } else {
     game.turn = nextTurn;
   }
+}
+
+function endHand(game, winner) {
+  winner.stack += game.pot;
+  delete game.pot;
+  delete game.board;
+  for (const seat of game.seats) {
+    delete seat.bet;
+    delete seat.cards;
+    delete seat.muck;
+    delete seat.action;
+  }
+  transition(game, "preflop");
 }
 
 function transition(game, state) {
@@ -231,6 +229,7 @@ const states = {
       } else {
         game.dealer = game.seats.findIndex(isSeated);
       }
+      game.deck = new Deck();
       game.pot = 0;
       game.turn = game.dealer;
 
@@ -293,9 +292,22 @@ const states = {
       game.board.push(game.deck.deal(1));
       game.turn = nextIndex(game.seats, game.dealer, isSeated);
     },
+
+    next: "showdown",
+  },
+
+  showdown: {
+    onEnter: function (game) {
+      game.turn = nextIndex(game.seats, game.dealer, isSeated);
+      do {
+        seat.hand = combinations(game.board.concat(seat.cards));
+      } while (
+        (game.turn = nextIndex(game.seats, game.turn, isSeated) === game.dealer)
+      );
+    },
   },
 };
 
 const seat = { nextIndex, prevIndex };
 
-module.exports = { Game, seat };
+module.exports = { Game, seat, Deck, hand };

@@ -1,2 +1,6 @@
 "use strict";
-module.exports = function handStrength() {};
+
+module.exports = {
+  calculate(cards) {},
+  compare(a, b) {}
+}
