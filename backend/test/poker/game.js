@@ -108,7 +108,7 @@ describe("game", function () {
         game.turn.next({
           seats: [{}, { button: true }, { folded: true }, {}],
         }),
-        0
+        3
       );
     });
 
