@@ -1,5 +1,7 @@
 # Terms
 
+https://www.pokernews.com/poker-rules/texas-holdem.htm
+
 Suits: Clubs, Diamonds, Spades, Hearts, Clubs
 Rank: Ace, King, Queen, Jack, 10, 9, 8, 7, 6, 5, 4, 3, 2
 Hand Strength: 
