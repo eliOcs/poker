@@ -1,11 +1,5 @@
 import deck from "./deck.js";
 
-const player = {
-  create: function () {
-    return {};
-  },
-};
-
 function dealCommunityCards(game, number) {
   const { remaining, dealt } = deck.deal(game.deck, number, "up");
   game.deck = remaining;
@@ -124,14 +118,35 @@ const bettingRound = {
       const nextToAct = turn.next(game);
       if (!game.seats[nextToAct].hasOwnProperty("bet")) {
         if (isSmallBlind(game, nextToAct)) {
-          bet(game, nextToAct, game.blinds.small, "small blind");
+          return bet(game, nextToAct, game.blinds.small, "small blind");
         } else if (isBigBlind(game, nextToAct)) {
-          bet(game, nextToAct, game.blinds.big, "big blind");
+          return bet(game, nextToAct, game.blinds.big, "big blind");
         }
       }
 
       return game;
     },
+  },
+};
+
+const actions = {
+  fold: function (game, seatIndex) {
+    game.seats[seatIndex].folded = true;
+    return game;
+  },
+  call: function (game, seatIndex) {
+    const highestBet = game.seats.reduce(
+      (max, seat) =>
+        seat.hasOwnProperty("bet") && seat.bet > max ? seat.bet : max,
+      0
+    );
+    return bet(game, seatIndex, highestBet, "call");
+  },
+  check: function (game, seatIndex) {
+    return bet(game, seatIndex, 0, "check");
+  },
+  raise: function (game, seatIndex, amount) {
+    return bet(game, seatIndex, amount, "raise");
   },
 };
 
@@ -147,7 +162,7 @@ function create({
     }
     seats.push(seat);
   }
-  return { blinds, maxPlayers, seats, deck: deck.create() };
+  return { blinds, maxPlayers, seats, deck: deck.create(), actions };
 }
 
-export default { create, deck, player, deal, bettingRound, turn };
+export default { create, deck, deal, bettingRound, turn, actions };

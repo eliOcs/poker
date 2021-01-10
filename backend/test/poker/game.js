@@ -217,23 +217,48 @@ describe("game", function () {
     });
 
     describe("check", function () {
-      it("should move action to next player");
+      it("should bet 0", function () {
+        const result = game.actions.check(
+          { seats: [{ bet: 0 }, { stack: 100 }] },
+          1
+        );
+        assert.equal(result.seats[1].bet, 0);
+      });
     });
 
     describe("call", function () {
-      it("should match the current bet");
-
-      it("should move action to next player");
+      it("should match the last bet", function () {
+        const result = game.actions.call(
+          { seats: [{ bet: 10 }, { stack: 100 }] },
+          1
+        );
+        assert.equal(result.seats[1].bet, 10);
+      });
     });
 
     describe("fold", function () {
-      it("should put cards in the muck");
-
-      it("should move action to next player");
+      it("should set folded true", function () {
+        const result = game.actions.fold({ seats: [{}] }, 0);
+        assert.equal(result.seats[0].folded, true);
+      });
     });
 
     describe("raise", function () {
-      it("should move chips player stack to board");
+      it("should bet", function () {
+        const result = game.actions.raise(
+          { seats: [{ bet: 10 }, { stack: 100 }] },
+          1,
+          20
+        );
+        assert.equal(result.seats[1].bet, 20);
+        assert.equal(result.seats[1].stack, 80);
+      });
+
+      it("amount should be at least the big blind");
+
+      // eslint-disable-next-line max-len
+      // https://poker.stackexchange.com/questions/2729/what-is-the-min-raise-and-min-reraise-in-holdem-no-limit
+      it("amount should be at least the size of the last raise");
     });
 
     describe("end", function () {
