@@ -8,23 +8,21 @@ const { describe, it } = tap.mocha;
 describe("game", function () {
   describe("deal", function () {
     describe("preflop", function () {
-      it("should deal 2 cards face down to players", function () {
+      it("should deal 2 cards to players", function () {
         const preflopGame = game.deal.preflop({
           deck: deck.create(),
           seats: [{}, {}],
         });
         for (const seat of preflopGame.seats) {
-          assert.equal(seat.holeCards.length, 2);
-          game.deck.validateCard(seat.holeCards[0]);
-          assert.equal(seat.holeCards[0].face, "down");
-          game.deck.validateCard(seat.holeCards[1]);
-          assert.equal(seat.holeCards[1].face, "down");
+          assert.equal(seat.cards.length, 2);
+          game.deck.validateCard(seat.cards[0]);
+          game.deck.validateCard(seat.cards[1]);
         }
       });
     });
 
     describe("flop", function () {
-      it("should deal 3 face up community cards", function () {
+      it("should deal 3 community cards", function () {
         const gameOnFlop = game.deal.flop({
           deck: deck.create(),
           communityCards: [],
@@ -32,13 +30,12 @@ describe("game", function () {
         assert.equal(gameOnFlop.communityCards.length, 3);
         for (const flopCard of gameOnFlop.communityCards) {
           game.deck.validateCard(flopCard);
-          assert.equal(flopCard.face, "up");
         }
       });
     });
 
     describe("turn", function () {
-      it("should deal 1 face up community card", function () {
+      it("should deal 1 community card", function () {
         const gameOnTurn = game.deal.turn({
           deck: deck.create(),
           communityCards: [],
@@ -46,12 +43,11 @@ describe("game", function () {
         assert.equal(gameOnTurn.communityCards.length, 1);
         const [turnCard] = gameOnTurn.communityCards;
         game.deck.validateCard(turnCard);
-        assert.equal(turnCard.face, "up");
       });
     });
 
     describe("river", function () {
-      it("should deal 1 face up community card", function () {
+      it("should deal 1 community card", function () {
         const gameOnRiver = game.deal.river({
           deck: deck.create(),
           communityCards: [],
@@ -59,12 +55,36 @@ describe("game", function () {
         assert.equal(gameOnRiver.communityCards.length, 1);
         const [riverCard] = gameOnRiver.communityCards;
         game.deck.validateCard(riverCard);
-        assert.equal(riverCard.face, "up");
       });
     });
   });
 
-  describe("buyin", function () {});
+  describe("resume", function () {
+    it("should resume game", function () {
+      const actual = game.actions.resume({ isPaused: true });
+      assert.equal(actual.isPaused, false);
+    });
+
+    it("should throw error if there are less than 2 players");
+  });
+
+  describe("buyin", function () {
+    it("should occupy seat with desired stack", function () {
+      const actual = game.actions.buyin(
+        { seats: ["empty"] },
+        { player: "player", stack: 5000, seat: 0 }
+      );
+      assert.deepEqual(actual, { seats: [{ player: "player", stack: 5000 }] });
+    });
+
+    it("should throw error if buyin is smaller than 20 big blinds");
+
+    it("should throw error if buyin is bigger than 100 big blinds");
+
+    it("should throw error if seat already occupied");
+
+    it("should throw error if seat doesn't exist");
+  });
 
   describe("rebuy");
 
@@ -82,7 +102,8 @@ describe("game", function () {
     it("player in the inmmediate left of the button is the first to act", function () {
       assert.equal(
         game.turn.next({
-          seats: [{}, { button: true }, {}, {}],
+          button: 1,
+          seats: [{}, {}, {}, {}],
         }),
         2
       );
@@ -91,9 +112,10 @@ describe("game", function () {
     it("should skip players which are all in", function () {
       assert.equal(
         game.turn.next({
+          button: 1,
           seats: [
             { bet: 5 },
-            { button: true, bet: 5 },
+            { bet: 5 },
             { bet: 5, allin: true },
             { bet: 10 },
             { allin: true },
@@ -106,7 +128,8 @@ describe("game", function () {
     it("should skip players which have folded", function () {
       assert.equal(
         game.turn.next({
-          seats: [{}, { button: true }, { folded: true }, {}],
+          button: 1,
+          seats: [{}, {}, { folded: true }, {}],
         }),
         3
       );
@@ -115,7 +138,8 @@ describe("game", function () {
     it("should skip empty seats", function () {
       assert.equal(
         game.turn.next({
-          seats: [{ button: true }, { bet: 10 }, "empty", {}],
+          button: 0,
+          seats: [{}, { bet: 10 }, "empty", {}],
         }),
         3
       );
@@ -124,7 +148,8 @@ describe("game", function () {
     it("should skip players that already have bet", function () {
       assert.equal(
         game.turn.next({
-          seats: [{ button: true }, { bet: 10 }, { bet: 10 }],
+          button: 0,
+          seats: [{}, { bet: 10 }, { bet: 10 }],
         }),
         0
       );
@@ -133,9 +158,10 @@ describe("game", function () {
     it("should return player", function () {
       assert.equal(
         game.turn.next({
+          button: 1,
           seats: [
             { bet: 10 },
-            { button: true, bet: 10 },
+            { bet: 10 },
             { bet: 20 },
             { bet: 40 },
             { bet: 40 },
@@ -148,7 +174,8 @@ describe("game", function () {
     it("should return -1 if all players called the largest bet", function () {
       game.turn.next(
         {
-          seats: [{ button: true, bet: 10 }, { bet: 10 }, { bet: 10 }],
+          button: 0,
+          seats: [{ bet: 10 }, { bet: 10 }, { bet: 10 }],
         },
         0
       );
@@ -159,9 +186,10 @@ describe("game", function () {
     describe("antes", function () {
       it("all players should bet ante", function () {
         let gameOnAntes = game.bettingRound.antes.next({
+          button: 0,
           pot: 0,
           blinds: { ante: 10 },
-          seats: [{ button: true, stack: 100 }, { stack: 100 }],
+          seats: [{ stack: 100 }, { stack: 100 }],
         });
         assert.equal(gameOnAntes.seats[1].bet, 10);
         assert.equal(gameOnAntes.seats[1].stack, 90);
@@ -179,24 +207,23 @@ describe("game", function () {
       it("first player left of button should bet small blind", function () {
         const gameOnPreflop = game.bettingRound.preflop.next({
           pot: 0,
+          button: 2,
           blinds: { small: 5, big: 10 },
-          seats: [{ button: true, stack: 100 }, { stack: 100 }],
+          seats: [{ stack: 100 }, "empty", { stack: 100 }, "empty"],
         });
-        assert.equal(gameOnPreflop.seats[1].bet, 5);
-        assert.equal(gameOnPreflop.seats[1].stack, 95);
+        assert.equal(gameOnPreflop.seats[0].bet, 5);
+        assert.equal(gameOnPreflop.seats[0].stack, 95);
       });
 
       it("second player left of button should bet big blind", function () {
         const gameOnPreflop = game.bettingRound.preflop.next({
           pot: 0,
           blinds: { small: 5, big: 10 },
-          seats: [
-            { button: true, stack: 100 },
-            { stack: 95, bet: 5 },
-          ],
+          button: 2,
+          seats: [{ stack: 95, bet: 5 }, "empty", { stack: 100 }, "empty"],
         });
-        assert.equal(gameOnPreflop.seats[0].bet, 10);
-        assert.equal(gameOnPreflop.seats[0].stack, 90);
+        assert.equal(gameOnPreflop.seats[2].bet, 10);
+        assert.equal(gameOnPreflop.seats[2].stack, 90);
       });
     });
 
@@ -268,5 +295,76 @@ describe("game", function () {
     it("should end when last bet has been called by all players");
 
     it("should end when all players have checked");
+  });
+
+  describe("moveButton", function () {
+    // eslint-disable-next-line max-len
+    // https://www.pokerstars.com/help/articles/fwd-moving-button/86605/
+    it("should move button to next player", function () {
+      const actual = game.moveButton({
+        button: 1,
+        seats: ["empty", {}, "empty", {}],
+      });
+      assert.equal(actual.button, 3);
+    });
+  });
+
+  it("sample hand", function () {
+    function print(game) {
+      console.dir({ ...game, deck: game.deck.length }, { depth: null });
+    }
+
+    let g = game.create();
+    for (const [func, args] of [
+      [game.actions.buyin, { player: "elio", stack: 5000, seat: 0 }],
+      [game.actions.buyin, { player: "oscar", stack: 5000, seat: 1 }],
+      [game.actions.resume],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.next],
+      [game.actions.call, { seat: 1 }],
+    ]) {
+      print(g);
+      g = func(g, args);
+    }
+
+    /*
+    g = game.actions.resume(g);
+    g = game.next(g); // ante elio
+    g = game.next(g); // ante oscar
+    g = game.next(g); // preflop small blind
+    g = game.next(g); // preflop big blind
+    g = game.next(g); // deal hole cards elio
+    g = game.next(g); // deal hole cards oscar
+    g = game.next(g); // start timer oscar
+    g = game.actions.call(g, { seat: 1 });
+    g = game.next(g); // start timer elio
+    g = game.actions.check(g, { seat: 0 });
+    g = game.next(g); // deal flop
+    g = game.next(g); // start timer oscar
+    g = game.actions.raise(g, { seat: 1, amount: 250 });
+    g = game.next(g); // start timer elio
+    g = game.actions.raise(g, { seat: 0, amount: 500 });
+    g = game.next(g); // start timer oscar
+    g = game.actions.call(g, { seat: 1 });
+    g = game.next(g); // deal turn
+    g = game.next(g); // start timer oscar
+    g = game.actions.check(g, { seat: 1 });
+    g = game.next(g); // start timer elio
+    g = game.actions.check(g, { seat: 0 });
+    g = game.next(g); // deal river
+    g = game.next(g); // start timer oscar
+    g = game.actions.raise(g, { seat: 1, amount: 2000 });
+    g = game.next(g); // start timer elio
+    g = game.actions.call(g, { seat: 0 });
+    g = game.next(g); // show oscar's hand
+    g = game.next(g); // elio's hand
+    g = game.next(g); // give pot to elio
+    game.next(g); // start new hand: 1. move button,*/
   });
 });
