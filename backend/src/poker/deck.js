@@ -20,28 +20,24 @@ const ranks = [
 const schema = joi.object({
   suit: joi.string().valid(...suits),
   rank: joi.string().valid(...ranks),
-  face: joi.string().valid("up", "down"),
 });
 
 function create() {
   const deck = [];
   for (const suit of suits) {
     for (const rank of ranks) {
-      deck.push({ suit, rank, face: "down" });
+      deck.push({ suit, rank });
     }
   }
   return deck;
 }
 
-function deal(deck, number, face) {
+function deal(deck, number) {
   const dealt = [];
-  let remaining = deck;
+  const remaining = deck;
   for (let i = 0; i < number; i += 1) {
     const randomIndex = Math.floor(Math.random() * remaining.length);
-    const card = remaining[randomIndex];
-    card.face = face;
-    dealt.push(card);
-    remaining = remaining.splice(randomIndex, 1);
+    dealt.push(remaining.splice(randomIndex, 1));
   }
   return { remaining, dealt };
 }
