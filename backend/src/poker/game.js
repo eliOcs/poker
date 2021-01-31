@@ -3,7 +3,11 @@ import deck from "./deck.js";
 function dealCommunityCards(game, number) {
   const { remaining, dealt } = deck.deal(game.deck, number);
   game.deck = remaining;
-  game.communityCards = game.communityCards.concat(dealt);
+  if (game.hasOwnProperty("communityCards")) {
+    game.communityCards = game.communityCards.concat(dealt);
+  } else {
+    game.communityCards = dealt;
+  }
   return game;
 }
 
@@ -106,6 +110,12 @@ const bettingRound = {
   preflop: {
     next: function (game) {
       const nextToAct = turn.next(game);
+
+      if (nextToAct === -1) {
+        game.round = "flop";
+        return collectBets(game);
+      }
+
       if (!game.seats[nextToAct].hasOwnProperty("bet")) {
         const smallBlind = circularArray.findIndex(
           game.seats,
@@ -133,20 +143,17 @@ const bettingRound = {
         return deal.preflop(game, nextWithoutCards);
       }
 
-      if (nextToAct === -1) {
-        game.round = "flop";
-        return collectBets(game);
-      }
-
       return game;
     },
   },
 
-  flop: function (game) {
-    if (!game.hasOwnProperty("communityCards")) {
-      return deal.flop(game);
-    }
-    return game;
+  flop: {
+    next: function (game) {
+      if (!game.hasOwnProperty("communityCards")) {
+        return deal.flop(game);
+      }
+      return game;
+    },
   },
 };
 
@@ -155,17 +162,17 @@ const actions = {
     game.isPaused = false;
     return game;
   },
-  fold: function (game, seatIndex) {
-    game.seats[seatIndex].folded = true;
+  fold: function (game, seat) {
+    game.seats[seat].folded = true;
     return game;
   },
-  call: function (game, { seat: seatIndex }) {
+  call: function (game, { seat }) {
     const highestBet = game.seats.reduce(
       (max, seat) =>
         seat.hasOwnProperty("bet") && seat.bet > max ? seat.bet : max,
       0
     );
-    return bet(game, seatIndex, highestBet, "call");
+    return bet(game, seat, highestBet, "call");
   },
   check: function (game, seatIndex) {
     return bet(game, seatIndex, 0, "check");
