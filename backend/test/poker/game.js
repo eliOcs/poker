@@ -9,15 +9,17 @@ describe("game", function () {
   describe("deal", function () {
     describe("preflop", function () {
       it("should deal 2 cards to players", function () {
-        const preflopGame = game.deal.preflop({
-          deck: deck.create(),
-          seats: [{}, {}],
-        });
-        for (const seat of preflopGame.seats) {
-          assert.equal(seat.cards.length, 2);
-          game.deck.validateCard(seat.cards[0]);
-          game.deck.validateCard(seat.cards[1]);
-        }
+        const preflopGame = game.deal.preflop(
+          {
+            deck: deck.create(),
+            seats: [{}, {}],
+          },
+          1
+        );
+        const seat = preflopGame.seats[1];
+        assert.equal(seat.cards.length, 2);
+        game.deck.validateCard(seat.cards[0]);
+        game.deck.validateCard(seat.cards[1]);
       });
     });
 
@@ -90,7 +92,16 @@ describe("game", function () {
 
   describe("bet");
 
-  describe("call");
+  describe("call", function () {
+    it("should match highest bet", function () {
+      const actual = game.actions.call(
+        { seats: [{ stack: 90, bet: 10 }, { stack: 100 }] },
+        { seat: 1 }
+      );
+      assert.equal(actual.seats[1].bet, 10);
+      assert.equal(actual.seats[1].stack, 90);
+    });
+  });
 
   describe("check");
 
@@ -257,7 +268,7 @@ describe("game", function () {
       it("should match the last bet", function () {
         const result = game.actions.call(
           { seats: [{ bet: 10 }, { stack: 100 }] },
-          1
+          { seat: 1 }
         );
         assert.equal(result.seats[1].bet, 10);
       });
@@ -315,6 +326,7 @@ describe("game", function () {
     }
 
     let g = game.create();
+    print(g);
     for (const [func, args] of [
       [game.actions.buyin, { player: "elio", stack: 5000, seat: 0 }],
       [game.actions.buyin, { player: "oscar", stack: 5000, seat: 1 }],
@@ -328,9 +340,14 @@ describe("game", function () {
       [game.next],
       [game.next],
       [game.actions.call, { seat: 1 }],
+      [game.next],
+      [game.next],
+      [game.actions.raise, { seat: 1, amount: 250 }],
+      [game.actions.raise, { seat: 0, amount: 500 }],
+      [game.actions.call, { seat: 1 }],
     ]) {
-      print(g);
       g = func(g, args);
+      print(g);
     }
 
     /*

@@ -37,7 +37,7 @@ function deal(deck, number) {
   const remaining = deck;
   for (let i = 0; i < number; i += 1) {
     const randomIndex = Math.floor(Math.random() * remaining.length);
-    dealt.push(remaining.splice(randomIndex, 1));
+    dealt.push(remaining.splice(randomIndex, 1)[0]);
   }
   return { remaining, dealt };
 }
