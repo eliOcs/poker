@@ -1,4 +1,5 @@
 import deck from "./deck.js";
+import handRankings from "./hand-rankings.js";
 
 function dealCommunityCards(game, number) {
   const { remaining, dealt } = deck.deal(game.deck, number);
@@ -70,7 +71,7 @@ const turn = {
   },
 };
 
-function bet(game, seatIndex, amount, description = "bet") {
+function bet(game, { seat: seatIndex, amount, description = "bet" }) {
   const seat = game.seats[seatIndex];
   if (seat.stack > amount) {
     seat.bet = amount;
@@ -94,6 +95,17 @@ function collectBets(game) {
   return game;
 }
 
+function calculateHands(game) {
+  for (const seat of game.seats.filter((seats) =>
+    seats.hasOwnProperty("cards")
+  )) {
+    seat.hand = handRankings.bestCombination(
+      game.communityCards.concat(seat.cards)
+    );
+  }
+  return game;
+}
+
 const bettingRound = {
   antes: {
     next: function (game) {
@@ -103,7 +115,11 @@ const bettingRound = {
         return collectBets(game);
       }
 
-      return bet(game, nextToAct, game.blinds.ante, "ante");
+      return bet(game, {
+        seat: nextToAct,
+        amount: game.blinds.ante,
+        description: "ante",
+      });
     },
   },
 
@@ -128,9 +144,17 @@ const bettingRound = {
           circularArray.nextIndex(game.seats, smallBlind)
         );
         if (nextToAct === smallBlind) {
-          return bet(game, nextToAct, game.blinds.small, "small blind");
+          return bet(game, {
+            seat: nextToAct,
+            amount: game.blinds.small,
+            description: "small blind",
+          });
         } else if (nextToAct === bigBlind) {
-          return bet(game, nextToAct, game.blinds.big, "big blind");
+          return bet(game, {
+            seat: nextToAct,
+            amount: game.blinds.big,
+            description: "big blind",
+          });
         }
       }
 
@@ -150,8 +174,47 @@ const bettingRound = {
   flop: {
     next: function (game) {
       if (!game.hasOwnProperty("communityCards")) {
-        return deal.flop(game);
+        return calculateHands(deal.flop(game));
       }
+
+      const nextToAct = turn.next(game);
+      if (nextToAct === -1) {
+        game.round = "turn";
+        return collectBets(game);
+      }
+
+      return game;
+    },
+  },
+
+  turn: {
+    next: function (game) {
+      if (game.communityCards.length < 4) {
+        return calculateHands(deal.turn(game));
+      }
+
+      const nextToAct = turn.next(game);
+      if (nextToAct === -1) {
+        game.round = "river";
+        return collectBets(game);
+      }
+
+      return game;
+    },
+  },
+
+  river: {
+    next: function (game) {
+      if (game.communityCards.length < 5) {
+        return calculateHands(deal.river(game));
+      }
+
+      const nextToAct = turn.next(game);
+      if (nextToAct === -1) {
+        const newGame = collectBets(game);
+        newGame;
+      }
+
       return game;
     },
   },
@@ -172,13 +235,13 @@ const actions = {
         seat.hasOwnProperty("bet") && seat.bet > max ? seat.bet : max,
       0
     );
-    return bet(game, seat, highestBet, "call");
+    return bet(game, { seat, amount: highestBet, description: "call" });
   },
-  check: function (game, seatIndex) {
-    return bet(game, seatIndex, 0, "check");
+  check: function (game, { seat }) {
+    return bet(game, { seat, amount: 0, description: "check" });
   },
-  raise: function (game, seatIndex, amount) {
-    return bet(game, seatIndex, amount, "raise");
+  raise: function (game, { seat, amount }) {
+    return bet(game, { seat, amount, description: "raise" });
   },
   buyin: function (game, { seat, stack, player }) {
     game.seats[seat] = { player, stack };
@@ -211,8 +274,6 @@ function moveButton(game) {
   );
   return game;
 }
-
-const rounds = ["antes", "preflop", "flop", "turn", "river"];
 
 function next(game) {
   if (game.isPaused) {
