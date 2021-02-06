@@ -323,4 +323,21 @@ describe("Hand Rankings", function () {
       );
     });
   });
+
+  describe("bestCombination", function () {
+    it("should return the best hand of all the possible combinations", function () {
+      assert.deepEqual(
+        handRankings.bestCombination([
+          { suit: "clubs", rank: "queen" },
+          { suit: "diamonds", rank: "ace" },
+          { suit: "diamonds", rank: "9" },
+          { suit: "spades", rank: "2" },
+          { suit: "diamonds", rank: "7" },
+          { suit: "spades", rank: "5" },
+          { suit: "clubs", rank: "7" },
+        ]),
+        { kickers: ["ace", "queen", "9"], name: "pair", of: "7" }
+      );
+    });
+  });
 });

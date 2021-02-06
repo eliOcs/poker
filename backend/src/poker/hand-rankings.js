@@ -273,4 +273,27 @@ const compare = {
   },
 };
 
-export default { calculate, compare: compare.any };
+function combinations(array, k) {
+  if (k === 1) {
+    return array.map((item) => [item]);
+  }
+
+  const result = [];
+  for (let i = 0; i < array.length; i++) {
+    const subcombinations = combinations(
+      array.slice(i + 1, array.length),
+      k - 1
+    );
+    for (const combination of subcombinations) {
+      combination.unshift(array[i]);
+      result.push(combination);
+    }
+  }
+  return result;
+}
+
+function bestCombination(cards) {
+  return combinations(cards, 5).map(calculate).sort(compare.any)[0];
+}
+
+export default { calculate, compare: compare.any, bestCombination };
