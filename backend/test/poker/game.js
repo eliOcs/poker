@@ -351,6 +351,11 @@ describe("game", function () {
       [game.actions.check, { seat: 0 }],
       [game.next],
       [game.next],
+      [game.actions.raise, { seat: 1, amount: 2000 }],
+      [game.actions.call, { seat: 0 }],
+      [game.next],
+      [game.next],
+      [game.next],
     ]) {
       g = func(g, args);
       print(g);
