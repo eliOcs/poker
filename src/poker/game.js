@@ -211,10 +211,48 @@ const bettingRound = {
 
       const nextToAct = turn.next(game);
       if (nextToAct === -1) {
-        const newGame = collectBets(game);
-        newGame;
+        game.round = "showdown";
+        return collectBets(game);
       }
 
+      return game;
+    },
+  },
+
+  showdown: {
+    next: function (game) {
+      if (game.hasOwnProperty("winner")) {
+        game.winner = circularArray.findIndex(
+          game.seats,
+          (seat) => seat.hasOwnProperty("cards"),
+          circularArray.nextIndex(game.seats, game.button)
+        );
+      }
+
+      const nextToAct = circularArray.findIndex(
+        game.seats,
+        (seat) => seat.hasOwnProperty("cards"),
+        circularArray.nextIndex(game.seats, game.winner)
+      );
+
+      if (nextToAct === -1) {
+        game.seats[game.winner].stack += game.pot;
+        delete game.winner;
+        delete game.pot;
+        return game;
+      }
+
+      if (
+        handRankings.compare(
+          game.seats[nextToAct].hand,
+          game.seats[game.winner].hand
+        ) > 0
+      ) {
+        game.winner = nextToAct;
+        delete game.seats[game.winner].hand;
+      } else {
+        delete game.seats[nextToAct].hand;
+      }
       return game;
     },
   },
