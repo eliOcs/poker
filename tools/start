@@ -1,9 +1,2 @@
 #!/usr/bin/env sh
-set -e
-
-(cd backend && ./tools/start) &
-BACKEND=$!
-
-(cd frontend && ./tools/start) &
-BROWSER=$!
-wait $BACKEND $BROWSER
+npx nodemon src/api/index.js

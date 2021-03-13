@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-./tools/build
-npx gulp watch &
-WATCH=$!
-
-npx live-server --port=9090 --mount="/:build" --entry-file="index.html"
-SERVER=$!
-
-wait $WATCH $SERVER
