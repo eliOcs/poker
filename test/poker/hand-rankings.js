@@ -1,8 +1,5 @@
 import assert from "assert";
-import tap from "tap";
 import handRankings from "../../src/poker/hand-rankings.js";
-
-const { describe, it } = tap.mocha;
 
 describe("Hand Rankings", function () {
   describe("calculate", function () {
