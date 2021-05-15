@@ -14,5 +14,11 @@
     "prefer-const": "error",
     "strict": ["error", "global"],
     "no-prototype-builtins": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.js"],
+      "env": { "mocha": true }
+    }
+  ]
 }
