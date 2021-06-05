@@ -1,6 +1,7 @@
 import joi from "joi";
 
 const suits = ["hearts", "clubs", "diamonds", "spades"];
+
 const ranks = [
   "ace",
   "2",
@@ -34,10 +35,9 @@ export function create() {
 
 export function deal(deck, number = 1) {
   const dealt = [];
-  const remaining = deck;
   for (let i = 0; i < number; i += 1) {
-    const randomIndex = Math.floor(Math.random() * remaining.length);
-    dealt.push(remaining.splice(randomIndex, 1)[0]);
+    const randomIndex = Math.floor(Math.random() * deck.length);
+    dealt.push(deck.splice(randomIndex, 1)[0]);
   }
-  return { remaining, dealt };
+  return dealt;
 }

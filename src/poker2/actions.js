@@ -1,46 +1,44 @@
-import { findIndex, nextIndex } from "./circular-array.js";
 import * as deck from "./deck.js";
 
 export function seat(game, { seat, player }) {
   game.seats[seat] = { player };
-  return game;
 }
 
-function nextPlayer(game, from) {
-  return findIndex(
-    game.seats,
-    (seat) => seat.player,
-    nextIndex(game.seats, from)
-  );
+export function buyIn(game, { seat, amount }) {
+  game.seats[seat].stack = amount;
 }
 
-export const deal = {
-  preflop: {
-    start: function (game) {
-      game.actions["deal.preflop"] = { next: nextPlayer(game, game.button) };
-      return game;
-    },
-    next: function (game) {
-      const seat = game.seats[game.actions["deal.preflop"].next];
+function* createSeatIterator(game, predicate) {
+  function nextSeat(index) {
+    return (index + 1) % game.seats.length;
+  }
 
-      if (seat.cards && seat.cards.length === 2) {
-        delete game.actions["deal.preflop"];
-      }
+  const start = nextSeat(game.button);
+  let current = start;
+  do {
+    if (predicate(game.seats[current])) {
+      yield game.seats[current];
+    }
+  } while ((current = nextSeat(current)) !== start);
+}
 
-      const { remaining, dealt } = deck.deal(game.deck);
-      game.deck = remaining;
-      if (seat.cards) {
-        seat.cards.push(dealt[0]);
-      } else {
-        seat.cards = dealt;
-      }
+export function* blinds(game) {
+  const seatIterator = createSeatIterator(game, (seat) => seat.player);
+  seatIterator.next().value.bet = game.blinds.small;
+  yield;
+  seatIterator.next().value.bet = game.blinds.big;
+  yield;
+}
 
-      game.actions["deal.preflop"].next = nextPlayer(
-        game,
-        game.actions["deal.preflop"].next
-      );
-
-      return game;
-    },
-  },
-};
+export function* dealPreflop(game) {
+  for (const seat of createSeatIterator(game, (seat) => seat.player)) {
+    const dealt = deck.deal(game.deck);
+    seat.cards = dealt;
+    yield;
+  }
+  for (const seat of createSeatIterator(game, (seat) => seat.player)) {
+    const dealt = deck.deal(game.deck);
+    seat.cards.push(dealt[0]);
+    yield;
+  }
+}
