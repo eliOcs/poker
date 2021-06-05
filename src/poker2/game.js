@@ -13,6 +13,22 @@ export function create({
     blinds,
     seats,
     deck: deck.create(),
-    actions: [],
   };
 }
+
+/**
+ *  hand
+ *    preflop
+ *      blinds
+ *      deal
+ *      betting round
+ *    flop
+ *      deal
+ *      betting round
+ *    river
+ *      deal
+ *      betting round
+ *    end
+ *      winner
+ *      move button
+ */
