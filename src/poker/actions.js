@@ -32,13 +32,19 @@ export function* blinds(game) {
 
 export function* dealPreflop(game) {
   for (const seat of createSeatIterator(game, (seat) => seat.player)) {
-    const dealt = deck.deal(game.deck);
-    seat.cards = dealt;
+    seat.cards = [deck.deal(game.deck)];
     yield;
   }
   for (const seat of createSeatIterator(game, (seat) => seat.player)) {
-    const dealt = deck.deal(game.deck);
-    seat.cards.push(dealt[0]);
+    seat.cards.push(deck.deal(game.deck));
+    yield;
+  }
+}
+
+export function* dealFlop(game) {
+  game.board.cards = [];
+  for (let i = 0; i <= 3; i += 1) {
+    game.board.cards.push(deck.deal(game.deck));
     yield;
   }
 }

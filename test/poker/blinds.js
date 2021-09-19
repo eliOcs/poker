@@ -1,7 +1,7 @@
 import assert from "assert";
-import * as game from "../../src/poker2/game.js";
-import * as player from "../../src/poker2/player.js";
-import { seat, buyIn, blinds } from "../../src/poker2/actions.js";
+import * as game from "../../src/poker/game.js";
+import * as player from "../../src/poker/player.js";
+import { seat, buyIn, blinds } from "../../src/poker/actions.js";
 
 describe("blinds", function () {
   let g;

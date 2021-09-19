@@ -1,6 +1,7 @@
 import joi from "joi";
 
 const suits = ["hearts", "clubs", "diamonds", "spades"];
+
 const ranks = [
   "ace",
   "2",
@@ -17,12 +18,12 @@ const ranks = [
   "king",
 ];
 
-const schema = joi.object({
+export const cardSchema = joi.object({
   suit: joi.string().valid(...suits),
   rank: joi.string().valid(...ranks),
 });
 
-function create() {
+export function create() {
   const deck = [];
   for (const suit of suits) {
     for (const rank of ranks) {
@@ -32,18 +33,7 @@ function create() {
   return deck;
 }
 
-function deal(deck, number) {
-  const dealt = [];
-  const remaining = deck;
-  for (let i = 0; i < number; i += 1) {
-    const randomIndex = Math.floor(Math.random() * remaining.length);
-    dealt.push(remaining.splice(randomIndex, 1)[0]);
-  }
-  return { remaining, dealt };
+export function deal(deck) {
+  const randomIndex = Math.floor(Math.random() * deck.length);
+  return deck.splice(randomIndex, 1)[0];
 }
-
-function validateCard(card) {
-  joi.assert(card, schema);
-}
-
-export default { create, validateCard, deal };
