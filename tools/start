@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-npx nodemon src/api/index.js
+npm start

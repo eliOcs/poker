@@ -8,7 +8,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "start": "node src/api",
+    "start": "nodemon src/api",
     "test": "mocha --recursive"
   },
   "devDependencies": {
