@@ -1,18 +1,20 @@
-"use strict";
+import http2 from "http2";
+import fs from "fs";
 
-const { port } = require("../../config");
-const WebSocket = require("ws");
-
-module.exports = function Server({ stopwatch }) {
-  const wss = new WebSocket.Server({ port });
-  wss.on("connection", function connection(ws) {
-    ws.send(JSON.stringify(stopwatch.toJSON()));
-    stopwatch.onUpdate = function (stopwatch) {
-      ws.send(JSON.stringify(stopwatch.toJSON()));
-    };
-
-    ws.on("message", function incoming(message) {
-      stopwatch[message]();
-    });
+export function create() {
+  const server = http2.createSecureServer({
+    key: fs.readFileSync(process.env.HTTPS_KEY),
+    cert: fs.readFileSync(process.env.HTTPS_CERT),
   });
-};
+
+  server.on("error", (err) => console.error(err));
+
+  server.on("stream", (stream) => {
+    stream.respond({
+      "content-type": "text/html; charset=utf-8",
+      ":status": 200,
+    });
+    stream.end("<h1>Hello World</h1>");
+  });
+  return server;
+}

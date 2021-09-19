@@ -1,5 +1,3 @@
-"use strict";
-
-const Stopwatch = require("../domain/stopwatch");
-const Server = require("./server");
-Server({ stopwatch: Stopwatch() });
+import * as server from "./server.js";
+const s = server.create();
+s.listen(process.env.PORT);
