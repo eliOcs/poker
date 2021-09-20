@@ -8,7 +8,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "start": "nodemon -r dotenv/config src/api",
+    "start": "nodemon -r dotenv/config src/backend",
     "test": "mocha --recursive"
   },
   "devDependencies": {
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "joi": "17.4.0",
+    "mime-types": "2.1.32",
     "uuid": "8.3.2"
   }
 }
