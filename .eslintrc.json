@@ -2,20 +2,11 @@
   "extends": ["eslint:recommended", "plugin:prettier/recommended"],
   "env": { "es6": true, "node": true },
   "parserOptions": { "sourceType": "module", "ecmaVersion": 2019 },
-  "rules": {
-    "no-unused-vars": ["error", { "vars": "all", "args": "all" }],
-    "max-len": ["error", 100],
-    "complexity": ["error", 10],
-    "max-nested-callbacks": ["error", 5],
-    "max-statements": ["error", 60],
-    "max-lines": ["error", 500],
-    "one-var": ["error", "never"],
-    "no-var": "error",
-    "prefer-const": "error",
-    "strict": ["error", "global"],
-    "no-prototype-builtins": "off"
-  },
   "overrides": [
+    {
+      "files": ["src/frontend/**/*.js"],
+      "env": { "node": false, "browser": true }
+    },
     {
       "files": ["test/**/*.js"],
       "env": { "mocha": true }

@@ -8,6 +8,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "lint": "eslint --fix **/*.js",
     "start": "nodemon -r dotenv/config src/backend",
     "test": "mocha --recursive"
   },
@@ -24,6 +25,7 @@
   "dependencies": {
     "joi": "17.4.0",
     "mime-types": "2.1.32",
-    "uuid": "8.3.2"
+    "uuid": "8.3.2",
+    "ws": "8.2.2"
   }
 }
