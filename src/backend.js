@@ -3,6 +3,7 @@ import path from "path";
 import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
+import * as pokerGame from "./poker/game.js";
 
 const server = https.createServer({
   key: fs.readFileSync(process.env.HTTPS_KEY),
@@ -32,13 +33,16 @@ server.on("request", (req, res) => {
   }
 });
 
-const wss = new WebSocketServer({ server });
-wss.on("connection", function connection(ws) {
-  ws.on("message", function incoming(message) {
-    console.log("received: %s", message);
-  });
+const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-  ws.send("something");
+const wss = new WebSocketServer({ server });
+wss.on("connection", async function connection(ws) {
+  let game = pokerGame.create();
+  while (game.running) {
+    game = pokerGame.next(game);
+    ws.send(JSON.stringify(game, null, 2));
+    await sleep(200);
+  }
 });
 
 server.listen(process.env.PORT);
