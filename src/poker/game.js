@@ -9,12 +9,17 @@ export function create({
     seats.push("empty");
   }
   return {
+    running: true,
     button: 0,
     blinds,
     seats,
     deck: deck.create(),
     board: {},
   };
+}
+
+export function next(game) {
+  return game;
 }
 
 /**
