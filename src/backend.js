@@ -12,10 +12,16 @@ const server = https.createServer({
 
 server.on("error", (err) => console.error(err));
 
-const files = {
+let files = {
   "/": "src/frontend/index.html",
-  "/index.js": "src/frontend/index.js",
 };
+for (const file of fs.readdirSync("src/frontend")) {
+  const ext = path.extname(file);
+  if (ext === ".html" || ext === ".js" || ext === ".css") {
+    files["/" + file] = "src/frontend/" + file;
+  }
+}
+console.dir(files);
 
 function respondWithFile(filePath, res) {
   res.writeHead(200, {
