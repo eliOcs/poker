@@ -10,21 +10,78 @@ class Game extends LitElement {
   static get styles() {
     return css`
       :host {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
         height: 100%;
+        display: block;
+        position: relative;
         background-color: ${unsafeCSS(COLORS.base01)};
+        box-sizing: border-box;
+      }
+
+      :host * {
+        box-sizing: inherit;
+      }
+
+      #container {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        height: 90%;
+        width: 90%;
       }
 
       #board {
-        height: 60%;
-        width: 80%;
+        position: absolute;
         display: block;
+        top: 15%;
+        left: 10%;
+        height: 70%;
+        width: 80%;
         background-color: ${unsafeCSS(COLORS.base0B)};
         border: 20px solid ${unsafeCSS(COLORS.base00)};
         border-radius: 90px;
+      }
+
+      #seats {
+        height: 100%;
+        width: 100%;
+      }
+
+      #seat {
+        position: absolute;
+        height: 20%;
+        width: 20%;
+        border: 6px solid ${unsafeCSS(COLORS.base04)};
+        border-radius: 6px;
+      }
+
+      #seat:nth-child(1) {
+        top: 15%;
+        left: 2.5%;
+      }
+
+      #seat:nth-child(2) {
+        top: 2.5%;
+        left: 40%;
+      }
+
+      #seat:nth-child(3) {
+        top: 15%;
+        right: 2.5%;
+      }
+
+      #seat:nth-child(4) {
+        bottom: 15%;
+        left: 2.5%;
+      }
+
+      #seat:nth-child(5) {
+        bottom: 5%;
+        left: 40%;
+      }
+
+      #seat:nth-child(6) {
+        bottom: 15%;
+        right: 2.5%;
       }
     `;
   }
@@ -40,7 +97,18 @@ class Game extends LitElement {
   }
 
   render() {
-    return html`<div id="board"></div>`;
+    if (!this.game) {
+      return html`<p>Loading ...</p>`;
+    }
+
+    return html`
+      <div id="container">
+        <div id="board"></div>
+        <div id="seats">
+          ${this.game.seats.map(() => html`<div id="seat"></div>`)}
+        </div>
+      </div>
+    `;
   }
 }
 customElements.define("phg-game", Game);
