@@ -1,5 +1,14 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomBytes } from "crypto";
 
-export function create() {
-  return { id: uuidv4() };
+async function generateId() {
+  return new Promise((res, rej) => {
+    randomBytes(16, (err, buf) => {
+      if (err) return rej(err);
+      res(buf.toString("hex"));
+    });
+  });
+}
+
+export async function create() {
+  return { id: await generateId() };
 }
