@@ -1,7 +1,15 @@
 import * as deck from "./deck.js";
 
 export function seat(game, { seat, player }) {
-  game.seats[seat] = { player };
+  if (game.seats[seat] === "empty") {
+    const playerSeat = game.seats.findIndex((seat) => seat.player === player);
+    if (playerSeat != -1) {
+      game.seats[playerSeat] = "empty";
+    }
+    game.seats[seat] = { player };
+  } else {
+    throw new Error("seat is already occupied");
+  }
 }
 
 export function buyIn(game, { seat, amount }) {
