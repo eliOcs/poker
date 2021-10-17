@@ -71,7 +71,7 @@ class Game extends LitElement {
 
       #seat:nth-child(4) {
         bottom: 15%;
-        left: 2.5%;
+        right: 2.5%;
       }
 
       #seat:nth-child(5) {
@@ -81,7 +81,7 @@ class Game extends LitElement {
 
       #seat:nth-child(6) {
         bottom: 15%;
-        right: 2.5%;
+        left: 2.5%;
       }
     `;
   }
@@ -89,11 +89,21 @@ class Game extends LitElement {
   static get properties() {
     return {
       game: { type: Object },
+      socket: { type: Object },
     };
   }
 
   constructor() {
     super();
+
+    this.socket = new WebSocket("wss://localhost:8443");
+    this.socket.onmessage = (event) => {
+      this.game = JSON.parse(event.data);
+    };
+  }
+
+  send(message) {
+    this.socket.send(JSON.stringify(message));
   }
 
   render() {
@@ -105,16 +115,22 @@ class Game extends LitElement {
       <div id="container">
         <div id="board"></div>
         <div id="seats">
-          ${this.game.seats.map(() => html`<div id="seat"></div>`)}
+          ${this.game.seats.map(
+            (seat, index) =>
+              html`<div id="seat">
+                ${seat === "empty"
+                  ? html`<button
+                      @click="${() =>
+                        this.send({ action: "seat", seat: index })}"
+                    >
+                      Seat here
+                    </button>`
+                  : html`Seated`}
+              </div>`
+          )}
         </div>
       </div>
     `;
   }
 }
 customElements.define("phg-game", Game);
-
-const gameEl = document.getElementById("main");
-const socket = new WebSocket("wss://localhost:8443");
-socket.onmessage = function (event) {
-  gameEl.game = JSON.parse(event.data);
-};

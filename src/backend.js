@@ -4,7 +4,8 @@ import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
 import * as pokerGame from "./poker/game.js";
-import { randomBytes } from "crypto";
+import * as pokerActions from "./poker/actions.js";
+import * as player from "./poker/player.js";
 
 const server = https.createServer({
   key: fs.readFileSync(process.env.HTTPS_KEY),
@@ -33,32 +34,24 @@ function respondWithFile(filePath, res, headers) {
 
 function parseCookies(rawCookies) {
   const cookies = {};
-  for (const rawCookie of rawCookies.split(";")) {
+  for (const rawCookie of rawCookies.split("; ")) {
     const [key, value] = rawCookie.split("=");
     cookies[key] = value;
   }
   return cookies;
 }
 
-async function generateId() {
-  return new Promise((res, rej) => {
-    randomBytes(32, (err, buf) => {
-      if (err) return rej(err);
-      res(buf.toString("hex"));
-    });
-  });
-}
+const players = {};
 
 server.on("request", async (req, res) => {
   if (req.method === "GET" && req.url in files) {
     const resHeaders = {};
     if (req.url === "/") {
-      const cookies = parseCookies(req.headers.cookie);
-      if (!("phg" in cookies)) {
-        resHeaders[
-          "Set-Cookie"
-        ] = `phg=${await generateId()}; Domain=localhost; Secure; HttpOnly`;
-      }
+      const p = await player.create();
+      players[p.id] = p;
+      resHeaders[
+        "Set-Cookie"
+      ] = `phg=${p.id}; Domain=localhost; Secure; HttpOnly`;
     }
     respondWithFile(files[req.url], res, resHeaders);
   } else {
@@ -67,11 +60,28 @@ server.on("request", async (req, res) => {
   }
 });
 
+server.on("upgrade", function upgrade(request, socket, head) {
+  const cookies = parseCookies(request.headers.cookie);
+  const player = players[cookies.phg];
+  if (player) {
+    wss.handleUpgrade(request, socket, head, (ws) =>
+      wss.emit("connection", ws, request, player)
+    );
+  } else {
+    socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
+  }
+});
+
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const wss = new WebSocketServer({ server });
-wss.on("connection", async function connection(ws) {
-  let game = pokerGame.create();
+let game = pokerGame.create();
+const wss = new WebSocketServer({ noServer: true });
+wss.on("connection", async function connection(ws, request, player) {
+  ws.on("message", async function (rawMessage) {
+    const { action, ...args } = JSON.parse(rawMessage);
+    pokerActions[action](game, { player, ...args });
+  });
+
   while (game.running) {
     game = pokerGame.next(game);
     ws.send(JSON.stringify(game, null, 2));
