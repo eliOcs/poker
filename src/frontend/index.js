@@ -98,7 +98,9 @@ class Game extends LitElement {
 
     this.socket = new WebSocket("wss://localhost:8443");
     this.socket.onmessage = (event) => {
-      this.game = JSON.parse(event.data);
+      const { game, error } = JSON.parse(event.data);
+      this.game = game;
+      this.error = error;
     };
   }
 

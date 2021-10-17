@@ -43,11 +43,11 @@ function parseCookies(rawCookies) {
 
 const players = {};
 
-server.on("request", async (req, res) => {
+server.on("request", (req, res) => {
   if (req.method === "GET" && req.url in files) {
     const resHeaders = {};
     if (req.url === "/") {
-      const p = await player.create();
+      const p = player.create();
       players[p.id] = p;
       resHeaders[
         "Set-Cookie"
@@ -74,17 +74,21 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-let game = pokerGame.create();
+const game = pokerGame.create();
 const wss = new WebSocketServer({ noServer: true });
 wss.on("connection", async function connection(ws, request, player) {
-  ws.on("message", async function (rawMessage) {
+  ws.on("message", function (rawMessage) {
     const { action, ...args } = JSON.parse(rawMessage);
-    pokerActions[action](game, { player, ...args });
+    try {
+      pokerActions[action](game, { player, ...args });
+    } catch (err) {
+      ws.send(JSON.stringify({ error: { message: err.message } }, null, 2));
+    }
   });
 
   while (game.running) {
-    game = pokerGame.next(game);
-    ws.send(JSON.stringify(game, null, 2));
+    pokerGame.next(game);
+    ws.send(JSON.stringify({ game }, null, 2));
     await sleep(200);
   }
 });
