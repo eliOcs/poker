@@ -5,7 +5,8 @@
   "overrides": [
     {
       "files": ["src/frontend/**/*.js"],
-      "env": { "node": false, "browser": true }
+      "env": { "node": false, "browser": true },
+      "globals": { "process": "readonly" }
     },
     {
       "files": ["test/**/*.js"],

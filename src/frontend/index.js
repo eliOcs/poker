@@ -23,9 +23,9 @@ class Game extends LitElement {
 
       #container {
         position: absolute;
-        top: 5%;
+        top: 0%;
         left: 5%;
-        height: 90%;
+        height: 80%;
         width: 90%;
       }
 
@@ -83,6 +83,23 @@ class Game extends LitElement {
         bottom: 15%;
         left: 2.5%;
       }
+
+      #actions {
+        position: absolute;
+        height: 15%;
+        width: 90%;
+        bottom: 5%;
+        left: 5%;
+        border: 6px solid ${unsafeCSS(COLORS.base04)};
+        border-radius: 6px;
+      }
+
+      #connection-status {
+        position: absolute;
+        left: 0.5%;
+        bottom: 0.5%;
+        color: ${unsafeCSS(COLORS.base04)};
+      }
     `;
   }
 
@@ -90,13 +107,22 @@ class Game extends LitElement {
     return {
       game: { type: Object },
       socket: { type: Object },
+      //actions
+      amount: { type: Number },
     };
   }
 
   constructor() {
     super();
+    this.amount = 50;
+    this.connect();
+  }
 
-    this.socket = new WebSocket("wss://localhost:8443");
+  connect() {
+    this.socket = new WebSocket(
+      `wss://${process.env.DOMAIN}:${process.env.PORT}`
+    );
+
     this.socket.onmessage = (event) => {
       const { game, error } = JSON.parse(event.data);
       this.game = game;
@@ -127,11 +153,31 @@ class Game extends LitElement {
                     >
                       Seat here
                     </button>`
-                  : html`Seated`}
+                  : "Seated"}
               </div>`
           )}
         </div>
       </div>
+      <span id="actions">
+        <input
+          type="range"
+          min="20"
+          max="100"
+          value="${this.amount}"
+          @change=${(e) => (this.amount = e.target.value)}
+        />
+        <button
+          @click="${() => this.send({ action: "buyIn", amount: this.amount })}"
+        >
+          Buy-in
+        </button>
+      </span>
+      <span id="connection-status">
+        ${this.socket.readyState === 0 ? "Connecting ..." : ""}
+        ${this.socket.readyState === 1 ? "Connected" : ""}
+        ${this.socket.readyState === 2 ? "Closing ..." : ""}
+        ${this.socket.readyState === 4 ? "Closed" : ""}
+      </span>
     `;
   }
 }

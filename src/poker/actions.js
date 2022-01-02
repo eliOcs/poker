@@ -12,8 +12,13 @@ export function seat(game, { seat, player }) {
   }
 }
 
-export function buyIn(game, { seat, amount }) {
-  game.seats[seat].stack = amount;
+export function buyIn(game, { player, amount }) {
+  const playerSeat = game.seats.findIndex((seat) => seat.player === player);
+  if (playerSeat !== -1) {
+    game.seats[seat].stack = game.blinds.big * amount;
+  } else {
+    throw new Error("player is not seated");
+  }
 }
 
 function* createSeatIterator(game, predicate) {

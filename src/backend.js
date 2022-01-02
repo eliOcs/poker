@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import path from "path";
+import stream from "stream";
 import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
@@ -29,7 +30,18 @@ function respondWithFile(filePath, res, headers) {
     "content-type": mime.contentType(path.extname(filePath)),
     ...headers,
   });
-  fs.createReadStream(filePath).pipe(res);
+
+  const injectEnv = new stream.Transform({
+    transform: function transformer(chunk, encoding, callback) {
+      callback(
+        null,
+        String(chunk).replace(/process\.env\.([A-Z_]+)/g, (match, key) =>
+          JSON.stringify(process.env[key])
+        )
+      );
+    },
+  });
+  fs.createReadStream(filePath).pipe(injectEnv).pipe(res);
 }
 
 function parseCookies(rawCookies) {
@@ -51,7 +63,7 @@ server.on("request", (req, res) => {
       players[p.id] = p;
       resHeaders[
         "Set-Cookie"
-      ] = `phg=${p.id}; Domain=localhost; Secure; HttpOnly`;
+      ] = `phg=${p.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly`;
     }
     respondWithFile(files[req.url], res, resHeaders);
   } else {
