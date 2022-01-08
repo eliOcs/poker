@@ -1,10 +1,5 @@
 import * as COLORS from "./colors.js";
-import {
-  html,
-  css,
-  unsafeCSS,
-  LitElement,
-} from "https://cdn.skypack.dev/pin/lit@v2.0.0-fmIQPXLJVWh8dPhS7nD3/mode=imports/optimized/lit.js";
+import { html, css, unsafeCSS, LitElement } from "lit";
 
 class Game extends LitElement {
   static get styles() {
@@ -146,10 +141,10 @@ class Game extends LitElement {
           ${this.game.seats.map(
             (seat, index) =>
               html`<div id="seat">
-                ${seat === "empty"
+                ${seat.empty
                   ? html`<button
                       @click="${() =>
-                        this.send({ action: "seat", seat: index })}"
+                        this.send({ action: "sit", seat: index })}"
                     >
                       Seat here
                     </button>`

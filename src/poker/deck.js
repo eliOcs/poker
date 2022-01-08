@@ -1,7 +1,17 @@
-import joi from "joi";
-
+/**
+ * @typedef {string} Suit
+ */
+/**
+ * @type {[Suit]}
+ */
 const suits = ["hearts", "clubs", "diamonds", "spades"];
 
+/**
+ * @typedef {string} Rank
+ */
+/**
+ * @type {[Rank]}
+ */
 const ranks = [
   "ace",
   "2",
@@ -18,11 +28,24 @@ const ranks = [
   "king",
 ];
 
-export const cardSchema = joi.object({
-  suit: joi.string().valid(...suits),
-  rank: joi.string().valid(...ranks),
-});
+/**
+ * @typedef {object} Card
+ * @property {Rank} rank
+ * @property {Suit} suit
+ */
+export function createCard({ rank, suit }) {
+  if (!ranks.includes(rank)) {
+    throw new Error("invalid rank");
+  }
+  if (!suits.includes(suit)) {
+    throw new Error("invalid suit");
+  }
+  return { rank, suit };
+}
 
+/**
+ * @returns {[Card]} deck
+ */
 export function create() {
   const deck = [];
   for (const suit of suits) {
@@ -33,6 +56,10 @@ export function create() {
   return deck;
 }
 
+/**
+ * @param {[Card]} deck will be altered
+ * @returns {Card} random card in deck
+ */
 export function deal(deck) {
   const randomIndex = Math.floor(Math.random() * deck.length);
   return deck.splice(randomIndex, 1)[0];

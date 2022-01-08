@@ -23,7 +23,6 @@
     "dotenv": "10.0.0"
   },
   "dependencies": {
-    "joi": "17.4.0",
     "mime-types": "2.1.32",
     "ws": "8.2.2"
   }

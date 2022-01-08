@@ -1,10 +1,11 @@
-import * as deck from "./deck.js";
+import * as Seat from "./seat.js";
+import * as Deck from "./deck.js";
 
-export function seat(game, { seat, player }) {
-  if (game.seats[seat] === "empty") {
+export function sit(game, { seat, player }) {
+  if (game.seats[seat].empty) {
     const playerSeat = game.seats.findIndex((seat) => seat.player === player);
     if (playerSeat != -1) {
-      game.seats[playerSeat] = "empty";
+      game.seats[playerSeat] = Seat.empty();
     }
     game.seats[seat] = { player };
   } else {
@@ -13,9 +14,9 @@ export function seat(game, { seat, player }) {
 }
 
 export function buyIn(game, { player, amount }) {
-  const playerSeat = game.seats.findIndex((seat) => seat.player === player);
-  if (playerSeat !== -1) {
-    game.seats[seat].stack = game.blinds.big * amount;
+  const seatIndex = game.seats.findIndex((seat) => seat.player === player);
+  if (seatIndex !== -1) {
+    game.seats[seatIndex].stack = game.blinds.big * amount;
   } else {
     throw new Error("player is not seated");
   }
@@ -45,11 +46,11 @@ export function* blinds(game) {
 
 export function* dealPreflop(game) {
   for (const seat of createSeatIterator(game, (seat) => seat.player)) {
-    seat.cards = [deck.deal(game.deck)];
+    seat.cards = [Deck.deal(game.deck)];
     yield;
   }
   for (const seat of createSeatIterator(game, (seat) => seat.player)) {
-    seat.cards.push(deck.deal(game.deck));
+    seat.cards.push(Deck.deal(game.deck));
     yield;
   }
 }
@@ -57,7 +58,7 @@ export function* dealPreflop(game) {
 export function* dealFlop(game) {
   game.board.cards = [];
   for (let i = 0; i <= 3; i += 1) {
-    game.board.cards.push(deck.deal(game.deck));
+    game.board.cards.push(Deck.deal(game.deck));
     yield;
   }
 }

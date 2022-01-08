@@ -1,16 +1,16 @@
 import assert from "assert";
-import * as game from "../../src/poker/game.js";
-import * as player from "../../src/poker/player.js";
-import { seat, buyIn, blinds } from "../../src/poker/actions.js";
+import * as Game from "../../src/poker/game.js";
+import * as Player from "../../src/poker/player.js";
+import { sit, buyIn, blinds } from "../../src/poker/actions.js";
 
 describe("blinds", function () {
   let g;
   let b;
   before(function () {
-    g = game.create({ blinds: { small: 25, big: 50 } });
-    seat(g, { seat: 0, player: player.create() });
+    g = Game.create({ blinds: { small: 25, big: 50 } });
+    sit(g, { seat: 0, player: Player.create() });
     buyIn(g, { seat: 0, amount: 1000 });
-    seat(g, { seat: 1, player: player.create() });
+    sit(g, { seat: 1, player: Player.create() });
     buyIn(g, { seat: 1, amount: 1000 });
     b = blinds(g);
   });
