@@ -4,9 +4,9 @@ import stream from "stream";
 import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
-import * as pokerGame from "./poker/game.js";
-import * as pokerActions from "./poker/actions.js";
-import * as player from "./poker/player.js";
+import * as PokerGame from "./poker/game.js";
+import * as PokerActions from "./poker/actions.js";
+import * as Player from "./poker/player.js";
 
 const server = https.createServer({
   key: fs.readFileSync(process.env.HTTPS_KEY),
@@ -59,7 +59,7 @@ server.on("request", (req, res) => {
   if (req.method === "GET" && req.url in files) {
     const resHeaders = {};
     if (req.url === "/") {
-      const p = player.create();
+      const p = Player.create();
       players[p.id] = p;
       resHeaders[
         "Set-Cookie"
@@ -86,20 +86,20 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const game = pokerGame.create();
+const game = PokerGame.create();
 const wss = new WebSocketServer({ noServer: true });
 wss.on("connection", async function connection(ws, request, player) {
   ws.on("message", function (rawMessage) {
     const { action, ...args } = JSON.parse(rawMessage);
     try {
-      pokerActions[action](game, { player, ...args });
+      PokerActions[action](game, { player, ...args });
     } catch (err) {
       ws.send(JSON.stringify({ error: { message: err.message } }, null, 2));
     }
   });
 
   while (game.running) {
-    pokerGame.next(game);
+    PokerGame.next(game);
     ws.send(JSON.stringify({ game }, null, 2));
     await sleep(200);
   }

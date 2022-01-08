@@ -1,12 +1,11 @@
-import joi from "joi";
 import assert from "assert";
-import * as game from "../../src/poker/game.js";
-import * as player from "../../src/poker/player.js";
-import { dealFlop, dealPreflop, seat } from "../../src/poker/actions.js";
-import { cardSchema } from "../../src/poker/deck.js";
+import * as Game from "../../src/poker/game.js";
+import * as Player from "../../src/poker/player.js";
+import { dealFlop, dealPreflop, sit } from "../../src/poker/actions.js";
+import { createCard } from "../../src/poker/deck.js";
 
 function assertCard(card) {
-  joi.assert(card, cardSchema, "expected card");
+  assert.doesNotThrow(() => createCard(card));
 }
 
 describe("deal", function () {
@@ -15,9 +14,9 @@ describe("deal", function () {
     let dp;
 
     before(function () {
-      g = game.create();
-      seat(g, { seat: 0, player: player.create() });
-      seat(g, { seat: 1, player: player.create() });
+      g = Game.create();
+      sit(g, { seat: 0, player: Player.create() });
+      sit(g, { seat: 1, player: Player.create() });
       dp = dealPreflop(g);
     });
 
@@ -44,7 +43,7 @@ describe("deal", function () {
 
   describe("flop", function () {
     it("should deal flop", function () {
-      const g = game.create();
+      const g = Game.create();
       const dp = dealFlop(g);
 
       dp.next();

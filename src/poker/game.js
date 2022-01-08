@@ -1,4 +1,5 @@
-import * as deck from "./deck.js";
+import * as Deck from "./deck.js";
+import * as Seat from "./seat.js";
 
 export function create({
   seats: numberOfSeats = 6,
@@ -6,14 +7,14 @@ export function create({
 } = {}) {
   const seats = [];
   for (let i = 0; i < numberOfSeats; i += 1) {
-    seats.push("empty");
+    seats.push(Seat.empty());
   }
   return {
     running: true,
     button: 0,
     blinds,
     seats,
-    deck: deck.create(),
+    deck: Deck.create(),
     board: {},
   };
 }
