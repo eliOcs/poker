@@ -4,6 +4,7 @@ import stream from "stream";
 import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
+import playerView from "./poker/player-view.js";
 import * as PokerGame from "./poker/game.js";
 import * as PokerActions from "./poker/actions.js";
 import * as Player from "./poker/player.js";
@@ -100,7 +101,7 @@ wss.on("connection", async function connection(ws, request, player) {
 
   while (game.running) {
     PokerGame.next(game);
-    ws.send(JSON.stringify({ game }, null, 2));
+    ws.send(JSON.stringify(playerView(game, player), null, 2));
     await sleep(200);
   }
 });
