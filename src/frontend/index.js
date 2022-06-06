@@ -119,9 +119,7 @@ class Game extends LitElement {
     );
 
     this.socket.onmessage = (event) => {
-      const { game, error } = JSON.parse(event.data);
-      this.game = game;
-      this.error = error;
+      this.game = JSON.parse(event.data);
     };
   }
 
@@ -139,16 +137,14 @@ class Game extends LitElement {
         <div id="board"></div>
         <div id="seats">
           ${this.game.seats.map(
-            (seat, index) =>
+            (seat) =>
               html`<div id="seat">
-                ${seat.empty
-                  ? html`<button
-                      @click="${() =>
-                        this.send({ action: "sit", seat: index })}"
-                    >
-                      Seat here
-                    </button>`
-                  : "Seated"}
+                ${seat.empty ? "Empty" : "Seated"}
+                ${seat.actions.map(
+                  (action) =>
+                    html`<button @click="${() =>
+                      this.send(action)}">Seat here</button></div>`
+                )}
               </div>`
           )}
         </div>
