@@ -1,3 +1,4 @@
+import { describe, it } from "node:test";
 import assert from "assert";
 import handRankings from "../../src/poker/hand-rankings.js";
 
