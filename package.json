@@ -10,13 +10,12 @@
   "scripts": {
     "lint": "eslint --fix **/*.js",
     "start": "node --env-file=.env --watch src/backend",
-    "test": "mocha --recursive"
+    "test": "node --test"
   },
   "devDependencies": {
     "eslint": "7.26.0",
     "eslint-config-prettier": "8.3.0",
     "eslint-plugin-prettier": "3.4.0",
-    "mocha": "8.4.0",
     "prettier": "2.3.0",
     "sinon": "10.0.0"
   },

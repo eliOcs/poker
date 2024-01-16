@@ -1,3 +1,4 @@
+import { describe, it } from "node:test";
 import * as assert from "assert";
 import * as Game from "../../src/poker/game.js";
 import * as Player from "../../src/poker/player.js";
