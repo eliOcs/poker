@@ -179,9 +179,7 @@ describe("hand flow", () => {
       // Deal preflop
       const dealGen = Actions.dealPreflop(game);
       // Exhaust the generator
-      while (!dealGen.next().done) {
-        /* exhaust generator */
-      }
+      while (!dealGen.next().done);
 
       // Each player should have 2 cards
       assert.equal(game.seats[0].cards.length, 2);
@@ -193,9 +191,7 @@ describe("hand flow", () => {
       Actions.startHand(game);
 
       const dealGen = Actions.dealFlop(game);
-      while (!dealGen.next().done) {
-        /* exhaust generator */
-      }
+      while (!dealGen.next().done);
 
       assert.equal(game.board.cards.length, 3);
     });
