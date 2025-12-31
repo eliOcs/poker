@@ -37,4 +37,14 @@ export default [
       },
     },
   },
+  {
+    // Playwright e2e tests - waitForFunction callbacks run in browser context
+    files: ["test/e2e/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
 ];
