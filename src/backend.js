@@ -114,6 +114,14 @@ server.on("upgrade", function upgrade(request, socket, head) {
 const game = PokerGame.create();
 const wss = new WebSocketServer({ noServer: true });
 
+/**
+ * Exhausts a generator (runs all steps without delay)
+ * @param {Generator} gen
+ */
+function runAll(gen) {
+  while (!gen.next().done);
+}
+
 /** @type {Map<import('ws').WebSocket, PlayerType>} */
 const clientPlayers = new Map();
 
@@ -154,9 +162,9 @@ function startCountdownTimer() {
       // Start the hand
       PokerActions.startHand(game);
       // Post blinds
-      for (const step of PokerActions.blinds(game)) step;
+      runAll(PokerActions.blinds(game));
       // Deal preflop
-      for (const step of PokerActions.dealPreflop(game)) step;
+      runAll(PokerActions.dealPreflop(game));
       // Set first player to act
       const firstToAct = game.seats.findIndex(
         (s, i) => !s.empty && s.stack > 0 && i !== game.button,
