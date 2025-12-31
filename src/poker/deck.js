@@ -1,3 +1,5 @@
+import { random } from "./rng.js";
+
 /**
  * @typedef {string} Suit
  */
@@ -67,6 +69,6 @@ export function create() {
  * @returns {Card} random card in deck
  */
 export function deal(deck) {
-  const randomIndex = Math.floor(Math.random() * deck.length);
+  const randomIndex = Math.floor(random() * deck.length);
   return deck.splice(randomIndex, 1)[0];
 }

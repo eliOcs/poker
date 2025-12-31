@@ -3,6 +3,7 @@ import assert from "node:assert";
 import * as Game from "../../src/poker/game.js";
 import * as Seat from "../../src/poker/seat.js";
 import * as Betting from "../../src/poker/betting.js";
+import * as Actions from "../../src/poker/actions.js";
 
 describe("betting", () => {
   let game;
@@ -207,6 +208,161 @@ describe("betting", () => {
       Betting.collectBets(game);
 
       assert.equal(game.hand.currentBet, 0);
+    });
+  });
+
+  describe("advanceAction - betting round completion", () => {
+    describe("postflop: all players check (no bet)", () => {
+      beforeEach(() => {
+        // Set up heads-up game for simpler testing
+        game.seats[4] = Seat.empty();
+        game.button = 0;
+        // Seat 0 = button/SB, Seat 2 = BB
+        // Postflop: first to act is seat 2 (first after button)
+        Betting.startBettingRound(game, "flop");
+      });
+
+      it("should set lastRaiser to first actor on postflop", () => {
+        // First actor is seat 2 (first active after button)
+        assert.equal(game.hand.lastRaiser, 2);
+        assert.equal(game.hand.actingSeat, 2);
+      });
+
+      it("should advance action when first player checks", () => {
+        // Seat 2 checks
+        Actions.check(game, { seat: 2 });
+        // Action should move to seat 0
+        assert.equal(game.hand.actingSeat, 0);
+      });
+
+      it("should end round when all players check", () => {
+        // Seat 2 checks
+        Actions.check(game, { seat: 2 });
+        assert.equal(game.hand.actingSeat, 0);
+
+        // Seat 0 checks - action should return to seat 2 (lastRaiser), ending round
+        Actions.check(game, { seat: 0 });
+        assert.equal(game.hand.actingSeat, -1);
+      });
+    });
+
+    describe("preflop: BB checks after call", () => {
+      beforeEach(() => {
+        // Set up heads-up game
+        game.seats[4] = Seat.empty();
+        game.button = 0;
+        // Seat 0 = button/SB, Seat 2 = BB
+
+        // Post blinds
+        game.seats[0].bet = 25;
+        game.seats[0].stack -= 25;
+        game.seats[2].bet = 50;
+        game.seats[2].stack -= 50;
+        game.hand.currentBet = 50;
+
+        Betting.startBettingRound(game, "preflop");
+      });
+
+      it("should set lastRaiser to first actor (SB in heads-up) for preflop", () => {
+        // In heads-up, first to act preflop is SB (button)
+        // lastRaiser is set to first actor so BB gets their option
+        assert.equal(game.hand.lastRaiser, 0);
+      });
+
+      it("should set first to act to SB (seat 0) in heads-up preflop", () => {
+        // In heads-up, SB (button) acts first preflop
+        assert.equal(game.hand.actingSeat, 0);
+      });
+
+      it("should end round when BB checks after SB calls", () => {
+        // SB (seat 0) calls
+        Actions.call(game, { seat: 0 });
+        // Action should move to BB (seat 2)
+        assert.equal(game.hand.actingSeat, 2);
+
+        // BB (seat 2) checks - round should end (action returns to SB who is lastRaiser)
+        Actions.check(game, { seat: 2 });
+        assert.equal(game.hand.actingSeat, -1);
+      });
+    });
+
+    describe("postflop: bet and call", () => {
+      beforeEach(() => {
+        // Set up heads-up game
+        game.seats[4] = Seat.empty();
+        game.button = 0;
+        Betting.startBettingRound(game, "flop");
+      });
+
+      it("should end round when caller action returns to bettor", () => {
+        // Seat 2 bets 100
+        Actions.bet(game, { seat: 2, amount: 100 });
+        assert.equal(game.hand.lastRaiser, 2);
+        assert.equal(game.hand.actingSeat, 0);
+
+        // Seat 0 calls - action returns to seat 2 (lastRaiser), ending round
+        Actions.call(game, { seat: 0 });
+        assert.equal(game.hand.actingSeat, -1);
+      });
+    });
+
+    describe("postflop: check then bet", () => {
+      beforeEach(() => {
+        // Set up heads-up game
+        game.seats[4] = Seat.empty();
+        game.button = 0;
+        Betting.startBettingRound(game, "flop");
+      });
+
+      it("should update lastRaiser when bet is made after check", () => {
+        // Seat 2 checks
+        Actions.check(game, { seat: 2 });
+        assert.equal(game.hand.actingSeat, 0);
+
+        // Seat 0 bets - lastRaiser should update
+        Actions.bet(game, { seat: 0, amount: 100 });
+        assert.equal(game.hand.lastRaiser, 0);
+        assert.equal(game.hand.actingSeat, 2);
+      });
+
+      it("should end round when checker calls the bet", () => {
+        // Seat 2 checks
+        Actions.check(game, { seat: 2 });
+
+        // Seat 0 bets
+        Actions.bet(game, { seat: 0, amount: 100 });
+
+        // Seat 2 calls - action returns to seat 0 (lastRaiser), ending round
+        Actions.call(game, { seat: 2 });
+        assert.equal(game.hand.actingSeat, -1);
+      });
+    });
+
+    describe("3-player postflop betting", () => {
+      beforeEach(() => {
+        // Keep all 3 players: seats 0, 2, 4
+        game.button = 0;
+        Betting.startBettingRound(game, "flop");
+      });
+
+      it("should set first actor to seat 2 (first after button)", () => {
+        assert.equal(game.hand.actingSeat, 2);
+        assert.equal(game.hand.lastRaiser, 2);
+      });
+
+      it("should end round when all 3 players check", () => {
+        // Seat 2 checks
+        Actions.check(game, { seat: 2 });
+        assert.equal(game.hand.actingSeat, 4);
+
+        // Seat 4 checks
+        Actions.check(game, { seat: 4 });
+        assert.equal(game.hand.actingSeat, 0);
+
+        // Seat 0 checks - action returns to seat 2 (lastRaiser), ending round
+        Actions.check(game, { seat: 0 });
+        assert.equal(game.hand.actingSeat, -1);
+      });
     });
   });
 });

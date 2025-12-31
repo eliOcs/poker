@@ -185,6 +185,9 @@ export function isBettingRoundComplete(game) {
 export function startBettingRound(game, phase) {
   game.hand.phase = phase;
 
+  const firstActor = getFirstToAct(game, phase);
+  game.hand.actingSeat = firstActor;
+
   // Reset bets for postflop rounds
   if (phase !== "preflop") {
     for (const seat of game.seats) {
@@ -193,11 +196,15 @@ export function startBettingRound(game, phase) {
       }
     }
     game.hand.currentBet = 0;
+    game.hand.lastRaiseSize = 0;
+  } else {
+    game.hand.lastRaiseSize = game.blinds.big;
   }
 
-  game.hand.lastRaiser = -1;
-  game.hand.lastRaiseSize = phase === "preflop" ? game.blinds.big : 0;
-  game.hand.actingSeat = getFirstToAct(game, phase);
+  // Set lastRaiser to first actor so round ends when action returns to them.
+  // For preflop, this gives BB their "option" to check or raise.
+  // For postflop, this ends the round after everyone checks.
+  game.hand.lastRaiser = firstActor;
 }
 
 /**

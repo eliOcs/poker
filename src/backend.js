@@ -9,6 +9,8 @@ import playerView from "./poker/player-view.js";
 import * as PokerGame from "./poker/game.js";
 import * as PokerActions from "./poker/actions.js";
 import * as Player from "./poker/player.js";
+import * as Betting from "./poker/betting.js";
+import * as Showdown from "./poker/showdown.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -222,12 +224,78 @@ function broadcastGameState(gameId) {
 }
 
 /**
+ * Processes game flow after a betting action
+ * Checks if round is complete and advances to next phase
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function processGameFlow(game, gameId) {
+  // Only process if we're in a betting phase
+  const phase = game.hand.phase;
+  if (!["preflop", "flop", "turn", "river"].includes(phase)) {
+    return;
+  }
+
+  // Check if only one player remains (everyone else folded)
+  if (Betting.countActivePlayers(game) <= 1) {
+    Showdown.awardToLastPlayer(game);
+    PokerActions.endHand(game);
+    // Auto-start next hand if enough players
+    autoStartNextHand(game, gameId);
+    return;
+  }
+
+  // Check if betting round is complete
+  if (game.hand.actingSeat === -1) {
+    // Collect bets
+    Betting.collectBets(game);
+
+    // Advance to next phase
+    if (phase === "preflop") {
+      runAll(PokerActions.dealFlop(game));
+      Betting.startBettingRound(game, "flop");
+    } else if (phase === "flop") {
+      runAll(PokerActions.dealTurn(game));
+      Betting.startBettingRound(game, "turn");
+    } else if (phase === "turn") {
+      runAll(PokerActions.dealRiver(game));
+      Betting.startBettingRound(game, "river");
+    } else if (phase === "river") {
+      // Go to showdown
+      runAll(Showdown.showdown(game));
+      PokerActions.endHand(game);
+      // Auto-start next hand if enough players
+      autoStartNextHand(game, gameId);
+    }
+  }
+}
+
+/**
+ * Automatically starts countdown for next hand if enough players
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function autoStartNextHand(game, gameId) {
+  if (PokerActions.countPlayersWithChips(game) >= 2) {
+    game.countdown = 3; // Shorter countdown between hands
+    startCountdownTimer(game, gameId);
+  }
+}
+
+// Timer interval in ms (can be reduced via TIMER_SPEED env var for faster e2e tests)
+const TIMER_INTERVAL = process.env.TIMER_SPEED
+  ? Math.floor(1000 / parseInt(process.env.TIMER_SPEED, 10))
+  : 1000;
+
+/**
  * Starts the countdown timer for a specific game
  * @param {Game} game
  * @param {string} gameId
  */
 function startCountdownTimer(game, gameId) {
-  if (game.countdownTimer) return;
+  if (game.countdownTimer) {
+    return;
+  }
 
   game.countdownTimer = setInterval(() => {
     if (game.countdown === null) {
@@ -249,16 +317,14 @@ function startCountdownTimer(game, gameId) {
       runAll(PokerActions.blinds(game));
       // Deal preflop
       runAll(PokerActions.dealPreflop(game));
-      // Set first player to act
-      const firstToAct = game.seats.findIndex(
-        (s, i) => !s.empty && s.stack > 0 && i !== game.button,
-      );
-      game.hand.actingSeat = firstToAct;
+      // Initialize betting round
+      Betting.startBettingRound(game, "preflop");
+      // Set currentBet to big blind (blinds already posted)
       game.hand.currentBet = game.blinds.big;
     }
 
     broadcastGameState(gameId);
-  }, 1000);
+  }, TIMER_INTERVAL);
 }
 
 wss.on(
@@ -272,12 +338,19 @@ wss.on(
 
     ws.on("message", function (rawMessage) {
       const { action, ...args } = JSON.parse(rawMessage);
+      const bettingActions = ["check", "call", "bet", "raise", "fold", "allIn"];
+
       try {
         PokerActions[action](game, { player, ...args });
 
         // If start action was called, begin countdown timer
         if (action === "start" && game.countdown !== null) {
           startCountdownTimer(game, gameId);
+        }
+
+        // Process game flow after betting actions
+        if (bettingActions.includes(action)) {
+          processGameFlow(game, gameId);
         }
       } catch (err) {
         ws.send(
