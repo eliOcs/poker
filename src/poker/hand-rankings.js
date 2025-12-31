@@ -18,7 +18,7 @@ function getRankValue(rank, { ace = "high" } = {}) {
 
 function sortByRank(cards, opts) {
   return [...cards].sort(
-    (a, b) => getRankValue(b.rank, opts) - getRankValue(a.rank, opts)
+    (a, b) => getRankValue(b.rank, opts) - getRankValue(a.rank, opts),
   );
 }
 
@@ -282,7 +282,7 @@ function combinations(array, k) {
   for (let i = 0; i < array.length; i++) {
     const subcombinations = combinations(
       array.slice(i + 1, array.length),
-      k - 1
+      k - 1,
     );
     for (const combination of subcombinations) {
       combination.unshift(array[i]);

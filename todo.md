@@ -1,4 +1,5 @@
 # To do
+
 - rework architecture to allow splitting game logic:
 - create ssl certificate https://www.freecodecamp.org/news/how-to-get-https-working-on-your-local-development-environment-in-5-minutes-7af615770eec/
 - http2 static file server: https://dexecure.com/blog/how-to-create-http2-static-file-server-nodejs-with-examples/

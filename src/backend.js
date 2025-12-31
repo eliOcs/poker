@@ -37,8 +37,8 @@ function respondWithFile(filePath, res, headers) {
       callback(
         null,
         String(chunk).replace(/process\.env\.([A-Z_]+)/g, (match, key) =>
-          JSON.stringify(process.env[key])
-        )
+          JSON.stringify(process.env[key]),
+        ),
       );
     },
   });
@@ -62,9 +62,8 @@ server.on("request", (req, res) => {
     if (req.url === "/") {
       const p = Player.create();
       players[p.id] = p;
-      resHeaders[
-        "Set-Cookie"
-      ] = `phg=${p.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly`;
+      resHeaders["Set-Cookie"] =
+        `phg=${p.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly`;
     }
     respondWithFile(files[req.url], res, resHeaders);
   } else {
@@ -78,7 +77,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
   const player = players[cookies.phg];
   if (player) {
     wss.handleUpgrade(request, socket, head, (ws) =>
-      wss.emit("connection", ws, request, player)
+      wss.emit("connection", ws, request, player),
     );
   } else {
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");

@@ -4,7 +4,7 @@ https://www.pokernews.com/poker-rules/texas-holdem.htm
 
 Suits: Clubs, Diamonds, Spades, Hearts, Clubs
 Rank: Ace, King, Queen, Jack, 10, 9, 8, 7, 6, 5, 4, 3, 2
-Hand Strength: 
+Hand Strength:
 Royal Flush
 Straight Flush
 4 of a kind
@@ -22,8 +22,7 @@ High card
 
 combinations:
 The number of ways (or combinations) in which r objects can be selected from a set of n objects, where repetition is not allowed, is denoted by:
-c = n!/(r!*(n!-r!))
-
+c = n!/(r!\*(n!-r!))
 
 ACTION
 (1) One's turn to act during a hand.
