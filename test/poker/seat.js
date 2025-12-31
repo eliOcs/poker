@@ -20,7 +20,7 @@ describe("sit", function () {
     const p2 = Player.create();
     assert.throws(
       () => sit(g, { seat: 0, player: p2 }),
-      /seat is already occupied/
+      /seat is already occupied/,
     );
   });
 

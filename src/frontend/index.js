@@ -115,7 +115,7 @@ class Game extends LitElement {
 
   connect() {
     this.socket = new WebSocket(
-      `wss://${process.env.DOMAIN}:${process.env.PORT}`
+      `wss://${process.env.DOMAIN}:${process.env.PORT}`,
     );
 
     this.socket.onmessage = (event) => {
@@ -143,9 +143,9 @@ class Game extends LitElement {
                 ${seat.actions.map(
                   (action) =>
                     html`<button @click="${() =>
-                      this.send(action)}">Seat here</button></div>`
+                      this.send(action)}">Seat here</button></div>`,
                 )}
-              </div>`
+              </div>`,
           )}
         </div>
       </div>

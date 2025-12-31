@@ -13,7 +13,7 @@ describe("Hand Rankings", function () {
           { rank: "10", suit: "clubs" },
           { rank: "king", suit: "clubs" },
         ]),
-        { name: "royal flush" }
+        { name: "royal flush" },
       );
     });
 
@@ -26,7 +26,7 @@ describe("Hand Rankings", function () {
           { rank: "4", suit: "hearts" },
           { rank: "6", suit: "hearts" },
         ]),
-        { name: "straight flush", suit: "hearts", from: "3", to: "7" }
+        { name: "straight flush", suit: "hearts", from: "3", to: "7" },
       );
     });
 
@@ -39,7 +39,7 @@ describe("Hand Rankings", function () {
           { rank: "king", suit: "clubs" },
           { rank: "king", suit: "diamonds" },
         ]),
-        { name: "4 of a kind", of: "king", kicker: "3" }
+        { name: "4 of a kind", of: "king", kicker: "3" },
       );
     });
 
@@ -52,7 +52,7 @@ describe("Hand Rankings", function () {
           { rank: "10", suit: "clubs" },
           { rank: "10", suit: "spades" },
         ]),
-        { name: "full house", of: "10", and: "3" }
+        { name: "full house", of: "10", and: "3" },
       );
     });
 
@@ -65,7 +65,7 @@ describe("Hand Rankings", function () {
           { rank: "4", suit: "diamonds" },
           { rank: "2", suit: "diamonds" },
         ]),
-        { name: "flush", suit: "diamonds", high: "queen" }
+        { name: "flush", suit: "diamonds", high: "queen" },
       );
     });
 
@@ -78,7 +78,7 @@ describe("Hand Rankings", function () {
           { rank: "ace", suit: "clubs" },
           { rank: "4", suit: "splades" },
         ]),
-        { name: "straight", from: "ace", to: "5" }
+        { name: "straight", from: "ace", to: "5" },
       );
     });
 
@@ -91,7 +91,7 @@ describe("Hand Rankings", function () {
           { rank: "5", suit: "hearts" },
           { rank: "2", suit: "splades" },
         ]),
-        { name: "3 of a kind", of: "2", kickers: ["ace", "5"] }
+        { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
       );
     });
 
@@ -104,7 +104,7 @@ describe("Hand Rankings", function () {
           { rank: "4", suit: "hearts" },
           { rank: "9", suit: "splades" },
         ]),
-        { name: "2 pair", of: "jack", and: "4", kicker: "9" }
+        { name: "2 pair", of: "jack", and: "4", kicker: "9" },
       );
     });
 
@@ -117,7 +117,7 @@ describe("Hand Rankings", function () {
           { rank: "4", suit: "hearts" },
           { rank: "9", suit: "splades" },
         ]),
-        { name: "pair", of: "4", kickers: ["jack", "9", "3"] }
+        { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
       );
     });
 
@@ -130,7 +130,7 @@ describe("Hand Rankings", function () {
           { rank: "king", suit: "hearts" },
           { rank: "9", suit: "splades" },
         ]),
-        { name: "high card", ranks: ["king", "jack", "9", "4", "3"] }
+        { name: "high card", ranks: ["king", "jack", "9", "4", "3"] },
       );
     });
   });
@@ -159,7 +159,7 @@ describe("Hand Rankings", function () {
           { name: "2 pair", of: "jack", and: "4", kicker: "9" },
           { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
           { name: "high card", ranks: ["king", "jack", "9", "4", "3"] },
-        ]
+        ],
       );
     });
 
@@ -168,9 +168,9 @@ describe("Hand Rankings", function () {
         assert.equal(
           handRankings.compare(
             { name: "royal flush" },
-            { name: "royal flush" }
+            { name: "royal flush" },
           ),
-          0
+          0,
         );
       });
     });
@@ -180,8 +180,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "straight flush", suit: "hearts", from: "3", to: "7" },
-            { name: "straight flush", suit: "hearts", from: "4", to: "8" }
-          ) > 0
+            { name: "straight flush", suit: "hearts", from: "4", to: "8" },
+          ) > 0,
         );
       });
     });
@@ -191,8 +191,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "4 of a kind", of: "10", kicker: "3" },
-            { name: "4 of a kind", of: "jack", kicker: "3" }
-          ) > 0
+            { name: "4 of a kind", of: "jack", kicker: "3" },
+          ) > 0,
         );
       });
 
@@ -200,8 +200,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "4 of a kind", of: "10", kicker: "10" },
-            { name: "4 of a kind", of: "10", kicker: "queen" }
-          ) > 0
+            { name: "4 of a kind", of: "10", kicker: "queen" },
+          ) > 0,
         );
       });
     });
@@ -211,8 +211,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "full house", of: "9", and: "3" },
-            { name: "full house", of: "10", and: "3" }
-          ) > 0
+            { name: "full house", of: "10", and: "3" },
+          ) > 0,
         );
       });
 
@@ -220,8 +220,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "full house", of: "10", and: "3" },
-            { name: "full house", of: "10", and: "4" }
-          ) > 0
+            { name: "full house", of: "10", and: "4" },
+          ) > 0,
         );
       });
     });
@@ -231,8 +231,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "flush", suit: "diamonds", high: "jack" },
-            { name: "flush", suit: "diamonds", high: "queen" }
-          ) > 0
+            { name: "flush", suit: "diamonds", high: "queen" },
+          ) > 0,
         );
       });
     });
@@ -242,8 +242,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
-            { name: "3 of a kind", of: "3", kickers: ["ace", "5"] }
-          ) > 0
+            { name: "3 of a kind", of: "3", kickers: ["ace", "5"] },
+          ) > 0,
         );
       });
 
@@ -251,8 +251,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "3 of a kind", of: "3", kickers: ["ace", "5"] },
-            { name: "3 of a kind", of: "3", kickers: ["ace", "king"] }
-          ) > 0
+            { name: "3 of a kind", of: "3", kickers: ["ace", "king"] },
+          ) > 0,
         );
       });
     });
@@ -262,8 +262,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "2 pair", of: "jack", and: "7", kicker: "9" },
-            { name: "2 pair", of: "queen", and: "4", kicker: "9" }
-          ) > 0
+            { name: "2 pair", of: "queen", and: "4", kicker: "9" },
+          ) > 0,
         );
       });
 
@@ -271,8 +271,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-            { name: "2 pair", of: "jack", and: "7", kicker: "9" }
-          ) > 0
+            { name: "2 pair", of: "jack", and: "7", kicker: "9" },
+          ) > 0,
         );
       });
 
@@ -280,8 +280,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-            { name: "2 pair", of: "jack", and: "7", kicker: "9" }
-          ) > 0
+            { name: "2 pair", of: "jack", and: "7", kicker: "9" },
+          ) > 0,
         );
       });
     });
@@ -291,8 +291,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
-            { name: "pair", of: "9", kickers: ["jack", "4", "3"] }
-          ) > 0
+            { name: "pair", of: "9", kickers: ["jack", "4", "3"] },
+          ) > 0,
         );
       });
 
@@ -300,8 +300,8 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "pair", of: "9", kickers: ["jack", "4", "2"] },
-            { name: "pair", of: "9", kickers: ["jack", "4", "3"] }
-          ) > 0
+            { name: "pair", of: "9", kickers: ["jack", "4", "3"] },
+          ) > 0,
         );
       });
     });
@@ -316,8 +316,8 @@ describe("Hand Rankings", function () {
           {
             name: "high card",
             ranks: ["king", "jack", "9", "5", "3"],
-          }
-        ) > 0
+          },
+        ) > 0,
       );
     });
   });
@@ -334,7 +334,7 @@ describe("Hand Rankings", function () {
           { suit: "spades", rank: "5" },
           { suit: "clubs", rank: "7" },
         ]),
-        { kickers: ["ace", "queen", "9"], name: "pair", of: "7" }
+        { kickers: ["ace", "queen", "9"], name: "pair", of: "7" },
       );
     });
   });
