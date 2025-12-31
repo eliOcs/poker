@@ -6,6 +6,9 @@ export default [
   js.configs.recommended,
   prettierConfig,
   {
+    ignores: ["node_modules/**"],
+  },
+  {
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",
@@ -20,6 +23,16 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
+        process: "readonly",
+      },
+    },
+  },
+  {
+    files: ["test/frontend/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.mocha,
         process: "readonly",
       },
     },
