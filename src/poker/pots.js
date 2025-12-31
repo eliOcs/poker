@@ -1,5 +1,3 @@
-import * as Seat from "./seat.js";
-
 /**
  * @typedef {import('./seat.js').Seat} SeatType
  * @typedef {import('./seat.js').OccupiedSeat} OccupiedSeat

@@ -1,7 +1,6 @@
 import HandRankings from "./hand-rankings.js";
 import * as Pots from "./pots.js";
 import * as Seat from "./seat.js";
-import { nextIndex } from "./circular-array.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
