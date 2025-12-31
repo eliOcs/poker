@@ -364,6 +364,7 @@ class Game extends LitElement {
 
   static get properties() {
     return {
+      gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
       socket: { type: Object },
       betAmount: { type: Number },
@@ -373,14 +374,23 @@ class Game extends LitElement {
 
   constructor() {
     super();
+    this.gameId = null;
     this.betAmount = 0;
     this.error = null;
+  }
+
+  firstUpdated() {
     this.connect();
   }
 
   connect() {
+    if (!this.gameId) {
+      console.error("No game ID provided");
+      return;
+    }
+
     this.socket = new WebSocket(
-      `wss://${process.env.DOMAIN}:${process.env.PORT}`,
+      `wss://${process.env.DOMAIN}:${process.env.PORT}/games/${this.gameId}`,
     );
 
     this.socket.onmessage = (event) => {
@@ -668,10 +678,11 @@ class Game extends LitElement {
       </div>
       <div id="actions">${this.renderActions()}</div>
       <span id="connection-status">
-        ${this.socket.readyState === 0 ? "Connecting ..." : ""}
-        ${this.socket.readyState === 1 ? "Connected" : ""}
-        ${this.socket.readyState === 2 ? "Closing ..." : ""}
-        ${this.socket.readyState === 3 ? "Closed" : ""}
+        ${!this.socket ? "Not connected" : ""}
+        ${this.socket?.readyState === 0 ? "Connecting ..." : ""}
+        ${this.socket?.readyState === 1 ? "Connected" : ""}
+        ${this.socket?.readyState === 2 ? "Closing ..." : ""}
+        ${this.socket?.readyState === 3 ? "Closed" : ""}
       </span>
     `;
   }

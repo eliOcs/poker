@@ -31,7 +31,7 @@ describe("phg-game", () => {
   let element;
 
   beforeEach(async () => {
-    element = await fixture(html`<phg-game></phg-game>`);
+    element = await fixture(html`<phg-game game-id="test123"></phg-game>`);
   });
 
   afterEach(() => {
