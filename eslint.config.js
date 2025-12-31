@@ -7,11 +7,11 @@ export default [
   prettierConfig,
   {
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 2024,
       sourceType: "module",
       globals: {
         ...globals.node,
-        ...globals.es2021,
+        ...globals.es2024,
       },
     },
   },

@@ -2,7 +2,7 @@
  * @typedef {string} Suit
  */
 /**
- * @type {[Suit]}
+ * @type {Suit[]}
  */
 const suits = ["hearts", "clubs", "diamonds", "spades"];
 
@@ -10,7 +10,7 @@ const suits = ["hearts", "clubs", "diamonds", "spades"];
  * @typedef {string} Rank
  */
 /**
- * @type {[Rank]}
+ * @type {Rank[]}
  */
 const ranks = [
   "ace",
@@ -33,6 +33,12 @@ const ranks = [
  * @property {Rank} rank
  * @property {Suit} suit
  */
+
+/**
+ * Creates a card with validated rank and suit
+ * @param {Card} card - Card to create
+ * @returns {Card}
+ */
 export function createCard({ rank, suit }) {
   if (!ranks.includes(rank)) {
     throw new Error("invalid rank");
@@ -44,7 +50,7 @@ export function createCard({ rank, suit }) {
 }
 
 /**
- * @returns {[Card]} deck
+ * @returns {Card[]} deck
  */
 export function create() {
   const deck = [];
@@ -57,7 +63,7 @@ export function create() {
 }
 
 /**
- * @param {[Card]} deck will be altered
+ * @param {Card[]} deck will be altered
  * @returns {Card} random card in deck
  */
 export function deal(deck) {

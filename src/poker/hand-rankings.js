@@ -1,6 +1,95 @@
+/**
+ * @typedef {import('./deck.js').Card} Card
+ * @typedef {import('./deck.js').Rank} Rank
+ * @typedef {import('./deck.js').Suit} Suit
+ */
+
+/**
+ * @typedef {'royal flush'|'straight flush'|'4 of a kind'|'full house'|'flush'|'straight'|'3 of a kind'|'2 pair'|'pair'|'high card'} HandName
+ */
+
+/**
+ * @typedef {object} RoyalFlush
+ * @property {'royal flush'} name
+ */
+
+/**
+ * @typedef {object} StraightFlush
+ * @property {'straight flush'} name
+ * @property {Suit} suit
+ * @property {Rank} from
+ * @property {Rank} to
+ */
+
+/**
+ * @typedef {object} FourOfAKind
+ * @property {'4 of a kind'} name
+ * @property {Rank} of
+ * @property {Rank} kicker
+ */
+
+/**
+ * @typedef {object} FullHouse
+ * @property {'full house'} name
+ * @property {Rank} of
+ * @property {Rank} and
+ */
+
+/**
+ * @typedef {object} Flush
+ * @property {'flush'} name
+ * @property {Suit} suit
+ * @property {Rank} high
+ */
+
+/**
+ * @typedef {object} Straight
+ * @property {'straight'} name
+ * @property {Rank} from
+ * @property {Rank} to
+ */
+
+/**
+ * @typedef {object} ThreeOfAKind
+ * @property {'3 of a kind'} name
+ * @property {Rank} of
+ * @property {Rank[]} kickers
+ */
+
+/**
+ * @typedef {object} TwoPair
+ * @property {'2 pair'} name
+ * @property {Rank} of
+ * @property {Rank} and
+ * @property {Rank} kicker
+ */
+
+/**
+ * @typedef {object} Pair
+ * @property {'pair'} name
+ * @property {Rank} of
+ * @property {Rank[]} kickers
+ */
+
+/**
+ * @typedef {object} HighCard
+ * @property {'high card'} name
+ * @property {Rank[]} ranks
+ */
+
+/**
+ * @typedef {RoyalFlush|StraightFlush|FourOfAKind|FullHouse|Flush|Straight|ThreeOfAKind|TwoPair|Pair|HighCard} EvaluatedHand
+ */
+
 const last = 4;
 const first = 0;
 
+/**
+ * Gets numeric value of a rank for comparison
+ * @param {Rank} rank
+ * @param {{ ace?: 'high'|'low' }} [opts]
+ * @returns {number}
+ */
 function getRankValue(rank, { ace = "high" } = {}) {
   switch (rank) {
     case "ace":
@@ -16,14 +105,27 @@ function getRankValue(rank, { ace = "high" } = {}) {
   }
 }
 
+/**
+ * Sorts cards by rank (highest first)
+ * @param {Card[]} cards
+ * @param {{ ace?: 'high'|'low' }} [opts]
+ * @returns {Card[]}
+ */
 function sortByRank(cards, opts) {
   return [...cards].sort(
     (a, b) => getRankValue(b.rank, opts) - getRankValue(a.rank, opts),
   );
 }
 
+/**
+ * Checks if cards form a straight
+ * @param {Card[]} cards
+ * @returns {Straight|false}
+ */
 function getStraight(cards) {
-  for (const ace of ["high", "low"]) {
+  /** @type {Array<'high'|'low'>} */
+  const aceValues = ["high", "low"];
+  for (const ace of aceValues) {
     const sorted = sortByRank(cards, { ace });
     const from = sorted[last].rank;
     const to = sorted[first].rank;
@@ -39,6 +141,11 @@ function getStraight(cards) {
   return false;
 }
 
+/**
+ * Checks if cards form a flush
+ * @param {Card[]} cards
+ * @returns {Flush|false}
+ */
 function getFlush(cards) {
   const suit = cards[0].suit;
   let high = cards[0].rank;
@@ -53,16 +160,24 @@ function getFlush(cards) {
   return { name: "flush", suit, high };
 }
 
+/**
+ * Checks for groups (pairs, trips, quads, full house)
+ * @param {Card[]} cards
+ * @returns {FourOfAKind|FullHouse|ThreeOfAKind|TwoPair|Pair|false|undefined}
+ */
 function getGroups(cards) {
-  let groups = {};
+  /** @type {Record<string, Array<{rank: string, suit: string}>>} */
+  const groupsByRank = {};
   for (const card of cards) {
-    if (groups[card.rank]) {
-      groups[card.rank].push(card);
+    if (groupsByRank[card.rank]) {
+      groupsByRank[card.rank].push(card);
     } else {
-      groups[card.rank] = [card];
+      groupsByRank[card.rank] = [card];
     }
   }
-  groups = Object.values(groups).sort((a, b) => b.length - a.length);
+  const groups = Object.values(groupsByRank).sort(
+    (a, b) => b.length - a.length,
+  );
 
   if (groups.length === 5) {
     return false;
@@ -123,8 +238,15 @@ function getGroups(cards) {
       kicker: secondGroup[0].rank,
     };
   }
+
+  return undefined;
 }
 
+/**
+ * Creates a high card hand
+ * @param {Card[]} cards
+ * @returns {HighCard}
+ */
 function getHighCard(cards) {
   return {
     name: "high card",
@@ -132,6 +254,11 @@ function getHighCard(cards) {
   };
 }
 
+/**
+ * Evaluates a 5-card hand
+ * @param {Card[]} cards - Exactly 5 cards
+ * @returns {EvaluatedHand}
+ */
 function calculate(cards) {
   const groups = getGroups(cards);
 
@@ -255,6 +382,7 @@ const compare = {
           return kickerComparison;
         }
       }
+      return 0;
     } else {
       return pairComparison;
     }
@@ -270,9 +398,17 @@ const compare = {
         return kickerComparison;
       }
     }
+    return 0;
   },
 };
 
+/**
+ * Generates all k-combinations of an array
+ * @template T
+ * @param {T[]} array
+ * @param {number} k
+ * @returns {T[][]}
+ */
 function combinations(array, k) {
   if (k === 1) {
     return array.map((item) => [item]);
@@ -292,6 +428,11 @@ function combinations(array, k) {
   return result;
 }
 
+/**
+ * Finds the best 5-card hand from 7 cards
+ * @param {Card[]} cards - 7 cards (hole + board)
+ * @returns {EvaluatedHand}
+ */
 function bestCombination(cards) {
   return combinations(cards, 5).map(calculate).sort(compare.any)[0];
 }
