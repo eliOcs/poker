@@ -226,27 +226,34 @@ function broadcastGameState(gameId) {
 /**
  * Processes game flow after a betting action
  * Checks if round is complete and advances to next phase
+ * Loops through all remaining streets when everyone is all-in
  * @param {Game} game
  * @param {string} gameId
  */
 function processGameFlow(game, gameId) {
-  // Only process if we're in a betting phase
-  const phase = game.hand.phase;
-  if (!["preflop", "flop", "turn", "river"].includes(phase)) {
-    return;
-  }
+  // Loop to handle all-in situations where we need to run out the board
+  while (true) {
+    const phase = game.hand.phase;
 
-  // Check if only one player remains (everyone else folded)
-  if (Betting.countActivePlayers(game) <= 1) {
-    Showdown.awardToLastPlayer(game);
-    PokerActions.endHand(game);
-    // Auto-start next hand if enough players
-    autoStartNextHand(game, gameId);
-    return;
-  }
+    // Only process if we're in a betting phase
+    if (!["preflop", "flop", "turn", "river"].includes(phase)) {
+      return;
+    }
 
-  // Check if betting round is complete
-  if (game.hand.actingSeat === -1) {
+    // Check if only one player remains (everyone else folded)
+    if (Betting.countActivePlayers(game) <= 1) {
+      Showdown.awardToLastPlayer(game);
+      PokerActions.endHand(game);
+      autoStartNextHand(game, gameId);
+      return;
+    }
+
+    // Check if betting round is complete
+    if (game.hand.actingSeat !== -1) {
+      // Someone still needs to act
+      return;
+    }
+
     // Collect bets
     Betting.collectBets(game);
 
@@ -264,9 +271,12 @@ function processGameFlow(game, gameId) {
       // Go to showdown
       runAll(Showdown.showdown(game));
       PokerActions.endHand(game);
-      // Auto-start next hand if enough players
       autoStartNextHand(game, gameId);
+      return;
     }
+
+    // If actingSeat is still -1 after starting new round (everyone all-in),
+    // continue looping to deal next street
   }
 }
 
