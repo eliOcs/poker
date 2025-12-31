@@ -271,13 +271,20 @@ function* createSeatIterator(game, predicate) {
  * @returns {Generator<void>}
  */
 export function* blinds(game) {
-  const seatIterator = createSeatIterator(
-    game,
-    (seat) => !seat.empty && !!seat.player,
-  );
-  seatIterator.next().value.bet = game.blinds.small;
+  // Post small blind
+  const sbSeat = Betting.getSmallBlindSeat(game);
+  const sbPlayer = /** @type {OccupiedSeat} */ (game.seats[sbSeat]);
+  const sbAmount = Math.min(game.blinds.small, sbPlayer.stack);
+  sbPlayer.bet = sbAmount;
+  sbPlayer.stack -= sbAmount;
   yield;
-  seatIterator.next().value.bet = game.blinds.big;
+
+  // Post big blind
+  const bbSeat = Betting.getBigBlindSeat(game);
+  const bbPlayer = /** @type {OccupiedSeat} */ (game.seats[bbSeat]);
+  const bbAmount = Math.min(game.blinds.big, bbPlayer.stack);
+  bbPlayer.bet = bbAmount;
+  bbPlayer.stack -= bbAmount;
   yield;
 }
 

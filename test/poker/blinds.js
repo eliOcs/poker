@@ -16,13 +16,17 @@ describe("blinds", function () {
     b = blinds(g);
   });
 
-  it("should force small blind for player left to the button", function () {
+  // Heads-up: button (seat 0) posts small blind
+  it("should force small blind for button in heads-up", function () {
     b.next();
-    assert.equal(g.seats[1].bet, 25);
+    assert.equal(g.seats[0].bet, 25);
+    assert.equal(g.seats[0].stack, 50000 - 25); // Stack reduced
   });
 
-  it("should force big blind for player left to small blind", function () {
+  // Heads-up: player after button posts big blind
+  it("should force big blind for player after button in heads-up", function () {
     b.next();
-    assert.equal(g.seats[0].bet, 50);
+    assert.equal(g.seats[1].bet, 50);
+    assert.equal(g.seats[1].stack, 50000 - 50); // Stack reduced
   });
 });
