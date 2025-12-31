@@ -3,3 +3,8 @@ node_modules
 tags
 .nyc_output
 coverage
+
+# Environment and secrets
+.env
+*.pem
+*.key
