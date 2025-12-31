@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from "node:test";
+import { describe, it } from "node:test";
 import assert from "node:assert";
 import * as Seat from "../../src/poker/seat.js";
 import * as Pots from "../../src/poker/pots.js";

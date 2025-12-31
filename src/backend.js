@@ -113,11 +113,78 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const game = PokerGame.create();
 const wss = new WebSocketServer({ noServer: true });
+
+/** @type {Map<import('ws').WebSocket, PlayerType>} */
+const clientPlayers = new Map();
+
+/**
+ * Broadcasts game state to all connected clients
+ */
+function broadcastGameState() {
+  for (const [ws, player] of clientPlayers) {
+    if (ws.readyState === 1) {
+      ws.send(JSON.stringify(playerView(game, player), null, 2));
+    }
+  }
+}
+
+/** @type {NodeJS.Timeout|null} */
+let countdownTimer = null;
+
+/**
+ * Starts the countdown timer
+ */
+function startCountdownTimer() {
+  if (countdownTimer) return;
+
+  countdownTimer = setInterval(() => {
+    if (game.countdown === null) {
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = null;
+      return;
+    }
+
+    game.countdown -= 1;
+
+    if (game.countdown <= 0) {
+      game.countdown = null;
+      if (countdownTimer) clearInterval(countdownTimer);
+      countdownTimer = null;
+
+      // Start the hand
+      PokerActions.startHand(game);
+      // Post blinds
+      for (const step of PokerActions.blinds(game)) step;
+      // Deal preflop
+      for (const step of PokerActions.dealPreflop(game)) step;
+      // Set first player to act
+      const firstToAct = game.seats.findIndex(
+        (s, i) => !s.empty && s.stack > 0 && i !== game.button,
+      );
+      game.hand.actingSeat = firstToAct;
+      game.hand.currentBet = game.blinds.big;
+    }
+
+    broadcastGameState();
+  }, 1000);
+}
+
 wss.on("connection", async function connection(ws, request, player) {
+  clientPlayers.set(ws, player);
+
+  ws.on("close", () => {
+    clientPlayers.delete(ws);
+  });
+
   ws.on("message", function (rawMessage) {
     const { action, ...args } = JSON.parse(rawMessage);
     try {
       PokerActions[action](game, { player, ...args });
+
+      // If start action was called, begin countdown timer
+      if (action === "start" && game.countdown !== null) {
+        startCountdownTimer();
+      }
     } catch (err) {
       ws.send(
         JSON.stringify(
@@ -131,8 +198,8 @@ wss.on("connection", async function connection(ws, request, player) {
         ),
       );
     }
-    // Send updated game state after action
-    ws.send(JSON.stringify(playerView(game, player), null, 2));
+    // Broadcast updated game state to all clients
+    broadcastGameState();
   });
 
   // Send initial game state

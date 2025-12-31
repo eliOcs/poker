@@ -10,6 +10,32 @@ import * as Betting from "./betting.js";
  */
 
 /**
+ * Counts players with chips who can play
+ * @param {Game} game
+ * @returns {number}
+ */
+export function countPlayersWithChips(game) {
+  return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
+}
+
+/**
+ * Starts countdown to begin a new hand
+ * @param {Game} game
+ */
+export function start(game) {
+  if (game.hand.phase !== "waiting") {
+    throw new Error("hand already in progress");
+  }
+  if (game.countdown !== null) {
+    throw new Error("countdown already started");
+  }
+  if (countPlayersWithChips(game) < 2) {
+    throw new Error("need at least 2 players with chips");
+  }
+  game.countdown = 5;
+}
+
+/**
  * Sits a player at a seat
  * @param {Game} game
  * @param {{ seat: number, player: Player }} options
@@ -311,15 +337,6 @@ export function* dealRiver(game) {
 }
 
 // --- Hand Flow ---
-
-/**
- * Counts players with chips who can play
- * @param {Game} game
- * @returns {number}
- */
-function countPlayersWithChips(game) {
-  return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
-}
 
 /**
  * Starts a new hand

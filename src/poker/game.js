@@ -41,6 +41,7 @@ import * as Seat from "./seat.js";
  * @property {Card[]} deck - Current deck
  * @property {Board} board - Community cards
  * @property {Hand} hand - Current hand state
+ * @property {number|null} countdown - Countdown seconds until hand starts (null if not counting)
  */
 
 /**
@@ -86,5 +87,6 @@ export function create({
     deck: Deck.create(),
     board: { cards: [] },
     hand: createHand(),
+    countdown: null,
   };
 }

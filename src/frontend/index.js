@@ -300,6 +300,20 @@ class Game extends LitElement {
         color: white;
       }
 
+      #actions button.start {
+        background-color: ${unsafeCSS(COLORS.base0C)};
+        color: white;
+        font-size: 1.2em;
+        padding: 15px 30px;
+      }
+
+      .countdown {
+        font-size: 3em;
+        font-weight: bold;
+        color: ${unsafeCSS(COLORS.base07)};
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
       .amount-input {
         display: flex;
         align-items: center;
@@ -441,8 +455,18 @@ class Game extends LitElement {
   }
 
   renderBoard() {
-    const { board, hand } = this.game;
+    const { board, hand, countdown } = this.game;
     const cards = board?.cards || [];
+
+    // Show countdown if active
+    if (countdown !== null && countdown !== undefined) {
+      return html`
+        <div class="board-info">
+          <div class="phase">Starting in...</div>
+          <div class="countdown">${countdown}</div>
+        </div>
+      `;
+    }
 
     return html`
       <div class="board-info">
@@ -609,6 +633,17 @@ class Game extends LitElement {
               @click=${() => this.send({ action: "allIn", seat: seatIndex })}
             >
               All-In $${action.amount}
+            </button>
+          `);
+          break;
+
+        case "start":
+          result.push(html`
+            <button
+              class="start"
+              @click=${() => this.send({ action: "start" })}
+            >
+              Start Game
             </button>
           `);
           break;

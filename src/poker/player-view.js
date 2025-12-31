@@ -1,4 +1,5 @@
 import * as Betting from "./betting.js";
+import { countPlayersWithChips } from "./actions.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -64,7 +65,12 @@ import * as Betting from "./betting.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold} PlayerAction
+ * @typedef {object} ActionStart
+ * @property {'start'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart} PlayerAction
  */
 
 /**
@@ -107,6 +113,7 @@ import * as Betting from "./betting.js";
  * @property {Board} board
  * @property {ViewHand|null} hand
  * @property {ViewSeat[]} seats
+ * @property {number|null} countdown
  */
 
 /**
@@ -178,10 +185,13 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     return actions;
   }
 
-  // Player is seated but hand not active - can buy in if no stack
+  // Player is seated but hand not active - can buy in if no stack, or start game
   if (game.hand?.phase === "waiting") {
     if (seat.stack === 0) {
       actions.push({ action: "buyIn", min: 20, max: 100 });
+    } else if (game.countdown === null && countPlayersWithChips(game) >= 2) {
+      // Player has chips, no countdown active, enough players - can start
+      actions.push({ action: "start" });
     }
     return actions;
   }
@@ -270,6 +280,7 @@ export default function playerView(game, player) {
           actingSeat: game.hand.actingSeat,
         }
       : null,
+    countdown: game.countdown,
     seats: game.seats.map((seat, index) => {
       if (seat.empty) {
         return {
