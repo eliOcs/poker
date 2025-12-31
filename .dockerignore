@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+test
+*.md
+*.log
+.DS_Store
+Dockerfile
+.dockerignore
+tsconfig.json
+eslint.config.js
+web-test-runner.config.js
+assets
