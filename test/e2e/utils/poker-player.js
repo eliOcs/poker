@@ -3,6 +3,13 @@
  * Manages their browser context, page, and WebSocket connection
  */
 export class PokerPlayer {
+  /** @type {import('@playwright/test').BrowserContext} */
+  context;
+  /** @type {import('@playwright/test').Page} */
+  page;
+  /** @type {string} */
+  name;
+
   /**
    * @param {import('@playwright/test').BrowserContext} context
    * @param {import('@playwright/test').Page} page

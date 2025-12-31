@@ -211,6 +211,62 @@ describe("betting", () => {
     });
   });
 
+  describe("all-in scenarios", () => {
+    beforeEach(() => {
+      // Set up heads-up game
+      game.seats[4] = Seat.empty();
+      game.button = 0;
+    });
+
+    it("should set actingSeat to -1 when starting round with all players all-in", () => {
+      game.seats[0].allIn = true;
+      game.seats[2].allIn = true;
+
+      Betting.startBettingRound(game, "flop");
+
+      // No one can act, so actingSeat should be -1
+      assert.equal(game.hand.actingSeat, -1);
+    });
+
+    it("should set actingSeat to -1 after call makes everyone all-in", () => {
+      // Player 1 has gone all-in with 500 bet
+      game.seats[0].stack = 0;
+      game.seats[0].bet = 500;
+      game.seats[0].allIn = true;
+      game.hand.currentBet = 500;
+      game.hand.lastRaiser = 0;
+
+      // Player 2 needs to act
+      game.hand.actingSeat = 2;
+      game.hand.phase = "preflop";
+
+      // Player 2 calls, going all-in (has only 500 chips left)
+      game.seats[2].stack = 500;
+      Actions.call(game, { seat: 2 });
+
+      // Both players are now all-in
+      assert.equal(game.seats[2].allIn, true);
+      assert.equal(game.seats[2].stack, 0);
+      // No one can act anymore
+      assert.equal(game.hand.actingSeat, -1);
+    });
+
+    it("should count 0 players who can act when both all-in", () => {
+      game.seats[0].allIn = true;
+      game.seats[2].allIn = true;
+
+      assert.equal(Betting.countPlayersWhoCanAct(game), 0);
+    });
+
+    it("should still count active players when all-in", () => {
+      game.seats[0].allIn = true;
+      game.seats[2].allIn = true;
+
+      // All-in players are still active (not folded)
+      assert.equal(Betting.countActivePlayers(game), 2);
+    });
+  });
+
   describe("advanceAction - betting round completion", () => {
     describe("postflop: all players check (no bet)", () => {
       beforeEach(() => {
