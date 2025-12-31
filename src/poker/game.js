@@ -42,6 +42,7 @@ import * as Seat from "./seat.js";
  * @property {Board} board - Community cards
  * @property {Hand} hand - Current hand state
  * @property {number|null} countdown - Countdown seconds until hand starts (null if not counting)
+ * @property {NodeJS.Timeout|null} countdownTimer - Timer ID for countdown interval
  */
 
 /**
@@ -88,5 +89,6 @@ export function create({
     board: { cards: [] },
     hand: createHand(),
     countdown: null,
+    countdownTimer: null,
   };
 }

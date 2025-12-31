@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import stream from "stream";
+import crypto from "crypto";
 import mime from "mime-types";
 import https from "https";
 import { WebSocketServer } from "ws";
@@ -11,6 +12,7 @@ import * as Player from "./poker/player.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
+ * @typedef {import('./poker/game.js').Game} Game
  */
 
 if (!process.env.HTTPS_KEY || !process.env.HTTPS_CERT) {
@@ -27,23 +29,22 @@ const server = https.createServer({
 server.on("error", (err) => console.error(err));
 
 /** @type {Record<string, string>} */
-const files = {
-  "/": "src/frontend/index.html",
-};
+const staticFiles = {};
 for (const file of fs.readdirSync("src/frontend")) {
   const ext = path.extname(file);
   if (ext === ".html" || ext === ".js" || ext === ".css") {
-    files["/" + file] = "src/frontend/" + file;
+    staticFiles["/" + file] = "src/frontend/" + file;
   }
 }
 
 /**
- * Responds with a file, injecting environment variables
+ * Responds with a file, injecting environment variables and optional replacements
  * @param {string} filePath
  * @param {import('http').ServerResponse} res
  * @param {Record<string, string>} headers
+ * @param {Record<string, string>} [replacements]
  */
-function respondWithFile(filePath, res, headers) {
+function respondWithFile(filePath, res, headers, replacements = {}) {
   const contentType = mime.contentType(path.extname(filePath));
   res.writeHead(200, {
     "content-type": contentType || "application/octet-stream",
@@ -52,12 +53,16 @@ function respondWithFile(filePath, res, headers) {
 
   const injectEnv = new stream.Transform({
     transform: function transformer(chunk, encoding, callback) {
-      callback(
-        null,
-        String(chunk).replace(/process\.env\.([A-Z_]+)/g, (match, key) =>
-          JSON.stringify(process.env[key]),
-        ),
+      let content = String(chunk);
+      // Inject environment variables
+      content = content.replace(/process\.env\.([A-Z_]+)/g, (match, key) =>
+        JSON.stringify(process.env[key]),
       );
+      // Inject custom replacements
+      for (const [key, value] of Object.entries(replacements)) {
+        content = content.replace(new RegExp(key, "g"), value);
+      }
+      callback(null, content);
     },
   });
   fs.createReadStream(filePath).pipe(injectEnv).pipe(res);
@@ -78,40 +83,116 @@ function parseCookies(rawCookies) {
   return cookies;
 }
 
+/**
+ * Gets or creates a player from cookie
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
+ * @returns {{ player: PlayerType, isNew: boolean }}
+ */
+function getOrCreatePlayer(req, res) {
+  const cookies = parseCookies(req.headers.cookie ?? "");
+  let player = players[cookies.phg];
+  let isNew = false;
+
+  if (!player) {
+    player = Player.create();
+    players[player.id] = player;
+    res.setHeader(
+      "Set-Cookie",
+      `phg=${player.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly; Path=/`,
+    );
+    isNew = true;
+  }
+
+  return { player, isNew };
+}
+
 /** @type {Record<string, PlayerType>} */
 const players = {};
 
+/** @type {Map<string, Game>} */
+const games = new Map();
+
+/**
+ * Generates a short game ID
+ * @returns {string}
+ */
+function generateGameId() {
+  return crypto.randomBytes(4).toString("hex");
+}
+
 server.on("request", (req, res) => {
   const url = req.url ?? "";
-  if (req.method === "GET" && url in files) {
-    /** @type {Record<string, string>} */
-    const resHeaders = {};
-    if (url === "/") {
-      const p = Player.create();
-      players[p.id] = p;
-      resHeaders["Set-Cookie"] =
-        `phg=${p.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly`;
-    }
-    respondWithFile(files[url], res, resHeaders);
-  } else {
-    res.writeHead(404);
-    res.end();
+  const method = req.method ?? "GET";
+
+  // Home page
+  if (method === "GET" && url === "/") {
+    getOrCreatePlayer(req, res);
+    respondWithFile("src/frontend/home.html", res, {});
+    return;
   }
+
+  // Create game
+  if (method === "POST" && url === "/games") {
+    const gameId = generateGameId();
+    const game = PokerGame.create();
+    games.set(gameId, game);
+
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ id: gameId }));
+    return;
+  }
+
+  // Game page
+  const gameMatch = url.match(/^\/games\/([a-z0-9]+)$/);
+  if (method === "GET" && gameMatch) {
+    const gameId = gameMatch[1];
+    if (!games.has(gameId)) {
+      res.writeHead(404);
+      res.end("Game not found");
+      return;
+    }
+
+    getOrCreatePlayer(req, res);
+    respondWithFile(
+      "src/frontend/game.html",
+      res,
+      {},
+      {
+        "\\$GAME_ID\\$": gameId,
+      },
+    );
+    return;
+  }
+
+  // Static files
+  if (method === "GET" && url in staticFiles) {
+    respondWithFile(staticFiles[url], res, {});
+    return;
+  }
+
+  res.writeHead(404);
+  res.end();
 });
 
 server.on("upgrade", function upgrade(request, socket, head) {
   const cookies = parseCookies(request.headers.cookie ?? "");
   const player = players[cookies.phg];
-  if (player) {
+
+  // Parse game ID from URL: /games/:id
+  const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
+  const gameId = gameMatch?.[1];
+  const game = gameId ? games.get(gameId) : undefined;
+
+  if (player && game && gameId) {
     wss.handleUpgrade(request, socket, head, (ws) =>
-      wss.emit("connection", ws, request, player),
+      wss.emit("connection", ws, request, player, game, gameId),
     );
   } else {
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
   }
 });
 
-const game = PokerGame.create();
 const wss = new WebSocketServer({ noServer: true });
 
 /**
@@ -122,33 +203,36 @@ function runAll(gen) {
   while (!gen.next().done);
 }
 
-/** @type {Map<import('ws').WebSocket, PlayerType>} */
-const clientPlayers = new Map();
+/** @type {Map<import('ws').WebSocket, { player: PlayerType, gameId: string }>} */
+const clientConnections = new Map();
 
 /**
- * Broadcasts game state to all connected clients
+ * Broadcasts game state to all clients in a specific game
+ * @param {string} gameId
  */
-function broadcastGameState() {
-  for (const [ws, player] of clientPlayers) {
-    if (ws.readyState === 1) {
-      ws.send(JSON.stringify(playerView(game, player), null, 2));
+function broadcastGameState(gameId) {
+  const game = games.get(gameId);
+  if (!game) return;
+
+  for (const [ws, conn] of clientConnections) {
+    if (conn.gameId === gameId && ws.readyState === 1) {
+      ws.send(JSON.stringify(playerView(game, conn.player), null, 2));
     }
   }
 }
 
-/** @type {NodeJS.Timeout|null} */
-let countdownTimer = null;
-
 /**
- * Starts the countdown timer
+ * Starts the countdown timer for a specific game
+ * @param {Game} game
+ * @param {string} gameId
  */
-function startCountdownTimer() {
-  if (countdownTimer) return;
+function startCountdownTimer(game, gameId) {
+  if (game.countdownTimer) return;
 
-  countdownTimer = setInterval(() => {
+  game.countdownTimer = setInterval(() => {
     if (game.countdown === null) {
-      if (countdownTimer) clearInterval(countdownTimer);
-      countdownTimer = null;
+      if (game.countdownTimer) clearInterval(game.countdownTimer);
+      game.countdownTimer = null;
       return;
     }
 
@@ -156,8 +240,8 @@ function startCountdownTimer() {
 
     if (game.countdown <= 0) {
       game.countdown = null;
-      if (countdownTimer) clearInterval(countdownTimer);
-      countdownTimer = null;
+      if (game.countdownTimer) clearInterval(game.countdownTimer);
+      game.countdownTimer = null;
 
       // Start the hand
       PokerActions.startHand(game);
@@ -173,45 +257,48 @@ function startCountdownTimer() {
       game.hand.currentBet = game.blinds.big;
     }
 
-    broadcastGameState();
+    broadcastGameState(gameId);
   }, 1000);
 }
 
-wss.on("connection", async function connection(ws, request, player) {
-  clientPlayers.set(ws, player);
+wss.on(
+  "connection",
+  async function connection(ws, request, player, game, gameId) {
+    clientConnections.set(ws, { player, gameId });
 
-  ws.on("close", () => {
-    clientPlayers.delete(ws);
-  });
+    ws.on("close", () => {
+      clientConnections.delete(ws);
+    });
 
-  ws.on("message", function (rawMessage) {
-    const { action, ...args } = JSON.parse(rawMessage);
-    try {
-      PokerActions[action](game, { player, ...args });
+    ws.on("message", function (rawMessage) {
+      const { action, ...args } = JSON.parse(rawMessage);
+      try {
+        PokerActions[action](game, { player, ...args });
 
-      // If start action was called, begin countdown timer
-      if (action === "start" && game.countdown !== null) {
-        startCountdownTimer();
-      }
-    } catch (err) {
-      ws.send(
-        JSON.stringify(
-          {
-            error: {
-              message: err instanceof Error ? err.message : String(err),
+        // If start action was called, begin countdown timer
+        if (action === "start" && game.countdown !== null) {
+          startCountdownTimer(game, gameId);
+        }
+      } catch (err) {
+        ws.send(
+          JSON.stringify(
+            {
+              error: {
+                message: err instanceof Error ? err.message : String(err),
+              },
             },
-          },
-          null,
-          2,
-        ),
-      );
-    }
-    // Broadcast updated game state to all clients
-    broadcastGameState();
-  });
+            null,
+            2,
+          ),
+        );
+      }
+      // Broadcast updated game state to clients in this game
+      broadcastGameState(gameId);
+    });
 
-  // Send initial game state
-  ws.send(JSON.stringify(playerView(game, player), null, 2));
-});
+    // Send initial game state
+    ws.send(JSON.stringify(playerView(game, player), null, 2));
+  },
+);
 
 server.listen(process.env.PORT);
