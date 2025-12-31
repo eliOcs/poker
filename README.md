@@ -6,27 +6,31 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - OpenSSL (for generating certificates)
 
 ### Setup
 
 1. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 2. **Generate self-signed SSL certificates**
+
    ```bash
    ./scripts/generate-certs.sh
    ```
 
 3. **Create environment file**
+
    ```bash
    cp .env.example .env
    ```
 
 4. **Start the server**
+
    ```bash
    npm start
    ```
