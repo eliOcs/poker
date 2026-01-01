@@ -271,12 +271,14 @@ describe("phg-game", () => {
       expect(communityCards.length).to.equal(3);
     });
 
-    it('shows "No cards yet" when board is empty', async () => {
+    it("shows no cards when board is empty", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const boardInfo = element.shadowRoot.querySelector(".board-info");
-      expect(boardInfo.textContent).to.include("No cards yet");
+      const communityCards = element.shadowRoot.querySelectorAll(
+        ".community-cards .card",
+      );
+      expect(communityCards.length).to.equal(0);
     });
 
     it("shows pot amount", async () => {
