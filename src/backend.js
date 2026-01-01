@@ -3,6 +3,7 @@ import path from "path";
 import stream from "stream";
 import crypto from "crypto";
 import mime from "mime-types";
+import http from "http";
 import https from "https";
 import { WebSocketServer } from "ws";
 import playerView from "./poker/player-view.js";
@@ -17,16 +18,20 @@ import * as Showdown from "./poker/showdown.js";
  * @typedef {import('./poker/game.js').Game} Game
  */
 
-if (!process.env.HTTPS_KEY || !process.env.HTTPS_CERT) {
-  throw new Error(
-    "HTTPS_KEY and HTTPS_CERT environment variables are required",
-  );
-}
+// Determine if running in HTTPS mode (local dev) or HTTP mode (behind Kamal Proxy)
+const httpsKey = process.env.HTTPS_KEY;
+const httpsCert = process.env.HTTPS_CERT;
+const useHttps = httpsKey && httpsCert;
 
-const server = https.createServer({
-  key: fs.readFileSync(process.env.HTTPS_KEY),
-  cert: fs.readFileSync(process.env.HTTPS_CERT),
-});
+let server;
+if (useHttps) {
+  server = https.createServer({
+    key: fs.readFileSync(httpsKey),
+    cert: fs.readFileSync(httpsCert),
+  });
+} else {
+  server = http.createServer();
+}
 
 server.on("error", (err) => console.error(err));
 
@@ -99,9 +104,11 @@ function getOrCreatePlayer(req, res) {
   if (!player) {
     player = Player.create();
     players[player.id] = player;
+    // Secure flag only when running HTTPS directly (not behind proxy)
+    const secureFlag = useHttps ? " Secure;" : "";
     res.setHeader(
       "Set-Cookie",
-      `phg=${player.id}; Domain=${process.env.DOMAIN}; Secure; HttpOnly; Path=/`,
+      `phg=${player.id}; Domain=${process.env.DOMAIN};${secureFlag} HttpOnly; Path=/`,
     );
     isNew = true;
   }
