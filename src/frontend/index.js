@@ -114,7 +114,13 @@ class Game extends LitElement {
       .seat.empty {
         justify-content: center;
         align-items: center;
+        gap: 12px;
         opacity: 0.6;
+      }
+
+      .seat.empty button {
+        padding: 10px 20px;
+        font-size: 0.8em;
       }
 
       .seat.acting {
