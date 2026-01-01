@@ -115,7 +115,6 @@ class Game extends LitElement {
         justify-content: center;
         align-items: center;
         gap: 12px;
-        opacity: 0.6;
         font-size: 0.7em;
       }
 
