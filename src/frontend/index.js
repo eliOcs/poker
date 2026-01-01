@@ -31,10 +31,11 @@ class Game extends LitElement {
         height: 100%;
         display: block;
         position: relative;
-        background-color: ${unsafeCSS(COLORS.base01)};
+        background-color: ${unsafeCSS(COLORS.bgMedium)};
         box-sizing: border-box;
-        font-family: system-ui, sans-serif;
-        color: ${unsafeCSS(COLORS.base05)};
+        font-family: "Press Start 2P", monospace;
+        color: ${unsafeCSS(COLORS.fgMedium)};
+        image-rendering: pixelated;
       }
 
       :host * {
@@ -59,33 +60,36 @@ class Game extends LitElement {
         left: 10%;
         height: 70%;
         width: 80%;
-        background-color: ${unsafeCSS(COLORS.base0B)};
-        border: 20px solid ${unsafeCSS(COLORS.base00)};
-        border-radius: 90px;
+        background-color: ${unsafeCSS(COLORS.green)};
+        border: 6px solid ${unsafeCSS(COLORS.bgDark)};
+        box-shadow:
+          inset 4px 4px 0 rgba(255, 255, 255, 0.1),
+          inset -4px -4px 0 rgba(0, 0, 0, 0.2),
+          8px 8px 0 ${unsafeCSS(COLORS.bgDark)};
       }
 
       .board-info {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
       }
 
       .community-cards {
         display: flex;
-        gap: 8px;
+        gap: 6px;
       }
 
       .pot {
-        font-size: 1.2em;
-        font-weight: bold;
-        color: ${unsafeCSS(COLORS.base07)};
+        font-size: 0.7em;
+        color: ${unsafeCSS(COLORS.gold)};
       }
 
       .phase {
-        font-size: 0.9em;
-        color: ${unsafeCSS(COLORS.base06)};
+        font-size: 0.5em;
+        color: ${unsafeCSS(COLORS.fgWhite)};
         text-transform: uppercase;
+        letter-spacing: 2px;
       }
 
       #seats {
@@ -97,14 +101,14 @@ class Game extends LitElement {
         position: absolute;
         height: 20%;
         width: 20%;
-        min-height: 120px;
-        border: 3px solid ${unsafeCSS(COLORS.base04)};
-        border-radius: 6px;
-        background-color: ${unsafeCSS(COLORS.base02)};
+        min-height: 130px;
+        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
+        background-color: ${unsafeCSS(COLORS.bgLight)};
         padding: 8px;
         display: flex;
         flex-direction: column;
-        font-size: 0.85em;
+        font-size: 0.5em;
+        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
 
       .seat.empty {
@@ -114,8 +118,11 @@ class Game extends LitElement {
       }
 
       .seat.acting {
-        border-color: ${unsafeCSS(COLORS.base0A)};
-        box-shadow: 0 0 10px ${unsafeCSS(COLORS.base0A)};
+        border-color: ${unsafeCSS(COLORS.gold)};
+        background-color: ${unsafeCSS(COLORS.bgLight)};
+        box-shadow:
+          4px 4px 0 ${unsafeCSS(COLORS.bgDark)},
+          0 0 0 4px ${unsafeCSS(COLORS.gold)};
       }
 
       .seat.folded {
@@ -123,11 +130,11 @@ class Game extends LitElement {
       }
 
       .seat.all-in {
-        border-color: ${unsafeCSS(COLORS.base08)};
+        border-color: ${unsafeCSS(COLORS.red)};
       }
 
       .seat.current-player {
-        border-width: 4px;
+        border-color: ${unsafeCSS(COLORS.magenta)};
       }
 
       .seat:nth-child(1) {
@@ -165,32 +172,31 @@ class Game extends LitElement {
       }
 
       .player-name {
-        font-weight: bold;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       .stack {
-        color: ${unsafeCSS(COLORS.base0B)};
+        color: ${unsafeCSS(COLORS.greenLight)};
       }
 
       .bet {
-        color: ${unsafeCSS(COLORS.base0A)};
+        color: ${unsafeCSS(COLORS.gold)};
       }
 
       .dealer-button {
         display: inline-block;
-        background-color: ${unsafeCSS(COLORS.base07)};
-        color: ${unsafeCSS(COLORS.base00)};
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
+        background-color: ${unsafeCSS(COLORS.gold)};
+        color: ${unsafeCSS(COLORS.bgDark)};
+        width: 18px;
+        height: 18px;
         text-align: center;
-        line-height: 20px;
-        font-size: 0.7em;
-        font-weight: bold;
+        line-height: 18px;
+        font-size: 0.8em;
         margin-left: 4px;
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
       }
 
       .hole-cards {
@@ -201,41 +207,48 @@ class Game extends LitElement {
 
       .card {
         display: inline-flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 50px;
-        background-color: ${unsafeCSS(COLORS.base07)};
-        border: 1px solid ${unsafeCSS(COLORS.base03)};
-        border-radius: 4px;
+        width: 32px;
+        height: 44px;
+        background-color: ${unsafeCSS(COLORS.fgWhite)};
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
         font-size: 0.9em;
-        font-weight: bold;
+        line-height: 1;
       }
 
       .card.red {
-        color: #d32f2f;
+        color: ${unsafeCSS(COLORS.red)};
       }
 
       .card.black {
-        color: ${unsafeCSS(COLORS.base00)};
+        color: ${unsafeCSS(COLORS.bgDark)};
       }
 
       .card.hidden {
-        background: linear-gradient(
-          135deg,
-          ${unsafeCSS(COLORS.base0D)} 25%,
-          ${unsafeCSS(COLORS.base02)} 25%,
-          ${unsafeCSS(COLORS.base02)} 50%,
-          ${unsafeCSS(COLORS.base0D)} 50%,
-          ${unsafeCSS(COLORS.base0D)} 75%,
-          ${unsafeCSS(COLORS.base02)} 75%
-        );
-        background-size: 8px 8px;
+        background-color: ${unsafeCSS(COLORS.blue)};
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 4px,
+            ${unsafeCSS(COLORS.purple)} 4px,
+            ${unsafeCSS(COLORS.purple)} 8px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 4px,
+            ${unsafeCSS(COLORS.purple)} 4px,
+            ${unsafeCSS(COLORS.purple)} 8px
+          );
       }
 
       .card.placeholder {
-        background-color: ${unsafeCSS(COLORS.base03)};
-        opacity: 0.3;
+        background-color: ${unsafeCSS(COLORS.bgLight)};
+        border-color: ${unsafeCSS(COLORS.bgDisabled)};
+        border-style: dashed;
       }
 
       .seat-action {
@@ -253,65 +266,75 @@ class Game extends LitElement {
         width: 90%;
         bottom: 2%;
         left: 5%;
-        border: 3px solid ${unsafeCSS(COLORS.base04)};
-        border-radius: 6px;
-        background-color: ${unsafeCSS(COLORS.base02)};
+        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
+        background-color: ${unsafeCSS(COLORS.bgLight)};
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
         padding: 10px;
         flex-wrap: wrap;
+        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
 
       #actions button {
-        padding: 10px 20px;
-        font-size: 1em;
+        padding: 8px 16px;
+        font-family: "Press Start 2P", monospace;
+        font-size: 0.6em;
         cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
+        box-shadow:
+          3px 3px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      #actions button:active {
+        box-shadow:
+          1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
+        transform: translate(2px, 2px);
       }
 
       #actions button.fold {
-        background-color: ${unsafeCSS(COLORS.base08)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.red)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       #actions button.check,
       #actions button.call {
-        background-color: ${unsafeCSS(COLORS.base0B)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.greenLight)};
+        color: ${unsafeCSS(COLORS.bgDark)};
       }
 
       #actions button.bet,
       #actions button.raise {
-        background-color: ${unsafeCSS(COLORS.base0D)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.blue)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       #actions button.all-in {
-        background-color: ${unsafeCSS(COLORS.base09)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.gold)};
+        color: ${unsafeCSS(COLORS.bgDark)};
       }
 
       #actions button.buy-in {
-        background-color: ${unsafeCSS(COLORS.base0E)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.purple)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       #actions button.start {
-        background-color: ${unsafeCSS(COLORS.base0C)};
-        color: white;
-        font-size: 1.2em;
-        padding: 15px 30px;
+        background-color: ${unsafeCSS(COLORS.gold)};
+        color: ${unsafeCSS(COLORS.bgDark)};
+        font-size: 0.7em;
+        padding: 12px 24px;
       }
 
       .countdown {
-        font-size: 3em;
-        font-weight: bold;
-        color: ${unsafeCSS(COLORS.base07)};
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-size: 2em;
+        color: ${unsafeCSS(COLORS.gold)};
+        text-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
 
       .amount-input {
@@ -321,30 +344,40 @@ class Game extends LitElement {
       }
 
       .amount-input input[type="range"] {
-        width: 120px;
+        width: 100px;
+        height: 8px;
+        appearance: none;
+        background: ${unsafeCSS(COLORS.bgDisabled)};
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
       }
 
-      .amount-input input[type="number"] {
-        width: 70px;
-        padding: 4px;
+      .amount-input input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: ${unsafeCSS(COLORS.gold)};
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
+        cursor: pointer;
       }
 
       .amount-display {
-        min-width: 50px;
+        min-width: 60px;
         text-align: center;
+        font-size: 0.6em;
+        color: ${unsafeCSS(COLORS.gold)};
       }
 
       #connection-status {
         position: absolute;
         left: 0.5%;
         bottom: 0.5%;
-        color: ${unsafeCSS(COLORS.base04)};
-        font-size: 0.8em;
+        color: ${unsafeCSS(COLORS.bgDisabled)};
+        font-size: 0.4em;
       }
 
       .status-label {
-        font-size: 0.75em;
-        color: ${unsafeCSS(COLORS.base04)};
+        font-size: 0.8em;
+        color: ${unsafeCSS(COLORS.gold)};
       }
 
       .error-message {
@@ -352,12 +385,13 @@ class Game extends LitElement {
         top: 10px;
         left: 50%;
         transform: translateX(-50%);
-        background-color: ${unsafeCSS(COLORS.base08)};
-        color: white;
+        background-color: ${unsafeCSS(COLORS.red)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
         padding: 10px 20px;
-        border-radius: 4px;
-        font-weight: bold;
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
+        font-size: 0.5em;
         z-index: 100;
+        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
     `;
   }
@@ -487,7 +521,7 @@ class Game extends LitElement {
         <div class="community-cards">
           ${cards.length > 0
             ? cards.map((card) => this.renderCard(card))
-            : html`<span style="color: ${COLORS.base06}">No cards yet</span>`}
+            : html`<span style="color: ${COLORS.fgLight}">No cards yet</span>`}
         </div>
         ${hand?.pot !== undefined
           ? html`<div class="pot">Pot: $${hand.pot}</div>`
@@ -511,7 +545,7 @@ class Game extends LitElement {
     const { seatIndex, actions } = this.getMySeatInfo();
 
     if (actions.length === 0) {
-      return html`<span style="color: ${COLORS.base04}"
+      return html`<span style="color: ${COLORS.fgDark}"
         >Waiting for your turn...</span
       >`;
     }

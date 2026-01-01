@@ -10,41 +10,58 @@ class Home extends LitElement {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background-color: ${unsafeCSS(COLORS.base01)};
-        font-family: system-ui, sans-serif;
-        color: ${unsafeCSS(COLORS.base05)};
+        background-color: ${unsafeCSS(COLORS.bgMedium)};
+        font-family: "Press Start 2P", monospace;
+        color: ${unsafeCSS(COLORS.fgMedium)};
+        image-rendering: pixelated;
       }
 
       .logo {
-        max-width: 400px;
-        margin-bottom: 1em;
+        max-width: 450px;
+        margin-bottom: 2em;
+        image-rendering: pixelated;
       }
 
       p {
-        font-size: 1.2em;
-        color: ${unsafeCSS(COLORS.base04)};
+        font-size: 0.7em;
+        line-height: 1.8;
+        color: ${unsafeCSS(COLORS.fgDark)};
         margin-bottom: 2em;
+        text-align: center;
+        padding: 0 1em;
       }
 
       button {
-        padding: 20px 40px;
-        font-size: 1.5em;
-        font-weight: bold;
+        padding: 16px 32px;
+        font-family: "Press Start 2P", monospace;
+        font-size: 0.9em;
         cursor: pointer;
-        border: none;
-        border-radius: 8px;
-        background-color: ${unsafeCSS(COLORS.base0B)};
-        color: white;
-        transition: background-color 0.2s;
+        border: 4px solid ${unsafeCSS(COLORS.bgDark)};
+        background-color: ${unsafeCSS(COLORS.gold)};
+        color: ${unsafeCSS(COLORS.bgDark)};
+        box-shadow:
+          4px 4px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset -2px -2px 0 ${unsafeCSS(COLORS.orange)},
+          inset 2px 2px 0 ${unsafeCSS(COLORS.fgWhite)};
       }
 
       button:hover {
-        background-color: ${unsafeCSS(COLORS.base0C)};
+        background-color: ${unsafeCSS(COLORS.orange)};
+      }
+
+      button:active {
+        box-shadow:
+          2px 2px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset 2px 2px 0 ${unsafeCSS(COLORS.orange)},
+          inset -2px -2px 0 ${unsafeCSS(COLORS.fgWhite)};
+        transform: translate(2px, 2px);
       }
 
       button:disabled {
-        background-color: ${unsafeCSS(COLORS.base03)};
+        background-color: ${unsafeCSS(COLORS.bgDisabled)};
+        color: ${unsafeCSS(COLORS.fgDark)};
         cursor: not-allowed;
+        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
     `;
   }
