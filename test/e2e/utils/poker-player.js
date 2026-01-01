@@ -22,12 +22,19 @@ export class PokerPlayer {
   }
 
   /**
+   * Get the phg-game element locator
+   */
+  get gameElement() {
+    return this.page.locator("phg-game");
+  }
+
+  /**
    * Navigate to game page and wait for connection
    * @param {string} gameId
    */
   async joinGame(gameId) {
     await this.page.goto(`/games/${gameId}`);
-    await this.page.waitForSelector("phg-game");
+    await this.gameElement.waitFor();
     // Wait for WebSocket connection
     await this.page.waitForFunction(() => {
       const game = document.querySelector("phg-game");
@@ -40,12 +47,11 @@ export class PokerPlayer {
    * @param {number} seatIndex
    */
   async sit(seatIndex) {
-    // Click the sit button in the empty seat
-    const seatSelector = `.seat:nth-child(${seatIndex + 1})`;
-    await this.page.waitForSelector(`${seatSelector}.empty button`);
-    await this.page.click(`${seatSelector}.empty button`);
+    // Click the Sit button in the empty seat
+    const seat = this.gameElement.locator(`.seat:nth-child(${seatIndex + 1})`);
+    await seat.getByRole("button", { name: "Sit" }).click();
     // Wait for seat to show as occupied (current-player class)
-    await this.page.waitForSelector(`${seatSelector}.current-player`);
+    await seat.and(this.page.locator(".current-player")).waitFor();
   }
 
   /**
@@ -53,17 +59,11 @@ export class PokerPlayer {
    * @param {number} amount
    */
   async buyIn(amount) {
-    // Set the slider value and click buy in
-    await this.page.waitForSelector("#actions button.buy-in");
-    // Set range input value
-    await this.page.evaluate((amt) => {
-      const input = document.querySelector('#actions input[type="range"]');
-      if (input) {
-        input.value = amt;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-    }, amount);
-    await this.page.click("#actions button.buy-in");
+    // Use mouse to drag slider to desired position
+    const slider = this.gameElement.locator('input[type="range"]');
+    await this.dragSliderToValue(slider, amount);
+
+    await this.gameElement.getByRole("button", { name: "Buy In" }).click();
     // Wait for stack to appear
     await this.page.waitForFunction(() => {
       const game = document.querySelector("phg-game");
@@ -76,8 +76,7 @@ export class PokerPlayer {
    * Click the start game button
    */
   async startGame() {
-    await this.page.waitForSelector("#actions button.start");
-    await this.page.click("#actions button.start");
+    await this.gameElement.getByRole("button", { name: "Start Game" }).click();
   }
 
   /**
@@ -134,43 +133,101 @@ export class PokerPlayer {
   }
 
   /**
+   * Drag a slider to a specific value using mouse
+   * @param {import('@playwright/test').Locator} slider
+   * @param {number} targetValue
+   */
+  async dragSliderToValue(slider, targetValue) {
+    const box = await slider.boundingBox();
+    if (!box) throw new Error("Slider not found");
+
+    // Get slider min/max from DOM
+    const { min, max } = await slider.evaluate((el) => ({
+      min: parseFloat(el.min),
+      max: parseFloat(el.max),
+    }));
+
+    // Calculate target X position
+    const percentage = (targetValue - min) / (max - min);
+    const targetX = box.x + box.width * percentage;
+    const centerY = box.y + box.height / 2;
+
+    // Drag from current position to target
+    await slider.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(targetX, centerY);
+    await this.page.mouse.up();
+  }
+
+  /**
+   * Drag slider to its maximum value using mouse
+   * @param {import('@playwright/test').Locator} slider
+   */
+  async dragSliderToMax(slider) {
+    const box = await slider.boundingBox();
+    if (!box) throw new Error("Slider not found");
+
+    // Drag to right edge (max value)
+    const targetX = box.x + box.width;
+    const centerY = box.y + box.height / 2;
+
+    await slider.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(targetX, centerY);
+    await this.page.mouse.up();
+  }
+
+  /**
    * Perform a betting action
    * @param {'check' | 'call' | 'fold' | 'bet' | 'raise' | 'allIn'} action
    */
   async act(action) {
-    // For allIn, we need to move the slider to max first
     if (action === "allIn") {
-      // Move slider to max value to trigger all-in button
-      await this.page.waitForSelector('#actions input[type="range"]');
-      await this.page.evaluate(async () => {
-        const game = document.querySelector("phg-game");
-        const input = game?.shadowRoot?.querySelector(
-          '#actions input[type="range"]',
-        );
-        if (input) {
-          input.value = input.max;
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-        // Wait for Lit component to re-render
-        await game?.updateComplete;
-      });
-      // Wait for button text to change to "All-In"
-      await this.page.waitForFunction(() => {
-        const game = document.querySelector("phg-game");
-        const buttons =
-          game?.shadowRoot?.querySelectorAll("#actions button") || [];
-        return Array.from(buttons).some((b) =>
-          b.textContent?.includes("All-In"),
-        );
-      });
-      await this.page.click("#actions button.all-in");
+      // Drag slider to max to trigger All-In button
+      const slider = this.gameElement.locator('input[type="range"]');
+      await this.dragSliderToMax(slider);
+      await this.gameElement.getByRole("button", { name: "All-In" }).click();
+    } else if (action === "call") {
+      // Call button includes amount (e.g., "Call $25")
+      await this.gameElement.getByRole("button", { name: /^Call \$/ }).click();
+    } else if (action === "check") {
+      await this.gameElement.getByRole("button", { name: "Check" }).click();
+    } else if (action === "fold") {
+      await this.gameElement.getByRole("button", { name: "Fold" }).click();
+    } else if (action === "bet") {
+      // Move slider slightly to ensure a valid bet amount
+      const slider = this.gameElement.locator('input[type="range"]');
+      const box = await slider.boundingBox();
+      if (box) {
+        // Click at 25% position for a small bet
+        const targetX = box.x + box.width * 0.25;
+        const centerY = box.y + box.height / 2;
+        await slider.hover();
+        await this.page.mouse.down();
+        await this.page.mouse.move(targetX, centerY);
+        await this.page.mouse.up();
+      }
+      await this.gameElement.getByRole("button", { name: "Bet" }).click();
+    } else if (action === "raise") {
+      // Move slider slightly to ensure a valid raise amount
+      const slider = this.gameElement.locator('input[type="range"]');
+      const box = await slider.boundingBox();
+      if (box) {
+        // Click at 25% position for a small raise
+        const targetX = box.x + box.width * 0.25;
+        const centerY = box.y + box.height / 2;
+        await slider.hover();
+        await this.page.mouse.down();
+        await this.page.mouse.move(targetX, centerY);
+        await this.page.mouse.up();
+      }
+      await this.gameElement.getByRole("button", { name: /^Raise to/ }).click();
     } else {
-      const selector = `#actions button.${action}`;
-      await this.page.waitForSelector(selector);
-      await this.page.click(selector);
+      throw new Error(`Unknown action: ${action}`);
     }
-    // Small delay for state propagation
-    await this.page.waitForTimeout(100);
+
+    // Wait for state to propagate via WebSocket
+    await this.page.waitForTimeout(200);
   }
 
   /**
