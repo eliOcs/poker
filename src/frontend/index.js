@@ -120,8 +120,25 @@ class Game extends LitElement {
       }
 
       .seat.empty button {
-        padding: 12px 24px;
-        font-size: 1em;
+        padding: 10px 20px;
+        font-size: 0.9em;
+        font-family: "Press Start 2P", monospace;
+        cursor: pointer;
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
+        background-color: ${unsafeCSS(COLORS.purple)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+        box-shadow:
+          3px 3px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      .seat.empty button:active {
+        box-shadow:
+          1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
+          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
+        transform: translate(2px, 2px);
       }
 
       .seat.acting {
