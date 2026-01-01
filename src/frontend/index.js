@@ -116,11 +116,12 @@ class Game extends LitElement {
         align-items: center;
         gap: 12px;
         opacity: 0.6;
+        font-size: 0.7em;
       }
 
       .seat.empty button {
-        padding: 10px 20px;
-        font-size: 0.8em;
+        padding: 12px 24px;
+        font-size: 1em;
       }
 
       .seat.acting {
