@@ -542,9 +542,7 @@ class Game extends LitElement {
           ? html`<div class="phase">${hand.phase}</div>`
           : html`<div class="phase">Waiting</div>`}
         <div class="community-cards">
-          ${cards.length > 0
-            ? cards.map((card) => this.renderCard(card))
-            : html`<span style="color: ${COLORS.fgLight}">No cards yet</span>`}
+          ${cards.map((card) => this.renderCard(card))}
         </div>
         ${hand?.pot !== undefined
           ? html`<div class="pot">Pot: $${hand.pot}</div>`
