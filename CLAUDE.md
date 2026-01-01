@@ -13,7 +13,7 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ### Tech Stack
 
-- **Backend**: Node.js with native ES modules, HTTPS, WebSocket (`ws`)
+- **Backend**: Node.js with native ES modules, HTTP, WebSocket (`ws`)
 - **Frontend**: Lit web components loaded from CDN (no build step)
 - **Protocol**: WebSocket for real-time bidirectional communication
 - **Testing**: Node.js built-in test runner (`node --test`)
@@ -22,7 +22,7 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ```
 src/
-├── backend.js           # HTTPS + WebSocket server
+├── backend.js           # HTTP + WebSocket server
 ├── poker/               # Game logic (pure functions)
 │   ├── game.js          # Game state initialization
 │   ├── actions.js       # Game actions (generators)
@@ -143,9 +143,7 @@ npm run format # Prettier
 
 ```
 DOMAIN=localhost
-PORT=8443
-HTTPS_KEY=./assets/localhost-privkey.pem
-HTTPS_CERT=./assets/localhost-cert.pem
+PORT=3000
 ```
 
 ### Frontend Development

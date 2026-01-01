@@ -2,10 +2,5 @@ services:
   poker:
     build: .
     ports:
-      - "${PORT:-8443}:${PORT:-8443}"
+      - "${PORT:-3000}:${PORT:-3000}"
     env_file: .env
-    environment:
-      - HTTPS_KEY=/certs/localhost-privkey.pem
-      - HTTPS_CERT=/certs/localhost-cert.pem
-    volumes:
-      - ./assets:/certs:ro
