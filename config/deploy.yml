@@ -1,0 +1,39 @@
+# Name of your application
+service: poker
+
+# Name of the container image
+image: poker
+
+# Deploy to these servers
+servers:
+  web:
+    - 63.182.34.164
+
+# Enable SSL via Let's Encrypt
+proxy:
+  ssl: true
+  host: plutonpoker.com
+
+# AWS ECR Registry
+registry:
+  server: 225656797743.dkr.ecr.eu-central-1.amazonaws.com
+  username: AWS
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+# Environment variables for the container
+env:
+  clear:
+    DOMAIN: plutonpoker.com
+    PORT: 3000
+    # Note: HTTPS_KEY and HTTPS_CERT are NOT set, so backend runs in HTTP mode
+
+# Build for ARM64 (Graviton instances)
+builder:
+  arch: arm64
+
+# SSH configuration
+ssh:
+  user: ubuntu
+  keys:
+    - ~/.ssh/poker_ed25519

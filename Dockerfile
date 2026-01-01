@@ -9,7 +9,7 @@ RUN npm ci --omit=dev
 USER nodejs
 COPY --chown=nodejs:nodejs src ./src
 
-ENV PORT=8443 DOMAIN=localhost
-EXPOSE 8443
+ENV PORT=3000 DOMAIN=localhost
+EXPOSE 3000
 
 CMD ["node", "src/backend"]
