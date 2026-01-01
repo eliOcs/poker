@@ -50,11 +50,17 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const cards = element.shadowRoot.querySelectorAll(".card");
-      expect(cards.length).to.be.greaterThan(0);
+      // Cards are now in phg-board -> phg-card components
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+      expect(cardElements.length).to.be.greaterThan(0);
 
-      // Check that cards contain suit symbols
-      const cardTexts = Array.from(cards).map((c) => c.textContent.trim());
+      // Check card contents
+      const cardTexts = Array.from(cardElements).map((c) => {
+        const card = c.shadowRoot.querySelector(".card");
+        return card ? card.textContent.trim() : "";
+      });
       expect(cardTexts.some((t) => t.includes("♥"))).to.be.true;
       expect(cardTexts.some((t) => t.includes("A"))).to.be.true;
     });
@@ -63,28 +69,53 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const hiddenCards = element.shadowRoot.querySelectorAll(".card.hidden");
-      expect(hiddenCards.length).to.be.greaterThan(0);
+      // Hidden cards are in opponent's seat
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      let foundHidden = false;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+        for (const cardEl of cardElements) {
+          const hiddenCard = cardEl.shadowRoot.querySelector(".card.hidden");
+          if (hiddenCard) foundHidden = true;
+        }
+      }
+      expect(foundHidden).to.be.true;
     });
 
     it("uses red color for hearts/diamonds", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const redCards = element.shadowRoot.querySelectorAll(".card.red");
-      expect(redCards.length).to.be.greaterThan(0);
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+
+      let foundRed = false;
+      for (const cardEl of cardElements) {
+        const redCard = cardEl.shadowRoot.querySelector(".card.red");
+        if (redCard) foundRed = true;
+      }
+      expect(foundRed).to.be.true;
     });
 
     it("uses black color for spades/clubs", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const blackCards = element.shadowRoot.querySelectorAll(".card.black");
-      expect(blackCards.length).to.be.greaterThan(0);
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+
+      let foundBlack = false;
+      for (const cardEl of cardElements) {
+        const blackCard = cardEl.shadowRoot.querySelector(".card.black");
+        if (blackCard) foundBlack = true;
+      }
+      expect(foundBlack).to.be.true;
     });
 
     it("handles all ranks (A, 2-10, J, Q, K)", async () => {
-      // Create game with various ranks
       const gameWithRanks = createMockGameState({
         board: {
           cards: [
@@ -100,10 +131,14 @@ describe("phg-game", () => {
       element.game = gameWithRanks;
       await element.updateComplete;
 
-      const cards = element.shadowRoot.querySelectorAll(
-        ".community-cards .card",
-      );
-      const cardTexts = Array.from(cards).map((c) => c.textContent.trim());
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+
+      const cardTexts = Array.from(cardElements).map((c) => {
+        const card = c.shadowRoot.querySelector(".card");
+        return card ? card.textContent.trim() : "";
+      });
       expect(cardTexts.some((t) => t.includes("A"))).to.be.true;
       expect(cardTexts.some((t) => t.includes("2"))).to.be.true;
       expect(cardTexts.some((t) => t.includes("10"))).to.be.true;
@@ -117,31 +152,43 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const emptySeats = element.shadowRoot.querySelectorAll(".seat.empty");
-      expect(emptySeats.length).to.equal(6);
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      expect(seats.length).to.equal(6);
 
-      const sitButtons =
-        element.shadowRoot.querySelectorAll(".seat.empty button");
-      expect(sitButtons.length).to.equal(6);
-      expect(sitButtons[0].textContent.trim()).to.equal("Sit");
+      let emptyCount = 0;
+      let sitButtonCount = 0;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (seat.classList.contains("empty")) emptyCount++;
+        const sitBtn = seat.shadowRoot.querySelector("button");
+        if (sitBtn && sitBtn.textContent.trim() === "Sit") sitButtonCount++;
+      }
+      expect(emptyCount).to.equal(6);
+      expect(sitButtonCount).to.equal(6);
     });
 
     it("displays player ID, stack, and bet for occupied seats", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const occupiedSeat =
-        element.shadowRoot.querySelector(".seat:not(.empty)");
-      expect(occupiedSeat).to.exist;
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      let foundOccupied = false;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (!seat.classList.contains("empty")) {
+          foundOccupied = true;
+          const playerName = seat.shadowRoot.querySelector(".player-name");
+          expect(playerName.textContent).to.include("test-pla");
 
-      const playerName = occupiedSeat.querySelector(".player-name");
-      expect(playerName.textContent).to.include("test-pla"); // truncated to 8 chars
+          const stack = seat.shadowRoot.querySelector(".stack");
+          expect(stack.textContent).to.include("1000");
 
-      const stack = occupiedSeat.querySelector(".stack");
-      expect(stack.textContent).to.include("1000");
-
-      const bet = occupiedSeat.querySelector(".bet");
-      expect(bet.textContent).to.include("50");
+          const bet = seat.shadowRoot.querySelector(".bet");
+          expect(bet.textContent).to.include("50");
+          break;
+        }
+      }
+      expect(foundOccupied).to.be.true;
     });
 
     it("shows dealer button at correct position", async () => {
@@ -158,7 +205,9 @@ describe("phg-game", () => {
       });
       await element.updateComplete;
 
-      const dealerButton = element.shadowRoot.querySelector(".dealer-button");
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      await seats[0].updateComplete;
+      const dealerButton = seats[0].shadowRoot.querySelector(".dealer-button");
       expect(dealerButton).to.exist;
       expect(dealerButton.textContent.trim()).to.equal("D");
     });
@@ -167,27 +216,45 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const currentPlayerSeat = element.shadowRoot.querySelector(
-        ".seat.current-player",
-      );
-      expect(currentPlayerSeat).to.exist;
-
-      const cards = currentPlayerSeat.querySelectorAll(".card:not(.hidden)");
-      expect(cards.length).to.equal(2);
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      let foundCurrentPlayer = false;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (seat.classList.contains("current-player")) {
+          foundCurrentPlayer = true;
+          const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+          let visibleCount = 0;
+          for (const cardEl of cardElements) {
+            const visibleCard =
+              cardEl.shadowRoot.querySelector(".card:not(.hidden)");
+            if (visibleCard) visibleCount++;
+          }
+          expect(visibleCount).to.equal(2);
+          break;
+        }
+      }
+      expect(foundCurrentPlayer).to.be.true;
     });
 
     it("renders hidden cards for opponents", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const seats = element.shadowRoot.querySelectorAll(".seat:not(.empty)");
-      const opponentSeat = Array.from(seats).find(
-        (s) => !s.classList.contains("current-player"),
-      );
-
-      if (opponentSeat) {
-        const hiddenCards = opponentSeat.querySelectorAll(".card.hidden");
-        expect(hiddenCards.length).to.equal(2);
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (
+          !seat.classList.contains("empty") &&
+          !seat.classList.contains("current-player")
+        ) {
+          const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+          let hiddenCount = 0;
+          for (const cardEl of cardElements) {
+            const hiddenCard = cardEl.shadowRoot.querySelector(".card.hidden");
+            if (hiddenCard) hiddenCount++;
+          }
+          expect(hiddenCount).to.equal(2);
+        }
       }
     });
 
@@ -204,16 +271,25 @@ describe("phg-game", () => {
       });
       await element.updateComplete;
 
-      const foldedSeat = element.shadowRoot.querySelector(".seat.folded");
-      expect(foldedSeat).to.exist;
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      await seats[0].updateComplete;
+      expect(seats[0].classList.contains("folded")).to.be.true;
     });
 
     it("applies .acting class when seat.isActing is true", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const actingSeat = element.shadowRoot.querySelector(".seat.acting");
-      expect(actingSeat).to.exist;
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      let foundActing = false;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (seat.classList.contains("acting")) {
+          foundActing = true;
+          break;
+        }
+      }
+      expect(foundActing).to.be.true;
     });
 
     it("applies .all-in class when seat.allIn is true", async () => {
@@ -229,18 +305,25 @@ describe("phg-game", () => {
       });
       await element.updateComplete;
 
-      const allInSeat = element.shadowRoot.querySelector(".seat.all-in");
-      expect(allInSeat).to.exist;
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      await seats[0].updateComplete;
+      expect(seats[0].classList.contains("all-in")).to.be.true;
     });
 
     it("applies .current-player class for own seat", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const currentPlayerSeat = element.shadowRoot.querySelector(
-        ".seat.current-player",
-      );
-      expect(currentPlayerSeat).to.exist;
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      let foundCurrentPlayer = false;
+      for (const seat of seats) {
+        await seat.updateComplete;
+        if (seat.classList.contains("current-player")) {
+          foundCurrentPlayer = true;
+          break;
+        }
+      }
+      expect(foundCurrentPlayer).to.be.true;
     });
   });
 
@@ -249,7 +332,9 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const phase = element.shadowRoot.querySelector(".phase");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const phase = board.shadowRoot.querySelector(".phase");
       expect(phase.textContent.toLowerCase()).to.include("waiting");
     });
 
@@ -257,7 +342,9 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const phase = element.shadowRoot.querySelector(".phase");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const phase = board.shadowRoot.querySelector(".phase");
       expect(phase.textContent.toLowerCase()).to.include("flop");
     });
 
@@ -265,27 +352,29 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const communityCards = element.shadowRoot.querySelectorAll(
-        ".community-cards .card",
-      );
-      expect(communityCards.length).to.equal(3);
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+      expect(cardElements.length).to.equal(3);
     });
 
     it("shows no cards when board is empty", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const communityCards = element.shadowRoot.querySelectorAll(
-        ".community-cards .card",
-      );
-      expect(communityCards.length).to.equal(0);
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+      expect(cardElements.length).to.equal(0);
     });
 
     it("shows pot amount", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const pot = element.shadowRoot.querySelector(".pot");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const pot = board.shadowRoot.querySelector(".pot");
       expect(pot.textContent).to.include("200");
     });
   });
@@ -304,24 +393,28 @@ describe("phg-game", () => {
       });
       await element.updateComplete;
 
-      const actions = element.shadowRoot.querySelector("#actions");
-      expect(actions.textContent).to.include("Waiting for your turn");
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+      expect(actionPanel.shadowRoot.textContent).to.include(
+        "Waiting for your turn",
+      );
     });
 
     it("renders buyIn slider with min/max from action", async () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const slider = element.shadowRoot.querySelector(
-        '#actions input[type="range"]',
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const slider = actionPanel.shadowRoot.querySelector(
+        'input[type="range"]',
       );
       expect(slider).to.exist;
       expect(slider.min).to.equal("20");
       expect(slider.max).to.equal("100");
 
-      const buyInButton = element.shadowRoot.querySelector(
-        "#actions button.buy-in",
-      );
+      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       expect(buyInButton).to.exist;
       expect(buyInButton.textContent.trim()).to.equal("Buy In");
     });
@@ -330,9 +423,10 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const checkButton = element.shadowRoot.querySelector(
-        "#actions button.check",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
       expect(checkButton).to.exist;
       expect(checkButton.textContent.trim()).to.equal("Check");
     });
@@ -341,9 +435,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const callButton = element.shadowRoot.querySelector(
-        "#actions button.call",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const callButton = actionPanel.shadowRoot.querySelector("button.call");
       expect(callButton).to.exist;
       expect(callButton.textContent).to.include("Call");
       expect(callButton.textContent).to.include("25");
@@ -353,9 +448,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const foldButton = element.shadowRoot.querySelector(
-        "#actions button.fold",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const foldButton = actionPanel.shadowRoot.querySelector("button.fold");
       expect(foldButton).to.exist;
       expect(foldButton.textContent.trim()).to.equal("Fold");
     });
@@ -364,12 +460,15 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const betButton = element.shadowRoot.querySelector("#actions button.bet");
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const betButton = actionPanel.shadowRoot.querySelector("button.bet");
       expect(betButton).to.exist;
       expect(betButton.textContent.trim()).to.equal("Bet");
 
-      const slider = element.shadowRoot.querySelector(
-        '#actions input[type="range"]',
+      const slider = actionPanel.shadowRoot.querySelector(
+        'input[type="range"]',
       );
       expect(slider).to.exist;
     });
@@ -378,21 +477,23 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const raiseButton = element.shadowRoot.querySelector(
-        "#actions button.raise",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const raiseButton = actionPanel.shadowRoot.querySelector("button.raise");
       expect(raiseButton).to.exist;
       expect(raiseButton.textContent).to.include("Raise");
     });
 
     it("renders All-In button when slider is at max", async () => {
       element.game = createMockGameWithPlayers();
-      element.betAmount = 1000; // Set to max
       await element.updateComplete;
 
-      const allInButton = element.shadowRoot.querySelector(
-        "#actions button.all-in",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      actionPanel.betAmount = 1000; // Set to max
+      await actionPanel.updateComplete;
+
+      const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
     });
@@ -404,7 +505,9 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const sitButton = element.shadowRoot.querySelector(".seat.empty button");
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      await seats[0].updateComplete;
+      const sitButton = seats[0].shadowRoot.querySelector("button");
       sitButton.click();
 
       expect(element.socket.sent.length).to.equal(1);
@@ -416,9 +519,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const buyInButton = element.shadowRoot.querySelector(
-        "#actions button.buy-in",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       buyInButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "buyIn");
@@ -431,9 +535,10 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const checkButton = element.shadowRoot.querySelector(
-        "#actions button.check",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
       checkButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "check");
@@ -445,9 +550,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const callButton = element.shadowRoot.querySelector(
-        "#actions button.call",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const callButton = actionPanel.shadowRoot.querySelector("button.call");
       callButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "call");
@@ -459,9 +565,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const foldButton = element.shadowRoot.querySelector(
-        "#actions button.fold",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const foldButton = actionPanel.shadowRoot.querySelector("button.fold");
       foldButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "fold");
@@ -473,7 +580,10 @@ describe("phg-game", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const betButton = element.shadowRoot.querySelector("#actions button.bet");
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const betButton = actionPanel.shadowRoot.querySelector("button.bet");
       betButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "bet");
@@ -486,9 +596,10 @@ describe("phg-game", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const raiseButton = element.shadowRoot.querySelector(
-        "#actions button.raise",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const raiseButton = actionPanel.shadowRoot.querySelector("button.raise");
       raiseButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "raise");
@@ -499,12 +610,13 @@ describe("phg-game", () => {
 
     it("calls send() with allIn action when slider at max and button clicked", async () => {
       element.game = createMockGameWithPlayers();
-      element.betAmount = 1000; // Set to max
       await element.updateComplete;
 
-      const allInButton = element.shadowRoot.querySelector(
-        "#actions button.all-in",
-      );
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      actionPanel.betAmount = 1000; // Set to max
+      await actionPanel.updateComplete;
+
+      const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
       allInButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "allIn");
@@ -516,14 +628,17 @@ describe("phg-game", () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const slider = element.shadowRoot.querySelector(
-        '#actions input[type="range"]',
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const slider = actionPanel.shadowRoot.querySelector(
+        'input[type="range"]',
       );
       slider.value = "75";
       slider.dispatchEvent(new Event("input"));
-      await element.updateComplete;
+      await actionPanel.updateComplete;
 
-      expect(element.betAmount).to.equal(75);
+      expect(actionPanel.betAmount).to.equal(75);
     });
   });
 
@@ -541,13 +656,16 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      let pot = element.shadowRoot.querySelector(".pot");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      let pot = board.shadowRoot.querySelector(".pot");
       expect(pot.textContent).to.include("0");
 
       element.game = createMockGameAtFlop();
       await element.updateComplete;
+      await board.updateComplete;
 
-      pot = element.shadowRoot.querySelector(".pot");
+      pot = board.shadowRoot.querySelector(".pot");
       expect(pot.textContent).to.include("200");
     });
 
