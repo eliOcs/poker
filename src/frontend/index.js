@@ -241,12 +241,12 @@ class Game extends LitElement {
       }
 
       .card .rank {
-        font-size: 1.1em;
+        font-size: 0.9em;
       }
 
       .card .suit {
         font-family: serif;
-        font-size: 1.2em;
+        font-size: 1em;
         margin-top: -2px;
       }
 
