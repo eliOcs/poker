@@ -134,6 +134,13 @@ server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
 
+  // Health check endpoint (for Kamal Proxy)
+  if (method === "GET" && url === "/up") {
+    res.writeHead(200, { "content-type": "text/plain" });
+    res.end("OK");
+    return;
+  }
+
   // Home page
   if (method === "GET" && url === "/") {
     getOrCreatePlayer(req, res);
