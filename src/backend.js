@@ -44,6 +44,16 @@ function respondWithFile(filePath, res, headers, replacements = {}) {
     ...headers,
   });
 
+  const fileStream = fs.createReadStream(filePath);
+
+  // Binary files (images, etc.) should be served as-is
+  const ext = path.extname(filePath);
+  if (ext === ".png" || ext === ".jpg" || ext === ".jpeg" || ext === ".gif") {
+    fileStream.pipe(res);
+    return;
+  }
+
+  // Text files get environment variable injection
   const injectEnv = new stream.Transform({
     transform: function transformer(chunk, encoding, callback) {
       let content = String(chunk);
@@ -58,7 +68,7 @@ function respondWithFile(filePath, res, headers, replacements = {}) {
       callback(null, content);
     },
   });
-  fs.createReadStream(filePath).pipe(injectEnv).pipe(res);
+  fileStream.pipe(injectEnv).pipe(res);
 }
 
 /**
