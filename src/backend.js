@@ -25,7 +25,7 @@ server.on("error", (err) => console.error(err));
 const staticFiles = {};
 for (const file of fs.readdirSync("src/frontend")) {
   const ext = path.extname(file);
-  if (ext === ".html" || ext === ".js" || ext === ".css") {
+  if (ext === ".html" || ext === ".js" || ext === ".css" || ext === ".png") {
     staticFiles["/" + file] = "src/frontend/" + file;
   }
 }
