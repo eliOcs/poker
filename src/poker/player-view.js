@@ -174,9 +174,11 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const actions = [];
   const seat = game.seats[seatIndex];
 
-  // Empty seat - anyone can sit
+  // Empty seat - can sit only if not already seated
   if (seat.empty) {
-    actions.push({ action: "sit", seat: seatIndex });
+    if (playerSeatIndex === -1) {
+      actions.push({ action: "sit", seat: seatIndex });
+    }
     return actions;
   }
 
