@@ -119,40 +119,17 @@ test.describe("Poker Game Smoke Test", () => {
     console.log("Player 2 calls the all-in");
     await player2.act("call");
 
-    // Check if P2 went all-in or still has chips
-    const p2StackAfterCall = await player2.getStack();
-    console.log(`Player 2 stack after call: ${p2StackAfterCall}`);
-
-    if (p2StackAfterCall > 0) {
-      // P2 still has chips - they need to check through remaining streets
-      // (P1 is all-in so P2 is the only one who can act)
-      console.log("Player 2 has chips remaining, checking through streets...");
-
-      await waitForPhase(player2, "flop");
-      console.log("Flop:", await player2.getBoardCards());
-      await player2.waitForTurn();
-      await player2.act("check");
-
-      await waitForPhase(player2, "turn");
-      console.log("Turn:", await player2.getBoardCards());
-      await player2.waitForTurn();
-      await player2.act("check");
-
-      await waitForPhase(player2, "river");
-      console.log("River:", await player2.getBoardCards());
-      await player2.waitForTurn();
-      await player2.act("check");
-    } else {
-      // Both players all-in - board runs out automatically
-      await player1.page.waitForFunction(
-        () => {
-          const game = document.querySelector("phg-game");
-          return game?.game?.board?.cards?.length === 5;
-        },
-        { timeout: 10000 },
-      );
-      console.log("Board (auto-dealt):", await player1.getBoardCards());
-    }
+    // With our bug fix, when one player is all-in, the board runs out automatically
+    // (no need for the remaining player to check through each street)
+    await player1.page.waitForFunction(
+      () => {
+        const game = document.querySelector("phg-game");
+        // Wait for hand to complete (back to waiting phase)
+        return game?.game?.hand?.phase === "waiting";
+      },
+      { timeout: 10000 },
+    );
+    console.log("Board ran out automatically - hand complete");
 
     console.log("Hand 3 complete (all-in showdown)");
 

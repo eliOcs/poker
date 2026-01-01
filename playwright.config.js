@@ -11,8 +11,7 @@ export default defineConfig({
   reporter: "list",
 
   use: {
-    baseURL: `https://localhost:${E2E_PORT}`,
-    ignoreHTTPSErrors: true,
+    baseURL: `http://localhost:${E2E_PORT}`,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
@@ -26,9 +25,8 @@ export default defineConfig({
 
   webServer: {
     command: "node --env-file=.env src/backend.js",
-    url: `https://localhost:${E2E_PORT}`,
+    url: `http://localhost:${E2E_PORT}`,
     reuseExistingServer: false, // Always start fresh server for tests
-    ignoreHTTPSErrors: true,
     env: {
       PORT: String(E2E_PORT),
       RNG_SEED: process.env.RNG_SEED || "12345",
