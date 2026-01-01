@@ -233,12 +233,21 @@ class Game extends LitElement {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 44px;
+        width: 36px;
+        height: 48px;
         background-color: ${unsafeCSS(COLORS.fgWhite)};
         border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        font-size: 0.9em;
         line-height: 1;
+      }
+
+      .card .rank {
+        font-size: 1.1em;
+      }
+
+      .card .suit {
+        font-family: serif;
+        font-size: 1.2em;
+        margin-top: -2px;
       }
 
       .card.red {
@@ -477,7 +486,8 @@ class Game extends LitElement {
     const isRed = card.suit === "hearts" || card.suit === "diamonds";
     return html`
       <span class="card ${isRed ? "red" : "black"}">
-        ${RANK_DISPLAY[card.rank]}${SUIT_SYMBOLS[card.suit]}
+        <span class="rank">${RANK_DISPLAY[card.rank]}</span>
+        <span class="suit">${SUIT_SYMBOLS[card.suit]}</span>
       </span>
     `;
   }
