@@ -15,10 +15,9 @@ class Home extends LitElement {
         color: ${unsafeCSS(COLORS.base05)};
       }
 
-      h1 {
-        font-size: 3em;
-        margin-bottom: 0.5em;
-        color: ${unsafeCSS(COLORS.base07)};
+      .logo {
+        max-width: 400px;
+        margin-bottom: 1em;
       }
 
       p {
@@ -75,7 +74,7 @@ class Home extends LitElement {
 
   render() {
     return html`
-      <h1>Poker Home Games</h1>
+      <img src="logo.png" alt="Pluton Poker" class="logo" />
       <p>Create a new game and invite your friends to play</p>
       <button @click=${this.createGame} ?disabled=${this.creating}>
         ${this.creating ? "Creating..." : "Create Game"}
