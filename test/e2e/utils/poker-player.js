@@ -138,10 +138,37 @@ export class PokerPlayer {
    * @param {'check' | 'call' | 'fold' | 'bet' | 'raise' | 'allIn'} action
    */
   async act(action) {
-    const buttonClass = action === "allIn" ? "all-in" : action;
-    const selector = `#actions button.${buttonClass}`;
-    await this.page.waitForSelector(selector);
-    await this.page.click(selector);
+    // For allIn, we need to move the slider to max first
+    if (action === "allIn") {
+      // Move slider to max value to trigger all-in button
+      await this.page.waitForSelector('#actions input[type="range"]');
+      await this.page.evaluate(async () => {
+        const game = document.querySelector("phg-game");
+        const input = game?.shadowRoot?.querySelector(
+          '#actions input[type="range"]',
+        );
+        if (input) {
+          input.value = input.max;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        // Wait for Lit component to re-render
+        await game?.updateComplete;
+      });
+      // Wait for button text to change to "All-In"
+      await this.page.waitForFunction(() => {
+        const game = document.querySelector("phg-game");
+        const buttons =
+          game?.shadowRoot?.querySelectorAll("#actions button") || [];
+        return Array.from(buttons).some((b) =>
+          b.textContent?.includes("All-In"),
+        );
+      });
+      await this.page.click("#actions button.all-in");
+    } else {
+      const selector = `#actions button.${action}`;
+      await this.page.waitForSelector(selector);
+      await this.page.click(selector);
+    }
     // Small delay for state propagation
     await this.page.waitForTimeout(100);
   }
