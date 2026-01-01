@@ -389,8 +389,9 @@ class Game extends LitElement {
       return;
     }
 
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     this.socket = new WebSocket(
-      `wss://${process.env.DOMAIN}:${process.env.PORT}/games/${this.gameId}`,
+      `${protocol}//${window.location.host}/games/${this.gameId}`,
     );
 
     this.socket.onmessage = (event) => {
