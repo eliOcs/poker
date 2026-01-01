@@ -228,6 +228,14 @@ class Game extends LitElement {
         margin-top: auto;
       }
 
+      .hole-cards .card .rank {
+        font-size: 1.2em;
+      }
+
+      .hole-cards .card .suit {
+        font-size: 1.3em;
+      }
+
       .card {
         display: inline-flex;
         flex-direction: column;
