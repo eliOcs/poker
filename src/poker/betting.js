@@ -186,7 +186,6 @@ export function startBettingRound(game, phase) {
   game.hand.phase = phase;
 
   const firstActor = getFirstToAct(game, phase);
-  game.hand.actingSeat = firstActor;
 
   // Reset bets for postflop rounds
   if (phase !== "preflop") {
@@ -200,6 +199,17 @@ export function startBettingRound(game, phase) {
   } else {
     game.hand.lastRaiseSize = game.blinds.big;
   }
+
+  // If only one player can act and all others are all-in, auto-complete the round.
+  // There's no point in forcing them to check when no one can respond to a bet.
+  const playersWhoCanAct = countPlayersWhoCanAct(game);
+  if (playersWhoCanAct <= 1) {
+    game.hand.actingSeat = -1;
+    game.hand.lastRaiser = -1;
+    return;
+  }
+
+  game.hand.actingSeat = firstActor;
 
   // Set lastRaiser to first actor so round ends when action returns to them.
   // For preflop, this gives BB their "option" to check or raise.

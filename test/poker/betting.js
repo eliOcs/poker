@@ -265,6 +265,25 @@ describe("betting", () => {
       // All-in players are still active (not folded)
       assert.equal(Betting.countActivePlayers(game), 2);
     });
+
+    it("should auto-complete betting round when only one player can act and opponent is all-in", () => {
+      // Scenario: heads-up, player at seat 0 went all-in and was called
+      // Player at seat 2 has chips remaining but opponent can't respond to any bet
+      game.seats[0].stack = 0;
+      game.seats[0].allIn = true;
+      game.seats[2].stack = 500; // Has chips remaining
+
+      // Start flop betting round
+      Betting.startBettingRound(game, "flop");
+
+      // Bug: actingSeat is set to 2 (player with chips), forcing them to check
+      // Expected: actingSeat should be -1 (auto-complete) since opponent can't respond
+      assert.equal(
+        game.hand.actingSeat,
+        -1,
+        "Betting round should auto-complete when opponent is all-in",
+      );
+    });
   });
 
   describe("advanceAction - betting round completion", () => {
