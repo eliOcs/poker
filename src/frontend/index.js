@@ -581,72 +581,67 @@ class Game extends LitElement {
           `);
           break;
 
-        case "bet":
+        case "bet": {
+          const betValue = this.betAmount || action.min;
+          const isAllIn = betValue >= action.max;
           result.push(html`
             <div class="amount-input">
               <input
                 type="range"
                 min="${action.min}"
                 max="${action.max}"
-                .value="${this.betAmount || action.min}"
+                .value="${betValue}"
                 @input=${(e) => (this.betAmount = parseInt(e.target.value))}
               />
-              <span class="amount-display"
-                >$${this.betAmount || action.min}</span
-              >
+              <span class="amount-display">$${betValue}</span>
               <button
-                class="bet"
+                class="${isAllIn ? "all-in" : "bet"}"
                 @click=${() =>
-                  this.send({
-                    action: "bet",
-                    seat: seatIndex,
-                    amount: this.betAmount || action.min,
-                  })}
+                  this.send(
+                    isAllIn
+                      ? { action: "allIn", seat: seatIndex }
+                      : { action: "bet", seat: seatIndex, amount: betValue },
+                  )}
               >
-                Bet
+                ${isAllIn ? "All-In" : "Bet"}
               </button>
             </div>
           `);
           break;
+        }
 
-        case "raise":
+        case "raise": {
+          const raiseValue = this.betAmount || action.min;
+          const isAllIn = raiseValue >= action.max;
           result.push(html`
             <div class="amount-input">
               <input
                 type="range"
                 min="${action.min}"
                 max="${action.max}"
-                .value="${this.betAmount || action.min}"
+                .value="${raiseValue}"
                 @input=${(e) => (this.betAmount = parseInt(e.target.value))}
               />
-              <span class="amount-display"
-                >$${this.betAmount || action.min}</span
-              >
+              <span class="amount-display">$${raiseValue}</span>
               <button
-                class="raise"
+                class="${isAllIn ? "all-in" : "raise"}"
                 @click=${() =>
-                  this.send({
-                    action: "raise",
-                    seat: seatIndex,
-                    amount: this.betAmount || action.min,
-                  })}
+                  this.send(
+                    isAllIn
+                      ? { action: "allIn", seat: seatIndex }
+                      : {
+                          action: "raise",
+                          seat: seatIndex,
+                          amount: raiseValue,
+                        },
+                  )}
               >
-                Raise to
+                ${isAllIn ? "All-In" : "Raise to"}
               </button>
             </div>
           `);
           break;
-
-        case "allIn":
-          result.push(html`
-            <button
-              class="all-in"
-              @click=${() => this.send({ action: "allIn", seat: seatIndex })}
-            >
-              All-In $${action.amount}
-            </button>
-          `);
-          break;
+        }
 
         case "start":
           result.push(html`

@@ -383,8 +383,9 @@ describe("phg-game", () => {
       expect(raiseButton.textContent).to.include("Raise");
     });
 
-    it("renders All-In button with amount", async () => {
+    it("renders All-In button when slider is at max", async () => {
       element.game = createMockGameWithPlayers();
+      element.betAmount = 1000; // Set to max
       await element.updateComplete;
 
       const allInButton = element.shadowRoot.querySelector(
@@ -392,7 +393,6 @@ describe("phg-game", () => {
       );
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
-      expect(allInButton.textContent).to.include("1000");
     });
   });
 
@@ -495,8 +495,9 @@ describe("phg-game", () => {
       expect(sentMessage.amount).to.be.a("number");
     });
 
-    it("calls send() with seat when All-In clicked", async () => {
+    it("calls send() with allIn action when slider at max and button clicked", async () => {
       element.game = createMockGameWithPlayers();
+      element.betAmount = 1000; // Set to max
       await element.updateComplete;
 
       const allInButton = element.shadowRoot.querySelector(
