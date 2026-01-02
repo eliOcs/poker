@@ -85,6 +85,7 @@ export function check(game, { seat }) {
     throw new Error("cannot check - there is a bet to call");
   }
 
+  seatObj.lastAction = "check";
   Betting.advanceAction(game);
 }
 
@@ -117,6 +118,9 @@ export function bet(game, { seat, amount }) {
 
   if (seatObj.stack === 0) {
     seatObj.allIn = true;
+    seatObj.lastAction = "all-in";
+  } else {
+    seatObj.lastAction = "bet";
   }
 
   Betting.advanceAction(game);
@@ -145,6 +149,9 @@ export function call(game, { seat }) {
 
   if (seatObj.stack === 0) {
     seatObj.allIn = true;
+    seatObj.lastAction = "all-in";
+  } else {
+    seatObj.lastAction = "call";
   }
 
   Betting.advanceAction(game);
@@ -182,6 +189,9 @@ export function raise(game, { seat, amount }) {
 
   if (seatObj.stack === 0) {
     seatObj.allIn = true;
+    seatObj.lastAction = "all-in";
+  } else {
+    seatObj.lastAction = "raise";
   }
 
   Betting.advanceAction(game);
@@ -201,6 +211,7 @@ export function fold(game, { seat }) {
 
   seatObj.folded = true;
   seatObj.cards = [];
+  seatObj.lastAction = "fold";
 
   Betting.advanceAction(game);
 }
@@ -223,6 +234,7 @@ export function allIn(game, { seat }) {
   seatObj.stack = 0;
   seatObj.bet = newBet;
   seatObj.allIn = true;
+  seatObj.lastAction = "all-in";
 
   // Only update current bet and raiser if this is a raise
   if (newBet > game.hand.currentBet) {

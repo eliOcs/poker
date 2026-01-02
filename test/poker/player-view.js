@@ -17,4 +17,54 @@ describe("Player View", function () {
       assert.deepEqual(p2View.seats[1].actions, [{ action: "sit", seat: 1 }]);
     });
   });
+
+  describe("winnerMessage", function () {
+    it("should include winnerMessage when set", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.winnerMessage = {
+        playerName: "player1",
+        handRank: "Pair of Aces",
+        amount: 100,
+      };
+
+      const view = playerView(g, p1);
+
+      assert.deepEqual(view.winnerMessage, {
+        playerName: "player1",
+        handRank: "Pair of Aces",
+        amount: 100,
+      });
+    });
+
+    it("should be null when no winner message", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      const view = playerView(g, p1);
+
+      assert.equal(view.winnerMessage, null);
+    });
+
+    it("should include winnerMessage without handRank for fold wins", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.winnerMessage = {
+        playerName: "player1",
+        handRank: null,
+        amount: 75,
+      };
+
+      const view = playerView(g, p1);
+
+      assert.equal(view.winnerMessage.playerName, "player1");
+      assert.equal(view.winnerMessage.handRank, null);
+      assert.equal(view.winnerMessage.amount, 75);
+    });
+  });
 });

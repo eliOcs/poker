@@ -3,6 +3,7 @@ import {
   MockWebSocket,
   createMockGameState,
   createMockGameAtFlop,
+  createMockGameWithWinner,
 } from "./setup.js";
 
 describe("phg-board", () => {
@@ -64,5 +65,81 @@ describe("phg-board", () => {
     await board.updateComplete;
     const pot = board.shadowRoot.querySelector(".pot");
     expect(pot.textContent).to.include("200");
+  });
+
+  describe("winner message", () => {
+    it("displays winner name when winnerMessage is set", async () => {
+      element.game = createMockGameWithWinner({
+        playerName: "player1",
+        handRank: "Full House, Kings over 5s",
+        amount: 200,
+      });
+      await element.updateComplete;
+
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const winnerName = board.shadowRoot.querySelector(".winner-name");
+      expect(winnerName).to.exist;
+      expect(winnerName.textContent).to.include("player1");
+      expect(winnerName.textContent).to.include("wins");
+    });
+
+    it("displays hand rank when winner has one", async () => {
+      element.game = createMockGameWithWinner({
+        playerName: "player1",
+        handRank: "Straight Flush, K high",
+        amount: 150,
+      });
+      await element.updateComplete;
+
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const winnerHand = board.shadowRoot.querySelector(".winner-hand");
+      expect(winnerHand).to.exist;
+      expect(winnerHand.textContent).to.include("Straight Flush");
+    });
+
+    it("displays amount won", async () => {
+      element.game = createMockGameWithWinner({
+        playerName: "player1",
+        handRank: "Pair of Aces",
+        amount: 300,
+      });
+      await element.updateComplete;
+
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const winnerAmount = board.shadowRoot.querySelector(".winner-amount");
+      expect(winnerAmount).to.exist;
+      expect(winnerAmount.textContent).to.include("300");
+    });
+
+    it("does not display hand rank when won by fold", async () => {
+      element.game = createMockGameWithWinner({
+        playerName: "player1",
+        handRank: null,
+        amount: 100,
+      });
+      await element.updateComplete;
+
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const winnerHand = board.shadowRoot.querySelector(".winner-hand");
+      expect(winnerHand).to.not.exist;
+    });
+
+    it("shows community cards along with winner message", async () => {
+      element.game = createMockGameWithWinner({
+        playerName: "player1",
+        handRank: "Royal Flush",
+        amount: 500,
+      });
+      await element.updateComplete;
+
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+      expect(cardElements.length).to.equal(5);
+    });
   });
 });

@@ -51,6 +51,28 @@ class Board extends LitElement {
         color: ${unsafeCSS(COLORS.gold)};
         text-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
+
+      .winner-message {
+        text-align: center;
+      }
+
+      .winner-name {
+        font-size: 0.8em;
+        color: ${unsafeCSS(COLORS.gold)};
+        text-shadow: 2px 2px 0 ${unsafeCSS(COLORS.bgDark)};
+        margin-bottom: 8px;
+      }
+
+      .winner-hand {
+        font-size: 0.6em;
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      .winner-amount {
+        font-size: 0.7em;
+        color: ${unsafeCSS(COLORS.greenLight)};
+        margin-top: 8px;
+      }
     `;
   }
 
@@ -59,11 +81,34 @@ class Board extends LitElement {
       board: { type: Object },
       hand: { type: Object },
       countdown: { type: Number },
+      winnerMessage: { type: Object },
     };
   }
 
   render() {
     const cards = this.board?.cards || [];
+
+    // Show winner message if present (with cards still visible)
+    if (this.winnerMessage) {
+      return html`
+        <div class="board-info">
+          <div class="community-cards">
+            ${cards.map((card) => html`<phg-card .card=${card}></phg-card>`)}
+          </div>
+          <div class="winner-message">
+            <div class="winner-name">
+              ${this.winnerMessage.playerName} wins!
+            </div>
+            ${this.winnerMessage.handRank
+              ? html`<div class="winner-hand">
+                  ${this.winnerMessage.handRank}
+                </div>`
+              : ""}
+            <div class="winner-amount">+$${this.winnerMessage.amount}</div>
+          </div>
+        </div>
+      `;
+    }
 
     // Show countdown if active
     if (this.countdown !== null && this.countdown !== undefined) {

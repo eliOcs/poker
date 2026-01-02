@@ -8,6 +8,7 @@ class Seat extends LitElement {
       :host {
         display: flex;
         flex-direction: column;
+        gap: 4px;
         border: 4px solid ${unsafeCSS(COLORS.fgDark)};
         background: ${unsafeCSS(COLORS.bgLight)};
         padding: 8px;
@@ -58,16 +59,20 @@ class Seat extends LitElement {
           inset 2px 2px 0 rgba(255, 255, 255, 0.2);
       }
 
+      button:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.purple)} 80%,
+          white
+        );
+      }
+
       button:active {
         box-shadow:
           1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
           inset 2px 2px 0 rgba(0, 0, 0, 0.2),
           inset -2px -2px 0 rgba(255, 255, 255, 0.2);
         transform: translate(2px, 2px);
-      }
-
-      .player-info {
-        margin-bottom: 4px;
       }
 
       .player-name {
@@ -79,10 +84,6 @@ class Seat extends LitElement {
 
       .stack {
         color: ${unsafeCSS(COLORS.greenLight)};
-      }
-
-      .bet {
-        color: ${unsafeCSS(COLORS.gold)};
       }
 
       .dealer-button {
@@ -107,6 +108,31 @@ class Seat extends LitElement {
       .status-label {
         font-size: 0.8em;
         color: ${unsafeCSS(COLORS.gold)};
+      }
+
+      .last-action {
+        font-size: 0.8em;
+        color: ${unsafeCSS(COLORS.cyan)};
+        text-transform: uppercase;
+      }
+
+      .hand-result {
+        font-size: 0.8em;
+        text-transform: uppercase;
+      }
+
+      .hand-result.won {
+        color: ${unsafeCSS(COLORS.greenLight)};
+      }
+
+      .hand-result.lost {
+        color: ${unsafeCSS(COLORS.red)};
+      }
+
+      .hand-rank {
+        font-size: 0.7em;
+        color: ${unsafeCSS(COLORS.fgMedium)};
+        margin-top: auto;
       }
 
       .empty-label {
@@ -175,12 +201,31 @@ class Seat extends LitElement {
           ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
         </span>
       </div>
-      <div class="stack">Stack: $${this.seat.stack}</div>
-      ${this.seat.bet > 0
-        ? html`<div class="bet">Bet: $${this.seat.bet}</div>`
+      <div class="stack">$${this.seat.stack}</div>
+      ${this.seat.handResult != null
+        ? html`<div
+            class="hand-result ${this.seat.handResult > 0
+              ? "won"
+              : this.seat.handResult < 0
+                ? "lost"
+                : ""}"
+          >
+            ${this.seat.handResult > 0
+              ? `WON +$${this.seat.handResult}`
+              : this.seat.handResult < 0
+                ? `LOST -$${Math.abs(this.seat.handResult)}`
+                : ""}
+          </div>`
+        : this.seat.folded
+          ? html`<div class="status-label">FOLDED</div>`
+          : this.seat.allIn
+            ? html`<div class="status-label">ALL-IN</div>`
+            : this.seat.lastAction
+              ? html`<div class="last-action">${this.seat.lastAction}</div>`
+              : ""}
+      ${this.seat.handRank
+        ? html`<div class="hand-rank">${this.seat.handRank}</div>`
         : ""}
-      ${this.seat.folded ? html`<div class="status-label">FOLDED</div>` : ""}
-      ${this.seat.allIn ? html`<div class="status-label">ALL-IN</div>` : ""}
       <div class="hole-cards">
         ${this.seat.cards?.map(
           (card) => html`<phg-card .card=${card}></phg-card>`,

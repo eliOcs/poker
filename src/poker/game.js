@@ -33,6 +33,13 @@ import * as Seat from "./seat.js";
  */
 
 /**
+ * @typedef {object} WinnerMessage
+ * @property {string} playerName - Winner's player name/ID
+ * @property {string|null} handRank - Winning hand description (null if won by fold)
+ * @property {number} amount - Amount won
+ */
+
+/**
  * @typedef {object} Game
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
@@ -43,6 +50,7 @@ import * as Seat from "./seat.js";
  * @property {Hand} hand - Current hand state
  * @property {number|null} countdown - Countdown seconds until hand starts (null if not counting)
  * @property {NodeJS.Timeout|null} countdownTimer - Timer ID for countdown interval
+ * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
  */
 
 /**
@@ -90,5 +98,6 @@ export function create({
     hand: createHand(),
     countdown: null,
     countdownTimer: null,
+    winnerMessage: null,
   };
 }

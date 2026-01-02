@@ -21,6 +21,9 @@ export const mockOccupiedSeat = {
   actions: [{ action: "check" }],
   isCurrentPlayer: true,
   isActing: true,
+  lastAction: null,
+  handResult: null,
+  handRank: "A High",
 };
 
 export const mockFoldedSeat = {
@@ -133,12 +136,48 @@ export function createMockGameWithBuyIn() {
         actions: [{ action: "buyIn", min: 20, max: 100, bigBlind: 50 }],
         isCurrentPlayer: true,
         isActing: false,
+        lastAction: null,
+        handResult: null,
+        handRank: null,
       },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+    ],
+  });
+}
+
+export function createMockGameWithWinner(winnerMessage) {
+  return createMockGameState({
+    hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+    board: {
+      cards: [
+        { rank: "ace", suit: "hearts" },
+        { rank: "king", suit: "diamonds" },
+        { rank: "queen", suit: "clubs" },
+        { rank: "jack", suit: "spades" },
+        { rank: "10", suit: "hearts" },
+      ],
+    },
+    winnerMessage,
+    seats: [
+      {
+        ...mockOccupiedSeat,
+        bet: 0,
+        actions: [],
+        handResult: winnerMessage?.amount || 0,
+      },
+      {
+        ...mockOpponentSeat,
+        bet: 0,
+        handResult: -(winnerMessage?.amount || 0),
+      },
+      { ...mockEmptySeat, actions: [] },
+      { ...mockEmptySeat, actions: [] },
+      { ...mockEmptySeat, actions: [] },
+      { ...mockEmptySeat, actions: [] },
     ],
   });
 }

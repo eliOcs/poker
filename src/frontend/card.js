@@ -42,15 +42,16 @@ class Card extends LitElement {
         background-color: ${unsafeCSS(COLORS.fgWhite)};
         border: 3px solid ${unsafeCSS(COLORS.bgDark)};
         line-height: 1;
+        font-size: 16px;
       }
 
       .card .rank {
-        font-size: 0.9em;
+        font-size: 14px;
       }
 
       .card .suit {
         font-family: serif;
-        font-size: 1.3em;
+        font-size: 20px;
         margin-top: -2px;
       }
 

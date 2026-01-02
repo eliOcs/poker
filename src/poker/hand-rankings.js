@@ -437,4 +437,62 @@ function bestCombination(cards) {
   return combinations(cards, 5).map(calculate).sort(compare.any)[0];
 }
 
-export default { calculate, compare: compare.any, bestCombination };
+/**
+ * Formats a rank for display (capitalizes face cards)
+ * @param {Rank} rank
+ * @returns {string}
+ */
+function formatRank(rank) {
+  switch (rank) {
+    case "ace":
+      return "A";
+    case "king":
+      return "K";
+    case "queen":
+      return "Q";
+    case "jack":
+      return "J";
+    default:
+      return rank;
+  }
+}
+
+/**
+ * Formats an evaluated hand as a human-readable string
+ * @param {EvaluatedHand} hand
+ * @returns {string}
+ */
+function formatHand(hand) {
+  switch (hand.name) {
+    case "royal flush":
+      return "Royal Flush";
+    case "straight flush":
+      return `Straight Flush, ${formatRank(hand.to)} high`;
+    case "4 of a kind":
+      return `Four ${formatRank(hand.of)}s`;
+    case "full house":
+      return `Full House, ${formatRank(hand.of)}s over ${formatRank(hand.and)}s`;
+    case "flush":
+      return `Flush, ${formatRank(hand.high)} high`;
+    case "straight":
+      return `Straight, ${formatRank(hand.to)} high`;
+    case "3 of a kind":
+      return `Three ${formatRank(hand.of)}s`;
+    case "2 pair":
+      return `Two Pair, ${formatRank(hand.of)}s and ${formatRank(hand.and)}s`;
+    case "pair":
+      return `Pair of ${formatRank(hand.of)}s`;
+    case "high card":
+      return `${formatRank(hand.ranks[0])} High`;
+    default:
+      return "";
+  }
+}
+
+export default {
+  calculate,
+  compare: compare.any,
+  bestCombination,
+  formatHand,
+  getRankValue,
+};

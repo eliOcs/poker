@@ -39,7 +39,7 @@ describe("phg-seat", () => {
     expect(sitButtonCount).to.equal(6);
   });
 
-  it("displays player ID, stack, and bet for occupied seats", async () => {
+  it("displays player ID and stack for occupied seats", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
@@ -54,13 +54,19 @@ describe("phg-seat", () => {
 
         const stack = seat.shadowRoot.querySelector(".stack");
         expect(stack.textContent).to.include("1000");
-
-        const bet = seat.shadowRoot.querySelector(".bet");
-        expect(bet.textContent).to.include("50");
         break;
       }
     }
     expect(foundOccupied).to.be.true;
+  });
+
+  it("displays bet indicator on table for players with bets", async () => {
+    element.game = createMockGameWithPlayers();
+    await element.updateComplete;
+
+    const betIndicators = element.shadowRoot.querySelectorAll(".bet-indicator");
+    expect(betIndicators.length).to.be.greaterThan(0);
+    expect(betIndicators[0].textContent).to.include("50");
   });
 
   it("shows dealer button at correct position", async () => {
@@ -210,5 +216,156 @@ describe("phg-seat", () => {
     expect(element.socket.sent.length).to.equal(1);
     expect(element.socket.sent[0].action).to.equal("sit");
     expect(element.socket.sent[0].seat).to.be.a("number");
+  });
+
+  it("displays lastAction when set (check, call, bet, raise)", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockOccupiedSeat, lastAction: "check" },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    expect(lastAction).to.exist;
+    expect(lastAction.textContent.toLowerCase()).to.include("check");
+  });
+
+  it("does not display lastAction when folded", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockFoldedSeat, lastAction: "fold" },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    expect(lastAction).to.not.exist;
+    // But FOLDED status label should still show
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel.textContent).to.include("FOLDED");
+  });
+
+  it("does not display lastAction when all-in", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockAllInSeat, lastAction: "all-in" },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    expect(lastAction).to.not.exist;
+    // But ALL-IN status label should still show
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel.textContent).to.include("ALL-IN");
+  });
+
+  it("displays handResult when player won", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockOccupiedSeat, handResult: 150 },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    expect(handResult).to.exist;
+    expect(handResult.textContent).to.include("WON");
+    expect(handResult.textContent).to.include("+$150");
+    expect(handResult.classList.contains("won")).to.be.true;
+  });
+
+  it("displays handResult when player lost", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockOccupiedSeat, handResult: -100 },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    expect(handResult).to.exist;
+    expect(handResult.textContent).to.include("LOST");
+    expect(handResult.textContent).to.include("-$100");
+    expect(handResult.classList.contains("lost")).to.be.true;
+  });
+
+  it("displays handResult instead of lastAction when set", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockOccupiedSeat, lastAction: "bet", handResult: 50 },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    expect(handResult).to.exist;
+    expect(lastAction).to.not.exist;
+  });
+
+  it("displays handResult instead of FOLDED status when set", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockFoldedSeat, handResult: -50 },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(handResult).to.exist;
+    expect(handResult.textContent).to.include("LOST");
+    expect(statusLabel).to.not.exist;
   });
 });

@@ -8,6 +8,7 @@ import * as PokerActions from "./poker/actions.js";
 import * as Player from "./poker/player.js";
 import * as Betting from "./poker/betting.js";
 import * as Showdown from "./poker/showdown.js";
+import HandRankings from "./poker/hand-rankings.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -191,7 +192,18 @@ function processGameFlow(game, gameId) {
 
     // Check if only one player remains (everyone else folded)
     if (Betting.countActivePlayers(game) <= 1) {
-      Showdown.awardToLastPlayer(game);
+      const result = Showdown.awardToLastPlayer(game);
+      if (result.winner !== -1) {
+        const winnerSeat =
+          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+            game.seats[result.winner]
+          );
+        game.winnerMessage = {
+          playerName: winnerSeat.player?.id ?? "Unknown",
+          handRank: null, // No showdown, won by fold
+          amount: result.amount,
+        };
+      }
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
       return;
@@ -218,7 +230,28 @@ function processGameFlow(game, gameId) {
       Betting.startBettingRound(game, "river");
     } else if (phase === "river") {
       // Go to showdown
-      runAll(Showdown.showdown(game));
+      const gen = Showdown.showdown(game);
+      let result = gen.next();
+      while (!result.done) {
+        result = gen.next();
+      }
+      // result.value contains PotResult[] when done
+      const potResults = result.value || [];
+      // Use the first pot result (main pot) for winner message
+      if (potResults.length > 0 && potResults[0].winners.length > 0) {
+        const mainPot = potResults[0];
+        const winnerSeat =
+          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+            game.seats[mainPot.winners[0]]
+          );
+        game.winnerMessage = {
+          playerName: winnerSeat.player?.id ?? "Unknown",
+          handRank: mainPot.winningHand
+            ? HandRankings.formatHand(mainPot.winningHand)
+            : null,
+          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
+        };
+      }
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
       return;
@@ -269,6 +302,9 @@ function startCountdownTimer(game, gameId) {
       game.countdown = null;
       if (game.countdownTimer) clearInterval(game.countdownTimer);
       game.countdownTimer = null;
+
+      // Clear winner message from previous hand
+      game.winnerMessage = null;
 
       // Start the hand
       PokerActions.startHand(game);
