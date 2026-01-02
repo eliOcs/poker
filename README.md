@@ -41,6 +41,30 @@ npm run format  # Run Prettier
 npm run test:e2e # Run Playwright e2e tests
 ```
 
+## Deployment
+
+Deployment uses [Kamal](https://kamal-deploy.org/) with AWS ECR and ARM64 instances.
+
+### Prerequisites
+
+- [Kamal](https://kamal-deploy.org/docs/installation/) installed (`gem install kamal`)
+- AWS CLI configured with ECR access
+- SSH key for the deployment server (`~/.ssh/poker_ed25519`)
+
+### Deploy
+
+```bash
+kamal deploy    # Build, push, and deploy
+```
+
+### Other Commands
+
+```bash
+kamal app logs  # View application logs
+kamal app exec -i 'sh'  # Shell into container
+kamal rollback  # Rollback to previous version
+```
+
 ## Architecture
 
 - **Backend**: Node.js with native ES modules, HTTP, WebSocket

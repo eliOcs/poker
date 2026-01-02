@@ -174,6 +174,60 @@ PORT=3000
 - Test generators by calling `.next()` explicitly
 - Deep equality for object comparisons
 
+## Deployment
+
+### Overview
+
+Deployment uses [Kamal](https://kamal-deploy.org/) for zero-downtime deploys:
+
+- **Registry**: AWS ECR (eu-central-1)
+- **Server**: ARM64 (Graviton) instance
+- **SSL**: Let's Encrypt via Kamal proxy
+- **Domain**: plutonpoker.com
+
+### Configuration Files
+
+```
+config/deploy.yml    # Kamal configuration
+.kamal/secrets       # Registry credentials (not committed)
+Dockerfile           # Container build
+```
+
+### Deploy Commands
+
+```bash
+kamal deploy         # Full deploy (build, push, deploy)
+kamal redeploy       # Deploy without rebuilding
+kamal rollback       # Rollback to previous version
+```
+
+### Logs & Debugging
+
+```bash
+kamal app logs              # View application logs
+kamal app logs -f           # Follow logs
+kamal app exec -i 'sh'      # Shell into container
+kamal proxy logs            # View proxy logs
+```
+
+### Infrastructure
+
+```bash
+kamal setup          # First-time server setup
+kamal proxy reboot   # Restart proxy (SSL issues)
+kamal app boot       # Start app without deploying
+```
+
+### Secrets
+
+The `.kamal/secrets` file generates the ECR password:
+
+```bash
+KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1 --profile personal)
+```
+
+ECR tokens expire after 12 hours. If deploy fails with auth errors, the token has expired.
+
 ## Dependencies
 
 **Runtime** (keep minimal):
