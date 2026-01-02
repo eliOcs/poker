@@ -48,7 +48,9 @@ export class PokerPlayer {
    */
   async sit(seatIndex) {
     // Click the Sit button in the empty seat
-    const seat = this.gameElement.locator(`.seat:nth-child(${seatIndex + 1})`);
+    const seat = this.gameElement.locator(
+      `phg-seat:nth-child(${seatIndex + 1})`,
+    );
     await seat.getByRole("button", { name: "Sit" }).click();
     // Wait for seat to show as occupied (current-player class)
     await seat.and(this.page.locator(".current-player")).waitFor();
