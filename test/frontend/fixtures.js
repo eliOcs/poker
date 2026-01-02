@@ -130,7 +130,7 @@ export function createMockGameWithBuyIn() {
         folded: false,
         allIn: false,
         cards: [],
-        actions: [{ action: "buyIn", min: 20, max: 100 }],
+        actions: [{ action: "buyIn", min: 20, max: 100, bigBlind: 50 }],
         isCurrentPlayer: true,
         isActing: false,
       },

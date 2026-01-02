@@ -26,6 +26,7 @@ import { countPlayersWithChips } from "./actions.js";
  * @property {'buyIn'} action
  * @property {number} min
  * @property {number} max
+ * @property {number} bigBlind
  */
 
 /**
@@ -190,7 +191,12 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   // Player is seated but hand not active - can buy in if no stack, or start game
   if (game.hand?.phase === "waiting") {
     if (seat.stack === 0) {
-      actions.push({ action: "buyIn", min: 20, max: 100 });
+      actions.push({
+        action: "buyIn",
+        min: 20,
+        max: 100,
+        bigBlind: game.blinds.big,
+      });
     } else if (game.countdown === null && countPlayersWithChips(game) >= 2) {
       // Player has chips, no countdown active, enough players - can start
       actions.push({ action: "start" });

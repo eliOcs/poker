@@ -1,5 +1,7 @@
 export default {
   files: "test/frontend/**/*.test.js",
-  nodeResolve: true,
+  nodeResolve: {
+    exportConditions: ["production", "default"],
+  },
   port: 8765,
 };
