@@ -14,7 +14,7 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 ### Tech Stack
 
 - **Backend**: Node.js with native ES modules, HTTP, WebSocket (`ws`)
-- **Frontend**: Lit web components loaded from CDN (no build step)
+- **Frontend**: Lit web components installed via npm (no build step, served via importmap)
 - **Protocol**: WebSocket for real-time bidirectional communication
 - **Testing**: Node.js built-in test runner (`node --test`)
 
@@ -148,7 +148,7 @@ PORT=3000
 
 ### Frontend Development
 
-- Lit components loaded from CDN via importmap (no bundler)
+- Lit installed via npm, served from node_modules via importmap (no bundler)
 - Environment variables injected at serve time via stream transform
 - Hot reload via browser refresh (backend has `--watch`)
 
@@ -180,9 +180,6 @@ PORT=3000
 
 - `ws` - WebSocket server
 - `mime-types` - MIME type detection for static files
-
-**Frontend** (CDN):
-
 - `lit` - Web components
 
 **Dev**:
