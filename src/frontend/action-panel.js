@@ -43,10 +43,27 @@ class ActionPanel extends LitElement {
         color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
+      button.fold:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.red)} 80%,
+          white
+        );
+      }
+
       button.check,
       button.call {
         background-color: ${unsafeCSS(COLORS.greenLight)};
         color: ${unsafeCSS(COLORS.bgDark)};
+      }
+
+      button.check:hover,
+      button.call:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.greenLight)} 80%,
+          white
+        );
       }
 
       button.bet,
@@ -55,9 +72,26 @@ class ActionPanel extends LitElement {
         color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
+      button.bet:hover,
+      button.raise:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.blue)} 80%,
+          white
+        );
+      }
+
       button.all-in {
         background-color: ${unsafeCSS(COLORS.gold)};
         color: ${unsafeCSS(COLORS.bgDark)};
+      }
+
+      button.all-in:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.gold)} 80%,
+          white
+        );
       }
 
       button.buy-in {
@@ -65,11 +99,27 @@ class ActionPanel extends LitElement {
         color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
+      button.buy-in:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.purple)} 80%,
+          white
+        );
+      }
+
       button.start {
         background-color: ${unsafeCSS(COLORS.gold)};
         color: ${unsafeCSS(COLORS.bgDark)};
         font-size: 0.7em;
         padding: 12px 24px;
+      }
+
+      button.start:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.gold)} 80%,
+          white
+        );
       }
 
       .amount-input {

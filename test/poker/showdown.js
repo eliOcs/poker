@@ -268,6 +268,93 @@ describe("showdown", () => {
       assert.equal(results[1].potAmount, 100);
       assert.deepEqual(results[1].winners, [2]);
     });
+
+    it("should split pot evenly when hands are equal", () => {
+      // Both players have low cards, board plays (straight on board)
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "2", suit: "spades" },
+          { rank: "3", suit: "spades" },
+        ],
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "clubs" },
+        ],
+        totalInvested: 100,
+      };
+      // Board has a straight - both players play the board
+      game.board.cards = [
+        { rank: "ace", suit: "hearts" },
+        { rank: "king", suit: "diamonds" },
+        { rank: "queen", suit: "clubs" },
+        { rank: "jack", suit: "hearts" },
+        { rank: "10", suit: "spades" },
+      ];
+
+      const results = Showdown.runShowdown(game);
+
+      assert.equal(results.length, 1);
+      assert.equal(results[0].potAmount, 200);
+      // Both players should be winners
+      assert.equal(results[0].winners.length, 2);
+      assert.ok(results[0].winners.includes(0));
+      assert.ok(results[0].winners.includes(2));
+      // Each player gets half (100 each)
+      assert.equal(game.seats[0].stack, 100);
+      assert.equal(game.seats[2].stack, 100);
+    });
+
+    it("should give odd chip to first winner when pot cannot split evenly", () => {
+      // Both players invest 50, creating a pot of 100 that splits to 50 each
+      // But we create a scenario with 3 players where one folds, leaving odd pot
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "2", suit: "spades" },
+          { rank: "3", suit: "spades" },
+        ],
+        totalInvested: 51,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "clubs" },
+        ],
+        totalInvested: 51,
+      };
+      game.seats[4] = {
+        ...Seat.occupied({ id: "p3" }, 0),
+        cards: [
+          { rank: "4", suit: "diamonds" },
+          { rank: "5", suit: "diamonds" },
+        ],
+        totalInvested: 51,
+        folded: true, // Folded, so not eligible but contributed
+      };
+      // Board has a straight - both active players play the board
+      game.board.cards = [
+        { rank: "ace", suit: "hearts" },
+        { rank: "king", suit: "diamonds" },
+        { rank: "queen", suit: "clubs" },
+        { rank: "jack", suit: "hearts" },
+        { rank: "10", suit: "spades" },
+      ];
+
+      const results = Showdown.runShowdown(game);
+
+      // Pot is 153 (51 * 3), splits to 76 and 77 (first winner gets odd chip)
+      assert.equal(results[0].potAmount, 153);
+      assert.equal(results[0].winners.length, 2);
+      // First winner (seat 0) gets 77, second (seat 2) gets 76
+      assert.equal(game.seats[0].stack, 77);
+      assert.equal(game.seats[2].stack, 76);
+    });
   });
 
   describe("awardToLastPlayer", () => {
@@ -288,6 +375,135 @@ describe("showdown", () => {
       assert.equal(result.winner, 2);
       assert.equal(result.amount, 200); // 100 in pot + 50 + 50 from bets
       assert.equal(game.seats[2].stack, 300); // 100 original + 200 won
+    });
+
+    it("should set handResult for winner and losers", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        bet: 50,
+        totalInvested: 0, // Will become 50 after bet collection
+        folded: true,
+        lastAction: "fold",
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 100),
+        bet: 50,
+        totalInvested: 0, // Will become 50 after bet collection
+        lastAction: "bet",
+      };
+      game.hand.pot = 0;
+
+      Showdown.awardToLastPlayer(game);
+
+      // Winner wins pot (100) minus their investment (50) = +50 profit
+      assert.equal(game.seats[2].handResult, 50);
+      // Loser loses their investment (-50)
+      assert.equal(game.seats[0].handResult, -50);
+    });
+
+    it("should clear lastAction for all players", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        bet: 50,
+        folded: true,
+        lastAction: "fold",
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 100),
+        bet: 50,
+        lastAction: "bet",
+      };
+      game.hand.pot = 0;
+
+      Showdown.awardToLastPlayer(game);
+
+      assert.equal(game.seats[0].lastAction, null);
+      assert.equal(game.seats[2].lastAction, null);
+    });
+  });
+
+  describe("showdown generator", () => {
+    it("should set handResult for winner and losers", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "ace", suit: "spades" },
+          { rank: "ace", suit: "hearts" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+        lastAction: "call",
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "diamonds" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+        lastAction: "bet",
+      };
+      game.board.cards = [
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "hearts" },
+      ];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      // Run the showdown generator to completion
+      const gen = Showdown.showdown(game);
+      let result = gen.next();
+      while (!result.done) {
+        result = gen.next();
+      }
+
+      // Winner (seat 0) gains opponent's bet
+      assert.equal(game.seats[0].handResult, 100);
+      // Loser (seat 2) loses their investment
+      assert.equal(game.seats[2].handResult, -100);
+    });
+
+    it("should clear lastAction for all players", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "ace", suit: "spades" },
+          { rank: "ace", suit: "hearts" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+        lastAction: "call",
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "diamonds" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+        lastAction: "bet",
+      };
+      game.board.cards = [
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "hearts" },
+      ];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      const gen = Showdown.showdown(game);
+      let result = gen.next();
+      while (!result.done) {
+        result = gen.next();
+      }
+
+      assert.equal(game.seats[0].lastAction, null);
+      assert.equal(game.seats[2].lastAction, null);
     });
   });
 });

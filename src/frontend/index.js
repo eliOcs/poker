@@ -44,6 +44,15 @@ class Game extends LitElement {
         width: 100%;
       }
 
+      #bets {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        pointer-events: none;
+      }
+
       phg-seat {
         position: absolute;
         height: 20%;
@@ -79,6 +88,51 @@ class Game extends LitElement {
       phg-seat:nth-child(6) {
         bottom: 15%;
         left: 2.5%;
+      }
+
+      .bet-indicator {
+        position: absolute;
+        z-index: 2;
+        color: ${unsafeCSS(COLORS.gold)};
+        font-size: 0.7em;
+      }
+
+      /* Seat 1: top-left */
+      .bet-indicator[data-seat="0"] {
+        top: 32%;
+        left: 22%;
+      }
+
+      /* Seat 2: top-center */
+      .bet-indicator[data-seat="1"] {
+        top: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      /* Seat 3: top-right */
+      .bet-indicator[data-seat="2"] {
+        top: 32%;
+        right: 26%;
+      }
+
+      /* Seat 4: bottom-right */
+      .bet-indicator[data-seat="3"] {
+        bottom: 38%;
+        right: 26%;
+      }
+
+      /* Seat 5: bottom-center */
+      .bet-indicator[data-seat="4"] {
+        bottom: 30%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      /* Seat 6: bottom-left */
+      .bet-indicator[data-seat="5"] {
+        bottom: 38%;
+        left: 22%;
       }
 
       phg-action-panel {
@@ -196,6 +250,7 @@ class Game extends LitElement {
           .board=${this.game.board}
           .hand=${this.game.hand}
           .countdown=${this.game.countdown}
+          .winnerMessage=${this.game.winnerMessage}
         ></phg-board>
         <div id="seats">
           ${this.game.seats.map(
@@ -207,6 +262,15 @@ class Game extends LitElement {
                 @seat-action=${this.handleSeatAction}
               ></phg-seat>
             `,
+          )}
+        </div>
+        <div id="bets">
+          ${this.game.seats.map((seat, i) =>
+            !seat.empty && seat.bet > 0
+              ? html`<div class="bet-indicator" data-seat="${i}">
+                  $${seat.bet}
+                </div>`
+              : "",
           )}
         </div>
       </div>

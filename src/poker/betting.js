@@ -187,11 +187,12 @@ export function startBettingRound(game, phase) {
 
   const firstActor = getFirstToAct(game, phase);
 
-  // Reset bets for postflop rounds
+  // Reset bets and lastAction for postflop rounds
   if (phase !== "preflop") {
     for (const seat of game.seats) {
       if (!seat.empty) {
         seat.bet = 0;
+        seat.lastAction = null;
       }
     }
     game.hand.currentBet = 0;

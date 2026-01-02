@@ -165,12 +165,29 @@ export function* showdown(game) {
 
   yield; // Pause for pot collection animation
 
+  // Track winnings per seat to calculate hand results
+  const winnings = new Map();
+
   // Run showdown and get results
   const results = runShowdown(game);
 
   // Yield after each pot is awarded (for animation)
   for (const result of results) {
+    // Track winnings for each award
+    for (const award of result.awards) {
+      winnings.set(award.seat, (winnings.get(award.seat) || 0) + award.amount);
+    }
     yield result;
+  }
+
+  // Set hand results for all players and clear lastAction
+  for (let i = 0; i < game.seats.length; i++) {
+    const seat = game.seats[i];
+    if (!seat.empty) {
+      const won = winnings.get(i) || 0;
+      seat.handResult = won - seat.totalInvested;
+      seat.lastAction = null;
+    }
   }
 
   return results;
@@ -209,6 +226,20 @@ export function awardToLastPlayer(game) {
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winner]);
   winnerSeat.stack += totalPot;
   game.hand.pot = 0;
+
+  // Set hand results for all players and clear lastAction
+  for (let i = 0; i < game.seats.length; i++) {
+    const seat = game.seats[i];
+    if (!seat.empty) {
+      const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
+      if (i === winner) {
+        occupiedSeat.handResult = totalPot - occupiedSeat.totalInvested;
+      } else {
+        occupiedSeat.handResult = -occupiedSeat.totalInvested;
+      }
+      occupiedSeat.lastAction = null;
+    }
+  }
 
   return { winner, amount: totalPot };
 }

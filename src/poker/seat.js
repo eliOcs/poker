@@ -23,6 +23,8 @@
  * @property {boolean} folded - Has folded this hand
  * @property {boolean} allIn - Is all-in
  * @property {boolean} sittingOut - Is sitting out (not participating)
+ * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
+ * @property {number|null} handResult - Result of the hand (positive for win, negative for loss)
  */
 
 /**
@@ -54,6 +56,8 @@ export function occupied(player, stack = 0) {
     folded: false,
     allIn: false,
     sittingOut: false,
+    lastAction: null,
+    handResult: null,
   };
 }
 
@@ -67,6 +71,8 @@ export function resetForNewHand(seat) {
   seat.cards = [];
   seat.folded = false;
   seat.allIn = false;
+  seat.lastAction = null;
+  seat.handResult = null;
 }
 
 /**

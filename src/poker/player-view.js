@@ -1,5 +1,6 @@
 import * as Betting from "./betting.js";
 import { countPlayersWithChips } from "./actions.js";
+import HandRankings from "./hand-rankings.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -92,6 +93,9 @@ import { countPlayersWithChips } from "./actions.js";
  * @property {PlayerAction[]} actions
  * @property {boolean} isCurrentPlayer
  * @property {boolean} isActing
+ * @property {string|null} lastAction
+ * @property {number|null} handResult
+ * @property {string|null} handRank
  */
 
 /**
@@ -107,6 +111,13 @@ import { countPlayersWithChips } from "./actions.js";
  */
 
 /**
+ * @typedef {object} WinnerMessage
+ * @property {string} playerName - Winner's player name/ID
+ * @property {string|null} handRank - Winning hand description (null if won by fold)
+ * @property {number} amount - Amount won
+ */
+
+/**
  * @typedef {object} PlayerView
  * @property {boolean} running
  * @property {number} button
@@ -115,6 +126,7 @@ import { countPlayersWithChips } from "./actions.js";
  * @property {ViewHand|null} hand
  * @property {ViewSeat[]} seats
  * @property {number|null} countdown
+ * @property {WinnerMessage|null} winnerMessage
  */
 
 /**
@@ -161,6 +173,46 @@ function shouldShowCards(seat, seatIndex, playerSeatIndex, game) {
  */
 function hiddenCard() {
   return { hidden: true };
+}
+
+/**
+ * Calculates the hand rank for a player
+ * @param {Card[]} holeCards - Player's hole cards
+ * @param {Card[]} boardCards - Community cards
+ * @returns {string|null}
+ */
+function calculateHandRank(holeCards, boardCards) {
+  if (!holeCards || holeCards.length < 2) {
+    return null;
+  }
+
+  const allCards = [...holeCards, ...boardCards];
+
+  // Need at least 5 cards for a full hand evaluation
+  if (allCards.length >= 5) {
+    const hand = HandRankings.bestCombination(allCards);
+    return HandRankings.formatHand(hand);
+  }
+
+  // For just hole cards (preflop), check for pair or high card
+  if (holeCards.length === 2) {
+    if (holeCards[0].rank === holeCards[1].rank) {
+      /** @type {import('./hand-rankings.js').Pair} */
+      const hand = { name: "pair", of: holeCards[0].rank, kickers: [] };
+      return HandRankings.formatHand(hand);
+    }
+    // Show high card
+    const highCard =
+      HandRankings.getRankValue(holeCards[0].rank) >
+      HandRankings.getRankValue(holeCards[1].rank)
+        ? holeCards[0].rank
+        : holeCards[1].rank;
+    /** @type {import('./hand-rankings.js').HighCard} */
+    const hand = { name: "high card", ranks: [highCard] };
+    return HandRankings.formatHand(hand);
+  }
+
+  return null;
 }
 
 /**
@@ -289,6 +341,7 @@ export default function playerView(game, player) {
         }
       : null,
     countdown: game.countdown,
+    winnerMessage: game.winnerMessage,
     seats: game.seats.map((seat, index) => {
       if (seat.empty) {
         return {
@@ -298,6 +351,12 @@ export default function playerView(game, player) {
       }
 
       const showCards = shouldShowCards(seat, index, playerSeatIndex, game);
+
+      // Calculate hand rank only for visible cards of non-folded players
+      const handRank =
+        showCards && !seat.folded
+          ? calculateHandRank(seat.cards, game.board?.cards || [])
+          : null;
 
       return {
         empty: false,
@@ -312,6 +371,9 @@ export default function playerView(game, player) {
         actions: getAvailableActions(game, index, playerSeatIndex),
         isCurrentPlayer: index === playerSeatIndex,
         isActing: index === game.hand?.actingSeat,
+        lastAction: seat.lastAction,
+        handResult: seat.handResult,
+        handRank,
       };
     }),
   };
