@@ -1,10 +1,7 @@
-import * as fs from "fs";
-import path from "path";
-import stream from "stream";
 import crypto from "crypto";
-import mime from "mime-types";
 import http from "http";
 import { WebSocketServer } from "ws";
+import { getFilePath, respondWithFile } from "./static-files.js";
 import playerView from "./poker/player-view.js";
 import * as PokerGame from "./poker/game.js";
 import * as PokerActions from "./poker/actions.js";
@@ -18,58 +15,6 @@ import * as Showdown from "./poker/showdown.js";
  */
 
 const server = http.createServer();
-
-server.on("error", (err) => console.error(err));
-
-/** @type {Record<string, string>} */
-const staticFiles = {};
-for (const file of fs.readdirSync("src/frontend")) {
-  const ext = path.extname(file);
-  if (ext === ".html" || ext === ".js" || ext === ".css" || ext === ".png") {
-    staticFiles["/" + file] = "src/frontend/" + file;
-  }
-}
-
-/**
- * Responds with a file, injecting environment variables and optional replacements
- * @param {string} filePath
- * @param {import('http').ServerResponse} res
- * @param {Record<string, string>} headers
- * @param {Record<string, string>} [replacements]
- */
-function respondWithFile(filePath, res, headers, replacements = {}) {
-  const contentType = mime.contentType(path.extname(filePath));
-  res.writeHead(200, {
-    "content-type": contentType || "application/octet-stream",
-    ...headers,
-  });
-
-  const fileStream = fs.createReadStream(filePath);
-
-  // Binary files (images, etc.) should be served as-is
-  const ext = path.extname(filePath);
-  if (ext === ".png" || ext === ".jpg" || ext === ".jpeg" || ext === ".gif") {
-    fileStream.pipe(res);
-    return;
-  }
-
-  // Text files get environment variable injection
-  const injectEnv = new stream.Transform({
-    transform: function transformer(chunk, encoding, callback) {
-      let content = String(chunk);
-      // Inject environment variables
-      content = content.replace(/process\.env\.([A-Z_]+)/g, (match, key) =>
-        JSON.stringify(process.env[key]),
-      );
-      // Inject custom replacements
-      for (const [key, value] of Object.entries(replacements)) {
-        content = content.replace(new RegExp(key, "g"), value);
-      }
-      callback(null, content);
-    },
-  });
-  fileStream.pipe(injectEnv).pipe(res);
-}
 
 /**
  * Parses cookie header into object
@@ -138,7 +83,7 @@ server.on("request", (req, res) => {
   // Home page
   if (method === "GET" && url === "/") {
     getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/home.html", res, {});
+    respondWithFile("src/frontend/home.html", res);
     return;
   }
 
@@ -164,20 +109,16 @@ server.on("request", (req, res) => {
     }
 
     getOrCreatePlayer(req, res);
-    respondWithFile(
-      "src/frontend/game.html",
-      res,
-      {},
-      {
-        "\\$GAME_ID\\$": gameId,
-      },
-    );
+    respondWithFile("src/frontend/game.html", res, {
+      "\\$GAME_ID\\$": gameId,
+    });
     return;
   }
 
-  // Static files
-  if (method === "GET" && url in staticFiles) {
-    respondWithFile(staticFiles[url], res, {});
+  // Static files and node modules
+  const filePath = getFilePath(url);
+  if (method === "GET" && filePath) {
+    respondWithFile(filePath, res);
     return;
   }
 
