@@ -148,26 +148,29 @@ class ActionPanel extends LitElement {
 
     for (const action of this.actions) {
       switch (action.action) {
-        case "buyIn":
+        case "buyIn": {
+          const min = action.min || 20;
+          const max = action.max || 100;
+          const bigBlind = action.bigBlind || 50;
+          const bbCount = this.betAmount >= min ? this.betAmount : min;
+          const stack = bbCount * bigBlind;
           result.push(html`
             <div class="amount-input">
               <input
                 type="range"
-                min="${action.min}"
-                max="${action.max}"
-                .value="${this.betAmount || action.min}"
+                min="${min}"
+                max="${max}"
+                .value="${bbCount}"
                 @input=${(e) => (this.betAmount = parseInt(e.target.value))}
               />
-              <span class="amount-display"
-                >$${this.betAmount || action.min}</span
-              >
+              <span class="amount-display">$${stack}</span>
               <button
                 class="buy-in"
                 @click=${() =>
                   this.sendAction({
                     action: "buyIn",
                     seat: this.seatIndex,
-                    amount: this.betAmount || action.min,
+                    amount: bbCount,
                   })}
               >
                 Buy In
@@ -175,6 +178,7 @@ class ActionPanel extends LitElement {
             </div>
           `);
           break;
+        }
 
         case "check":
           result.push(html`
