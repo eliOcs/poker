@@ -22,22 +22,24 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ```
 src/
-├── backend.js           # HTTP + WebSocket server
-├── poker/               # Game logic (pure functions)
-│   ├── game.js          # Game state initialization
-│   ├── actions.js       # Game actions (generators)
-│   ├── hand-rankings.js # Hand evaluation & comparison
-│   ├── player.js        # Player identity
-│   ├── player-view.js   # Server-side view filtering
-│   ├── seat.js          # Seat representation
-│   ├── deck.js          # Card deck management
-│   └── circular-array.js
+├── backend/             # Server-side code
+│   ├── index.js         # HTTP + WebSocket server
+│   ├── static-files.js  # Static file serving
+│   └── poker/           # Game logic (pure functions)
+│       ├── game.js          # Game state initialization
+│       ├── actions.js       # Game actions (generators)
+│       ├── hand-rankings.js # Hand evaluation & comparison
+│       ├── player.js        # Player identity
+│       ├── player-view.js   # Server-side view filtering
+│       ├── seat.js          # Seat representation
+│       ├── deck.js          # Card deck management
+│       └── circular-array.js
 └── frontend/            # Browser UI
     ├── index.html       # Entry point with importmap
     ├── index.js         # Lit component
     └── colors.js        # Base16 color theme
 
-test/poker/              # Tests mirror src/poker structure
+test/poker/              # Tests mirror src/backend/poker structure
 ```
 
 ## Communication Model
@@ -122,7 +124,7 @@ const nextIndex = (i) => (i + 1) % seats.length;
 
 ### Pure Game Logic
 
-Poker logic in `src/poker/` is pure and testable:
+Poker logic in `src/backend/poker/` is pure and testable:
 
 - No I/O or side effects
 - Takes game state, returns/mutates state

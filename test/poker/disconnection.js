@@ -1,9 +1,9 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../src/poker/game.js";
-import * as Seat from "../../src/poker/seat.js";
-import * as Betting from "../../src/poker/betting.js";
-import playerView from "../../src/poker/player-view.js";
+import * as Game from "../../src/backend/poker/game.js";
+import * as Seat from "../../src/backend/poker/seat.js";
+import * as Betting from "../../src/backend/poker/betting.js";
+import playerView from "../../src/backend/poker/player-view.js";
 
 describe("disconnection handling", () => {
   let game;

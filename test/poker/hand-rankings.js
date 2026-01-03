@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "assert";
-import handRankings from "../../src/poker/hand-rankings.js";
+import handRankings from "../../src/backend/poker/hand-rankings.js";
 
 describe("Hand Rankings", function () {
   describe("calculate", function () {
