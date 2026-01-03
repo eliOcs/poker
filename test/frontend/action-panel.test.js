@@ -345,8 +345,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitOutButton =
-        actionPanel.shadowRoot.querySelector("button.sit-out");
+      const sitOutButton = actionPanel.shadowRoot.querySelector(
+        'phg-button[variant="secondary"]',
+      );
       expect(sitOutButton).to.exist;
       expect(sitOutButton.textContent.trim()).to.equal("Sit Out");
     });
@@ -367,7 +368,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitInButton = actionPanel.shadowRoot.querySelector("button.sit-in");
+      const sitInButton = actionPanel.shadowRoot.querySelector(
+        'phg-button[variant="success"]',
+      );
       expect(sitInButton).to.exist;
       expect(sitInButton.textContent).to.include("Sit In");
     });
@@ -391,7 +394,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitInButton = actionPanel.shadowRoot.querySelector("button.sit-in");
+      const sitInButton = actionPanel.shadowRoot.querySelector(
+        'phg-button[variant="success"]',
+      );
       expect(sitInButton.textContent).to.include("$50");
     });
 
@@ -415,8 +420,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitOutButton =
-        actionPanel.shadowRoot.querySelector("button.sit-out");
+      const sitOutButton = actionPanel.shadowRoot.querySelector(
+        'phg-button[variant="secondary"]',
+      );
       sitOutButton.click();
 
       const sentMessage = element.socket.sent.find(
@@ -442,7 +448,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitInButton = actionPanel.shadowRoot.querySelector("button.sit-in");
+      const sitInButton = actionPanel.shadowRoot.querySelector(
+        'phg-button[variant="success"]',
+      );
       sitInButton.click();
 
       const sentMessage = element.socket.sent.find((m) => m.action === "sitIn");

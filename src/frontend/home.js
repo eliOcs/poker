@@ -1,5 +1,6 @@
 import * as COLORS from "./colors.js";
 import { html, css, unsafeCSS, LitElement } from "lit";
+import "./button.js";
 
 class Home extends LitElement {
   static get styles() {
@@ -35,39 +36,6 @@ class Home extends LitElement {
         max-width: 500px;
       }
 
-      button {
-        padding: 20px 40px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 1em;
-        cursor: pointer;
-        border: 4px solid ${unsafeCSS(COLORS.bgDark)};
-        background-color: ${unsafeCSS(COLORS.gold)};
-        color: ${unsafeCSS(COLORS.bgDark)};
-        box-shadow:
-          4px 4px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset -2px -2px 0 ${unsafeCSS(COLORS.orange)},
-          inset 2px 2px 0 ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      button:hover {
-        background-color: ${unsafeCSS(COLORS.orange)};
-      }
-
-      button:active {
-        box-shadow:
-          2px 2px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset 2px 2px 0 ${unsafeCSS(COLORS.orange)},
-          inset -2px -2px 0 ${unsafeCSS(COLORS.fgWhite)};
-        transform: translate(2px, 2px);
-      }
-
-      button:disabled {
-        background-color: ${unsafeCSS(COLORS.bgDisabled)};
-        color: ${unsafeCSS(COLORS.fgDark)};
-        cursor: not-allowed;
-        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
-      }
-
       @media (min-width: 600px) {
         .logo {
           width: 60%;
@@ -75,10 +43,6 @@ class Home extends LitElement {
 
         p {
           font-size: 0.8em;
-        }
-
-        button {
-          font-size: 1.1em;
         }
       }
     `;
@@ -117,9 +81,14 @@ class Home extends LitElement {
     return html`
       <img src="logo.png" alt="Pluton Poker" class="logo" />
       <p>Create a new game and invite your friends to play</p>
-      <button @click=${this.createGame} ?disabled=${this.creating}>
+      <phg-button
+        variant="primary"
+        size="large"
+        ?disabled=${this.creating}
+        @click=${this.createGame}
+      >
         ${this.creating ? "Creating..." : "Create Game"}
-      </button>
+      </phg-button>
     `;
   }
 }

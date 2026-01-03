@@ -4,6 +4,7 @@ import "./card.js";
 import "./board.js";
 import "./seat.js";
 import "./action-panel.js";
+import "./button.js";
 
 class Game extends LitElement {
   static get styles() {
@@ -228,24 +229,6 @@ class Game extends LitElement {
         justify-content: flex-end;
       }
 
-      #settings-modal button {
-        padding: 8px 16px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.5em;
-        cursor: pointer;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-      }
-
-      #settings-modal .save-btn {
-        background: ${unsafeCSS(COLORS.greenLight)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      #settings-modal .cancel-btn {
-        background: ${unsafeCSS(COLORS.bgMedium)};
-        color: ${unsafeCSS(COLORS.fgMedium)};
-      }
-
       #settings-overlay {
         position: absolute;
         top: 0;
@@ -422,12 +405,12 @@ class Game extends LitElement {
                   @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
                 />
                 <div class="buttons">
-                  <button class="cancel-btn" @click=${this.closeSettings}>
+                  <phg-button variant="secondary" @click=${this.closeSettings}>
                     Cancel
-                  </button>
-                  <button class="save-btn" @click=${this.saveSettings}>
+                  </phg-button>
+                  <phg-button variant="success" @click=${this.saveSettings}>
                     Save
-                  </button>
+                  </phg-button>
                 </div>
               </div>
             `

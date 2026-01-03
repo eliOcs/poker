@@ -1,5 +1,6 @@
 import * as COLORS from "./colors.js";
 import { html, css, unsafeCSS, LitElement } from "lit";
+import "./button.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
@@ -7,7 +8,8 @@ class ActionPanel extends LitElement {
       :host {
         display: flex;
         flex-direction: column;
-        align-items: stretch;
+        align-items: center;
+        justify-content: center;
         gap: 8px;
         padding: 10px;
         border: 4px solid ${unsafeCSS(COLORS.fgDark)};
@@ -17,6 +19,7 @@ class ActionPanel extends LitElement {
         box-sizing: border-box;
         min-width: 400px;
         max-width: 500px;
+        min-height: 100px;
         margin: 0 auto;
       }
 
@@ -68,7 +71,7 @@ class ActionPanel extends LitElement {
 
       button.call {
         background-color: ${unsafeCSS(COLORS.greenLight)};
-        color: ${unsafeCSS(COLORS.bgDark)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       button.call:hover {
@@ -96,7 +99,7 @@ class ActionPanel extends LitElement {
 
       button.all-in {
         background-color: ${unsafeCSS(COLORS.gold)};
-        color: ${unsafeCSS(COLORS.bgDark)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
       button.all-in:hover {
@@ -116,21 +119,6 @@ class ActionPanel extends LitElement {
         background-color: color-mix(
           in oklch,
           ${unsafeCSS(COLORS.purple)} 80%,
-          white
-        );
-      }
-
-      button.start {
-        background-color: ${unsafeCSS(COLORS.gold)};
-        color: ${unsafeCSS(COLORS.bgDark)};
-        font-size: 0.7em;
-        padding: 12px 24px;
-      }
-
-      button.start:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.gold)} 80%,
           white
         );
       }
@@ -287,53 +275,6 @@ class ActionPanel extends LitElement {
         justify-content: center;
       }
 
-      button.copy-link,
-      button.share {
-        background-color: ${unsafeCSS(COLORS.blue)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      button.copy-link:hover,
-      button.share:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.blue)} 80%,
-          white
-        );
-      }
-
-      button.copied {
-        background-color: ${unsafeCSS(COLORS.greenLight)};
-      }
-
-      button.sit-out {
-        background-color: ${unsafeCSS(COLORS.fgDark)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        font-size: 0.7em;
-        padding: 12px 24px;
-      }
-
-      button.sit-out:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.fgDark)} 80%,
-          white
-        );
-      }
-
-      button.sit-in {
-        background-color: ${unsafeCSS(COLORS.greenLight)};
-        color: ${unsafeCSS(COLORS.bgDark)};
-      }
-
-      button.sit-in:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.greenLight)} 80%,
-          white
-        );
-      }
-
       .waiting-actions {
         display: flex;
         gap: 8px;
@@ -420,17 +361,17 @@ class ActionPanel extends LitElement {
           <div class="waiting-panel">
             <span class="waiting">Waiting for players...</span>
             <div class="share-buttons">
-              <button
-                class="copy-link ${this.copied ? "copied" : ""}"
+              <phg-button
+                variant="${this.copied ? "success" : "action"}"
                 @click=${this.copyGameLink}
               >
                 ${this.copied ? "Copied!" : "Copy Link"}
-              </button>
+              </phg-button>
               ${this.canShare()
                 ? html`
-                    <button class="share" @click=${this.shareGameLink}>
+                    <phg-button variant="action" @click=${this.shareGameLink}>
                       Share
-                    </button>
+                    </phg-button>
                   `
                 : ""}
             </div>
@@ -514,13 +455,13 @@ class ActionPanel extends LitElement {
     if (actionMap.sitIn) {
       const cost = actionMap.sitIn.cost;
       return html`
-        <button
-          class="sit-in"
+        <phg-button
+          variant="success"
           @click=${() =>
             this.sendAction({ action: "sitIn", seat: this.seatIndex })}
         >
           ${cost > 0 ? `Sit In ($${cost} BB)` : "Sit In"}
-        </button>
+        </phg-button>
       `;
     }
 
@@ -530,23 +471,23 @@ class ActionPanel extends LitElement {
         <div class="waiting-actions">
           ${actionMap.sitOut
             ? html`
-                <button
-                  class="sit-out"
+                <phg-button
+                  variant="secondary"
                   @click=${() =>
                     this.sendAction({ action: "sitOut", seat: this.seatIndex })}
                 >
                   Sit Out
-                </button>
+                </phg-button>
               `
             : ""}
           ${actionMap.start
             ? html`
-                <button
-                  class="start"
+                <phg-button
+                  variant="primary"
                   @click=${() => this.sendAction({ action: "start" })}
                 >
                   Start Game
-                </button>
+                </phg-button>
               `
             : ""}
         </div>

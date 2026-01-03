@@ -35,7 +35,7 @@ describe("phg-seat", () => {
     for (const seat of seats) {
       await seat.updateComplete;
       if (seat.classList.contains("empty")) emptyCount++;
-      const sitBtn = seat.shadowRoot.querySelector("button");
+      const sitBtn = seat.shadowRoot.querySelector("phg-button");
       if (sitBtn && sitBtn.textContent.trim() === "Sit") sitButtonCount++;
     }
     expect(emptyCount).to.equal(6);
@@ -232,7 +232,7 @@ describe("phg-seat", () => {
 
     const seats = element.shadowRoot.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitButton = seats[0].shadowRoot.querySelector("button");
+    const sitButton = seats[0].shadowRoot.querySelector("phg-button");
     sitButton.click();
 
     expect(element.socket.sent.length).to.equal(1);
