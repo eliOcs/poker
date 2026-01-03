@@ -61,5 +61,5 @@ jobs:
           KAMAL_REGISTRY_PASSWORD: ${{ steps.ecr-password.outputs.password }}
         run: |
           gem install kamal
-          rm -f .kamal/secrets
+          echo "KAMAL_REGISTRY_PASSWORD=$KAMAL_REGISTRY_PASSWORD" > .kamal/secrets
           kamal deploy
