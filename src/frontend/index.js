@@ -331,6 +331,16 @@ class Game extends LitElement {
     return this.game.seats.some((s) => s.isCurrentPlayer && !s.empty);
   }
 
+  getWinningCards() {
+    // Collect winning cards from all winners (for highlighting on the board)
+    for (const seat of this.game.seats) {
+      if (!seat.empty && seat.winningCards) {
+        return seat.winningCards;
+      }
+    }
+    return null;
+  }
+
   render() {
     if (!this.game) {
       return html`<p>Loading ...</p>`;
@@ -350,6 +360,7 @@ class Game extends LitElement {
             .hand=${this.game.hand}
             .countdown=${this.game.countdown}
             .winnerMessage=${this.game.winnerMessage}
+            .winningCards=${this.getWinningCards()}
           ></phg-board>
           <div id="seats">
             ${this.game.seats.map(

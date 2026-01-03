@@ -153,4 +153,199 @@ describe("Player View", function () {
       assert.equal(view.seats[1].cards[0].rank, "queen");
     });
   });
+
+  describe("handRank calculation", function () {
+    it("calculates handRank for 7 cards (2 hole + 5 board)", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+      ];
+      g.board = {
+        cards: [
+          { rank: "ace", suit: "clubs" },
+          { rank: "king", suit: "diamonds" },
+          { rank: "9", suit: "clubs" },
+          { rank: "5", suit: "hearts" },
+          { rank: "2", suit: "spades" },
+        ],
+      };
+
+      const view = playerView(g, p1);
+
+      assert.ok(view.seats[0].handRank);
+      assert.ok(view.seats[0].handRank.includes("Three"));
+      assert.ok(view.seats[0].handRank.includes("A"));
+    });
+
+    it("calculates flush correctly with 7 cards", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "ace", suit: "hearts" },
+        { rank: "2", suit: "hearts" },
+      ];
+      g.board = {
+        cards: [
+          { rank: "king", suit: "hearts" },
+          { rank: "queen", suit: "hearts" },
+          { rank: "jack", suit: "hearts" },
+          { rank: "5", suit: "spades" },
+          { rank: "3", suit: "diamonds" },
+        ],
+      };
+
+      const view = playerView(g, p1);
+
+      assert.ok(view.seats[0].handRank);
+      assert.ok(view.seats[0].handRank.includes("Flush"));
+    });
+
+    it("calculates straight correctly with 7 cards", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "9", suit: "spades" },
+        { rank: "8", suit: "hearts" },
+      ];
+      g.board = {
+        cards: [
+          { rank: "7", suit: "clubs" },
+          { rank: "6", suit: "diamonds" },
+          { rank: "5", suit: "hearts" },
+          { rank: "2", suit: "spades" },
+          { rank: "ace", suit: "diamonds" },
+        ],
+      };
+
+      const view = playerView(g, p1);
+
+      assert.ok(view.seats[0].handRank);
+      assert.ok(view.seats[0].handRank.includes("Straight"));
+    });
+
+    it("calculates full house correctly with 7 cards", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "king", suit: "spades" },
+        { rank: "king", suit: "hearts" },
+      ];
+      g.board = {
+        cards: [
+          { rank: "king", suit: "clubs" },
+          { rank: "queen", suit: "diamonds" },
+          { rank: "queen", suit: "hearts" },
+          { rank: "5", suit: "spades" },
+          { rank: "3", suit: "diamonds" },
+        ],
+      };
+
+      const view = playerView(g, p1);
+
+      assert.ok(view.seats[0].handRank);
+      assert.ok(view.seats[0].handRank.includes("Full House"));
+    });
+
+    it("does not calculate handRank for folded players", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+      ];
+      g.seats[0].folded = true;
+      g.board = {
+        cards: [
+          { rank: "king", suit: "diamonds" },
+          { rank: "queen", suit: "clubs" },
+          { rank: "jack", suit: "hearts" },
+          { rank: "10", suit: "spades" },
+          { rank: "9", suit: "clubs" },
+        ],
+      };
+
+      const view = playerView(g, p1);
+
+      assert.equal(view.seats[0].handRank, null);
+    });
+  });
+
+  describe("winningCards", function () {
+    it("includes winningCards in view for winning seats", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+      ];
+      g.seats[0].handResult = 100;
+      g.seats[0].winningCards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+      ];
+
+      const view = playerView(g, p1);
+
+      assert.ok(view.seats[0].winningCards);
+      assert.equal(view.seats[0].winningCards.length, 5);
+    });
+
+    it("does not include winningCards for losing seats", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+      ];
+      g.seats[0].handResult = 100;
+      g.seats[0].winningCards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "ace", suit: "hearts" },
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+      ];
+
+      g.seats[1].cards = [
+        { rank: "2", suit: "clubs" },
+        { rank: "3", suit: "diamonds" },
+      ];
+      g.seats[1].handResult = -100;
+      g.seats[1].winningCards = null;
+
+      const view = playerView(g, p1);
+
+      assert.equal(view.seats[1].winningCards, null);
+    });
+  });
 });

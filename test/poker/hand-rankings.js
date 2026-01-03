@@ -324,18 +324,39 @@ describe("Hand Rankings", function () {
 
   describe("bestCombination", function () {
     it("should return the best hand of all the possible combinations", function () {
-      assert.deepEqual(
-        handRankings.bestCombination([
-          { suit: "clubs", rank: "queen" },
-          { suit: "diamonds", rank: "ace" },
-          { suit: "diamonds", rank: "9" },
-          { suit: "spades", rank: "2" },
-          { suit: "diamonds", rank: "7" },
-          { suit: "spades", rank: "5" },
-          { suit: "clubs", rank: "7" },
-        ]),
-        { kickers: ["ace", "queen", "9"], name: "pair", of: "7" },
-      );
+      const result = handRankings.bestCombination([
+        { suit: "clubs", rank: "queen" },
+        { suit: "diamonds", rank: "ace" },
+        { suit: "diamonds", rank: "9" },
+        { suit: "spades", rank: "2" },
+        { suit: "diamonds", rank: "7" },
+        { suit: "spades", rank: "5" },
+        { suit: "clubs", rank: "7" },
+      ]);
+      assert.deepEqual(result.hand, {
+        kickers: ["ace", "queen", "9"],
+        name: "pair",
+        of: "7",
+      });
+      assert.equal(result.cards.length, 5);
+    });
+
+    it("should return the cards that form the best hand", function () {
+      const result = handRankings.bestCombination([
+        { suit: "spades", rank: "ace" },
+        { suit: "hearts", rank: "ace" },
+        { suit: "diamonds", rank: "king" },
+        { suit: "clubs", rank: "queen" },
+        { suit: "hearts", rank: "9" },
+        { suit: "spades", rank: "5" },
+        { suit: "clubs", rank: "2" },
+      ]);
+      assert.equal(result.hand.name, "pair");
+      assert.equal(result.hand.of, "ace");
+      assert.equal(result.cards.length, 5);
+      // Verify the two aces are in the winning cards
+      const aces = result.cards.filter((c) => c.rank === "ace");
+      assert.equal(aces.length, 2);
     });
   });
 });

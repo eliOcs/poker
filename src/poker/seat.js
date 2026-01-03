@@ -28,6 +28,7 @@
  * @property {boolean} disconnected - Whether player's WebSocket is disconnected
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
  * @property {number|null} handResult - Result of the hand (positive for win, negative for loss)
+ * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  */
 
 /**
@@ -63,6 +64,7 @@ export function occupied(player, stack = 0) {
     disconnected: false,
     lastAction: null,
     handResult: null,
+    winningCards: null,
   };
 }
 
@@ -78,6 +80,7 @@ export function resetForNewHand(seat) {
   seat.allIn = false;
   seat.lastAction = null;
   seat.handResult = null;
+  seat.winningCards = null;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;

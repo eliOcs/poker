@@ -82,7 +82,14 @@ class Board extends LitElement {
       hand: { type: Object },
       countdown: { type: Number },
       winnerMessage: { type: Object },
+      winningCards: { type: Array },
     };
+  }
+
+  isWinningCard(card) {
+    return this.winningCards?.some(
+      (wc) => wc.rank === card.rank && wc.suit === card.suit,
+    );
   }
 
   render() {
@@ -93,7 +100,13 @@ class Board extends LitElement {
       return html`
         <div class="board-info">
           <div class="community-cards">
-            ${cards.map((card) => html`<phg-card .card=${card}></phg-card>`)}
+            ${cards.map(
+              (card) =>
+                html`<phg-card
+                  .card=${card}
+                  ?winning=${this.isWinningCard(card)}
+                ></phg-card>`,
+            )}
           </div>
           <div class="winner-message">
             <div class="winner-name">
@@ -126,7 +139,13 @@ class Board extends LitElement {
           ? html`<div class="phase">${this.hand.phase}</div>`
           : html`<div class="phase">Waiting</div>`}
         <div class="community-cards">
-          ${cards.map((card) => html`<phg-card .card=${card}></phg-card>`)}
+          ${cards.map(
+            (card) =>
+              html`<phg-card
+                .card=${card}
+                ?winning=${this.isWinningCard(card)}
+              ></phg-card>`,
+          )}
         </div>
         ${this.hand?.pot !== undefined
           ? html`<div class="pot">Pot: $${this.hand.pot}</div>`

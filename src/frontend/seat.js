@@ -219,9 +219,15 @@ class Seat extends LitElement {
         ? html`<div class="hand-rank">${this.seat.handRank}</div>`
         : ""}
       <div class="hole-cards">
-        ${this.seat.cards?.map(
-          (card) => html`<phg-card .card=${card}></phg-card>`,
-        ) || ""}
+        ${this.seat.cards?.map((card) => {
+          const isWinning = this.seat.winningCards?.some(
+            (wc) => wc.rank === card.rank && wc.suit === card.suit,
+          );
+          return html`<phg-card
+            .card=${card}
+            ?winning=${isWinning}
+          ></phg-card>`;
+        }) || ""}
       </div>
     `;
   }

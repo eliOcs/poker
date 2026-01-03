@@ -113,4 +113,90 @@ describe("phg-card", () => {
     expect(cardTexts.some((t) => t.includes("J"))).to.be.true;
     expect(cardTexts.some((t) => t.includes("K"))).to.be.true;
   });
+
+  it("applies winning class when winning prop is true", async () => {
+    const winningCards = [
+      { rank: "ace", suit: "spades" },
+      { rank: "ace", suit: "hearts" },
+      { rank: "ace", suit: "clubs" },
+      { rank: "king", suit: "diamonds" },
+      { rank: "queen", suit: "clubs" },
+    ];
+    const gameWithWinner = createMockGameState({
+      hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+      board: {
+        cards: [
+          { rank: "ace", suit: "clubs" },
+          { rank: "king", suit: "diamonds" },
+          { rank: "queen", suit: "clubs" },
+          { rank: "jack", suit: "spades" },
+          { rank: "10", suit: "hearts" },
+        ],
+      },
+      winnerMessage: {
+        playerName: "Player 1",
+        handRank: "Three of a Kind",
+        amount: 100,
+      },
+      seats: [
+        {
+          empty: false,
+          player: { id: "test-player-123", name: null },
+          stack: 1100,
+          bet: 0,
+          folded: false,
+          allIn: false,
+          sittingOut: false,
+          disconnected: false,
+          cards: [
+            { rank: "ace", suit: "spades" },
+            { rank: "ace", suit: "hearts" },
+          ],
+          actions: [],
+          isCurrentPlayer: true,
+          isActing: false,
+          lastAction: null,
+          handResult: 100,
+          handRank: "Three of a Kind, Aces",
+          winningCards,
+        },
+        { empty: true, actions: [] },
+        { empty: true, actions: [] },
+        { empty: true, actions: [] },
+        { empty: true, actions: [] },
+        { empty: true, actions: [] },
+      ],
+    });
+    element.game = gameWithWinner;
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const playerSeat = seats[0];
+    await playerSeat.updateComplete;
+
+    const cardElements = playerSeat.shadowRoot.querySelectorAll("phg-card");
+    let foundWinning = false;
+    for (const cardEl of cardElements) {
+      await cardEl.updateComplete;
+      const winningCard = cardEl.shadowRoot.querySelector(".card.winning");
+      if (winningCard) foundWinning = true;
+    }
+    expect(foundWinning).to.be.true;
+  });
+
+  it("does not apply winning class when winning prop is false", async () => {
+    element.game = createMockGameAtFlop();
+    await element.updateComplete;
+
+    const board = element.shadowRoot.querySelector("phg-board");
+    await board.updateComplete;
+    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+
+    let foundWinning = false;
+    for (const cardEl of cardElements) {
+      const winningCard = cardEl.shadowRoot.querySelector(".card.winning");
+      if (winningCard) foundWinning = true;
+    }
+    expect(foundWinning).to.be.false;
+  });
 });

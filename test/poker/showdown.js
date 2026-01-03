@@ -28,9 +28,10 @@ describe("showdown", () => {
         { rank: "3", suit: "diamonds" },
       ];
 
-      const hand = Showdown.evaluateHand(seat, board);
+      const result = Showdown.evaluateHand(seat, board);
 
-      assert.equal(hand.name, "royal flush");
+      assert.equal(result.hand.name, "royal flush");
+      assert.equal(result.cards.length, 5);
     });
 
     it("should return null for empty cards", () => {
@@ -39,9 +40,9 @@ describe("showdown", () => {
         cards: [],
       };
 
-      const hand = Showdown.evaluateHand(seat, []);
+      const result = Showdown.evaluateHand(seat, []);
 
-      assert.equal(hand, null);
+      assert.equal(result, null);
     });
   });
 
@@ -504,6 +505,86 @@ describe("showdown", () => {
 
       assert.equal(game.seats[0].lastAction, null);
       assert.equal(game.seats[2].lastAction, null);
+    });
+
+    it("should set winningCards for winner", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "ace", suit: "spades" },
+          { rank: "ace", suit: "hearts" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "diamonds" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.board.cards = [
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "hearts" },
+      ];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      const gen = Showdown.showdown(game);
+      let result = gen.next();
+      while (!result.done) {
+        result = gen.next();
+      }
+
+      // Winner (seat 0) should have winningCards set
+      assert.ok(game.seats[0].winningCards);
+      assert.equal(game.seats[0].winningCards.length, 5);
+      // Verify all 4 aces are in the winning cards
+      const aces = game.seats[0].winningCards.filter((c) => c.rank === "ace");
+      assert.equal(aces.length, 4);
+    });
+
+    it("should not set winningCards for loser", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: [
+          { rank: "ace", suit: "spades" },
+          { rank: "ace", suit: "hearts" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: [
+          { rank: "2", suit: "clubs" },
+          { rank: "3", suit: "diamonds" },
+        ],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.board.cards = [
+        { rank: "ace", suit: "clubs" },
+        { rank: "ace", suit: "diamonds" },
+        { rank: "king", suit: "hearts" },
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "hearts" },
+      ];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      const gen = Showdown.showdown(game);
+      let result = gen.next();
+      while (!result.done) {
+        result = gen.next();
+      }
+
+      // Loser (seat 2) should NOT have winningCards set
+      assert.equal(game.seats[2].winningCards, null);
     });
   });
 });
