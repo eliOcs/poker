@@ -14,6 +14,8 @@ export const mockOccupiedSeat = {
   bet: 50,
   folded: false,
   allIn: false,
+  sittingOut: false,
+  disconnected: false,
   cards: [
     { rank: "ace", suit: "spades" },
     { rank: "king", suit: "hearts" },
@@ -56,6 +58,12 @@ export const mockSittingOutSeat = {
   sittingOut: true,
   cards: [],
   actions: [{ action: "sitIn", cost: 50 }],
+  isActing: false,
+};
+
+export const mockDisconnectedSeat = {
+  ...mockOccupiedSeat,
+  disconnected: true,
   isActing: false,
 };
 

@@ -8,6 +8,7 @@ import {
   mockAllInSeat,
   mockEmptySeat,
   mockSittingOutSeat,
+  mockDisconnectedSeat,
 } from "./setup.js";
 
 describe("phg-seat", () => {
@@ -428,5 +429,82 @@ describe("phg-seat", () => {
     expect(lastAction).to.not.exist;
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("SITTING OUT");
+  });
+
+  it("applies .disconnected class when seat.disconnected is true", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockDisconnectedSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    expect(seats[0].classList.contains("disconnected")).to.be.true;
+  });
+
+  it("displays DISCONNECTED status label when disconnected is true", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockDisconnectedSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("DISCONNECTED");
+  });
+
+  it("displays DISCONNECTED instead of SITTING OUT when both are true", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockDisconnectedSeat, sittingOut: true },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("DISCONNECTED");
+    expect(statusLabel.textContent).to.not.include("SITTING OUT");
+  });
+
+  it("does not apply .disconnected class when disconnected is false", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockOccupiedSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    expect(seats[0].classList.contains("disconnected")).to.be.false;
   });
 });

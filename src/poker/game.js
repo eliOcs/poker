@@ -51,6 +51,8 @@ import * as Seat from "./seat.js";
  * @property {number|null} countdown - Countdown seconds until hand starts (null if not counting)
  * @property {NodeJS.Timeout|null} countdownTimer - Timer ID for countdown interval
  * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
+ * @property {NodeJS.Timeout|null} disconnectTimer - Timer for auto-action on disconnected player
+ * @property {number} disconnectTimerSeat - Seat index for disconnect timer (-1 if none)
  */
 
 /**
@@ -99,5 +101,7 @@ export function create({
     countdown: null,
     countdownTimer: null,
     winnerMessage: null,
+    disconnectTimer: null,
+    disconnectTimerSeat: -1,
   };
 }

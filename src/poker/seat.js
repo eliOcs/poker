@@ -24,6 +24,7 @@
  * @property {boolean} allIn - Is all-in
  * @property {boolean} sittingOut - Is sitting out (not participating)
  * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
+ * @property {boolean} disconnected - Whether player's WebSocket is disconnected
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
  * @property {number|null} handResult - Result of the hand (positive for win, negative for loss)
  */
@@ -58,6 +59,7 @@ export function occupied(player, stack = 0) {
     allIn: false,
     sittingOut: false,
     missedBigBlind: false,
+    disconnected: false,
     lastAction: null,
     handResult: null,
   };

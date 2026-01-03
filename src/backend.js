@@ -209,7 +209,8 @@ function processGameFlow(game, gameId) {
 
     // Check if betting round is complete
     if (game.hand.actingSeat !== -1) {
-      // Someone still needs to act
+      // Someone still needs to act - check if they're disconnected
+      checkDisconnectedActingPlayer(game, gameId);
       return;
     }
 
@@ -266,6 +267,9 @@ function processGameFlow(game, gameId) {
  * @param {string} gameId
  */
 function autoStartNextHand(game, gameId) {
+  // Sit out any disconnected players
+  sitOutDisconnectedPlayers(game);
+
   if (PokerActions.countPlayersWithChips(game) >= 2) {
     game.countdown = 3; // Shorter countdown between hands
     startCountdownTimer(game, gameId);
@@ -276,6 +280,90 @@ function autoStartNextHand(game, gameId) {
 const TIMER_INTERVAL = process.env.TIMER_SPEED
   ? Math.floor(1000 / parseInt(process.env.TIMER_SPEED, 10))
   : 1000;
+
+// Disconnect action timeout in ms (5 seconds, can be sped up for tests)
+const DISCONNECT_TIMEOUT = process.env.TIMER_SPEED
+  ? Math.floor(5000 / parseInt(process.env.TIMER_SPEED, 10))
+  : 5000;
+
+/**
+ * Finds the seat index for a player in a game
+ * @param {Game} game
+ * @param {PlayerType} player
+ * @returns {number} - Seat index or -1 if not found
+ */
+function findPlayerSeatIndex(game, player) {
+  return game.seats.findIndex(
+    (seat) => !seat.empty && seat.player?.id === player.id,
+  );
+}
+
+/**
+ * Starts a timer to auto-action for a disconnected player
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {number} seatIndex
+ */
+function startDisconnectTimer(game, gameId, seatIndex) {
+  // Clear any existing timer
+  if (game.disconnectTimer) {
+    clearTimeout(game.disconnectTimer);
+  }
+
+  game.disconnectTimerSeat = seatIndex;
+  game.disconnectTimer = setTimeout(() => {
+    game.disconnectTimer = null;
+    game.disconnectTimerSeat = -1;
+
+    // Verify it's still this player's turn and they're still disconnected
+    const seat = game.seats[seatIndex];
+    if (
+      game.hand?.actingSeat !== seatIndex ||
+      seat.empty ||
+      !seat.disconnected
+    ) {
+      return;
+    }
+
+    // Auto check/fold: check if possible, otherwise fold
+    if (seat.bet === game.hand.currentBet) {
+      PokerActions.check(game, { seat: seatIndex });
+    } else {
+      PokerActions.fold(game, { seat: seatIndex });
+    }
+
+    // Process game flow after the auto-action
+    processGameFlow(game, gameId);
+    broadcastGameState(gameId);
+  }, DISCONNECT_TIMEOUT);
+}
+
+/**
+ * Checks if the acting player is disconnected and starts timer if so
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function checkDisconnectedActingPlayer(game, gameId) {
+  const actingSeat = game.hand?.actingSeat;
+  if (actingSeat === -1 || actingSeat === undefined) return;
+
+  const seat = game.seats[actingSeat];
+  if (!seat.empty && seat.disconnected) {
+    startDisconnectTimer(game, gameId, actingSeat);
+  }
+}
+
+/**
+ * Sits out all disconnected players at end of hand
+ * @param {Game} game
+ */
+function sitOutDisconnectedPlayers(game) {
+  for (const seat of game.seats) {
+    if (!seat.empty && seat.disconnected && !seat.sittingOut) {
+      seat.sittingOut = true;
+    }
+  }
+}
 
 /**
  * Starts the countdown timer for a specific game
@@ -320,6 +408,9 @@ function startCountdownTimer(game, gameId) {
       Betting.startBettingRound(game, "preflop");
       // Set currentBet to big blind (blinds already posted)
       game.hand.currentBet = game.blinds.big;
+
+      // Check if first to act is disconnected
+      checkDisconnectedActingPlayer(game, gameId);
     }
 
     broadcastGameState(gameId);
@@ -331,8 +422,52 @@ wss.on(
   async function connection(ws, request, player, game, gameId) {
     clientConnections.set(ws, { player, gameId });
 
+    // Mark player as connected if they have a seat
+    const seatIndex = findPlayerSeatIndex(game, player);
+    if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
+      const seat =
+        /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+          game.seats[seatIndex]
+        );
+      seat.disconnected = false;
+
+      // Cancel any pending disconnect timer for this seat
+      if (game.disconnectTimer && game.disconnectTimerSeat === seatIndex) {
+        clearTimeout(game.disconnectTimer);
+        game.disconnectTimer = null;
+        game.disconnectTimerSeat = -1;
+      }
+    }
+
     ws.on("close", () => {
+      const conn = clientConnections.get(ws);
       clientConnections.delete(ws);
+
+      if (!conn) return;
+
+      const { player: closedPlayer, gameId: closedGameId } = conn;
+      const closedGame = games.get(closedGameId);
+      if (!closedGame) return;
+
+      const closedSeatIndex = findPlayerSeatIndex(closedGame, closedPlayer);
+      if (closedSeatIndex === -1 || closedGame.seats[closedSeatIndex].empty)
+        return;
+
+      const closedSeat =
+        /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+          closedGame.seats[closedSeatIndex]
+        );
+
+      // Mark seat as disconnected
+      closedSeat.disconnected = true;
+
+      // If it's this player's turn, start disconnect timer
+      if (closedGame.hand?.actingSeat === closedSeatIndex) {
+        startDisconnectTimer(closedGame, closedGameId, closedSeatIndex);
+      }
+
+      // Broadcast updated state (shows DISCONNECTED status)
+      broadcastGameState(closedGameId);
     });
 
     ws.on("message", function (rawMessage) {
