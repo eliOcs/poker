@@ -1,6 +1,7 @@
 import * as COLORS from "./colors.js";
 import { html, css, unsafeCSS, LitElement } from "lit";
 import "./card.js";
+import "./button.js";
 
 class Seat extends LitElement {
   static get styles() {
@@ -54,36 +55,6 @@ class Seat extends LitElement {
 
       :host(.current-player) {
         border-color: ${unsafeCSS(COLORS.magenta)};
-      }
-
-      button {
-        padding: 10px 20px;
-        font-size: 0.9em;
-        font-family: "Press Start 2P", monospace;
-        cursor: pointer;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        background-color: ${unsafeCSS(COLORS.purple)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        box-shadow:
-          3px 3px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-      }
-
-      button:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.purple)} 80%,
-          white
-        );
-      }
-
-      button:active {
-        box-shadow:
-          1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-        transform: translate(2px, 2px);
       }
 
       .player-name {
@@ -206,7 +177,7 @@ class Seat extends LitElement {
       return html`
         <span class="empty-label">Empty</span>
         ${sitAction && this.showSitAction
-          ? html`<button @click=${this.handleSit}>Sit</button>`
+          ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
           : ""}
       `;
     }

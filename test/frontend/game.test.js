@@ -164,7 +164,9 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const cancelBtn = element.shadowRoot.querySelector(".cancel-btn");
+      const cancelBtn = element.shadowRoot.querySelector(
+        'phg-button[variant="secondary"]',
+      );
       cancelBtn.click();
       await element.updateComplete;
 
@@ -202,7 +204,9 @@ describe("phg-game", () => {
       const input = element.shadowRoot.querySelector("#name-input");
       input.value = "TestPlayer";
 
-      const saveBtn = element.shadowRoot.querySelector(".save-btn");
+      const saveBtn = element.shadowRoot.querySelector(
+        'phg-button[variant="success"]',
+      );
       saveBtn.click();
 
       expect(element.socket.sent.length).to.equal(1);
@@ -215,7 +219,9 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const saveBtn = element.shadowRoot.querySelector(".save-btn");
+      const saveBtn = element.shadowRoot.querySelector(
+        'phg-button[variant="success"]',
+      );
       saveBtn.click();
       await element.updateComplete;
 
