@@ -10,18 +10,21 @@ import * as Seat from "./seat.js";
  * @typedef {import('./pots.js').Pot} Pot
  * @typedef {import('./pots.js').Award} Award
  * @typedef {import('./hand-rankings.js').EvaluatedHand} EvaluatedHand
+ * @typedef {import('./hand-rankings.js').BestHandResult} BestHandResult
  */
 
 /**
  * @typedef {object} HandResult
  * @property {number} seat - Seat index
  * @property {EvaluatedHand} hand - Evaluated hand from hand-rankings
+ * @property {Card[]} cards - The 5 cards that form this hand
  */
 
 /**
  * @typedef {object} WinnerResult
  * @property {number[]} winners - Seat indices of winners
  * @property {EvaluatedHand|null} winningHand - The winning hand (for display)
+ * @property {Card[]|null} winningCards - The 5 cards that form the winning hand
  */
 
 /**
@@ -29,6 +32,7 @@ import * as Seat from "./seat.js";
  * @property {number} potAmount - Amount in this pot
  * @property {number[]} winners - Seat indices of winners
  * @property {EvaluatedHand|null} winningHand - The winning hand (for display)
+ * @property {Card[]|null} winningCards - The 5 cards that form the winning hand
  * @property {Award[]} awards - Array of { seat, amount } for each winner
  */
 
@@ -42,7 +46,7 @@ import * as Seat from "./seat.js";
  * Evaluates the best hand for a seat given the board
  * @param {OccupiedSeat} seat - Seat object with cards
  * @param {Card[]} boardCards - Community cards
- * @returns {EvaluatedHand|null} - Evaluated hand or null if no cards
+ * @returns {BestHandResult|null} - Evaluated hand with cards or null if no cards
  */
 export function evaluateHand(seat, boardCards) {
   if (!seat.cards || seat.cards.length === 0) {
@@ -65,9 +69,9 @@ export function getActiveHands(game) {
     const seat = game.seats[i];
     if (Seat.isActive(seat)) {
       const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
-      const hand = evaluateHand(occupiedSeat, game.board.cards);
-      if (hand) {
-        hands.push({ seat: i, hand });
+      const result = evaluateHand(occupiedSeat, game.board.cards);
+      if (result) {
+        hands.push({ seat: i, hand: result.hand, cards: result.cards });
       }
     }
   }
@@ -79,18 +83,22 @@ export function getActiveHands(game) {
  * Determines winners for a specific pot
  * @param {Pot} pot - Pot with eligibleSeats
  * @param {HandResult[]} hands - All evaluated hands
- * @returns {WinnerResult} - { winners: number[], winningHand: EvaluatedHand|null }
+ * @returns {WinnerResult} - { winners: number[], winningHand, winningCards }
  */
 export function determineWinnersForPot(pot, hands) {
   // Filter to only eligible players
   const eligible = hands.filter((h) => pot.eligibleSeats.includes(h.seat));
 
   if (eligible.length === 0) {
-    return { winners: [], winningHand: null };
+    return { winners: [], winningHand: null, winningCards: null };
   }
 
   if (eligible.length === 1) {
-    return { winners: [eligible[0].seat], winningHand: eligible[0].hand };
+    return {
+      winners: [eligible[0].seat],
+      winningHand: eligible[0].hand,
+      winningCards: eligible[0].cards,
+    };
   }
 
   // Sort by hand strength (best first - compare returns negative if first is better)
@@ -98,6 +106,7 @@ export function determineWinnersForPot(pot, hands) {
 
   const winners = [eligible[0].seat];
   const winningHand = eligible[0].hand;
+  const winningCards = eligible[0].cards;
 
   // Find all players with equal hands (ties)
   for (let i = 1; i < eligible.length; i++) {
@@ -108,7 +117,7 @@ export function determineWinnersForPot(pot, hands) {
     }
   }
 
-  return { winners, winningHand };
+  return { winners, winningHand, winningCards };
 }
 
 /**
@@ -130,7 +139,10 @@ export function runShowdown(game) {
   const results = [];
 
   for (const pot of pots) {
-    const { winners, winningHand } = determineWinnersForPot(pot, hands);
+    const { winners, winningHand, winningCards } = determineWinnersForPot(
+      pot,
+      hands,
+    );
 
     // Award the pot
     const awards = Pots.awardPot(pot, winners, game.seats);
@@ -139,6 +151,7 @@ export function runShowdown(game) {
       potAmount: pot.amount,
       winners,
       winningHand,
+      winningCards,
       awards,
     });
   }
@@ -171,11 +184,22 @@ export function* showdown(game) {
   // Run showdown and get results
   const results = runShowdown(game);
 
+  // Track winning cards for each winner
+  const winningCardsMap = new Map();
+
   // Yield after each pot is awarded (for animation)
   for (const result of results) {
     // Track winnings for each award
     for (const award of result.awards) {
       winnings.set(award.seat, (winnings.get(award.seat) || 0) + award.amount);
+    }
+    // Store winning cards for winners (only if not already set)
+    if (result.winningCards) {
+      for (const winner of result.winners) {
+        if (!winningCardsMap.has(winner)) {
+          winningCardsMap.set(winner, result.winningCards);
+        }
+      }
     }
     yield result;
   }
@@ -187,6 +211,8 @@ export function* showdown(game) {
       const won = winnings.get(i) || 0;
       seat.handResult = won - seat.totalInvested;
       seat.lastAction = null;
+      // Set winning cards for winners
+      seat.winningCards = winningCardsMap.get(i) || null;
     }
   }
 

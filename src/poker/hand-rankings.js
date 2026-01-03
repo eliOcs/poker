@@ -81,6 +81,12 @@
  * @typedef {RoyalFlush|StraightFlush|FourOfAKind|FullHouse|Flush|Straight|ThreeOfAKind|TwoPair|Pair|HighCard} EvaluatedHand
  */
 
+/**
+ * @typedef {object} BestHandResult
+ * @property {EvaluatedHand} hand - The evaluated hand
+ * @property {Card[]} cards - The 5 cards that form this hand
+ */
+
 const last = 4;
 const first = 0;
 
@@ -300,10 +306,11 @@ const compare = {
     "4 of a kind": 7,
     "full house": 6,
     flush: 5,
-    "3 of a kind": 4,
-    "2 pair": 3,
-    pair: 2,
-    "high card": 1,
+    straight: 4,
+    "3 of a kind": 3,
+    "2 pair": 2,
+    pair: 1,
+    "high card": 0,
   },
 
   any: function (a, b) {
@@ -337,6 +344,8 @@ const compare = {
   },
 
   flush: (a, b) => getRankValue(b.high) - getRankValue(a.high),
+
+  straight: (a, b) => getRankValue(b.to) - getRankValue(a.to),
 
   "3 of a kind": function (a, b) {
     const tripletComparison = getRankValue(b.of) - getRankValue(a.of);
@@ -431,10 +440,16 @@ function combinations(array, k) {
 /**
  * Finds the best 5-card hand from 7 cards
  * @param {Card[]} cards - 7 cards (hole + board)
- * @returns {EvaluatedHand}
+ * @returns {BestHandResult}
  */
 function bestCombination(cards) {
-  return combinations(cards, 5).map(calculate).sort(compare.any)[0];
+  const combos = combinations(cards, 5);
+  const evaluated = combos.map((combo) => ({
+    hand: calculate(combo),
+    cards: combo,
+  }));
+  evaluated.sort((a, b) => compare.any(a.hand, b.hand));
+  return evaluated[0];
 }
 
 /**

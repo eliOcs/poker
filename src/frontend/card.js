@@ -87,12 +87,18 @@ class Card extends LitElement {
         border-color: ${unsafeCSS(COLORS.bgDisabled)};
         border-style: dashed;
       }
+
+      .card.winning {
+        border-color: ${unsafeCSS(COLORS.gold)};
+        box-shadow: 0 0 6px ${unsafeCSS(COLORS.gold)};
+      }
     `;
   }
 
   static get properties() {
     return {
       card: { type: Object },
+      winning: { type: Boolean },
     };
   }
 
@@ -104,8 +110,9 @@ class Card extends LitElement {
       return html`<span class="card hidden"></span>`;
     }
     const isRed = this.card.suit === "hearts" || this.card.suit === "diamonds";
+    const classes = `card ${isRed ? "red" : "black"} ${this.winning ? "winning" : ""}`;
     return html`
-      <span class="card ${isRed ? "red" : "black"}">
+      <span class="${classes}">
         <span class="rank">${RANK_DISPLAY[this.card.rank]}</span>
         <span class="suit">${SUIT_SYMBOLS[this.card.suit]}</span>
       </span>

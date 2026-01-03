@@ -109,6 +109,7 @@ import HandRankings from "./hand-rankings.js";
  * @property {string|null} lastAction
  * @property {number|null} handResult
  * @property {string|null} handRank
+ * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  */
 
 /**
@@ -203,8 +204,8 @@ function calculateHandRank(holeCards, boardCards) {
 
   // Need at least 5 cards for a full hand evaluation
   if (allCards.length >= 5) {
-    const hand = HandRankings.bestCombination(allCards);
-    return HandRankings.formatHand(hand);
+    const result = HandRankings.bestCombination(allCards);
+    return HandRankings.formatHand(result.hand);
   }
 
   // For just hole cards (preflop), check for pair or high card
@@ -400,6 +401,7 @@ export default function playerView(game, player) {
         lastAction: seat.lastAction,
         handResult: seat.handResult,
         handRank,
+        winningCards: seat.winningCards,
       };
     }),
   };
