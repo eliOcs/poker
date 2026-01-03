@@ -52,8 +52,13 @@ jobs:
         with:
           ruby-version: '3.3'
 
+      - name: Get ECR password
+        id: ecr-password
+        run: echo "password=$(aws ecr get-login-password --region eu-central-1)" >> $GITHUB_OUTPUT
+
       - name: Deploy with Kamal
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ steps.ecr-password.outputs.password }}
         run: |
           gem install kamal
-          export KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1)
           kamal deploy
