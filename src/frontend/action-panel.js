@@ -18,7 +18,7 @@ class ActionPanel extends LitElement {
         font-family: "Press Start 2P", monospace;
         box-sizing: border-box;
         min-width: 400px;
-        max-width: 500px;
+        max-width: 560px;
         min-height: 100px;
         margin: 0 auto;
       }
@@ -242,8 +242,9 @@ class ActionPanel extends LitElement {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 2px;
+        gap: 6px;
         padding: 10px 12px;
+        white-space: nowrap;
       }
 
       .action-row .amount {
