@@ -8,3 +8,4 @@ coverage
 .env
 *.pem
 *.key
+.kamal/secrets
