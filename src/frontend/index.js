@@ -175,6 +175,86 @@ class Game extends LitElement {
         z-index: 100;
         box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
       }
+
+      #settings-btn {
+        position: absolute;
+        right: 0.5%;
+        top: 0.5%;
+        background: none;
+        border: none;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+        color: ${unsafeCSS(COLORS.fgMedium)};
+      }
+
+      #settings-btn:hover {
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      #settings-modal {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: ${unsafeCSS(COLORS.bgLight)};
+        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
+        padding: 20px;
+        z-index: 200;
+        box-shadow: 8px 8px 0 ${unsafeCSS(COLORS.bgDark)};
+        min-width: 280px;
+      }
+
+      #settings-modal h3 {
+        margin: 0 0 15px 0;
+        font-size: 0.7em;
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      #settings-modal input {
+        width: 100%;
+        padding: 10px;
+        font-family: "Press Start 2P", monospace;
+        font-size: 0.6em;
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
+        background: ${unsafeCSS(COLORS.bgMedium)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+        margin-bottom: 15px;
+      }
+
+      #settings-modal .buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+
+      #settings-modal button {
+        padding: 8px 16px;
+        font-family: "Press Start 2P", monospace;
+        font-size: 0.5em;
+        cursor: pointer;
+        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
+      }
+
+      #settings-modal .save-btn {
+        background: ${unsafeCSS(COLORS.greenLight)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      #settings-modal .cancel-btn {
+        background: ${unsafeCSS(COLORS.bgMedium)};
+        color: ${unsafeCSS(COLORS.fgMedium)};
+      }
+
+      #settings-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 199;
+      }
     `;
   }
 
@@ -184,6 +264,7 @@ class Game extends LitElement {
       game: { type: Object },
       socket: { type: Object },
       error: { type: String },
+      showSettings: { type: Boolean },
     };
   }
 
@@ -191,6 +272,7 @@ class Game extends LitElement {
     super();
     this.gameId = null;
     this.error = null;
+    this.showSettings = false;
   }
 
   firstUpdated() {
@@ -232,6 +314,26 @@ class Game extends LitElement {
     this.send(e.detail);
   }
 
+  openSettings() {
+    this.showSettings = true;
+  }
+
+  closeSettings() {
+    this.showSettings = false;
+  }
+
+  saveSettings() {
+    const input = this.shadowRoot.querySelector("#name-input");
+    const name = input?.value?.trim() || "";
+    this.send({ action: "setName", name });
+    this.showSettings = false;
+  }
+
+  getCurrentPlayerName() {
+    const seat = this.game?.seats?.find((s) => s.isCurrentPlayer && !s.empty);
+    return seat?.player?.name || "";
+  }
+
   getMySeatInfo() {
     const seatIndex = this.game.seats.findIndex(
       (s) => s.isCurrentPlayer && !s.empty,
@@ -271,6 +373,7 @@ class Game extends LitElement {
               (seat, i) => html`
                 <phg-seat
                   .seat=${seat}
+                  .seatNumber=${i}
                   .isButton=${this.game.button === i}
                   .showSitAction=${!isSeated}
                   @seat-action=${this.handleSeatAction}
@@ -302,6 +405,33 @@ class Game extends LitElement {
           ${this.socket?.readyState === 2 ? "Closing ..." : ""}
           ${this.socket?.readyState === 3 ? "Closed" : ""}
         </span>
+        <button id="settings-btn" @click=${this.openSettings} title="Settings">
+          ⚙
+        </button>
+        ${this.showSettings
+          ? html`
+              <div id="settings-overlay" @click=${this.closeSettings}></div>
+              <div id="settings-modal">
+                <h3>Settings</h3>
+                <input
+                  id="name-input"
+                  type="text"
+                  placeholder="Enter your name"
+                  maxlength="20"
+                  .value=${this.getCurrentPlayerName()}
+                  @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
+                />
+                <div class="buttons">
+                  <button class="cancel-btn" @click=${this.closeSettings}>
+                    Cancel
+                  </button>
+                  <button class="save-btn" @click=${this.saveSettings}>
+                    Save
+                  </button>
+                </div>
+              </div>
+            `
+          : ""}
       </div>
     `;
   }

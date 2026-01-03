@@ -9,7 +9,7 @@ export const mockEmptySeat = {
 
 export const mockOccupiedSeat = {
   empty: false,
-  player: { id: "test-player-123" },
+  player: { id: "test-player-123", name: null },
   stack: 1000,
   bet: 50,
   folded: false,
@@ -46,7 +46,7 @@ export const mockAllInSeat = {
 
 export const mockOpponentSeat = {
   ...mockOccupiedSeat,
-  player: { id: "opponent-456" },
+  player: { id: "opponent-456", name: null },
   cards: [{ hidden: true }, { hidden: true }],
   isCurrentPlayer: false,
   isActing: false,
@@ -65,6 +65,11 @@ export const mockDisconnectedSeat = {
   ...mockOccupiedSeat,
   disconnected: true,
   isActing: false,
+};
+
+export const mockOccupiedSeatWithName = {
+  ...mockOccupiedSeat,
+  player: { id: "test-player-123", name: "Alice" },
 };
 
 export function createMockGameState(overrides = {}) {

@@ -155,6 +155,7 @@ class Seat extends LitElement {
   static get properties() {
     return {
       seat: { type: Object },
+      seatNumber: { type: Number },
       isButton: { type: Boolean },
       showSitAction: { type: Boolean },
     };
@@ -175,7 +176,10 @@ class Seat extends LitElement {
       this.classList.toggle("folded", !isEmpty && this.seat?.folded);
       this.classList.toggle("all-in", !isEmpty && this.seat?.allIn);
       this.classList.toggle("sitting-out", !isEmpty && this.seat?.sittingOut);
-      this.classList.toggle("disconnected", !isEmpty && this.seat?.disconnected);
+      this.classList.toggle(
+        "disconnected",
+        !isEmpty && this.seat?.disconnected,
+      );
       this.classList.toggle(
         "current-player",
         !isEmpty && this.seat?.isCurrentPlayer,
@@ -210,7 +214,7 @@ class Seat extends LitElement {
     return html`
       <div class="player-info">
         <span class="player-name">
-          ${this.seat.player?.id?.substring(0, 8) || "Player"}
+          ${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}
           ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
         </span>
       </div>

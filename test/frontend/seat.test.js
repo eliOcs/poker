@@ -9,6 +9,7 @@ import {
   mockEmptySeat,
   mockSittingOutSeat,
   mockDisconnectedSeat,
+  mockOccupiedSeatWithName,
 } from "./setup.js";
 
 describe("phg-seat", () => {
@@ -41,7 +42,7 @@ describe("phg-seat", () => {
     expect(sitButtonCount).to.equal(6);
   });
 
-  it("displays player ID and stack for occupied seats", async () => {
+  it("displays 'Seat N' fallback when player has no name", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
@@ -52,7 +53,7 @@ describe("phg-seat", () => {
       if (!seat.classList.contains("empty")) {
         foundOccupied = true;
         const playerName = seat.shadowRoot.querySelector(".player-name");
-        expect(playerName.textContent).to.include("test-pla");
+        expect(playerName.textContent).to.include("Seat 1");
 
         const stack = seat.shadowRoot.querySelector(".stack");
         expect(stack.textContent).to.include("1000");
@@ -60,6 +61,25 @@ describe("phg-seat", () => {
       }
     }
     expect(foundOccupied).to.be.true;
+  });
+
+  it("displays player name when set", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockOccupiedSeatWithName,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const playerName = seats[0].shadowRoot.querySelector(".player-name");
+    expect(playerName.textContent).to.include("Alice");
   });
 
   it("displays bet indicator on table for players with bets", async () => {

@@ -4,6 +4,8 @@ import {
   MockWebSocket,
   createMockGameState,
   createMockGameAtFlop,
+  mockOccupiedSeat,
+  mockEmptySeat,
 } from "./setup.js";
 
 describe("phg-game", () => {
@@ -123,6 +125,124 @@ describe("phg-game", () => {
 
       const status = element.shadowRoot.querySelector("#connection-status");
       expect(status.textContent).to.include("Closed");
+    });
+  });
+
+  describe("settings", () => {
+    it("shows settings button", async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const settingsBtn = element.shadowRoot.querySelector("#settings-btn");
+      expect(settingsBtn).to.exist;
+    });
+
+    it("opens settings modal when settings button clicked", async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const settingsBtn = element.shadowRoot.querySelector("#settings-btn");
+      settingsBtn.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("#settings-modal");
+      expect(modal).to.exist;
+    });
+
+    it("settings modal contains name input", async () => {
+      element.game = createMockGameState();
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const input = element.shadowRoot.querySelector("#name-input");
+      expect(input).to.exist;
+      expect(input.getAttribute("placeholder")).to.include("name");
+    });
+
+    it("closes modal when cancel button clicked", async () => {
+      element.game = createMockGameState();
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const cancelBtn = element.shadowRoot.querySelector(".cancel-btn");
+      cancelBtn.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("#settings-modal");
+      expect(modal).to.not.exist;
+    });
+
+    it("closes modal when overlay clicked", async () => {
+      element.game = createMockGameState();
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const overlay = element.shadowRoot.querySelector("#settings-overlay");
+      overlay.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("#settings-modal");
+      expect(modal).to.not.exist;
+    });
+
+    it("sends setName action when save button clicked", async () => {
+      element.game = createMockGameState({
+        seats: [
+          { ...mockOccupiedSeat, isCurrentPlayer: true },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const input = element.shadowRoot.querySelector("#name-input");
+      input.value = "TestPlayer";
+
+      const saveBtn = element.shadowRoot.querySelector(".save-btn");
+      saveBtn.click();
+
+      expect(element.socket.sent.length).to.equal(1);
+      expect(element.socket.sent[0].action).to.equal("setName");
+      expect(element.socket.sent[0].name).to.equal("TestPlayer");
+    });
+
+    it("closes modal after saving", async () => {
+      element.game = createMockGameState();
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const saveBtn = element.shadowRoot.querySelector(".save-btn");
+      saveBtn.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("#settings-modal");
+      expect(modal).to.not.exist;
+    });
+
+    it("pre-fills input with current player name", async () => {
+      element.game = createMockGameState({
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            isCurrentPlayer: true,
+            player: { id: "test", name: "CurrentName" },
+          },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const input = element.shadowRoot.querySelector("#name-input");
+      expect(input.value).to.equal("CurrentName");
     });
   });
 });
