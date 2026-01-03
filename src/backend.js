@@ -99,16 +99,9 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // Game page
+  // Game page - serve SPA for all game routes, let frontend handle not-found
   const gameMatch = url.match(/^\/games\/([a-z0-9]+)$/);
   if (method === "GET" && gameMatch) {
-    const gameId = gameMatch[1];
-    if (!games.has(gameId)) {
-      res.writeHead(404);
-      res.end("Game not found");
-      return;
-    }
-
     getOrCreatePlayer(req, res);
     respondWithFile("src/frontend/index.html", res);
     return;

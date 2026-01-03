@@ -238,6 +238,28 @@ class Game extends LitElement {
         background: rgba(0, 0, 0, 0.5);
         z-index: 199;
       }
+
+      .not-found {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+      }
+
+      .not-found h1 {
+        font-size: 0.75em;
+        line-height: 2;
+        color: ${unsafeCSS(COLORS.fgDark)};
+        margin: 0 0 2em 0;
+        text-align: center;
+      }
+
+      @media (min-width: 600px) {
+        .not-found h1 {
+          font-size: 0.8em;
+        }
+      }
     `;
   }
 
@@ -248,6 +270,7 @@ class Game extends LitElement {
       socket: { type: Object },
       error: { type: String },
       showSettings: { type: Boolean },
+      notFound: { type: Boolean },
     };
   }
 
@@ -256,10 +279,26 @@ class Game extends LitElement {
     this.gameId = null;
     this.error = null;
     this.showSettings = false;
+    this.notFound = false;
   }
 
   firstUpdated() {
     this.connect();
+  }
+
+  updated(changedProperties) {
+    if (
+      changedProperties.has("gameId") &&
+      changedProperties.get("gameId") !== undefined
+    ) {
+      // gameId changed, reconnect to new game
+      if (this.socket) {
+        this.socket.close();
+      }
+      this.game = null;
+      this.notFound = false;
+      this.connect();
+    }
   }
 
   connect() {
@@ -281,6 +320,17 @@ class Game extends LitElement {
       } else {
         this.game = data;
         this.error = null;
+      }
+    };
+
+    this.socket.onerror = () => {
+      this.notFound = true;
+    };
+
+    this.socket.onclose = (event) => {
+      // Code 1006 = abnormal closure (connection rejected)
+      if (!this.game && event.code === 1006) {
+        this.notFound = true;
       }
     };
   }
@@ -341,7 +391,38 @@ class Game extends LitElement {
     return null;
   }
 
+  async handleCreateGame() {
+    try {
+      const response = await fetch("/games", { method: "POST" });
+      const { id } = await response.json();
+      this.dispatchEvent(
+        new CustomEvent("navigate", {
+          detail: { path: `/games/${id}` },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    } catch (err) {
+      console.error("Failed to create game:", err);
+    }
+  }
+
   render() {
+    if (this.notFound) {
+      return html`
+        <div class="not-found">
+          <h1>Game not found</h1>
+          <phg-button
+            variant="primary"
+            size="large"
+            @click=${this.handleCreateGame}
+          >
+            Create Game
+          </phg-button>
+        </div>
+      `;
+    }
+
     if (!this.game) {
       return html`<p>Loading ...</p>`;
     }
