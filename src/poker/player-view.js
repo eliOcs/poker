@@ -172,8 +172,8 @@ function shouldShowCards(seat, seatIndex, playerSeatIndex, game) {
     return true;
   }
 
-  // Show at showdown
-  if (game.hand?.phase === "showdown") {
+  // Show at showdown or when hand result is set (post-showdown)
+  if (game.hand?.phase === "showdown" || seat.handResult !== null) {
     return true;
   }
 
