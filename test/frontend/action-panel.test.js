@@ -25,7 +25,7 @@ describe("phg-action-panel", () => {
       element.game = createMockGameState({
         seats: [
           { ...mockOpponentSeat, isCurrentPlayer: true },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+          { ...mockOpponentSeat, isCurrentPlayer: false },
           { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
           { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
           { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
@@ -57,7 +57,7 @@ describe("phg-action-panel", () => {
 
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       expect(buyInButton).to.exist;
-      expect(buyInButton.textContent.trim()).to.equal("Buy In");
+      expect(buyInButton.textContent).to.include("Buy In");
     });
 
     it("displays buyIn amount as stack (BB count * big blind)", async () => {
@@ -67,11 +67,10 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const amountDisplay =
-        actionPanel.shadowRoot.querySelector(".amount-display");
-      expect(amountDisplay).to.exist;
-      // min=20, bigBlind=50, so initial display should be $1000
-      expect(amountDisplay.textContent).to.equal("$1000");
+      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      expect(buyInButton).to.exist;
+      // default=80 BB, bigBlind=50, so initial display should be $4000
+      expect(buyInButton.textContent).to.include("$4000");
     });
 
     it("updates buyIn stack display when slider changes", async () => {
@@ -88,10 +87,9 @@ describe("phg-action-panel", () => {
       slider.dispatchEvent(new Event("input"));
       await actionPanel.updateComplete;
 
-      const amountDisplay =
-        actionPanel.shadowRoot.querySelector(".amount-display");
+      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       // 50 BB * $50 = $2500
-      expect(amountDisplay.textContent).to.equal("$2500");
+      expect(buyInButton.textContent).to.include("$2500");
     });
 
     it("uses fallback values for buyIn when action properties missing", async () => {
@@ -110,10 +108,9 @@ describe("phg-action-panel", () => {
       expect(slider.min).to.equal("20"); // fallback
       expect(slider.max).to.equal("100"); // fallback
 
-      const amountDisplay =
-        actionPanel.shadowRoot.querySelector(".amount-display");
-      // fallback: min=20, bigBlind=50, so $1000
-      expect(amountDisplay.textContent).to.equal("$1000");
+      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      // fallback: default=80 BB, bigBlind=50, so $4000
+      expect(buyInButton.textContent).to.include("$4000");
     });
 
     it("renders Check button", async () => {
@@ -162,7 +159,8 @@ describe("phg-action-panel", () => {
 
       const betButton = actionPanel.shadowRoot.querySelector("button.bet");
       expect(betButton).to.exist;
-      expect(betButton.textContent.trim()).to.equal("Bet");
+      expect(betButton.textContent).to.include("Bet");
+      expect(betButton.textContent).to.include("$"); // Now shows amount
 
       const slider = actionPanel.shadowRoot.querySelector(
         'input[type="range"]',

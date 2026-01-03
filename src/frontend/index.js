@@ -26,9 +26,9 @@ class Game extends LitElement {
       #container {
         position: absolute;
         top: 0%;
-        left: 5%;
+        left: 2.5%;
         height: 80%;
-        width: 90%;
+        width: 95%;
       }
 
       phg-board {
@@ -56,38 +56,44 @@ class Game extends LitElement {
       phg-seat {
         position: absolute;
         height: 20%;
-        width: 20%;
+        width: 30%;
+        min-width: 100px;
+        max-width: 200px;
+        min-height: 100px;
+        max-height: 200px;
         z-index: 1;
       }
 
       phg-seat:nth-child(1) {
         top: 15%;
-        left: 2.5%;
+        left: 0;
       }
 
       phg-seat:nth-child(2) {
         top: 2.5%;
-        left: 40%;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       phg-seat:nth-child(3) {
         top: 15%;
-        right: 2.5%;
+        right: 0;
       }
 
       phg-seat:nth-child(4) {
         bottom: 15%;
-        right: 2.5%;
+        right: 0;
       }
 
       phg-seat:nth-child(5) {
         bottom: 5%;
-        left: 40%;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       phg-seat:nth-child(6) {
         bottom: 15%;
-        left: 2.5%;
+        left: 0;
       }
 
       .bet-indicator {
@@ -137,16 +143,15 @@ class Game extends LitElement {
 
       phg-action-panel {
         position: absolute;
-        height: 15%;
-        width: 90%;
-        bottom: 2%;
-        left: 5%;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
       }
 
       #connection-status {
         position: absolute;
         left: 0.5%;
-        bottom: 0.5%;
+        top: 0.5%;
         color: ${unsafeCSS(COLORS.bgDisabled)};
         font-size: 0.4em;
       }
@@ -277,6 +282,8 @@ class Game extends LitElement {
       <phg-action-panel
         .actions=${actions}
         .seatIndex=${seatIndex}
+        .bigBlind=${this.game.blinds?.big || 1}
+        .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
         @game-action=${this.handleGameAction}
       ></phg-action-panel>
       <span id="connection-status">

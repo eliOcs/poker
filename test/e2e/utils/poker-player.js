@@ -43,6 +43,37 @@ export class PokerPlayer {
   }
 
   /**
+   * Navigate to game page using a URL and wait for connection
+   * @param {string} url
+   */
+  async joinGameByUrl(url) {
+    await this.page.goto(url);
+    await this.gameElement.waitFor();
+    // Wait for WebSocket connection
+    await this.page.waitForFunction(() => {
+      const game = document.querySelector("phg-game");
+      return game?.socket?.readyState === 1;
+    });
+  }
+
+  /**
+   * Copy the game link using the Copy Link button
+   * @returns {Promise<string>} The copied URL
+   */
+  async copyGameLink() {
+    // Click the Copy Link button in the action panel
+    const actionPanel = this.gameElement.locator("phg-action-panel");
+    await actionPanel.getByRole("button", { name: "Copy Link" }).click();
+
+    // Wait for button to show "Copied!" feedback
+    await actionPanel.getByRole("button", { name: "Copied!" }).waitFor();
+
+    // Read from clipboard
+    const url = await this.page.evaluate(() => navigator.clipboard.readText());
+    return url;
+  }
+
+  /**
    * Sit at a specific seat
    * @param {number} seatIndex
    */

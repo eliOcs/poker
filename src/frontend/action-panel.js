@@ -6,16 +6,18 @@ class ActionPanel extends LitElement {
     return css`
       :host {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
         padding: 10px;
-        flex-wrap: wrap;
         border: 4px solid ${unsafeCSS(COLORS.fgDark)};
         background-color: ${unsafeCSS(COLORS.bgLight)};
         box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
         font-family: "Press Start 2P", monospace;
         box-sizing: border-box;
+        min-width: 400px;
+        max-width: 500px;
+        margin: 0 auto;
       }
 
       button {
@@ -51,13 +53,24 @@ class ActionPanel extends LitElement {
         );
       }
 
-      button.check,
+      button.check {
+        background-color: ${unsafeCSS(COLORS.greenLight)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      button.check:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.greenLight)} 80%,
+          white
+        );
+      }
+
       button.call {
         background-color: ${unsafeCSS(COLORS.greenLight)};
         color: ${unsafeCSS(COLORS.bgDark)};
       }
 
-      button.check:hover,
       button.call:hover {
         background-color: color-mix(
           in oklch,
@@ -122,9 +135,11 @@ class ActionPanel extends LitElement {
         );
       }
 
+      /* Buy-in slider row */
       .amount-input {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
       }
 
@@ -157,9 +172,138 @@ class ActionPanel extends LitElement {
         color: ${unsafeCSS(COLORS.gold)};
       }
 
+      /* Betting panel styles */
+      .betting-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .slider-row input[type="number"] {
+        width: 80px;
+        padding: 4px 4px;
+        font-family: "Press Start 2P", monospace;
+        font-size: 0.5em;
+        text-align: center;
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
+        background: ${unsafeCSS(COLORS.bgDisabled)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+        line-height: 2;
+      }
+
+      .slider-row input[type="number"]::-webkit-inner-spin-button,
+      .slider-row input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .slider-row input[type="number"] {
+        -moz-appearance: textfield;
+      }
+
+      .slider-row button.step-btn {
+        padding: 6px 10px;
+        font-size: 0.7em;
+        min-width: auto;
+        background-color: ${unsafeCSS(COLORS.bgDisabled)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      .slider-row button.step-btn:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.bgDisabled)} 80%,
+          white
+        );
+      }
+
+      .slider-row input[type="range"] {
+        flex: 1;
+        height: 8px;
+        appearance: none;
+        background: ${unsafeCSS(COLORS.bgDisabled)};
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
+        min-width: 80px;
+      }
+
+      .slider-row input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: ${unsafeCSS(COLORS.gold)};
+        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
+        cursor: pointer;
+      }
+
+      .action-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .action-row button {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        padding: 10px 12px;
+      }
+
+      .action-row .amount {
+        font-size: 0.9em;
+      }
+
       .waiting {
         color: ${unsafeCSS(COLORS.fgDark)};
         font-size: 0.6em;
+        text-align: center;
+      }
+
+      .simple-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .waiting-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .share-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      button.copy-link,
+      button.share {
+        background-color: ${unsafeCSS(COLORS.blue)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      button.copy-link:hover,
+      button.share:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.blue)} 80%,
+          white
+        );
+      }
+
+      button.copied {
+        background-color: ${unsafeCSS(COLORS.greenLight)};
       }
     `;
   }
@@ -169,6 +313,9 @@ class ActionPanel extends LitElement {
       actions: { type: Array },
       seatIndex: { type: Number },
       betAmount: { type: Number },
+      bigBlind: { type: Number },
+      seatedCount: { type: Number },
+      copied: { type: Boolean },
     };
   }
 
@@ -177,6 +324,38 @@ class ActionPanel extends LitElement {
     this.actions = [];
     this.seatIndex = -1;
     this.betAmount = 0;
+    this.bigBlind = 1;
+    this.seatedCount = 0;
+    this.copied = false;
+  }
+
+  async copyGameLink() {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.copied = true;
+      setTimeout(() => {
+        this.copied = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }
+
+  async shareGameLink() {
+    const url = window.location.href;
+    try {
+      await navigator.share({
+        title: "Join my poker game",
+        url: url,
+      });
+    } catch (err) {
+      console.error("Failed to share:", err);
+    }
+  }
+
+  canShare() {
+    return typeof navigator.share === "function";
   }
 
   sendAction(action) {
@@ -189,163 +368,275 @@ class ActionPanel extends LitElement {
     );
   }
 
+  adjustBet(delta, min, max) {
+    const newValue = Math.max(min, Math.min(max, this.betAmount + delta));
+    this.betAmount = newValue;
+  }
+
+  handleManualInput(e, min, max) {
+    const value = parseInt(e.target.value) || min;
+    this.betAmount = Math.max(min, Math.min(max, value));
+  }
+
   render() {
     if (!this.actions || this.actions.length === 0) {
+      if (this.seatedCount < 2) {
+        return html`
+          <div class="waiting-panel">
+            <span class="waiting">Waiting for players...</span>
+            <div class="share-buttons">
+              <button
+                class="copy-link ${this.copied ? "copied" : ""}"
+                @click=${this.copyGameLink}
+              >
+                ${this.copied ? "Copied!" : "Copy Link"}
+              </button>
+              ${this.canShare()
+                ? html`
+                    <button class="share" @click=${this.shareGameLink}>
+                      Share
+                    </button>
+                  `
+                : ""}
+            </div>
+          </div>
+        `;
+      }
       return html`<span class="waiting">Waiting for your turn...</span>`;
     }
 
-    const result = [];
-
+    // Collect actions by type
+    const actionMap = {};
     for (const action of this.actions) {
-      switch (action.action) {
-        case "buyIn": {
-          const min = action.min || 20;
-          const max = action.max || 100;
-          const bigBlind = action.bigBlind || 50;
-          const bbCount = this.betAmount >= min ? this.betAmount : min;
-          const stack = bbCount * bigBlind;
-          result.push(html`
-            <div class="amount-input">
-              <input
-                type="range"
-                min="${min}"
-                max="${max}"
-                .value="${bbCount}"
-                @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-              />
-              <span class="amount-display">$${stack}</span>
-              <button
-                class="buy-in"
-                @click=${() =>
-                  this.sendAction({
-                    action: "buyIn",
-                    seat: this.seatIndex,
-                    amount: bbCount,
-                  })}
-              >
-                Buy In
-              </button>
-            </div>
-          `);
-          break;
-        }
-
-        case "check":
-          result.push(html`
-            <button
-              class="check"
-              @click=${() =>
-                this.sendAction({ action: "check", seat: this.seatIndex })}
-            >
-              Check
-            </button>
-          `);
-          break;
-
-        case "call":
-          result.push(html`
-            <button
-              class="call"
-              @click=${() =>
-                this.sendAction({ action: "call", seat: this.seatIndex })}
-            >
-              Call $${action.amount}
-            </button>
-          `);
-          break;
-
-        case "fold":
-          result.push(html`
-            <button
-              class="fold"
-              @click=${() =>
-                this.sendAction({ action: "fold", seat: this.seatIndex })}
-            >
-              Fold
-            </button>
-          `);
-          break;
-
-        case "bet": {
-          const betValue = this.betAmount || action.min;
-          const isAllIn = betValue >= action.max;
-          result.push(html`
-            <div class="amount-input">
-              <input
-                type="range"
-                min="${action.min}"
-                max="${action.max}"
-                .value="${betValue}"
-                @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-              />
-              <span class="amount-display">$${betValue}</span>
-              <button
-                class="${isAllIn ? "all-in" : "bet"}"
-                @click=${() =>
-                  this.sendAction(
-                    isAllIn
-                      ? { action: "allIn", seat: this.seatIndex }
-                      : {
-                          action: "bet",
-                          seat: this.seatIndex,
-                          amount: betValue,
-                        },
-                  )}
-              >
-                ${isAllIn ? "All-In" : "Bet"}
-              </button>
-            </div>
-          `);
-          break;
-        }
-
-        case "raise": {
-          const raiseValue = this.betAmount || action.min;
-          const isAllIn = raiseValue >= action.max;
-          result.push(html`
-            <div class="amount-input">
-              <input
-                type="range"
-                min="${action.min}"
-                max="${action.max}"
-                .value="${raiseValue}"
-                @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-              />
-              <span class="amount-display">$${raiseValue}</span>
-              <button
-                class="${isAllIn ? "all-in" : "raise"}"
-                @click=${() =>
-                  this.sendAction(
-                    isAllIn
-                      ? { action: "allIn", seat: this.seatIndex }
-                      : {
-                          action: "raise",
-                          seat: this.seatIndex,
-                          amount: raiseValue,
-                        },
-                  )}
-              >
-                ${isAllIn ? "All-In" : "Raise to"}
-              </button>
-            </div>
-          `);
-          break;
-        }
-
-        case "start":
-          result.push(html`
-            <button
-              class="start"
-              @click=${() => this.sendAction({ action: "start" })}
-            >
-              Start Game
-            </button>
-          `);
-          break;
-      }
+      actionMap[action.action] = action;
     }
 
-    return result;
+    // Handle buy-in separately
+    if (actionMap.buyIn) {
+      const action = actionMap.buyIn;
+      const min = action.min || 20;
+      const max = action.max || 100;
+      const bigBlind = action.bigBlind || 50;
+      const defaultBuyIn = Math.min(80, max);
+      const bbCount = this.betAmount >= min ? this.betAmount : defaultBuyIn;
+      const stack = bbCount * bigBlind;
+      const minStack = min * bigBlind;
+      const maxStack = max * bigBlind;
+      return html`
+        <div class="betting-panel">
+          <div class="slider-row">
+            <input
+              type="number"
+              min="${minStack}"
+              max="${maxStack}"
+              step="${bigBlind}"
+              .value="${stack}"
+              @input=${(e) => {
+                const stackValue = parseInt(e.target.value) || minStack;
+                const bb = Math.round(stackValue / bigBlind);
+                this.betAmount = Math.max(min, Math.min(max, bb));
+              }}
+            />
+            <button
+              class="step-btn"
+              @click=${() => this.adjustBet(-10, min, max)}
+            >
+              -
+            </button>
+            <input
+              type="range"
+              min="${min}"
+              max="${max}"
+              .value="${bbCount}"
+              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
+            />
+            <button
+              class="step-btn"
+              @click=${() => this.adjustBet(10, min, max)}
+            >
+              +
+            </button>
+          </div>
+          <div class="action-row">
+            <button
+              class="buy-in"
+              @click=${() =>
+                this.sendAction({
+                  action: "buyIn",
+                  seat: this.seatIndex,
+                  amount: bbCount,
+                })}
+            >
+              <span>Buy In</span>
+              <span class="amount">$${stack}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Handle start action
+    if (actionMap.start) {
+      return html`
+        <button
+          class="start"
+          @click=${() => this.sendAction({ action: "start" })}
+        >
+          Start Game
+        </button>
+      `;
+    }
+
+    // Handle betting actions (bet or raise with fold/check/call)
+    const betAction = actionMap.bet || actionMap.raise;
+    if (betAction) {
+      const isBet = actionMap.bet != null;
+      const min = betAction.min;
+      const max = betAction.max;
+      const step = this.bigBlind;
+
+      // Initialize betAmount if not set
+      if (this.betAmount < min) {
+        this.betAmount = min;
+      }
+
+      const currentValue = Math.max(min, Math.min(max, this.betAmount));
+      const isAllIn = currentValue >= max;
+
+      return html`
+        <div class="betting-panel">
+          <div class="slider-row">
+            <input
+              type="number"
+              min="${min}"
+              max="${max}"
+              .value="${currentValue}"
+              @input=${(e) => this.handleManualInput(e, min, max)}
+            />
+            <button
+              class="step-btn"
+              @click=${() => this.adjustBet(-step, min, max)}
+            >
+              -
+            </button>
+            <input
+              type="range"
+              min="${min}"
+              max="${max}"
+              .value="${currentValue}"
+              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
+            />
+            <button
+              class="step-btn"
+              @click=${() => this.adjustBet(step, min, max)}
+            >
+              +
+            </button>
+          </div>
+          <div class="action-row">
+            ${actionMap.fold
+              ? html`
+                  <button
+                    class="fold"
+                    @click=${() =>
+                      this.sendAction({ action: "fold", seat: this.seatIndex })}
+                  >
+                    Fold
+                  </button>
+                `
+              : null}
+            ${actionMap.check
+              ? html`
+                  <button
+                    class="check"
+                    @click=${() =>
+                      this.sendAction({
+                        action: "check",
+                        seat: this.seatIndex,
+                      })}
+                  >
+                    Check
+                  </button>
+                `
+              : null}
+            ${actionMap.call
+              ? html`
+                  <button
+                    class="call"
+                    @click=${() =>
+                      this.sendAction({ action: "call", seat: this.seatIndex })}
+                  >
+                    <span>Call</span>
+                    <span class="amount">$${actionMap.call.amount}</span>
+                  </button>
+                `
+              : null}
+            <button
+              class="${isAllIn ? "all-in" : isBet ? "bet" : "raise"}"
+              @click=${() =>
+                this.sendAction(
+                  isAllIn
+                    ? { action: "allIn", seat: this.seatIndex }
+                    : {
+                        action: isBet ? "bet" : "raise",
+                        seat: this.seatIndex,
+                        amount: currentValue,
+                      },
+                )}
+            >
+              <span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span>
+              <span class="amount">$${currentValue}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Simple actions only (check/call/fold without bet/raise)
+    const simpleButtons = [];
+
+    if (actionMap.fold) {
+      simpleButtons.push(html`
+        <button
+          class="fold"
+          @click=${() =>
+            this.sendAction({ action: "fold", seat: this.seatIndex })}
+        >
+          Fold
+        </button>
+      `);
+    }
+
+    if (actionMap.check) {
+      simpleButtons.push(html`
+        <button
+          class="check"
+          @click=${() =>
+            this.sendAction({ action: "check", seat: this.seatIndex })}
+        >
+          Check
+        </button>
+      `);
+    }
+
+    if (actionMap.call) {
+      simpleButtons.push(html`
+        <button
+          class="call"
+          @click=${() =>
+            this.sendAction({ action: "call", seat: this.seatIndex })}
+        >
+          <span>Call</span>
+          <span class="amount">$${actionMap.call.amount}</span>
+        </button>
+      `);
+    }
+
+    if (simpleButtons.length > 0) {
+      return html`<div class="simple-actions">${simpleButtons}</div>`;
+    }
+
+    return html`<span class="waiting">Waiting for your turn...</span>`;
   }
 }
 
