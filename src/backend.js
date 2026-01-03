@@ -84,7 +84,7 @@ server.on("request", (req, res) => {
   // Home page
   if (method === "GET" && url === "/") {
     getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/home.html", res);
+    respondWithFile("src/frontend/index.html", res);
     return;
   }
 
@@ -110,9 +110,7 @@ server.on("request", (req, res) => {
     }
 
     getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/game.html", res, {
-      "\\$GAME_ID\\$": gameId,
-    });
+    respondWithFile("src/frontend/index.html", res);
     return;
   }
 
