@@ -24,11 +24,13 @@ function collectJsFiles(dir, baseUrl) {
   return files;
 }
 
+const allowedExtensions = [".html", ".js", ".css", ".png", ".ico"];
+
 /** @type {Record<string, string>} */
 const staticFiles = {};
 for (const file of fs.readdirSync("src/frontend")) {
   const ext = path.extname(file);
-  if (ext === ".html" || ext === ".js" || ext === ".css" || ext === ".png") {
+  if (allowedExtensions.includes(ext)) {
     staticFiles["/" + file] = "src/frontend/" + file;
   }
 }
