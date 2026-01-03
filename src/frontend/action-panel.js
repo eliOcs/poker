@@ -309,7 +309,8 @@ class ActionPanel extends LitElement {
       button.sit-out {
         background-color: ${unsafeCSS(COLORS.fgDark)};
         color: ${unsafeCSS(COLORS.fgWhite)};
-        font-size: 0.5em;
+        font-size: 0.7em;
+        padding: 12px 24px;
       }
 
       button.sit-out:hover {
@@ -527,16 +528,6 @@ class ActionPanel extends LitElement {
     if (actionMap.start || actionMap.sitOut) {
       return html`
         <div class="waiting-actions">
-          ${actionMap.start
-            ? html`
-                <button
-                  class="start"
-                  @click=${() => this.sendAction({ action: "start" })}
-                >
-                  Start Game
-                </button>
-              `
-            : ""}
           ${actionMap.sitOut
             ? html`
                 <button
@@ -545,6 +536,16 @@ class ActionPanel extends LitElement {
                     this.sendAction({ action: "sitOut", seat: this.seatIndex })}
                 >
                   Sit Out
+                </button>
+              `
+            : ""}
+          ${actionMap.start
+            ? html`
+                <button
+                  class="start"
+                  @click=${() => this.sendAction({ action: "start" })}
+                >
+                  Start Game
                 </button>
               `
             : ""}
