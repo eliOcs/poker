@@ -14,27 +14,31 @@ class Home extends LitElement {
         font-family: "Press Start 2P", monospace;
         color: ${unsafeCSS(COLORS.fgMedium)};
         image-rendering: pixelated;
+        padding: 1em;
+        box-sizing: border-box;
       }
 
       .logo {
+        width: 80%;
         max-width: 450px;
-        margin-bottom: 2em;
+        margin-bottom: 1.5em;
         image-rendering: pixelated;
       }
 
       p {
-        font-size: 0.7em;
-        line-height: 1.8;
+        font-size: 0.75em;
+        line-height: 2;
         color: ${unsafeCSS(COLORS.fgDark)};
         margin-bottom: 2em;
         text-align: center;
         padding: 0 1em;
+        max-width: 500px;
       }
 
       button {
-        padding: 16px 32px;
+        padding: 20px 40px;
         font-family: "Press Start 2P", monospace;
-        font-size: 0.9em;
+        font-size: 1em;
         cursor: pointer;
         border: 4px solid ${unsafeCSS(COLORS.bgDark)};
         background-color: ${unsafeCSS(COLORS.gold)};
@@ -62,6 +66,20 @@ class Home extends LitElement {
         color: ${unsafeCSS(COLORS.fgDark)};
         cursor: not-allowed;
         box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
+      }
+
+      @media (min-width: 600px) {
+        .logo {
+          width: 60%;
+        }
+
+        p {
+          font-size: 0.8em;
+        }
+
+        button {
+          font-size: 1.1em;
+        }
       }
     `;
   }

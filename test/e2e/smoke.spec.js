@@ -15,8 +15,13 @@ test.describe("Poker Game Smoke Test", () => {
     const gameId = await createGame(request);
 
     // === SETUP ===
+    // Player 1 joins and copies the game link
     await player1.joinGame(gameId);
-    await player2.joinGame(gameId);
+    const gameUrl = await player1.copyGameLink();
+    console.log("Game URL copied:", gameUrl);
+
+    // Player 2 joins using the copied link
+    await player2.joinGameByUrl(gameUrl);
 
     await player1.sit(0);
     await player2.sit(1);

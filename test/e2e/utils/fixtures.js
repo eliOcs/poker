@@ -11,7 +11,9 @@ export const test = base.extend({
    * @type {PokerPlayer}
    */
   player1: async ({ browser }, use) => {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const context = await browser.newContext({
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
     const page = await context.newPage();
     const player = new PokerPlayer(context, page, "Player 1");
     await use(player);
@@ -23,7 +25,9 @@ export const test = base.extend({
    * @type {PokerPlayer}
    */
   player2: async ({ browser }, use) => {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true });
+    const context = await browser.newContext({
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
     const page = await context.newPage();
     const player = new PokerPlayer(context, page, "Player 2");
     await use(player);
