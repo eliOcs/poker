@@ -305,6 +305,40 @@ class ActionPanel extends LitElement {
       button.copied {
         background-color: ${unsafeCSS(COLORS.greenLight)};
       }
+
+      button.sit-out {
+        background-color: ${unsafeCSS(COLORS.fgDark)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+        font-size: 0.5em;
+      }
+
+      button.sit-out:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.fgDark)} 80%,
+          white
+        );
+      }
+
+      button.sit-in {
+        background-color: ${unsafeCSS(COLORS.greenLight)};
+        color: ${unsafeCSS(COLORS.bgDark)};
+      }
+
+      button.sit-in:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.greenLight)} 80%,
+          white
+        );
+      }
+
+      .waiting-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
+      }
     `;
   }
 
@@ -475,15 +509,46 @@ class ActionPanel extends LitElement {
       `;
     }
 
-    // Handle start action
-    if (actionMap.start) {
+    // Handle sit in action (player is sitting out)
+    if (actionMap.sitIn) {
+      const cost = actionMap.sitIn.cost;
       return html`
         <button
-          class="start"
-          @click=${() => this.sendAction({ action: "start" })}
+          class="sit-in"
+          @click=${() =>
+            this.sendAction({ action: "sitIn", seat: this.seatIndex })}
         >
-          Start Game
+          ${cost > 0 ? `Sit In ($${cost} BB)` : "Sit In"}
         </button>
+      `;
+    }
+
+    // Handle start action (with optional sit out)
+    if (actionMap.start || actionMap.sitOut) {
+      return html`
+        <div class="waiting-actions">
+          ${actionMap.start
+            ? html`
+                <button
+                  class="start"
+                  @click=${() => this.sendAction({ action: "start" })}
+                >
+                  Start Game
+                </button>
+              `
+            : ""}
+          ${actionMap.sitOut
+            ? html`
+                <button
+                  class="sit-out"
+                  @click=${() =>
+                    this.sendAction({ action: "sitOut", seat: this.seatIndex })}
+                >
+                  Sit Out
+                </button>
+              `
+            : ""}
+        </div>
       `;
     }
 

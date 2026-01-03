@@ -23,6 +23,7 @@
  * @property {boolean} folded - Has folded this hand
  * @property {boolean} allIn - Is all-in
  * @property {boolean} sittingOut - Is sitting out (not participating)
+ * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
  * @property {number|null} handResult - Result of the hand (positive for win, negative for loss)
  */
@@ -56,6 +57,7 @@ export function occupied(player, stack = 0) {
     folded: false,
     allIn: false,
     sittingOut: false,
+    missedBigBlind: false,
     lastAction: null,
     handResult: null,
   };
@@ -73,6 +75,10 @@ export function resetForNewHand(seat) {
   seat.allIn = false;
   seat.lastAction = null;
   seat.handResult = null;
+  // If sitting out, mark as having missed big blind
+  if (seat.sittingOut) {
+    seat.missedBigBlind = true;
+  }
 }
 
 /**

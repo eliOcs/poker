@@ -303,6 +303,12 @@ function startCountdownTimer(game, gameId) {
       if (game.countdownTimer) clearInterval(game.countdownTimer);
       game.countdownTimer = null;
 
+      // Check if we still have enough players (someone might have sat out)
+      if (PokerActions.countPlayersWithChips(game) < 2) {
+        broadcastGameState(gameId);
+        return;
+      }
+
       // Clear winner message from previous hand
       game.winnerMessage = null;
 
@@ -341,6 +347,17 @@ wss.on(
         // If start action was called, begin countdown timer
         if (action === "start" && game.countdown !== null) {
           startCountdownTimer(game, gameId);
+        }
+
+        // Cancel countdown if sitOut leaves fewer than 2 active players
+        if (action === "sitOut" && game.countdown !== null) {
+          if (PokerActions.countPlayersWithChips(game) < 2) {
+            game.countdown = null;
+            if (game.countdownTimer) {
+              clearInterval(game.countdownTimer);
+              game.countdownTimer = null;
+            }
+          }
         }
 
         // Process game flow after betting actions
