@@ -303,6 +303,24 @@ class ActionPanel extends LitElement {
     this.bigBlind = 1;
     this.seatedCount = 0;
     this.copied = false;
+    this._lastActionType = null;
+  }
+
+  updated(changedProperties) {
+    if (changedProperties.has("actions")) {
+      // Detect action type to reset betAmount when context changes
+      const actionTypes = this.actions?.map((a) => a.action) || [];
+      const currentType = actionTypes.includes("buyIn")
+        ? "buyIn"
+        : actionTypes.includes("bet") || actionTypes.includes("raise")
+          ? "betting"
+          : "other";
+
+      if (this._lastActionType && this._lastActionType !== currentType) {
+        this.betAmount = 0;
+      }
+      this._lastActionType = currentType;
+    }
   }
 
   async copyGameLink() {
@@ -394,7 +412,10 @@ class ActionPanel extends LitElement {
       const max = action.max || 100;
       const bigBlind = action.bigBlind || 50;
       const defaultBuyIn = Math.min(80, max);
-      const bbCount = this.betAmount >= min ? this.betAmount : defaultBuyIn;
+      const bbCount =
+        this.betAmount >= min && this.betAmount <= max
+          ? this.betAmount
+          : defaultBuyIn;
       const stack = bbCount * bigBlind;
       const minStack = min * bigBlind;
       const maxStack = max * bigBlind;
