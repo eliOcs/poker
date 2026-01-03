@@ -100,7 +100,13 @@ class Home extends LitElement {
     try {
       const response = await fetch("/games", { method: "POST" });
       const { id } = await response.json();
-      window.location.href = `/games/${id}`;
+      this.dispatchEvent(
+        new CustomEvent("navigate", {
+          detail: { path: `/games/${id}` },
+          bubbles: true,
+          composed: true,
+        }),
+      );
     } catch (err) {
       console.error("Failed to create game:", err);
       this.creating = false;

@@ -1,14 +1,14 @@
 /**
  * Represents a player in the e2e test
- * Manages their browser context, page, and WebSocket connection
+ * All interactions use visible UI elements only - no component internal access
  */
 export class PokerPlayer {
   /** @type {import('@playwright/test').BrowserContext} */
-  context;
+  context
   /** @type {import('@playwright/test').Page} */
-  page;
+  page
   /** @type {string} */
-  name;
+  name
 
   /**
    * @param {import('@playwright/test').BrowserContext} context
@@ -16,44 +16,58 @@ export class PokerPlayer {
    * @param {string} name - Display name for logging
    */
   constructor(context, page, name) {
-    this.context = context;
-    this.page = page;
-    this.name = name;
+    this.context = context
+    this.page = page
+    this.name = name
   }
 
   /**
-   * Get the phg-game element locator
+   * Get the game element locator (pierces through phg-app)
    */
-  get gameElement() {
-    return this.page.locator("phg-game");
+  get game() {
+    return this.page.locator("phg-game")
   }
 
   /**
-   * Navigate to game page and wait for connection
+   * Get the current player's seat locator (pierces shadow DOM)
+   */
+  get mySeat() {
+    return this.game.locator("phg-seat.current-player")
+  }
+
+  /**
+   * Get the board element locator (pierces shadow DOM)
+   */
+  get board() {
+    return this.game.locator("phg-board")
+  }
+
+  /**
+   * Get the action panel locator (pierces shadow DOM)
+   */
+  get actionPanel() {
+    return this.game.locator("phg-action-panel")
+  }
+
+  /**
+   * Navigate to game page and wait for UI to load
    * @param {string} gameId
    */
   async joinGame(gameId) {
-    await this.page.goto(`/games/${gameId}`);
-    await this.gameElement.waitFor();
-    // Wait for WebSocket connection
-    await this.page.waitForFunction(() => {
-      const game = document.querySelector("phg-game");
-      return game?.socket?.readyState === 1;
-    });
+    await this.page.goto(`/games/${gameId}`)
+    // Wait for the game element to be visible, then board inside it
+    await this.game.waitFor({ timeout: 10000 })
+    await this.board.waitFor({ timeout: 10000 })
   }
 
   /**
-   * Navigate to game page using a URL and wait for connection
+   * Navigate to game page using a URL and wait for UI to load
    * @param {string} url
    */
   async joinGameByUrl(url) {
-    await this.page.goto(url);
-    await this.gameElement.waitFor();
-    // Wait for WebSocket connection
-    await this.page.waitForFunction(() => {
-      const game = document.querySelector("phg-game");
-      return game?.socket?.readyState === 1;
-    });
+    await this.page.goto(url)
+    await this.game.waitFor({ timeout: 10000 })
+    await this.board.waitFor({ timeout: 10000 })
   }
 
   /**
@@ -61,16 +75,10 @@ export class PokerPlayer {
    * @returns {Promise<string>} The copied URL
    */
   async copyGameLink() {
-    // Click the Copy Link button in the action panel
-    const actionPanel = this.gameElement.locator("phg-action-panel");
-    await actionPanel.getByRole("button", { name: "Copy Link" }).click();
-
-    // Wait for button to show "Copied!" feedback
-    await actionPanel.getByRole("button", { name: "Copied!" }).waitFor();
-
-    // Read from clipboard
-    const url = await this.page.evaluate(() => navigator.clipboard.readText());
-    return url;
+    await this.actionPanel.getByRole("button", { name: "Copy Link" }).click()
+    await this.actionPanel.getByRole("button", { name: "Copied!" }).waitFor()
+    const url = await this.page.evaluate(() => navigator.clipboard.readText())
+    return url
   }
 
   /**
@@ -78,77 +86,56 @@ export class PokerPlayer {
    * @param {number} seatIndex
    */
   async sit(seatIndex) {
-    // Click the Sit button in the empty seat
-    const seat = this.gameElement.locator(
-      `phg-seat:nth-child(${seatIndex + 1})`,
-    );
-    await seat.getByRole("button", { name: "Sit" }).click();
-    // Wait for seat to show as occupied (current-player class)
-    await seat.and(this.page.locator(".current-player")).waitFor();
+    const seat = this.game.locator(`phg-seat:nth-child(${seatIndex + 1})`)
+    await seat.getByRole("button", { name: "Sit" }).click()
+    // Wait for seat to show as occupied (has current-player class)
+    await this.mySeat.waitFor()
   }
 
   /**
-   * Buy in with amount
+   * Buy in with amount using slider
    * @param {number} amount
    */
   async buyIn(amount) {
-    // Use mouse to drag slider to desired position
-    const slider = this.gameElement.locator('input[type="range"]');
-    await this.dragSliderToValue(slider, amount);
-
-    await this.gameElement.getByRole("button", { name: "Buy In" }).click();
-    // Wait for stack to appear
-    await this.page.waitForFunction(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.stack > 0;
-    });
+    const slider = this.actionPanel.locator('input[type="range"]')
+    await this.dragSliderToValue(slider, amount)
+    await this.actionPanel.getByRole("button", { name: "Buy In" }).click()
+    // Wait for stack to appear in our seat
+    await this.mySeat.locator(".stack").waitFor()
   }
 
   /**
    * Click the start game button
    */
   async startGame() {
-    await this.gameElement.getByRole("button", { name: "Start Game" }).click();
+    await this.actionPanel.getByRole("button", { name: "Start Game" }).click()
   }
 
   /**
-   * Wait for countdown to start (become non-null)
+   * Wait for countdown to start (countdown element visible)
    * @param {number} [timeout=5000]
    */
   async waitForCountdownStart(timeout = 5000) {
-    await this.page.waitForFunction(
-      () => {
-        const game = document.querySelector("phg-game");
-        return game?.game?.countdown !== null && game?.game?.countdown > 0;
-      },
-      { timeout },
-    );
+    await this.board.locator(".countdown").waitFor({ timeout })
   }
 
   /**
-   * Wait for countdown to complete and hand to start
+   * Wait for hand to start by checking for preflop phase
    */
   async waitForHandStart() {
-    await this.page.waitForFunction(
-      () => {
-        const game = document.querySelector("phg-game");
-        return game?.game?.hand?.phase === "preflop";
-      },
-      { timeout: 15000 },
-    );
+    await this.board.locator(".phase").filter({ hasText: "preflop" }).waitFor({ timeout: 15000 })
   }
 
   /**
-   * Check if it's this player's turn
+   * Check if it's this player's turn by looking for action buttons
    * @returns {Promise<boolean>}
    */
   async isMyTurn() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.isActing === true;
-    });
+    // If we can see action buttons (Check, Call, Fold, Bet, Raise, All-In), it's our turn
+    const hasCheck = await this.actionPanel.getByRole("button", { name: "Check" }).isVisible().catch(() => false)
+    const hasCall = await this.actionPanel.getByRole("button", { name: /^Call/ }).isVisible().catch(() => false)
+    const hasFold = await this.actionPanel.getByRole("button", { name: "Fold" }).isVisible().catch(() => false)
+    return hasCheck || hasCall || hasFold
   }
 
   /**
@@ -156,27 +143,27 @@ export class PokerPlayer {
    * @param {number} [timeout=15000]
    */
   async waitForTurn(timeout = 15000) {
-    await this.page.waitForFunction(
-      () => {
-        const game = document.querySelector("phg-game");
-        const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-        return seat?.isActing === true;
-      },
-      { timeout },
-    );
+    // Wait for any action button to appear
+    await this.actionPanel
+      .getByRole("button", { name: /(Check|Call|Fold)/ })
+      .first()
+      .waitFor({ timeout })
   }
 
   /**
-   * Check if action is available
+   * Check if a specific action button is available
    * @param {string} actionName
    * @returns {Promise<boolean>}
    */
   async hasAction(actionName) {
-    return await this.page.evaluate((name) => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.actions?.some((a) => a.action === name) ?? false;
-    }, actionName);
+    if (actionName === "call") {
+      return await this.actionPanel.getByRole("button", { name: /^Call/ }).isVisible().catch(() => false)
+    }
+    if (actionName === "raise") {
+      return await this.actionPanel.getByRole("button", { name: /^Raise/ }).isVisible().catch(() => false)
+    }
+    const buttonName = actionName.charAt(0).toUpperCase() + actionName.slice(1)
+    return await this.actionPanel.getByRole("button", { name: buttonName }).isVisible().catch(() => false)
   }
 
   /**
@@ -185,25 +172,22 @@ export class PokerPlayer {
    * @param {number} targetValue
    */
   async dragSliderToValue(slider, targetValue) {
-    const box = await slider.boundingBox();
-    if (!box) throw new Error("Slider not found");
+    const box = await slider.boundingBox()
+    if (!box) throw new Error("Slider not found")
 
-    // Get slider min/max from DOM
     const { min, max } = await slider.evaluate((el) => ({
       min: parseFloat(el.min),
       max: parseFloat(el.max),
-    }));
+    }))
 
-    // Calculate target X position
-    const percentage = (targetValue - min) / (max - min);
-    const targetX = box.x + box.width * percentage;
-    const centerY = box.y + box.height / 2;
+    const percentage = (targetValue - min) / (max - min)
+    const targetX = box.x + box.width * percentage
+    const centerY = box.y + box.height / 2
 
-    // Drag from current position to target
-    await slider.hover();
-    await this.page.mouse.down();
-    await this.page.mouse.move(targetX, centerY);
-    await this.page.mouse.up();
+    await slider.hover()
+    await this.page.mouse.down()
+    await this.page.mouse.move(targetX, centerY)
+    await this.page.mouse.up()
   }
 
   /**
@@ -211,17 +195,16 @@ export class PokerPlayer {
    * @param {import('@playwright/test').Locator} slider
    */
   async dragSliderToMax(slider) {
-    const box = await slider.boundingBox();
-    if (!box) throw new Error("Slider not found");
+    const box = await slider.boundingBox()
+    if (!box) throw new Error("Slider not found")
 
-    // Drag to right edge (max value)
-    const targetX = box.x + box.width;
-    const centerY = box.y + box.height / 2;
+    const targetX = box.x + box.width
+    const centerY = box.y + box.height / 2
 
-    await slider.hover();
-    await this.page.mouse.down();
-    await this.page.mouse.move(targetX, centerY);
-    await this.page.mouse.up();
+    await slider.hover()
+    await this.page.mouse.down()
+    await this.page.mouse.move(targetX, centerY)
+    await this.page.mouse.up()
   }
 
   /**
@@ -230,169 +213,150 @@ export class PokerPlayer {
    */
   async act(action) {
     if (action === "allIn") {
-      // Drag slider to max to trigger All-In button
-      const slider = this.gameElement.locator('input[type="range"]');
-      await this.dragSliderToMax(slider);
-      await this.gameElement.getByRole("button", { name: "All-In" }).click();
+      const slider = this.actionPanel.locator('input[type="range"]')
+      await this.dragSliderToMax(slider)
+      await this.actionPanel.getByRole("button", { name: "All-In" }).click()
     } else if (action === "call") {
-      // Call button includes amount (e.g., "Call $25")
-      await this.gameElement.getByRole("button", { name: /^Call \$/ }).click();
+      await this.actionPanel.getByRole("button", { name: /^Call \$/ }).click()
     } else if (action === "check") {
-      await this.gameElement.getByRole("button", { name: "Check" }).click();
+      await this.actionPanel.getByRole("button", { name: "Check" }).click()
     } else if (action === "fold") {
-      await this.gameElement.getByRole("button", { name: "Fold" }).click();
+      await this.actionPanel.getByRole("button", { name: "Fold" }).click()
     } else if (action === "bet") {
-      // Move slider slightly to ensure a valid bet amount
-      const slider = this.gameElement.locator('input[type="range"]');
-      const box = await slider.boundingBox();
+      const slider = this.actionPanel.locator('input[type="range"]')
+      const box = await slider.boundingBox()
       if (box) {
-        // Click at 25% position for a small bet
-        const targetX = box.x + box.width * 0.25;
-        const centerY = box.y + box.height / 2;
-        await slider.hover();
-        await this.page.mouse.down();
-        await this.page.mouse.move(targetX, centerY);
-        await this.page.mouse.up();
+        const targetX = box.x + box.width * 0.25
+        const centerY = box.y + box.height / 2
+        await slider.hover()
+        await this.page.mouse.down()
+        await this.page.mouse.move(targetX, centerY)
+        await this.page.mouse.up()
       }
-      await this.gameElement.getByRole("button", { name: "Bet" }).click();
+      await this.actionPanel.getByRole("button", { name: "Bet" }).click()
     } else if (action === "raise") {
-      // Move slider slightly to ensure a valid raise amount
-      const slider = this.gameElement.locator('input[type="range"]');
-      const box = await slider.boundingBox();
+      const slider = this.actionPanel.locator('input[type="range"]')
+      const box = await slider.boundingBox()
       if (box) {
-        // Click at 25% position for a small raise
-        const targetX = box.x + box.width * 0.25;
-        const centerY = box.y + box.height / 2;
-        await slider.hover();
-        await this.page.mouse.down();
-        await this.page.mouse.move(targetX, centerY);
-        await this.page.mouse.up();
+        const targetX = box.x + box.width * 0.25
+        const centerY = box.y + box.height / 2
+        await slider.hover()
+        await this.page.mouse.down()
+        await this.page.mouse.move(targetX, centerY)
+        await this.page.mouse.up()
       }
-      await this.gameElement.getByRole("button", { name: /^Raise to/ }).click();
+      await this.actionPanel.getByRole("button", { name: /^Raise to/ }).click()
     } else {
-      throw new Error(`Unknown action: ${action}`);
+      throw new Error(`Unknown action: ${action}`)
     }
 
     // Wait for state to propagate via WebSocket
-    await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(200)
   }
 
   /**
-   * Get current game state from player's perspective
-   * @returns {Promise<object>}
-   */
-  async getGameState() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      return game?.game;
-    });
-  }
-
-  /**
-   * Get current hand phase
-   * @returns {Promise<string|null>}
+   * Get current phase from the board UI
+   * @returns {Promise<string>}
    */
   async getPhase() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      return game?.game?.hand?.phase ?? null;
-    });
+    const phaseText = await this.board.locator(".phase").textContent()
+    return phaseText?.toLowerCase().trim() ?? ""
   }
 
   /**
-   * Get this player's hole cards
-   * @returns {Promise<Array<{rank: string, suit: string}>>}
+   * Get the number of hole cards visible for this player
+   * @returns {Promise<number>}
    */
-  async getHoleCards() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.cards?.filter((c) => !c.hidden) || [];
-    });
+  async getHoleCardCount() {
+    // Count visible cards (not hidden, not placeholder) in our seat
+    const cards = this.mySeat.locator(".hole-cards phg-card:not(.hidden):not(.placeholder)")
+    return await cards.count()
   }
 
   /**
-   * Get community cards on the board
-   * @returns {Promise<Array<{rank: string, suit: string}>>}
+   * Get the number of community cards on the board
+   * @returns {Promise<number>}
    */
-  async getBoardCards() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      return game?.game?.board?.cards || [];
-    });
+  async getBoardCardCount() {
+    const cards = this.board.locator(".community-cards phg-card:not(.placeholder)")
+    return await cards.count()
   }
 
   /**
-   * Get player's current stack
+   * Get player's current stack from UI
    * @returns {Promise<number>}
    */
   async getStack() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.stack ?? 0;
-    });
+    const stackText = await this.mySeat.locator(".stack").textContent()
+    // Parse "$1000" -> 1000
+    const match = stackText?.match(/\$(\d+)/)
+    return match ? parseInt(match[1], 10) : 0
+  }
+
+  /**
+   * Wait for the phase to change to a specific value
+   * @param {string} phase
+   * @param {number} [timeout=15000]
+   */
+  async waitForPhase(phase, timeout = 15000) {
+    await this.board.locator(".phase").filter({ hasText: phase }).waitFor({ timeout })
+  }
+
+  /**
+   * Wait for the hand to end (waiting phase or winner message)
+   * @param {number} [timeout=15000]
+   */
+  async waitForHandEnd(timeout = 15000) {
+    // Wait for either "Waiting" phase or winner message to appear
+    await this.board
+      .locator(".phase:has-text('Waiting'), .winner-message")
+      .first()
+      .waitFor({ timeout })
   }
 
   /**
    * Click the Sit Out button
    */
   async sitOut() {
-    await this.gameElement.getByRole("button", { name: "Sit Out" }).click();
-    // Wait for state to propagate
-    await this.page.waitForFunction(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.sittingOut === true;
-    });
+    await this.actionPanel.getByRole("button", { name: "Sit Out" }).click()
+    // Wait for SITTING OUT label to appear in our seat
+    await this.mySeat.locator(".status-label").filter({ hasText: "SITTING OUT" }).waitFor()
   }
 
   /**
    * Click the Sit In button
    */
   async sitIn() {
-    await this.gameElement.getByRole("button", { name: /^Sit In/ }).click();
-    // Wait for state to propagate
-    await this.page.waitForFunction(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.sittingOut === false;
-    });
+    await this.actionPanel.getByRole("button", { name: /^Sit In/ }).click()
+    // Wait for SITTING OUT label to disappear
+    await this.mySeat.locator(".status-label").filter({ hasText: "SITTING OUT" }).waitFor({ state: "hidden" })
   }
 
   /**
-   * Check if player is sitting out
+   * Check if player is sitting out by looking for the status label
    * @returns {Promise<boolean>}
    */
   async isSittingOut() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
-      return seat?.sittingOut === true;
-    });
+    return await this.mySeat.locator(".status-label").filter({ hasText: "SITTING OUT" }).isVisible().catch(() => false)
   }
 
   /**
-   * Get current countdown value
+   * Get current countdown value from UI
    * @returns {Promise<number|null>}
    */
   async getCountdown() {
-    return await this.page.evaluate(() => {
-      const game = document.querySelector("phg-game");
-      return game?.game?.countdown ?? null;
-    });
+    const countdownEl = this.board.locator(".countdown")
+    if (await countdownEl.isVisible().catch(() => false)) {
+      const text = await countdownEl.textContent()
+      return text ? parseInt(text, 10) : null
+    }
+    return null
   }
 
   /**
-   * Wait for countdown to be cancelled (null)
+   * Wait for countdown to be cancelled (countdown element hidden)
    */
-  async waitForCountdownCancelled() {
-    await this.page.waitForFunction(
-      () => {
-        const game = document.querySelector("phg-game");
-        return game?.game?.countdown === null;
-      },
-      { timeout: 10000 },
-    );
+  async waitForCountdownCancelled(timeout = 10000) {
+    await this.board.locator(".countdown").waitFor({ state: "hidden", timeout })
   }
 }
