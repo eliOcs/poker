@@ -11,6 +11,7 @@ import {
   mockOpponentSeat,
   mockEmptySeat,
   mockSittingOutSeat,
+  mockDisconnectedSeat,
 } from "./fixtures.js";
 
 // Mock WebSocket before importing components
@@ -42,4 +43,5 @@ export {
   mockOpponentSeat,
   mockEmptySeat,
   mockSittingOutSeat,
+  mockDisconnectedSeat,
 };

@@ -42,6 +42,12 @@ class Seat extends LitElement {
         border-style: dashed;
       }
 
+      :host(.disconnected) {
+        border-color: ${unsafeCSS(COLORS.red)};
+        border-style: dotted;
+        opacity: 0.7;
+      }
+
       :host(.all-in) {
         border-color: ${unsafeCSS(COLORS.red)};
       }
@@ -169,6 +175,7 @@ class Seat extends LitElement {
       this.classList.toggle("folded", !isEmpty && this.seat?.folded);
       this.classList.toggle("all-in", !isEmpty && this.seat?.allIn);
       this.classList.toggle("sitting-out", !isEmpty && this.seat?.sittingOut);
+      this.classList.toggle("disconnected", !isEmpty && this.seat?.disconnected);
       this.classList.toggle(
         "current-player",
         !isEmpty && this.seat?.isCurrentPlayer,
@@ -222,15 +229,17 @@ class Seat extends LitElement {
                 ? `LOST -$${Math.abs(this.seat.handResult)}`
                 : ""}
           </div>`
-        : this.seat.sittingOut
-          ? html`<div class="status-label">SITTING OUT</div>`
-          : this.seat.folded
-            ? html`<div class="status-label">FOLDED</div>`
-            : this.seat.allIn
-              ? html`<div class="status-label">ALL-IN</div>`
-              : this.seat.lastAction
-                ? html`<div class="last-action">${this.seat.lastAction}</div>`
-                : ""}
+        : this.seat.disconnected
+          ? html`<div class="status-label">DISCONNECTED</div>`
+          : this.seat.sittingOut
+            ? html`<div class="status-label">SITTING OUT</div>`
+            : this.seat.folded
+              ? html`<div class="status-label">FOLDED</div>`
+              : this.seat.allIn
+                ? html`<div class="status-label">ALL-IN</div>`
+                : this.seat.lastAction
+                  ? html`<div class="last-action">${this.seat.lastAction}</div>`
+                  : ""}
       ${this.seat.handRank
         ? html`<div class="hand-rank">${this.seat.handRank}</div>`
         : ""}

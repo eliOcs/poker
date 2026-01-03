@@ -101,6 +101,7 @@ import HandRankings from "./hand-rankings.js";
  * @property {boolean} folded
  * @property {boolean} allIn
  * @property {boolean} sittingOut
+ * @property {boolean} disconnected
  * @property {(Card|HiddenCard)[]} cards
  * @property {PlayerAction[]} actions
  * @property {boolean} isCurrentPlayer
@@ -389,6 +390,7 @@ export default function playerView(game, player) {
         folded: seat.folded,
         allIn: seat.allIn,
         sittingOut: seat.sittingOut,
+        disconnected: seat.disconnected,
         cards: showCards
           ? seat.cards
           : seat.cards?.map(() => hiddenCard()) || [],
