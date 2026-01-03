@@ -11,7 +11,6 @@ class Game extends LitElement {
       :host {
         height: 100%;
         display: block;
-        position: relative;
         background-color: ${unsafeCSS(COLORS.bgMedium)};
         box-sizing: border-box;
         font-family: "Press Start 2P", monospace;
@@ -21,6 +20,13 @@ class Game extends LitElement {
 
       :host * {
         box-sizing: inherit;
+      }
+
+      #wrapper {
+        position: relative;
+        height: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
       }
 
       #container {
@@ -143,9 +149,9 @@ class Game extends LitElement {
 
       phg-action-panel {
         position: absolute;
-        bottom: 8px;
+        bottom: 10%;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translate(-50%, 50%);
       }
 
       #connection-status {
@@ -249,50 +255,54 @@ class Game extends LitElement {
     const isSeated = this.isPlayerSeated();
 
     return html`
-      ${this.error ? html`<div class="error-message">${this.error}</div>` : ""}
-      <div id="container">
-        <phg-board
-          .board=${this.game.board}
-          .hand=${this.game.hand}
-          .countdown=${this.game.countdown}
-          .winnerMessage=${this.game.winnerMessage}
-        ></phg-board>
-        <div id="seats">
-          ${this.game.seats.map(
-            (seat, i) => html`
-              <phg-seat
-                .seat=${seat}
-                .isButton=${this.game.button === i}
-                .showSitAction=${!isSeated}
-                @seat-action=${this.handleSeatAction}
-              ></phg-seat>
-            `,
-          )}
+      <div id="wrapper">
+        ${this.error
+          ? html`<div class="error-message">${this.error}</div>`
+          : ""}
+        <div id="container">
+          <phg-board
+            .board=${this.game.board}
+            .hand=${this.game.hand}
+            .countdown=${this.game.countdown}
+            .winnerMessage=${this.game.winnerMessage}
+          ></phg-board>
+          <div id="seats">
+            ${this.game.seats.map(
+              (seat, i) => html`
+                <phg-seat
+                  .seat=${seat}
+                  .isButton=${this.game.button === i}
+                  .showSitAction=${!isSeated}
+                  @seat-action=${this.handleSeatAction}
+                ></phg-seat>
+              `,
+            )}
+          </div>
+          <div id="bets">
+            ${this.game.seats.map((seat, i) =>
+              !seat.empty && seat.bet > 0
+                ? html`<div class="bet-indicator" data-seat="${i}">
+                    $${seat.bet}
+                  </div>`
+                : "",
+            )}
+          </div>
         </div>
-        <div id="bets">
-          ${this.game.seats.map((seat, i) =>
-            !seat.empty && seat.bet > 0
-              ? html`<div class="bet-indicator" data-seat="${i}">
-                  $${seat.bet}
-                </div>`
-              : "",
-          )}
-        </div>
+        <phg-action-panel
+          .actions=${actions}
+          .seatIndex=${seatIndex}
+          .bigBlind=${this.game.blinds?.big || 1}
+          .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
+          @game-action=${this.handleGameAction}
+        ></phg-action-panel>
+        <span id="connection-status">
+          ${!this.socket ? "Not connected" : ""}
+          ${this.socket?.readyState === 0 ? "Connecting ..." : ""}
+          ${this.socket?.readyState === 1 ? "Connected" : ""}
+          ${this.socket?.readyState === 2 ? "Closing ..." : ""}
+          ${this.socket?.readyState === 3 ? "Closed" : ""}
+        </span>
       </div>
-      <phg-action-panel
-        .actions=${actions}
-        .seatIndex=${seatIndex}
-        .bigBlind=${this.game.blinds?.big || 1}
-        .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
-        @game-action=${this.handleGameAction}
-      ></phg-action-panel>
-      <span id="connection-status">
-        ${!this.socket ? "Not connected" : ""}
-        ${this.socket?.readyState === 0 ? "Connecting ..." : ""}
-        ${this.socket?.readyState === 1 ? "Connected" : ""}
-        ${this.socket?.readyState === 2 ? "Closing ..." : ""}
-        ${this.socket?.readyState === 3 ? "Closed" : ""}
-      </span>
     `;
   }
 }
