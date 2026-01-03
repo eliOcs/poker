@@ -52,9 +52,6 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium
 
-      - name: Generate SSL certificates
-        run: ./scripts/generate-certs.sh
-
       - name: Create .env file
         run: cp .env.example .env
 
