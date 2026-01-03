@@ -197,7 +197,7 @@ function processGameFlow(game, gameId) {
             game.seats[result.winner]
           );
         game.winnerMessage = {
-          playerName: winnerSeat.player?.id ?? "Unknown",
+          playerName: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
           handRank: null, // No showdown, won by fold
           amount: result.amount,
         };
@@ -239,12 +239,13 @@ function processGameFlow(game, gameId) {
       // Use the first pot result (main pot) for winner message
       if (potResults.length > 0 && potResults[0].winners.length > 0) {
         const mainPot = potResults[0];
+        const winnerSeatIndex = mainPot.winners[0];
         const winnerSeat =
           /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-            game.seats[mainPot.winners[0]]
+            game.seats[winnerSeatIndex]
           );
         game.winnerMessage = {
-          playerName: winnerSeat.player?.id ?? "Unknown",
+          playerName: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
           handRank: mainPot.winningHand
             ? HandRankings.formatHand(mainPot.winningHand)
             : null,
@@ -425,10 +426,9 @@ wss.on(
     // Mark player as connected if they have a seat
     const seatIndex = findPlayerSeatIndex(game, player);
     if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-      const seat =
-        /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-          game.seats[seatIndex]
-        );
+      const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+        game.seats[seatIndex]
+      );
       seat.disconnected = false;
 
       // Cancel any pending disconnect timer for this seat
@@ -453,10 +453,9 @@ wss.on(
       if (closedSeatIndex === -1 || closedGame.seats[closedSeatIndex].empty)
         return;
 
-      const closedSeat =
-        /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-          closedGame.seats[closedSeatIndex]
-        );
+      const closedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+        closedGame.seats[closedSeatIndex]
+      );
 
       // Mark seat as disconnected
       closedSeat.disconnected = true;
@@ -473,6 +472,14 @@ wss.on(
     ws.on("message", function (rawMessage) {
       const { action, ...args } = JSON.parse(rawMessage);
       const bettingActions = ["check", "call", "bet", "raise", "fold", "allIn"];
+
+      // Handle setName separately (not a poker action)
+      if (action === "setName") {
+        const name = args.name?.trim().substring(0, 20) || null;
+        player.name = name;
+        broadcastGameState(gameId);
+        return;
+      }
 
       try {
         PokerActions[action](game, { player, ...args });

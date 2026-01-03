@@ -9,5 +9,5 @@ import { randomBytes } from "crypto";
  * @returns {Player}
  */
 export function create() {
-  return { id: randomBytes(16).toString("hex") };
+  return { id: randomBytes(16).toString("hex"), name: null };
 }
