@@ -72,7 +72,18 @@ import HandRankings from "./hand-rankings.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart} PlayerAction
+ * @typedef {object} ActionSitOut
+ * @property {'sitOut'} action
+ */
+
+/**
+ * @typedef {object} ActionSitIn
+ * @property {'sitIn'} action
+ * @property {number} cost - Big blind cost to sit back in (0 if no missed blinds)
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn} PlayerAction
  */
 
 /**
@@ -89,6 +100,7 @@ import HandRankings from "./hand-rankings.js";
  * @property {number} bet
  * @property {boolean} folded
  * @property {boolean} allIn
+ * @property {boolean} sittingOut
  * @property {(Card|HiddenCard)[]} cards
  * @property {PlayerAction[]} actions
  * @property {boolean} isCurrentPlayer
@@ -242,16 +254,27 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
 
   // Player is seated but hand not active - can buy in if no stack, or start game
   if (game.hand?.phase === "waiting") {
-    if (seat.stack === 0) {
+    if (seat.sittingOut) {
+      // Sitting out - can sit back in if has enough chips for big blind
+      if (seat.stack >= game.blinds.big) {
+        const cost = seat.missedBigBlind ? game.blinds.big : 0;
+        actions.push({ action: "sitIn", cost });
+      }
+    } else if (seat.stack === 0) {
       actions.push({
         action: "buyIn",
         min: 20,
         max: 100,
         bigBlind: game.blinds.big,
       });
-    } else if (game.countdown === null && countPlayersWithChips(game) >= 2) {
-      // Player has chips, no countdown active, enough players - can start
-      actions.push({ action: "start" });
+    } else {
+      // Player has chips and not sitting out
+      if (game.countdown === null && countPlayersWithChips(game) >= 2) {
+        // No countdown active, enough players - can start
+        actions.push({ action: "start" });
+      }
+      // Can sit out if has chips
+      actions.push({ action: "sitOut" });
     }
     return actions;
   }
@@ -365,6 +388,7 @@ export default function playerView(game, player) {
         bet: seat.bet,
         folded: seat.folded,
         allIn: seat.allIn,
+        sittingOut: seat.sittingOut,
         cards: showCards
           ? seat.cards
           : seat.cards?.map(() => hiddenCard()) || [],

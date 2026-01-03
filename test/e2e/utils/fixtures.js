@@ -33,6 +33,20 @@ export const test = base.extend({
     await use(player);
     await context.close();
   },
+
+  /**
+   * Player 3 fixture - creates a tracked browser context
+   * @type {PokerPlayer}
+   */
+  player3: async ({ browser }, use) => {
+    const context = await browser.newContext({
+      permissions: ["clipboard-read", "clipboard-write"],
+    });
+    const page = await context.newPage();
+    const player = new PokerPlayer(context, page, "Player 3");
+    await use(player);
+    await context.close();
+  },
 });
 
 export { expect } from "@playwright/test";

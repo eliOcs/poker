@@ -113,6 +113,20 @@ export class PokerPlayer {
   }
 
   /**
+   * Wait for countdown to start (become non-null)
+   * @param {number} [timeout=5000]
+   */
+  async waitForCountdownStart(timeout = 5000) {
+    await this.page.waitForFunction(
+      () => {
+        const game = document.querySelector("phg-game");
+        return game?.game?.countdown !== null && game?.game?.countdown > 0;
+      },
+      { timeout },
+    );
+  }
+
+  /**
    * Wait for countdown to complete and hand to start
    */
   async waitForHandStart() {
@@ -318,5 +332,67 @@ export class PokerPlayer {
       const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
       return seat?.stack ?? 0;
     });
+  }
+
+  /**
+   * Click the Sit Out button
+   */
+  async sitOut() {
+    await this.gameElement.getByRole("button", { name: "Sit Out" }).click();
+    // Wait for state to propagate
+    await this.page.waitForFunction(() => {
+      const game = document.querySelector("phg-game");
+      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
+      return seat?.sittingOut === true;
+    });
+  }
+
+  /**
+   * Click the Sit In button
+   */
+  async sitIn() {
+    await this.gameElement.getByRole("button", { name: /^Sit In/ }).click();
+    // Wait for state to propagate
+    await this.page.waitForFunction(() => {
+      const game = document.querySelector("phg-game");
+      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
+      return seat?.sittingOut === false;
+    });
+  }
+
+  /**
+   * Check if player is sitting out
+   * @returns {Promise<boolean>}
+   */
+  async isSittingOut() {
+    return await this.page.evaluate(() => {
+      const game = document.querySelector("phg-game");
+      const seat = game?.game?.seats?.find((s) => s.isCurrentPlayer);
+      return seat?.sittingOut === true;
+    });
+  }
+
+  /**
+   * Get current countdown value
+   * @returns {Promise<number|null>}
+   */
+  async getCountdown() {
+    return await this.page.evaluate(() => {
+      const game = document.querySelector("phg-game");
+      return game?.game?.countdown ?? null;
+    });
+  }
+
+  /**
+   * Wait for countdown to be cancelled (null)
+   */
+  async waitForCountdownCancelled() {
+    await this.page.waitForFunction(
+      () => {
+        const game = document.querySelector("phg-game");
+        return game?.game?.countdown === null;
+      },
+      { timeout: 10000 },
+    );
   }
 }

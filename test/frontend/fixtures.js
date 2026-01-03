@@ -51,6 +51,14 @@ export const mockOpponentSeat = {
   actions: [],
 };
 
+export const mockSittingOutSeat = {
+  ...mockOccupiedSeat,
+  sittingOut: true,
+  cards: [],
+  actions: [{ action: "sitIn", cost: 50 }],
+  isActing: false,
+};
+
 export function createMockGameState(overrides = {}) {
   return {
     running: true,

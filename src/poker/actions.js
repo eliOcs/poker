@@ -15,7 +15,9 @@ import * as Betting from "./betting.js";
  * @returns {number}
  */
 export function countPlayersWithChips(game) {
-  return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
+  return game.seats.filter(
+    (seat) => !seat.empty && seat.stack > 0 && !seat.sittingOut,
+  ).length;
 }
 
 /**
@@ -308,14 +310,14 @@ export function* blinds(game) {
 export function* dealPreflop(game) {
   for (const seat of createSeatIterator(
     game,
-    (seat) => !seat.empty && !!seat.player,
+    (seat) => !seat.empty && !seat.sittingOut,
   )) {
     seat.cards = [Deck.deal(game.deck)];
     yield;
   }
   for (const seat of createSeatIterator(
     game,
-    (seat) => !seat.empty && !!seat.player,
+    (seat) => !seat.empty && !seat.sittingOut,
   )) {
     seat.cards.push(Deck.deal(game.deck));
     yield;
@@ -412,10 +414,69 @@ export function moveButton(game) {
   const seats = game.seats;
   let next = (game.button + 1) % seats.length;
 
-  // Find next occupied seat
-  while (seats[next].empty && next !== game.button) {
+  // Find next occupied seat that isn't sitting out
+  while (next !== game.button) {
+    const seat = seats[next];
+    if (!seat.empty && !seat.sittingOut) {
+      break;
+    }
     next = (next + 1) % seats.length;
   }
 
   game.button = next;
+}
+
+// --- Sit Out Actions ---
+
+/**
+ * Player sits out (takes a break, won't be dealt into hands)
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function sitOut(game, { seat }) {
+  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+  if (game.hand?.phase !== "waiting") {
+    throw new Error("can only sit out between hands");
+  }
+  if (seatObj.sittingOut) {
+    throw new Error("already sitting out");
+  }
+
+  seatObj.sittingOut = true;
+}
+
+/**
+ * Player sits back in (returns from break, posts big blind)
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function sitIn(game, { seat }) {
+  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+  if (game.hand?.phase !== "waiting") {
+    throw new Error("can only sit in between hands");
+  }
+  if (!seatObj.sittingOut) {
+    throw new Error("not sitting out");
+  }
+
+  // Must post big blind to return if missed
+  if (seatObj.missedBigBlind) {
+    if (seatObj.stack < game.blinds.big) {
+      throw new Error("not enough chips to post big blind");
+    }
+    seatObj.stack -= game.blinds.big;
+    // The posted blind goes to the pot when the next hand starts
+    seatObj.bet = game.blinds.big;
+    seatObj.missedBigBlind = false;
+  }
+
+  seatObj.sittingOut = false;
 }

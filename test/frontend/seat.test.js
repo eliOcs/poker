@@ -7,6 +7,7 @@ import {
   mockFoldedSeat,
   mockAllInSeat,
   mockEmptySeat,
+  mockSittingOutSeat,
 } from "./setup.js";
 
 describe("phg-seat", () => {
@@ -367,5 +368,65 @@ describe("phg-seat", () => {
     expect(handResult).to.exist;
     expect(handResult.textContent).to.include("LOST");
     expect(statusLabel).to.not.exist;
+  });
+
+  it("applies .sitting-out class when seat.sittingOut is true", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockSittingOutSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    expect(seats[0].classList.contains("sitting-out")).to.be.true;
+  });
+
+  it("displays SITTING OUT status label when sittingOut is true", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockSittingOutSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("SITTING OUT");
+  });
+
+  it("displays SITTING OUT instead of lastAction when sittingOut", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockSittingOutSeat, lastAction: "check" },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(lastAction).to.not.exist;
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("SITTING OUT");
   });
 });
