@@ -145,7 +145,7 @@ describe("phg-game", () => {
       settingsBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("#settings-modal");
+      const modal = element.shadowRoot.querySelector("phg-modal");
       expect(modal).to.exist;
     });
 
@@ -170,7 +170,7 @@ describe("phg-game", () => {
       cancelBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("#settings-modal");
+      const modal = element.shadowRoot.querySelector("phg-modal");
       expect(modal).to.not.exist;
     });
 
@@ -179,12 +179,13 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const overlay = element.shadowRoot.querySelector("#settings-overlay");
+      const modal = element.shadowRoot.querySelector("phg-modal");
+      const overlay = modal.shadowRoot.querySelector(".overlay");
       overlay.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("#settings-modal");
-      expect(modal).to.not.exist;
+      const closedModal = element.shadowRoot.querySelector("phg-modal");
+      expect(closedModal).to.not.exist;
     });
 
     it("sends setName action when save button clicked", async () => {
@@ -225,7 +226,7 @@ describe("phg-game", () => {
       saveBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("#settings-modal");
+      const modal = element.shadowRoot.querySelector("phg-modal");
       expect(modal).to.not.exist;
     });
 

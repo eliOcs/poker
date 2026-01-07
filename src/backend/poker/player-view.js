@@ -1,6 +1,7 @@
 import * as Betting from "./betting.js";
 import { countPlayersWithChips } from "./actions.js";
 import HandRankings from "./hand-rankings.js";
+import * as Ranking from "./ranking.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -141,6 +142,7 @@ import HandRankings from "./hand-rankings.js";
  * @property {ViewSeat[]} seats
  * @property {number|null} countdown
  * @property {WinnerMessage|null} winnerMessage
+ * @property {Ranking.PlayerRanking[]} rankings
  */
 
 /**
@@ -367,6 +369,7 @@ export default function playerView(game, player) {
       : null,
     countdown: game.countdown,
     winnerMessage: game.winnerMessage,
+    rankings: Ranking.computeRankings(game),
     seats: game.seats.map((seat, index) => {
       if (seat.empty) {
         return {
