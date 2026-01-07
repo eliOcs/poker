@@ -19,6 +19,7 @@
     "test:backend": "node --test 'test/poker/**/*.js'",
     "test:e2e": "playwright test",
     "test:frontend": "web-test-runner",
+    "test:ui-catalog": "playwright test --config=playwright.ui-catalog.config.js",
     "typecheck": "tsc",
     "validate": "npm run format && npm run lint && npm run typecheck && npm run test"
   },
