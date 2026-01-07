@@ -44,16 +44,19 @@ As a player waiting for another player to act, I want to be able to call the clo
 ### callClock
 
 **Request:**
+
 ```javascript
 { "action": "callClock" }
 ```
 
 **Validation:**
+
 - Must not be the acting player's turn
 - Acting player must have been acting for >= 60 seconds
 - Clock must not already be called
 
 **Effect:**
+
 - Sets `clockCalledAt` to current timestamp
 - Broadcasts updated game state with `clockExpires`
 
@@ -63,11 +66,11 @@ As a player waiting for another player to act, I want to be able to call the clo
 
 Show clock status near the acting player's seat:
 
-| State | Display |
-|-------|---------|
-| Acting < 60s | Nothing |
+| State                           | Display                                 |
+| ------------------------------- | --------------------------------------- |
+| Acting < 60s                    | Nothing                                 |
 | Acting >= 60s, clock not called | "Call Clock" button for waiting players |
-| Clock called | Countdown timer (30s -> 0s) |
+| Clock called                    | Countdown timer (30s -> 0s)             |
 
 ### Call Clock Button
 
@@ -125,9 +128,7 @@ function getClockInfo(game) {
 
   const elapsed = Date.now() - game.actingSince;
   const canCallClock = elapsed >= 60000 && game.clockCalledAt === null;
-  const clockExpires = game.clockCalledAt
-    ? game.clockCalledAt + 30000
-    : null;
+  const clockExpires = game.clockCalledAt ? game.clockCalledAt + 30000 : null;
 
   return { canCallClock, clockExpires };
 }
@@ -135,13 +136,13 @@ function getClockInfo(game) {
 
 ## Edge Cases
 
-| Scenario | Behavior |
-|----------|----------|
-| Player acts before clock expires | Clock is cleared, normal flow continues |
-| Player disconnects while clock is running | Clock continues, auto-action on expiry |
+| Scenario                                     | Behavior                                              |
+| -------------------------------------------- | ----------------------------------------------------- |
+| Player acts before clock expires             | Clock is cleared, normal flow continues               |
+| Player disconnects while clock is running    | Clock continues, auto-action on expiry                |
 | Clock called but player already disconnected | Existing disconnect timer takes precedence if shorter |
-| Multiple players call clock simultaneously | First call wins, subsequent calls ignored |
-| Hand ends while clock is running | Clock is cleared |
+| Multiple players call clock simultaneously   | First call wins, subsequent calls ignored             |
+| Hand ends while clock is running             | Clock is cleared                                      |
 
 ## Testing
 

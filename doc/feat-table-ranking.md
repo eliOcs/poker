@@ -21,6 +21,7 @@ Net Winnings = Current Stack - Total Buy-ins
 ```
 
 **Example:**
+
 - Player buys in for 100, rebuys for 50, currently has 200
 - Net Winnings = 200 - (100 + 50) = +50
 
@@ -35,6 +36,7 @@ Win Rate = (Net Winnings / Big Blind) / (Hands Played / 100)
 ```
 
 **Example:**
+
 - Big blind is 2
 - Player is up 40 chips over 50 hands
 - Win Rate = (40 / 2) / (50 / 100) = 20 / 0.5 = **40 BB/100**
@@ -84,13 +86,14 @@ game.stats = {
 ### Buy-in Tracking
 
 Track buy-ins when:
+
 - Player first sits down and buys chips
 - Player adds chips (top-up/rebuy)
 
 ```javascript
 function recordBuyIn(game, playerId, amount) {
-  const stats = getPlayerStats(game, playerId)
-  stats.totalBuyIn += amount
+  const stats = getPlayerStats(game, playerId);
+  stats.totalBuyIn += amount;
 }
 ```
 
@@ -100,10 +103,10 @@ Increment `handsPlayed` for each player dealt cards when a hand completes:
 
 ```javascript
 function endHand(game) {
-  game.stats.handNumber++
+  game.stats.handNumber++;
   for (const seat of occupiedSeats(game)) {
     if (seat.wasDealtIn) {
-      getPlayerStats(game, seat.player.id).handsPlayed++
+      getPlayerStats(game, seat.player.id).handsPlayed++;
     }
   }
 }
@@ -129,10 +132,12 @@ function endHand(game) {
 ```
 
 **Column headers with explanations:**
+
 - **Net** - "Profit/loss" (tooltip: "Current stack minus total buy-ins")
 - **BB/100** - "Big blinds won per 100 hands" (tooltip: "Standard win rate metric - higher is better")
 
 **Color coding:**
+
 - Green for positive values
 - Red for negative values
 
