@@ -280,6 +280,11 @@ const DISCONNECT_TIMEOUT = process.env.TIMER_SPEED
   ? Math.floor(5000 / parseInt(process.env.TIMER_SPEED, 10))
   : 5000;
 
+// Clock duration in ms (30 seconds, can be sped up for tests)
+const CLOCK_DURATION = process.env.TIMER_SPEED
+  ? Math.floor(30000 / parseInt(process.env.TIMER_SPEED, 10))
+  : 30000;
+
 /**
  * Finds the seat index for a player in a game
  * @param {Game} game
@@ -330,6 +335,47 @@ function startDisconnectTimer(game, gameId, seatIndex) {
     processGameFlow(game, gameId);
     broadcastGameState(gameId);
   }, DISCONNECT_TIMEOUT);
+}
+
+/**
+ * Clears the clock timer if active
+ * @param {Game} game
+ */
+function clearClockTimer(game) {
+  if (game.clockTimer) {
+    clearTimeout(game.clockTimer);
+    game.clockTimer = null;
+  }
+}
+
+/**
+ * Starts a timer for call the clock (30 second countdown)
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function startClockTimer(game, gameId) {
+  clearClockTimer(game);
+
+  game.clockTimer = setTimeout(() => {
+    game.clockTimer = null;
+
+    const actingSeat = game.hand?.actingSeat;
+    if (actingSeat === -1 || actingSeat === undefined) return;
+
+    const seat = game.seats[actingSeat];
+    if (seat.empty) return;
+
+    // Auto check/fold: check if possible, otherwise fold
+    if (seat.bet === game.hand.currentBet) {
+      PokerActions.check(game, { seat: actingSeat });
+    } else {
+      PokerActions.fold(game, { seat: actingSeat });
+    }
+
+    // Process game flow after the auto-action
+    processGameFlow(game, gameId);
+    broadcastGameState(gameId);
+  }, CLOCK_DURATION);
 }
 
 /**
@@ -493,8 +539,15 @@ wss.on(
           }
         }
 
+        // Start clock timer when clock is called
+        if (action === "callClock") {
+          startClockTimer(game, gameId);
+        }
+
         // Process game flow after betting actions
         if (bettingActions.includes(action)) {
+          // Clear clock timer since action was taken
+          clearClockTimer(game);
           processGameFlow(game, gameId);
         }
       } catch (err) {

@@ -120,6 +120,18 @@ class Seat extends LitElement {
       .empty-label {
         color: ${unsafeCSS(COLORS.fgDark)};
       }
+
+      .clock-countdown {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 1em;
+        color: ${unsafeCSS(COLORS.orange)};
+      }
+
+      .clock-countdown.urgent {
+        color: ${unsafeCSS(COLORS.red)};
+      }
     `;
   }
 
@@ -129,12 +141,51 @@ class Seat extends LitElement {
       seatNumber: { type: Number },
       isButton: { type: Boolean },
       showSitAction: { type: Boolean },
+      clockCalledAt: { type: Number },
+      _clockRemaining: { type: Number, state: true },
     };
   }
 
   constructor() {
     super();
     this.showSitAction = true;
+    this.clockCalledAt = null;
+    this._clockRemaining = null;
+    this._clockInterval = null;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._startClockTimer();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._stopClockTimer();
+  }
+
+  _startClockTimer() {
+    this._stopClockTimer();
+    this._clockInterval = setInterval(() => {
+      this._updateClockRemaining();
+    }, 100);
+  }
+
+  _stopClockTimer() {
+    if (this._clockInterval) {
+      clearInterval(this._clockInterval);
+      this._clockInterval = null;
+    }
+  }
+
+  _updateClockRemaining() {
+    if (this.clockCalledAt) {
+      const elapsed = Date.now() - this.clockCalledAt;
+      const remaining = Math.max(0, Math.ceil((30000 - elapsed) / 1000));
+      this._clockRemaining = remaining;
+    } else {
+      this._clockRemaining = null;
+    }
   }
 
   updated(changedProperties) {
@@ -190,6 +241,15 @@ class Seat extends LitElement {
         </span>
       </div>
       <div class="stack">$${this.seat.stack}</div>
+      ${this._clockRemaining !== null
+        ? html`<div
+            class="clock-countdown ${this._clockRemaining <= 10
+              ? "urgent"
+              : ""}"
+          >
+            <span>⏱</span><span>${this._clockRemaining}s</span>
+          </div>`
+        : ""}
       ${this.seat.handResult != null
         ? html`<div
             class="hand-result ${this.seat.handResult > 0

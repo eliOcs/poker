@@ -348,4 +348,152 @@ describe("Player View", function () {
       assert.equal(view.seats[1].winningCards, null);
     });
   });
+
+  describe("callClock action", function () {
+    it("should appear on waiting player's seat when opponent is acting too long", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Simulate a hand in progress where seat 1 is acting
+      g.hand = {
+        phase: "flop",
+        pot: 10,
+        currentBet: 0,
+        actingSeat: 1,
+        actingSince: Date.now() - 61000, // 61 seconds ago
+        clockCalledAt: null,
+      };
+
+      // Player 1 (seat 0) is waiting - should see callClock action on their own seat
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+      const callClockAction = p1Actions.find((a) => a.action === "callClock");
+
+      assert.ok(callClockAction, "callClock action should be available");
+    });
+
+    it("should NOT appear on acting player's own seat", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Simulate a hand in progress where seat 1 is acting
+      g.hand = {
+        phase: "flop",
+        pot: 10,
+        currentBet: 0,
+        actingSeat: 1,
+        actingSince: Date.now() - 61000, // 61 seconds ago
+        clockCalledAt: null,
+      };
+
+      // Player 2 (seat 1) is acting - should NOT see callClock on their own seat
+      const view = playerView(g, p2);
+      const p2Actions = view.seats[1].actions;
+      const callClockAction = p2Actions.find((a) => a.action === "callClock");
+
+      assert.ok(
+        !callClockAction,
+        "callClock should NOT appear for acting player",
+      );
+    });
+
+    it("should NOT appear before 60 seconds have passed", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Simulate a hand where seat 1 started acting recently
+      g.hand = {
+        phase: "flop",
+        pot: 10,
+        currentBet: 0,
+        actingSeat: 1,
+        actingSince: Date.now() - 30000, // Only 30 seconds ago
+        clockCalledAt: null,
+      };
+
+      // Player 1 (seat 0) is waiting - should NOT see callClock yet
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+      const callClockAction = p1Actions.find((a) => a.action === "callClock");
+
+      assert.ok(
+        !callClockAction,
+        "callClock should NOT appear before 60 seconds",
+      );
+    });
+
+    it("should NOT appear if clock is already called", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Simulate a hand where clock is already called
+      g.hand = {
+        phase: "flop",
+        pot: 10,
+        currentBet: 0,
+        actingSeat: 1,
+        actingSince: Date.now() - 61000,
+        clockCalledAt: Date.now() - 5000, // Clock was called 5 seconds ago
+      };
+
+      // Player 1 (seat 0) should NOT see callClock again
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+      const callClockAction = p1Actions.find((a) => a.action === "callClock");
+
+      assert.ok(
+        !callClockAction,
+        "callClock should NOT appear if already called",
+      );
+    });
+
+    it("should NOT appear when no one is acting", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Waiting phase - no one is acting
+      g.hand = {
+        phase: "waiting",
+        pot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+        actingSince: null,
+        clockCalledAt: null,
+      };
+
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+      const callClockAction = p1Actions.find((a) => a.action === "callClock");
+
+      assert.ok(
+        !callClockAction,
+        "callClock should NOT appear when no one is acting",
+      );
+    });
+  });
 });

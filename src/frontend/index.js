@@ -68,7 +68,7 @@ class Game extends LitElement {
         width: 30%;
         min-width: 100px;
         max-width: 200px;
-        min-height: 100px;
+        min-height: 150px;
         max-height: 200px;
         z-index: 1;
       }
@@ -451,6 +451,9 @@ class Game extends LitElement {
                   .seatNumber=${i}
                   .isButton=${this.game.button === i}
                   .showSitAction=${!isSeated}
+                  .clockCalledAt=${this.game.hand?.actingSeat === i
+                    ? this.game.hand?.clockCalledAt
+                    : null}
                   @seat-action=${this.handleSeatAction}
                 ></phg-seat>
               `,
