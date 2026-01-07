@@ -5,6 +5,8 @@ import "./board.js";
 import "./seat.js";
 import "./action-panel.js";
 import "./button.js";
+import "./modal.js";
+import "./ranking-panel.js";
 
 class Game extends LitElement {
   static get styles() {
@@ -193,26 +195,7 @@ class Game extends LitElement {
         color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
-      #settings-modal {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: ${unsafeCSS(COLORS.bgLight)};
-        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
-        padding: 20px;
-        z-index: 200;
-        box-shadow: 8px 8px 0 ${unsafeCSS(COLORS.bgDark)};
-        min-width: 280px;
-      }
-
-      #settings-modal h3 {
-        margin: 0 0 15px 0;
-        font-size: 0.7em;
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      #settings-modal input {
+      .settings-content input {
         width: 100%;
         padding: 10px;
         font-family: "Press Start 2P", monospace;
@@ -221,22 +204,13 @@ class Game extends LitElement {
         background: ${unsafeCSS(COLORS.bgMedium)};
         color: ${unsafeCSS(COLORS.fgWhite)};
         margin-bottom: 15px;
+        box-sizing: border-box;
       }
 
-      #settings-modal .buttons {
+      .settings-content .buttons {
         display: flex;
         gap: 10px;
         justify-content: flex-end;
-      }
-
-      #settings-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 199;
       }
 
       .not-found {
@@ -260,6 +234,22 @@ class Game extends LitElement {
           font-size: 0.8em;
         }
       }
+
+      #ranking-btn {
+        position: absolute;
+        right: 40px;
+        top: 0.5%;
+        background: none;
+        border: none;
+        font-size: 1.2em;
+        cursor: pointer;
+        padding: 5px;
+        color: ${unsafeCSS(COLORS.gold)};
+      }
+
+      #ranking-btn:hover {
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
     `;
   }
 
@@ -270,6 +260,7 @@ class Game extends LitElement {
       socket: { type: Object },
       error: { type: String },
       showSettings: { type: Boolean },
+      showRanking: { type: Boolean },
       notFound: { type: Boolean },
     };
   }
@@ -279,6 +270,7 @@ class Game extends LitElement {
     this.gameId = null;
     this.error = null;
     this.showSettings = false;
+    this.showRanking = false;
     this.notFound = false;
   }
 
@@ -353,6 +345,14 @@ class Game extends LitElement {
 
   closeSettings() {
     this.showSettings = false;
+  }
+
+  openRanking() {
+    this.showRanking = true;
+  }
+
+  closeRanking() {
+    this.showRanking = false;
   }
 
   saveSettings() {
@@ -480,31 +480,46 @@ class Game extends LitElement {
           ${this.socket?.readyState === 2 ? "Closing ..." : ""}
           ${this.socket?.readyState === 3 ? "Closed" : ""}
         </span>
+        <button id="ranking-btn" @click=${this.openRanking} title="Rankings">
+          🏆
+        </button>
         <button id="settings-btn" @click=${this.openSettings} title="Settings">
           ⚙
         </button>
+        ${this.showRanking
+          ? html`
+              <phg-modal title="Table Ranking" @close=${this.closeRanking}>
+                <phg-ranking-panel
+                  .rankings=${this.game?.rankings || []}
+                ></phg-ranking-panel>
+              </phg-modal>
+            `
+          : ""}
         ${this.showSettings
           ? html`
-              <div id="settings-overlay" @click=${this.closeSettings}></div>
-              <div id="settings-modal">
-                <h3>Settings</h3>
-                <input
-                  id="name-input"
-                  type="text"
-                  placeholder="Enter your name"
-                  maxlength="20"
-                  .value=${this.getCurrentPlayerName()}
-                  @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
-                />
-                <div class="buttons">
-                  <phg-button variant="secondary" @click=${this.closeSettings}>
-                    Cancel
-                  </phg-button>
-                  <phg-button variant="success" @click=${this.saveSettings}>
-                    Save
-                  </phg-button>
+              <phg-modal title="Settings" @close=${this.closeSettings}>
+                <div class="settings-content">
+                  <input
+                    id="name-input"
+                    type="text"
+                    placeholder="Enter your name"
+                    maxlength="20"
+                    .value=${this.getCurrentPlayerName()}
+                    @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
+                  />
+                  <div class="buttons">
+                    <phg-button
+                      variant="secondary"
+                      @click=${this.closeSettings}
+                    >
+                      Cancel
+                    </phg-button>
+                    <phg-button variant="success" @click=${this.saveSettings}>
+                      Save
+                    </phg-button>
+                  </div>
                 </div>
-              </div>
+              </phg-modal>
             `
           : ""}
       </div>

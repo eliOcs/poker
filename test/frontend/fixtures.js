@@ -12,6 +12,8 @@ export const mockOccupiedSeat = {
   player: { id: "test-player-123", name: null },
   stack: 1000,
   bet: 50,
+  totalBuyIn: 1000,
+  handsPlayed: 0,
   folded: false,
   allIn: false,
   sittingOut: false,
@@ -87,6 +89,7 @@ export function createMockGameState(overrides = {}) {
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
     ],
+    rankings: [],
     ...overrides,
   };
 }
@@ -199,6 +202,53 @@ export function createMockGameWithWinner(winnerMessage) {
       { ...mockEmptySeat, actions: [] },
       { ...mockEmptySeat, actions: [] },
       { ...mockEmptySeat, actions: [] },
+    ],
+  });
+}
+
+export function createMockGameWithRankings() {
+  return createMockGameState({
+    seats: [
+      {
+        ...mockOccupiedSeat,
+        player: { id: "test-player-123", name: "Alice" },
+        stack: 1200,
+        totalBuyIn: 1000,
+        handsPlayed: 50,
+      },
+      {
+        ...mockOpponentSeat,
+        player: { id: "opponent-456", name: null },
+        stack: 800,
+        totalBuyIn: 1000,
+        handsPlayed: 50,
+      },
+      { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+      { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+      { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+      { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+    ],
+    rankings: [
+      {
+        seatIndex: 0,
+        playerId: "test-player-123",
+        playerName: "Alice",
+        stack: 1200,
+        totalBuyIn: 1000,
+        netWinnings: 200,
+        handsPlayed: 50,
+        winRate: 8.0,
+      },
+      {
+        seatIndex: 1,
+        playerId: "opponent-456",
+        playerName: null,
+        stack: 800,
+        totalBuyIn: 1000,
+        netWinnings: -200,
+        handsPlayed: 50,
+        winRate: -8.0,
+      },
     ],
   });
 }

@@ -20,6 +20,8 @@
  * @property {number} stack - Chips behind (not in pot)
  * @property {number} bet - Current bet in this betting round
  * @property {number} totalInvested - Total chips put in pot this hand (for side pots)
+ * @property {number} totalBuyIn - Cumulative buy-ins for this session (for ranking)
+ * @property {number} handsPlayed - Number of hands played this session (for ranking)
  * @property {Card[]} cards - Hole cards
  * @property {boolean} folded - Has folded this hand
  * @property {boolean} allIn - Is all-in
@@ -56,6 +58,8 @@ export function occupied(player, stack = 0) {
     stack,
     bet: 0,
     totalInvested: 0,
+    totalBuyIn: 0,
+    handsPlayed: 0,
     cards: [],
     folded: false,
     allIn: false,

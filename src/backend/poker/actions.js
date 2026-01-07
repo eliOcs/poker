@@ -57,14 +57,16 @@ export function sit(game, { seat, player }) {
 }
 
 /**
- * Buys in a player for an amount
+ * Buys in a player for an amount (adds to existing stack)
  * @param {Game} game
  * @param {{ seat: number, amount: number }} options
  */
 export function buyIn(game, { seat, amount }) {
   const seatObj = game.seats[seat];
   if (!seatObj.empty) {
-    seatObj.stack = game.blinds.big * amount;
+    const chipAmount = game.blinds.big * amount;
+    seatObj.stack += chipAmount;
+    seatObj.totalBuyIn += chipAmount;
   } else {
     throw new Error("seat is empty");
   }
@@ -401,6 +403,13 @@ export function endHand(game) {
   game.hand.lastRaiser = -1;
   game.hand.actingSeat = -1;
   game.hand.lastRaiseSize = 0;
+
+  // Increment handsPlayed for all players who were dealt in (not sitting out)
+  for (const seat of game.seats) {
+    if (!seat.empty && !seat.sittingOut) {
+      seat.handsPlayed++;
+    }
+  }
 
   // Move button to next occupied seat
   moveButton(game);
