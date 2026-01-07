@@ -489,3 +489,44 @@ export function sitIn(game, { seat }) {
 
   seatObj.sittingOut = false;
 }
+
+// --- Clock Actions ---
+
+/** @type {number} Time in ms a player must be acting before clock can be called */
+export const CLOCK_WAIT_TIME = 60000;
+
+/**
+ * Calls the clock on the acting player (starts 30 second countdown)
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function callClock(game, { seat }) {
+  const seatObj = game.seats[seat];
+
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+
+  if (game.hand.actingSeat === -1) {
+    throw new Error("no one is acting");
+  }
+
+  if (seat === game.hand.actingSeat) {
+    throw new Error("cannot call clock on yourself");
+  }
+
+  if (game.hand.actingSince === null) {
+    throw new Error("no one is acting");
+  }
+
+  const elapsed = Date.now() - game.hand.actingSince;
+  if (elapsed < CLOCK_WAIT_TIME) {
+    throw new Error("must wait 60 seconds before calling clock");
+  }
+
+  if (game.hand.clockCalledAt !== null) {
+    throw new Error("clock already called");
+  }
+
+  game.hand.clockCalledAt = Date.now();
+}

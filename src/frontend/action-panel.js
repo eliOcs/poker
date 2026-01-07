@@ -123,6 +123,19 @@ class ActionPanel extends LitElement {
         );
       }
 
+      button.call-clock {
+        background-color: ${unsafeCSS(COLORS.orange)};
+        color: ${unsafeCSS(COLORS.fgWhite)};
+      }
+
+      button.call-clock:hover {
+        background-color: color-mix(
+          in oklch,
+          ${unsafeCSS(COLORS.orange)} 80%,
+          white
+        );
+      }
+
       /* Buy-in slider row */
       .amount-input {
         display: flex;
@@ -663,6 +676,21 @@ class ActionPanel extends LitElement {
 
     if (simpleButtons.length > 0) {
       return html`<div class="simple-actions">${simpleButtons}</div>`;
+    }
+
+    // Call clock action (when waiting for another player)
+    if (actionMap.callClock) {
+      return html`
+        <div class="simple-actions">
+          <button
+            class="call-clock"
+            @click=${() =>
+              this.sendAction({ action: "callClock", seat: this.seatIndex })}
+          >
+            Call Clock
+          </button>
+        </div>
+      `;
     }
 
     return html`<span class="waiting">Waiting for your turn...</span>`;

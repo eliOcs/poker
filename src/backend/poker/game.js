@@ -30,6 +30,8 @@ import * as Seat from "./seat.js";
  * @property {number} lastRaiser - Seat index of last raiser (-1 if none)
  * @property {number} actingSeat - Seat index of player to act (-1 if none)
  * @property {number} lastRaiseSize - Size of the last raise (for min-raise calculation)
+ * @property {number|null} actingSince - Timestamp when current player started acting
+ * @property {number|null} clockCalledAt - Timestamp when clock was called (null if not called)
  */
 
 /**
@@ -53,6 +55,7 @@ import * as Seat from "./seat.js";
  * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
  * @property {NodeJS.Timeout|null} disconnectTimer - Timer for auto-action on disconnected player
  * @property {number} disconnectTimerSeat - Seat index for disconnect timer (-1 if none)
+ * @property {NodeJS.Timeout|null} clockTimer - Timer for call the clock countdown
  */
 
 /**
@@ -73,6 +76,8 @@ export function createHand() {
     lastRaiser: -1,
     actingSeat: -1,
     lastRaiseSize: 0,
+    actingSince: null,
+    clockCalledAt: null,
   };
 }
 
@@ -103,5 +108,6 @@ export function create({
     winnerMessage: null,
     disconnectTimer: null,
     disconnectTimerSeat: -1,
+    clockTimer: null,
   };
 }

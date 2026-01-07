@@ -1,5 +1,5 @@
 import * as Betting from "./betting.js";
-import { countPlayersWithChips } from "./actions.js";
+import { countPlayersWithChips, CLOCK_WAIT_TIME } from "./actions.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
 
@@ -84,7 +84,12 @@ import * as Ranking from "./ranking.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn} PlayerAction
+ * @typedef {object} ActionCallClock
+ * @property {'callClock'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock} PlayerAction
  */
 
 /**
@@ -123,6 +128,8 @@ import * as Ranking from "./ranking.js";
  * @property {number} pot
  * @property {number} currentBet
  * @property {number} actingSeat
+ * @property {number|null} actingSince - Timestamp when current player started acting
+ * @property {number|null} clockCalledAt - Timestamp when clock was called
  */
 
 /**
@@ -251,9 +258,24 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     return actions;
   }
 
-  // Not the player's seat - no actions
+  // Not the player's seat - only callClock action possible
   if (seatIndex !== playerSeatIndex) {
+    // Call clock action - available when someone else is taking too long
+    // This is checked on the player's OWN seat actions, not the acting player's seat
     return actions;
+  }
+
+  // Call clock action - available when someone else is taking too long
+  if (
+    game.hand?.actingSeat !== -1 &&
+    game.hand?.actingSeat !== playerSeatIndex &&
+    game.hand?.actingSince !== null &&
+    game.hand?.clockCalledAt === null
+  ) {
+    const elapsed = Date.now() - game.hand.actingSince;
+    if (elapsed >= CLOCK_WAIT_TIME) {
+      actions.push({ action: "callClock" });
+    }
   }
 
   // Player is seated but hand not active - can buy in if no stack, or start game
@@ -365,6 +387,8 @@ export default function playerView(game, player) {
           pot: game.hand.pot,
           currentBet: game.hand.currentBet,
           actingSeat: game.hand.actingSeat,
+          actingSince: game.hand.actingSince,
+          clockCalledAt: game.hand.clockCalledAt,
         }
       : null,
     countdown: game.countdown,
