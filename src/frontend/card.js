@@ -92,6 +92,23 @@ class Card extends LitElement {
         border-color: ${unsafeCSS(COLORS.gold)};
         box-shadow: 0 0 6px ${unsafeCSS(COLORS.gold)};
       }
+
+      /* Larger cards on desktop */
+      @media (min-width: 800px) {
+        .card {
+          width: 44px;
+          height: 60px;
+          font-size: 20px;
+        }
+
+        .card .rank {
+          font-size: 18px;
+        }
+
+        .card .suit {
+          font-size: 26px;
+        }
+      }
     `;
   }
 
