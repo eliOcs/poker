@@ -219,4 +219,40 @@ describe("sit out", () => {
       assert.equal(game.seats[0].sittingOut, false);
     });
   });
+
+  describe("leave action", () => {
+    beforeEach(() => {
+      game.seats[0].sittingOut = true;
+    });
+
+    it("should make seat empty when leaving", () => {
+      Actions.leave(game, { seat: 0 });
+
+      assert.equal(game.seats[0].empty, true);
+    });
+
+    it("should throw if seat is already empty", () => {
+      assert.throws(() => Actions.leave(game, { seat: 1 }), /seat is empty/);
+    });
+
+    it("should throw if not sitting out", () => {
+      game.seats[2].sittingOut = false;
+
+      assert.throws(
+        () => Actions.leave(game, { seat: 2 }),
+        /must be sitting out to leave/,
+      );
+    });
+
+    it("should allow player to sit again at any empty seat after leaving", () => {
+      const player1 = game.seats[0].player;
+
+      Actions.leave(game, { seat: 0 });
+
+      // Player should be able to sit at any empty seat
+      Actions.sit(game, { seat: 0, player: player1 });
+      assert.equal(game.seats[0].empty, false);
+      assert.equal(game.seats[0].player, player1);
+    });
+  });
 });

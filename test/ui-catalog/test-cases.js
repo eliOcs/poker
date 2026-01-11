@@ -663,7 +663,7 @@ const TEST_CASES = {
             stack: 5000,
             bet: 0,
             cards: [],
-            actions: [{ action: "sitIn", cost: 50 }],
+            actions: [{ action: "sitIn", cost: 50 }, { action: "leave" }],
           }),
           createPlayer("Alice", {
             stack: 2975,

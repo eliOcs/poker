@@ -8,7 +8,7 @@ class ActionPanel extends LitElement {
       :host {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
         gap: 8px;
         padding: 10px;
@@ -17,10 +17,8 @@ class ActionPanel extends LitElement {
         box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
         font-family: "Press Start 2P", monospace;
         box-sizing: border-box;
-        min-width: 400px;
-        max-width: 560px;
+        width: min(560px, calc(100vw - 24px));
         min-height: 100px;
-        margin: 0 auto;
       }
 
       button {
@@ -56,24 +54,13 @@ class ActionPanel extends LitElement {
         );
       }
 
-      button.check {
-        background-color: ${unsafeCSS(COLORS.greenLight)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      button.check:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.greenLight)} 80%,
-          white
-        );
-      }
-
+      button.check,
       button.call {
         background-color: ${unsafeCSS(COLORS.greenLight)};
         color: ${unsafeCSS(COLORS.fgWhite)};
       }
 
+      button.check:hover,
       button.call:hover {
         background-color: color-mix(
           in oklch,
@@ -134,43 +121,6 @@ class ActionPanel extends LitElement {
           ${unsafeCSS(COLORS.orange)} 80%,
           white
         );
-      }
-
-      /* Buy-in slider row */
-      .amount-input {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-
-      .amount-input button {
-        min-width: 11ch;
-        text-align: center;
-      }
-
-      .amount-input input[type="range"] {
-        width: 100px;
-        height: 8px;
-        appearance: none;
-        background: ${unsafeCSS(COLORS.bgDisabled)};
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-      }
-
-      .amount-input input[type="range"]::-webkit-slider-thumb {
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        background: ${unsafeCSS(COLORS.gold)};
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-        cursor: pointer;
-      }
-
-      .amount-display {
-        min-width: 60px;
-        text-align: center;
-        font-size: 0.6em;
-        color: ${unsafeCSS(COLORS.gold)};
       }
 
       /* Betting panel styles */
@@ -243,7 +193,10 @@ class ActionPanel extends LitElement {
         cursor: pointer;
       }
 
-      .action-row {
+      .action-row,
+      .simple-actions,
+      .share-buttons,
+      .waiting-actions {
         display: flex;
         gap: 8px;
         justify-content: center;
@@ -270,30 +223,11 @@ class ActionPanel extends LitElement {
         text-align: center;
       }
 
-      .simple-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-      }
-
       .waiting-panel {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 12px;
-      }
-
-      .share-buttons {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-      }
-
-      .waiting-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        align-items: center;
       }
     `;
   }
@@ -486,17 +420,29 @@ class ActionPanel extends LitElement {
       `;
     }
 
-    // Handle sit in action (player is sitting out)
-    if (actionMap.sitIn) {
-      const cost = actionMap.sitIn.cost;
+    // Handle sit in / leave actions (player is sitting out)
+    if (actionMap.sitIn || actionMap.leave) {
       return html`
-        <phg-button
-          variant="success"
-          @click=${() =>
-            this.sendAction({ action: "sitIn", seat: this.seatIndex })}
-        >
-          ${cost > 0 ? `Sit In ($${cost} BB)` : "Sit In"}
-        </phg-button>
+        <div class="waiting-actions">
+          ${actionMap.sitIn
+            ? html`<phg-button
+                variant="success"
+                @click=${() =>
+                  this.sendAction({ action: "sitIn", seat: this.seatIndex })}
+              >
+                Sit In
+              </phg-button>`
+            : ""}
+          ${actionMap.leave
+            ? html`<phg-button
+                variant="secondary"
+                @click=${() =>
+                  this.sendAction({ action: "leave", seat: this.seatIndex })}
+              >
+                Leave Table
+              </phg-button>`
+            : ""}
+        </div>
       `;
     }
 

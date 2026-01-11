@@ -528,8 +528,8 @@ wss.on(
           startCountdownTimer(game, gameId);
         }
 
-        // Cancel countdown if sitOut leaves fewer than 2 active players
-        if (action === "sitOut" && game.countdown !== null) {
+        // Cancel countdown if sitOut or leave reduces active players below 2
+        if ((action === "sitOut" || action === "leave") && game.countdown !== null) {
           if (PokerActions.countPlayersWithChips(game) < 2) {
             game.countdown = null;
             if (game.countdownTimer) {

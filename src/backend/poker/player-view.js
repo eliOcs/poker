@@ -89,7 +89,12 @@ import * as Ranking from "./ranking.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock} PlayerAction
+ * @typedef {object} ActionLeave
+ * @property {'leave'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave} PlayerAction
  */
 
 /**
@@ -286,6 +291,8 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
         const cost = seat.missedBigBlind ? game.blinds.big : 0;
         actions.push({ action: "sitIn", cost });
       }
+      // Can always leave when sitting out
+      actions.push({ action: "leave" });
     } else if (seat.stack === 0) {
       actions.push({
         action: "buyIn",
