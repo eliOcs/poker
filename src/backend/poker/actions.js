@@ -411,6 +411,13 @@ export function endHand(game) {
     }
   }
 
+  // Auto sit-out players with 0 stack
+  for (const seat of game.seats) {
+    if (!seat.empty && seat.stack === 0) {
+      seat.sittingOut = true;
+    }
+  }
+
   // Move button to next occupied seat
   moveButton(game);
 }

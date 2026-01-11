@@ -196,4 +196,27 @@ describe("sit out", () => {
       assert.equal(Seat.isActive(game.seats[1]), false);
     });
   });
+
+  describe("auto sit-out on zero stack", () => {
+    it("should automatically sit out player with 0 stack at end of hand", () => {
+      // Player loses all-in and has 0 stack
+      game.seats[0].stack = 0;
+
+      Actions.endHand(game);
+
+      assert.equal(
+        game.seats[0].sittingOut,
+        true,
+        "Player with 0 stack should be sat out automatically",
+      );
+    });
+
+    it("should not sit out player with chips remaining", () => {
+      game.seats[0].stack = 500;
+
+      Actions.endHand(game);
+
+      assert.equal(game.seats[0].sittingOut, false);
+    });
+  });
 });
