@@ -128,6 +128,7 @@ class ActionPanel extends LitElement {
         display: flex;
         flex-direction: column;
         gap: 8px;
+        width: 100%;
       }
 
       .slider-row {
@@ -194,16 +195,25 @@ class ActionPanel extends LitElement {
       }
 
       .action-row,
-      .simple-actions,
+      .simple-actions {
+        display: grid;
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+        gap: 8px;
+        width: 100%;
+      }
+
       .share-buttons,
       .waiting-actions {
         display: flex;
         gap: 8px;
         justify-content: center;
+        width: 100%;
       }
 
-      .action-row button {
-        flex: 1;
+      .action-row button,
+      .simple-actions button {
+        width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
