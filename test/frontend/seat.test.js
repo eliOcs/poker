@@ -321,7 +321,6 @@ describe("phg-seat", () => {
     await seats[0].updateComplete;
     const handResult = seats[0].shadowRoot.querySelector(".hand-result");
     expect(handResult).to.exist;
-    expect(handResult.textContent).to.include("WON");
     expect(handResult.textContent).to.include("+$150");
     expect(handResult.classList.contains("won")).to.be.true;
   });
@@ -343,7 +342,6 @@ describe("phg-seat", () => {
     await seats[0].updateComplete;
     const handResult = seats[0].shadowRoot.querySelector(".hand-result");
     expect(handResult).to.exist;
-    expect(handResult.textContent).to.include("LOST");
     expect(handResult.textContent).to.include("-$100");
     expect(handResult.classList.contains("lost")).to.be.true;
   });
@@ -387,7 +385,7 @@ describe("phg-seat", () => {
     const handResult = seats[0].shadowRoot.querySelector(".hand-result");
     const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
     expect(handResult).to.exist;
-    expect(handResult.textContent).to.include("LOST");
+    expect(handResult.textContent).to.include("-$50");
     expect(statusLabel).to.not.exist;
   });
 

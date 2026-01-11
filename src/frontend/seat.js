@@ -7,6 +7,7 @@ class Seat extends LitElement {
   static get styles() {
     return css`
       :host {
+        position: relative;
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -69,16 +70,19 @@ class Seat extends LitElement {
       }
 
       .dealer-button {
-        display: inline-block;
+        position: absolute;
+        top: -8px;
+        right: -8px;
         background-color: ${unsafeCSS(COLORS.gold)};
         color: ${unsafeCSS(COLORS.bgDark)};
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         text-align: center;
-        line-height: 18px;
+        line-height: 20px;
         font-size: 0.8em;
-        margin-left: 4px;
         border: 2px solid ${unsafeCSS(COLORS.bgDark)};
+        border-radius: 50%;
+        z-index: 1;
       }
 
       .hole-cards {
@@ -234,13 +238,27 @@ class Seat extends LitElement {
     }
 
     return html`
+      ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
       <div class="player-info">
         <span class="player-name">
           ${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}
-          ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
         </span>
       </div>
-      <div class="stack">$${this.seat.stack}</div>
+      ${this.seat.handResult != null
+        ? html`<div
+            class="hand-result ${this.seat.handResult > 0
+              ? "won"
+              : this.seat.handResult < 0
+                ? "lost"
+                : ""}"
+          >
+            ${this.seat.handResult > 0
+              ? `+$${this.seat.handResult}`
+              : this.seat.handResult < 0
+                ? `-$${Math.abs(this.seat.handResult)}`
+                : "$0"}
+          </div>`
+        : html`<div class="stack">$${this.seat.stack}</div>`}
       ${this._clockRemaining !== null
         ? html`<div
             class="clock-countdown ${this._clockRemaining <= 10
@@ -251,19 +269,7 @@ class Seat extends LitElement {
           </div>`
         : ""}
       ${this.seat.handResult != null
-        ? html`<div
-            class="hand-result ${this.seat.handResult > 0
-              ? "won"
-              : this.seat.handResult < 0
-                ? "lost"
-                : ""}"
-          >
-            ${this.seat.handResult > 0
-              ? `WON +$${this.seat.handResult}`
-              : this.seat.handResult < 0
-                ? `LOST -$${Math.abs(this.seat.handResult)}`
-                : ""}
-          </div>`
+        ? ""
         : this.seat.disconnected
           ? html`<div class="status-label">DISCONNECTED</div>`
           : this.seat.sittingOut
