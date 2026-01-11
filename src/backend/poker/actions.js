@@ -497,6 +497,25 @@ export function sitIn(game, { seat }) {
   seatObj.sittingOut = false;
 }
 
+/**
+ * Player leaves the table (must be sitting out first)
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function leave(game, { seat }) {
+  const seatObj = game.seats[seat];
+
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+  if (!seatObj.sittingOut) {
+    throw new Error("must be sitting out to leave");
+  }
+
+  // Make the seat empty (chips are cashed out)
+  game.seats[seat] = Seat.empty();
+}
+
 // --- Clock Actions ---
 
 /** @type {number} Time in ms a player must be acting before clock can be called */
