@@ -112,42 +112,42 @@ class Game extends LitElement {
         font-size: 0.7em;
       }
 
-      /* Seat 1: top-left */
+      /* Seat 1: top-left - position bet toward table center */
       .bet-indicator[data-seat="0"] {
-        top: 32%;
-        left: 22%;
+        top: 42%;
+        left: 35%;
       }
 
-      /* Seat 2: top-center */
+      /* Seat 2: top-center - position bet below player, toward table center */
       .bet-indicator[data-seat="1"] {
-        top: 25%;
+        top: 28%;
         left: 50%;
         transform: translateX(-50%);
       }
 
-      /* Seat 3: top-right */
+      /* Seat 3: top-right - position bet toward table center */
       .bet-indicator[data-seat="2"] {
-        top: 32%;
-        right: 26%;
+        top: 42%;
+        right: 35%;
       }
 
-      /* Seat 4: bottom-right */
+      /* Seat 4: bottom-right - position bet toward table center */
       .bet-indicator[data-seat="3"] {
-        bottom: 38%;
-        right: 26%;
+        bottom: 46%;
+        right: 35%;
       }
 
-      /* Seat 5: bottom-center */
+      /* Seat 5: bottom-center - position bet above player, toward table center */
       .bet-indicator[data-seat="4"] {
-        bottom: 30%;
+        bottom: 40%;
         left: 50%;
         transform: translateX(-50%);
       }
 
-      /* Seat 6: bottom-left */
+      /* Seat 6: bottom-left - position bet toward table center */
       .bet-indicator[data-seat="5"] {
-        bottom: 38%;
-        left: 22%;
+        bottom: 46%;
+        left: 35%;
       }
 
       phg-action-panel {

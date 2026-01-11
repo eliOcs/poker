@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test"
+import { test, expect } from "@playwright/test";
 
 // Test case IDs (keep in sync with test-cases.js)
 const TEST_CASES = [
@@ -44,22 +44,22 @@ const TEST_CASES = [
 
   // Modal states
   "game-rankings-modal",
-]
+];
 
 for (const testCase of TEST_CASES) {
   test(testCase, async ({ page }) => {
-    await page.goto(`/?test=${testCase}`)
+    await page.goto(`/?test=${testCase}`);
 
     // Wait for the appropriate component to render
-    const selector = testCase === "landing-page" ? "phg-home" : "phg-game"
-    await page.waitForSelector(selector)
+    const selector = testCase === "landing-page" ? "phg-home" : "phg-game";
+    await page.waitForSelector(selector);
 
     // Give Lit components time to fully render
-    await page.waitForTimeout(100)
+    await page.waitForTimeout(100);
 
     // Take screenshot of the root element (full viewport)
     await expect(page.locator("#root")).toHaveScreenshot(`${testCase}.png`, {
       maxDiffPixelRatio: 0.01,
-    })
-  })
+    });
+  });
 }

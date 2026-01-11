@@ -58,13 +58,22 @@ export function getFilePath(url) {
  * Responds with a file, optionally applying text replacements
  * @param {string} filePath
  * @param {import('http').ServerResponse} res
- * @param {Record<string, string>} [replacements]
+ * @param {Object} [options]
+ * @param {Record<string, string>} [options.replacements]
+ * @param {boolean} [options.noCache]
  */
-export function respondWithFile(filePath, res, replacements) {
+export function respondWithFile(filePath, res, options = {}) {
+  const { replacements, noCache } = options;
   const contentType = mime.contentType(path.extname(filePath));
-  res.writeHead(200, {
+  const headers = {
     "content-type": contentType || "application/octet-stream",
-  });
+  };
+  if (noCache) {
+    headers["cache-control"] = "no-store, no-cache, must-revalidate";
+    headers["pragma"] = "no-cache";
+    headers["expires"] = "0";
+  }
+  res.writeHead(200, headers);
 
   const fileStream = fs.createReadStream(filePath);
 
