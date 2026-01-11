@@ -1,6 +1,6 @@
-import { defineConfig, devices } from "@playwright/test"
+import { defineConfig, devices } from "@playwright/test";
 
-const UI_CATALOG_PORT = 8445
+const UI_CATALOG_PORT = 8445;
 
 export default defineConfig({
   testDir: "./test/ui-catalog",
@@ -31,10 +31,7 @@ export default defineConfig({
     },
     {
       name: "mobile",
-      use: {
-        ...devices["iPhone 12"],
-        viewport: { width: 375, height: 667 },
-      },
+      use: devices["iPhone 12"],
     },
   ],
 
@@ -45,4 +42,4 @@ export default defineConfig({
     stdout: "pipe",
     stderr: "pipe",
   },
-})
+});
