@@ -1,7 +1,5 @@
 # To do
 
-- 0$ sitout automatically
-- bigger cars
 - add chips when betting
 - 9 player table
 - Chat: to talk to players but also announcements: shows who won the hand, blind announcments
