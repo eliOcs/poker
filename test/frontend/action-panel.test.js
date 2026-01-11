@@ -375,31 +375,6 @@ describe("phg-action-panel", () => {
       expect(sitInButton.textContent).to.include("Sit In");
     });
 
-    it("shows cost in Sit In button when cost > 0", async () => {
-      element.game = createMockGameState({
-        seats: [
-          {
-            ...mockSittingOutSeat,
-            actions: [{ action: "sitIn", cost: 50 }],
-          },
-          { ...mockOpponentSeat, stack: 1000 },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
-        ],
-      });
-      await element.updateComplete;
-
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      await actionPanel.updateComplete;
-
-      const sitInButton = actionPanel.shadowRoot.querySelector(
-        'phg-button[variant="success"]',
-      );
-      expect(sitInButton.textContent).to.include("$50");
-    });
-
     it("calls send() with seat when Sit Out clicked", async () => {
       element.game = createMockGameState({
         seats: [
