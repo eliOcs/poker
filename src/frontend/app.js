@@ -1,15 +1,20 @@
 import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./home.js";
 import "./index.js";
 
 class App extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: block;
-        height: 100%;
-      }
-    `;
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: block;
+          height: 100%;
+        }
+      `,
+    ];
   }
 
   static get properties() {

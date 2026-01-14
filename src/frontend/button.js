@@ -1,98 +1,102 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 
 class Button extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: inline-block;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: inline-block;
+        }
 
-      :host([full-width]) {
-        display: block;
-        width: 100%;
-      }
+        :host([full-width]) {
+          display: block;
+          width: 100%;
+        }
 
-      button {
-        padding: 8px 16px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.6em;
-        cursor: pointer;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        background-color: ${unsafeCSS(COLORS.purple)};
-        box-shadow:
-          3px 3px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-      }
+        button {
+          padding: var(--space-md) var(--space-lg);
+          font-family: inherit;
+          font-size: var(--font-md);
+          cursor: pointer;
+          border: 3px solid var(--color-bg-dark);
+          color: var(--color-fg-white);
+          background-color: var(--color-secondary);
+          box-shadow:
+            3px 3px 0 var(--color-bg-dark),
+            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+        }
 
-      :host([full-width]) button {
-        width: 100%;
-      }
+        :host([full-width]) button {
+          width: 100%;
+        }
 
-      button:hover {
-        filter: brightness(1.1);
-      }
+        button:hover {
+          filter: brightness(1.1);
+        }
 
-      button:active {
-        box-shadow:
-          1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-        transform: translate(2px, 2px);
-      }
+        button:active {
+          box-shadow:
+            1px 1px 0 var(--color-bg-dark),
+            inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.2);
+          transform: translate(2px, 2px);
+        }
 
-      /* Variants */
-      :host([variant="primary"]) button {
-        background-color: ${unsafeCSS(COLORS.gold)};
-      }
+        /* Variants */
+        :host([variant="primary"]) button {
+          background-color: var(--color-primary);
+        }
 
-      :host([variant="success"]) button {
-        background-color: ${unsafeCSS(COLORS.greenLight)};
-      }
+        :host([variant="success"]) button {
+          background-color: var(--color-success);
+        }
 
-      :host([variant="danger"]) button {
-        background-color: ${unsafeCSS(COLORS.red)};
-      }
+        :host([variant="danger"]) button {
+          background-color: var(--color-error);
+        }
 
-      :host([variant="action"]) button {
-        background-color: ${unsafeCSS(COLORS.blue)};
-      }
+        :host([variant="action"]) button {
+          background-color: var(--color-accent);
+        }
 
-      :host([variant="secondary"]) button {
-        background-color: ${unsafeCSS(COLORS.bgDisabled)};
-      }
+        :host([variant="secondary"]) button {
+          background-color: var(--color-bg-disabled);
+        }
 
-      /* Sizes */
-      :host([size="large"]) button {
-        padding: 20px 40px;
-        font-size: 1em;
-        border-width: 4px;
-        box-shadow:
-          4px 4px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-      }
+        /* Sizes */
+        :host([size="large"]) button {
+          padding: calc(var(--space-lg) * 1.25) calc(var(--space-lg) * 2.5);
+          font-size: var(--font-lg);
+          border-width: var(--space-sm);
+          box-shadow:
+            4px 4px 0 var(--color-bg-dark),
+            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+        }
 
-      :host([size="large"]) button:active {
-        box-shadow:
-          2px 2px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-      }
+        :host([size="large"]) button:active {
+          box-shadow:
+            2px 2px 0 var(--color-bg-dark),
+            inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.2);
+        }
 
-      /* Disabled state */
-      button:disabled {
-        background-color: ${unsafeCSS(COLORS.bgDisabled)};
-        color: ${unsafeCSS(COLORS.fgDark)};
-        cursor: not-allowed;
-      }
+        /* Disabled state */
+        button:disabled {
+          background-color: var(--color-bg-disabled);
+          color: var(--color-fg-muted);
+          cursor: not-allowed;
+        }
 
-      button:disabled:hover {
-        filter: none;
-      }
-    `;
+        button:disabled:hover {
+          filter: none;
+        }
+      `,
+    ];
   }
 
   static get properties() {

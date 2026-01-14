@@ -1,142 +1,145 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./card.js";
 import "./button.js";
 
 class Seat extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
-        background: ${unsafeCSS(COLORS.bgLight)};
-        padding: 8px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.5em;
-        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
-        box-sizing: border-box;
-        min-height: 130px;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-sm);
+          border: var(--space-sm) solid var(--color-fg-muted);
+          background: var(--color-bg-light);
+          padding: var(--space-md);
+          font-size: var(--font-sm);
+          box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+          box-sizing: border-box;
+          min-height: 130px;
+        }
 
-      :host(.empty) {
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-        font-size: 0.7em;
-      }
+        :host(.empty) {
+          justify-content: center;
+          align-items: center;
+          gap: var(--space-lg);
+          font-size: var(--font-md);
+        }
 
-      :host(.acting) {
-        border-color: ${unsafeCSS(COLORS.gold)};
-        box-shadow:
-          4px 4px 0 ${unsafeCSS(COLORS.bgDark)},
-          0 0 0 4px ${unsafeCSS(COLORS.gold)};
-      }
+        :host(.acting) {
+          border-color: var(--color-primary);
+          box-shadow:
+            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
+            0 0 0 var(--space-sm) var(--color-primary);
+        }
 
-      :host(.folded) {
-        opacity: 0.4;
-      }
+        :host(.folded) {
+          opacity: 0.4;
+        }
 
-      :host(.sitting-out) {
-        opacity: 0.5;
-        border-style: dashed;
-      }
+        :host(.sitting-out) {
+          opacity: 0.5;
+          border-style: dashed;
+        }
 
-      :host(.disconnected) {
-        border-color: ${unsafeCSS(COLORS.red)};
-        border-style: dotted;
-        opacity: 0.7;
-      }
+        :host(.disconnected) {
+          border-color: var(--color-error);
+          border-style: dotted;
+          opacity: 0.7;
+        }
 
-      :host(.all-in) {
-        border-color: ${unsafeCSS(COLORS.red)};
-      }
+        :host(.all-in) {
+          border-color: var(--color-error);
+        }
 
-      :host(.current-player) {
-        border-color: ${unsafeCSS(COLORS.magenta)};
-      }
+        :host(.current-player) {
+          border-color: var(--color-highlight);
+        }
 
-      .player-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        .player-name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: var(--color-fg-white);
+        }
 
-      .stack {
-        color: ${unsafeCSS(COLORS.greenLight)};
-      }
+        .stack {
+          color: var(--color-success);
+        }
 
-      .dealer-button {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background-color: ${unsafeCSS(COLORS.gold)};
-        color: ${unsafeCSS(COLORS.bgDark)};
-        width: 20px;
-        height: 20px;
-        text-align: center;
-        line-height: 20px;
-        font-size: 0.8em;
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-        border-radius: 50%;
-        z-index: 1;
-      }
+        .dealer-button {
+          position: absolute;
+          top: calc(-1 * var(--space-md));
+          right: calc(-1 * var(--space-md));
+          background-color: var(--color-primary);
+          color: var(--color-bg-dark);
+          width: 20px;
+          height: 20px;
+          text-align: center;
+          line-height: 20px;
+          font-size: var(--font-md);
+          border: 2px solid var(--color-bg-dark);
+          border-radius: 50%;
+          z-index: 1;
+        }
 
-      .hole-cards {
-        display: flex;
-        gap: 4px;
-        margin-top: auto;
-      }
+        .hole-cards {
+          display: flex;
+          gap: var(--space-sm);
+          margin-top: auto;
+        }
 
-      .status-label {
-        font-size: 0.8em;
-        color: ${unsafeCSS(COLORS.gold)};
-      }
+        .status-label {
+          font-size: var(--font-md);
+          color: var(--color-primary);
+        }
 
-      .last-action {
-        font-size: 0.8em;
-        color: ${unsafeCSS(COLORS.cyan)};
-        text-transform: uppercase;
-      }
+        .last-action {
+          font-size: var(--font-md);
+          color: var(--color-fg-medium);
+          text-transform: uppercase;
+        }
 
-      .hand-result {
-        font-size: 0.8em;
-        text-transform: uppercase;
-      }
+        .hand-result {
+          font-size: var(--font-md);
+          text-transform: uppercase;
+        }
 
-      .hand-result.won {
-        color: ${unsafeCSS(COLORS.greenLight)};
-      }
+        .hand-result.won {
+          color: var(--color-success);
+        }
 
-      .hand-result.lost {
-        color: ${unsafeCSS(COLORS.red)};
-      }
+        .hand-result.lost {
+          color: var(--color-error);
+        }
 
-      .hand-rank {
-        font-size: 0.7em;
-        color: ${unsafeCSS(COLORS.fgMedium)};
-        margin-top: auto;
-      }
+        .hand-rank {
+          font-size: var(--font-md);
+          color: var(--color-fg-medium);
+          margin-top: auto;
+        }
 
-      .empty-label {
-        color: ${unsafeCSS(COLORS.fgDark)};
-      }
+        .empty-label {
+          color: var(--color-fg-muted);
+        }
 
-      .clock-countdown {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        font-size: 1em;
-        color: ${unsafeCSS(COLORS.orange)};
-      }
+        .clock-countdown {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-size: var(--font-lg);
+          color: var(--color-warning);
+        }
 
-      .clock-countdown.urgent {
-        color: ${unsafeCSS(COLORS.red)};
-      }
-    `;
+        .clock-countdown.urgent {
+          color: var(--color-error);
+        }
+      `,
+    ];
   }
 
   static get properties() {

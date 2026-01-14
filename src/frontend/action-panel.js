@@ -1,245 +1,240 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./button.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px;
-        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
-        background-color: ${unsafeCSS(COLORS.bgLight)};
-        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
-        font-family: "Press Start 2P", monospace;
-        box-sizing: border-box;
-        width: min(560px, calc(100vw - 24px));
-        min-height: 100px;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: flex;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: center;
+          gap: var(--space-md);
+          padding: var(--space-md);
+          border: var(--space-sm) solid var(--color-fg-muted);
+          background-color: var(--color-bg-light);
+          box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+          box-sizing: border-box;
+          width: min(560px, calc(100vw - 24px));
+          min-height: 100px;
+        }
 
-      button {
-        padding: 8px 16px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.6em;
-        cursor: pointer;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        box-shadow:
-          3px 3px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-          inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-      }
+        button {
+          padding: var(--space-md) var(--space-lg);
+          font-family: inherit;
+          font-size: var(--font-md);
+          cursor: pointer;
+          border: 3px solid var(--color-bg-dark);
+          box-shadow:
+            3px 3px 0 var(--color-bg-dark),
+            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+        }
 
-      button:active {
-        box-shadow:
-          1px 1px 0 ${unsafeCSS(COLORS.bgDark)},
-          inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-          inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-        transform: translate(2px, 2px);
-      }
+        button:active {
+          box-shadow:
+            1px 1px 0 var(--color-bg-dark),
+            inset 2px 2px 0 rgba(0, 0, 0, 0.2),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.2);
+          transform: translate(2px, 2px);
+        }
 
-      button.fold {
-        background-color: ${unsafeCSS(COLORS.red)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.fold {
+          background-color: var(--color-error);
+          color: var(--color-fg-white);
+        }
 
-      button.fold:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.red)} 80%,
-          white
-        );
-      }
+        button.fold:hover {
+          background-color: color-mix(in oklch, var(--color-error) 80%, white);
+        }
 
-      button.check,
-      button.call {
-        background-color: ${unsafeCSS(COLORS.greenLight)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.check,
+        button.call {
+          background-color: var(--color-success);
+          color: var(--color-fg-white);
+        }
 
-      button.check:hover,
-      button.call:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.greenLight)} 80%,
-          white
-        );
-      }
+        button.check:hover,
+        button.call:hover {
+          background-color: color-mix(
+            in oklch,
+            var(--color-success) 80%,
+            white
+          );
+        }
 
-      button.bet,
-      button.raise {
-        background-color: ${unsafeCSS(COLORS.blue)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.bet,
+        button.raise {
+          background-color: var(--color-accent);
+          color: var(--color-fg-white);
+        }
 
-      button.bet:hover,
-      button.raise:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.blue)} 80%,
-          white
-        );
-      }
+        button.bet:hover,
+        button.raise:hover {
+          background-color: color-mix(in oklch, var(--color-accent) 80%, white);
+        }
 
-      button.all-in {
-        background-color: ${unsafeCSS(COLORS.gold)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.all-in {
+          background-color: var(--color-primary);
+          color: var(--color-fg-white);
+        }
 
-      button.all-in:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.gold)} 80%,
-          white
-        );
-      }
+        button.all-in:hover {
+          background-color: color-mix(
+            in oklch,
+            var(--color-primary) 80%,
+            white
+          );
+        }
 
-      button.buy-in {
-        background-color: ${unsafeCSS(COLORS.purple)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.buy-in {
+          background-color: var(--color-secondary);
+          color: var(--color-fg-white);
+        }
 
-      button.buy-in:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.purple)} 80%,
-          white
-        );
-      }
+        button.buy-in:hover {
+          background-color: color-mix(
+            in oklch,
+            var(--color-secondary) 80%,
+            white
+          );
+        }
 
-      button.call-clock {
-        background-color: ${unsafeCSS(COLORS.orange)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        button.call-clock {
+          background-color: var(--color-warning);
+          color: var(--color-fg-white);
+        }
 
-      button.call-clock:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.orange)} 80%,
-          white
-        );
-      }
+        button.call-clock:hover {
+          background-color: color-mix(
+            in oklch,
+            var(--color-warning) 80%,
+            white
+          );
+        }
 
-      /* Betting panel styles */
-      .betting-panel {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-      }
+        /* Betting panel styles */
+        .betting-panel {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-md);
+          width: 100%;
+        }
 
-      .slider-row {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-      }
+        .slider-row {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-md);
+        }
 
-      .slider-row input[type="number"] {
-        width: 80px;
-        padding: 4px 4px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.5em;
-        text-align: center;
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-        background: ${unsafeCSS(COLORS.bgDisabled)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        line-height: 2;
-      }
+        .slider-row input[type="number"] {
+          width: 80px;
+          padding: var(--space-sm);
+          font-family: inherit;
+          font-size: var(--font-sm);
+          text-align: center;
+          border: 2px solid var(--color-bg-dark);
+          background: var(--color-bg-disabled);
+          color: var(--color-fg-white);
+          line-height: 2;
+        }
 
-      .slider-row input[type="number"]::-webkit-inner-spin-button,
-      .slider-row input[type="number"]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
+        .slider-row input[type="number"]::-webkit-inner-spin-button,
+        .slider-row input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
 
-      .slider-row input[type="number"] {
-        -moz-appearance: textfield;
-      }
+        .slider-row input[type="number"] {
+          -moz-appearance: textfield;
+        }
 
-      .slider-row button.step-btn {
-        padding: 6px 10px;
-        font-size: 0.7em;
-        min-width: auto;
-        background-color: ${unsafeCSS(COLORS.bgDisabled)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        .slider-row button.step-btn {
+          padding: var(--space-md) var(--space-md);
+          font-size: var(--font-md);
+          min-width: auto;
+          background-color: var(--color-bg-disabled);
+          color: var(--color-fg-white);
+        }
 
-      .slider-row button.step-btn:hover {
-        background-color: color-mix(
-          in oklch,
-          ${unsafeCSS(COLORS.bgDisabled)} 80%,
-          white
-        );
-      }
+        .slider-row button.step-btn:hover {
+          background-color: color-mix(
+            in oklch,
+            var(--color-bg-disabled) 80%,
+            white
+          );
+        }
 
-      .slider-row input[type="range"] {
-        flex: 1;
-        height: 8px;
-        appearance: none;
-        background: ${unsafeCSS(COLORS.bgDisabled)};
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-        min-width: 80px;
-      }
+        .slider-row input[type="range"] {
+          flex: 1;
+          height: var(--space-md);
+          appearance: none;
+          background: var(--color-bg-disabled);
+          border: 2px solid var(--color-bg-dark);
+          min-width: 80px;
+        }
 
-      .slider-row input[type="range"]::-webkit-slider-thumb {
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        background: ${unsafeCSS(COLORS.gold)};
-        border: 2px solid ${unsafeCSS(COLORS.bgDark)};
-        cursor: pointer;
-      }
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+          appearance: none;
+          width: var(--space-lg);
+          height: var(--space-lg);
+          background: var(--color-primary);
+          border: 2px solid var(--color-bg-dark);
+          cursor: pointer;
+        }
 
-      .action-row,
-      .simple-actions {
-        display: grid;
-        grid-auto-columns: 1fr;
-        grid-auto-flow: column;
-        gap: 8px;
-        width: 100%;
-      }
+        .action-row,
+        .simple-actions {
+          display: grid;
+          grid-auto-columns: 1fr;
+          grid-auto-flow: column;
+          gap: var(--space-md);
+          width: 100%;
+        }
 
-      .share-buttons,
-      .waiting-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        width: 100%;
-      }
+        .share-buttons,
+        .waiting-actions {
+          display: flex;
+          gap: var(--space-md);
+          justify-content: center;
+          width: 100%;
+        }
 
-      .action-row button,
-      .simple-actions button {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 10px 12px;
-        white-space: nowrap;
-      }
+        .action-row button,
+        .simple-actions button {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-md);
+          padding: var(--space-md) var(--space-lg);
+          white-space: nowrap;
+        }
 
-      .action-row .amount {
-        font-size: 0.9em;
-      }
+        .action-row .amount {
+          font-size: var(--font-md);
+        }
 
-      .waiting {
-        color: ${unsafeCSS(COLORS.fgDark)};
-        font-size: 0.6em;
-        text-align: center;
-      }
+        .waiting {
+          color: var(--color-fg-muted);
+          font-size: var(--font-md);
+          text-align: center;
+        }
 
-      .waiting-panel {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-      }
-    `;
+        .waiting-panel {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-lg);
+        }
+      `,
+    ];
   }
 
   static get properties() {

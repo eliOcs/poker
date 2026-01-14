@@ -1,72 +1,75 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 
 class RankingPanel extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: block;
-        font-family: "Press Start 2P", monospace;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: block;
+        }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
 
-      th,
-      td {
-        padding: 8px 12px;
-        text-align: left;
-      }
+        th,
+        td {
+          padding: var(--space-md) var(--space-lg);
+          text-align: left;
+        }
 
-      th {
-        color: ${unsafeCSS(COLORS.fgDark)};
-        font-size: 0.8em;
-        border-bottom: 2px solid ${unsafeCSS(COLORS.fgDark)};
-      }
+        th {
+          color: var(--color-fg-muted);
+          font-size: var(--font-md);
+          border-bottom: 2px solid var(--color-fg-muted);
+        }
 
-      th .tooltip {
-        font-size: 0.8em;
-        color: ${unsafeCSS(COLORS.fgDark)};
-        display: block;
-        font-weight: normal;
-        margin-top: 4px;
-      }
+        th .tooltip {
+          font-size: var(--font-sm);
+          color: var(--color-fg-muted);
+          display: block;
+          font-weight: normal;
+          margin-top: var(--space-sm);
+        }
 
-      td {
-        color: ${unsafeCSS(COLORS.fgMedium)};
-      }
+        td {
+          color: var(--color-fg-medium);
+        }
 
-      .player-name {
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        max-width: 120px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
+        .player-name {
+          color: var(--color-fg-white);
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
 
-      .positive {
-        color: ${unsafeCSS(COLORS.greenLight)};
-      }
+        .positive {
+          color: var(--color-success);
+        }
 
-      .negative {
-        color: ${unsafeCSS(COLORS.red)};
-      }
+        .negative {
+          color: var(--color-error);
+        }
 
-      .neutral {
-        color: ${unsafeCSS(COLORS.fgMedium)};
-      }
+        .neutral {
+          color: var(--color-fg-medium);
+        }
 
-      .na {
-        color: ${unsafeCSS(COLORS.fgDark)};
-      }
+        .na {
+          color: var(--color-fg-muted);
+        }
 
-      .rank-col {
-        width: 20px;
-        color: ${unsafeCSS(COLORS.gold)};
-      }
-    `;
+        .rank-col {
+          width: 20px;
+          color: var(--color-primary);
+        }
+      `,
+    ];
   }
 
   static get properties() {
