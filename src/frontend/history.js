@@ -65,14 +65,20 @@ class History extends LitElement {
           flex-direction: column;
         }
 
-        /* Mobile nav bar */
+        /* Mobile nav bar - hidden on desktop */
         .nav-bar {
-          display: flex;
+          display: none;
           align-items: center;
           justify-content: space-between;
           padding: var(--space-md) var(--space-lg);
           background-color: var(--color-bg-dark);
           border-bottom: 3px solid var(--color-bg-light);
+        }
+
+        @media (max-width: 799px) {
+          .nav-bar {
+            display: flex;
+          }
         }
 
         .nav-btn {
@@ -327,10 +333,26 @@ class History extends LitElement {
         }
 
         .sidebar-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           padding: var(--space-lg);
           font-size: var(--font-md);
           color: var(--color-fg-light);
           border-bottom: 3px solid var(--color-bg-light);
+        }
+
+        .sidebar-back {
+          background: none;
+          border: none;
+          color: var(--color-fg-medium);
+          font-size: var(--font-md);
+          cursor: pointer;
+          padding: var(--space-sm);
+        }
+
+        .sidebar-back:hover {
+          color: var(--color-fg-white);
         }
 
         .hand-list {
@@ -781,7 +803,10 @@ class History extends LitElement {
     return html`
       <div class="sidebar">
         <div class="sidebar-header">
-          Hands (${this.handList.length})
+          <button class="sidebar-back" @click=${this.goBack} title="Back to game">
+            ✕
+          </button>
+          <span>Hands (${this.handList.length})</span>
         </div>
         <ul class="hand-list">
           ${this.handList.map((item) => {
