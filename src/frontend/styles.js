@@ -68,24 +68,3 @@ export const baseStyles = css`
     image-rendering: pixelated;
   }
 `;
-
-/**
- * 3D button effect used across multiple components
- */
-export const buttonEffect = css`
-  box-shadow:
-    3px 3px 0 var(--color-bg-dark),
-    inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-    inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-`;
-
-/**
- * Active/pressed button state
- */
-export const buttonEffectActive = css`
-  box-shadow:
-    1px 1px 0 var(--color-bg-dark),
-    inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-    inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-  transform: translate(2px, 2px);
-`;
