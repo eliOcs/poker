@@ -1,79 +1,82 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./card.js";
 
 class Board extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        width: 100%;
-        background-color: ${unsafeCSS(COLORS.green)};
-        border: 6px solid ${unsafeCSS(COLORS.bgDark)};
-        box-shadow:
-          inset 4px 4px 0 rgba(255, 255, 255, 0.1),
-          inset -4px -4px 0 rgba(0, 0, 0, 0.2),
-          8px 8px 0 ${unsafeCSS(COLORS.bgDark)};
-        font-family: "Press Start 2P", monospace;
-        box-sizing: border-box;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          width: 100%;
+          background-color: var(--color-table);
+          border: 6px solid var(--color-bg-dark);
+          box-shadow:
+            inset 4px 4px 0 rgba(255, 255, 255, 0.1),
+            inset -4px -4px 0 rgba(0, 0, 0, 0.2),
+            8px 8px 0 var(--color-bg-dark);
+          box-sizing: border-box;
+        }
 
-      .board-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-      }
+        .board-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-lg);
+        }
 
-      .community-cards {
-        display: flex;
-        gap: 6px;
-      }
+        .community-cards {
+          display: flex;
+          gap: var(--space-md);
+        }
 
-      .pot {
-        font-size: 0.7em;
-        color: ${unsafeCSS(COLORS.gold)};
-      }
+        .pot {
+          font-size: var(--font-md);
+          color: var(--color-primary);
+        }
 
-      .phase {
-        font-size: 0.5em;
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        text-transform: uppercase;
-        letter-spacing: 2px;
-      }
+        .phase {
+          font-size: var(--font-sm);
+          color: var(--color-fg-white);
+          text-transform: uppercase;
+          letter-spacing: 2px;
+        }
 
-      .countdown {
-        font-size: 2em;
-        color: ${unsafeCSS(COLORS.gold)};
-        text-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
-      }
+        .countdown {
+          font-size: calc(var(--font-lg) * 2);
+          color: var(--color-primary);
+          text-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+        }
 
-      .winner-message {
-        text-align: center;
-      }
+        .winner-message {
+          text-align: center;
+        }
 
-      .winner-name {
-        font-size: 0.8em;
-        color: ${unsafeCSS(COLORS.gold)};
-        text-shadow: 2px 2px 0 ${unsafeCSS(COLORS.bgDark)};
-        margin-bottom: 8px;
-      }
+        .winner-name {
+          font-size: var(--font-md);
+          color: var(--color-primary);
+          text-shadow: 2px 2px 0 var(--color-bg-dark);
+          margin-bottom: var(--space-md);
+        }
 
-      .winner-hand {
-        font-size: 0.6em;
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
+        .winner-hand {
+          font-size: var(--font-md);
+          color: var(--color-fg-white);
+        }
 
-      .winner-amount {
-        font-size: 0.7em;
-        color: ${unsafeCSS(COLORS.greenLight)};
-        margin-top: 8px;
-      }
-    `;
+        .winner-amount {
+          font-size: var(--font-md);
+          color: var(--color-success);
+          margin-top: var(--space-md);
+        }
+      `,
+    ];
   }
 
   static get properties() {

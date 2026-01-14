@@ -1,5 +1,5 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 
 const SUIT_SYMBOLS = {
   hearts: "♥",
@@ -26,90 +26,93 @@ const RANK_DISPLAY = {
 
 class Card extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: inline-block;
-        font-family: "Press Start 2P", monospace;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: inline-block;
+        }
 
-      .card {
-        display: inline-flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 48px;
-        background-color: ${unsafeCSS(COLORS.fgWhite)};
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        line-height: 1;
-        font-size: 16px;
-      }
-
-      .card .rank {
-        font-size: 14px;
-      }
-
-      .card .suit {
-        font-family: serif;
-        font-size: 20px;
-        margin-top: -2px;
-      }
-
-      .card.red {
-        color: ${unsafeCSS(COLORS.red)};
-      }
-
-      .card.black {
-        color: ${unsafeCSS(COLORS.bgDark)};
-      }
-
-      .card.hidden {
-        background-color: ${unsafeCSS(COLORS.blue)};
-        background-image:
-          repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 4px,
-            ${unsafeCSS(COLORS.purple)} 4px,
-            ${unsafeCSS(COLORS.purple)} 8px
-          ),
-          repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 4px,
-            ${unsafeCSS(COLORS.purple)} 4px,
-            ${unsafeCSS(COLORS.purple)} 8px
-          );
-      }
-
-      .card.placeholder {
-        background-color: ${unsafeCSS(COLORS.bgLight)};
-        border-color: ${unsafeCSS(COLORS.bgDisabled)};
-        border-style: dashed;
-      }
-
-      .card.winning {
-        border-color: ${unsafeCSS(COLORS.gold)};
-        box-shadow: 0 0 6px ${unsafeCSS(COLORS.gold)};
-      }
-
-      /* Larger cards on desktop */
-      @media (min-width: 800px) {
         .card {
-          width: 44px;
-          height: 60px;
-          font-size: 20px;
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 48px;
+          background-color: var(--color-fg-white);
+          border: 3px solid var(--color-bg-dark);
+          line-height: 1;
+          font-size: 16px;
         }
 
         .card .rank {
-          font-size: 18px;
+          font-size: 14px;
         }
 
         .card .suit {
-          font-size: 26px;
+          font-family: serif;
+          font-size: 20px;
+          margin-top: -2px;
         }
-      }
-    `;
+
+        .card.red {
+          color: var(--color-error);
+        }
+
+        .card.black {
+          color: var(--color-bg-dark);
+        }
+
+        .card.hidden {
+          background-color: var(--color-accent);
+          background-image:
+            repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 4px,
+              var(--color-secondary) 4px,
+              var(--color-secondary) 8px
+            ),
+            repeating-linear-gradient(
+              90deg,
+              transparent,
+              transparent 4px,
+              var(--color-secondary) 4px,
+              var(--color-secondary) 8px
+            );
+        }
+
+        .card.placeholder {
+          background-color: var(--color-bg-light);
+          border-color: var(--color-bg-disabled);
+          border-style: dashed;
+        }
+
+        .card.winning {
+          border-color: var(--color-primary);
+          box-shadow: 0 0 6px var(--color-primary);
+        }
+
+        /* Larger cards on desktop */
+        @media (min-width: 800px) {
+          .card {
+            width: 44px;
+            height: 60px;
+            font-size: 20px;
+          }
+
+          .card .rank {
+            font-size: 18px;
+          }
+
+          .card .suit {
+            font-size: 26px;
+          }
+        }
+      `,
+    ];
   }
 
   static get properties() {

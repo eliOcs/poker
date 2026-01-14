@@ -1,67 +1,71 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 
 class Modal extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        display: block;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: block;
+        }
 
-      .overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 199;
-      }
+        .overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 199;
+        }
 
-      .modal {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: ${unsafeCSS(COLORS.bgLight)};
-        border: 4px solid ${unsafeCSS(COLORS.fgDark)};
-        padding: 20px;
-        z-index: 200;
-        box-shadow: 8px 8px 0 ${unsafeCSS(COLORS.bgDark)};
-        min-width: 280px;
-        max-width: 90vw;
-        max-height: 90vh;
-        overflow: auto;
-      }
+        .modal {
+          position: fixed;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          background: var(--color-bg-light);
+          border: var(--space-sm) solid var(--color-fg-muted);
+          padding: var(--space-lg);
+          z-index: 200;
+          box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+          min-width: 280px;
+          max-width: 90vw;
+          max-height: 90vh;
+          overflow: auto;
+        }
 
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-      }
+        .header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: var(--space-lg);
+        }
 
-      h3 {
-        margin: 0;
-        font-size: 0.7em;
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        font-family: "Press Start 2P", monospace;
-      }
+        h3 {
+          margin: 0;
+          font-size: var(--font-md);
+          color: var(--color-fg-white);
+          font-family: inherit;
+        }
 
-      .close-btn {
-        background: none;
-        border: none;
-        color: ${unsafeCSS(COLORS.fgDark)};
-        font-size: 1.2em;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-      }
+        .close-btn {
+          background: none;
+          border: none;
+          color: var(--color-fg-muted);
+          font-size: var(--font-lg);
+          cursor: pointer;
+          padding: 0;
+          line-height: 1;
+        }
 
-      .close-btn:hover {
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-    `;
+        .close-btn:hover {
+          color: var(--color-fg-white);
+        }
+      `,
+    ];
   }
 
   static get properties() {

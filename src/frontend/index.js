@@ -1,5 +1,5 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./card.js";
 import "./board.js";
 import "./seat.js";
@@ -10,247 +10,249 @@ import "./ranking-panel.js";
 
 class Game extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        height: 100%;
-        display: block;
-        background-color: ${unsafeCSS(COLORS.bgMedium)};
-        box-sizing: border-box;
-        font-family: "Press Start 2P", monospace;
-        color: ${unsafeCSS(COLORS.fgMedium)};
-        image-rendering: pixelated;
-      }
-
-      :host * {
-        box-sizing: inherit;
-      }
-
-      #wrapper {
-        position: relative;
-        height: 100%;
-        max-width: 1600px;
-        margin: 0 auto;
-      }
-
-      #container {
-        position: absolute;
-        top: 0%;
-        left: 2.5%;
-        height: 80%;
-        width: 95%;
-      }
-
-      phg-board {
-        position: absolute;
-        top: 15%;
-        left: 10%;
-        height: 70%;
-        width: 80%;
-      }
-
-      #seats {
-        height: 100%;
-        width: 100%;
-      }
-
-      #bets {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        width: 100%;
-        pointer-events: none;
-      }
-
-      phg-seat {
-        position: absolute;
-        height: 20%;
-        width: 30%;
-        min-width: 100px;
-        max-width: 200px;
-        min-height: 150px;
-        max-height: 200px;
-        z-index: 1;
-      }
-
-      phg-seat:nth-child(1) {
-        top: 15%;
-        left: 0;
-      }
-
-      phg-seat:nth-child(2) {
-        top: 2.5%;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      phg-seat:nth-child(3) {
-        top: 15%;
-        right: 0;
-      }
-
-      phg-seat:nth-child(4) {
-        bottom: 15%;
-        right: 0;
-      }
-
-      phg-seat:nth-child(5) {
-        bottom: 5%;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      phg-seat:nth-child(6) {
-        bottom: 15%;
-        left: 0;
-      }
-
-      .bet-indicator {
-        position: absolute;
-        z-index: 2;
-        color: ${unsafeCSS(COLORS.gold)};
-        font-size: 0.7em;
-      }
-
-      /* Seat 1: top-left - position bet toward table center */
-      .bet-indicator[data-seat="0"] {
-        top: 42%;
-        left: 35%;
-      }
-
-      /* Seat 2: top-center - position bet below player, toward table center */
-      .bet-indicator[data-seat="1"] {
-        top: 28%;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      /* Seat 3: top-right - position bet toward table center */
-      .bet-indicator[data-seat="2"] {
-        top: 42%;
-        right: 35%;
-      }
-
-      /* Seat 4: bottom-right - position bet toward table center */
-      .bet-indicator[data-seat="3"] {
-        bottom: 46%;
-        right: 35%;
-      }
-
-      /* Seat 5: bottom-center - position bet above player, toward table center */
-      .bet-indicator[data-seat="4"] {
-        bottom: 40%;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      /* Seat 6: bottom-left - position bet toward table center */
-      .bet-indicator[data-seat="5"] {
-        bottom: 46%;
-        left: 35%;
-      }
-
-      phg-action-panel {
-        position: absolute;
-        bottom: 10%;
-        left: 50%;
-        transform: translate(-50%, 50%);
-      }
-
-      #connection-status {
-        position: absolute;
-        left: 0.5%;
-        top: 0.5%;
-        color: ${unsafeCSS(COLORS.bgDisabled)};
-        font-size: 0.4em;
-      }
-
-      .error-message {
-        position: absolute;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: ${unsafeCSS(COLORS.red)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        padding: 10px 20px;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        font-size: 0.5em;
-        z-index: 100;
-        box-shadow: 4px 4px 0 ${unsafeCSS(COLORS.bgDark)};
-      }
-
-      #settings-btn {
-        position: absolute;
-        right: 0.5%;
-        top: 0.5%;
-        background: none;
-        border: none;
-        font-size: 1.2em;
-        cursor: pointer;
-        padding: 5px;
-        color: ${unsafeCSS(COLORS.fgMedium)};
-      }
-
-      #settings-btn:hover {
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-
-      .settings-content input {
-        width: 100%;
-        padding: 10px;
-        font-family: "Press Start 2P", monospace;
-        font-size: 0.6em;
-        border: 3px solid ${unsafeCSS(COLORS.bgDark)};
-        background: ${unsafeCSS(COLORS.bgMedium)};
-        color: ${unsafeCSS(COLORS.fgWhite)};
-        margin-bottom: 15px;
-        box-sizing: border-box;
-      }
-
-      .settings-content .buttons {
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-      }
-
-      .not-found {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-      }
-
-      .not-found h1 {
-        font-size: 0.75em;
-        line-height: 2;
-        color: ${unsafeCSS(COLORS.fgDark)};
-        margin: 0 0 2em 0;
-        text-align: center;
-      }
-
-      @media (min-width: 600px) {
-        .not-found h1 {
-          font-size: 0.8em;
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          height: 100%;
+          display: block;
+          background-color: var(--color-bg-medium);
+          box-sizing: border-box;
+          color: var(--color-fg-medium);
         }
-      }
 
-      #ranking-btn {
-        position: absolute;
-        right: 40px;
-        top: 0.5%;
-        background: none;
-        border: none;
-        font-size: 1.2em;
-        cursor: pointer;
-        padding: 5px;
-        color: ${unsafeCSS(COLORS.gold)};
-      }
+        :host * {
+          box-sizing: inherit;
+        }
 
-      #ranking-btn:hover {
-        color: ${unsafeCSS(COLORS.fgWhite)};
-      }
-    `;
+        #wrapper {
+          position: relative;
+          height: 100%;
+          max-width: 1600px;
+          margin: 0 auto;
+        }
+
+        #container {
+          position: absolute;
+          top: 0%;
+          left: 2.5%;
+          height: 80%;
+          width: 95%;
+        }
+
+        phg-board {
+          position: absolute;
+          top: 15%;
+          left: 10%;
+          height: 70%;
+          width: 80%;
+        }
+
+        #seats {
+          height: 100%;
+          width: 100%;
+        }
+
+        #bets {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 100%;
+          pointer-events: none;
+        }
+
+        phg-seat {
+          position: absolute;
+          height: 20%;
+          width: 30%;
+          min-width: 100px;
+          max-width: 200px;
+          min-height: 150px;
+          max-height: 200px;
+          z-index: 1;
+        }
+
+        phg-seat:nth-child(1) {
+          top: 15%;
+          left: 0;
+        }
+
+        phg-seat:nth-child(2) {
+          top: 2.5%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        phg-seat:nth-child(3) {
+          top: 15%;
+          right: 0;
+        }
+
+        phg-seat:nth-child(4) {
+          bottom: 15%;
+          right: 0;
+        }
+
+        phg-seat:nth-child(5) {
+          bottom: 5%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        phg-seat:nth-child(6) {
+          bottom: 15%;
+          left: 0;
+        }
+
+        .bet-indicator {
+          position: absolute;
+          z-index: 2;
+          color: var(--color-primary);
+          font-size: var(--font-md);
+        }
+
+        /* Seat 1: top-left - position bet toward table center */
+        .bet-indicator[data-seat="0"] {
+          top: 42%;
+          left: 35%;
+        }
+
+        /* Seat 2: top-center - position bet below player, toward table center */
+        .bet-indicator[data-seat="1"] {
+          top: 28%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Seat 3: top-right - position bet toward table center */
+        .bet-indicator[data-seat="2"] {
+          top: 42%;
+          right: 35%;
+        }
+
+        /* Seat 4: bottom-right - position bet toward table center */
+        .bet-indicator[data-seat="3"] {
+          bottom: 46%;
+          right: 35%;
+        }
+
+        /* Seat 5: bottom-center - position bet above player, toward table center */
+        .bet-indicator[data-seat="4"] {
+          bottom: 40%;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Seat 6: bottom-left - position bet toward table center */
+        .bet-indicator[data-seat="5"] {
+          bottom: 46%;
+          left: 35%;
+        }
+
+        phg-action-panel {
+          position: absolute;
+          bottom: 10%;
+          left: 50%;
+          transform: translate(-50%, 50%);
+        }
+
+        #connection-status {
+          position: absolute;
+          left: 0.5%;
+          top: 0.5%;
+          color: var(--color-bg-disabled);
+          font-size: var(--font-sm);
+        }
+
+        .error-message {
+          position: absolute;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: var(--color-error);
+          color: var(--color-fg-white);
+          padding: var(--space-md) var(--space-lg);
+          border: 3px solid var(--color-bg-dark);
+          font-size: var(--font-sm);
+          z-index: 100;
+          box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+        }
+
+        #settings-btn {
+          position: absolute;
+          right: 0.5%;
+          top: 0.5%;
+          background: none;
+          border: none;
+          font-size: var(--font-lg);
+          cursor: pointer;
+          padding: 5px;
+          color: var(--color-fg-medium);
+        }
+
+        #settings-btn:hover {
+          color: var(--color-fg-white);
+        }
+
+        .settings-content input {
+          width: 100%;
+          padding: var(--space-md);
+          font-family: inherit;
+          font-size: var(--font-md);
+          border: 3px solid var(--color-bg-dark);
+          background: var(--color-bg-medium);
+          color: var(--color-fg-white);
+          margin-bottom: var(--space-lg);
+          box-sizing: border-box;
+        }
+
+        .settings-content .buttons {
+          display: flex;
+          gap: var(--space-md);
+          justify-content: flex-end;
+        }
+
+        .not-found {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+        }
+
+        .not-found h1 {
+          font-size: var(--font-md);
+          line-height: 2;
+          color: var(--color-fg-muted);
+          margin: 0 0 2em 0;
+          text-align: center;
+        }
+
+        @media (min-width: 600px) {
+          .not-found h1 {
+            font-size: var(--font-md);
+          }
+        }
+
+        #ranking-btn {
+          position: absolute;
+          right: 40px;
+          top: 0.5%;
+          background: none;
+          border: none;
+          font-size: var(--font-lg);
+          cursor: pointer;
+          padding: 5px;
+          color: var(--color-primary);
+        }
+
+        #ranking-btn:hover {
+          color: var(--color-fg-white);
+        }
+      `,
+    ];
   }
 
   static get properties() {

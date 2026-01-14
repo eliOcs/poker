@@ -1,51 +1,53 @@
-import * as COLORS from "./colors.js";
-import { html, css, unsafeCSS, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./button.js";
 
 class Home extends LitElement {
   static get styles() {
-    return css`
-      :host {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background-color: ${unsafeCSS(COLORS.bgMedium)};
-        font-family: "Press Start 2P", monospace;
-        color: ${unsafeCSS(COLORS.fgMedium)};
-        image-rendering: pixelated;
-        padding: 1em;
-        box-sizing: border-box;
-      }
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: var(--color-bg-medium);
+          color: var(--color-fg-medium);
+          padding: 1em;
+          box-sizing: border-box;
+        }
 
-      .logo {
-        width: 80%;
-        max-width: 450px;
-        margin-bottom: 1.5em;
-        image-rendering: pixelated;
-      }
-
-      p {
-        font-size: 0.75em;
-        line-height: 2;
-        color: ${unsafeCSS(COLORS.fgDark)};
-        margin-bottom: 2em;
-        text-align: center;
-        padding: 0 1em;
-        max-width: 500px;
-      }
-
-      @media (min-width: 600px) {
         .logo {
-          width: 60%;
+          width: 80%;
+          max-width: 450px;
+          margin-bottom: 1.5em;
+          image-rendering: pixelated;
         }
 
         p {
-          font-size: 0.8em;
+          font-size: var(--font-md);
+          line-height: 2;
+          color: var(--color-fg-muted);
+          margin-bottom: 2em;
+          text-align: center;
+          padding: 0 1em;
+          max-width: 500px;
         }
-      }
-    `;
+
+        @media (min-width: 600px) {
+          .logo {
+            width: 60%;
+          }
+
+          p {
+            font-size: var(--font-md);
+          }
+        }
+      `,
+    ];
   }
 
   static get properties() {
