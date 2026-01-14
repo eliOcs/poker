@@ -24,12 +24,12 @@ export const designTokens = css`
 
     /* Colors - Semantic */
     --color-primary: #f4a020;
-    --color-secondary: #8844aa;
-    --color-accent: #3366cc;
-    --color-success: #33aa55;
-    --color-error: #cc3333;
+    --color-secondary: #84a;
+    --color-accent: #36c;
+    --color-success: #3a5;
+    --color-error: #c33;
     --color-warning: #e07020;
-    --color-highlight: #cc44aa;
+    --color-highlight: #c4a;
 
     /* Colors - Backgrounds */
     --color-bg-dark: #0f0f1a;
@@ -39,13 +39,13 @@ export const designTokens = css`
     --color-table: #2d5a27;
 
     /* Colors - Foregrounds */
-    --color-fg-muted: #8888aa;
+    --color-fg-muted: #88a;
     --color-fg-medium: #c0c0d0;
     --color-fg-light: #e0e0e8;
     --color-fg-white: #f0f0f0;
   }
 
-  @media (max-width: 599px) {
+  @media (width <= 599px) {
     :host {
       /* Smaller sizes for mobile */
       --font-sm: 0.45em;

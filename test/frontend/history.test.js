@@ -1,7 +1,5 @@
 import { fixture, expect, html } from "@open-wc/testing";
 import {
-  mockHandSummary,
-  mockHandSummaryLost,
   mockOhhHand,
   mockOhhHandWithShowdown,
   createMockHandList,

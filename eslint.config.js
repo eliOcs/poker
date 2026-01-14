@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
+import lit from "eslint-plugin-lit";
 
 export default [
   js.configs.recommended,
@@ -20,6 +21,7 @@ export default [
   },
   {
     files: ["src/frontend/**/*.js"],
+    ...lit.configs["flat/recommended"],
     languageOptions: {
       globals: {
         ...globals.browser,

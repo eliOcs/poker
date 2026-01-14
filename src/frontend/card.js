@@ -96,7 +96,7 @@ class Card extends LitElement {
         }
 
         /* Larger cards on desktop */
-        @media (min-width: 800px) {
+        @media (width >= 800px) {
           .card {
             width: 44px;
             height: 60px;
