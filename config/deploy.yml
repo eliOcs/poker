@@ -33,6 +33,10 @@ env:
 builder:
   arch: arm64
 
+# Volume mounts for persistent data
+volumes:
+  - /opt/poker/data:/app/data
+
 # SSH configuration
 ssh:
   user: ubuntu
