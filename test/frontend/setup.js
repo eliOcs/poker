@@ -13,6 +13,11 @@ import {
   mockSittingOutSeat,
   mockDisconnectedSeat,
   mockOccupiedSeatWithName,
+  mockHandSummary,
+  mockHandSummaryLost,
+  mockOhhHand,
+  mockOhhHandWithShowdown,
+  createMockHandList,
 } from "./fixtures.js";
 
 // Mock WebSocket before importing components
@@ -29,6 +34,7 @@ globalThis.process = {
 
 // Import all components after mocking
 import "../../src/frontend/index.js";
+import "../../src/frontend/history.js";
 
 export {
   OriginalWebSocket,
@@ -46,4 +52,9 @@ export {
   mockSittingOutSeat,
   mockDisconnectedSeat,
   mockOccupiedSeatWithName,
+  mockHandSummary,
+  mockHandSummaryLost,
+  mockOhhHand,
+  mockOhhHandWithShowdown,
+  createMockHandList,
 };
