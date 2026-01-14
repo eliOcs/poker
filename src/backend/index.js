@@ -9,6 +9,7 @@ import * as Player from "./poker/player.js";
 import * as Betting from "./poker/betting.js";
 import * as Showdown from "./poker/showdown.js";
 import HandRankings from "./poker/hand-rankings.js";
+import * as HandHistory from "./poker/hand-history.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -194,6 +195,15 @@ function processGameFlow(game, gameId) {
           handRank: null, // No showdown, won by fold
           amount: result.amount,
         };
+        // Finalize hand history (won by fold)
+        HandHistory.finalizeHand(gameId, game, [
+          {
+            visibleSeats: [],
+            potAmount: result.amount,
+            winners: [result.winner],
+            winningHand: null,
+          },
+        ]);
       }
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
@@ -213,12 +223,15 @@ function processGameFlow(game, gameId) {
     // Advance to next phase
     if (phase === "preflop") {
       runAll(PokerActions.dealFlop(game));
+      HandHistory.recordStreet(gameId, "flop", game.board.cards);
       Betting.startBettingRound(game, "flop");
     } else if (phase === "flop") {
       runAll(PokerActions.dealTurn(game));
+      HandHistory.recordStreet(gameId, "turn", [game.board.cards[3]]);
       Betting.startBettingRound(game, "turn");
     } else if (phase === "turn") {
       runAll(PokerActions.dealRiver(game));
+      HandHistory.recordStreet(gameId, "river", [game.board.cards[4]]);
       Betting.startBettingRound(game, "river");
     } else if (phase === "river") {
       // Go to showdown
@@ -229,6 +242,20 @@ function processGameFlow(game, gameId) {
       }
       // result.value contains PotResult[] when done
       const potResults = result.value || [];
+
+      // Record showdown actions to history
+      for (const seat of game.seats) {
+        if (
+          !seat.empty &&
+          !seat.folded &&
+          !seat.sittingOut &&
+          seat.cards.length > 0
+        ) {
+          // Players who made it to showdown show their cards
+          HandHistory.recordShowdown(gameId, seat.player.id, seat.cards, true);
+        }
+      }
+
       // Use the first pot result (main pot) for winner message
       if (potResults.length > 0 && potResults[0].winners.length > 0) {
         const mainPot = potResults[0];
@@ -245,6 +272,10 @@ function processGameFlow(game, gameId) {
           amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
         };
       }
+
+      // Finalize hand history with pot results
+      HandHistory.finalizeHand(gameId, game, potResults);
+
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
       return;
@@ -327,8 +358,10 @@ function startDisconnectTimer(game, gameId, seatIndex) {
     // Auto check/fold: check if possible, otherwise fold
     if (seat.bet === game.hand.currentBet) {
       PokerActions.check(game, { seat: seatIndex });
+      HandHistory.recordAction(gameId, seat.player.id, "check");
     } else {
       PokerActions.fold(game, { seat: seatIndex });
+      HandHistory.recordAction(gameId, seat.player.id, "fold");
     }
 
     // Process game flow after the auto-action
@@ -368,8 +401,10 @@ function startClockTimer(game, gameId) {
     // Auto check/fold: check if possible, otherwise fold
     if (seat.bet === game.hand.currentBet) {
       PokerActions.check(game, { seat: actingSeat });
+      HandHistory.recordAction(gameId, seat.player.id, "check");
     } else {
       PokerActions.fold(game, { seat: actingSeat });
+      HandHistory.recordAction(gameId, seat.player.id, "fold");
     }
 
     // Process game flow after the auto-action
@@ -440,10 +475,35 @@ function startCountdownTimer(game, gameId) {
 
       // Start the hand
       PokerActions.startHand(game);
-      // Post blinds
+
+      // Start hand history recording
+      HandHistory.startHand(gameId, game);
+
+      // Post blinds and record them
+      const sbSeat = Betting.getSmallBlindSeat(game);
+      const bbSeat = Betting.getBigBlindSeat(game);
       runAll(PokerActions.blinds(game));
-      // Deal preflop
+
+      // Record blinds to history
+      const sbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+        game.seats[sbSeat]
+      );
+      const bbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+        game.seats[bbSeat]
+      );
+      HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
+      HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
+
+      // Deal preflop and record cards
       runAll(PokerActions.dealPreflop(game));
+
+      // Record dealt cards for each player
+      for (const seat of game.seats) {
+        if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
+          HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
+        }
+      }
+
       // Initialize betting round
       Betting.startBettingRound(game, "preflop");
       // Set currentBet to big blind (blinds already posted)
@@ -520,8 +580,84 @@ wss.on(
         return;
       }
 
+      // Capture seat state before action for history recording
+      const seatIndex = findPlayerSeatIndex(game, player);
+      const seatBefore =
+        seatIndex !== -1 && !game.seats[seatIndex].empty
+          ? /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+              game.seats[seatIndex]
+            )
+          : null;
+      const betBefore = seatBefore?.bet || 0;
+
       try {
         PokerActions[action](game, { player, ...args });
+
+        // Record betting actions to history
+        if (bettingActions.includes(action) && seatBefore) {
+          const seatAfter = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+            game.seats[seatIndex]
+          );
+          const isAllIn = seatAfter.allIn;
+
+          if (action === "fold") {
+            HandHistory.recordAction(gameId, player.id, "fold");
+          } else if (action === "check") {
+            HandHistory.recordAction(gameId, player.id, "check");
+          } else if (action === "call") {
+            HandHistory.recordAction(
+              gameId,
+              player.id,
+              "call",
+              seatAfter.bet,
+              isAllIn
+            );
+          } else if (action === "bet") {
+            HandHistory.recordAction(
+              gameId,
+              player.id,
+              "bet",
+              seatAfter.bet,
+              isAllIn
+            );
+          } else if (action === "raise") {
+            HandHistory.recordAction(
+              gameId,
+              player.id,
+              "raise",
+              seatAfter.bet,
+              isAllIn
+            );
+          } else if (action === "allIn") {
+            // Determine if it's a call, bet, or raise based on context
+            const currentBet = game.hand.currentBet;
+            if (betBefore >= currentBet || seatAfter.bet <= currentBet) {
+              HandHistory.recordAction(
+                gameId,
+                player.id,
+                "call",
+                seatAfter.bet,
+                true
+              );
+            } else if (currentBet === 0) {
+              HandHistory.recordAction(
+                gameId,
+                player.id,
+                "bet",
+                seatAfter.bet,
+                true
+              );
+            } else {
+              HandHistory.recordAction(
+                gameId,
+                player.id,
+                "raise",
+                seatAfter.bet,
+                true
+              );
+            }
+          }
+        }
 
         // If start action was called, begin countdown timer
         if (action === "start" && game.countdown !== null) {
