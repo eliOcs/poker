@@ -1,4 +1,4 @@
-import { appendFile, mkdir } from "node:fs/promises"
+import { appendFile, mkdir, readFile } from "node:fs/promises"
 import { existsSync } from "node:fs"
 
 /**
@@ -421,6 +421,25 @@ async function writeHandToFile(gameId, hand) {
 }
 
 /**
+ * Reads all hands from a game's .ohh file
+ * @param {string} gameId
+ * @returns {Promise<OHHHand[]>}
+ */
+async function readHandsFromFile(gameId) {
+  const dataDir = getDataDir()
+  const filePath = `${dataDir}/${gameId}.ohh`
+
+  if (!existsSync(filePath)) {
+    return []
+  }
+
+  const content = await readFile(filePath, "utf8")
+  const lines = content.split("\n\n").filter(Boolean)
+
+  return lines.map((line) => JSON.parse(line).ohh)
+}
+
+/**
  * Gets a hand from cache or file
  * @param {string} gameId
  * @param {number} handNumber
@@ -434,9 +453,128 @@ export async function getHand(gameId, handNumber) {
     return cache.get(cacheKey) || null
   }
 
-  // TODO: Read from file if not in cache
-  // For now, return null for cache misses
-  return null
+  // Read from file
+  const hands = await readHandsFromFile(gameId)
+  const hand = hands.find((h) => h.game_number === `${gameId}-${handNumber}`)
+
+  if (hand) {
+    // Add to cache for future requests
+    cache.set(cacheKey, hand)
+    if (cache.size > CACHE_LIMIT) {
+      const firstKey = cache.keys().next().value
+      cache.delete(firstKey)
+    }
+  }
+
+  return hand || null
+}
+
+/**
+ * Gets all hands for a game (for list endpoint)
+ * @param {string} gameId
+ * @returns {Promise<OHHHand[]>}
+ */
+export async function getAllHands(gameId) {
+  return readHandsFromFile(gameId)
+}
+
+/**
+ * Filters a hand for a specific player's view
+ * Hides opponent hole cards unless shown at showdown
+ * @param {OHHHand} hand
+ * @param {string} playerId
+ * @returns {OHHHand}
+ */
+export function filterHandForPlayer(hand, playerId) {
+  // Find which players showed their cards at showdown
+  const shownPlayerIds = new Set()
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (action.action === "Shows Cards") {
+        shownPlayerIds.add(action.player_id)
+      }
+    }
+  }
+
+  // Clone and filter rounds
+  const filteredRounds = hand.rounds.map((round) => ({
+    ...round,
+    actions: round.actions.map((action) => {
+      // Filter "Dealt Cards" actions
+      if (action.action === "Dealt Cards") {
+        const isOwnCards = action.player_id === playerId
+        const wasShown = shownPlayerIds.has(action.player_id)
+
+        if (isOwnCards || wasShown) {
+          return action // Show cards
+        } else {
+          // Hide cards
+          return {
+            ...action,
+            cards: ["??", "??"],
+          }
+        }
+      }
+      return action
+    }),
+  }))
+
+  return {
+    ...hand,
+    rounds: filteredRounds,
+  }
+}
+
+/**
+ * Gets a summary of a hand for the hand list
+ * @param {OHHHand} hand
+ * @param {string} playerId - The requesting player's ID
+ * @returns {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
+ */
+export function getHandSummary(hand, playerId) {
+  // Extract hand number from game_number (format: "gameId-handNumber")
+  const handNumber = parseInt(hand.game_number.split("-").pop() || "0", 10)
+
+  // Find player's hole cards
+  let holeCards = ["??", "??"]
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (action.action === "Dealt Cards" && action.player_id === playerId) {
+        holeCards = action.cards || ["??", "??"]
+        break
+      }
+    }
+  }
+
+  // Find winner info
+  let winnerName = null
+  let winnerId = null
+  let totalPot = 0
+  let isWinner = false
+
+  if (hand.pots.length > 0) {
+    const mainPot = hand.pots[0]
+    totalPot = mainPot.amount
+
+    if (mainPot.player_wins.length > 0) {
+      winnerId = mainPot.player_wins[0].player_id
+      isWinner = winnerId === playerId
+
+      // Find winner name from players array
+      const winner = hand.players.find((p) => p.id === winnerId)
+      winnerName = winner?.name || `Seat ${winner?.seat || "??"}`
+    }
+  }
+
+  return {
+    game_number: hand.game_number,
+    hand_number: handNumber,
+    hole_cards: holeCards,
+    winner_name: winnerName,
+    winner_id: winnerId,
+    pot: totalPot,
+    is_winner: isWinner,
+  }
 }
 
 /**

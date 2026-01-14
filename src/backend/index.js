@@ -108,6 +108,61 @@ server.on("request", (req, res) => {
     return;
   }
 
+  // History page - serve SPA
+  const historyPageMatch = url.match(/^\/history\/([a-z0-9]+)(\/\d+)?$/);
+  if (method === "GET" && historyPageMatch) {
+    getOrCreatePlayer(req, res);
+    respondWithFile("src/frontend/index.html", res);
+    return;
+  }
+
+  // API: List hands for a game
+  const historyListMatch = url.match(/^\/api\/history\/([a-z0-9]+)$/);
+  if (method === "GET" && historyListMatch) {
+    const historyGameId = historyListMatch[1];
+    const { player } = getOrCreatePlayer(req, res);
+
+    HandHistory.getAllHands(historyGameId)
+      .then((hands) => {
+        const summaries = hands.map((hand) =>
+          HandHistory.getHandSummary(hand, player.id)
+        );
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify(summaries));
+      })
+      .catch((err) => {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err.message }));
+      });
+    return;
+  }
+
+  // API: Get specific hand
+  const historyHandMatch = url.match(/^\/api\/history\/([a-z0-9]+)\/(\d+)$/);
+  if (method === "GET" && historyHandMatch) {
+    const historyGameId = historyHandMatch[1];
+    const handNumber = parseInt(historyHandMatch[2], 10);
+    const { player } = getOrCreatePlayer(req, res);
+
+    HandHistory.getHand(historyGameId, handNumber)
+      .then((hand) => {
+        if (!hand) {
+          res.writeHead(404, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "Hand not found" }));
+          return;
+        }
+
+        const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ ohh: filteredHand }));
+      })
+      .catch((err) => {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: err.message }));
+      });
+    return;
+  }
+
   // Static files and node modules
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {

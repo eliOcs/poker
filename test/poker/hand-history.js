@@ -208,6 +208,265 @@ describe("hand-history", function () {
     })
   })
 
+  describe("filterHandForPlayer", function () {
+    it("shows own cards", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 1000 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Dealt Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+        ],
+        pots: [],
+      }
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1")
+
+      // Own cards visible
+      assert.deepStrictEqual(
+        filtered.rounds[0].actions[0].cards,
+        ["Ah", "Kh"]
+      )
+      // Opponent cards hidden
+      assert.deepStrictEqual(
+        filtered.rounds[0].actions[1].cards,
+        ["??", "??"]
+      )
+    })
+
+    it("shows opponent cards if they showed at showdown", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 1000 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Dealt Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+          {
+            id: 1,
+            street: "Showdown",
+            actions: [
+              {
+                action_number: 3,
+                player_id: "player2",
+                action: "Shows Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+        ],
+        pots: [],
+      }
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1")
+
+      // Opponent cards visible because they showed
+      assert.deepStrictEqual(
+        filtered.rounds[0].actions[1].cards,
+        ["Qc", "Jc"]
+      )
+    })
+  })
+
+  describe("getHandSummary", function () {
+    it("returns correct summary", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "abc123-5",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 1000 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Dealt Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+        ],
+        pots: [
+          {
+            number: 0,
+            amount: 200,
+            player_wins: [
+              { player_id: "player1", win_amount: 200, contributed_rake: 0 },
+            ],
+          },
+        ],
+      }
+
+      const summary = HandHistory.getHandSummary(hand, "player1")
+
+      assert.strictEqual(summary.game_number, "abc123-5")
+      assert.strictEqual(summary.hand_number, 5)
+      assert.deepStrictEqual(summary.hole_cards, ["Ah", "Kh"])
+      assert.strictEqual(summary.winner_name, "Alice")
+      assert.strictEqual(summary.winner_id, "player1")
+      assert.strictEqual(summary.pot, 200)
+      assert.strictEqual(summary.is_winner, true)
+    })
+
+    it("marks is_winner false for non-winners", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "abc123-5",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 1000 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+            ],
+          },
+        ],
+        pots: [
+          {
+            number: 0,
+            amount: 200,
+            player_wins: [
+              { player_id: "player2", win_amount: 200, contributed_rake: 0 },
+            ],
+          },
+        ],
+      }
+
+      const summary = HandHistory.getHandSummary(hand, "player1")
+
+      assert.strictEqual(summary.is_winner, false)
+      assert.strictEqual(summary.winner_name, "Bob")
+    })
+  })
+
+  describe("getAllHands", function () {
+    it("returns empty array for non-existent game", async function () {
+      process.env.DATA_DIR = TEST_DATA_DIR
+
+      const hands = await HandHistory.getAllHands("nonexistent")
+      assert.deepStrictEqual(hands, [])
+
+      delete process.env.DATA_DIR
+    })
+
+    it("returns all hands from file", async function () {
+      const { game, players } = createGameWithPlayers()
+
+      process.env.DATA_DIR = TEST_DATA_DIR
+
+      // Create two hands
+      HandHistory.startHand("test-game", game)
+      HandHistory.recordBlind("test-game", players[0].id, "sb", 25)
+      await HandHistory.finalizeHand("test-game", game, [])
+
+      HandHistory.startHand("test-game", game)
+      HandHistory.recordBlind("test-game", players[0].id, "sb", 25)
+      await HandHistory.finalizeHand("test-game", game, [])
+
+      const hands = await HandHistory.getAllHands("test-game")
+      assert.strictEqual(hands.length, 2)
+      assert.strictEqual(hands[0].game_number, "test-game-1")
+      assert.strictEqual(hands[1].game_number, "test-game-2")
+
+      delete process.env.DATA_DIR
+    })
+  })
+
   describe("file operations", function () {
     it("writes hand to .ohh file", async function () {
       const { game, players } = createGameWithPlayers()
