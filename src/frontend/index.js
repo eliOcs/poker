@@ -251,6 +251,22 @@ class Game extends LitElement {
         #ranking-btn:hover {
           color: var(--color-fg-white);
         }
+
+        #history-btn {
+          position: absolute;
+          right: 75px;
+          top: 0.5%;
+          background: none;
+          border: none;
+          font-size: var(--font-lg);
+          cursor: pointer;
+          padding: 5px;
+          color: var(--color-fg-medium);
+        }
+
+        #history-btn:hover {
+          color: var(--color-fg-white);
+        }
       `,
     ];
   }
@@ -355,6 +371,16 @@ class Game extends LitElement {
 
   closeRanking() {
     this.showRanking = false;
+  }
+
+  openHistory() {
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: `/history/${this.gameId}` },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   saveSettings() {
@@ -485,6 +511,9 @@ class Game extends LitElement {
           ${this.socket?.readyState === 2 ? "Closing ..." : ""}
           ${this.socket?.readyState === 3 ? "Closed" : ""}
         </span>
+        <button id="history-btn" @click=${this.openHistory} title="Hand History">
+          🔁
+        </button>
         <button id="ranking-btn" @click=${this.openRanking} title="Rankings">
           🏆
         </button>
