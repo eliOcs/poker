@@ -1,8 +1,12 @@
 test-results
+test-data
 node_modules
 tags
 .nyc_output
 coverage
+
+# Hand history data (runtime)
+data/
 
 # Environment and secrets
 .env
