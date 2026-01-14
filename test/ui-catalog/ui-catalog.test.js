@@ -44,6 +44,15 @@ const TEST_CASES = [
 
   // Modal states
   "game-rankings-modal",
+
+  // Hand history states
+  "history-loading",
+  "history-empty",
+  "history-error",
+  "history-preflop-fold",
+  "history-showdown-win",
+  "history-showdown-lose",
+  "history-multiple-hands",
 ];
 
 for (const testCase of TEST_CASES) {
@@ -51,7 +60,14 @@ for (const testCase of TEST_CASES) {
     await page.goto(`/?test=${testCase}`);
 
     // Wait for the appropriate component to render
-    const selector = testCase === "landing-page" ? "phg-home" : "phg-game";
+    let selector;
+    if (testCase === "landing-page") {
+      selector = "phg-home";
+    } else if (testCase.startsWith("history-")) {
+      selector = "phg-history";
+    } else {
+      selector = "phg-game";
+    }
     await page.waitForSelector(selector);
 
     // Give Lit components time to fully render
