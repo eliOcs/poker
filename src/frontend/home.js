@@ -37,7 +37,7 @@ class Home extends LitElement {
           max-width: 500px;
         }
 
-        @media (min-width: 600px) {
+        @media (width >= 600px) {
           .logo {
             width: 60%;
           }

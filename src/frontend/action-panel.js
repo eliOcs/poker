@@ -142,16 +142,13 @@ class ActionPanel extends LitElement {
           background: var(--color-bg-disabled);
           color: var(--color-fg-white);
           line-height: 2;
+          appearance: textfield;
         }
 
         .slider-row input[type="number"]::-webkit-inner-spin-button,
         .slider-row input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: none;
+          appearance: none;
           margin: 0;
-        }
-
-        .slider-row input[type="number"] {
-          -moz-appearance: textfield;
         }
 
         .slider-row button.step-btn {

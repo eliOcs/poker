@@ -302,8 +302,9 @@ function buildRounds(recorder) {
     }
 
     // Clone action without the street field for the output
-    const { street, ...actionWithoutStreet } = action
-    currentRound.actions.push(actionWithoutStreet)
+    const actionCopy = { ...action }
+    delete actionCopy.street
+    currentRound.actions.push(actionCopy)
   }
 
   return rounds

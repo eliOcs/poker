@@ -226,11 +226,11 @@ class Game extends LitElement {
           font-size: var(--font-md);
           line-height: 2;
           color: var(--color-fg-muted);
-          margin: 0 0 2em 0;
+          margin: 0 0 2em;
           text-align: center;
         }
 
-        @media (min-width: 600px) {
+        @media (width >= 600px) {
           .not-found h1 {
             font-size: var(--font-md);
           }

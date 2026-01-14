@@ -75,7 +75,7 @@ class History extends LitElement {
           border-bottom: 3px solid var(--color-bg-light);
         }
 
-        @media (max-width: 799px) {
+        @media (width <= 799px) {
           .nav-bar {
             display: flex;
           }
@@ -128,21 +128,23 @@ class History extends LitElement {
           flex: 1;
           display: flex;
           overflow: hidden;
+          min-height: 0;
         }
 
         /* Desktop: table + sidebar layout */
-        @media (min-width: 800px) {
+        @media (width >= 800px) {
           .main {
             flex-direction: row;
           }
         }
 
-        /* Table area */
+        /* Table area (left column) */
         .table-area {
           flex: 1;
           display: flex;
           flex-direction: column;
           overflow: auto;
+          min-width: 0;
         }
 
         /* Final table state */
@@ -151,6 +153,12 @@ class History extends LitElement {
           position: relative;
           min-height: 300px;
           max-height: 400px;
+        }
+
+        @media (width >= 800px) {
+          .table-state {
+            max-height: none;
+          }
         }
 
         .board {
@@ -192,7 +200,7 @@ class History extends LitElement {
 
         .player.winner {
           border-color: var(--color-success);
-          background-color: rgba(51, 170, 85, 0.2);
+          background-color: rgb(51 170 85 / 20%);
         }
 
         .player-name {
@@ -260,10 +268,11 @@ class History extends LitElement {
           background-color: var(--color-bg-dark);
           border-top: 3px solid var(--color-bg-light);
           overflow-x: auto;
+          flex-shrink: 0;
         }
 
         /* Desktop: horizontal layout */
-        @media (min-width: 800px) {
+        @media (width >= 800px) {
           .timeline-content {
             display: flex;
             gap: var(--space-lg);
@@ -276,11 +285,11 @@ class History extends LitElement {
         }
 
         /* Mobile: vertical layout */
-        @media (max-width: 799px) {
+        @media (width <= 799px) {
           .timeline-content {
             display: flex;
             flex-direction: column;
-            gap: var(--space-md);
+            gap: var(--space-lg);
           }
         }
 
@@ -330,7 +339,7 @@ class History extends LitElement {
           overflow-y: auto;
         }
 
-        @media (min-width: 800px) {
+        @media (width >= 800px) {
           .sidebar {
             display: block;
           }
@@ -384,11 +393,11 @@ class History extends LitElement {
         }
 
         .hand-item.winner {
-          background-color: rgba(51, 170, 85, 0.1);
+          background-color: rgb(51 170 85 / 10%);
         }
 
         .hand-item.winner.active {
-          background-color: rgba(51, 170, 85, 0.2);
+          background-color: rgb(51 170 85 / 20%);
         }
 
         .hand-cards {
@@ -525,6 +534,14 @@ class History extends LitElement {
   }
 
   async fetchData() {
+    // Skip fetch if data was already provided externally (e.g., for testing)
+    if (
+      !this.loading &&
+      (this.handList.length > 0 || this.hand !== null || this.error !== null)
+    ) {
+      return;
+    }
+
     if (!this.gameId) return;
 
     this.loading = true;
