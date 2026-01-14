@@ -216,6 +216,7 @@ export function recordAction(gameId, playerId, action, amount, isAllIn = false) 
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: ohhAction,
+    street: recorder.currentStreet,
   }
 
   if (amount !== undefined) {
@@ -263,6 +264,7 @@ export function recordShowdown(gameId, playerId, cards, shows) {
     player_id: playerId,
     action: shows ? "Shows Cards" : "Mucks Cards",
     cards: shows ? cards.map(cardToOHH) : undefined,
+    street: "Showdown",
   })
 }
 
@@ -278,40 +280,12 @@ function buildRounds(recorder) {
   let currentRound = null
   let roundId = 0
 
-  // Street order for tracking
-  const streetOrder = ["Preflop", "Flop", "Turn", "River", "Showdown"]
-  let currentStreetIndex = 0
-
   for (const action of recorder.actions) {
-    // Determine which street this action belongs to
-    let actionStreet = "Preflop"
-
-    // Check if this action starts a new street based on action type
-    if (
-      action.action === "Dealt Cards" &&
-      currentStreetIndex === 0 &&
-      currentRound !== null
-    ) {
-      // Still in preflop dealing
-      actionStreet = "Preflop"
-    } else if (
-      ["Post SB", "Post BB", "Post Ante", "Dealt Cards"].includes(action.action)
-    ) {
-      actionStreet = "Preflop"
-    } else if (["Shows Cards", "Mucks Cards"].includes(action.action)) {
-      actionStreet = "Showdown"
-    } else {
-      actionStreet = streetOrder[currentStreetIndex]
-    }
+    // Use the street stored with each action
+    const actionStreet = action.street || "Preflop"
 
     // Create new round if needed
     if (!currentRound || currentRound.street !== actionStreet) {
-      // Check if we need to advance street
-      const newStreetIndex = streetOrder.indexOf(actionStreet)
-      if (newStreetIndex > currentStreetIndex) {
-        currentStreetIndex = newStreetIndex
-      }
-
       currentRound = {
         id: roundId++,
         street: actionStreet,
@@ -327,7 +301,9 @@ function buildRounds(recorder) {
       rounds.push(currentRound)
     }
 
-    currentRound.actions.push(action)
+    // Clone action without the street field for the output
+    const { street, ...actionWithoutStreet } = action
+    currentRound.actions.push(actionWithoutStreet)
   }
 
   return rounds

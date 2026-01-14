@@ -166,6 +166,111 @@ describe("hand-history", function () {
         "2d",
       ])
     })
+
+    it("groups actions by street correctly", async function () {
+      const { game, players } = createGameWithPlayers()
+
+      process.env.DATA_DIR = TEST_DATA_DIR
+
+      HandHistory.startHand("test-game", game)
+
+      // Preflop: blinds and dealt cards
+      HandHistory.recordBlind("test-game", players[0].id, "sb", 25)
+      HandHistory.recordBlind("test-game", players[1].id, "bb", 50)
+      HandHistory.recordDealtCards("test-game", players[0].id, [
+        { rank: "ace", suit: "hearts" },
+        { rank: "king", suit: "hearts" },
+      ])
+      HandHistory.recordDealtCards("test-game", players[1].id, [
+        { rank: "queen", suit: "clubs" },
+        { rank: "jack", suit: "clubs" },
+      ])
+      HandHistory.recordAction("test-game", players[0].id, "call", 50)
+      HandHistory.recordAction("test-game", players[1].id, "check")
+
+      // Flop
+      HandHistory.recordStreet("test-game", "flop", [
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "diamonds" },
+        { rank: "2", suit: "spades" },
+      ])
+      HandHistory.recordAction("test-game", players[1].id, "check")
+      HandHistory.recordAction("test-game", players[0].id, "bet", 50)
+      HandHistory.recordAction("test-game", players[1].id, "call", 50)
+
+      // Turn
+      HandHistory.recordStreet("test-game", "turn", [
+        { rank: "10", suit: "clubs" },
+      ])
+      HandHistory.recordAction("test-game", players[1].id, "check")
+      HandHistory.recordAction("test-game", players[0].id, "check")
+
+      // River
+      HandHistory.recordStreet("test-game", "river", [
+        { rank: "3", suit: "hearts" },
+      ])
+      HandHistory.recordAction("test-game", players[1].id, "bet", 100)
+      HandHistory.recordAction("test-game", players[0].id, "call", 100)
+
+      // Showdown
+      HandHistory.recordShowdown(
+        "test-game",
+        players[0].id,
+        [
+          { rank: "ace", suit: "hearts" },
+          { rank: "king", suit: "hearts" },
+        ],
+        true
+      )
+      HandHistory.recordShowdown(
+        "test-game",
+        players[1].id,
+        [
+          { rank: "queen", suit: "clubs" },
+          { rank: "jack", suit: "clubs" },
+        ],
+        true
+      )
+
+      await HandHistory.finalizeHand("test-game", game, [
+        {
+          visibleSeats: [0, 1],
+          potAmount: 400,
+          winners: [1],
+          winningHand: null,
+        },
+      ])
+
+      const hand = await HandHistory.getHand("test-game", 1)
+
+      // Should have 5 rounds: Preflop, Flop, Turn, River, Showdown
+      assert.strictEqual(hand.rounds.length, 5)
+      assert.strictEqual(hand.rounds[0].street, "Preflop")
+      assert.strictEqual(hand.rounds[1].street, "Flop")
+      assert.strictEqual(hand.rounds[2].street, "Turn")
+      assert.strictEqual(hand.rounds[3].street, "River")
+      assert.strictEqual(hand.rounds[4].street, "Showdown")
+
+      // Check board cards
+      assert.deepStrictEqual(hand.rounds[1].cards, ["Qh", "Jd", "2s"])
+      assert.deepStrictEqual(hand.rounds[2].cards, ["Tc"])
+      assert.deepStrictEqual(hand.rounds[3].cards, ["3h"])
+
+      // Check flop actions
+      const flopActions = hand.rounds[1].actions
+      assert.strictEqual(flopActions.length, 3)
+      assert.strictEqual(flopActions[0].action, "Check")
+      assert.strictEqual(flopActions[1].action, "Bet")
+      assert.strictEqual(flopActions[2].action, "Call")
+
+      // Check showdown actions
+      const showdownActions = hand.rounds[4].actions
+      assert.strictEqual(showdownActions.length, 2)
+      assert.strictEqual(showdownActions[0].action, "Shows Cards")
+      assert.strictEqual(showdownActions[1].action, "Shows Cards")
+
+      delete process.env.DATA_DIR
+    })
   })
 
   describe("cache", function () {
