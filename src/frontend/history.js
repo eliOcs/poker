@@ -313,6 +313,10 @@ class History extends LitElement {
           color: var(--color-fg-light);
         }
 
+        .action-player.you {
+          color: var(--color-success);
+        }
+
         .action-amount {
           color: var(--color-primary);
         }
@@ -777,10 +781,11 @@ class History extends LitElement {
                   ${(round.actions || [])
                     .filter((a) => a.action !== "Dealt Cards")
                     .map((action) => {
-                      const playerName = this.getPlayerName(action.player_id);
+                      const isYou = action.player_id === this.playerId;
+                      const playerName = isYou ? "You" : this.getPlayerName(action.player_id);
                       return html`
                         <div class="action-item">
-                          <span class="action-player">${playerName}</span>
+                          <span class="action-player ${isYou ? "you" : ""}">${playerName}</span>
                           ${action.action}
                           ${action.amount
                             ? html`<span class="action-amount"
