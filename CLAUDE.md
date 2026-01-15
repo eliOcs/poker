@@ -16,7 +16,7 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 - **Backend**: Node.js with native ES modules, HTTP, WebSocket (`ws`)
 - **Frontend**: Lit web components installed via npm (no build step, served via importmap)
 - **Protocol**: WebSocket for real-time bidirectional communication
-- **Testing**: Node.js built-in test runner (`node --test`)
+- **Testing**: Node.js test runner, web-test-runner, Playwright
 
 ### Project Structure
 
@@ -28,18 +28,38 @@ src/
 │   └── poker/           # Game logic (pure functions)
 │       ├── game.js          # Game state initialization
 │       ├── actions.js       # Game actions (generators)
+│       ├── betting.js       # Betting logic and turn management
 │       ├── hand-rankings.js # Hand evaluation & comparison
+│       ├── hand-history.js  # OHH format hand history
 │       ├── player.js        # Player identity
 │       ├── player-view.js   # Server-side view filtering
+│       ├── pots.js          # Pot calculation and side pots
+│       ├── ranking.js       # Hand ranking utilities
 │       ├── seat.js          # Seat representation
+│       ├── showdown.js      # Showdown logic
 │       ├── deck.js          # Card deck management
+│       ├── rng.js           # Random number generation
 │       └── circular-array.js
-└── frontend/            # Browser UI
+└── frontend/            # Browser UI (Lit web components)
     ├── index.html       # Entry point with importmap
-    ├── index.js         # Lit component
-    └── colors.js        # Base16 color theme
+    ├── app.js           # Main app router
+    ├── index.js         # Game table component
+    ├── history.js       # Hand history viewer
+    ├── home.js          # Landing page
+    ├── action-panel.js  # Betting action buttons
+    ├── board.js         # Community cards
+    ├── card.js          # Card component
+    ├── seat.js          # Player seat component
+    ├── button.js        # Generic button component
+    ├── modal.js         # Modal dialog
+    ├── ranking-panel.js # Hand rankings display
+    └── styles.js        # Design tokens and base styles
 
-test/poker/              # Tests mirror src/backend/poker structure
+test/
+├── poker/               # Backend unit tests (mirrors src/backend/poker)
+├── frontend/            # Frontend component tests (web-test-runner)
+├── e2e/                 # End-to-end tests (Playwright)
+└── ui-catalog/          # Visual regression tests (Playwright screenshots)
 ```
 
 ## Communication Model
@@ -135,10 +155,17 @@ Poker logic in `src/backend/poker/` is pure and testable:
 ### Commands
 
 ```bash
-npm start      # Run dev server with file watching
-npm test       # Run tests
-npm run lint   # ESLint
-npm run format # Prettier
+npm start                       # Run dev server with file watching
+npm test                        # Run all tests (backend + frontend)
+npm run test:backend            # Run backend unit tests (node:test)
+npm run test:frontend           # Run frontend component tests (web-test-runner)
+npm run test:e2e                # Run end-to-end tests (Playwright)
+npm run test:ui-catalog         # Run visual regression tests
+npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
+npm run lint                    # ESLint + Stylelint
+npm run format                  # Prettier
+npm run typecheck               # TypeScript type checking
+npm run validate                # Run all checks (format, lint, typecheck, test)
 ```
 
 ### Environment (.env)
@@ -171,10 +198,22 @@ PORT=3000
 
 ### Testing
 
+**Backend tests** (`test/poker/`):
 - Use `node:test` and `node:assert`
-- Descriptive test names
 - Test generators by calling `.next()` explicitly
 - Deep equality for object comparisons
+
+**Frontend tests** (`test/frontend/`):
+- Use `@open-wc/testing` with `web-test-runner`
+- Test Lit components in isolation
+
+**E2E tests** (`test/e2e/`):
+- Use Playwright for browser automation
+- Test full user flows
+
+**UI Catalog** (`test/ui-catalog/`):
+- Visual regression testing with Playwright screenshots
+- Run `npm run test:ui-catalog:update` to regenerate snapshots after UI changes
 
 ## Deployment
 
@@ -240,5 +279,8 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 
 **Dev**:
 
-- `eslint`, `prettier` - Code quality
-- `sinon` - Test mocks (if needed)
+- `eslint`, `prettier`, `stylelint` - Code quality
+- `typescript` - Type checking (no compilation)
+- `@open-wc/testing`, `web-test-runner` - Frontend testing
+- `@playwright/test` - E2E and visual regression testing
+- `sinon` - Test mocks
