@@ -1,10 +1,12 @@
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import HandRankings from "./hand-rankings.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').OccupiedSeat} OccupiedSeat
+ * @typedef {import('./showdown.js').PotResult} PotResult
  */
 
 /**
@@ -15,6 +17,7 @@ import { existsSync } from "node:fs";
  * @property {number} [amount]
  * @property {boolean} [is_allin]
  * @property {string[]} [cards]
+ * @property {string} [street] - Internal use only, stripped before saving
  */
 
 /**
@@ -40,7 +43,7 @@ import { existsSync } from "node:fs";
  * @property {number} ante_amount
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
  * @property {OHHRound[]} rounds
- * @property {Array<{ number: number, amount: number, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
+ * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards: string[]|null, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
  */
 
 /**
@@ -101,6 +104,71 @@ function cardToOHH(card) {
     spades: "s",
   };
   return `${rankMap[card.rank]}${suitMap[card.suit]}`;
+}
+
+/**
+ * Converts OHH card notation to card object
+ * @param {string} card - OHH card string (e.g., "Ah", "Kd", "??")
+ * @returns {Card | { hidden: true }}
+ */
+function parseOhhCard(card) {
+  if (!card || card === "??") {
+    return { hidden: true };
+  }
+
+  const rankMap = {
+    A: "ace",
+    K: "king",
+    Q: "queen",
+    J: "jack",
+    T: "10",
+    9: "9",
+    8: "8",
+    7: "7",
+    6: "6",
+    5: "5",
+    4: "4",
+    3: "3",
+    2: "2",
+  };
+
+  const suitMap = {
+    h: "hearts",
+    d: "diamonds",
+    c: "clubs",
+    s: "spades",
+  };
+
+  const rankChar = card.slice(0, -1);
+  const suitChar = card.slice(-1);
+
+  return {
+    rank: rankMap[rankChar] || rankChar,
+    suit: suitMap[suitChar] || suitChar,
+  };
+}
+
+/**
+ * Transforms OHH hand data to frontend format (converts card strings to card objects)
+ * @param {OHHHand} hand
+ * @returns {object}
+ */
+export function transformForFrontend(hand) {
+  return {
+    ...hand,
+    rounds: hand.rounds.map((round) => ({
+      ...round,
+      cards: round.cards?.map(parseOhhCard),
+      actions: round.actions.map((action) => ({
+        ...action,
+        cards: action.cards?.map(parseOhhCard),
+      })),
+    })),
+    pots: hand.pots.map((pot) => ({
+      ...pot,
+      winning_cards: pot.winning_cards?.map(parseOhhCard),
+    })),
+  };
 }
 
 /**
@@ -320,7 +388,7 @@ function buildRounds(recorder) {
  * Finalizes and saves the current hand
  * @param {string} gameId
  * @param {Game} game
- * @param {Array<{ visibleSeats: number[], potAmount: number, winners: number[], winningHand: object|null }>} [potResults]
+ * @param {PotResult[]} [potResults]
  */
 export async function finalizeHand(gameId, game, potResults = []) {
   const recorder = getRecorder(gameId);
@@ -333,6 +401,10 @@ export async function finalizeHand(gameId, game, potResults = []) {
   const pots = potResults.map((pot, index) => ({
     number: index,
     amount: pot.potAmount,
+    winning_hand: pot.winningHand
+      ? HandRankings.formatHand(pot.winningHand)
+      : null,
+    winning_cards: pot.winningCards ? pot.winningCards.map(cardToOHH) : null,
     player_wins: pot.winners.map((seatIndex) => {
       const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
       return {
@@ -369,7 +441,7 @@ export async function finalizeHand(gameId, game, potResults = []) {
   // Evict oldest if over limit
   if (cache.size > CACHE_LIMIT) {
     const firstKey = cache.keys().next().value;
-    cache.delete(firstKey);
+    if (firstKey) cache.delete(firstKey);
   }
 
   // Write to file
@@ -445,7 +517,7 @@ export async function getHand(gameId, handNumber) {
     cache.set(cacheKey, hand);
     if (cache.size > CACHE_LIMIT) {
       const firstKey = cache.keys().next().value;
-      cache.delete(firstKey);
+      if (firstKey) cache.delete(firstKey);
     }
   }
 
@@ -512,7 +584,7 @@ export function filterHandForPlayer(hand, playerId) {
  * Gets a summary of a hand for the hand list
  * @param {OHHHand} hand
  * @param {string} playerId - The requesting player's ID
- * @returns {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
+ * @returns {{ game_number: string, hand_number: number, hole_cards: Array<Card|{hidden: true}>, winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
  */
 export function getHandSummary(hand, playerId) {
   // Extract hand number from game_number (format: "gameId-handNumber")
@@ -552,7 +624,7 @@ export function getHandSummary(hand, playerId) {
   return {
     game_number: hand.game_number,
     hand_number: handNumber,
-    hole_cards: holeCards,
+    hole_cards: holeCards.map(parseOhhCard),
     winner_name: winnerName,
     winner_id: winnerId,
     pot: totalPot,

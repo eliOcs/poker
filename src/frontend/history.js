@@ -5,44 +5,6 @@ import "./button.js";
 import "./seat.js";
 import "./board.js";
 
-// Convert OHH card notation (e.g., "Ah", "Kd") to card object
-function parseOhhCard(card) {
-  if (!card || card === "??") {
-    return { hidden: true };
-  }
-
-  const rankMap = {
-    A: "ace",
-    K: "king",
-    Q: "queen",
-    J: "jack",
-    T: "10",
-    9: "9",
-    8: "8",
-    7: "7",
-    6: "6",
-    5: "5",
-    4: "4",
-    3: "3",
-    2: "2",
-  };
-
-  const suitMap = {
-    h: "hearts",
-    d: "diamonds",
-    c: "clubs",
-    s: "spades",
-  };
-
-  const rankChar = card.slice(0, -1);
-  const suitChar = card.slice(-1);
-
-  return {
-    rank: rankMap[rankChar] || rankChar,
-    suit: suitMap[suitChar] || suitChar,
-  };
-}
-
 class History extends LitElement {
   static get styles() {
     return [
@@ -255,8 +217,21 @@ class History extends LitElement {
 
         .street-cards {
           display: flex;
-          gap: var(--space-sm);
           margin-bottom: var(--space-md);
+        }
+
+        .street-cards phg-card,
+        .showdown-cards phg-card {
+          transform: scale(0.7);
+          transform-origin: top left;
+          margin-right: -10px;
+        }
+
+        @media (width >= 800px) {
+          .street-cards phg-card,
+          .showdown-cards phg-card {
+            margin-right: -12px;
+          }
         }
 
         .action-list {
@@ -279,6 +254,38 @@ class History extends LitElement {
         }
 
         .action-amount {
+          color: var(--color-primary);
+        }
+
+        .showdown-hand {
+          font-size: var(--font-sm);
+          color: var(--color-fg-light);
+          font-weight: bold;
+          margin-top: var(--space-md);
+          padding-top: var(--space-sm);
+          border-top: 1px solid var(--color-bg-light);
+        }
+
+        .showdown-cards {
+          display: flex;
+          margin-top: var(--space-sm);
+        }
+
+        .showdown-winner {
+          font-size: var(--font-sm);
+          color: var(--color-fg-medium);
+          margin-top: var(--space-sm);
+        }
+
+        .showdown-winner.you {
+          color: var(--color-success);
+        }
+
+        .winner-name {
+          font-weight: bold;
+        }
+
+        .winner-amount {
           color: var(--color-primary);
         }
 
@@ -524,7 +531,7 @@ class History extends LitElement {
         throw new Error("Hand not found");
       }
       const data = await handRes.json();
-      this.hand = data.ohh;
+      this.hand = data.hand;
       this.handNumber = targetHand;
     } catch (err) {
       this.error = err.message;
@@ -628,17 +635,16 @@ class History extends LitElement {
   playerToSeat(player) {
     const cards = this.getPlayerCards(player.id);
     const winAmount = this.getPlayerWinAmount(player.id);
-    const isYou = player.id === this.playerId;
-    const displayName = isYou ? `${player.name} (you)` : player.name;
+    const isCurrentPlayer = player.id === this.playerId;
+    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
 
     return {
       empty: false,
       player: { id: player.id, name: displayName },
       stack: player.starting_stack,
-      cards: cards.map((card) => parseOhhCard(card)),
+      cards,
       handResult: winAmount > 0 ? winAmount : null,
-      // Disable game-specific states for history view
-      isCurrentPlayer: false,
+      isCurrentPlayer,
       folded: false,
       allIn: false,
       sittingOut: false,
@@ -654,7 +660,7 @@ class History extends LitElement {
 
     for (const round of this.hand?.rounds || []) {
       if (round.cards) {
-        boardCards.push(...round.cards.map((card) => parseOhhCard(card)));
+        boardCards.push(...round.cards);
       }
       if (round.street) {
         lastStreet = round.street;
@@ -691,7 +697,7 @@ class History extends LitElement {
         <div class="nav-info">
           <div class="nav-cards">
             ${(summary?.hole_cards || []).map(
-              (card) => html`<phg-card .card=${parseOhhCard(card)}></phg-card>`,
+              (card) => html`<phg-card .card=${card}></phg-card>`,
             )}
           </div>
           <span class="nav-result ${summary?.is_winner ? "winner" : ""}">
@@ -750,6 +756,7 @@ class History extends LitElement {
           ${(this.hand?.rounds || []).map((round) => {
             const streetName =
               round.street || streetNames[round.id] || "Unknown";
+            const isShowdown = streetName === "Showdown";
 
             return html`
               <div class="street">
@@ -758,10 +765,7 @@ class History extends LitElement {
                   ? html`
                       <div class="street-cards">
                         ${round.cards.map(
-                          (card) =>
-                            html`<phg-card
-                              .card=${parseOhhCard(card)}
-                            ></phg-card>`,
+                          (card) => html`<phg-card .card=${card}></phg-card>`,
                         )}
                       </div>
                     `
@@ -788,12 +792,46 @@ class History extends LitElement {
                         </div>
                       `;
                     })}
+                  ${isShowdown ? this.renderShowdownResult() : ""}
                 </div>
               </div>
             `;
           })}
         </div>
       </div>
+    `;
+  }
+
+  renderShowdownResult() {
+    const mainPot = this.hand?.pots?.[0];
+    if (!mainPot) return "";
+
+    const winningHand = mainPot.winning_hand;
+    const winningCards = mainPot.winning_cards;
+    const winnerIds = mainPot.player_wins?.map((w) => w.player_id) || [];
+    const winAmount = mainPot.player_wins?.[0]?.win_amount || mainPot.amount;
+
+    return html`
+      ${winningHand
+        ? html`<div class="showdown-hand">${winningHand}</div>`
+        : ""}
+      ${winningCards?.length
+        ? html`<div class="showdown-cards">
+            ${winningCards.map(
+              (card) => html`<phg-card .card=${card}></phg-card>`,
+            )}
+          </div>`
+        : ""}
+      ${winnerIds.map((winnerId) => {
+        const isYou = winnerId === this.playerId;
+        const playerName = isYou ? "You" : this.getPlayerName(winnerId);
+        return html`
+          <div class="showdown-winner ${isYou ? "you" : ""}">
+            <span class="winner-name">${playerName}</span> won
+            <span class="winner-amount">$${winAmount}</span>
+          </div>
+        `;
+      })}
     `;
   }
 
@@ -824,8 +862,7 @@ class History extends LitElement {
               >
                 <div class="hand-cards">
                   ${(item.hole_cards || []).map(
-                    (card) =>
-                      html`<phg-card .card=${parseOhhCard(card)}></phg-card>`,
+                    (card) => html`<phg-card .card=${card}></phg-card>`,
                   )}
                 </div>
                 <span class="hand-winner ${isWinner ? "you" : ""}">

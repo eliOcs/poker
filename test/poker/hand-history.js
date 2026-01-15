@@ -474,7 +474,10 @@ describe("hand-history", function () {
 
       assert.strictEqual(summary.game_number, "abc123-5");
       assert.strictEqual(summary.hand_number, 5);
-      assert.deepStrictEqual(summary.hole_cards, ["Ah", "Kh"]);
+      assert.deepStrictEqual(summary.hole_cards, [
+        { rank: "ace", suit: "hearts" },
+        { rank: "king", suit: "hearts" },
+      ]);
       assert.strictEqual(summary.winner_name, "Alice");
       assert.strictEqual(summary.winner_id, "player1");
       assert.strictEqual(summary.pot, 200);

@@ -259,7 +259,10 @@ export function createMockGameWithRankings() {
 export const mockHandSummary = {
   game_number: "test123-1",
   hand_number: 1,
-  hole_cards: ["Ah", "Kh"],
+  hole_cards: [
+    { rank: "ace", suit: "hearts" },
+    { rank: "king", suit: "hearts" },
+  ],
   winner_name: "Alice",
   winner_id: "player1",
   pot: 200,
@@ -269,7 +272,10 @@ export const mockHandSummary = {
 export const mockHandSummaryLost = {
   game_number: "test123-2",
   hand_number: 2,
-  hole_cards: ["7s", "2d"],
+  hole_cards: [
+    { rank: "7", suit: "spades" },
+    { rank: "2", suit: "diamonds" },
+  ],
   winner_name: "Bob",
   winner_id: "player2",
   pot: 150,
@@ -313,13 +319,19 @@ export const mockOhhHand = {
           action_number: 3,
           player_id: "player1",
           action: "Dealt Cards",
-          cards: ["Ah", "Kh"],
+          cards: [
+            { rank: "ace", suit: "hearts" },
+            { rank: "king", suit: "hearts" },
+          ],
         },
         {
           action_number: 4,
           player_id: "player2",
           action: "Dealt Cards",
-          cards: ["Qc", "Jc"],
+          cards: [
+            { rank: "queen", suit: "clubs" },
+            { rank: "jack", suit: "clubs" },
+          ],
         },
         {
           action_number: 5,
@@ -333,7 +345,11 @@ export const mockOhhHand = {
     {
       id: 1,
       street: "Flop",
-      cards: ["Qh", "Jd", "2s"],
+      cards: [
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "diamonds" },
+        { rank: "2", suit: "spades" },
+      ],
       actions: [
         { action_number: 7, player_id: "player2", action: "Check" },
         { action_number: 8, player_id: "player1", action: "Bet", amount: 100 },
@@ -345,6 +361,8 @@ export const mockOhhHand = {
     {
       number: 0,
       amount: 400,
+      winning_hand: "A High",
+      winning_cards: null,
       player_wins: [
         { player_id: "player1", win_amount: 400, contributed_rake: 0 },
       ],
@@ -360,7 +378,7 @@ export const mockOhhHandWithShowdown = {
     {
       id: 2,
       street: "Turn",
-      cards: ["5c"],
+      cards: [{ rank: "5", suit: "clubs" }],
       actions: [
         { action_number: 10, player_id: "player2", action: "Check" },
         { action_number: 11, player_id: "player1", action: "Check" },
@@ -369,7 +387,7 @@ export const mockOhhHandWithShowdown = {
     {
       id: 3,
       street: "River",
-      cards: ["8h"],
+      cards: [{ rank: "8", suit: "hearts" }],
       actions: [
         { action_number: 12, player_id: "player2", action: "Bet", amount: 100 },
         {
@@ -388,14 +406,37 @@ export const mockOhhHandWithShowdown = {
           action_number: 14,
           player_id: "player1",
           action: "Shows Cards",
-          cards: ["Ah", "Kh"],
+          cards: [
+            { rank: "ace", suit: "hearts" },
+            { rank: "king", suit: "hearts" },
+          ],
         },
         {
           action_number: 15,
           player_id: "player2",
           action: "Shows Cards",
-          cards: ["Qc", "Jc"],
+          cards: [
+            { rank: "queen", suit: "clubs" },
+            { rank: "jack", suit: "clubs" },
+          ],
         },
+      ],
+    },
+  ],
+  pots: [
+    {
+      number: 0,
+      amount: 500,
+      winning_hand: "Two Pair, Qs and Js",
+      winning_cards: [
+        { rank: "queen", suit: "clubs" },
+        { rank: "queen", suit: "hearts" },
+        { rank: "jack", suit: "clubs" },
+        { rank: "jack", suit: "diamonds" },
+        { rank: "8", suit: "hearts" },
+      ],
+      player_wins: [
+        { player_id: "player2", win_amount: 500, contributed_rake: 0 },
       ],
     },
   ],

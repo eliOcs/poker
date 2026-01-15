@@ -984,6 +984,8 @@ const TEST_CASES = {
             {
               number: 0,
               amount: 75,
+              winning_hand: null,
+              winning_cards: null,
               player_wins: [
                 { player_id: "player1", win_amount: 75, contributed_rake: 0 },
               ],
@@ -1008,7 +1010,7 @@ const TEST_CASES = {
             hole_cards: ["Jh", "Th"],
             winner_name: "Bob",
             winner_id: "player1",
-            pot: 500,
+            pot: 750,
             is_winner: true,
           },
         ]}
@@ -1020,13 +1022,15 @@ const TEST_CASES = {
           game_type: "Holdem",
           bet_limit: { bet_type: "NL" },
           table_size: 6,
-          dealer_seat: 3,
+          dealer_seat: 0,
           small_blind_amount: 25,
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "Bob", starting_stack: 1000 },
-            { id: "player2", seat: 5, name: "Alice", starting_stack: 1000 },
+            { id: "player1", seat: 1, name: "Bob", starting_stack: 1000 },
+            { id: "player2", seat: 2, name: "Alice", starting_stack: 850 },
+            { id: "player3", seat: 4, name: "Charlie", starting_stack: 1200 },
+            { id: "player4", seat: 5, name: "Diana", starting_stack: 650 },
           ],
           rounds: [
             {
@@ -1059,11 +1063,40 @@ const TEST_CASES = {
                 },
                 {
                   action_number: 5,
+                  player_id: "player3",
+                  action: "Dealt Cards",
+                  cards: ["7c", "2d"],
+                },
+                {
+                  action_number: 6,
+                  player_id: "player4",
+                  action: "Dealt Cards",
+                  cards: ["Kd", "Qd"],
+                },
+                {
+                  action_number: 7,
+                  player_id: "player3",
+                  action: "Raise",
+                  amount: 150,
+                },
+                {
+                  action_number: 8,
+                  player_id: "player4",
+                  action: "Call",
+                  amount: 150,
+                },
+                {
+                  action_number: 9,
                   player_id: "player1",
                   action: "Call",
-                  amount: 50,
+                  amount: 150,
                 },
-                { action_number: 6, player_id: "player2", action: "Check" },
+                {
+                  action_number: 10,
+                  player_id: "player2",
+                  action: "Call",
+                  amount: 150,
+                },
               ],
             },
             {
@@ -1071,17 +1104,20 @@ const TEST_CASES = {
               street: "Flop",
               cards: ["Ah", "Kh", "Qh"],
               actions: [
+                { action_number: 11, player_id: "player1", action: "Check" },
                 {
-                  action_number: 7,
+                  action_number: 12,
                   player_id: "player2",
                   action: "Bet",
-                  amount: 100,
+                  amount: 200,
                 },
+                { action_number: 13, player_id: "player3", action: "Fold" },
+                { action_number: 14, player_id: "player4", action: "Fold" },
                 {
-                  action_number: 8,
+                  action_number: 15,
                   player_id: "player1",
                   action: "Call",
-                  amount: 100,
+                  amount: 200,
                 },
               ],
             },
@@ -1090,18 +1126,8 @@ const TEST_CASES = {
               street: "Turn",
               cards: ["5c"],
               actions: [
-                {
-                  action_number: 9,
-                  player_id: "player2",
-                  action: "Bet",
-                  amount: 100,
-                },
-                {
-                  action_number: 10,
-                  player_id: "player1",
-                  action: "Call",
-                  amount: 100,
-                },
+                { action_number: 16, player_id: "player1", action: "Check" },
+                { action_number: 17, player_id: "player2", action: "Check" },
               ],
             },
             {
@@ -1109,8 +1135,8 @@ const TEST_CASES = {
               street: "River",
               cards: ["2d"],
               actions: [
-                { action_number: 11, player_id: "player2", action: "Check" },
-                { action_number: 12, player_id: "player1", action: "Check" },
+                { action_number: 18, player_id: "player1", action: "Check" },
+                { action_number: 19, player_id: "player2", action: "Check" },
               ],
             },
             {
@@ -1118,13 +1144,13 @@ const TEST_CASES = {
               street: "Showdown",
               actions: [
                 {
-                  action_number: 13,
+                  action_number: 20,
                   player_id: "player1",
                   action: "Shows Cards",
                   cards: ["Jh", "Th"],
                 },
                 {
-                  action_number: 14,
+                  action_number: 21,
                   player_id: "player2",
                   action: "Shows Cards",
                   cards: ["As", "Ad"],
@@ -1135,9 +1161,11 @@ const TEST_CASES = {
           pots: [
             {
               number: 0,
-              amount: 500,
+              amount: 1000,
+              winning_hand: "Royal Flush",
+              winning_cards: ["Ah", "Kh", "Qh", "Jh", "Th"],
               player_wins: [
-                { player_id: "player1", win_amount: 500, contributed_rake: 0 },
+                { player_id: "player1", win_amount: 1000, contributed_rake: 0 },
               ],
             },
           ],
@@ -1160,7 +1188,7 @@ const TEST_CASES = {
             hole_cards: ["Kc", "Ks"],
             winner_name: "Alice",
             winner_id: "player2",
-            pot: 400,
+            pot: 850,
             is_winner: false,
           },
         ]}
@@ -1172,13 +1200,16 @@ const TEST_CASES = {
           game_type: "Holdem",
           bet_limit: { bet_type: "NL" },
           table_size: 6,
-          dealer_seat: 3,
+          dealer_seat: 5,
           small_blind_amount: 25,
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "Bob", starting_stack: 1000 },
-            { id: "player2", seat: 5, name: "Alice", starting_stack: 1000 },
+            { id: "player1", seat: 0, name: "Bob", starting_stack: 1000 },
+            { id: "player2", seat: 1, name: "Alice", starting_stack: 1200 },
+            { id: "player3", seat: 3, name: "Charlie", starting_stack: 750 },
+            { id: "player4", seat: 4, name: "Diana", starting_stack: 900 },
+            { id: "player5", seat: 5, name: "Eve", starting_stack: 500 },
           ],
           rounds: [
             {
@@ -1211,21 +1242,54 @@ const TEST_CASES = {
                 },
                 {
                   action_number: 5,
-                  player_id: "player1",
-                  action: "Raise",
-                  amount: 100,
+                  player_id: "player3",
+                  action: "Dealt Cards",
+                  cards: ["9h", "9d"],
                 },
                 {
                   action_number: 6,
-                  player_id: "player2",
-                  action: "Raise",
-                  amount: 200,
+                  player_id: "player4",
+                  action: "Dealt Cards",
+                  cards: ["Jc", "Tc"],
                 },
                 {
                   action_number: 7,
+                  player_id: "player5",
+                  action: "Dealt Cards",
+                  cards: ["5s", "5c"],
+                },
+                {
+                  action_number: 8,
+                  player_id: "player3",
+                  action: "Call",
+                  amount: 50,
+                },
+                { action_number: 9, player_id: "player4", action: "Fold" },
+                {
+                  action_number: 10,
+                  player_id: "player5",
+                  action: "Call",
+                  amount: 50,
+                },
+                {
+                  action_number: 11,
+                  player_id: "player1",
+                  action: "Raise",
+                  amount: 150,
+                },
+                {
+                  action_number: 12,
+                  player_id: "player2",
+                  action: "Raise",
+                  amount: 350,
+                },
+                { action_number: 13, player_id: "player3", action: "Fold" },
+                { action_number: 14, player_id: "player5", action: "Fold" },
+                {
+                  action_number: 15,
                   player_id: "player1",
                   action: "Call",
-                  amount: 200,
+                  amount: 350,
                 },
               ],
             },
@@ -1234,8 +1298,19 @@ const TEST_CASES = {
               street: "Flop",
               cards: ["Kd", "5h", "2c"],
               actions: [
-                { action_number: 8, player_id: "player2", action: "Check" },
-                { action_number: 9, player_id: "player1", action: "Check" },
+                { action_number: 16, player_id: "player1", action: "Check" },
+                {
+                  action_number: 17,
+                  player_id: "player2",
+                  action: "Bet",
+                  amount: 200,
+                },
+                {
+                  action_number: 18,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 200,
+                },
               ],
             },
             {
@@ -1243,8 +1318,8 @@ const TEST_CASES = {
               street: "Turn",
               cards: ["Ac"],
               actions: [
-                { action_number: 10, player_id: "player2", action: "Check" },
-                { action_number: 11, player_id: "player1", action: "Check" },
+                { action_number: 19, player_id: "player1", action: "Check" },
+                { action_number: 20, player_id: "player2", action: "Check" },
               ],
             },
             {
@@ -1252,8 +1327,8 @@ const TEST_CASES = {
               street: "River",
               cards: ["3s"],
               actions: [
-                { action_number: 12, player_id: "player2", action: "Check" },
-                { action_number: 13, player_id: "player1", action: "Check" },
+                { action_number: 21, player_id: "player1", action: "Check" },
+                { action_number: 22, player_id: "player2", action: "Check" },
               ],
             },
             {
@@ -1261,13 +1336,13 @@ const TEST_CASES = {
               street: "Showdown",
               actions: [
                 {
-                  action_number: 14,
+                  action_number: 23,
                   player_id: "player1",
                   action: "Shows Cards",
                   cards: ["Kc", "Ks"],
                 },
                 {
-                  action_number: 15,
+                  action_number: 24,
                   player_id: "player2",
                   action: "Shows Cards",
                   cards: ["As", "Ad"],
@@ -1278,9 +1353,11 @@ const TEST_CASES = {
           pots: [
             {
               number: 0,
-              amount: 400,
+              amount: 1200,
+              winning_hand: "Three As",
+              winning_cards: ["As", "Ad", "Ac", "Kd", "5h"],
               player_wins: [
-                { player_id: "player2", win_amount: 400, contributed_rake: 0 },
+                { player_id: "player2", win_amount: 1200, contributed_rake: 0 },
               ],
             },
           ],
@@ -1452,6 +1529,8 @@ const TEST_CASES = {
             {
               number: 0,
               amount: 200,
+              winning_hand: "Three Qs",
+              winning_cards: ["Qh", "Qc", "Qs", "Ah", "7h"],
               player_wins: [
                 { player_id: "player2", win_amount: 200, contributed_rake: 0 },
               ],
