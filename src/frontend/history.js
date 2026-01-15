@@ -2,6 +2,8 @@ import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles } from "./styles.js";
 import "./card.js";
 import "./button.js";
+import "./seat.js";
+import "./board.js";
 
 // Convert OHH card notation (e.g., "Ah", "Kd") to card object
 function parseOhhCard(card) {
@@ -166,98 +168,48 @@ class History extends LitElement {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-md);
-          padding: var(--space-lg);
-          background-color: var(--color-table);
-          border: 3px solid var(--color-bg-dark);
+          width: 60%;
+          max-width: 400px;
+          height: 50%;
+          max-height: 200px;
         }
 
-        .board-cards {
-          display: flex;
-          gap: var(--space-sm);
-        }
-
-        .pot-info {
-          font-size: var(--font-md);
-          color: var(--color-primary);
-        }
-
-        /* Player positions around the table */
-        .player {
+        /* Player seat positions around the table */
+        .player-seat {
           position: absolute;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-sm);
-          padding: var(--space-md);
-          background-color: var(--color-bg-light);
-          border: 3px solid var(--color-bg-dark);
-          min-width: 80px;
+          min-width: 100px;
         }
 
-        .player.winner {
-          border-color: var(--color-success);
-          background-color: rgb(51 170 85 / 20%);
+        .player-seat.winner {
+          border-color: var(--color-primary);
+          box-shadow:
+            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
+            0 0 0 var(--space-sm) var(--color-primary);
         }
 
-        .player-name {
-          font-size: var(--font-sm);
-          color: var(--color-fg-light);
-          max-width: 80px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .player-cards {
-          display: flex;
-          gap: 2px;
-        }
-
-        .player-stack {
-          font-size: var(--font-sm);
-          color: var(--color-fg-muted);
-        }
-
-        .player-result {
-          font-size: var(--font-sm);
-        }
-
-        .player-result.won {
-          color: var(--color-success);
-        }
-
-        .player-result.lost {
-          color: var(--color-error);
-        }
-
-        /* Position players around the table */
-        .player[data-seat="0"] {
+        .player-seat[data-seat="0"] {
           top: 10%;
           left: 5%;
         }
-        .player[data-seat="1"] {
+        .player-seat[data-seat="1"] {
           top: 5%;
           left: 50%;
           transform: translateX(-50%);
         }
-        .player[data-seat="2"] {
+        .player-seat[data-seat="2"] {
           top: 10%;
           right: 5%;
         }
-        .player[data-seat="3"] {
+        .player-seat[data-seat="3"] {
           bottom: 10%;
           right: 5%;
         }
-        .player[data-seat="4"] {
+        .player-seat[data-seat="4"] {
           bottom: 5%;
           left: 50%;
           transform: translateX(-50%);
         }
-        .player[data-seat="5"] {
+        .player-seat[data-seat="5"] {
           bottom: 10%;
           left: 5%;
         }
@@ -671,6 +623,48 @@ class History extends LitElement {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
+  // Transform OHH player to seat format for phg-seat component
+  playerToSeat(player) {
+    const cards = this.getPlayerCards(player.id);
+    const winAmount = this.getPlayerWinAmount(player.id);
+    const isYou = player.id === this.playerId;
+
+    return {
+      empty: false,
+      player: { id: player.id, name: isYou ? "You" : player.name },
+      stack: player.starting_stack,
+      cards: cards.map((card) => parseOhhCard(card)),
+      handResult: winAmount > 0 ? winAmount : null,
+      // Disable game-specific states for history view
+      isCurrentPlayer: false,
+      folded: false,
+      allIn: false,
+      sittingOut: false,
+      disconnected: false,
+      isActing: false,
+    };
+  }
+
+  // Get board data for phg-board component
+  getBoardData() {
+    const boardCards = [];
+    let lastStreet = "Preflop";
+
+    for (const round of this.hand?.rounds || []) {
+      if (round.cards) {
+        boardCards.push(...round.cards.map((card) => parseOhhCard(card)));
+      }
+      if (round.street) {
+        lastStreet = round.street;
+      }
+    }
+
+    return {
+      cards: boardCards,
+      phase: lastStreet,
+    };
+  }
+
   renderNavBar() {
     const summary = this.getCurrentHandSummary();
     const currentIndex = this.handList.findIndex(
@@ -719,52 +713,30 @@ class History extends LitElement {
 
   renderTableState() {
     const winners = this.getWinners();
-    const boardCards = [];
-
-    // Collect board cards from rounds
-    for (const round of this.hand?.rounds || []) {
-      if (round.cards) {
-        boardCards.push(...round.cards);
-      }
-    }
+    const board = this.getBoardData();
+    const hand = { pot: this.getTotalPot(), phase: board.phase };
 
     return html`
       <div class="table-state">
-        <div class="board">
-          <div class="board-cards">
-            ${boardCards.map(
-              (card) => html`<phg-card .card=${parseOhhCard(card)}></phg-card>`
-            )}
-            ${boardCards.length === 0
-              ? html`<span style="color: var(--color-fg-muted)">No board</span>`
-              : ""}
-          </div>
-          <div class="pot-info">Pot: $${this.getTotalPot()}</div>
-        </div>
+        <phg-board
+          class="board"
+          .board=${board}
+          .hand=${hand}
+        ></phg-board>
         ${(this.hand?.players || []).map((player) => {
           const isWinner = winners.has(player.id);
-          const cards = this.getPlayerCards(player.id);
-          const winAmount = this.getPlayerWinAmount(player.id);
+          const seat = this.playerToSeat(player);
+          const isButton = player.seat === this.hand?.dealer_seat;
 
           return html`
-            <div
-              class="player ${isWinner ? "winner" : ""}"
+            <phg-seat
+              class="player-seat ${isWinner ? "winner" : ""}"
               data-seat="${player.seat}"
-            >
-              <div class="player-name">
-                ${player.name || `Seat ${player.seat}`}
-              </div>
-              <div class="player-cards">
-                ${cards.map(
-                  (card) =>
-                    html`<phg-card .card=${parseOhhCard(card)}></phg-card>`
-                )}
-              </div>
-              <div class="player-stack">$${player.starting_stack}</div>
-              ${winAmount > 0
-                ? html`<div class="player-result won">+$${winAmount}</div>`
-                : ""}
-            </div>
+              .seat=${seat}
+              .seatNumber=${player.seat}
+              .isButton=${isButton}
+              .showSitAction=${false}
+            ></phg-seat>
           `;
         })}
       </div>
