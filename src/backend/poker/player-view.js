@@ -2,6 +2,7 @@ import * as Betting from "./betting.js";
 import { countPlayersWithChips, CLOCK_WAIT_TIME } from "./actions.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
+import { HIDDEN, getRank } from "./deck.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -13,8 +14,8 @@ import * as Ranking from "./ranking.js";
  */
 
 /**
- * @typedef {object} HiddenCard
- * @property {true} hidden
+ * Hidden card is the string "??"
+ * @typedef {typeof HIDDEN} HiddenCard
  */
 
 /**
@@ -200,13 +201,12 @@ function shouldShowCards(seat, seatIndex, playerSeatIndex, game) {
  * @returns {HiddenCard}
  */
 function hiddenCard() {
-  return { hidden: true };
+  return HIDDEN;
 }
 
 /**
- * Calculates the hand rank for a player
- * @param {Card[]} holeCards - Player's hole cards
- * @param {Card[]} boardCards - Community cards
+ * @param {Card[]} holeCards
+ * @param {Card[]} boardCards
  * @returns {string|null}
  */
 function calculateHandRank(holeCards, boardCards) {
@@ -224,17 +224,18 @@ function calculateHandRank(holeCards, boardCards) {
 
   // For just hole cards (preflop), check for pair or high card
   if (holeCards.length === 2) {
-    if (holeCards[0].rank === holeCards[1].rank) {
+    const rank0 = getRank(holeCards[0]);
+    const rank1 = getRank(holeCards[1]);
+    if (rank0 === rank1) {
       /** @type {import('./hand-rankings.js').Pair} */
-      const hand = { name: "pair", of: holeCards[0].rank, kickers: [] };
+      const hand = { name: "pair", of: rank0, kickers: [] };
       return HandRankings.formatHand(hand);
     }
     // Show high card
     const highCard =
-      HandRankings.getRankValue(holeCards[0].rank) >
-      HandRankings.getRankValue(holeCards[1].rank)
-        ? holeCards[0].rank
-        : holeCards[1].rank;
+      HandRankings.getRankValue(rank0) > HandRankings.getRankValue(rank1)
+        ? rank0
+        : rank1;
     /** @type {import('./hand-rankings.js').HighCard} */
     const hand = { name: "high card", ranks: [highCard] };
     return HandRankings.formatHand(hand);

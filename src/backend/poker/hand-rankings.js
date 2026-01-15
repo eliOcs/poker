@@ -1,8 +1,8 @@
-/**
- * @typedef {import('./deck.js').Card} Card
- * @typedef {import('./deck.js').Rank} Rank
- * @typedef {import('./deck.js').Suit} Suit
- */
+import { getRank, getSuit } from "./deck.js";
+
+/** @typedef {import('./deck.js').Card} Card */
+/** @typedef {import('./deck.js').Rank} Rank */
+/** @typedef {import('./deck.js').Suit} Suit */
 
 /**
  * @typedef {'royal flush'|'straight flush'|'4 of a kind'|'full house'|'flush'|'straight'|'3 of a kind'|'2 pair'|'pair'|'high card'} HandName
@@ -91,21 +91,22 @@ const last = 4;
 const first = 0;
 
 /**
- * Gets numeric value of a rank for comparison
  * @param {Rank} rank
  * @param {{ ace?: 'high'|'low' }} [opts]
  * @returns {number}
  */
 function getRankValue(rank, { ace = "high" } = {}) {
   switch (rank) {
-    case "ace":
+    case "A":
       return ace === "high" ? 14 : 1;
-    case "king":
+    case "K":
       return 13;
-    case "queen":
+    case "Q":
       return 12;
-    case "jack":
+    case "J":
       return 11;
+    case "T":
+      return 10;
     default:
       return Number(rank);
   }
@@ -119,7 +120,7 @@ function getRankValue(rank, { ace = "high" } = {}) {
  */
 function sortByRank(cards, opts) {
   return [...cards].sort(
-    (a, b) => getRankValue(b.rank, opts) - getRankValue(a.rank, opts),
+    (a, b) => getRankValue(getRank(b), opts) - getRankValue(getRank(a), opts),
   );
 }
 
@@ -133,8 +134,8 @@ function getStraight(cards) {
   const aceValues = ["high", "low"];
   for (const ace of aceValues) {
     const sorted = sortByRank(cards, { ace });
-    const from = sorted[last].rank;
-    const to = sorted[first].rank;
+    const from = getRank(sorted[last]);
+    const to = getRank(sorted[first]);
     if (getRankValue(to, { ace }) - getRankValue(from, { ace }) === 4) {
       return {
         name: "straight",
@@ -153,14 +154,14 @@ function getStraight(cards) {
  * @returns {Flush|false}
  */
 function getFlush(cards) {
-  const suit = cards[0].suit;
-  let high = cards[0].rank;
+  const suit = getSuit(cards[0]);
+  let high = getRank(cards[0]);
   for (let i = 1; i < cards.length; i += 1) {
-    if (cards[i].suit !== suit) {
+    if (getSuit(cards[i]) !== suit) {
       return false;
     }
-    if (getRankValue(cards[i].rank) > getRankValue(high)) {
-      high = cards[i].rank;
+    if (getRankValue(getRank(cards[i])) > getRankValue(high)) {
+      high = getRank(cards[i]);
     }
   }
   return { name: "flush", suit, high };
@@ -172,13 +173,14 @@ function getFlush(cards) {
  * @returns {FourOfAKind|FullHouse|ThreeOfAKind|TwoPair|Pair|false|undefined}
  */
 function getGroups(cards) {
-  /** @type {Record<string, Array<{rank: string, suit: string}>>} */
+  /** @type {Record<string, Card[]>} */
   const groupsByRank = {};
   for (const card of cards) {
-    if (groupsByRank[card.rank]) {
-      groupsByRank[card.rank].push(card);
+    const rank = getRank(card);
+    if (groupsByRank[rank]) {
+      groupsByRank[rank].push(card);
     } else {
-      groupsByRank[card.rank] = [card];
+      groupsByRank[rank] = [card];
     }
   }
   const groups = Object.values(groupsByRank).sort(
@@ -190,25 +192,25 @@ function getGroups(cards) {
   }
 
   const [firstGroup, secondGroup, ...restOfGroups] = groups;
+  const firstRank = getRank(firstGroup[0]);
+  const secondRank = getRank(secondGroup[0]);
 
   if (firstGroup.length === 2) {
     if (secondGroup.length === 2) {
       const name = "2 pair";
-      const kicker = restOfGroups[0][0].rank;
-      if (
-        getRankValue(firstGroup[0].rank) > getRankValue(secondGroup[0].rank)
-      ) {
+      const kicker = getRank(restOfGroups[0][0]);
+      if (getRankValue(firstRank) > getRankValue(secondRank)) {
         return {
           name,
-          of: firstGroup[0].rank,
-          and: secondGroup[0].rank,
+          of: firstRank,
+          and: secondRank,
           kicker,
         };
       } else {
         return {
           name,
-          of: secondGroup[0].rank,
-          and: firstGroup[0].rank,
+          of: secondRank,
+          and: firstRank,
           kicker,
         };
       }
@@ -216,8 +218,8 @@ function getGroups(cards) {
 
     return {
       name: "pair",
-      of: firstGroup[0].rank,
-      kickers: sortByRank(groups.slice(1).flat()).map((card) => card.rank),
+      of: firstRank,
+      kickers: sortByRank(groups.slice(1).flat()).map((card) => getRank(card)),
     };
   }
 
@@ -225,23 +227,23 @@ function getGroups(cards) {
     if (secondGroup.length === 2) {
       return {
         name: "full house",
-        of: firstGroup[0].rank,
-        and: secondGroup[0].rank,
+        of: firstRank,
+        and: secondRank,
       };
     }
 
     return {
       name: "3 of a kind",
-      of: firstGroup[0].rank,
-      kickers: sortByRank(groups.slice(1).flat()).map((card) => card.rank),
+      of: firstRank,
+      kickers: sortByRank(groups.slice(1).flat()).map((card) => getRank(card)),
     };
   }
 
   if (firstGroup.length === 4) {
     return {
       name: "4 of a kind",
-      of: firstGroup[0].rank,
-      kicker: secondGroup[0].rank,
+      of: firstRank,
+      kicker: secondRank,
     };
   }
 
@@ -256,7 +258,7 @@ function getGroups(cards) {
 function getHighCard(cards) {
   return {
     name: "high card",
-    ranks: sortByRank(cards).map(({ rank }) => rank),
+    ranks: sortByRank(cards).map((card) => getRank(card)),
   };
 }
 
@@ -276,7 +278,7 @@ function calculate(cards) {
   const straight = getStraight(cards);
 
   if (flush && straight) {
-    if (straight.from === "10" && straight.to === "ace") {
+    if (straight.from === "T" && straight.to === "A") {
       return { name: "royal flush" };
     } else {
       return {
@@ -453,23 +455,14 @@ function bestCombination(cards) {
 }
 
 /**
- * Formats a rank for display (capitalizes face cards)
  * @param {Rank} rank
  * @returns {string}
  */
 function formatRank(rank) {
-  switch (rank) {
-    case "ace":
-      return "A";
-    case "king":
-      return "K";
-    case "queen":
-      return "Q";
-    case "jack":
-      return "J";
-    default:
-      return rank;
+  if (rank === "T") {
+    return "10";
   }
+  return rank;
 }
 
 /**

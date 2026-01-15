@@ -465,7 +465,7 @@ describe("phg-history", () => {
     });
 
     it("shows hidden cards as hidden", async () => {
-      // Modify hand to have hidden cards (using pre-parsed format from backend)
+      // Modify hand to have hidden cards (using OHH "??" format)
       element.hand = {
         ...mockOhhHand,
         rounds: [
@@ -473,7 +473,7 @@ describe("phg-history", () => {
             ...mockOhhHand.rounds[0],
             actions: mockOhhHand.rounds[0].actions.map((a) =>
               a.action === "Dealt Cards" && a.player_id === "player2"
-                ? { ...a, cards: [{ hidden: true }, { hidden: true }] }
+                ? { ...a, cards: ["??", "??"] }
                 : a,
             ),
           },

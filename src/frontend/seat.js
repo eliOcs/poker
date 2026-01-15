@@ -289,9 +289,7 @@ class Seat extends LitElement {
         : ""}
       <div class="hole-cards">
         ${this.seat.cards?.map((card) => {
-          const isWinning = this.seat.winningCards?.some(
-            (wc) => wc.rank === card.rank && wc.suit === card.suit,
-          );
+          const isWinning = this.seat.winningCards?.includes(card);
           return html`<phg-card
             .card=${card}
             ?winning=${isWinning}

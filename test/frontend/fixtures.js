@@ -18,10 +18,7 @@ export const mockOccupiedSeat = {
   allIn: false,
   sittingOut: false,
   disconnected: false,
-  cards: [
-    { rank: "ace", suit: "spades" },
-    { rank: "king", suit: "hearts" },
-  ],
+  cards: ["As", "Kh"],
   actions: [{ action: "check" }],
   isCurrentPlayer: true,
   isActing: true,
@@ -49,7 +46,7 @@ export const mockAllInSeat = {
 export const mockOpponentSeat = {
   ...mockOccupiedSeat,
   player: { id: "opponent-456", name: null },
-  cards: [{ hidden: true }, { hidden: true }],
+  cards: ["??", "??"],
   isCurrentPlayer: false,
   isActing: false,
   actions: [],
@@ -121,11 +118,7 @@ export function createMockGameAtFlop() {
   return createMockGameState({
     hand: { phase: "flop", pot: 200, currentBet: 0, actingSeat: 0 },
     board: {
-      cards: [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "diamonds" },
-        { rank: "queen", suit: "clubs" },
-      ],
+      cards: ["Ah", "Kd", "Qc"],
     },
     seats: [
       {
@@ -177,13 +170,7 @@ export function createMockGameWithWinner(winnerMessage) {
   return createMockGameState({
     hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
     board: {
-      cards: [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "diamonds" },
-        { rank: "queen", suit: "clubs" },
-        { rank: "jack", suit: "spades" },
-        { rank: "10", suit: "hearts" },
-      ],
+      cards: ["Ah", "Kd", "Qc", "Js", "Th"],
     },
     winnerMessage,
     seats: [
@@ -259,10 +246,7 @@ export function createMockGameWithRankings() {
 export const mockHandSummary = {
   game_number: "test123-1",
   hand_number: 1,
-  hole_cards: [
-    { rank: "ace", suit: "hearts" },
-    { rank: "king", suit: "hearts" },
-  ],
+  hole_cards: ["Ah", "Kh"],
   winner_name: "Alice",
   winner_id: "player1",
   pot: 200,
@@ -272,10 +256,7 @@ export const mockHandSummary = {
 export const mockHandSummaryLost = {
   game_number: "test123-2",
   hand_number: 2,
-  hole_cards: [
-    { rank: "7", suit: "spades" },
-    { rank: "2", suit: "diamonds" },
-  ],
+  hole_cards: ["7s", "2d"],
   winner_name: "Bob",
   winner_id: "player2",
   pot: 150,
@@ -319,19 +300,13 @@ export const mockOhhHand = {
           action_number: 3,
           player_id: "player1",
           action: "Dealt Cards",
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "hearts" },
-          ],
+          cards: ["Ah", "Kh"],
         },
         {
           action_number: 4,
           player_id: "player2",
           action: "Dealt Cards",
-          cards: [
-            { rank: "queen", suit: "clubs" },
-            { rank: "jack", suit: "clubs" },
-          ],
+          cards: ["Qc", "Jc"],
         },
         {
           action_number: 5,
@@ -345,11 +320,7 @@ export const mockOhhHand = {
     {
       id: 1,
       street: "Flop",
-      cards: [
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "diamonds" },
-        { rank: "2", suit: "spades" },
-      ],
+      cards: ["Qh", "Jd", "2s"],
       actions: [
         { action_number: 7, player_id: "player2", action: "Check" },
         { action_number: 8, player_id: "player1", action: "Bet", amount: 100 },
@@ -378,7 +349,7 @@ export const mockOhhHandWithShowdown = {
     {
       id: 2,
       street: "Turn",
-      cards: [{ rank: "5", suit: "clubs" }],
+      cards: ["5c"],
       actions: [
         { action_number: 10, player_id: "player2", action: "Check" },
         { action_number: 11, player_id: "player1", action: "Check" },
@@ -387,7 +358,7 @@ export const mockOhhHandWithShowdown = {
     {
       id: 3,
       street: "River",
-      cards: [{ rank: "8", suit: "hearts" }],
+      cards: ["8h"],
       actions: [
         { action_number: 12, player_id: "player2", action: "Bet", amount: 100 },
         {
@@ -406,19 +377,13 @@ export const mockOhhHandWithShowdown = {
           action_number: 14,
           player_id: "player1",
           action: "Shows Cards",
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "hearts" },
-          ],
+          cards: ["Ah", "Kh"],
         },
         {
           action_number: 15,
           player_id: "player2",
           action: "Shows Cards",
-          cards: [
-            { rank: "queen", suit: "clubs" },
-            { rank: "jack", suit: "clubs" },
-          ],
+          cards: ["Qc", "Jc"],
         },
       ],
     },
@@ -428,13 +393,7 @@ export const mockOhhHandWithShowdown = {
       number: 0,
       amount: 500,
       winning_hand: "Two Pair, Qs and Js",
-      winning_cards: [
-        { rank: "queen", suit: "clubs" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "clubs" },
-        { rank: "jack", suit: "diamonds" },
-        { rank: "8", suit: "hearts" },
-      ],
+      winning_cards: ["Qc", "Qh", "Jc", "Jd", "8h"],
       player_wins: [
         { player_id: "player2", win_amount: 500, contributed_rake: 0 },
       ],

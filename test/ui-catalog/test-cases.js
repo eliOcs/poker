@@ -156,10 +156,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 4950,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "king", suit: "spades" },
-            ],
+            cards: ["As", "Ks"],
             actions: [
               { action: "fold" },
               { action: "call", amount: 50 },
@@ -170,13 +167,13 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 2975,
             bet: 25,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "SB $25",
           }),
           createPlayer("Bob", {
             stack: 2950,
             bet: 50,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "BB $50",
           }),
           { ...mockEmptySeat, actions: [] },
@@ -196,24 +193,21 @@ const TEST_CASES = {
             isCurrentPlayer: true,
             stack: 4950,
             bet: 50,
-            cards: [
-              { rank: "queen", suit: "hearts" },
-              { rank: "jack", suit: "hearts" },
-            ],
+            cards: ["Qh", "Jh"],
             lastAction: "Call $50",
             handRank: "Q High",
           }),
           createPlayer("Alice", {
             stack: 2975,
             bet: 25,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "SB $25",
           }),
           createPlayer("Bob", {
             isActing: true,
             stack: 2950,
             bet: 50,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             actions: [{ action: "callClock" }],
           }),
           { ...mockEmptySeat, actions: [] },
@@ -231,11 +225,7 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "flop", pot: 150, currentBet: 0, actingSeat: 0 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "diamonds" },
-            { rank: "7", suit: "clubs" },
-          ],
+          cards: ["Ah", "Kd", "7c"],
         },
         seats: [
           createPlayer("You", {
@@ -243,10 +233,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 4950,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "king", suit: "spades" },
-            ],
+            cards: ["As", "Ks"],
             actions: [
               { action: "check" },
               { action: "bet", min: 50, max: 4950 },
@@ -256,7 +243,7 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 2950,
             bet: 0,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -272,11 +259,7 @@ const TEST_CASES = {
         button: 1,
         hand: { phase: "flop", pot: 350, currentBet: 200, actingSeat: 0 },
         board: {
-          cards: [
-            { rank: "10", suit: "hearts" },
-            { rank: "jack", suit: "hearts" },
-            { rank: "3", suit: "clubs" },
-          ],
+          cards: ["Th", "Jh", "3c"],
         },
         seats: [
           createPlayer("You", {
@@ -284,10 +267,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 4800,
             bet: 0,
-            cards: [
-              { rank: "queen", suit: "hearts" },
-              { rank: "9", suit: "hearts" },
-            ],
+            cards: ["Qh", "9h"],
             actions: [
               { action: "fold" },
               { action: "call", amount: 200 },
@@ -298,7 +278,7 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 2800,
             bet: 200,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "Bet $200",
           }),
           { ...mockEmptySeat, actions: [] },
@@ -317,29 +297,21 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "turn", pot: 600, currentBet: 0, actingSeat: 1 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "diamonds" },
-            { rank: "7", suit: "clubs" },
-            { rank: "2", suit: "spades" },
-          ],
+          cards: ["Ah", "Kd", "7c", "2s"],
         },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
             stack: 4700,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "queen", suit: "spades" },
-            ],
+            cards: ["As", "Qs"],
             handRank: "Pair of Aces",
           }),
           createPlayer("Alice", {
             isActing: true,
             stack: 2700,
             bet: 0,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             actions: [{ action: "callClock" }],
           }),
           { ...mockEmptySeat, actions: [] },
@@ -358,13 +330,7 @@ const TEST_CASES = {
         button: 1,
         hand: { phase: "river", pot: 2400, currentBet: 1200, actingSeat: 0 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "hearts" },
-            { rank: "queen", suit: "hearts" },
-            { rank: "5", suit: "clubs" },
-            { rank: "2", suit: "diamonds" },
-          ],
+          cards: ["Ah", "Kh", "Qh", "5c", "2d"],
         },
         seats: [
           createPlayer("You", {
@@ -372,10 +338,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 3600,
             bet: 0,
-            cards: [
-              { rank: "jack", suit: "hearts" },
-              { rank: "10", suit: "hearts" },
-            ],
+            cards: ["Jh", "Th"],
             actions: [
               { action: "fold" },
               { action: "call", amount: 1200 },
@@ -386,7 +349,7 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 1800,
             bet: 1200,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "Bet $1200",
           }),
           { ...mockEmptySeat, actions: [] },
@@ -400,25 +363,13 @@ const TEST_CASES = {
   // === SHOWDOWN STATES ===
 
   "game-showdown-you-win": () => {
-    const winningCards = [
-      { rank: "ace", suit: "hearts" },
-      { rank: "king", suit: "hearts" },
-      { rank: "queen", suit: "hearts" },
-      { rank: "jack", suit: "hearts" },
-      { rank: "10", suit: "hearts" },
-    ];
+    const winningCards = ["Ah", "Kh", "Qh", "Jh", "Th"];
     return gameView(
       createGame({
         button: 1,
         hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "hearts" },
-            { rank: "queen", suit: "hearts" },
-            { rank: "5", suit: "clubs" },
-            { rank: "2", suit: "diamonds" },
-          ],
+          cards: ["Ah", "Kh", "Qh", "5c", "2d"],
         },
         winnerMessage: {
           playerName: "You",
@@ -430,10 +381,7 @@ const TEST_CASES = {
             isCurrentPlayer: true,
             stack: 9800,
             bet: 0,
-            cards: [
-              { rank: "jack", suit: "hearts" },
-              { rank: "10", suit: "hearts" },
-            ],
+            cards: ["Jh", "Th"],
             handResult: 4800,
             handRank: "Royal Flush",
             winningCards,
@@ -441,10 +389,7 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 200,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "ace", suit: "diamonds" },
-            ],
+            cards: ["As", "Ad"],
             handResult: -4800,
             handRank: "Three of a Kind, Aces",
           }),
@@ -463,13 +408,7 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "ace", suit: "clubs" },
-            { rank: "king", suit: "diamonds" },
-            { rank: "5", suit: "clubs" },
-            { rank: "2", suit: "diamonds" },
-          ],
+          cards: ["Ah", "Ac", "Kd", "5c", "2d"],
         },
         winnerMessage: {
           playerName: "Alice",
@@ -481,29 +420,17 @@ const TEST_CASES = {
             isCurrentPlayer: true,
             stack: 1000,
             bet: 0,
-            cards: [
-              { rank: "king", suit: "spades" },
-              { rank: "king", suit: "clubs" },
-            ],
+            cards: ["Ks", "Kc"],
             handResult: -2000,
             handRank: "Full House, Kings over Aces",
           }),
           createPlayer("Alice", {
             stack: 7000,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "ace", suit: "diamonds" },
-            ],
+            cards: ["As", "Ad"],
             handResult: 4000,
             handRank: "Four of a Kind, Aces",
-            winningCards: [
-              { rank: "ace", suit: "hearts" },
-              { rank: "ace", suit: "clubs" },
-              { rank: "ace", suit: "spades" },
-              { rank: "ace", suit: "diamonds" },
-              { rank: "king", suit: "diamonds" },
-            ],
+            winningCards: ["Ah", "Ac", "As", "Ad", "Kd"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -521,12 +448,7 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "turn", pot: 6000, currentBet: 0, actingSeat: -1 },
         board: {
-          cards: [
-            { rank: "jack", suit: "spades" },
-            { rank: "10", suit: "spades" },
-            { rank: "9", suit: "hearts" },
-            { rank: "2", suit: "clubs" },
-          ],
+          cards: ["Js", "Ts", "9h", "2c"],
         },
         seats: [
           createPlayer("You", {
@@ -534,17 +456,14 @@ const TEST_CASES = {
             allIn: true,
             stack: 0,
             bet: 0,
-            cards: [
-              { rank: "queen", suit: "spades" },
-              { rank: "8", suit: "spades" },
-            ],
+            cards: ["Qs", "8s"],
             handRank: "Straight",
           }),
           createPlayer("Alice", {
             allIn: true,
             stack: 0,
             bet: 0,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -560,12 +479,7 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "turn", pot: 800, currentBet: 200, actingSeat: 0 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "diamonds" },
-            { rank: "7", suit: "clubs" },
-            { rank: "3", suit: "spades" },
-          ],
+          cards: ["Ah", "Kd", "7c", "3s"],
         },
         seats: [
           createPlayer("You", {
@@ -573,10 +487,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 4500,
             bet: 0,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "queen", suit: "spades" },
-            ],
+            cards: ["As", "Qs"],
             actions: [
               { action: "fold" },
               { action: "call", amount: 200 },
@@ -593,7 +504,7 @@ const TEST_CASES = {
           createPlayer("Bob", {
             stack: 2600,
             bet: 200,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "Bet $200",
           }),
           createPlayer("Charlie", {
@@ -620,21 +531,14 @@ const TEST_CASES = {
           clockCalledAt: Date.now() - 15000,
         },
         board: {
-          cards: [
-            { rank: "jack", suit: "hearts" },
-            { rank: "10", suit: "diamonds" },
-            { rank: "5", suit: "clubs" },
-          ],
+          cards: ["Jh", "Td", "5c"],
         },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
             stack: 4900,
             bet: 100,
-            cards: [
-              { rank: "ace", suit: "spades" },
-              { rank: "king", suit: "spades" },
-            ],
+            cards: ["As", "Ks"],
             lastAction: "Call $100",
             handRank: "A High",
           }),
@@ -642,7 +546,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 2800,
             bet: 100,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -669,14 +573,14 @@ const TEST_CASES = {
           createPlayer("Alice", {
             stack: 2975,
             bet: 25,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "SB $25",
           }),
           createPlayer("Bob", {
             isActing: true,
             stack: 2950,
             bet: 50,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -691,11 +595,7 @@ const TEST_CASES = {
         button: 0,
         hand: { phase: "flop", pot: 200, currentBet: 0, actingSeat: 0 },
         board: {
-          cards: [
-            { rank: "ace", suit: "hearts" },
-            { rank: "king", suit: "diamonds" },
-            { rank: "7", suit: "clubs" },
-          ],
+          cards: ["Ah", "Kd", "7c"],
         },
         seats: [
           createPlayer("You", {
@@ -703,10 +603,7 @@ const TEST_CASES = {
             isActing: true,
             stack: 4900,
             bet: 0,
-            cards: [
-              { rank: "queen", suit: "hearts" },
-              { rank: "jack", suit: "hearts" },
-            ],
+            cards: ["Qh", "Jh"],
             actions: [
               { action: "check" },
               { action: "bet", min: 50, max: 4900 },
@@ -717,7 +614,7 @@ const TEST_CASES = {
             disconnected: true,
             stack: 2900,
             bet: 0,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
@@ -737,35 +634,32 @@ const TEST_CASES = {
             isCurrentPlayer: true,
             stack: 4950,
             bet: 50,
-            cards: [
-              { rank: "9", suit: "hearts" },
-              { rank: "9", suit: "diamonds" },
-            ],
+            cards: ["9h", "9d"],
             lastAction: "Call $50",
             handRank: "Pair of Nines",
           }),
           createPlayer("Alice", {
             stack: 2975,
             bet: 25,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "SB $25",
           }),
           createPlayer("Bob", {
             stack: 2950,
             bet: 50,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "BB $50",
           }),
           createPlayer("Charlie", {
             isActing: true,
             stack: 3000,
             bet: 0,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
           }),
           createPlayer("Diana", {
             stack: 1500,
             bet: 50,
-            cards: [{ hidden: true }, { hidden: true }],
+            cards: ["??", "??"],
             lastAction: "Call $50",
           }),
           createPlayer("Eve", {

@@ -2,26 +2,26 @@ import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles } from "./styles.js";
 
 const SUIT_SYMBOLS = {
-  hearts: "♥",
-  diamonds: "♦",
-  clubs: "♣",
-  spades: "♠",
+  h: "♥",
+  d: "♦",
+  c: "♣",
+  s: "♠",
 };
 
 const RANK_DISPLAY = {
-  ace: "A",
-  2: "2",
-  3: "3",
-  4: "4",
-  5: "5",
-  6: "6",
-  7: "7",
-  8: "8",
+  A: "A",
+  K: "K",
+  Q: "Q",
+  J: "J",
+  T: "10",
   9: "9",
-  10: "10",
-  jack: "J",
-  queen: "Q",
-  king: "K",
+  8: "8",
+  7: "7",
+  6: "6",
+  5: "5",
+  4: "4",
+  3: "3",
+  2: "2",
 };
 
 class Card extends LitElement {
@@ -126,15 +126,17 @@ class Card extends LitElement {
     if (!this.card) {
       return html`<span class="card placeholder"></span>`;
     }
-    if (this.card.hidden) {
+    if (this.card === "??") {
       return html`<span class="card hidden"></span>`;
     }
-    const isRed = this.card.suit === "hearts" || this.card.suit === "diamonds";
+    const rank = this.card.slice(0, -1);
+    const suit = this.card.slice(-1);
+    const isRed = suit === "h" || suit === "d";
     const classes = `card ${isRed ? "red" : "black"} ${this.winning ? "winning" : ""}`;
     return html`
       <span class="${classes}">
-        <span class="rank">${RANK_DISPLAY[this.card.rank]}</span>
-        <span class="suit">${SUIT_SYMBOLS[this.card.suit]}</span>
+        <span class="rank">${RANK_DISPLAY[rank]}</span>
+        <span class="suit">${SUIT_SYMBOLS[suit]}</span>
       </span>
     `;
   }

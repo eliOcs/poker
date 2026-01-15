@@ -86,13 +86,7 @@ describe("phg-card", () => {
   it("handles all ranks (A, 2-10, J, Q, K)", async () => {
     const gameWithRanks = createMockGameState({
       board: {
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "2", suit: "hearts" },
-          { rank: "10", suit: "diamonds" },
-          { rank: "jack", suit: "clubs" },
-          { rank: "king", suit: "spades" },
-        ],
+        cards: ["As", "2h", "Td", "Jc", "Ks"],
       },
       hand: { phase: "river", pot: 100, currentBet: 0, actingSeat: -1 },
     });
@@ -115,23 +109,11 @@ describe("phg-card", () => {
   });
 
   it("applies winning class when winning prop is true", async () => {
-    const winningCards = [
-      { rank: "ace", suit: "spades" },
-      { rank: "ace", suit: "hearts" },
-      { rank: "ace", suit: "clubs" },
-      { rank: "king", suit: "diamonds" },
-      { rank: "queen", suit: "clubs" },
-    ];
+    const winningCards = ["As", "Ah", "Ac", "Kd", "Qc"];
     const gameWithWinner = createMockGameState({
       hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
       board: {
-        cards: [
-          { rank: "ace", suit: "clubs" },
-          { rank: "king", suit: "diamonds" },
-          { rank: "queen", suit: "clubs" },
-          { rank: "jack", suit: "spades" },
-          { rank: "10", suit: "hearts" },
-        ],
+        cards: ["Ac", "Kd", "Qc", "Js", "Th"],
       },
       winnerMessage: {
         playerName: "Player 1",
@@ -148,10 +130,7 @@ describe("phg-card", () => {
           allIn: false,
           sittingOut: false,
           disconnected: false,
-          cards: [
-            { rank: "ace", suit: "spades" },
-            { rank: "ace", suit: "hearts" },
-          ],
+          cards: ["As", "Ah"],
           actions: [],
           isCurrentPlayer: true,
           isActing: false,

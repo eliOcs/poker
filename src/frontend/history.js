@@ -631,7 +631,6 @@ class History extends LitElement {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
-  // Transform OHH player to seat format for phg-seat component
   playerToSeat(player) {
     const cards = this.getPlayerCards(player.id);
     const winAmount = this.getPlayerWinAmount(player.id);

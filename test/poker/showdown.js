@@ -15,18 +15,9 @@ describe("showdown", () => {
     it("should evaluate hand with board cards", () => {
       const seat = {
         ...Seat.occupied({ id: "p1" }, 1000),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "king", suit: "spades" },
-        ],
+        cards: ["As", "Ks"],
       };
-      const board = [
-        { rank: "queen", suit: "spades" },
-        { rank: "jack", suit: "spades" },
-        { rank: "10", suit: "spades" },
-        { rank: "2", suit: "hearts" },
-        { rank: "3", suit: "diamonds" },
-      ];
+      const board = ["Qs", "Js", "Ts", "2h", "3d"];
 
       const result = Showdown.evaluateHand(seat, board);
 
@@ -50,25 +41,13 @@ describe("showdown", () => {
     it("should get hands for all active players", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 1000),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "king", suit: "spades" },
-        ],
+        cards: ["As", "Ks"],
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 1000),
-        cards: [
-          { rank: "2", suit: "hearts" },
-          { rank: "3", suit: "hearts" },
-        ],
+        cards: ["2h", "3h"],
       };
-      game.board.cards = [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "clubs" },
-        { rank: "10", suit: "clubs" },
-      ];
+      game.board.cards = ["Ah", "Kh", "Qh", "Jc", "Tc"];
 
       const hands = Showdown.getActiveHands(game);
 
@@ -80,26 +59,14 @@ describe("showdown", () => {
     it("should exclude folded players", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 1000),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "king", suit: "spades" },
-        ],
+        cards: ["As", "Ks"],
         folded: true,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 1000),
-        cards: [
-          { rank: "2", suit: "hearts" },
-          { rank: "3", suit: "hearts" },
-        ],
+        cards: ["2h", "3h"],
       };
-      game.board.cards = [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "clubs" },
-        { rank: "10", suit: "clubs" },
-      ];
+      game.board.cards = ["Ah", "Kh", "Qh", "Jc", "Tc"];
 
       const hands = Showdown.getActiveHands(game);
 
@@ -117,14 +84,14 @@ describe("showdown", () => {
           hand: {
             name: "pair",
             of: "9",
-            kickers: ["ace", "king", "queen"],
+            kickers: ["A", "K", "Q"],
           },
         },
         {
           seat: 2,
           hand: {
             name: "full house",
-            of: "10",
+            of: "T",
             and: "5",
           },
         },
@@ -143,16 +110,16 @@ describe("showdown", () => {
           seat: 0,
           hand: {
             name: "pair",
-            of: "ace",
-            kickers: ["king", "queen", "jack"],
+            of: "A",
+            kickers: ["K", "Q", "J"],
           },
         },
         {
           seat: 2,
           hand: {
             name: "pair",
-            of: "ace",
-            kickers: ["king", "queen", "jack"],
+            of: "A",
+            kickers: ["K", "Q", "J"],
           },
         },
       ];
@@ -169,7 +136,7 @@ describe("showdown", () => {
           seat: 0,
           hand: {
             name: "full house",
-            of: "10",
+            of: "T",
             and: "5",
           },
         }, // Best hand but not eligible
@@ -178,7 +145,7 @@ describe("showdown", () => {
           hand: {
             name: "pair",
             of: "9",
-            kickers: ["ace", "king", "queen"],
+            kickers: ["A", "K", "Q"],
           },
         },
       ];
@@ -194,27 +161,15 @@ describe("showdown", () => {
     it("should distribute pot to winner", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         totalInvested: 100,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         totalInvested: 100,
       };
-      game.board.cards = [
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "hearts" },
-      ];
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
 
       const results = Showdown.runShowdown(game);
 
@@ -227,36 +182,21 @@ describe("showdown", () => {
     it("should handle side pots", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         totalInvested: 50, // Short stack
         allIn: true,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "king", suit: "clubs" },
-          { rank: "king", suit: "diamonds" },
-        ],
+        cards: ["Kc", "Kd"],
         totalInvested: 100,
       };
       game.seats[4] = {
         ...Seat.occupied({ id: "p3" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         totalInvested: 100,
       };
-      game.board.cards = [
-        { rank: "7", suit: "clubs" },
-        { rank: "8", suit: "diamonds" },
-        { rank: "9", suit: "hearts" },
-        { rank: "4", suit: "hearts" },
-        { rank: "5", suit: "hearts" },
-      ];
+      game.board.cards = ["7c", "8d", "9h", "4h", "5h"];
 
       const results = Showdown.runShowdown(game);
 
@@ -274,28 +214,16 @@ describe("showdown", () => {
       // Both players have low cards, board plays (straight on board)
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "2", suit: "spades" },
-          { rank: "3", suit: "spades" },
-        ],
+        cards: ["2s", "3s"],
         totalInvested: 100,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "clubs" },
-        ],
+        cards: ["2c", "3c"],
         totalInvested: 100,
       };
       // Board has a straight - both players play the board
-      game.board.cards = [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "diamonds" },
-        { rank: "queen", suit: "clubs" },
-        { rank: "jack", suit: "hearts" },
-        { rank: "10", suit: "spades" },
-      ];
+      game.board.cards = ["Ah", "Kd", "Qc", "Jh", "Ts"];
 
       const results = Showdown.runShowdown(game);
 
@@ -315,37 +243,22 @@ describe("showdown", () => {
       // But we create a scenario with 3 players where one folds, leaving odd pot
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "2", suit: "spades" },
-          { rank: "3", suit: "spades" },
-        ],
+        cards: ["2s", "3s"],
         totalInvested: 51,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "clubs" },
-        ],
+        cards: ["2c", "3c"],
         totalInvested: 51,
       };
       game.seats[4] = {
         ...Seat.occupied({ id: "p3" }, 0),
-        cards: [
-          { rank: "4", suit: "diamonds" },
-          { rank: "5", suit: "diamonds" },
-        ],
+        cards: ["4d", "5d"],
         totalInvested: 51,
         folded: true, // Folded, so not eligible but contributed
       };
       // Board has a straight - both active players play the board
-      game.board.cards = [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "diamonds" },
-        { rank: "queen", suit: "clubs" },
-        { rank: "jack", suit: "hearts" },
-        { rank: "10", suit: "spades" },
-      ];
+      game.board.cards = ["Ah", "Kd", "Qc", "Jh", "Ts"];
 
       const results = Showdown.runShowdown(game);
 
@@ -427,31 +340,19 @@ describe("showdown", () => {
     it("should set handResult for winner and losers", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         bet: 0,
         totalInvested: 100,
         lastAction: "call",
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         bet: 0,
         totalInvested: 100,
         lastAction: "bet",
       };
-      game.board.cards = [
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "hearts" },
-      ];
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
       // Run the showdown generator to completion
@@ -470,31 +371,19 @@ describe("showdown", () => {
     it("should clear lastAction for all players", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         bet: 0,
         totalInvested: 100,
         lastAction: "call",
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         bet: 0,
         totalInvested: 100,
         lastAction: "bet",
       };
-      game.board.cards = [
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "hearts" },
-      ];
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
       const gen = Showdown.showdown(game);
@@ -510,29 +399,17 @@ describe("showdown", () => {
     it("should set winningCards for winner", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         bet: 0,
         totalInvested: 100,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         bet: 0,
         totalInvested: 100,
       };
-      game.board.cards = [
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "hearts" },
-      ];
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
       const gen = Showdown.showdown(game);
@@ -545,36 +422,24 @@ describe("showdown", () => {
       assert.ok(game.seats[0].winningCards);
       assert.equal(game.seats[0].winningCards.length, 5);
       // Verify all 4 aces are in the winning cards
-      const aces = game.seats[0].winningCards.filter((c) => c.rank === "ace");
+      const aces = game.seats[0].winningCards.filter((c) => c.startsWith("A"));
       assert.equal(aces.length, 4);
     });
 
     it("should not set winningCards for loser", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
-        cards: [
-          { rank: "ace", suit: "spades" },
-          { rank: "ace", suit: "hearts" },
-        ],
+        cards: ["As", "Ah"],
         bet: 0,
         totalInvested: 100,
       };
       game.seats[2] = {
         ...Seat.occupied({ id: "p2" }, 0),
-        cards: [
-          { rank: "2", suit: "clubs" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["2c", "3d"],
         bet: 0,
         totalInvested: 100,
       };
-      game.board.cards = [
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "hearts" },
-      ];
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
       const gen = Showdown.showdown(game);

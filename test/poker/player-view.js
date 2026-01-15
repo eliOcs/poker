@@ -78,14 +78,8 @@ describe("Player View", function () {
 
       // Simulate post-showdown state
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "king", suit: "hearts" },
-      ];
-      g.seats[1].cards = [
-        { rank: "queen", suit: "diamonds" },
-        { rank: "jack", suit: "clubs" },
-      ];
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[1].cards = ["Qd", "Jc"];
       // Both players have hand results (participated in showdown)
       g.seats[0].handResult = 100;
       g.seats[1].handResult = -100;
@@ -93,10 +87,10 @@ describe("Player View", function () {
       const view = playerView(g, p1);
 
       // Own cards should be visible
-      assert.equal(view.seats[0].cards[0].rank, "ace");
+      assert.equal(view.seats[0].cards[0], "As");
       // Opponent cards should also be visible (they have handResult)
-      assert.equal(view.seats[1].cards[0].rank, "queen");
-      assert.equal(view.seats[1].cards[1].rank, "jack");
+      assert.equal(view.seats[1].cards[0], "Qd");
+      assert.equal(view.seats[1].cards[1], "Jc");
     });
 
     it("hides opponent cards when they have no handResult (folded)", function () {
@@ -108,14 +102,8 @@ describe("Player View", function () {
 
       // Simulate post-hand state where opponent folded
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "king", suit: "hearts" },
-      ];
-      g.seats[1].cards = [
-        { rank: "queen", suit: "diamonds" },
-        { rank: "jack", suit: "clubs" },
-      ];
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[1].cards = ["Qd", "Jc"];
       // Only winner has hand result (opponent folded)
       g.seats[0].handResult = 100;
       g.seats[1].handResult = null;
@@ -123,10 +111,10 @@ describe("Player View", function () {
       const view = playerView(g, p1);
 
       // Own cards should be visible
-      assert.equal(view.seats[0].cards[0].rank, "ace");
+      assert.equal(view.seats[0].cards[0], "As");
       // Opponent cards should be hidden (no handResult)
-      assert.equal(view.seats[1].cards[0].hidden, true);
-      assert.equal(view.seats[1].cards[1].hidden, true);
+      assert.equal(view.seats[1].cards[0], "??");
+      assert.equal(view.seats[1].cards[1], "??");
     });
 
     it("shows all cards during showdown phase", function () {
@@ -137,20 +125,14 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       g.hand = { phase: "showdown", pot: 200, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "king", suit: "hearts" },
-      ];
-      g.seats[1].cards = [
-        { rank: "queen", suit: "diamonds" },
-        { rank: "jack", suit: "clubs" },
-      ];
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[1].cards = ["Qd", "Jc"];
 
       const view = playerView(g, p1);
 
       // All cards should be visible during showdown phase
-      assert.equal(view.seats[0].cards[0].rank, "ace");
-      assert.equal(view.seats[1].cards[0].rank, "queen");
+      assert.equal(view.seats[0].cards[0], "As");
+      assert.equal(view.seats[1].cards[0], "Qd");
     });
   });
 
@@ -161,18 +143,9 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["As", "Ah"];
       g.board = {
-        cards: [
-          { rank: "ace", suit: "clubs" },
-          { rank: "king", suit: "diamonds" },
-          { rank: "9", suit: "clubs" },
-          { rank: "5", suit: "hearts" },
-          { rank: "2", suit: "spades" },
-        ],
+        cards: ["Ac", "Kd", "9c", "5h", "2s"],
       };
 
       const view = playerView(g, p1);
@@ -188,18 +161,9 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "hearts" },
-        { rank: "2", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["Ah", "2h"];
       g.board = {
-        cards: [
-          { rank: "king", suit: "hearts" },
-          { rank: "queen", suit: "hearts" },
-          { rank: "jack", suit: "hearts" },
-          { rank: "5", suit: "spades" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["Kh", "Qh", "Jh", "5s", "3d"],
       };
 
       const view = playerView(g, p1);
@@ -214,18 +178,9 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "9", suit: "spades" },
-        { rank: "8", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["9s", "8h"];
       g.board = {
-        cards: [
-          { rank: "7", suit: "clubs" },
-          { rank: "6", suit: "diamonds" },
-          { rank: "5", suit: "hearts" },
-          { rank: "2", suit: "spades" },
-          { rank: "ace", suit: "diamonds" },
-        ],
+        cards: ["7c", "6d", "5h", "2s", "Ad"],
       };
 
       const view = playerView(g, p1);
@@ -240,18 +195,9 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "king", suit: "spades" },
-        { rank: "king", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["Ks", "Kh"];
       g.board = {
-        cards: [
-          { rank: "king", suit: "clubs" },
-          { rank: "queen", suit: "diamonds" },
-          { rank: "queen", suit: "hearts" },
-          { rank: "5", suit: "spades" },
-          { rank: "3", suit: "diamonds" },
-        ],
+        cards: ["Kc", "Qd", "Qh", "5s", "3d"],
       };
 
       const view = playerView(g, p1);
@@ -266,19 +212,10 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["As", "Ah"];
       g.seats[0].folded = true;
       g.board = {
-        cards: [
-          { rank: "king", suit: "diamonds" },
-          { rank: "queen", suit: "clubs" },
-          { rank: "jack", suit: "hearts" },
-          { rank: "10", suit: "spades" },
-          { rank: "9", suit: "clubs" },
-        ],
+        cards: ["Kd", "Qc", "Jh", "Ts", "9c"],
       };
 
       const view = playerView(g, p1);
@@ -296,18 +233,9 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["As", "Ah"];
       g.seats[0].handResult = 100;
-      g.seats[0].winningCards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-      ];
+      g.seats[0].winningCards = ["As", "Ah", "Ac", "Ad", "Kh"];
 
       const view = playerView(g, p1);
 
@@ -323,23 +251,11 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
-      g.seats[0].cards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-      ];
+      g.seats[0].cards = ["As", "Ah"];
       g.seats[0].handResult = 100;
-      g.seats[0].winningCards = [
-        { rank: "ace", suit: "spades" },
-        { rank: "ace", suit: "hearts" },
-        { rank: "ace", suit: "clubs" },
-        { rank: "ace", suit: "diamonds" },
-        { rank: "king", suit: "hearts" },
-      ];
+      g.seats[0].winningCards = ["As", "Ah", "Ac", "Ad", "Kh"];
 
-      g.seats[1].cards = [
-        { rank: "2", suit: "clubs" },
-        { rank: "3", suit: "diamonds" },
-      ];
+      g.seats[1].cards = ["2c", "3d"];
       g.seats[1].handResult = -100;
       g.seats[1].winningCards = null;
 

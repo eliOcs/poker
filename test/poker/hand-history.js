@@ -136,10 +136,7 @@ describe("hand-history", function () {
       const { game, players } = createGameWithPlayers();
 
       HandHistory.startHand("test-game", game);
-      HandHistory.recordDealtCards("test-game", players[0].id, [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "spades" },
-      ]);
+      HandHistory.recordDealtCards("test-game", players[0].id, ["Ah", "Ks"]);
 
       const recorder = HandHistory.getRecorder("test-game");
       assert.strictEqual(recorder.actions[0].action, "Dealt Cards");
@@ -152,11 +149,7 @@ describe("hand-history", function () {
       const { game } = createGameWithPlayers();
 
       HandHistory.startHand("test-game", game);
-      HandHistory.recordStreet("test-game", "flop", [
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "clubs" },
-        { rank: "2", suit: "diamonds" },
-      ]);
+      HandHistory.recordStreet("test-game", "flop", ["Qh", "Jc", "2d"]);
 
       const recorder = HandHistory.getRecorder("test-game");
       assert.strictEqual(recorder.currentStreet, "Flop");
@@ -177,38 +170,24 @@ describe("hand-history", function () {
       // Preflop: blinds and dealt cards
       HandHistory.recordBlind("test-game", players[0].id, "sb", 25);
       HandHistory.recordBlind("test-game", players[1].id, "bb", 50);
-      HandHistory.recordDealtCards("test-game", players[0].id, [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "hearts" },
-      ]);
-      HandHistory.recordDealtCards("test-game", players[1].id, [
-        { rank: "queen", suit: "clubs" },
-        { rank: "jack", suit: "clubs" },
-      ]);
+      HandHistory.recordDealtCards("test-game", players[0].id, ["Ah", "Kh"]);
+      HandHistory.recordDealtCards("test-game", players[1].id, ["Qc", "Jc"]);
       HandHistory.recordAction("test-game", players[0].id, "call", 50);
       HandHistory.recordAction("test-game", players[1].id, "check");
 
       // Flop
-      HandHistory.recordStreet("test-game", "flop", [
-        { rank: "queen", suit: "hearts" },
-        { rank: "jack", suit: "diamonds" },
-        { rank: "2", suit: "spades" },
-      ]);
+      HandHistory.recordStreet("test-game", "flop", ["Qh", "Jd", "2s"]);
       HandHistory.recordAction("test-game", players[1].id, "check");
       HandHistory.recordAction("test-game", players[0].id, "bet", 50);
       HandHistory.recordAction("test-game", players[1].id, "call", 50);
 
       // Turn
-      HandHistory.recordStreet("test-game", "turn", [
-        { rank: "10", suit: "clubs" },
-      ]);
+      HandHistory.recordStreet("test-game", "turn", ["Tc"]);
       HandHistory.recordAction("test-game", players[1].id, "check");
       HandHistory.recordAction("test-game", players[0].id, "check");
 
       // River
-      HandHistory.recordStreet("test-game", "river", [
-        { rank: "3", suit: "hearts" },
-      ]);
+      HandHistory.recordStreet("test-game", "river", ["3h"]);
       HandHistory.recordAction("test-game", players[1].id, "bet", 100);
       HandHistory.recordAction("test-game", players[0].id, "call", 100);
 
@@ -216,19 +195,13 @@ describe("hand-history", function () {
       HandHistory.recordShowdown(
         "test-game",
         players[0].id,
-        [
-          { rank: "ace", suit: "hearts" },
-          { rank: "king", suit: "hearts" },
-        ],
+        ["Ah", "Kh"],
         true,
       );
       HandHistory.recordShowdown(
         "test-game",
         players[1].id,
-        [
-          { rank: "queen", suit: "clubs" },
-          { rank: "jack", suit: "clubs" },
-        ],
+        ["Qc", "Jc"],
         true,
       );
 
@@ -474,10 +447,7 @@ describe("hand-history", function () {
 
       assert.strictEqual(summary.game_number, "abc123-5");
       assert.strictEqual(summary.hand_number, 5);
-      assert.deepStrictEqual(summary.hole_cards, [
-        { rank: "ace", suit: "hearts" },
-        { rank: "king", suit: "hearts" },
-      ]);
+      assert.deepStrictEqual(summary.hole_cards, ["Ah", "Kh"]);
       assert.strictEqual(summary.winner_name, "Alice");
       assert.strictEqual(summary.winner_id, "player1");
       assert.strictEqual(summary.pot, 200);

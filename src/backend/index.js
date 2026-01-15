@@ -153,9 +153,8 @@ server.on("request", (req, res) => {
         }
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
-        const transformed = HandHistory.transformForFrontend(filteredHand);
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hand: transformed }));
+        res.end(JSON.stringify({ hand: filteredHand }));
       })
       .catch((err) => {
         res.writeHead(500, { "content-type": "application/json" });
