@@ -471,8 +471,8 @@ class History extends LitElement {
     this.gameId = null;
     this.handNumber = null;
     this.hand = null;
-    this.handList = [];
-    this.loading = true;
+    this.handList = null;
+    this.loading = null;
     this.error = null;
     this.playerId = localStorage.getItem("playerId") || null;
     this.touchStartX = null;
@@ -534,11 +534,9 @@ class History extends LitElement {
   }
 
   async fetchData() {
-    // Skip fetch if data was already provided externally (e.g., for testing)
-    if (
-      !this.loading &&
-      (this.handList.length > 0 || this.hand !== null || this.error !== null)
-    ) {
+    // Skip fetch if state was explicitly provided (e.g., for testing)
+    // null means "use default behavior", true/false means "explicitly set"
+    if (this.loading !== null) {
       return;
     }
 
@@ -546,6 +544,7 @@ class History extends LitElement {
 
     this.loading = true;
     this.error = null;
+    this.handList = [];
 
     try {
       // Fetch hand list
@@ -592,6 +591,7 @@ class History extends LitElement {
   }
 
   navigatePrev() {
+    if (!this.handList) return;
     const currentIndex = this.handList.findIndex(
       (h) => h.hand_number === this.handNumber
     );
@@ -601,6 +601,7 @@ class History extends LitElement {
   }
 
   navigateNext() {
+    if (!this.handList) return;
     const currentIndex = this.handList.findIndex(
       (h) => h.hand_number === this.handNumber
     );
@@ -667,7 +668,7 @@ class History extends LitElement {
   }
 
   getCurrentHandSummary() {
-    return this.handList.find((h) => h.hand_number === this.handNumber);
+    return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
   renderNavBar() {
@@ -861,7 +862,8 @@ class History extends LitElement {
   }
 
   render() {
-    if (this.loading) {
+    // loading: null = initial/fetching, true = explicitly loading, false = done
+    if (this.loading === null || this.loading === true) {
       return html`<div class="loading">Loading hand history...</div>`;
     }
 
@@ -879,7 +881,7 @@ class History extends LitElement {
       `;
     }
 
-    if (this.handList.length === 0) {
+    if (!this.handList || this.handList.length === 0) {
       return html`
         <div class="empty">
           No hands recorded yet
