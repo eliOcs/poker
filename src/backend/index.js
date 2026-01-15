@@ -153,8 +153,9 @@ server.on("request", (req, res) => {
         }
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
+        const transformed = HandHistory.transformForFrontend(filteredHand);
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ ohh: filteredHand }));
+        res.end(JSON.stringify({ hand: transformed }));
       })
       .catch((err) => {
         res.writeHead(500, { "content-type": "application/json" });
@@ -253,10 +254,11 @@ function processGameFlow(game, gameId) {
         // Finalize hand history (won by fold)
         HandHistory.finalizeHand(gameId, game, [
           {
-            visibleSeats: [],
             potAmount: result.amount,
             winners: [result.winner],
             winningHand: null,
+            winningCards: null,
+            awards: [{ seat: result.winner, amount: result.amount }],
           },
         ]);
       }
