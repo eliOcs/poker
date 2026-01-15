@@ -115,8 +115,8 @@ class History extends LitElement {
         .table-state {
           flex: 1;
           position: relative;
-          min-height: 300px;
-          max-height: 400px;
+          min-height: 450px;
+          max-height: 550px;
         }
 
         @media (width >= 800px) {
@@ -127,13 +127,10 @@ class History extends LitElement {
 
         .board {
           position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: 60%;
-          max-width: 400px;
-          height: 50%;
-          max-height: 200px;
+          top: 15%;
+          left: 10%;
+          width: 80%;
+          height: 70%;
         }
 
         /* Player seat positions around the table */

@@ -17,6 +17,7 @@ class Board extends LitElement {
           width: 100%;
           background-color: var(--color-table);
           border: 6px solid var(--color-bg-dark);
+          border-radius: 50%;
           box-shadow:
             inset 4px 4px 0 rgba(255, 255, 255, 0.1),
             inset -4px -4px 0 rgba(0, 0, 0, 0.2),
