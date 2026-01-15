@@ -85,24 +85,32 @@ describe("phg-history", () => {
     });
 
     it("renders table state with players", async () => {
-      const players = element.shadowRoot.querySelectorAll(".player");
-      expect(players.length).to.equal(2);
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      expect(seats.length).to.equal(2);
     });
 
     it("shows player names", async () => {
-      const playerNames = element.shadowRoot.querySelectorAll(".player-name");
-      const names = Array.from(playerNames).map((n) => n.textContent.trim());
-      expect(names).to.include("Alice");
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      const names = [];
+      for (const seat of seats) {
+        await seat.updateComplete;
+        const nameEl = seat.shadowRoot.querySelector(".player-name");
+        if (nameEl) names.push(nameEl.textContent.trim());
+      }
+      // player1 is current player so shown as "You", player2 is "Bob"
+      expect(names).to.include("You");
       expect(names).to.include("Bob");
     });
 
     it("highlights winner with winning class", async () => {
-      const winners = element.shadowRoot.querySelectorAll(".player.winner");
+      const winners = element.shadowRoot.querySelectorAll(".player-seat.winner");
       expect(winners.length).to.be.greaterThan(0);
     });
 
     it("shows pot amount", async () => {
-      const potInfo = element.shadowRoot.querySelector(".pot-info");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const potInfo = board.shadowRoot.querySelector(".pot");
       expect(potInfo).to.exist;
       expect(potInfo.textContent).to.include("400");
     });
@@ -111,14 +119,16 @@ describe("phg-history", () => {
       element.hand = mockOhhHandWithShowdown;
       await element.updateComplete;
 
-      const boardCards = element.shadowRoot.querySelector(".board-cards");
-      expect(boardCards).to.exist;
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const communityCards = board.shadowRoot.querySelector(".community-cards");
+      expect(communityCards).to.exist;
 
-      const cards = boardCards.querySelectorAll("phg-card");
+      const cards = communityCards.querySelectorAll("phg-card");
       expect(cards.length).to.be.greaterThan(0);
     });
 
-    it("shows 'No board' when no board cards", async () => {
+    it("handles preflop fold with no board cards", async () => {
       // Create hand without board cards (fold preflop)
       element.hand = {
         ...mockOhhHand,
@@ -126,8 +136,11 @@ describe("phg-history", () => {
       };
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector(".board-cards");
-      expect(board.textContent).to.include("No board");
+      const board = element.shadowRoot.querySelector("phg-board");
+      await board.updateComplete;
+      const communityCards = board.shadowRoot.querySelector(".community-cards");
+      const cards = communityCards.querySelectorAll("phg-card");
+      expect(cards.length).to.equal(0);
     });
   });
 
@@ -459,10 +472,11 @@ describe("phg-history", () => {
       await element.updateComplete;
 
       // The player cards display should show hidden cards for player2
-      const players = element.shadowRoot.querySelectorAll(".player");
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
       let foundHidden = false;
-      for (const player of players) {
-        const cards = player.querySelectorAll("phg-card");
+      for (const seat of seats) {
+        await seat.updateComplete;
+        const cards = seat.shadowRoot.querySelectorAll("phg-card");
         for (const card of cards) {
           await card.updateComplete;
           const hiddenCard = card.shadowRoot.querySelector(".card.hidden");
