@@ -46,7 +46,9 @@ class App extends LitElement {
       return html`<phg-game .gameId=${gameMatch[1]}></phg-game>`;
     }
 
-    const historyMatch = this.path.match(/^\/history\/([a-z0-9]+)(?:\/(\d+))?$/);
+    const historyMatch = this.path.match(
+      /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
+    );
     if (historyMatch) {
       const handNumber = historyMatch[2] ? parseInt(historyMatch[2], 10) : null;
       return html`<phg-history

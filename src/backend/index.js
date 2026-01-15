@@ -125,7 +125,7 @@ server.on("request", (req, res) => {
     HandHistory.getAllHands(historyGameId)
       .then((hands) => {
         const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, player.id)
+          HandHistory.getHandSummary(hand, player.id),
         );
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify(summaries));
@@ -650,9 +650,10 @@ wss.on(
 
         // Record betting actions to history
         if (bettingActions.includes(action) && seatBefore) {
-          const seatAfter = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-            game.seats[seatIndex]
-          );
+          const seatAfter =
+            /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+              game.seats[seatIndex]
+            );
           const isAllIn = seatAfter.allIn;
 
           if (action === "fold") {
@@ -665,7 +666,7 @@ wss.on(
               player.id,
               "call",
               seatAfter.bet,
-              isAllIn
+              isAllIn,
             );
           } else if (action === "bet") {
             HandHistory.recordAction(
@@ -673,7 +674,7 @@ wss.on(
               player.id,
               "bet",
               seatAfter.bet,
-              isAllIn
+              isAllIn,
             );
           } else if (action === "raise") {
             HandHistory.recordAction(
@@ -681,7 +682,7 @@ wss.on(
               player.id,
               "raise",
               seatAfter.bet,
-              isAllIn
+              isAllIn,
             );
           } else if (action === "allIn") {
             // Determine if it's a call, bet, or raise based on context
@@ -692,7 +693,7 @@ wss.on(
                 player.id,
                 "call",
                 seatAfter.bet,
-                true
+                true,
               );
             } else if (currentBet === 0) {
               HandHistory.recordAction(
@@ -700,7 +701,7 @@ wss.on(
                 player.id,
                 "bet",
                 seatAfter.bet,
-                true
+                true,
               );
             } else {
               HandHistory.recordAction(
@@ -708,7 +709,7 @@ wss.on(
                 player.id,
                 "raise",
                 seatAfter.bet,
-                true
+                true,
               );
             }
           }

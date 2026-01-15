@@ -448,7 +448,10 @@ class History extends LitElement {
   }
 
   updated(changedProperties) {
-    if (changedProperties.has("gameId") || changedProperties.has("handNumber")) {
+    if (
+      changedProperties.has("gameId") ||
+      changedProperties.has("handNumber")
+    ) {
       this.fetchData();
     }
   }
@@ -516,9 +519,7 @@ class History extends LitElement {
         this.handNumber ?? this.handList[this.handList.length - 1].hand_number;
 
       // Fetch specific hand
-      const handRes = await fetch(
-        `/api/history/${this.gameId}/${targetHand}`
-      );
+      const handRes = await fetch(`/api/history/${this.gameId}/${targetHand}`);
       if (!handRes.ok) {
         throw new Error("Hand not found");
       }
@@ -538,14 +539,14 @@ class History extends LitElement {
         detail: { path: `/history/${this.gameId}/${handNumber}` },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
   navigatePrev() {
     if (!this.handList) return;
     const currentIndex = this.handList.findIndex(
-      (h) => h.hand_number === this.handNumber
+      (h) => h.hand_number === this.handNumber,
     );
     if (currentIndex > 0) {
       this.navigateTo(this.handList[currentIndex - 1].hand_number);
@@ -555,7 +556,7 @@ class History extends LitElement {
   navigateNext() {
     if (!this.handList) return;
     const currentIndex = this.handList.findIndex(
-      (h) => h.hand_number === this.handNumber
+      (h) => h.hand_number === this.handNumber,
     );
     if (currentIndex < this.handList.length - 1) {
       this.navigateTo(this.handList[currentIndex + 1].hand_number);
@@ -568,7 +569,7 @@ class History extends LitElement {
         detail: { path: `/games/${this.gameId}` },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -628,10 +629,11 @@ class History extends LitElement {
     const cards = this.getPlayerCards(player.id);
     const winAmount = this.getPlayerWinAmount(player.id);
     const isYou = player.id === this.playerId;
+    const displayName = isYou ? `${player.name} (you)` : player.name;
 
     return {
       empty: false,
-      player: { id: player.id, name: isYou ? "You" : player.name },
+      player: { id: player.id, name: displayName },
       stack: player.starting_stack,
       cards: cards.map((card) => parseOhhCard(card)),
       handResult: winAmount > 0 ? winAmount : null,
@@ -668,7 +670,7 @@ class History extends LitElement {
   renderNavBar() {
     const summary = this.getCurrentHandSummary();
     const currentIndex = this.handList.findIndex(
-      (h) => h.hand_number === this.handNumber
+      (h) => h.hand_number === this.handNumber,
     );
     const hasPrev = currentIndex > 0;
     const hasNext = currentIndex < this.handList.length - 1;
@@ -689,7 +691,7 @@ class History extends LitElement {
         <div class="nav-info">
           <div class="nav-cards">
             ${(summary?.hole_cards || []).map(
-              (card) => html`<phg-card .card=${parseOhhCard(card)}></phg-card>`
+              (card) => html`<phg-card .card=${parseOhhCard(card)}></phg-card>`,
             )}
           </div>
           <span class="nav-result ${summary?.is_winner ? "winner" : ""}">
@@ -718,11 +720,7 @@ class History extends LitElement {
 
     return html`
       <div class="table-state">
-        <phg-board
-          class="board"
-          .board=${board}
-          .hand=${hand}
-        ></phg-board>
+        <phg-board class="board" .board=${board} .hand=${hand}></phg-board>
         ${(this.hand?.players || []).map((player) => {
           const isWinner = winners.has(player.id);
           const seat = this.playerToSeat(player);
@@ -750,7 +748,8 @@ class History extends LitElement {
       <div class="timeline">
         <div class="timeline-content">
           ${(this.hand?.rounds || []).map((round) => {
-            const streetName = round.street || streetNames[round.id] || "Unknown";
+            const streetName =
+              round.street || streetNames[round.id] || "Unknown";
 
             return html`
               <div class="street">
@@ -762,7 +761,7 @@ class History extends LitElement {
                           (card) =>
                             html`<phg-card
                               .card=${parseOhhCard(card)}
-                            ></phg-card>`
+                            ></phg-card>`,
                         )}
                       </div>
                     `
@@ -772,10 +771,14 @@ class History extends LitElement {
                     .filter((a) => a.action !== "Dealt Cards")
                     .map((action) => {
                       const isYou = action.player_id === this.playerId;
-                      const playerName = isYou ? "You" : this.getPlayerName(action.player_id);
+                      const playerName = isYou
+                        ? "You"
+                        : this.getPlayerName(action.player_id);
                       return html`
                         <div class="action-item">
-                          <span class="action-player ${isYou ? "you" : ""}">${playerName}</span>
+                          <span class="action-player ${isYou ? "you" : ""}"
+                            >${playerName}</span
+                          >
                           ${action.action}
                           ${action.amount
                             ? html`<span class="action-amount"
@@ -798,7 +801,11 @@ class History extends LitElement {
     return html`
       <div class="sidebar">
         <div class="sidebar-header">
-          <button class="sidebar-back" @click=${this.goBack} title="Back to game">
+          <button
+            class="sidebar-back"
+            @click=${this.goBack}
+            title="Back to game"
+          >
             ✕
           </button>
           <span>Hands (${this.handList.length})</span>
@@ -818,7 +825,7 @@ class History extends LitElement {
                 <div class="hand-cards">
                   ${(item.hole_cards || []).map(
                     (card) =>
-                      html`<phg-card .card=${parseOhhCard(card)}></phg-card>`
+                      html`<phg-card .card=${parseOhhCard(card)}></phg-card>`,
                   )}
                 </div>
                 <span class="hand-winner ${isWinner ? "you" : ""}">
@@ -843,10 +850,14 @@ class History extends LitElement {
       return html`
         <div class="error">
           ${this.error}
-          <a class="back-link" href="/games/${this.gameId}" @click=${(e) => {
-            e.preventDefault();
-            this.goBack();
-          }}>
+          <a
+            class="back-link"
+            href="/games/${this.gameId}"
+            @click=${(e) => {
+              e.preventDefault();
+              this.goBack();
+            }}
+          >
             Back to game
           </a>
         </div>
@@ -857,10 +868,14 @@ class History extends LitElement {
       return html`
         <div class="empty">
           No hands recorded yet
-          <a class="back-link" href="/games/${this.gameId}" @click=${(e) => {
-            e.preventDefault();
-            this.goBack();
-          }}>
+          <a
+            class="back-link"
+            href="/games/${this.gameId}"
+            @click=${(e) => {
+              e.preventDefault();
+              this.goBack();
+            }}
+          >
             Back to game
           </a>
         </div>
@@ -872,8 +887,7 @@ class History extends LitElement {
         ${this.renderNavBar()}
         <div class="main">
           <div class="table-area">
-            ${this.renderTableState()}
-            ${this.renderTimeline()}
+            ${this.renderTableState()} ${this.renderTimeline()}
           </div>
           ${this.renderSidebar()}
         </div>

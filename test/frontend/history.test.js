@@ -11,7 +11,7 @@ describe("phg-history", () => {
   describe("loading state", () => {
     it("shows loading message initially", async () => {
       element = await fixture(
-        html`<phg-history .gameId=${"test123"}></phg-history>`
+        html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
 
       const loading = element.shadowRoot.querySelector(".loading");
@@ -23,7 +23,7 @@ describe("phg-history", () => {
   describe("empty state", () => {
     it("shows empty message when no hands recorded", async () => {
       element = await fixture(
-        html`<phg-history .gameId=${"test123"}></phg-history>`
+        html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
 
       // Simulate loaded state with empty hand list
@@ -38,7 +38,7 @@ describe("phg-history", () => {
 
     it("shows back link in empty state", async () => {
       element = await fixture(
-        html`<phg-history .gameId=${"test123"}></phg-history>`
+        html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
 
       element.loading = false;
@@ -53,7 +53,7 @@ describe("phg-history", () => {
   describe("error state", () => {
     it("shows error message", async () => {
       element = await fixture(
-        html`<phg-history .gameId=${"test123"}></phg-history>`
+        html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
 
       element.loading = false;
@@ -73,7 +73,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${1}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       // Simulate loaded state with hand data
@@ -97,13 +97,15 @@ describe("phg-history", () => {
         const nameEl = seat.shadowRoot.querySelector(".player-name");
         if (nameEl) names.push(nameEl.textContent.trim());
       }
-      // player1 is current player so shown as "You", player2 is "Bob"
-      expect(names).to.include("You");
+      // player1 is current player so shown as "Alice (you)", player2 is "Bob"
+      expect(names).to.include("Alice (you)");
       expect(names).to.include("Bob");
     });
 
     it("highlights winner with winning class", async () => {
-      const winners = element.shadowRoot.querySelectorAll(".player-seat.winner");
+      const winners = element.shadowRoot.querySelectorAll(
+        ".player-seat.winner",
+      );
       expect(winners.length).to.be.greaterThan(0);
     });
 
@@ -151,7 +153,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${1}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       element.loading = false;
@@ -162,8 +164,11 @@ describe("phg-history", () => {
     });
 
     it("renders street headers", async () => {
-      const streetHeaders = element.shadowRoot.querySelectorAll(".street-header");
-      const streets = Array.from(streetHeaders).map((h) => h.textContent.trim());
+      const streetHeaders =
+        element.shadowRoot.querySelectorAll(".street-header");
+      const streets = Array.from(streetHeaders).map((h) =>
+        h.textContent.trim(),
+      );
       expect(streets).to.include("Preflop");
       expect(streets).to.include("Flop");
     });
@@ -186,7 +191,8 @@ describe("phg-history", () => {
     });
 
     it("highlights current player as 'You'", async () => {
-      const youLabels = element.shadowRoot.querySelectorAll(".action-player.you");
+      const youLabels =
+        element.shadowRoot.querySelectorAll(".action-player.you");
       expect(youLabels.length).to.be.greaterThan(0);
       expect(youLabels[0].textContent.trim()).to.equal("You");
     });
@@ -203,8 +209,11 @@ describe("phg-history", () => {
       element.hand = mockOhhHandWithShowdown;
       await element.updateComplete;
 
-      const streetHeaders = element.shadowRoot.querySelectorAll(".street-header");
-      const streets = Array.from(streetHeaders).map((h) => h.textContent.trim());
+      const streetHeaders =
+        element.shadowRoot.querySelectorAll(".street-header");
+      const streets = Array.from(streetHeaders).map((h) =>
+        h.textContent.trim(),
+      );
       expect(streets).to.include("Showdown");
     });
   });
@@ -216,7 +225,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${1}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       element.loading = false;
@@ -242,7 +251,8 @@ describe("phg-history", () => {
     });
 
     it("highlights winning hands with winner class", async () => {
-      const winnerItems = element.shadowRoot.querySelectorAll(".hand-item.winner");
+      const winnerItems =
+        element.shadowRoot.querySelectorAll(".hand-item.winner");
       expect(winnerItems.length).to.equal(2); // hands 1 and 3 are winners
     });
 
@@ -274,7 +284,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${2}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       element.loading = false;
@@ -370,7 +380,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${1}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       element.loading = false;
@@ -430,7 +440,7 @@ describe("phg-history", () => {
           .gameId=${"test123"}
           .handNumber=${1}
           .playerId=${"player1"}
-        ></phg-history>`
+        ></phg-history>`,
       );
 
       element.loading = false;
@@ -464,7 +474,7 @@ describe("phg-history", () => {
             actions: mockOhhHand.rounds[0].actions.map((a) =>
               a.action === "Dealt Cards" && a.player_id === "player2"
                 ? { ...a, cards: ["??", "??"] }
-                : a
+                : a,
             ),
           },
         ],
