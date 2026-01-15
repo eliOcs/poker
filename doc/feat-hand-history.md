@@ -18,12 +18,14 @@ data/
 ```
 
 **File format:**
+
 - Plain text with `.ohh` extension
 - Each hand wrapped in `{"ohh": <hand_object>}`
 - Hands separated by blank lines (newline-delimited JSON)
 - Append-only writes
 
 **Example file contents (`data/abc123.ohh`):**
+
 ```
 {"ohh": {"spec_version": "1.4.6", "game_number": "abc123-1", ...}}
 
@@ -33,38 +35,42 @@ data/
 ```
 
 **Reading:**
+
 ```javascript
-const hands = fs.readFileSync(path, 'utf8')
-  .split('\n\n')
+const hands = fs
+  .readFileSync(path, "utf8")
+  .split("\n\n")
   .filter(Boolean)
-  .map(line => JSON.parse(line).ohh)
+  .map((line) => JSON.parse(line).ohh);
 ```
 
 **Writing:**
+
 ```javascript
-fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + '\n\n')
+fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + "\n\n");
 ```
 
 ### Terminology Mapping (codebase → OHH)
 
-| Codebase | OHH | Status |
-|----------|-----|--------|
-| `fold` | `"Fold"` | ✅ Rename only |
-| `check` | `"Check"` | ✅ Rename only |
-| `bet` | `"Bet"` | ✅ Rename only |
-| `raise` | `"Raise"` | ✅ Rename only |
-| `call` | `"Call"` | ✅ Rename only |
-| `allIn` action | `"is_allin": true` flag | 🔄 Flag instead of action |
-| `blinds` generator | `"Post SB"`, `"Post BB"` | 🔄 Separate actions |
-| `buyIn` | `"Added Chips"` | ✅ Rename only |
-| `sit` | `"Sits Down"` | ✅ Rename only |
-| `dealPreflop` | `"Dealt Cards"` per player | 🔄 Per-player action |
-| (implicit) | `"Shows Cards"` | ➕ Add for showdown |
-| (implicit) | `"Mucks Cards"` | ➕ Add for showdown |
+| Codebase           | OHH                        | Status                    |
+| ------------------ | -------------------------- | ------------------------- |
+| `fold`             | `"Fold"`                   | ✅ Rename only            |
+| `check`            | `"Check"`                  | ✅ Rename only            |
+| `bet`              | `"Bet"`                    | ✅ Rename only            |
+| `raise`            | `"Raise"`                  | ✅ Rename only            |
+| `call`             | `"Call"`                   | ✅ Rename only            |
+| `allIn` action     | `"is_allin": true` flag    | 🔄 Flag instead of action |
+| `blinds` generator | `"Post SB"`, `"Post BB"`   | 🔄 Separate actions       |
+| `buyIn`            | `"Added Chips"`            | ✅ Rename only            |
+| `sit`              | `"Sits Down"`              | ✅ Rename only            |
+| `dealPreflop`      | `"Dealt Cards"` per player | 🔄 Per-player action      |
+| (implicit)         | `"Shows Cards"`            | ➕ Add for showdown       |
+| (implicit)         | `"Mucks Cards"`            | ➕ Add for showdown       |
 
 ### OHH Fields
 
 **Fields we use:**
+
 - `spec_version` - OHH version
 - `site_name` - "Pluton Poker"
 - `game_number` - unique identifier: `"{gameId}-{handNumber}"`
@@ -79,6 +85,7 @@ fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + '\n\n')
 - `pots` - array of pot results
 
 **Fields we omit:**
+
 - `network_name` - not part of a poker network
 - `currency` - play chips, not real money
 - `tournament`, `tournament_info` - cash game only
@@ -100,22 +107,74 @@ fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + '\n\n')
   "big_blind_amount": 50,
   "ante_amount": 5,
   "players": [
-    { "id": "a1b2c3d4e5f6...", "seat": 1, "name": "Alice", "starting_stack": 1000 },
-    { "id": "f6e5d4c3b2a1...", "seat": 2, "name": null, "starting_stack": 1500 },
-    { "id": "1234567890ab...", "seat": 4, "name": "Charlie", "starting_stack": 800 }
+    {
+      "id": "a1b2c3d4e5f6...",
+      "seat": 1,
+      "name": "Alice",
+      "starting_stack": 1000
+    },
+    {
+      "id": "f6e5d4c3b2a1...",
+      "seat": 2,
+      "name": null,
+      "starting_stack": 1500
+    },
+    {
+      "id": "1234567890ab...",
+      "seat": 4,
+      "name": "Charlie",
+      "starting_stack": 800
+    }
   ],
   "rounds": [
     {
       "id": 0,
       "street": "Preflop",
       "actions": [
-        { "action_number": 1, "player_id": "a1b2c3d4e5f6...", "action": "Post SB", "amount": 25 },
-        { "action_number": 2, "player_id": "f6e5d4c3b2a1...", "action": "Post BB", "amount": 50 },
-        { "action_number": 3, "player_id": "a1b2c3d4e5f6...", "action": "Dealt Cards", "cards": ["Ah", "Kd"] },
-        { "action_number": 4, "player_id": "f6e5d4c3b2a1...", "action": "Dealt Cards", "cards": ["9s", "9h"] },
-        { "action_number": 5, "player_id": "1234567890ab...", "action": "Dealt Cards", "cards": ["Qc", "Jc"] },
-        { "action_number": 6, "player_id": "1234567890ab...", "action": "Raise", "amount": 150, "is_allin": false },
-        { "action_number": 7, "player_id": "a1b2c3d4e5f6...", "action": "Call", "amount": 150, "is_allin": false },
+        {
+          "action_number": 1,
+          "player_id": "a1b2c3d4e5f6...",
+          "action": "Post SB",
+          "amount": 25
+        },
+        {
+          "action_number": 2,
+          "player_id": "f6e5d4c3b2a1...",
+          "action": "Post BB",
+          "amount": 50
+        },
+        {
+          "action_number": 3,
+          "player_id": "a1b2c3d4e5f6...",
+          "action": "Dealt Cards",
+          "cards": ["Ah", "Kd"]
+        },
+        {
+          "action_number": 4,
+          "player_id": "f6e5d4c3b2a1...",
+          "action": "Dealt Cards",
+          "cards": ["9s", "9h"]
+        },
+        {
+          "action_number": 5,
+          "player_id": "1234567890ab...",
+          "action": "Dealt Cards",
+          "cards": ["Qc", "Jc"]
+        },
+        {
+          "action_number": 6,
+          "player_id": "1234567890ab...",
+          "action": "Raise",
+          "amount": 150,
+          "is_allin": false
+        },
+        {
+          "action_number": 7,
+          "player_id": "a1b2c3d4e5f6...",
+          "action": "Call",
+          "amount": 150,
+          "is_allin": false
+        },
         { "action_number": 8, "player_id": "f6e5d4c3b2a1...", "action": "Fold" }
       ]
     },
@@ -124,9 +183,23 @@ fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + '\n\n')
       "street": "Flop",
       "cards": ["Qh", "Jc", "2s"],
       "actions": [
-        { "action_number": 9, "player_id": "a1b2c3d4e5f6...", "action": "Check" },
-        { "action_number": 10, "player_id": "1234567890ab...", "action": "Bet", "amount": 200, "is_allin": false },
-        { "action_number": 11, "player_id": "a1b2c3d4e5f6...", "action": "Fold" }
+        {
+          "action_number": 9,
+          "player_id": "a1b2c3d4e5f6...",
+          "action": "Check"
+        },
+        {
+          "action_number": 10,
+          "player_id": "1234567890ab...",
+          "action": "Bet",
+          "amount": 200,
+          "is_allin": false
+        },
+        {
+          "action_number": 11,
+          "player_id": "a1b2c3d4e5f6...",
+          "action": "Fold"
+        }
       ]
     }
   ],
@@ -135,7 +208,11 @@ fs.appendFileSync(path, JSON.stringify({ ohh: hand }) + '\n\n')
       "number": 0,
       "amount": 505,
       "player_wins": [
-        { "player_id": "1234567890ab...", "win_amount": 505, "contributed_rake": 0 }
+        {
+          "player_id": "1234567890ab...",
+          "win_amount": 505,
+          "contributed_rake": 0
+        }
       ]
     }
   ]
@@ -191,6 +268,7 @@ Reference: GGPoker PokerCraft hand history viewer.
 ### Components
 
 **1. Final Table State (main area)**
+
 - Reuse existing table component from game view
 - Show player positions with stack changes (+/- amount)
 - Display community cards in center
@@ -198,12 +276,14 @@ Reference: GGPoker PokerCraft hand history viewer.
 - Show revealed hole cards (showdown only, or all if viewing own history)
 
 **2. Action Timeline (bottom)**
+
 - Horizontal layout, grouped by street
 - Columns: Blinds | Pre-Flop | Flop | Turn | River
 - Each action shows: player indicator, action name, amount
 - Final column shows result: win amount + winning hand
 
 **3. Hand List (right sidebar)**
+
 - Scrollable list of hands in session
 - Columns: Hole Cards | Winner | Pot
 - Winner column shows player name
@@ -243,6 +323,7 @@ Reference: GGPoker PokerCraft hand history viewer.
 ```
 
 **Key differences from desktop:**
+
 - **Fixed nav bar** with: prev/next arrows, hole cards, winner, pot size
 - **No hand list sidebar** - navigate via arrows or swipe
 - **Vertical action layout** - streets stacked, each action on own line
@@ -251,17 +332,21 @@ Reference: GGPoker PokerCraft hand history viewer.
 ### Navigation
 
 **Entry point:**
+
 - 🔁 icon on game screen → opens history for current game
 
 **Desktop:**
+
 - Click hand in list → load that hand
 - Arrow keys (←/→) to navigate between hands
 
 **Mobile:**
+
 - Tap arrows in fixed nav bar
 - Swipe left/right to navigate between hands
 
 **Both:**
+
 - URL: `/history/{gameId}/{handNumber}`
 - Back button returns to game screen
 
@@ -272,6 +357,7 @@ Reference: GGPoker PokerCraft hand history viewer.
 Hand history files stored at `/app/data/{gameId}.ohh` inside container, mounted from host.
 
 **Dockerfile changes:**
+
 ```dockerfile
 # Create data directory
 RUN mkdir -p /app/data && chown nodejs:nodejs /app/data
@@ -281,12 +367,14 @@ VOLUME /app/data
 ```
 
 **Kamal config (config/deploy.yml):**
+
 ```yaml
 volumes:
   - /opt/poker/data:/app/data
 ```
 
 **Host setup (one-time):**
+
 ```bash
 sudo mkdir -p /opt/poker/data
 sudo chown 1001:1001 /opt/poker/data
@@ -302,6 +390,7 @@ sudo chown 1001:1001 /opt/poker/data
 ### Phase 1: Data Recording
 
 **1.1 Hand history recorder module**
+
 - Create `src/backend/poker/hand-history.js`
 - `createRecorder(gameId)` - initializes recorder for a game session
 - `recordAction(action)` - buffers actions during hand
@@ -311,11 +400,13 @@ sudo chown 1001:1001 /opt/poker/data
 - Internal FIFO cache (1000 hands max)
 
 **1.2 Hook into game flow**
+
 - Call `recordAction()` from action handlers (fold, call, raise, etc.)
 - Call `recordAction()` from dealing generators (blinds, dealPreflop, etc.)
 - Call `finalizeHand()` from `endHand()` in actions.js
 
 **1.3 File operations**
+
 - Create `data/` directory if not exists
 - Append `{"ohh": {...}}\n\n` to `data/{gameId}.ohh`
 - Handle file creation on first hand
@@ -323,23 +414,28 @@ sudo chown 1001:1001 /opt/poker/data
 ### Phase 2: API Endpoints
 
 **2.1 List hands**
+
 ```
 GET /api/history/{gameId}
 Response: [{ game_number, hole_cards, winner, pot }, ...]
 ```
+
 - Parse .ohh file
 - Return summary for hand list (filtered to requesting player's view)
 
 **2.2 Get specific hand**
+
 ```
 GET /api/history/{gameId}/{handNumber}
 Response: { ohh: <full hand object> }
 ```
+
 - Check in-memory cache first (last 10 hands in game state)
 - Cache miss → read from .ohh file
 - Filter cards based on requesting player's visibility
 
 **2.3 Caching strategy**
+
 - FIFO cache inside `hand-history.js` module (limit: 1000 hands)
 - Key: `"{gameId}-{handNumber}"` (same as `game_number`)
 - On hand recorded: add to cache, evict oldest if over limit
@@ -347,6 +443,7 @@ Response: { ohh: <full hand object> }
 - Keeps hand history logic self-contained, game state unpolluted
 
 **2.4 Player view filtering**
+
 - Implement `filterForPlayer(hand, playerId)` in player-view.js
 - Replace opponent hole cards with `["??", "??"]` unless shown at showdown
 - Track which cards were revealed via "Shows Cards" actions
@@ -354,52 +451,62 @@ Response: { ohh: <full hand object> }
 ### Phase 3: Frontend Components
 
 **3.1 History page route**
+
 - Add route `/history/{gameId}/{handNumber?}`
 - Create `src/frontend/history.js` (Lit component)
 
 **3.2 Table state component**
+
 - Reuse/adapt existing table rendering
 - Display final state: positions, stacks, board, revealed cards
 - Show winner badge and stack changes (+/- amounts)
 
 **3.3 Action timeline component**
+
 - `<action-timeline>` component
 - Desktop: horizontal columns by street
 - Mobile: vertical list with street headers
 - Render actions with player indicator + action + amount
 
 **3.4 Hand list component (desktop)**
+
 - `<hand-list>` component
 - Columns: Hole Cards | Winner | Pot
 - Highlight rows where player won
 - Click handler to select hand
 
 **3.5 Mobile nav bar**
+
 - `<history-nav>` component
 - Shows: arrows, hole cards, winner, pot
 - Fixed position at top
 
 **3.6 Entry point**
+
 - Add 🔁 icon to game screen
 - Link to `/history/{gameId}`
 
 ### Phase 4: Navigation
 
 **4.1 URL routing**
+
 - Update router to handle `/history/{gameId}/{handNumber?}`
 - Default to latest hand if handNumber omitted
 
 **4.2 Keyboard navigation (desktop)**
+
 - Arrow keys ←/→ to prev/next hand
 - Update URL on navigation
 
 **4.3 Touch navigation (mobile)**
+
 - Swipe left/right gesture detection
 - Tap arrows in nav bar
 
 ### Phase 5: Testing
 
 **5.1 Backend unit tests**
+
 - `hand-history.test.js`
   - `createRecorder()` initializes correctly
   - `recordAction()` buffers actions
@@ -411,24 +518,28 @@ Response: { ohh: <full hand object> }
   - Cache evicts oldest when over limit
 
 **5.2 Player view filtering tests**
+
 - Own cards always visible
 - Opponent cards hidden by default
 - Opponent cards visible after "Shows Cards" action
 - Board cards visible after dealt
 
 **5.3 API endpoint tests**
+
 - `GET /api/history/{gameId}` returns hand list
 - `GET /api/history/{gameId}/{handNumber}` returns specific hand
 - Cache hit returns same data as cache miss
 - Player filtering applied correctly
 
 **5.4 Frontend component tests**
+
 - `<action-timeline>` renders actions grouped by street
 - `<hand-list>` highlights winning hands
 - `<history-nav>` shows correct hand info
 - Navigation updates URL
 
 **5.5 E2E smoke tests**
+
 - Extend existing smoke tests to:
   - Play a hand to completion
   - Click 🔁 icon to open hand history

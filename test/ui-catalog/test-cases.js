@@ -883,10 +883,7 @@ const TEST_CASES = {
 
   "history-loading": () => html`
     <div style="height: 100vh; width: 100%;">
-      <phg-history
-        .gameId=${"test123"}
-        .loading=${true}
-      ></phg-history>
+      <phg-history .gameId=${"test123"} .loading=${true}></phg-history>
     </div>
   `,
 
@@ -918,7 +915,15 @@ const TEST_CASES = {
         .playerId=${"player1"}
         .loading=${false}
         .handList=${[
-          { game_number: "test123-1", hand_number: 1, hole_cards: ["Ah", "Kh"], winner_name: "You", winner_id: "player1", pot: 75, is_winner: true },
+          {
+            game_number: "test123-1",
+            hand_number: 1,
+            hole_cards: ["Ah", "Kh"],
+            winner_name: "Bob",
+            winner_id: "player1",
+            pot: 75,
+            is_winner: true,
+          },
         ]}
         .hand=${{
           spec_version: "1.4.6",
@@ -933,7 +938,7 @@ const TEST_CASES = {
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "You", starting_stack: 1000 },
+            { id: "player1", seat: 3, name: "Bob", starting_stack: 1000 },
             { id: "player2", seat: 5, name: "Alice", starting_stack: 1000 },
           ],
           rounds: [
@@ -941,16 +946,49 @@ const TEST_CASES = {
               id: 0,
               street: "Preflop",
               actions: [
-                { action_number: 1, player_id: "player1", action: "Post SB", amount: 25 },
-                { action_number: 2, player_id: "player2", action: "Post BB", amount: 50 },
-                { action_number: 3, player_id: "player1", action: "Dealt Cards", cards: ["Ah", "Kh"] },
-                { action_number: 4, player_id: "player2", action: "Dealt Cards", cards: ["??", "??"] },
-                { action_number: 5, player_id: "player1", action: "Raise", amount: 150 },
+                {
+                  action_number: 1,
+                  player_id: "player1",
+                  action: "Post SB",
+                  amount: 25,
+                },
+                {
+                  action_number: 2,
+                  player_id: "player2",
+                  action: "Post BB",
+                  amount: 50,
+                },
+                {
+                  action_number: 3,
+                  player_id: "player1",
+                  action: "Dealt Cards",
+                  cards: ["Ah", "Kh"],
+                },
+                {
+                  action_number: 4,
+                  player_id: "player2",
+                  action: "Dealt Cards",
+                  cards: ["??", "??"],
+                },
+                {
+                  action_number: 5,
+                  player_id: "player1",
+                  action: "Raise",
+                  amount: 150,
+                },
                 { action_number: 6, player_id: "player2", action: "Fold" },
               ],
             },
           ],
-          pots: [{ number: 0, amount: 75, player_wins: [{ player_id: "player1", win_amount: 75, contributed_rake: 0 }] }],
+          pots: [
+            {
+              number: 0,
+              amount: 75,
+              player_wins: [
+                { player_id: "player1", win_amount: 75, contributed_rake: 0 },
+              ],
+            },
+          ],
         }}
       ></phg-history>
     </div>
@@ -964,7 +1002,15 @@ const TEST_CASES = {
         .playerId=${"player1"}
         .loading=${false}
         .handList=${[
-          { game_number: "test123-1", hand_number: 1, hole_cards: ["Jh", "Th"], winner_name: "You", winner_id: "player1", pot: 500, is_winner: true },
+          {
+            game_number: "test123-1",
+            hand_number: 1,
+            hole_cards: ["Jh", "Th"],
+            winner_name: "Bob",
+            winner_id: "player1",
+            pot: 500,
+            is_winner: true,
+          },
         ]}
         .hand=${{
           spec_version: "1.4.6",
@@ -979,7 +1025,7 @@ const TEST_CASES = {
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "You", starting_stack: 1000 },
+            { id: "player1", seat: 3, name: "Bob", starting_stack: 1000 },
             { id: "player2", seat: 5, name: "Alice", starting_stack: 1000 },
           ],
           rounds: [
@@ -987,11 +1033,36 @@ const TEST_CASES = {
               id: 0,
               street: "Preflop",
               actions: [
-                { action_number: 1, player_id: "player1", action: "Post SB", amount: 25 },
-                { action_number: 2, player_id: "player2", action: "Post BB", amount: 50 },
-                { action_number: 3, player_id: "player1", action: "Dealt Cards", cards: ["Jh", "Th"] },
-                { action_number: 4, player_id: "player2", action: "Dealt Cards", cards: ["As", "Ad"] },
-                { action_number: 5, player_id: "player1", action: "Call", amount: 50 },
+                {
+                  action_number: 1,
+                  player_id: "player1",
+                  action: "Post SB",
+                  amount: 25,
+                },
+                {
+                  action_number: 2,
+                  player_id: "player2",
+                  action: "Post BB",
+                  amount: 50,
+                },
+                {
+                  action_number: 3,
+                  player_id: "player1",
+                  action: "Dealt Cards",
+                  cards: ["Jh", "Th"],
+                },
+                {
+                  action_number: 4,
+                  player_id: "player2",
+                  action: "Dealt Cards",
+                  cards: ["As", "Ad"],
+                },
+                {
+                  action_number: 5,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 50,
+                },
                 { action_number: 6, player_id: "player2", action: "Check" },
               ],
             },
@@ -1000,8 +1071,18 @@ const TEST_CASES = {
               street: "Flop",
               cards: ["Ah", "Kh", "Qh"],
               actions: [
-                { action_number: 7, player_id: "player2", action: "Bet", amount: 100 },
-                { action_number: 8, player_id: "player1", action: "Call", amount: 100 },
+                {
+                  action_number: 7,
+                  player_id: "player2",
+                  action: "Bet",
+                  amount: 100,
+                },
+                {
+                  action_number: 8,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 100,
+                },
               ],
             },
             {
@@ -1009,8 +1090,18 @@ const TEST_CASES = {
               street: "Turn",
               cards: ["5c"],
               actions: [
-                { action_number: 9, player_id: "player2", action: "Bet", amount: 100 },
-                { action_number: 10, player_id: "player1", action: "Call", amount: 100 },
+                {
+                  action_number: 9,
+                  player_id: "player2",
+                  action: "Bet",
+                  amount: 100,
+                },
+                {
+                  action_number: 10,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 100,
+                },
               ],
             },
             {
@@ -1026,12 +1117,30 @@ const TEST_CASES = {
               id: 4,
               street: "Showdown",
               actions: [
-                { action_number: 13, player_id: "player1", action: "Shows Cards", cards: ["Jh", "Th"] },
-                { action_number: 14, player_id: "player2", action: "Shows Cards", cards: ["As", "Ad"] },
+                {
+                  action_number: 13,
+                  player_id: "player1",
+                  action: "Shows Cards",
+                  cards: ["Jh", "Th"],
+                },
+                {
+                  action_number: 14,
+                  player_id: "player2",
+                  action: "Shows Cards",
+                  cards: ["As", "Ad"],
+                },
               ],
             },
           ],
-          pots: [{ number: 0, amount: 500, player_wins: [{ player_id: "player1", win_amount: 500, contributed_rake: 0 }] }],
+          pots: [
+            {
+              number: 0,
+              amount: 500,
+              player_wins: [
+                { player_id: "player1", win_amount: 500, contributed_rake: 0 },
+              ],
+            },
+          ],
         }}
       ></phg-history>
     </div>
@@ -1045,7 +1154,15 @@ const TEST_CASES = {
         .playerId=${"player1"}
         .loading=${false}
         .handList=${[
-          { game_number: "test123-1", hand_number: 1, hole_cards: ["Kc", "Ks"], winner_name: "Alice", winner_id: "player2", pot: 400, is_winner: false },
+          {
+            game_number: "test123-1",
+            hand_number: 1,
+            hole_cards: ["Kc", "Ks"],
+            winner_name: "Alice",
+            winner_id: "player2",
+            pot: 400,
+            is_winner: false,
+          },
         ]}
         .hand=${{
           spec_version: "1.4.6",
@@ -1060,7 +1177,7 @@ const TEST_CASES = {
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "You", starting_stack: 1000 },
+            { id: "player1", seat: 3, name: "Bob", starting_stack: 1000 },
             { id: "player2", seat: 5, name: "Alice", starting_stack: 1000 },
           ],
           rounds: [
@@ -1068,13 +1185,48 @@ const TEST_CASES = {
               id: 0,
               street: "Preflop",
               actions: [
-                { action_number: 1, player_id: "player1", action: "Post SB", amount: 25 },
-                { action_number: 2, player_id: "player2", action: "Post BB", amount: 50 },
-                { action_number: 3, player_id: "player1", action: "Dealt Cards", cards: ["Kc", "Ks"] },
-                { action_number: 4, player_id: "player2", action: "Dealt Cards", cards: ["As", "Ad"] },
-                { action_number: 5, player_id: "player1", action: "Raise", amount: 100 },
-                { action_number: 6, player_id: "player2", action: "Raise", amount: 200 },
-                { action_number: 7, player_id: "player1", action: "Call", amount: 200 },
+                {
+                  action_number: 1,
+                  player_id: "player1",
+                  action: "Post SB",
+                  amount: 25,
+                },
+                {
+                  action_number: 2,
+                  player_id: "player2",
+                  action: "Post BB",
+                  amount: 50,
+                },
+                {
+                  action_number: 3,
+                  player_id: "player1",
+                  action: "Dealt Cards",
+                  cards: ["Kc", "Ks"],
+                },
+                {
+                  action_number: 4,
+                  player_id: "player2",
+                  action: "Dealt Cards",
+                  cards: ["As", "Ad"],
+                },
+                {
+                  action_number: 5,
+                  player_id: "player1",
+                  action: "Raise",
+                  amount: 100,
+                },
+                {
+                  action_number: 6,
+                  player_id: "player2",
+                  action: "Raise",
+                  amount: 200,
+                },
+                {
+                  action_number: 7,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 200,
+                },
               ],
             },
             {
@@ -1108,12 +1260,30 @@ const TEST_CASES = {
               id: 4,
               street: "Showdown",
               actions: [
-                { action_number: 14, player_id: "player1", action: "Shows Cards", cards: ["Kc", "Ks"] },
-                { action_number: 15, player_id: "player2", action: "Shows Cards", cards: ["As", "Ad"] },
+                {
+                  action_number: 14,
+                  player_id: "player1",
+                  action: "Shows Cards",
+                  cards: ["Kc", "Ks"],
+                },
+                {
+                  action_number: 15,
+                  player_id: "player2",
+                  action: "Shows Cards",
+                  cards: ["As", "Ad"],
+                },
               ],
             },
           ],
-          pots: [{ number: 0, amount: 400, player_wins: [{ player_id: "player2", win_amount: 400, contributed_rake: 0 }] }],
+          pots: [
+            {
+              number: 0,
+              amount: 400,
+              player_wins: [
+                { player_id: "player2", win_amount: 400, contributed_rake: 0 },
+              ],
+            },
+          ],
         }}
       ></phg-history>
     </div>
@@ -1127,11 +1297,51 @@ const TEST_CASES = {
         .playerId=${"player1"}
         .loading=${false}
         .handList=${[
-          { game_number: "test123-1", hand_number: 1, hole_cards: ["Ah", "Kh"], winner_name: "You", winner_id: "player1", pot: 150, is_winner: true },
-          { game_number: "test123-2", hand_number: 2, hole_cards: ["7s", "2d"], winner_name: "Alice", winner_id: "player2", pot: 200, is_winner: false },
-          { game_number: "test123-3", hand_number: 3, hole_cards: ["Qc", "Qd"], winner_name: "You", winner_id: "player1", pot: 350, is_winner: true },
-          { game_number: "test123-4", hand_number: 4, hole_cards: ["Jc", "Ts"], winner_name: "Bob", winner_id: "player3", pot: 100, is_winner: false },
-          { game_number: "test123-5", hand_number: 5, hole_cards: ["9h", "9s"], winner_name: "You", winner_id: "player1", pot: 500, is_winner: true },
+          {
+            game_number: "test123-1",
+            hand_number: 1,
+            hole_cards: ["Ah", "Kh"],
+            winner_name: "Bob",
+            winner_id: "player1",
+            pot: 150,
+            is_winner: true,
+          },
+          {
+            game_number: "test123-2",
+            hand_number: 2,
+            hole_cards: ["7s", "2d"],
+            winner_name: "Alice",
+            winner_id: "player2",
+            pot: 200,
+            is_winner: false,
+          },
+          {
+            game_number: "test123-3",
+            hand_number: 3,
+            hole_cards: ["Qc", "Qd"],
+            winner_name: "Bob",
+            winner_id: "player1",
+            pot: 350,
+            is_winner: true,
+          },
+          {
+            game_number: "test123-4",
+            hand_number: 4,
+            hole_cards: ["Jc", "Ts"],
+            winner_name: "Bob",
+            winner_id: "player3",
+            pot: 100,
+            is_winner: false,
+          },
+          {
+            game_number: "test123-5",
+            hand_number: 5,
+            hole_cards: ["9h", "9s"],
+            winner_name: "Bob",
+            winner_id: "player1",
+            pot: 500,
+            is_winner: true,
+          },
         ]}
         .hand=${{
           spec_version: "1.4.6",
@@ -1146,7 +1356,7 @@ const TEST_CASES = {
           big_blind_amount: 50,
           ante_amount: 0,
           players: [
-            { id: "player1", seat: 3, name: "You", starting_stack: 1150 },
+            { id: "player1", seat: 3, name: "Bob", starting_stack: 1150 },
             { id: "player2", seat: 5, name: "Alice", starting_stack: 850 },
           ],
           rounds: [
@@ -1154,12 +1364,42 @@ const TEST_CASES = {
               id: 0,
               street: "Preflop",
               actions: [
-                { action_number: 1, player_id: "player2", action: "Post SB", amount: 25 },
-                { action_number: 2, player_id: "player1", action: "Post BB", amount: 50 },
-                { action_number: 3, player_id: "player2", action: "Dealt Cards", cards: ["Ah", "Qh"] },
-                { action_number: 4, player_id: "player1", action: "Dealt Cards", cards: ["7s", "2d"] },
-                { action_number: 5, player_id: "player2", action: "Raise", amount: 100 },
-                { action_number: 6, player_id: "player1", action: "Call", amount: 100 },
+                {
+                  action_number: 1,
+                  player_id: "player2",
+                  action: "Post SB",
+                  amount: 25,
+                },
+                {
+                  action_number: 2,
+                  player_id: "player1",
+                  action: "Post BB",
+                  amount: 50,
+                },
+                {
+                  action_number: 3,
+                  player_id: "player2",
+                  action: "Dealt Cards",
+                  cards: ["Ah", "Qh"],
+                },
+                {
+                  action_number: 4,
+                  player_id: "player1",
+                  action: "Dealt Cards",
+                  cards: ["7s", "2d"],
+                },
+                {
+                  action_number: 5,
+                  player_id: "player2",
+                  action: "Raise",
+                  amount: 100,
+                },
+                {
+                  action_number: 6,
+                  player_id: "player1",
+                  action: "Call",
+                  amount: 100,
+                },
               ],
             },
             {
@@ -1193,12 +1433,30 @@ const TEST_CASES = {
               id: 4,
               street: "Showdown",
               actions: [
-                { action_number: 13, player_id: "player2", action: "Shows Cards", cards: ["Ah", "Qh"] },
-                { action_number: 14, player_id: "player1", action: "Shows Cards", cards: ["7s", "2d"] },
+                {
+                  action_number: 13,
+                  player_id: "player2",
+                  action: "Shows Cards",
+                  cards: ["Ah", "Qh"],
+                },
+                {
+                  action_number: 14,
+                  player_id: "player1",
+                  action: "Shows Cards",
+                  cards: ["7s", "2d"],
+                },
               ],
             },
           ],
-          pots: [{ number: 0, amount: 200, player_wins: [{ player_id: "player2", win_amount: 200, contributed_rake: 0 }] }],
+          pots: [
+            {
+              number: 0,
+              amount: 200,
+              player_wins: [
+                { player_id: "player2", win_amount: 200, contributed_rake: 0 },
+              ],
+            },
+          ],
         }}
       ></phg-history>
     </div>

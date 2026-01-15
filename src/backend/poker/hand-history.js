@@ -1,5 +1,5 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises"
-import { existsSync } from "node:fs"
+import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -58,19 +58,19 @@ import { existsSync } from "node:fs"
  */
 
 // FIFO cache for recent hands
-const CACHE_LIMIT = 1000
+const CACHE_LIMIT = 1000;
 /** @type {Map<string, OHHHand>} */
-const cache = new Map()
+const cache = new Map();
 
 /** @type {Map<string, Recorder>} */
-const recorders = new Map()
+const recorders = new Map();
 
 /**
  * Gets the data directory path
  * @returns {string}
  */
 function getDataDir() {
-  return process.env.DATA_DIR || "data"
+  return process.env.DATA_DIR || "data";
 }
 
 /**
@@ -93,14 +93,14 @@ function cardToOHH(card) {
     jack: "J",
     queen: "Q",
     king: "K",
-  }
+  };
   const suitMap = {
     hearts: "h",
     diamonds: "d",
     clubs: "c",
     spades: "s",
-  }
-  return `${rankMap[card.rank]}${suitMap[card.suit]}`
+  };
+  return `${rankMap[card.rank]}${suitMap[card.suit]}`;
 }
 
 /**
@@ -109,7 +109,7 @@ function cardToOHH(card) {
  * @returns {Recorder}
  */
 export function getRecorder(gameId) {
-  let recorder = recorders.get(gameId)
+  let recorder = recorders.get(gameId);
   if (!recorder) {
     recorder = {
       gameId,
@@ -122,10 +122,10 @@ export function getRecorder(gameId) {
       dealerSeat: 0,
       blinds: { ante: 0, small: 0, big: 0 },
       boardByStreet: new Map(),
-    }
-    recorders.set(gameId, recorder)
+    };
+    recorders.set(gameId, recorder);
   }
-  return recorder
+  return recorder;
 }
 
 /**
@@ -134,27 +134,27 @@ export function getRecorder(gameId) {
  * @param {Game} game
  */
 export function startHand(gameId, game) {
-  const recorder = getRecorder(gameId)
-  recorder.handNumber++
-  recorder.actions = []
-  recorder.actionCounter = 0
-  recorder.currentStreet = "Preflop"
-  recorder.startTime = new Date().toISOString()
-  recorder.dealerSeat = game.button + 1 // OHH uses 1-indexed seats
-  recorder.blinds = { ...game.blinds }
-  recorder.boardByStreet = new Map()
+  const recorder = getRecorder(gameId);
+  recorder.handNumber++;
+  recorder.actions = [];
+  recorder.actionCounter = 0;
+  recorder.currentStreet = "Preflop";
+  recorder.startTime = new Date().toISOString();
+  recorder.dealerSeat = game.button + 1; // OHH uses 1-indexed seats
+  recorder.blinds = { ...game.blinds };
+  recorder.boardByStreet = new Map();
 
   // Capture players at hand start
-  recorder.players = []
+  recorder.players = [];
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i]
+    const seat = game.seats[i];
     if (!seat.empty && !seat.sittingOut) {
       recorder.players.push({
         id: seat.player.id,
         seat: i + 1, // OHH uses 1-indexed seats
         name: seat.player.name,
         starting_stack: seat.stack + seat.bet, // Include any posted blinds
-      })
+      });
     }
   }
 }
@@ -167,18 +167,18 @@ export function startHand(gameId, game) {
  * @param {number} amount
  */
 export function recordBlind(gameId, playerId, blindType, amount) {
-  const recorder = getRecorder(gameId)
+  const recorder = getRecorder(gameId);
   const actionMap = {
     sb: "Post SB",
     bb: "Post BB",
     ante: "Post Ante",
-  }
+  };
   recorder.actions.push({
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: actionMap[blindType],
     amount,
-  })
+  });
 }
 
 /**
@@ -188,13 +188,13 @@ export function recordBlind(gameId, playerId, blindType, amount) {
  * @param {Card[]} cards
  */
 export function recordDealtCards(gameId, playerId, cards) {
-  const recorder = getRecorder(gameId)
+  const recorder = getRecorder(gameId);
   recorder.actions.push({
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: "Dealt Cards",
     cards: cards.map(cardToOHH),
-  })
+  });
 }
 
 /**
@@ -205,11 +205,17 @@ export function recordDealtCards(gameId, playerId, cards) {
  * @param {number} [amount]
  * @param {boolean} [isAllIn]
  */
-export function recordAction(gameId, playerId, action, amount, isAllIn = false) {
-  const recorder = getRecorder(gameId)
+export function recordAction(
+  gameId,
+  playerId,
+  action,
+  amount,
+  isAllIn = false,
+) {
+  const recorder = getRecorder(gameId);
 
   // Capitalize action for OHH format
-  const ohhAction = action.charAt(0).toUpperCase() + action.slice(1)
+  const ohhAction = action.charAt(0).toUpperCase() + action.slice(1);
 
   /** @type {OHHAction} */
   const actionObj = {
@@ -217,14 +223,14 @@ export function recordAction(gameId, playerId, action, amount, isAllIn = false) 
     player_id: playerId,
     action: ohhAction,
     street: recorder.currentStreet,
-  }
+  };
 
   if (amount !== undefined) {
-    actionObj.amount = amount
-    actionObj.is_allin = isAllIn
+    actionObj.amount = amount;
+    actionObj.is_allin = isAllIn;
   }
 
-  recorder.actions.push(actionObj)
+  recorder.actions.push(actionObj);
 }
 
 /**
@@ -234,19 +240,19 @@ export function recordAction(gameId, playerId, action, amount, isAllIn = false) 
  * @param {Card[]} [boardCards] - new board cards for this street
  */
 export function recordStreet(gameId, street, boardCards) {
-  const recorder = getRecorder(gameId)
+  const recorder = getRecorder(gameId);
   const streetMap = {
     flop: "Flop",
     turn: "Turn",
     river: "River",
-  }
-  recorder.currentStreet = streetMap[street] || street
+  };
+  recorder.currentStreet = streetMap[street] || street;
 
   if (boardCards && boardCards.length > 0) {
     recorder.boardByStreet.set(
       recorder.currentStreet,
-      boardCards.map(cardToOHH)
-    )
+      boardCards.map(cardToOHH),
+    );
   }
 }
 
@@ -258,14 +264,14 @@ export function recordStreet(gameId, street, boardCards) {
  * @param {boolean} shows - true if showing, false if mucking
  */
 export function recordShowdown(gameId, playerId, cards, shows) {
-  const recorder = getRecorder(gameId)
+  const recorder = getRecorder(gameId);
   recorder.actions.push({
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: shows ? "Shows Cards" : "Mucks Cards",
     cards: shows ? cards.map(cardToOHH) : undefined,
     street: "Showdown",
-  })
+  });
 }
 
 /**
@@ -275,14 +281,14 @@ export function recordShowdown(gameId, playerId, cards, shows) {
  */
 function buildRounds(recorder) {
   /** @type {OHHRound[]} */
-  const rounds = []
+  const rounds = [];
   /** @type {OHHRound|null} */
-  let currentRound = null
-  let roundId = 0
+  let currentRound = null;
+  let roundId = 0;
 
   for (const action of recorder.actions) {
     // Use the street stored with each action
-    const actionStreet = action.street || "Preflop"
+    const actionStreet = action.street || "Preflop";
 
     // Create new round if needed
     if (!currentRound || currentRound.street !== actionStreet) {
@@ -290,24 +296,24 @@ function buildRounds(recorder) {
         id: roundId++,
         street: actionStreet,
         actions: [],
-      }
+      };
 
       // Add board cards if this street has them
-      const streetCards = recorder.boardByStreet.get(actionStreet)
+      const streetCards = recorder.boardByStreet.get(actionStreet);
       if (streetCards) {
-        currentRound.cards = streetCards
+        currentRound.cards = streetCards;
       }
 
-      rounds.push(currentRound)
+      rounds.push(currentRound);
     }
 
     // Clone action without the street field for the output
-    const actionCopy = { ...action }
-    delete actionCopy.street
-    currentRound.actions.push(actionCopy)
+    const actionCopy = { ...action };
+    delete actionCopy.street;
+    currentRound.actions.push(actionCopy);
   }
 
-  return rounds
+  return rounds;
 }
 
 /**
@@ -317,10 +323,10 @@ function buildRounds(recorder) {
  * @param {Array<{ visibleSeats: number[], potAmount: number, winners: number[], winningHand: object|null }>} [potResults]
  */
 export async function finalizeHand(gameId, game, potResults = []) {
-  const recorder = getRecorder(gameId)
+  const recorder = getRecorder(gameId);
 
   if (recorder.actions.length === 0) {
-    return // No actions recorded, skip
+    return; // No actions recorded, skip
   }
 
   // Build pots array
@@ -328,14 +334,14 @@ export async function finalizeHand(gameId, game, potResults = []) {
     number: index,
     amount: pot.potAmount,
     player_wins: pot.winners.map((seatIndex) => {
-      const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex])
+      const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
       return {
         player_id: seat.player.id,
         win_amount: Math.floor(pot.potAmount / pot.winners.length),
         contributed_rake: 0,
-      }
+      };
     }),
-  }))
+  }));
 
   // Build the OHH hand object
   /** @type {OHHHand} */
@@ -354,28 +360,28 @@ export async function finalizeHand(gameId, game, potResults = []) {
     players: recorder.players,
     rounds: buildRounds(recorder),
     pots,
-  }
+  };
 
   // Add to cache
-  const cacheKey = `${gameId}-${recorder.handNumber}`
-  cache.set(cacheKey, hand)
+  const cacheKey = `${gameId}-${recorder.handNumber}`;
+  cache.set(cacheKey, hand);
 
   // Evict oldest if over limit
   if (cache.size > CACHE_LIMIT) {
-    const firstKey = cache.keys().next().value
-    cache.delete(firstKey)
+    const firstKey = cache.keys().next().value;
+    cache.delete(firstKey);
   }
 
   // Write to file
-  await writeHandToFile(gameId, hand)
+  await writeHandToFile(gameId, hand);
 
   // Reset for next hand (keep handNumber)
-  recorder.actions = []
-  recorder.actionCounter = 0
-  recorder.currentStreet = "Preflop"
-  recorder.startTime = null
-  recorder.players = []
-  recorder.boardByStreet = new Map()
+  recorder.actions = [];
+  recorder.actionCounter = 0;
+  recorder.currentStreet = "Preflop";
+  recorder.startTime = null;
+  recorder.players = [];
+  recorder.boardByStreet = new Map();
 }
 
 /**
@@ -384,17 +390,17 @@ export async function finalizeHand(gameId, game, potResults = []) {
  * @param {OHHHand} hand
  */
 async function writeHandToFile(gameId, hand) {
-  const dataDir = getDataDir()
+  const dataDir = getDataDir();
 
   // Ensure data directory exists
   if (!existsSync(dataDir)) {
-    await mkdir(dataDir, { recursive: true })
+    await mkdir(dataDir, { recursive: true });
   }
 
-  const filePath = `${dataDir}/${gameId}.ohh`
-  const content = JSON.stringify({ ohh: hand }) + "\n\n"
+  const filePath = `${dataDir}/${gameId}.ohh`;
+  const content = JSON.stringify({ ohh: hand }) + "\n\n";
 
-  await appendFile(filePath, content, "utf8")
+  await appendFile(filePath, content, "utf8");
 }
 
 /**
@@ -403,17 +409,17 @@ async function writeHandToFile(gameId, hand) {
  * @returns {Promise<OHHHand[]>}
  */
 async function readHandsFromFile(gameId) {
-  const dataDir = getDataDir()
-  const filePath = `${dataDir}/${gameId}.ohh`
+  const dataDir = getDataDir();
+  const filePath = `${dataDir}/${gameId}.ohh`;
 
   if (!existsSync(filePath)) {
-    return []
+    return [];
   }
 
-  const content = await readFile(filePath, "utf8")
-  const lines = content.split("\n\n").filter(Boolean)
+  const content = await readFile(filePath, "utf8");
+  const lines = content.split("\n\n").filter(Boolean);
 
-  return lines.map((line) => JSON.parse(line).ohh)
+  return lines.map((line) => JSON.parse(line).ohh);
 }
 
 /**
@@ -423,27 +429,27 @@ async function readHandsFromFile(gameId) {
  * @returns {Promise<OHHHand|null>}
  */
 export async function getHand(gameId, handNumber) {
-  const cacheKey = `${gameId}-${handNumber}`
+  const cacheKey = `${gameId}-${handNumber}`;
 
   // Check cache first
   if (cache.has(cacheKey)) {
-    return cache.get(cacheKey) || null
+    return cache.get(cacheKey) || null;
   }
 
   // Read from file
-  const hands = await readHandsFromFile(gameId)
-  const hand = hands.find((h) => h.game_number === `${gameId}-${handNumber}`)
+  const hands = await readHandsFromFile(gameId);
+  const hand = hands.find((h) => h.game_number === `${gameId}-${handNumber}`);
 
   if (hand) {
     // Add to cache for future requests
-    cache.set(cacheKey, hand)
+    cache.set(cacheKey, hand);
     if (cache.size > CACHE_LIMIT) {
-      const firstKey = cache.keys().next().value
-      cache.delete(firstKey)
+      const firstKey = cache.keys().next().value;
+      cache.delete(firstKey);
     }
   }
 
-  return hand || null
+  return hand || null;
 }
 
 /**
@@ -452,7 +458,7 @@ export async function getHand(gameId, handNumber) {
  * @returns {Promise<OHHHand[]>}
  */
 export async function getAllHands(gameId) {
-  return readHandsFromFile(gameId)
+  return readHandsFromFile(gameId);
 }
 
 /**
@@ -464,11 +470,11 @@ export async function getAllHands(gameId) {
  */
 export function filterHandForPlayer(hand, playerId) {
   // Find which players showed their cards at showdown
-  const shownPlayerIds = new Set()
+  const shownPlayerIds = new Set();
   for (const round of hand.rounds) {
     for (const action of round.actions) {
       if (action.action === "Shows Cards") {
-        shownPlayerIds.add(action.player_id)
+        shownPlayerIds.add(action.player_id);
       }
     }
   }
@@ -479,27 +485,27 @@ export function filterHandForPlayer(hand, playerId) {
     actions: round.actions.map((action) => {
       // Filter "Dealt Cards" actions
       if (action.action === "Dealt Cards") {
-        const isOwnCards = action.player_id === playerId
-        const wasShown = shownPlayerIds.has(action.player_id)
+        const isOwnCards = action.player_id === playerId;
+        const wasShown = shownPlayerIds.has(action.player_id);
 
         if (isOwnCards || wasShown) {
-          return action // Show cards
+          return action; // Show cards
         } else {
           // Hide cards
           return {
             ...action,
             cards: ["??", "??"],
-          }
+          };
         }
       }
-      return action
+      return action;
     }),
-  }))
+  }));
 
   return {
     ...hand,
     rounds: filteredRounds,
-  }
+  };
 }
 
 /**
@@ -510,36 +516,36 @@ export function filterHandForPlayer(hand, playerId) {
  */
 export function getHandSummary(hand, playerId) {
   // Extract hand number from game_number (format: "gameId-handNumber")
-  const handNumber = parseInt(hand.game_number.split("-").pop() || "0", 10)
+  const handNumber = parseInt(hand.game_number.split("-").pop() || "0", 10);
 
   // Find player's hole cards
-  let holeCards = ["??", "??"]
+  let holeCards = ["??", "??"];
   for (const round of hand.rounds) {
     for (const action of round.actions) {
       if (action.action === "Dealt Cards" && action.player_id === playerId) {
-        holeCards = action.cards || ["??", "??"]
-        break
+        holeCards = action.cards || ["??", "??"];
+        break;
       }
     }
   }
 
   // Find winner info
-  let winnerName = null
-  let winnerId = null
-  let totalPot = 0
-  let isWinner = false
+  let winnerName = null;
+  let winnerId = null;
+  let totalPot = 0;
+  let isWinner = false;
 
   if (hand.pots.length > 0) {
-    const mainPot = hand.pots[0]
-    totalPot = mainPot.amount
+    const mainPot = hand.pots[0];
+    totalPot = mainPot.amount;
 
     if (mainPot.player_wins.length > 0) {
-      winnerId = mainPot.player_wins[0].player_id
-      isWinner = winnerId === playerId
+      winnerId = mainPot.player_wins[0].player_id;
+      isWinner = winnerId === playerId;
 
       // Find winner name from players array
-      const winner = hand.players.find((p) => p.id === winnerId)
-      winnerName = winner?.name || `Seat ${winner?.seat || "??"}`
+      const winner = hand.players.find((p) => p.id === winnerId);
+      winnerName = winner?.name || `Seat ${winner?.seat || "??"}`;
     }
   }
 
@@ -551,7 +557,7 @@ export function getHandSummary(hand, playerId) {
     winner_id: winnerId,
     pot: totalPot,
     is_winner: isWinner,
-  }
+  };
 }
 
 /**
@@ -560,8 +566,8 @@ export function getHandSummary(hand, playerId) {
  * @returns {number}
  */
 export function getHandNumber(gameId) {
-  const recorder = recorders.get(gameId)
-  return recorder?.handNumber || 0
+  const recorder = recorders.get(gameId);
+  return recorder?.handNumber || 0;
 }
 
 /**
@@ -569,14 +575,14 @@ export function getHandNumber(gameId) {
  * @param {string} gameId
  */
 export function clearRecorder(gameId) {
-  recorders.delete(gameId)
+  recorders.delete(gameId);
 }
 
 /**
  * Clears the cache (for testing)
  */
 export function clearCache() {
-  cache.clear()
+  cache.clear();
 }
 
 /**
@@ -584,5 +590,5 @@ export function clearCache() {
  * @returns {number}
  */
 export function getCacheSize() {
-  return cache.size
+  return cache.size;
 }

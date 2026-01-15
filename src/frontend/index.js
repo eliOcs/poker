@@ -379,7 +379,7 @@ class Game extends LitElement {
         detail: { path: `/history/${this.gameId}` },
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   }
 
@@ -511,7 +511,11 @@ class Game extends LitElement {
           ${this.socket?.readyState === 2 ? "Closing ..." : ""}
           ${this.socket?.readyState === 3 ? "Closed" : ""}
         </span>
-        <button id="history-btn" @click=${this.openHistory} title="Hand History">
+        <button
+          id="history-btn"
+          @click=${this.openHistory}
+          title="Hand History"
+        >
           🔁
         </button>
         <button id="ranking-btn" @click=${this.openRanking} title="Rankings">
