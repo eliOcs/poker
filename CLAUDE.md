@@ -199,19 +199,23 @@ PORT=3000
 ### Testing
 
 **Backend tests** (`test/poker/`):
+
 - Use `node:test` and `node:assert`
 - Test generators by calling `.next()` explicitly
 - Deep equality for object comparisons
 
 **Frontend tests** (`test/frontend/`):
+
 - Use `@open-wc/testing` with `web-test-runner`
 - Test Lit components in isolation
 
 **E2E tests** (`test/e2e/`):
+
 - Use Playwright for browser automation
 - Test full user flows
 
 **UI Catalog** (`test/ui-catalog/`):
+
 - Visual regression testing with Playwright screenshots
 - Run `npm run test:ui-catalog:update` to regenerate snapshots after UI changes
 
