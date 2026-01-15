@@ -77,101 +77,6 @@ function getDataDir() {
 }
 
 /**
- * Converts internal card format to OHH format
- * @param {Card} card
- * @returns {string}
- */
-function cardToOHH(card) {
-  const rankMap = {
-    ace: "A",
-    2: "2",
-    3: "3",
-    4: "4",
-    5: "5",
-    6: "6",
-    7: "7",
-    8: "8",
-    9: "9",
-    10: "T",
-    jack: "J",
-    queen: "Q",
-    king: "K",
-  };
-  const suitMap = {
-    hearts: "h",
-    diamonds: "d",
-    clubs: "c",
-    spades: "s",
-  };
-  return `${rankMap[card.rank]}${suitMap[card.suit]}`;
-}
-
-/**
- * Converts OHH card notation to card object
- * @param {string} card - OHH card string (e.g., "Ah", "Kd", "??")
- * @returns {Card | { hidden: true }}
- */
-function parseOhhCard(card) {
-  if (!card || card === "??") {
-    return { hidden: true };
-  }
-
-  const rankMap = {
-    A: "ace",
-    K: "king",
-    Q: "queen",
-    J: "jack",
-    T: "10",
-    9: "9",
-    8: "8",
-    7: "7",
-    6: "6",
-    5: "5",
-    4: "4",
-    3: "3",
-    2: "2",
-  };
-
-  const suitMap = {
-    h: "hearts",
-    d: "diamonds",
-    c: "clubs",
-    s: "spades",
-  };
-
-  const rankChar = card.slice(0, -1);
-  const suitChar = card.slice(-1);
-
-  return {
-    rank: rankMap[rankChar] || rankChar,
-    suit: suitMap[suitChar] || suitChar,
-  };
-}
-
-/**
- * Transforms OHH hand data to frontend format (converts card strings to card objects)
- * @param {OHHHand} hand
- * @returns {object}
- */
-export function transformForFrontend(hand) {
-  return {
-    ...hand,
-    rounds: hand.rounds.map((round) => ({
-      ...round,
-      cards: round.cards?.map(parseOhhCard),
-      actions: round.actions.map((action) => ({
-        ...action,
-        cards: action.cards?.map(parseOhhCard),
-      })),
-    })),
-    pots: hand.pots.map((pot) => ({
-      ...pot,
-      winning_cards: pot.winning_cards?.map(parseOhhCard),
-    })),
-  };
-}
-
-/**
  * Gets or creates a recorder for a game
  * @param {string} gameId
  * @returns {Recorder}
@@ -250,7 +155,6 @@ export function recordBlind(gameId, playerId, blindType, amount) {
 }
 
 /**
- * Records cards dealt to a player
  * @param {string} gameId
  * @param {string} playerId
  * @param {Card[]} cards
@@ -261,7 +165,7 @@ export function recordDealtCards(gameId, playerId, cards) {
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: "Dealt Cards",
-    cards: cards.map(cardToOHH),
+    cards,
   });
 }
 
@@ -302,10 +206,9 @@ export function recordAction(
 }
 
 /**
- * Records the start of a new street
  * @param {string} gameId
  * @param {string} street - flop, turn, river
- * @param {Card[]} [boardCards] - new board cards for this street
+ * @param {Card[]} [boardCards]
  */
 export function recordStreet(gameId, street, boardCards) {
   const recorder = getRecorder(gameId);
@@ -317,15 +220,11 @@ export function recordStreet(gameId, street, boardCards) {
   recorder.currentStreet = streetMap[street] || street;
 
   if (boardCards && boardCards.length > 0) {
-    recorder.boardByStreet.set(
-      recorder.currentStreet,
-      boardCards.map(cardToOHH),
-    );
+    recorder.boardByStreet.set(recorder.currentStreet, boardCards);
   }
 }
 
 /**
- * Records a showdown action
  * @param {string} gameId
  * @param {string} playerId
  * @param {Card[]} cards
@@ -337,7 +236,7 @@ export function recordShowdown(gameId, playerId, cards, shows) {
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: shows ? "Shows Cards" : "Mucks Cards",
-    cards: shows ? cards.map(cardToOHH) : undefined,
+    cards: shows ? cards : undefined,
     street: "Showdown",
   });
 }
@@ -404,7 +303,7 @@ export async function finalizeHand(gameId, game, potResults = []) {
     winning_hand: pot.winningHand
       ? HandRankings.formatHand(pot.winningHand)
       : null,
-    winning_cards: pot.winningCards ? pot.winningCards.map(cardToOHH) : null,
+    winning_cards: pot.winningCards || null,
     player_wins: pot.winners.map((seatIndex) => {
       const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
       return {
@@ -584,7 +483,7 @@ export function filterHandForPlayer(hand, playerId) {
  * Gets a summary of a hand for the hand list
  * @param {OHHHand} hand
  * @param {string} playerId - The requesting player's ID
- * @returns {{ game_number: string, hand_number: number, hole_cards: Array<Card|{hidden: true}>, winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
+ * @returns {{ game_number: string, hand_number: number, hole_cards: (Card | string)[], winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
  */
 export function getHandSummary(hand, playerId) {
   // Extract hand number from game_number (format: "gameId-handNumber")
@@ -624,7 +523,7 @@ export function getHandSummary(hand, playerId) {
   return {
     game_number: hand.game_number,
     hand_number: handNumber,
-    hole_cards: holeCards.map(parseOhhCard),
+    hole_cards: holeCards,
     winner_name: winnerName,
     winner_id: winnerId,
     pot: totalPot,

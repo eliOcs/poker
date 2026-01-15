@@ -1,21 +1,17 @@
 import { random } from "./rng.js";
 
-/**
- * @typedef {string} Suit
- */
-/**
- * @type {Suit[]}
- */
-const suits = ["hearts", "clubs", "diamonds", "spades"];
+/** @typedef {'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | 'T' | 'J' | 'Q' | 'K'} Rank */
+/** @typedef {'s' | 'h' | 'd' | 'c'} Suit */
+/** @typedef {`${Rank}${Suit}`} Card */
 
-/**
- * @typedef {string} Rank
- */
-/**
- * @type {Rank[]}
- */
-const ranks = [
-  "ace",
+export const HIDDEN = "??";
+
+/** @type {Suit[]} */
+const suits = /** @type {Suit[]} */ (["s", "h", "d", "c"]);
+
+/** @type {Rank[]} */
+const ranks = /** @type {Rank[]} */ ([
+  "A",
   "2",
   "3",
   "4",
@@ -24,41 +20,36 @@ const ranks = [
   "7",
   "8",
   "9",
-  "10",
-  "jack",
-  "queen",
-  "king",
-];
+  "T",
+  "J",
+  "Q",
+  "K",
+]);
 
 /**
- * @typedef {object} Card
- * @property {Rank} rank
- * @property {Suit} suit
- */
-
-/**
- * Creates a card with validated rank and suit
- * @param {Card} card - Card to create
+ * @param {Rank} rank
+ * @param {Suit} suit
  * @returns {Card}
  */
-export function createCard({ rank, suit }) {
+export function createCard(rank, suit) {
   if (!ranks.includes(rank)) {
     throw new Error("invalid rank");
   }
   if (!suits.includes(suit)) {
     throw new Error("invalid suit");
   }
-  return { rank, suit };
+  return `${rank}${suit}`;
 }
 
 /**
- * @returns {Card[]} deck
+ * @returns {Card[]}
  */
 export function create() {
+  /** @type {Card[]} */
   const deck = [];
   for (const suit of suits) {
     for (const rank of ranks) {
-      deck.push({ suit, rank });
+      deck.push(/** @type {Card} */ (`${rank}${suit}`));
     }
   }
   return deck;
@@ -66,9 +57,47 @@ export function create() {
 
 /**
  * @param {Card[]} deck will be altered
- * @returns {Card} random card in deck
+ * @returns {Card} random card from deck
  */
 export function deal(deck) {
   const randomIndex = Math.floor(random() * deck.length);
   return deck.splice(randomIndex, 1)[0];
+}
+
+/**
+ * @param {Card} card
+ * @returns {Rank}
+ */
+export function getRank(card) {
+  return /** @type {Rank} */ (card.slice(0, -1));
+}
+
+/**
+ * @param {Card} card
+ * @returns {Suit}
+ */
+export function getSuit(card) {
+  return /** @type {Suit} */ (card.slice(-1));
+}
+
+/**
+ * @param {Card|string} card
+ * @returns {boolean}
+ */
+export function isHidden(card) {
+  return card === HIDDEN;
+}
+
+/**
+ * @param {string} card
+ * @returns {card is Card}
+ */
+export function isValidCard(card) {
+  if (typeof card !== "string" || card.length !== 2) return false;
+  const rank = card.slice(0, -1);
+  const suit = card.slice(-1);
+  return (
+    ranks.includes(/** @type {Rank} */ (rank)) &&
+    suits.includes(/** @type {Suit} */ (suit))
+  );
 }

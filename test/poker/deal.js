@@ -3,10 +3,10 @@ import assert from "assert";
 import * as Game from "../../src/backend/poker/game.js";
 import * as Player from "../../src/backend/poker/player.js";
 import { dealFlop, dealPreflop, sit } from "../../src/backend/poker/actions.js";
-import { createCard } from "../../src/backend/poker/deck.js";
+import { isValidCard } from "../../src/backend/poker/deck.js";
 
 function assertCard(card) {
-  assert.doesNotThrow(() => createCard(card));
+  assert.ok(isValidCard(card), `Expected valid card, got: ${card}`);
 }
 
 describe("deal", function () {

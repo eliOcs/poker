@@ -5,133 +5,82 @@ import handRankings from "../../src/backend/poker/hand-rankings.js";
 describe("Hand Rankings", function () {
   describe("calculate", function () {
     it("Royal Flush", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "queen", suit: "clubs" },
-          { rank: "jack", suit: "clubs" },
-          { rank: "ace", suit: "clubs" },
-          { rank: "10", suit: "clubs" },
-          { rank: "king", suit: "clubs" },
-        ]),
-        { name: "royal flush" },
-      );
+      assert.deepEqual(handRankings.calculate(["Qc", "Jc", "Ac", "Tc", "Kc"]), {
+        name: "royal flush",
+      });
     });
 
     it("Straight Flush", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "7", suit: "hearts" },
-          { rank: "3", suit: "hearts" },
-          { rank: "5", suit: "hearts" },
-          { rank: "4", suit: "hearts" },
-          { rank: "6", suit: "hearts" },
-        ]),
-        { name: "straight flush", suit: "hearts", from: "3", to: "7" },
-      );
+      assert.deepEqual(handRankings.calculate(["7h", "3h", "5h", "4h", "6h"]), {
+        name: "straight flush",
+        suit: "h",
+        from: "3",
+        to: "7",
+      });
     });
 
     it("4 of a kind", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "king", suit: "spades" },
-          { rank: "3", suit: "hearts" },
-          { rank: "king", suit: "hearts" },
-          { rank: "king", suit: "clubs" },
-          { rank: "king", suit: "diamonds" },
-        ]),
-        { name: "4 of a kind", of: "king", kicker: "3" },
-      );
+      assert.deepEqual(handRankings.calculate(["Ks", "3h", "Kh", "Kc", "Kd"]), {
+        name: "4 of a kind",
+        of: "K",
+        kicker: "3",
+      });
     });
 
     it("Full House", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "3", suit: "hearts" },
-          { rank: "10", suit: "hearts" },
-          { rank: "3", suit: "diamonds" },
-          { rank: "10", suit: "clubs" },
-          { rank: "10", suit: "spades" },
-        ]),
-        { name: "full house", of: "10", and: "3" },
-      );
+      assert.deepEqual(handRankings.calculate(["3h", "Th", "3d", "Tc", "Ts"]), {
+        name: "full house",
+        of: "T",
+        and: "3",
+      });
     });
 
     it("Flush", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "queen", suit: "diamonds" },
-          { rank: "10", suit: "diamonds" },
-          { rank: "7", suit: "diamonds" },
-          { rank: "4", suit: "diamonds" },
-          { rank: "2", suit: "diamonds" },
-        ]),
-        { name: "flush", suit: "diamonds", high: "queen" },
-      );
+      assert.deepEqual(handRankings.calculate(["Qd", "Td", "7d", "4d", "2d"]), {
+        name: "flush",
+        suit: "d",
+        high: "Q",
+      });
     });
 
     it("Straight", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "2", suit: "diamonds" },
-          { rank: "5", suit: "hearts" },
-          { rank: "3", suit: "hearts" },
-          { rank: "ace", suit: "clubs" },
-          { rank: "4", suit: "splades" },
-        ]),
-        { name: "straight", from: "ace", to: "5" },
-      );
+      assert.deepEqual(handRankings.calculate(["2d", "5h", "3h", "Ac", "4s"]), {
+        name: "straight",
+        from: "A",
+        to: "5",
+      });
     });
 
     it("3 of a kind", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "ace", suit: "clubs" },
-          { rank: "2", suit: "diamonds" },
-          { rank: "2", suit: "hearts" },
-          { rank: "5", suit: "hearts" },
-          { rank: "2", suit: "splades" },
-        ]),
-        { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
-      );
+      assert.deepEqual(handRankings.calculate(["Ac", "2d", "2h", "5h", "2s"]), {
+        name: "3 of a kind",
+        of: "2",
+        kickers: ["A", "5"],
+      });
     });
 
     it("2 pair", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "jack", suit: "clubs" },
-          { rank: "4", suit: "diamonds" },
-          { rank: "jack", suit: "hearts" },
-          { rank: "4", suit: "hearts" },
-          { rank: "9", suit: "splades" },
-        ]),
-        { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-      );
+      assert.deepEqual(handRankings.calculate(["Jc", "4d", "Jh", "4h", "9s"]), {
+        name: "2 pair",
+        of: "J",
+        and: "4",
+        kicker: "9",
+      });
     });
 
     it("Pair", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "3", suit: "clubs" },
-          { rank: "jack", suit: "hearts" },
-          { rank: "4", suit: "diamonds" },
-          { rank: "4", suit: "hearts" },
-          { rank: "9", suit: "splades" },
-        ]),
-        { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
-      );
+      assert.deepEqual(handRankings.calculate(["3c", "Jh", "4d", "4h", "9s"]), {
+        name: "pair",
+        of: "4",
+        kickers: ["J", "9", "3"],
+      });
     });
 
     it("High card", function () {
-      assert.deepEqual(
-        handRankings.calculate([
-          { rank: "3", suit: "clubs" },
-          { rank: "jack", suit: "hearts" },
-          { rank: "4", suit: "diamonds" },
-          { rank: "king", suit: "hearts" },
-          { rank: "9", suit: "splades" },
-        ]),
-        { name: "high card", ranks: ["king", "jack", "9", "4", "3"] },
-      );
+      assert.deepEqual(handRankings.calculate(["3c", "Jh", "4d", "Kh", "9s"]), {
+        name: "high card",
+        ranks: ["K", "J", "9", "4", "3"],
+      });
     });
   });
 
@@ -139,26 +88,26 @@ describe("Hand Rankings", function () {
     it("should correcly rank by hand type", function () {
       assert.deepEqual(
         [
-          { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
-          { name: "full house", of: "10", and: "3" },
+          { name: "pair", of: "4", kickers: ["J", "9", "3"] },
+          { name: "full house", of: "T", and: "3" },
           { name: "royal flush" },
-          { name: "high card", ranks: ["king", "jack", "9", "4", "3"] },
-          { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
-          { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-          { name: "straight flush", suit: "hearts", from: "3", to: "7" },
-          { name: "flush", suit: "diamonds", high: "queen" },
-          { name: "4 of a kind", of: "king", kicker: "3" },
+          { name: "high card", ranks: ["K", "J", "9", "4", "3"] },
+          { name: "3 of a kind", of: "2", kickers: ["A", "5"] },
+          { name: "2 pair", of: "J", and: "4", kicker: "9" },
+          { name: "straight flush", suit: "h", from: "3", to: "7" },
+          { name: "flush", suit: "d", high: "Q" },
+          { name: "4 of a kind", of: "K", kicker: "3" },
         ].sort(handRankings.compare),
         [
           { name: "royal flush" },
-          { name: "straight flush", suit: "hearts", from: "3", to: "7" },
-          { name: "4 of a kind", of: "king", kicker: "3" },
-          { name: "full house", of: "10", and: "3" },
-          { name: "flush", suit: "diamonds", high: "queen" },
-          { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
-          { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-          { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
-          { name: "high card", ranks: ["king", "jack", "9", "4", "3"] },
+          { name: "straight flush", suit: "h", from: "3", to: "7" },
+          { name: "4 of a kind", of: "K", kicker: "3" },
+          { name: "full house", of: "T", and: "3" },
+          { name: "flush", suit: "d", high: "Q" },
+          { name: "3 of a kind", of: "2", kickers: ["A", "5"] },
+          { name: "2 pair", of: "J", and: "4", kicker: "9" },
+          { name: "pair", of: "4", kickers: ["J", "9", "3"] },
+          { name: "high card", ranks: ["K", "J", "9", "4", "3"] },
         ],
       );
     });
@@ -179,8 +128,8 @@ describe("Hand Rankings", function () {
       it("highest wins", function () {
         assert(
           handRankings.compare(
-            { name: "straight flush", suit: "hearts", from: "3", to: "7" },
-            { name: "straight flush", suit: "hearts", from: "4", to: "8" },
+            { name: "straight flush", suit: "h", from: "3", to: "7" },
+            { name: "straight flush", suit: "h", from: "4", to: "8" },
           ) > 0,
         );
       });
@@ -190,8 +139,8 @@ describe("Hand Rankings", function () {
       it("highest ranked wins", function () {
         assert(
           handRankings.compare(
-            { name: "4 of a kind", of: "10", kicker: "3" },
-            { name: "4 of a kind", of: "jack", kicker: "3" },
+            { name: "4 of a kind", of: "T", kicker: "3" },
+            { name: "4 of a kind", of: "J", kicker: "3" },
           ) > 0,
         );
       });
@@ -199,8 +148,8 @@ describe("Hand Rankings", function () {
       it("highest kicker wins", function () {
         assert(
           handRankings.compare(
-            { name: "4 of a kind", of: "10", kicker: "10" },
-            { name: "4 of a kind", of: "10", kicker: "queen" },
+            { name: "4 of a kind", of: "T", kicker: "T" },
+            { name: "4 of a kind", of: "T", kicker: "Q" },
           ) > 0,
         );
       });
@@ -211,7 +160,7 @@ describe("Hand Rankings", function () {
         assert(
           handRankings.compare(
             { name: "full house", of: "9", and: "3" },
-            { name: "full house", of: "10", and: "3" },
+            { name: "full house", of: "T", and: "3" },
           ) > 0,
         );
       });
@@ -219,8 +168,8 @@ describe("Hand Rankings", function () {
       it("highest pair wins", function () {
         assert(
           handRankings.compare(
-            { name: "full house", of: "10", and: "3" },
-            { name: "full house", of: "10", and: "4" },
+            { name: "full house", of: "T", and: "3" },
+            { name: "full house", of: "T", and: "4" },
           ) > 0,
         );
       });
@@ -230,8 +179,8 @@ describe("Hand Rankings", function () {
       it("highest wins", function () {
         assert(
           handRankings.compare(
-            { name: "flush", suit: "diamonds", high: "jack" },
-            { name: "flush", suit: "diamonds", high: "queen" },
+            { name: "flush", suit: "d", high: "J" },
+            { name: "flush", suit: "d", high: "Q" },
           ) > 0,
         );
       });
@@ -241,8 +190,8 @@ describe("Hand Rankings", function () {
       it("highest triplet wins", function () {
         assert(
           handRankings.compare(
-            { name: "3 of a kind", of: "2", kickers: ["ace", "5"] },
-            { name: "3 of a kind", of: "3", kickers: ["ace", "5"] },
+            { name: "3 of a kind", of: "2", kickers: ["A", "5"] },
+            { name: "3 of a kind", of: "3", kickers: ["A", "5"] },
           ) > 0,
         );
       });
@@ -250,8 +199,8 @@ describe("Hand Rankings", function () {
       it("highest kicker wins", function () {
         assert(
           handRankings.compare(
-            { name: "3 of a kind", of: "3", kickers: ["ace", "5"] },
-            { name: "3 of a kind", of: "3", kickers: ["ace", "king"] },
+            { name: "3 of a kind", of: "3", kickers: ["A", "5"] },
+            { name: "3 of a kind", of: "3", kickers: ["A", "K"] },
           ) > 0,
         );
       });
@@ -261,8 +210,8 @@ describe("Hand Rankings", function () {
       it("highest pair wins", function () {
         assert(
           handRankings.compare(
-            { name: "2 pair", of: "jack", and: "7", kicker: "9" },
-            { name: "2 pair", of: "queen", and: "4", kicker: "9" },
+            { name: "2 pair", of: "J", and: "7", kicker: "9" },
+            { name: "2 pair", of: "Q", and: "4", kicker: "9" },
           ) > 0,
         );
       });
@@ -270,8 +219,8 @@ describe("Hand Rankings", function () {
       it("highest second pair wins", function () {
         assert(
           handRankings.compare(
-            { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-            { name: "2 pair", of: "jack", and: "7", kicker: "9" },
+            { name: "2 pair", of: "J", and: "4", kicker: "9" },
+            { name: "2 pair", of: "J", and: "7", kicker: "9" },
           ) > 0,
         );
       });
@@ -279,8 +228,8 @@ describe("Hand Rankings", function () {
       it("highest kicker  wins", function () {
         assert(
           handRankings.compare(
-            { name: "2 pair", of: "jack", and: "4", kicker: "9" },
-            { name: "2 pair", of: "jack", and: "7", kicker: "9" },
+            { name: "2 pair", of: "J", and: "4", kicker: "9" },
+            { name: "2 pair", of: "J", and: "7", kicker: "9" },
           ) > 0,
         );
       });
@@ -290,8 +239,8 @@ describe("Hand Rankings", function () {
       it("highest pair wins", function () {
         assert(
           handRankings.compare(
-            { name: "pair", of: "4", kickers: ["jack", "9", "3"] },
-            { name: "pair", of: "9", kickers: ["jack", "4", "3"] },
+            { name: "pair", of: "4", kickers: ["J", "9", "3"] },
+            { name: "pair", of: "9", kickers: ["J", "4", "3"] },
           ) > 0,
         );
       });
@@ -299,8 +248,8 @@ describe("Hand Rankings", function () {
       it("highest kicker wins", function () {
         assert(
           handRankings.compare(
-            { name: "pair", of: "9", kickers: ["jack", "4", "2"] },
-            { name: "pair", of: "9", kickers: ["jack", "4", "3"] },
+            { name: "pair", of: "9", kickers: ["J", "4", "2"] },
+            { name: "pair", of: "9", kickers: ["J", "4", "3"] },
           ) > 0,
         );
       });
@@ -311,11 +260,11 @@ describe("Hand Rankings", function () {
         handRankings.compare(
           {
             name: "high card",
-            ranks: ["king", "jack", "9", "4", "3"],
+            ranks: ["K", "J", "9", "4", "3"],
           },
           {
             name: "high card",
-            ranks: ["king", "jack", "9", "5", "3"],
+            ranks: ["K", "J", "9", "5", "3"],
           },
         ) > 0,
       );
@@ -325,16 +274,16 @@ describe("Hand Rankings", function () {
   describe("bestCombination", function () {
     it("should return the best hand of all the possible combinations", function () {
       const result = handRankings.bestCombination([
-        { suit: "clubs", rank: "queen" },
-        { suit: "diamonds", rank: "ace" },
-        { suit: "diamonds", rank: "9" },
-        { suit: "spades", rank: "2" },
-        { suit: "diamonds", rank: "7" },
-        { suit: "spades", rank: "5" },
-        { suit: "clubs", rank: "7" },
+        "Qc",
+        "Ad",
+        "9d",
+        "2s",
+        "7d",
+        "5s",
+        "7c",
       ]);
       assert.deepEqual(result.hand, {
-        kickers: ["ace", "queen", "9"],
+        kickers: ["A", "Q", "9"],
         name: "pair",
         of: "7",
       });
@@ -343,19 +292,19 @@ describe("Hand Rankings", function () {
 
     it("should return the cards that form the best hand", function () {
       const result = handRankings.bestCombination([
-        { suit: "spades", rank: "ace" },
-        { suit: "hearts", rank: "ace" },
-        { suit: "diamonds", rank: "king" },
-        { suit: "clubs", rank: "queen" },
-        { suit: "hearts", rank: "9" },
-        { suit: "spades", rank: "5" },
-        { suit: "clubs", rank: "2" },
+        "As",
+        "Ah",
+        "Kd",
+        "Qc",
+        "9h",
+        "5s",
+        "2c",
       ]);
       assert.equal(result.hand.name, "pair");
-      assert.equal(result.hand.of, "ace");
+      assert.equal(result.hand.of, "A");
       assert.equal(result.cards.length, 5);
       // Verify the two aces are in the winning cards
-      const aces = result.cards.filter((c) => c.rank === "ace");
+      const aces = result.cards.filter((c) => c.startsWith("A"));
       assert.equal(aces.length, 2);
     });
   });

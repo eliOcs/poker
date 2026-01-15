@@ -90,9 +90,7 @@ class Board extends LitElement {
   }
 
   isWinningCard(card) {
-    return this.winningCards?.some(
-      (wc) => wc.rank === card.rank && wc.suit === card.suit,
-    );
+    return this.winningCards?.includes(card);
   }
 
   render() {
