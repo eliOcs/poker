@@ -60,6 +60,13 @@ class Seat extends LitElement {
           border-color: var(--color-highlight);
         }
 
+        :host(.winner) {
+          border-color: var(--color-highlight);
+          box-shadow:
+            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
+            0 0 0 var(--space-sm) var(--color-highlight);
+        }
+
         .player-name {
           overflow: hidden;
           text-overflow: ellipsis;
@@ -186,6 +193,7 @@ class Seat extends LitElement {
         "current-player",
         !isEmpty && this.seat?.isCurrentPlayer,
       );
+      this.classList.toggle("winner", !isEmpty && this.seat?.handResult > 0);
     }
   }
 

@@ -10,9 +10,13 @@ export default defineConfig({
   reporter: "list",
 
   // Screenshot comparison settings
+  // Use platform-agnostic snapshot names to share between Mac and Linux
+  snapshotPathTemplate:
+    "{snapshotDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   expect: {
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.01,
+      // Slightly higher threshold to tolerate cross-platform font rendering differences
+      maxDiffPixelRatio: 0.02,
     },
   },
 
@@ -31,7 +35,7 @@ export default defineConfig({
     },
     {
       name: "mobile",
-      use: devices["iPhone 12"],
+      use: devices["Pixel 5"],
     },
   ],
 

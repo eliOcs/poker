@@ -117,12 +117,13 @@ describe("phg-history", () => {
       expect(winners.length).to.be.greaterThan(0);
     });
 
-    it("shows pot amount", async () => {
+    it("shows winner amount when hand has winner", async () => {
       const board = element.shadowRoot.querySelector("phg-board");
       await board.updateComplete;
-      const potInfo = board.shadowRoot.querySelector(".pot");
-      expect(potInfo).to.exist;
-      expect(potInfo.textContent).to.include("400");
+      // When there's a winner, the board shows winner message instead of pot
+      const winnerAmount = board.shadowRoot.querySelector(".winner-amount");
+      expect(winnerAmount).to.exist;
+      expect(winnerAmount.textContent).to.include("400");
     });
 
     it("renders board cards when present", async () => {
@@ -302,11 +303,17 @@ describe("phg-history", () => {
       await element.updateComplete;
     });
 
-    it("updates handNumber when clicking hand item", async () => {
+    it("emits hand-select event when clicking hand item", async () => {
+      let selectEvent = null;
+      element.addEventListener("hand-select", (e) => {
+        selectEvent = e;
+      });
+
       const handItems = element.shadowRoot.querySelectorAll(".hand-item");
       handItems[0].click();
 
-      expect(element.handNumber).to.equal(1);
+      expect(selectEvent).to.exist;
+      expect(selectEvent.detail.handNumber).to.equal(1);
     });
 
     it("dispatches close and navigate events on goBack", async () => {
@@ -327,74 +334,56 @@ describe("phg-history", () => {
       expect(navigateEvent.detail.path).to.equal("/games/test123");
     });
 
-    it("updates handNumber to previous hand with navigatePrev", async () => {
+    it("emits hand-select event with previous hand on navigatePrev", async () => {
+      let selectEvent = null;
+      element.addEventListener("hand-select", (e) => {
+        selectEvent = e;
+      });
+
       element.navigatePrev();
 
-      expect(element.handNumber).to.equal(1);
+      expect(selectEvent).to.exist;
+      expect(selectEvent.detail.handNumber).to.equal(1);
     });
 
-    it("updates handNumber to next hand with navigateNext", async () => {
+    it("emits hand-select event with next hand on navigateNext", async () => {
+      let selectEvent = null;
+      element.addEventListener("hand-select", (e) => {
+        selectEvent = e;
+      });
+
       element.navigateNext();
 
-      expect(element.handNumber).to.equal(3);
+      expect(selectEvent).to.exist;
+      expect(selectEvent.detail.handNumber).to.equal(3);
     });
 
-    it("does not change handNumber when at first hand", async () => {
+    it("does not emit event when at first hand", async () => {
       element.handNumber = 1;
       await element.updateComplete;
 
+      let selectEvent = null;
+      element.addEventListener("hand-select", (e) => {
+        selectEvent = e;
+      });
+
       element.navigatePrev();
 
-      expect(element.handNumber).to.equal(1);
+      expect(selectEvent).to.be.null;
     });
 
-    it("does not change handNumber when at last hand", async () => {
+    it("does not emit event when at last hand", async () => {
       element.handNumber = 3;
       await element.updateComplete;
 
+      let selectEvent = null;
+      element.addEventListener("hand-select", (e) => {
+        selectEvent = e;
+      });
+
       element.navigateNext();
 
-      expect(element.handNumber).to.equal(3);
-    });
-
-    it("fetches new hand data when handNumber changes", async () => {
-      // Create a different mock hand for hand #1
-      const mockHand1 = {
-        ...mockOhhHand,
-        game_number: "test123-1",
-        players: [
-          { id: "player1", seat: 3, name: "Charlie", starting_stack: 500 },
-          { id: "player2", seat: 5, name: "Dana", starting_stack: 500 },
-        ],
-      };
-
-      // Mock fetch to return different data for hand #1
-      const originalFetch = globalThis.fetch;
-      globalThis.fetch = async (url) => {
-        if (url === "/api/history/test123/1") {
-          return {
-            ok: true,
-            json: async () => ({ hand: mockHand1 }),
-          };
-        }
-        return { ok: false };
-      };
-
-      try {
-        // Change handNumber from 2 to 1
-        element.handNumber = 1;
-        await element.updateComplete;
-
-        // Wait for fetch to complete
-        await new Promise((r) => setTimeout(r, 10));
-        await element.updateComplete;
-
-        // Verify the hand data was updated
-        expect(element.hand.players[0].name).to.equal("Charlie");
-        expect(element.hand.players[1].name).to.equal("Dana");
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      expect(selectEvent).to.be.null;
     });
   });
 

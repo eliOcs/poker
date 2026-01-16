@@ -803,16 +803,6 @@ const TEST_CASES = {
     </div>
   `,
 
-  "history-error": () => html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-history
-        .gameId=${"test123"}
-        .loading=${false}
-        .error=${"Failed to load hand history"}
-      ></phg-history>
-    </div>
-  `,
-
   "history-preflop-fold": () => html`
     <div style="height: 100vh; width: 100%;">
       <phg-history
@@ -1487,7 +1477,6 @@ function init() {
       "Hand History": [
         "history-loading",
         "history-empty",
-        "history-error",
         "history-preflop-fold",
         "history-showdown-win",
         "history-showdown-lose",

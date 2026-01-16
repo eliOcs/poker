@@ -139,13 +139,6 @@ class History extends LitElement {
           min-width: 100px;
         }
 
-        .player-seat.winner {
-          border-color: var(--color-primary);
-          box-shadow:
-            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
-            0 0 0 var(--space-sm) var(--color-primary);
-        }
-
         .player-seat[data-seat="0"] {
           top: 10%;
           left: 5%;
@@ -428,7 +421,7 @@ class History extends LitElement {
     this.handNumber = null;
     this.hand = null;
     this.handList = null;
-    this.loading = null;
+    this.loading = true;
     this.error = null;
     this.playerId = localStorage.getItem("playerId") || null;
     this.touchStartX = null;
@@ -449,15 +442,6 @@ class History extends LitElement {
     window.removeEventListener("keydown", this.boundHandleKeydown);
     this.removeEventListener("touchstart", this.boundHandleTouchStart);
     this.removeEventListener("touchend", this.boundHandleTouchEnd);
-  }
-
-  updated(changedProperties) {
-    if (
-      changedProperties.has("gameId") ||
-      changedProperties.has("handNumber")
-    ) {
-      this.fetchData();
-    }
   }
 
   handleKeydown(e) {
@@ -492,55 +476,14 @@ class History extends LitElement {
     this.touchStartX = null;
   }
 
-  async fetchData() {
-    if (!this.gameId) return;
-
-    // Only fetch hand list if we don't have it yet
-    if (!this.handList || this.handList.length === 0) {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        const listRes = await fetch(`/api/history/${this.gameId}`);
-        if (!listRes.ok) {
-          throw new Error("Failed to load hand history");
-        }
-        this.handList = await listRes.json();
-
-        if (this.handList.length === 0) {
-          this.loading = false;
-          return;
-        }
-      } catch (err) {
-        this.error = err.message;
-        this.loading = false;
-        return;
-      }
-    }
-
-    // Determine which hand to show
-    const targetHand =
-      this.handNumber ?? this.handList[this.handList.length - 1].hand_number;
-
-    // Fetch specific hand
-    try {
-      const handRes = await fetch(`/api/history/${this.gameId}/${targetHand}`);
-      if (!handRes.ok) {
-        throw new Error("Hand not found");
-      }
-      const data = await handRes.json();
-      this.hand = data.hand;
-      this.handNumber = targetHand;
-    } catch (err) {
-      this.error = err.message;
-    } finally {
-      this.loading = false;
-    }
-  }
-
   navigateTo(handNumber) {
-    // Update handNumber directly for internal navigation
-    this.handNumber = handNumber;
+    this.dispatchEvent(
+      new CustomEvent("hand-select", {
+        detail: { handNumber },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   navigatePrev() {
@@ -632,11 +575,16 @@ class History extends LitElement {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
-  playerToSeat(player) {
+  playerToSeat(player, isWinner) {
     const cards = this.getPlayerCards(player.id);
     const winAmount = this.getPlayerWinAmount(player.id);
     const isCurrentPlayer = player.id === this.playerId;
     const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+
+    // Get winning hand info from main pot
+    const mainPot = this.hand?.pots?.[0];
+    const winningCards = isWinner ? mainPot?.winning_cards : null;
+    const handRank = isWinner ? mainPot?.winning_hand : null;
 
     return {
       empty: false,
@@ -644,6 +592,8 @@ class History extends LitElement {
       stack: player.starting_stack,
       cards,
       handResult: winAmount > 0 ? winAmount : null,
+      handRank,
+      winningCards,
       isCurrentPlayer,
       folded: false,
       allIn: false,
@@ -671,6 +621,28 @@ class History extends LitElement {
       cards: boardCards,
       phase: lastStreet,
     };
+  }
+
+  // Get winner message for phg-board component
+  getWinnerMessage() {
+    const mainPot = this.hand?.pots?.[0];
+    if (!mainPot?.player_wins?.length) return null;
+
+    const winnerId = mainPot.player_wins[0].player_id;
+    const winAmount = mainPot.player_wins[0].win_amount;
+    const winnerPlayer = this.hand?.players?.find((p) => p.id === winnerId);
+
+    return {
+      playerName: winnerPlayer?.name || `Seat ${winnerPlayer?.seat + 1}`,
+      handRank: mainPot.winning_hand,
+      amount: winAmount,
+    };
+  }
+
+  // Get winning cards for phg-board component (for highlighting)
+  getBoardWinningCards() {
+    const mainPot = this.hand?.pots?.[0];
+    return mainPot?.winning_cards || null;
   }
 
   renderNavBar() {
@@ -723,18 +695,26 @@ class History extends LitElement {
     const winners = this.getWinners();
     const board = this.getBoardData();
     const hand = { pot: this.getTotalPot(), phase: board.phase };
+    const winnerMessage = this.getWinnerMessage();
+    const winningCards = this.getBoardWinningCards();
 
     return html`
       <div class="table-state">
-        <phg-board class="board" .board=${board} .hand=${hand}></phg-board>
+        <phg-board
+          class="board"
+          .board=${board}
+          .hand=${hand}
+          .winnerMessage=${winnerMessage}
+          .winningCards=${winningCards}
+        ></phg-board>
         ${(this.hand?.players || []).map((player) => {
           const isWinner = winners.has(player.id);
-          const seat = this.playerToSeat(player);
+          const seat = this.playerToSeat(player, isWinner);
           const isButton = player.seat === this.hand?.dealer_seat;
 
           return html`
             <phg-seat
-              class="player-seat ${isWinner ? "winner" : ""}"
+              class="player-seat"
               data-seat="${player.seat}"
               .seat=${seat}
               .seatNumber=${player.seat}

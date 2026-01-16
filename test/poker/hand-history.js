@@ -160,6 +160,33 @@ describe("hand-history", function () {
       ]);
     });
 
+    it("stores a copy of board cards to prevent mutation", function () {
+      const { game } = createGameWithPlayers();
+
+      HandHistory.startHand("test-game", game);
+
+      // Simulate how the game deals cards - using a mutable array
+      const boardCards = ["Qh", "Jc", "2d"];
+      HandHistory.recordStreet("test-game", "flop", boardCards);
+
+      // Simulate turn and river being added to the same array
+      boardCards.push("Tc");
+      HandHistory.recordStreet("test-game", "turn", [boardCards[3]]);
+
+      boardCards.push("3h");
+      HandHistory.recordStreet("test-game", "river", [boardCards[4]]);
+
+      // Verify flop still only has 3 cards (not 5)
+      const recorder = HandHistory.getRecorder("test-game");
+      assert.deepStrictEqual(recorder.boardByStreet.get("Flop"), [
+        "Qh",
+        "Jc",
+        "2d",
+      ]);
+      assert.deepStrictEqual(recorder.boardByStreet.get("Turn"), ["Tc"]);
+      assert.deepStrictEqual(recorder.boardByStreet.get("River"), ["3h"]);
+    });
+
     it("groups actions by street correctly", async function () {
       const { game, players } = createGameWithPlayers();
 
