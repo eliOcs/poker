@@ -1,5 +1,6 @@
 import * as Betting from "./betting.js";
-import { countPlayersWithChips, CLOCK_WAIT_TIME } from "./actions.js";
+import { countPlayersWithChips } from "./actions.js";
+import { isClockCallable } from "./game-tick.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
 import { HIDDEN, getRank } from "./deck.js";
@@ -134,8 +135,8 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} pot
  * @property {number} currentBet
  * @property {number} actingSeat
- * @property {number|null} actingSince - Timestamp when current player started acting
- * @property {number|null} clockCalledAt - Timestamp when clock was called
+ * @property {number} actingTicks - Ticks the current player has been acting
+ * @property {number} clockTicks - Ticks since clock was called (0 if not called)
  */
 
 /**
@@ -275,13 +276,9 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   if (
     game.hand?.actingSeat !== -1 &&
     game.hand?.actingSeat !== playerSeatIndex &&
-    game.hand?.actingSince !== null &&
-    game.hand?.clockCalledAt === null
+    isClockCallable(game)
   ) {
-    const elapsed = Date.now() - game.hand.actingSince;
-    if (elapsed >= CLOCK_WAIT_TIME) {
-      actions.push({ action: "callClock" });
-    }
+    actions.push({ action: "callClock" });
   }
 
   // Player is seated but hand not active - can buy in if no stack, or start game
@@ -395,8 +392,8 @@ export default function playerView(game, player) {
           pot: game.hand.pot,
           currentBet: game.hand.currentBet,
           actingSeat: game.hand.actingSeat,
-          actingSince: game.hand.actingSince,
-          clockCalledAt: game.hand.clockCalledAt,
+          actingTicks: game.actingTicks,
+          clockTicks: game.clockTicks,
         }
       : null,
     countdown: game.countdown,

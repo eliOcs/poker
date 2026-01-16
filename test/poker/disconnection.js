@@ -28,13 +28,13 @@ describe("disconnection handling", () => {
     });
   });
 
-  describe("game disconnect timer properties", () => {
-    it("should initialize disconnectTimer as null", () => {
-      assert.equal(game.disconnectTimer, null);
+  describe("game tick timer properties", () => {
+    it("should initialize tickTimer as null", () => {
+      assert.equal(game.tickTimer, null);
     });
 
-    it("should initialize disconnectTimerSeat as -1", () => {
-      assert.equal(game.disconnectTimerSeat, -1);
+    it("should initialize disconnectedActingTicks as 0", () => {
+      assert.equal(game.disconnectedActingTicks, 0);
     });
   });
 
@@ -54,6 +54,18 @@ describe("disconnection handling", () => {
       game.seats[0].disconnected = true;
       const view = playerView(game, { id: "player2" });
       assert.equal(view.seats[0].disconnected, true);
+    });
+
+    it("should show reconnected status to other players", () => {
+      // Player disconnects
+      game.seats[0].disconnected = true;
+      let view = playerView(game, { id: "player2" });
+      assert.equal(view.seats[0].disconnected, true);
+
+      // Player reconnects
+      game.seats[0].disconnected = false;
+      view = playerView(game, { id: "player2" });
+      assert.equal(view.seats[0].disconnected, false);
     });
   });
 

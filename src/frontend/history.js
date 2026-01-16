@@ -493,36 +493,37 @@ class History extends LitElement {
   }
 
   async fetchData() {
-    // Skip fetch if state was explicitly provided (e.g., for testing)
-    // null means "use default behavior", true/false means "explicitly set"
-    if (this.loading !== null) {
-      return;
-    }
-
     if (!this.gameId) return;
 
-    this.loading = true;
-    this.error = null;
-    this.handList = [];
+    // Only fetch hand list if we don't have it yet
+    if (!this.handList || this.handList.length === 0) {
+      this.loading = true;
+      this.error = null;
 
-    try {
-      // Fetch hand list
-      const listRes = await fetch(`/api/history/${this.gameId}`);
-      if (!listRes.ok) {
-        throw new Error("Failed to load hand history");
-      }
-      this.handList = await listRes.json();
+      try {
+        const listRes = await fetch(`/api/history/${this.gameId}`);
+        if (!listRes.ok) {
+          throw new Error("Failed to load hand history");
+        }
+        this.handList = await listRes.json();
 
-      if (this.handList.length === 0) {
+        if (this.handList.length === 0) {
+          this.loading = false;
+          return;
+        }
+      } catch (err) {
+        this.error = err.message;
         this.loading = false;
         return;
       }
+    }
 
-      // Determine which hand to show
-      const targetHand =
-        this.handNumber ?? this.handList[this.handList.length - 1].hand_number;
+    // Determine which hand to show
+    const targetHand =
+      this.handNumber ?? this.handList[this.handList.length - 1].hand_number;
 
-      // Fetch specific hand
+    // Fetch specific hand
+    try {
       const handRes = await fetch(`/api/history/${this.gameId}/${targetHand}`);
       if (!handRes.ok) {
         throw new Error("Hand not found");

@@ -4,6 +4,11 @@ import * as Game from "../../src/backend/poker/game.js";
 import * as Actions from "../../src/backend/poker/actions.js";
 import * as Betting from "../../src/backend/poker/betting.js";
 import * as Player from "../../src/backend/poker/player.js";
+import playerView from "../../src/backend/poker/player-view.js";
+import {
+  CLOCK_WAIT_TICKS,
+  CLOCK_DURATION_TICKS,
+} from "../../src/backend/poker/game-tick.js";
 
 describe("call the clock", () => {
   /** @type {import('../../src/backend/poker/game.js').Game} */
@@ -25,23 +30,12 @@ describe("call the clock", () => {
     Actions.buyIn(game, { seat: 1, amount: 50 });
   });
 
-  describe("actingSince tracking", () => {
-    it("should set actingSince when betting round starts", () => {
-      Actions.startHand(game);
-      Actions.blinds(game).next();
-      Actions.blinds(game).next();
-      Actions.dealPreflop(game).next();
-
-      const before = Date.now();
-      Betting.startBettingRound(game, "preflop");
-      const after = Date.now();
-
-      assert.ok(game.hand.actingSince !== null);
-      assert.ok(game.hand.actingSince >= before);
-      assert.ok(game.hand.actingSince <= after);
+  describe("actingTicks tracking", () => {
+    it("should initialize actingTicks when game is created", () => {
+      assert.strictEqual(game.actingTicks, 0);
     });
 
-    it("should reset actingSince when action advances", () => {
+    it("should have actingTicks at 0 after betting round starts", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -49,39 +43,9 @@ describe("call the clock", () => {
       const dealGen = Actions.dealPreflop(game);
       while (!dealGen.next().done);
       Betting.startBettingRound(game, "preflop");
-      game.hand.currentBet = game.blinds.big;
 
-      const firstActingSince = game.hand.actingSince;
-
-      // Small wait to ensure timestamp changes
-      const actingSeat = game.hand.actingSeat;
-      Actions.call(game, { seat: actingSeat });
-
-      // actingSince should be updated (or null if round ended)
-      if (game.hand.actingSeat !== -1) {
-        assert.ok(game.hand.actingSince !== null);
-        assert.ok(game.hand.actingSince >= firstActingSince);
-      }
-    });
-
-    it("should clear actingSince when no one is acting", () => {
-      Actions.startHand(game);
-      const blindsGen = Actions.blinds(game);
-      blindsGen.next();
-      blindsGen.next();
-      const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
-      Betting.startBettingRound(game, "preflop");
-      game.hand.currentBet = game.blinds.big;
-
-      // Fold to end the round
-      const actingSeat = game.hand.actingSeat;
-      Actions.fold(game, { seat: actingSeat });
-
-      // If only one player left, actingSince should be null
-      if (Betting.countActivePlayers(game) <= 1) {
-        assert.strictEqual(game.hand.actingSince, null);
-      }
+      // actingTicks is managed by the tick system, not betting
+      assert.strictEqual(game.actingTicks, 0);
     });
   });
 
@@ -120,15 +84,15 @@ describe("call the clock", () => {
       game.hand.currentBet = game.blinds.big;
 
       const actingSeat = game.hand.actingSeat;
-      // Force actingSince to be old enough
-      game.hand.actingSince = Date.now() - 61000;
+      // Force enough ticks to have passed
+      game.actingTicks = CLOCK_WAIT_TICKS;
 
       assert.throws(() => Actions.callClock(game, { seat: actingSeat }), {
         message: "cannot call clock on yourself",
       });
     });
 
-    it("should throw if not enough time has passed", () => {
+    it("should throw if not enough ticks have passed", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -138,7 +102,7 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // actingSince is just set, less than 60 seconds
+      // actingTicks is 0, less than CLOCK_WAIT_TICKS
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
 
       assert.throws(() => Actions.callClock(game, { seat: nonActingSeat }), {
@@ -156,9 +120,9 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Force time to have passed
-      game.hand.actingSince = Date.now() - 61000;
-      game.hand.clockCalledAt = Date.now(); // Already called
+      // Force enough ticks to have passed
+      game.actingTicks = CLOCK_WAIT_TICKS;
+      game.clockTicks = 1; // Already called
 
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
 
@@ -167,7 +131,7 @@ describe("call the clock", () => {
       });
     });
 
-    it("should set clockCalledAt when valid", () => {
+    it("should succeed when valid (enough ticks and clock not called)", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -177,80 +141,174 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Force time to have passed
-      game.hand.actingSince = Date.now() - 61000;
+      // Force enough ticks to have passed
+      game.actingTicks = CLOCK_WAIT_TICKS;
 
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
-      const before = Date.now();
-      Actions.callClock(game, { seat: nonActingSeat });
-      const after = Date.now();
 
-      assert.ok(game.hand.clockCalledAt !== null);
-      assert.ok(game.hand.clockCalledAt >= before);
-      assert.ok(game.hand.clockCalledAt <= after);
-    });
-  });
-
-  describe("clockCalledAt clearing", () => {
-    it("should clear clockCalledAt when action advances", () => {
-      Actions.startHand(game);
-      const blindsGen = Actions.blinds(game);
-      blindsGen.next();
-      blindsGen.next();
-      const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
-      Betting.startBettingRound(game, "preflop");
-      game.hand.currentBet = game.blinds.big;
-
-      // Set clock as called
-      game.hand.clockCalledAt = Date.now();
-
-      // Take an action
-      const actingSeat = game.hand.actingSeat;
-      Actions.call(game, { seat: actingSeat });
-
-      // clockCalledAt should be cleared
-      assert.strictEqual(game.hand.clockCalledAt, null);
-    });
-
-    it("should clear clockCalledAt when betting round starts", () => {
-      Actions.startHand(game);
-      const blindsGen = Actions.blinds(game);
-      blindsGen.next();
-      blindsGen.next();
-      const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
-
-      // Manually set clockCalledAt before starting betting round
-      game.hand.clockCalledAt = Date.now();
-
-      Betting.startBettingRound(game, "preflop");
-
-      // Should be cleared
-      assert.strictEqual(game.hand.clockCalledAt, null);
+      // Should not throw
+      assert.doesNotThrow(() =>
+        Actions.callClock(game, { seat: nonActingSeat }),
+      );
     });
   });
 
   describe("game state initialization", () => {
-    it("should initialize actingSince as null", () => {
+    it("should initialize actingTicks as 0", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.hand.actingSince, null);
+      assert.strictEqual(newGame.actingTicks, 0);
     });
 
-    it("should initialize clockCalledAt as null", () => {
+    it("should initialize clockTicks as 0", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.hand.clockCalledAt, null);
+      assert.strictEqual(newGame.clockTicks, 0);
     });
 
-    it("should initialize clockTimer as null", () => {
+    it("should initialize tickTimer as null", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.clockTimer, null);
+      assert.strictEqual(newGame.tickTimer, null);
+    });
+
+    it("should initialize disconnectedActingTicks as 0", () => {
+      const newGame = Game.create();
+      assert.strictEqual(newGame.disconnectedActingTicks, 0);
     });
   });
 
-  describe("CLOCK_WAIT_TIME constant", () => {
-    it("should be 60 seconds (60000 ms)", () => {
-      assert.strictEqual(Actions.CLOCK_WAIT_TIME, 60000);
+  describe("tick constants", () => {
+    it("CLOCK_WAIT_TICKS should be 60 ticks", () => {
+      assert.strictEqual(CLOCK_WAIT_TICKS, 60);
+    });
+
+    it("CLOCK_DURATION_TICKS should be 30 ticks", () => {
+      assert.strictEqual(CLOCK_DURATION_TICKS, 30);
+    });
+  });
+
+  describe("callClock in player view", () => {
+    it("should show callClock action to waiting player after 60 ticks", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      while (!dealGen.next().done);
+      Betting.startBettingRound(game, "preflop");
+      game.hand.currentBet = game.blinds.big;
+
+      // Force 60+ ticks to have passed
+      game.actingTicks = CLOCK_WAIT_TICKS;
+
+      // Get view for the non-acting player
+      const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
+      const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
+      const view = playerView(game, nonActingPlayer);
+
+      // The non-acting player's seat should have callClock action
+      const seatActions = view.seats[nonActingSeatIndex].actions;
+      const hasCallClock = seatActions.some((a) => a.action === "callClock");
+      assert.strictEqual(hasCallClock, true);
+    });
+
+    it("should hide callClock action when not enough ticks have passed", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      while (!dealGen.next().done);
+      Betting.startBettingRound(game, "preflop");
+      game.hand.currentBet = game.blinds.big;
+
+      // Only 59 ticks have passed
+      game.actingTicks = CLOCK_WAIT_TICKS - 1;
+
+      // Get view for the non-acting player
+      const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
+      const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
+      const view = playerView(game, nonActingPlayer);
+
+      // The callClock action should not be available
+      const seatActions = view.seats[nonActingSeatIndex].actions;
+      const hasCallClock = seatActions.some((a) => a.action === "callClock");
+      assert.strictEqual(hasCallClock, false);
+    });
+
+    it("should hide callClock action after clock is called", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      while (!dealGen.next().done);
+      Betting.startBettingRound(game, "preflop");
+      game.hand.currentBet = game.blinds.big;
+
+      // Force 60+ ticks to have passed
+      game.actingTicks = CLOCK_WAIT_TICKS;
+
+      // Call the clock
+      const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
+      Actions.callClock(game, { seat: nonActingSeatIndex });
+
+      // Simulate clock being started (index.js would call startClockTicks)
+      game.clockTicks = 1;
+
+      // Get view for the non-acting player
+      const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
+      const view = playerView(game, nonActingPlayer);
+
+      // The callClock action should no longer be available
+      const seatActions = view.seats[nonActingSeatIndex].actions;
+      const hasCallClock = seatActions.some((a) => a.action === "callClock");
+      assert.strictEqual(hasCallClock, false);
+    });
+
+    it("should include clockTicks in hand state for all players", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      while (!dealGen.next().done);
+      Betting.startBettingRound(game, "preflop");
+      game.hand.currentBet = game.blinds.big;
+
+      // Force 60+ ticks and call clock
+      game.actingTicks = CLOCK_WAIT_TICKS;
+      const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
+      Actions.callClock(game, { seat: nonActingSeatIndex });
+
+      // Simulate clock being started
+      game.clockTicks = 1;
+
+      // Both players should see clockTicks in their view
+      const view1 = playerView(game, player1);
+      const view2 = playerView(game, player2);
+
+      assert.strictEqual(view1.hand.clockTicks, 1);
+      assert.strictEqual(view2.hand.clockTicks, 1);
+    });
+
+    it("should include actingTicks in hand state for all players", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      while (!dealGen.next().done);
+      Betting.startBettingRound(game, "preflop");
+      game.hand.currentBet = game.blinds.big;
+
+      // Set actingTicks
+      game.actingTicks = 45;
+
+      // Both players should see actingTicks in their view
+      const view1 = playerView(game, player1);
+      const view2 = playerView(game, player2);
+
+      assert.strictEqual(view1.hand.actingTicks, 45);
+      assert.strictEqual(view2.hand.actingTicks, 45);
     });
   });
 });

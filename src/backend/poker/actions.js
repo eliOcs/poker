@@ -1,6 +1,7 @@
 import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
+import { isClockCallable } from "./game-tick.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -518,9 +519,6 @@ export function leave(game, { seat }) {
 
 // --- Clock Actions ---
 
-/** @type {number} Time in ms a player must be acting before clock can be called */
-export const CLOCK_WAIT_TIME = 60000;
-
 /**
  * Calls the clock on the acting player (starts 30 second countdown)
  * @param {Game} game
@@ -541,18 +539,10 @@ export function callClock(game, { seat }) {
     throw new Error("cannot call clock on yourself");
   }
 
-  if (game.hand.actingSince === null) {
-    throw new Error("no one is acting");
-  }
-
-  const elapsed = Date.now() - game.hand.actingSince;
-  if (elapsed < CLOCK_WAIT_TIME) {
+  if (!isClockCallable(game)) {
+    if (game.clockTicks > 0) {
+      throw new Error("clock already called");
+    }
     throw new Error("must wait 60 seconds before calling clock");
   }
-
-  if (game.hand.clockCalledAt !== null) {
-    throw new Error("clock already called");
-  }
-
-  game.hand.clockCalledAt = Date.now();
 }

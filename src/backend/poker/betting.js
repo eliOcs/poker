@@ -207,14 +207,10 @@ export function startBettingRound(game, phase) {
   if (playersWhoCanAct <= 1) {
     game.hand.actingSeat = -1;
     game.hand.lastRaiser = -1;
-    game.hand.actingSince = null;
-    game.hand.clockCalledAt = null;
     return;
   }
 
   game.hand.actingSeat = firstActor;
-  game.hand.actingSince = Date.now();
-  game.hand.clockCalledAt = null;
 
   // Set lastRaiser to first actor so round ends when action returns to them.
   // For preflop, this gives BB their "option" to check or raise.
@@ -247,16 +243,12 @@ export function advanceAction(game) {
   // Check for immediate termination conditions
   if (countActivePlayers(game) <= 1) {
     game.hand.actingSeat = -1;
-    game.hand.actingSince = null;
-    game.hand.clockCalledAt = null;
     return;
   }
 
   // If no one can act anymore (all all-in or folded)
   if (countPlayersWhoCanAct(game) === 0) {
     game.hand.actingSeat = -1;
-    game.hand.actingSince = null;
-    game.hand.clockCalledAt = null;
     return;
   }
 
@@ -266,12 +258,8 @@ export function advanceAction(game) {
   // Check if we've come full circle back to the raiser
   if (game.hand.lastRaiser !== -1 && next === game.hand.lastRaiser) {
     game.hand.actingSeat = -1;
-    game.hand.actingSince = null;
-    game.hand.clockCalledAt = null;
     return;
   }
 
   game.hand.actingSeat = next;
-  game.hand.actingSince = Date.now();
-  game.hand.clockCalledAt = null;
 }
