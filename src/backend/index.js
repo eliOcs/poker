@@ -10,6 +10,12 @@ import * as Betting from "./poker/betting.js";
 import * as Showdown from "./poker/showdown.js";
 import HandRankings from "./poker/hand-rankings.js";
 import * as HandHistory from "./poker/hand-history.js";
+import {
+  tick,
+  shouldTickBeRunning,
+  resetActingTicks,
+  startClockTicks,
+} from "./poker/game-tick.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -268,8 +274,7 @@ function processGameFlow(game, gameId) {
 
     // Check if betting round is complete
     if (game.hand.actingSeat !== -1) {
-      // Someone still needs to act - check if they're disconnected
-      checkDisconnectedActingPlayer(game, gameId);
+      // Someone still needs to act
       return;
     }
 
@@ -353,7 +358,7 @@ function autoStartNextHand(game, gameId) {
 
   if (PokerActions.countPlayersWithChips(game) >= 2) {
     game.countdown = 3; // Shorter countdown between hands
-    startCountdownTimer(game, gameId);
+    startGameTick(game, gameId);
   }
 }
 
@@ -361,16 +366,6 @@ function autoStartNextHand(game, gameId) {
 const TIMER_INTERVAL = process.env.TIMER_SPEED
   ? Math.floor(1000 / parseInt(process.env.TIMER_SPEED, 10))
   : 1000;
-
-// Disconnect action timeout in ms (5 seconds, can be sped up for tests)
-const DISCONNECT_TIMEOUT = process.env.TIMER_SPEED
-  ? Math.floor(5000 / parseInt(process.env.TIMER_SPEED, 10))
-  : 5000;
-
-// Clock duration in ms (30 seconds, can be sped up for tests)
-const CLOCK_DURATION = process.env.TIMER_SPEED
-  ? Math.floor(30000 / parseInt(process.env.TIMER_SPEED, 10))
-  : 30000;
 
 /**
  * Finds the seat index for a player in a game
@@ -385,103 +380,83 @@ function findPlayerSeatIndex(game, player) {
 }
 
 /**
- * Starts a timer to auto-action for a disconnected player
+ * Performs auto check/fold for a seat
  * @param {Game} game
  * @param {string} gameId
  * @param {number} seatIndex
  */
-function startDisconnectTimer(game, gameId, seatIndex) {
-  // Clear any existing timer
-  if (game.disconnectTimer) {
-    clearTimeout(game.disconnectTimer);
+function performAutoAction(game, gameId, seatIndex) {
+  const seat = game.seats[seatIndex];
+  if (seat.empty) return;
+
+  // Auto check/fold: check if possible, otherwise fold
+  if (seat.bet === game.hand.currentBet) {
+    PokerActions.check(game, { seat: seatIndex });
+    HandHistory.recordAction(gameId, seat.player.id, "check");
+  } else {
+    PokerActions.fold(game, { seat: seatIndex });
+    HandHistory.recordAction(gameId, seat.player.id, "fold");
   }
 
-  game.disconnectTimerSeat = seatIndex;
-  game.disconnectTimer = setTimeout(() => {
-    game.disconnectTimer = null;
-    game.disconnectTimerSeat = -1;
+  // Reset tick counters since action was taken
+  resetActingTicks(game);
 
-    // Verify it's still this player's turn and they're still disconnected
-    const seat = game.seats[seatIndex];
-    if (
-      game.hand?.actingSeat !== seatIndex ||
-      seat.empty ||
-      !seat.disconnected
-    ) {
-      return;
-    }
-
-    // Auto check/fold: check if possible, otherwise fold
-    if (seat.bet === game.hand.currentBet) {
-      PokerActions.check(game, { seat: seatIndex });
-      HandHistory.recordAction(gameId, seat.player.id, "check");
-    } else {
-      PokerActions.fold(game, { seat: seatIndex });
-      HandHistory.recordAction(gameId, seat.player.id, "fold");
-    }
-
-    // Process game flow after the auto-action
-    processGameFlow(game, gameId);
-    broadcastGameState(gameId);
-  }, DISCONNECT_TIMEOUT);
+  // Process game flow after the auto-action
+  processGameFlow(game, gameId);
 }
 
 /**
- * Clears the clock timer if active
- * @param {Game} game
- */
-function clearClockTimer(game) {
-  if (game.clockTimer) {
-    clearTimeout(game.clockTimer);
-    game.clockTimer = null;
-  }
-}
-
-/**
- * Starts a timer for call the clock (30 second countdown)
+ * Starts the hand (called when countdown reaches 0)
  * @param {Game} game
  * @param {string} gameId
  */
-function startClockTimer(game, gameId) {
-  clearClockTimer(game);
-
-  game.clockTimer = setTimeout(() => {
-    game.clockTimer = null;
-
-    const actingSeat = game.hand?.actingSeat;
-    if (actingSeat === -1 || actingSeat === undefined) return;
-
-    const seat = game.seats[actingSeat];
-    if (seat.empty) return;
-
-    // Auto check/fold: check if possible, otherwise fold
-    if (seat.bet === game.hand.currentBet) {
-      PokerActions.check(game, { seat: actingSeat });
-      HandHistory.recordAction(gameId, seat.player.id, "check");
-    } else {
-      PokerActions.fold(game, { seat: actingSeat });
-      HandHistory.recordAction(gameId, seat.player.id, "fold");
-    }
-
-    // Process game flow after the auto-action
-    processGameFlow(game, gameId);
-    broadcastGameState(gameId);
-  }, CLOCK_DURATION);
-}
-
-/**
- * Checks if the acting player is disconnected and starts timer if so
- * @param {Game} game
- * @param {string} gameId
- */
-function checkDisconnectedActingPlayer(game, gameId) {
-  const actingSeat = game.hand?.actingSeat;
-  if (actingSeat === -1 || actingSeat === undefined) return;
-
-  const seat = game.seats[actingSeat];
-  if (!seat.empty && seat.disconnected) {
-    startDisconnectTimer(game, gameId, actingSeat);
+function startHand(game, gameId) {
+  // Check if we still have enough players (someone might have sat out)
+  if (PokerActions.countPlayersWithChips(game) < 2) {
+    return;
   }
+
+  // Clear winner message from previous hand
+  game.winnerMessage = null;
+
+  // Start the hand
+  PokerActions.startHand(game);
+
+  // Start hand history recording
+  HandHistory.startHand(gameId, game);
+
+  // Post blinds and record them
+  const sbSeat = Betting.getSmallBlindSeat(game);
+  const bbSeat = Betting.getBigBlindSeat(game);
+  runAll(PokerActions.blinds(game));
+
+  // Record blinds to history
+  const sbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+    game.seats[sbSeat]
+  );
+  const bbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+    game.seats[bbSeat]
+  );
+  HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
+  HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
+
+  // Deal preflop and record cards
+  runAll(PokerActions.dealPreflop(game));
+
+  // Record dealt cards for each player
+  for (const seat of game.seats) {
+    if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
+      HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
+    }
+  }
+
+  // Initialize betting round
+  Betting.startBettingRound(game, "preflop");
+  // Set currentBet to big blind (blinds already posted)
+  game.hand.currentBet = game.blinds.big;
+
+  // Reset tick counters for first player to act
+  resetActingTicks(game);
 }
 
 /**
@@ -497,80 +472,61 @@ function sitOutDisconnectedPlayers(game) {
 }
 
 /**
- * Starts the countdown timer for a specific game
+ * Stops the game tick timer
+ * @param {Game} game
+ */
+function stopGameTick(game) {
+  if (game.tickTimer) {
+    clearInterval(game.tickTimer);
+    game.tickTimer = null;
+  }
+}
+
+/**
+ * Starts the unified game tick timer
+ * Handles countdown, disconnect timeout, and clock expiry
  * @param {Game} game
  * @param {string} gameId
  */
-function startCountdownTimer(game, gameId) {
-  if (game.countdownTimer) {
-    return;
+function startGameTick(game, gameId) {
+  if (game.tickTimer) {
+    return; // Already running
   }
 
-  game.countdownTimer = setInterval(() => {
-    if (game.countdown === null) {
-      if (game.countdownTimer) clearInterval(game.countdownTimer);
-      game.countdownTimer = null;
-      return;
+  game.tickTimer = setInterval(() => {
+    const result = tick(game);
+
+    // Handle startHand event
+    if (result.startHand) {
+      startHand(game, gameId);
     }
 
-    game.countdown -= 1;
-
-    if (game.countdown <= 0) {
-      game.countdown = null;
-      if (game.countdownTimer) clearInterval(game.countdownTimer);
-      game.countdownTimer = null;
-
-      // Check if we still have enough players (someone might have sat out)
-      if (PokerActions.countPlayersWithChips(game) < 2) {
-        broadcastGameState(gameId);
-        return;
-      }
-
-      // Clear winner message from previous hand
-      game.winnerMessage = null;
-
-      // Start the hand
-      PokerActions.startHand(game);
-
-      // Start hand history recording
-      HandHistory.startHand(gameId, game);
-
-      // Post blinds and record them
-      const sbSeat = Betting.getSmallBlindSeat(game);
-      const bbSeat = Betting.getBigBlindSeat(game);
-      runAll(PokerActions.blinds(game));
-
-      // Record blinds to history
-      const sbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-        game.seats[sbSeat]
-      );
-      const bbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-        game.seats[bbSeat]
-      );
-      HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
-      HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
-
-      // Deal preflop and record cards
-      runAll(PokerActions.dealPreflop(game));
-
-      // Record dealt cards for each player
-      for (const seat of game.seats) {
-        if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
-          HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
-        }
-      }
-
-      // Initialize betting round
-      Betting.startBettingRound(game, "preflop");
-      // Set currentBet to big blind (blinds already posted)
-      game.hand.currentBet = game.blinds.big;
-
-      // Check if first to act is disconnected
-      checkDisconnectedActingPlayer(game, gameId);
+    // Handle auto-action (disconnect or clock expiry)
+    if (result.autoActionSeat !== null) {
+      performAutoAction(game, gameId, result.autoActionSeat);
     }
 
-    broadcastGameState(gameId);
+    // Stop tick if no longer needed
+    if (result.shouldStopTick) {
+      stopGameTick(game);
+    }
+
+    // Broadcast state to all clients
+    if (result.shouldBroadcast) {
+      broadcastGameState(gameId);
+    }
   }, TIMER_INTERVAL);
+}
+
+/**
+ * Ensures the game tick is running if needed
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function ensureGameTick(game, gameId) {
+  if (shouldTickBeRunning(game) && !game.tickTimer) {
+    startGameTick(game, gameId);
+  }
 }
 
 wss.on(
@@ -586,12 +542,13 @@ wss.on(
       );
       seat.disconnected = false;
 
-      // Cancel any pending disconnect timer for this seat
-      if (game.disconnectTimer && game.disconnectTimerSeat === seatIndex) {
-        clearTimeout(game.disconnectTimer);
-        game.disconnectTimer = null;
-        game.disconnectTimerSeat = -1;
+      // Reset disconnect tick counter if this was the disconnected acting player
+      if (seatIndex === game.hand?.actingSeat) {
+        game.disconnectedActingTicks = 0;
       }
+
+      // Notify other players that this player reconnected
+      broadcastGameState(gameId);
     }
 
     ws.on("close", () => {
@@ -615,10 +572,8 @@ wss.on(
       // Mark seat as disconnected
       closedSeat.disconnected = true;
 
-      // If it's this player's turn, start disconnect timer
-      if (closedGame.hand?.actingSeat === closedSeatIndex) {
-        startDisconnectTimer(closedGame, closedGameId, closedSeatIndex);
-      }
+      // Ensure tick is running to handle disconnect timeout
+      ensureGameTick(closedGame, closedGameId);
 
       // Broadcast updated state (shows DISCONNECTED status)
       broadcastGameState(closedGameId);
@@ -716,9 +671,9 @@ wss.on(
           }
         }
 
-        // If start action was called, begin countdown timer
+        // If start action was called, begin game tick
         if (action === "start" && game.countdown !== null) {
-          startCountdownTimer(game, gameId);
+          startGameTick(game, gameId);
         }
 
         // Cancel countdown if sitOut or leave reduces active players below 2
@@ -728,23 +683,20 @@ wss.on(
         ) {
           if (PokerActions.countPlayersWithChips(game) < 2) {
             game.countdown = null;
-            if (game.countdownTimer) {
-              clearInterval(game.countdownTimer);
-              game.countdownTimer = null;
-            }
+            stopGameTick(game);
           }
-        }
-
-        // Start clock timer when clock is called
-        if (action === "callClock") {
-          startClockTimer(game, gameId);
         }
 
         // Process game flow after betting actions
         if (bettingActions.includes(action)) {
-          // Clear clock timer since action was taken
-          clearClockTimer(game);
+          // Reset tick counters since player took action
+          resetActingTicks(game);
           processGameFlow(game, gameId);
+        }
+
+        // Start clock countdown when callClock action is called
+        if (action === "callClock") {
+          startClockTicks(game);
         }
       } catch (err) {
         ws.send(
@@ -759,8 +711,12 @@ wss.on(
           ),
         );
       }
+
       // Broadcast updated game state to clients in this game
       broadcastGameState(gameId);
+
+      // Ensure tick is running if needed (e.g., someone is acting)
+      ensureGameTick(game, gameId);
     });
 
     // Send initial game state

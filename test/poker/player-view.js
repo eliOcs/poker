@@ -281,9 +281,11 @@ describe("Player View", function () {
         pot: 10,
         currentBet: 0,
         actingSeat: 1,
-        actingSince: Date.now() - 61000, // 61 seconds ago
-        clockCalledAt: null,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
       };
+      g.actingTicks = 60; // 60 ticks (enough for clock)
+      g.clockTicks = 0; // Clock not called
 
       // Player 1 (seat 0) is waiting - should see callClock action on their own seat
       const view = playerView(g, p1);
@@ -308,9 +310,11 @@ describe("Player View", function () {
         pot: 10,
         currentBet: 0,
         actingSeat: 1,
-        actingSince: Date.now() - 61000, // 61 seconds ago
-        clockCalledAt: null,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
       };
+      g.actingTicks = 60; // 60 ticks (enough for clock)
+      g.clockTicks = 0; // Clock not called
 
       // Player 2 (seat 1) is acting - should NOT see callClock on their own seat
       const view = playerView(g, p2);
@@ -323,7 +327,7 @@ describe("Player View", function () {
       );
     });
 
-    it("should NOT appear before 60 seconds have passed", function () {
+    it("should NOT appear before 60 ticks have passed", function () {
       const g = Game.create({ seats: 2 });
       const p1 = Player.create();
       const p2 = Player.create();
@@ -338,9 +342,11 @@ describe("Player View", function () {
         pot: 10,
         currentBet: 0,
         actingSeat: 1,
-        actingSince: Date.now() - 30000, // Only 30 seconds ago
-        clockCalledAt: null,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
       };
+      g.actingTicks = 30; // Only 30 ticks
+      g.clockTicks = 0;
 
       // Player 1 (seat 0) is waiting - should NOT see callClock yet
       const view = playerView(g, p1);
@@ -349,7 +355,7 @@ describe("Player View", function () {
 
       assert.ok(
         !callClockAction,
-        "callClock should NOT appear before 60 seconds",
+        "callClock should NOT appear before 60 ticks",
       );
     });
 
@@ -368,9 +374,11 @@ describe("Player View", function () {
         pot: 10,
         currentBet: 0,
         actingSeat: 1,
-        actingSince: Date.now() - 61000,
-        clockCalledAt: Date.now() - 5000, // Clock was called 5 seconds ago
+        lastRaiser: -1,
+        lastRaiseSize: 0,
       };
+      g.actingTicks = 60;
+      g.clockTicks = 5; // Clock was called 5 ticks ago
 
       // Player 1 (seat 0) should NOT see callClock again
       const view = playerView(g, p1);
@@ -398,9 +406,11 @@ describe("Player View", function () {
         pot: 0,
         currentBet: 0,
         actingSeat: -1,
-        actingSince: null,
-        clockCalledAt: null,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
       };
+      g.actingTicks = 0;
+      g.clockTicks = 0;
 
       const view = playerView(g, p1);
       const p1Actions = view.seats[0].actions;

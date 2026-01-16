@@ -148,51 +148,24 @@ class Seat extends LitElement {
       seatNumber: { type: Number },
       isButton: { type: Boolean },
       showSitAction: { type: Boolean },
-      clockCalledAt: { type: Number },
-      _clockRemaining: { type: Number, state: true },
+      clockTicks: { type: Number },
     };
   }
 
   constructor() {
     super();
     this.showSitAction = true;
-    this.clockCalledAt = null;
-    this._clockRemaining = null;
-    this._clockInterval = null;
+    this.clockTicks = 0;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this._startClockTimer();
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._stopClockTimer();
-  }
-
-  _startClockTimer() {
-    this._stopClockTimer();
-    this._clockInterval = setInterval(() => {
-      this._updateClockRemaining();
-    }, 100);
-  }
-
-  _stopClockTimer() {
-    if (this._clockInterval) {
-      clearInterval(this._clockInterval);
-      this._clockInterval = null;
+  /**
+   * Returns the clock remaining time in seconds, or null if clock not called
+   */
+  get _clockRemaining() {
+    if (this.clockTicks > 0) {
+      return Math.max(0, 30 - this.clockTicks);
     }
-  }
-
-  _updateClockRemaining() {
-    if (this.clockCalledAt) {
-      const elapsed = Date.now() - this.clockCalledAt;
-      const remaining = Math.max(0, Math.ceil((30000 - elapsed) / 1000));
-      this._clockRemaining = remaining;
-    } else {
-      this._clockRemaining = null;
-    }
+    return null;
   }
 
   updated(changedProperties) {

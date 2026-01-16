@@ -371,6 +371,46 @@ describe("phg-history", () => {
 
       expect(navigateEvent).to.be.null;
     });
+
+    it("fetches new hand data when handNumber changes", async () => {
+      // Create a different mock hand for hand #1
+      const mockHand1 = {
+        ...mockOhhHand,
+        game_number: "test123-1",
+        players: [
+          { id: "player1", seat: 3, name: "Charlie", starting_stack: 500 },
+          { id: "player2", seat: 5, name: "Dana", starting_stack: 500 },
+        ],
+      };
+
+      // Mock fetch to return different data for hand #1
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async (url) => {
+        if (url === "/api/history/test123/1") {
+          return {
+            ok: true,
+            json: async () => ({ hand: mockHand1 }),
+          };
+        }
+        return { ok: false };
+      };
+
+      try {
+        // Change handNumber from 2 to 1
+        element.handNumber = 1;
+        await element.updateComplete;
+
+        // Wait for fetch to complete
+        await new Promise((r) => setTimeout(r, 10));
+        await element.updateComplete;
+
+        // Verify the hand data was updated
+        expect(element.hand.players[0].name).to.equal("Charlie");
+        expect(element.hand.players[1].name).to.equal("Dana");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
   });
 
   describe("mobile nav bar", () => {

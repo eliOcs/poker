@@ -479,9 +479,9 @@ class Game extends LitElement {
                   .seatNumber=${i}
                   .isButton=${this.game.button === i}
                   .showSitAction=${!isSeated}
-                  .clockCalledAt=${this.game.hand?.actingSeat === i
-                    ? this.game.hand?.clockCalledAt
-                    : null}
+                  .clockTicks=${this.game.hand?.actingSeat === i
+                    ? this.game.hand?.clockTicks
+                    : 0}
                   @seat-action=${this.handleSeatAction}
                 ></phg-seat>
               `,

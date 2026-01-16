@@ -528,7 +528,8 @@ const TEST_CASES = {
           pot: 300,
           currentBet: 100,
           actingSeat: 1,
-          clockCalledAt: Date.now() - 15000,
+          actingTicks: 75,
+          clockTicks: 15, // 15 ticks since clock was called
         },
         board: {
           cards: ["Jh", "Td", "5c"],

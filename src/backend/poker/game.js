@@ -30,8 +30,6 @@ import * as Seat from "./seat.js";
  * @property {number} lastRaiser - Seat index of last raiser (-1 if none)
  * @property {number} actingSeat - Seat index of player to act (-1 if none)
  * @property {number} lastRaiseSize - Size of the last raise (for min-raise calculation)
- * @property {number|null} actingSince - Timestamp when current player started acting
- * @property {number|null} clockCalledAt - Timestamp when clock was called (null if not called)
  */
 
 /**
@@ -50,12 +48,12 @@ import * as Seat from "./seat.js";
  * @property {Card[]} deck - Current deck
  * @property {Board} board - Community cards
  * @property {Hand} hand - Current hand state
- * @property {number|null} countdown - Countdown seconds until hand starts (null if not counting)
- * @property {NodeJS.Timeout|null} countdownTimer - Timer ID for countdown interval
+ * @property {number|null} countdown - Countdown ticks until hand starts (null if not counting)
+ * @property {NodeJS.Timeout|null} tickTimer - Unified game tick timer (1 second interval)
  * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
- * @property {NodeJS.Timeout|null} disconnectTimer - Timer for auto-action on disconnected player
- * @property {number} disconnectTimerSeat - Seat index for disconnect timer (-1 if none)
- * @property {NodeJS.Timeout|null} clockTimer - Timer for call the clock countdown
+ * @property {number} actingTicks - Ticks the current player has been acting (for call clock availability)
+ * @property {number} disconnectedActingTicks - Ticks a disconnected player has been acting (for auto-fold)
+ * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
  */
 
 /**
@@ -76,8 +74,6 @@ export function createHand() {
     lastRaiser: -1,
     actingSeat: -1,
     lastRaiseSize: 0,
-    actingSince: null,
-    clockCalledAt: null,
   };
 }
 
@@ -104,10 +100,10 @@ export function create({
     board: { cards: [] },
     hand: createHand(),
     countdown: null,
-    countdownTimer: null,
+    tickTimer: null,
     winnerMessage: null,
-    disconnectTimer: null,
-    disconnectTimerSeat: -1,
-    clockTimer: null,
+    actingTicks: 0,
+    disconnectedActingTicks: 0,
+    clockTicks: 0,
   };
 }

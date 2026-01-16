@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Terraform
+terraform/
+
+# Build artifacts
+dist/
+coverage/
+
+# Data files
+data/
