@@ -7,7 +7,6 @@ import "./action-panel.js";
 import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
-import "./history.js";
 
 class Game extends LitElement {
   static get styles() {
@@ -243,7 +242,6 @@ class Game extends LitElement {
       socket: { type: Object },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
-      showHistory: { type: Boolean },
     };
   }
 
@@ -252,7 +250,6 @@ class Game extends LitElement {
     this.gameId = null;
     this.showSettings = false;
     this.showRanking = false;
-    this.showHistory = false;
   }
 
   firstUpdated() {
@@ -357,18 +354,13 @@ class Game extends LitElement {
   }
 
   openHistory() {
-    this.showHistory = true;
-  }
-
-  closeHistory() {
-    this.showHistory = false;
-  }
-
-  handleHistoryClose(e) {
-    // Stop navigate event from bubbling to router when closing embedded history
-    if (e.detail.path === `/games/${this.gameId}`) {
-      e.stopPropagation();
-    }
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: `/history/${this.gameId}` },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   saveSettings() {
@@ -410,18 +402,6 @@ class Game extends LitElement {
   render() {
     if (!this.game) {
       return html`<p>Loading ...</p>`;
-    }
-
-    // Show history view when showHistory is true
-    if (this.showHistory) {
-      return html`
-        <phg-history
-          .gameId=${this.gameId}
-          .playerId=${this.game?.playerId}
-          @close=${this.closeHistory}
-          @navigate=${this.handleHistoryClose}
-        ></phg-history>
-      `;
     }
 
     const { seatIndex, actions } = this.getMySeatInfo();
