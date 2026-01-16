@@ -533,6 +533,140 @@ export function getHandSummary(hand, playerId) {
 }
 
 /**
+ * @typedef {object} HistoryViewSeat
+ * @property {boolean} empty
+ * @property {{ id: string, name: string }} [player]
+ * @property {number} [stack]
+ * @property {string[]} [cards]
+ * @property {number|null} [handResult]
+ * @property {string|null} [handRank]
+ * @property {string[]|null} [winningCards]
+ * @property {boolean} [isCurrentPlayer]
+ * @property {boolean} [folded]
+ * @property {boolean} [allIn]
+ * @property {boolean} [sittingOut]
+ * @property {boolean} [disconnected]
+ * @property {boolean} [isActing]
+ */
+
+/**
+ * @typedef {object} HistoryView
+ * @property {HistoryViewSeat[]} seats
+ * @property {{ cards: string[], phase: string }} board
+ * @property {number} pot
+ * @property {{ playerName: string, handRank: string|null, amount: number }|null} winnerMessage
+ * @property {string[]|null} winningCards
+ * @property {number} button
+ */
+
+/**
+ * Converts OHH hand data to game view format for rendering
+ * @param {OHHHand} hand - The OHH hand data
+ * @param {string} playerId - The requesting player's ID
+ * @returns {HistoryView}
+ */
+export function getHandView(hand, playerId) {
+  // Build a map of player cards from Dealt Cards actions
+  /** @type {Map<string, string[]>} */
+  const playerCards = new Map();
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (action.action === "Dealt Cards" && action.cards) {
+        playerCards.set(action.player_id, action.cards);
+      }
+    }
+  }
+
+  // Build a set of winners and their win amounts
+  /** @type {Map<string, number>} */
+  const winAmounts = new Map();
+  for (const pot of hand.pots) {
+    for (const win of pot.player_wins) {
+      const current = winAmounts.get(win.player_id) || 0;
+      winAmounts.set(win.player_id, current + win.win_amount);
+    }
+  }
+
+  // Get winning hand info from main pot
+  const mainPot = hand.pots[0];
+  const winningHand = mainPot?.winning_hand || null;
+  const winningCards = mainPot?.winning_cards || null;
+
+  // Build seats array (6 seats, sparse based on player positions)
+  /** @type {HistoryViewSeat[]} */
+  const seats = [];
+  for (let i = 0; i < hand.table_size; i++) {
+    const player = hand.players.find((p) => p.seat === i);
+    if (!player) {
+      seats.push({ empty: true });
+      continue;
+    }
+
+    const isCurrentPlayer = player.id === playerId;
+    const isWinner = winAmounts.has(player.id);
+    const winAmount = winAmounts.get(player.id) || 0;
+    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+
+    seats.push({
+      empty: false,
+      player: { id: player.id, name: displayName || `Seat ${i + 1}` },
+      stack: player.starting_stack,
+      cards: playerCards.get(player.id) || [],
+      handResult: winAmount > 0 ? winAmount : null,
+      handRank: isWinner ? winningHand : null,
+      winningCards: isWinner ? winningCards : null,
+      isCurrentPlayer,
+      folded: false,
+      allIn: false,
+      sittingOut: false,
+      disconnected: false,
+      isActing: false,
+    });
+  }
+
+  // Extract board cards and last street from rounds
+  /** @type {string[]} */
+  const boardCards = [];
+  let lastStreet = "Preflop";
+  for (const round of hand.rounds) {
+    if (round.cards) {
+      boardCards.push(...round.cards);
+    }
+    if (round.street) {
+      lastStreet = round.street;
+    }
+  }
+
+  // Calculate total pot
+  let totalPot = 0;
+  for (const pot of hand.pots) {
+    totalPot += pot.amount || 0;
+  }
+
+  // Build winner message
+  let winnerMessage = null;
+  if (mainPot?.player_wins?.length > 0) {
+    const winnerId = mainPot.player_wins[0].player_id;
+    const winAmount = mainPot.player_wins[0].win_amount;
+    const winner = hand.players.find((p) => p.id === winnerId);
+    winnerMessage = {
+      playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
+      handRank: winningHand,
+      amount: winAmount,
+    };
+  }
+
+  return {
+    seats,
+    board: { cards: boardCards, phase: lastStreet },
+    pot: totalPot,
+    winnerMessage,
+    winningCards,
+    button: hand.dealer_seat,
+  };
+}
+
+/**
  * Gets the current hand number for a game
  * @param {string} gameId
  * @returns {number}

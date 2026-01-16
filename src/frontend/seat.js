@@ -61,10 +61,10 @@ class Seat extends LitElement {
         }
 
         :host(.winner) {
-          border-color: var(--color-highlight);
+          border-color: var(--color-primary);
           box-shadow:
             var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
-            0 0 0 var(--space-sm) var(--color-highlight);
+            0 0 0 var(--space-sm) var(--color-primary);
         }
 
         .player-name {

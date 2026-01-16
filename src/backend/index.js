@@ -178,8 +178,9 @@ server.on("request", (req, res) => {
         }
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
+        const view = HandHistory.getHandView(filteredHand, player.id);
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hand: filteredHand }));
+        res.end(JSON.stringify({ hand: filteredHand, view }));
       })
       .catch((err) => {
         logger.error("api error", { path: url, error: err.message });

@@ -410,6 +410,116 @@ export function createMockHandList() {
 }
 
 /**
+ * Creates a mock view object from an OHH hand (mirrors backend getHandView)
+ * @param {object} hand - OHH hand data
+ * @param {string} playerId - The requesting player's ID
+ * @returns {object} View object for rendering
+ */
+export function createMockView(hand, playerId) {
+  // Build a map of player cards from Dealt Cards actions
+  const playerCards = new Map();
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (action.action === "Dealt Cards" && action.cards) {
+        playerCards.set(action.player_id, action.cards);
+      }
+    }
+  }
+
+  // Build win amounts map
+  const winAmounts = new Map();
+  for (const pot of hand.pots) {
+    for (const win of pot.player_wins) {
+      const current = winAmounts.get(win.player_id) || 0;
+      winAmounts.set(win.player_id, current + win.win_amount);
+    }
+  }
+
+  // Get winning hand info from main pot
+  const mainPot = hand.pots[0];
+  const winningHand = mainPot?.winning_hand || null;
+  const winningCards = mainPot?.winning_cards || null;
+
+  // Build seats array
+  const seats = [];
+  for (let i = 0; i < hand.table_size; i++) {
+    const player = hand.players.find((p) => p.seat === i);
+    if (!player) {
+      seats.push({ empty: true });
+      continue;
+    }
+
+    const isCurrentPlayer = player.id === playerId;
+    const isWinner = winAmounts.has(player.id);
+    const winAmount = winAmounts.get(player.id) || 0;
+    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+
+    seats.push({
+      empty: false,
+      player: { id: player.id, name: displayName || `Seat ${i + 1}` },
+      stack: player.starting_stack,
+      cards: playerCards.get(player.id) || [],
+      handResult: winAmount > 0 ? winAmount : null,
+      handRank: isWinner ? winningHand : null,
+      winningCards: isWinner ? winningCards : null,
+      isCurrentPlayer,
+      folded: false,
+      allIn: false,
+      sittingOut: false,
+      disconnected: false,
+      isActing: false,
+    });
+  }
+
+  // Extract board cards and last street
+  const boardCards = [];
+  let lastStreet = "Preflop";
+  for (const round of hand.rounds) {
+    if (round.cards) {
+      boardCards.push(...round.cards);
+    }
+    if (round.street) {
+      lastStreet = round.street;
+    }
+  }
+
+  // Calculate total pot
+  let totalPot = 0;
+  for (const pot of hand.pots) {
+    totalPot += pot.amount || 0;
+  }
+
+  // Build winner message
+  let winnerMessage = null;
+  if (mainPot?.player_wins?.length > 0) {
+    const winnerId = mainPot.player_wins[0].player_id;
+    const winAmount = mainPot.player_wins[0].win_amount;
+    const winner = hand.players.find((p) => p.id === winnerId);
+    winnerMessage = {
+      playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
+      handRank: winningHand,
+      amount: winAmount,
+    };
+  }
+
+  return {
+    seats,
+    board: { cards: boardCards, phase: lastStreet },
+    pot: totalPot,
+    winnerMessage,
+    winningCards,
+    button: hand.dealer_seat,
+  };
+}
+
+// Pre-built mock views for common test scenarios
+export const mockOhhHandView = createMockView(mockOhhHand, "player1");
+export const mockOhhHandWithShowdownView = createMockView(
+  mockOhhHandWithShowdown,
+  "player1",
+);
+
+/**
  * Mock WebSocket class for testing
  */
 export class MockWebSocket {

@@ -408,6 +408,7 @@ class History extends LitElement {
       gameId: { type: String },
       handNumber: { type: Number },
       hand: { type: Object },
+      view: { type: Object },
       handList: { type: Array },
       loading: { type: Boolean },
       error: { type: String },
@@ -420,6 +421,7 @@ class History extends LitElement {
     this.gameId = null;
     this.handNumber = null;
     this.hand = null;
+    this.view = null;
     this.handList = null;
     this.loading = true;
     this.error = null;
@@ -529,120 +531,8 @@ class History extends LitElement {
     return player?.name || `Seat ${player?.seat || "?"}`;
   }
 
-  getPlayerCards(playerId) {
-    // Find dealt cards action for this player
-    for (const round of this.hand?.rounds || []) {
-      for (const action of round.actions || []) {
-        if (action.player_id === playerId && action.action === "Dealt Cards") {
-          return action.cards || [];
-        }
-      }
-    }
-    return [];
-  }
-
-  getWinners() {
-    const winners = new Set();
-    for (const pot of this.hand?.pots || []) {
-      for (const win of pot.player_wins || []) {
-        winners.add(win.player_id);
-      }
-    }
-    return winners;
-  }
-
-  getPlayerWinAmount(playerId) {
-    let total = 0;
-    for (const pot of this.hand?.pots || []) {
-      for (const win of pot.player_wins || []) {
-        if (win.player_id === playerId) {
-          total += win.win_amount;
-        }
-      }
-    }
-    return total;
-  }
-
-  getTotalPot() {
-    let total = 0;
-    for (const pot of this.hand?.pots || []) {
-      total += pot.amount || 0;
-    }
-    return total;
-  }
-
   getCurrentHandSummary() {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
-  }
-
-  playerToSeat(player, isWinner) {
-    const cards = this.getPlayerCards(player.id);
-    const winAmount = this.getPlayerWinAmount(player.id);
-    const isCurrentPlayer = player.id === this.playerId;
-    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
-
-    // Get winning hand info from main pot
-    const mainPot = this.hand?.pots?.[0];
-    const winningCards = isWinner ? mainPot?.winning_cards : null;
-    const handRank = isWinner ? mainPot?.winning_hand : null;
-
-    return {
-      empty: false,
-      player: { id: player.id, name: displayName },
-      stack: player.starting_stack,
-      cards,
-      handResult: winAmount > 0 ? winAmount : null,
-      handRank,
-      winningCards,
-      isCurrentPlayer,
-      folded: false,
-      allIn: false,
-      sittingOut: false,
-      disconnected: false,
-      isActing: false,
-    };
-  }
-
-  // Get board data for phg-board component
-  getBoardData() {
-    const boardCards = [];
-    let lastStreet = "Preflop";
-
-    for (const round of this.hand?.rounds || []) {
-      if (round.cards) {
-        boardCards.push(...round.cards);
-      }
-      if (round.street) {
-        lastStreet = round.street;
-      }
-    }
-
-    return {
-      cards: boardCards,
-      phase: lastStreet,
-    };
-  }
-
-  // Get winner message for phg-board component
-  getWinnerMessage() {
-    const mainPot = this.hand?.pots?.[0];
-    if (!mainPot?.player_wins?.length) return null;
-
-    const winnerId = mainPot.player_wins[0].player_id;
-    const winAmount = mainPot.player_wins[0].win_amount;
-    const winnerPlayer = this.hand?.players?.find((p) => p.id === winnerId);
-
-    return {
-      playerName: winnerPlayer?.name || `Seat ${winnerPlayer?.seat + 1}`,
-      handRank: mainPot.winning_hand,
-      amount: winAmount,
-    };
-  }
-
-  // Get winning cards for phg-board component (for highlighting)
-  getBoardWinningCards() {
-    const mainPot = this.hand?.pots?.[0];
-    return mainPot?.winning_cards || null;
   }
 
   renderNavBar() {
@@ -692,32 +582,29 @@ class History extends LitElement {
   }
 
   renderTableState() {
-    const winners = this.getWinners();
-    const board = this.getBoardData();
-    const hand = { pot: this.getTotalPot(), phase: board.phase };
-    const winnerMessage = this.getWinnerMessage();
-    const winningCards = this.getBoardWinningCards();
+    if (!this.view) return html``;
+
+    const hand = { pot: this.view.pot, phase: this.view.board.phase };
 
     return html`
       <div class="table-state">
         <phg-board
           class="board"
-          .board=${board}
+          .board=${this.view.board}
           .hand=${hand}
-          .winnerMessage=${winnerMessage}
-          .winningCards=${winningCards}
+          .winnerMessage=${this.view.winnerMessage}
+          .winningCards=${this.view.winningCards}
         ></phg-board>
-        ${(this.hand?.players || []).map((player) => {
-          const isWinner = winners.has(player.id);
-          const seat = this.playerToSeat(player, isWinner);
-          const isButton = player.seat === this.hand?.dealer_seat;
+        ${this.view.seats.map((seat, index) => {
+          if (seat.empty) return html``;
+          const isButton = index === this.view.button;
 
           return html`
             <phg-seat
               class="player-seat"
-              data-seat="${player.seat}"
+              data-seat="${index}"
               .seat=${seat}
-              .seatNumber=${player.seat}
+              .seatNumber=${index}
               .isButton=${isButton}
               .showSitAction=${false}
             ></phg-seat>

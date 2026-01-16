@@ -3,6 +3,9 @@ import {
   mockOhhHand,
   mockOhhHandWithShowdown,
   createMockHandList,
+  createMockView,
+  mockOhhHandView,
+  mockOhhHandWithShowdownView,
 } from "./setup.js";
 
 describe("phg-history", () => {
@@ -88,6 +91,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
+      element.view = mockOhhHandView;
       element.handNumber = 1;
       await element.updateComplete;
     });
@@ -128,6 +132,7 @@ describe("phg-history", () => {
 
     it("renders board cards when present", async () => {
       element.hand = mockOhhHandWithShowdown;
+      element.view = mockOhhHandWithShowdownView;
       await element.updateComplete;
 
       const board = element.shadowRoot.querySelector("phg-board");
@@ -141,10 +146,12 @@ describe("phg-history", () => {
 
     it("handles preflop fold with no board cards", async () => {
       // Create hand without board cards (fold preflop)
-      element.hand = {
+      const preflopOnlyHand = {
         ...mockOhhHand,
         rounds: [mockOhhHand.rounds[0]], // Only preflop
       };
+      element.hand = preflopOnlyHand;
+      element.view = createMockView(preflopOnlyHand, "player1");
       await element.updateComplete;
 
       const board = element.shadowRoot.querySelector("phg-board");
@@ -168,6 +175,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
+      element.view = mockOhhHandView;
       element.handNumber = 1;
       await element.updateComplete;
     });
@@ -208,6 +216,7 @@ describe("phg-history", () => {
 
     it("shows street cards on Flop/Turn/River", async () => {
       element.hand = mockOhhHandWithShowdown;
+      element.view = mockOhhHandWithShowdownView;
       await element.updateComplete;
 
       const streetCards = element.shadowRoot.querySelectorAll(".street-cards");
@@ -216,6 +225,7 @@ describe("phg-history", () => {
 
     it("renders showdown actions", async () => {
       element.hand = mockOhhHandWithShowdown;
+      element.view = mockOhhHandWithShowdownView;
       await element.updateComplete;
 
       const streetHeaders =
@@ -240,6 +250,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
+      element.view = mockOhhHandView;
       element.handNumber = 1;
       await element.updateComplete;
     });
@@ -299,6 +310,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
+      element.view = mockOhhHandView;
       element.handNumber = 2;
       await element.updateComplete;
     });
@@ -400,6 +412,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
+      element.view = mockOhhHandView;
       element.handNumber = 1;
       await element.updateComplete;
     });
@@ -460,6 +473,7 @@ describe("phg-history", () => {
       element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHandWithShowdown;
+      element.view = mockOhhHandWithShowdownView;
       element.handNumber = 1;
       await element.updateComplete;
     });
@@ -480,7 +494,7 @@ describe("phg-history", () => {
 
     it("shows hidden cards as hidden", async () => {
       // Modify hand to have hidden cards (using OHH "??" format)
-      element.hand = {
+      const handWithHiddenCards = {
         ...mockOhhHand,
         rounds: [
           {
@@ -493,6 +507,8 @@ describe("phg-history", () => {
           },
         ],
       };
+      element.hand = handWithHiddenCards;
+      element.view = createMockView(handWithHiddenCards, "player1");
       await element.updateComplete;
 
       // The player cards display should show hidden cards for player2
