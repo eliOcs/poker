@@ -18,6 +18,9 @@ import {
   mockOhhHand,
   mockOhhHandWithShowdown,
   createMockHandList,
+  createMockView,
+  mockOhhHandView,
+  mockOhhHandWithShowdownView,
 } from "./fixtures.js";
 
 // Mock WebSocket before importing components
@@ -73,4 +76,7 @@ export {
   mockOhhHand,
   mockOhhHandWithShowdown,
   createMockHandList,
+  createMockView,
+  mockOhhHandView,
+  mockOhhHandWithShowdownView,
 };

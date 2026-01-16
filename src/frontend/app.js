@@ -25,6 +25,7 @@ class App extends LitElement {
       toast: { type: Object },
       // History state
       historyHand: { type: Object },
+      historyView: { type: Object },
       historyHandList: { type: Array },
       historyLoading: { type: Boolean },
     };
@@ -36,6 +37,7 @@ class App extends LitElement {
     this.toast = null;
     // History state
     this.historyHand = null;
+    this.historyView = null;
     this.historyHandList = null;
     this.historyLoading = true;
     this._historyGameId = null;
@@ -79,6 +81,7 @@ class App extends LitElement {
     // Reset state for new game
     if (gameId !== this._historyGameId) {
       this.historyHand = null;
+      this.historyView = null;
       this.historyHandList = null;
       this._historyGameId = gameId;
     }
@@ -115,6 +118,7 @@ class App extends LitElement {
         }
         const handData = await handRes.json();
         this.historyHand = handData.hand;
+        this.historyView = handData.view;
       }
 
       this.historyLoading = false;
@@ -149,6 +153,7 @@ class App extends LitElement {
       }
       const data = await res.json();
       this.historyHand = data.hand;
+      this.historyView = data.view;
     } catch (err) {
       // Redirect to game and show error toast
       this.toast = { message: err.message, variant: "error" };
@@ -184,6 +189,7 @@ class App extends LitElement {
           .gameId=${gameId}
           .handNumber=${this._historyHandNumber}
           .hand=${this.historyHand}
+          .view=${this.historyView}
           .handList=${this.historyHandList}
           .loading=${this.historyLoading}
         ></phg-history>`;
