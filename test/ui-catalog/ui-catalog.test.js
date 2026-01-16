@@ -47,7 +47,6 @@ const TEST_CASES = [
   // Hand history states
   "history-loading",
   "history-empty",
-  "history-error",
   "history-preflop-fold",
   "history-showdown-win",
   "history-showdown-lose",

@@ -220,7 +220,8 @@ export function recordStreet(gameId, street, boardCards) {
   recorder.currentStreet = streetMap[street] || street;
 
   if (boardCards && boardCards.length > 0) {
-    recorder.boardByStreet.set(recorder.currentStreet, boardCards);
+    // Store a copy to avoid mutation when more cards are dealt
+    recorder.boardByStreet.set(recorder.currentStreet, [...boardCards]);
   }
 }
 
