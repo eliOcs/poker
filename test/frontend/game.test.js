@@ -57,83 +57,71 @@ describe("phg-game", () => {
     });
   });
 
-  describe("error handling", () => {
-    it("emits toast event for server errors", async () => {
+  describe("event handling", () => {
+    it("emits only one game-action event per action (no double-send)", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      let toastEvent = null;
-      element.addEventListener("toast", (e) => {
-        toastEvent = e;
+      let eventCount = 0;
+      element.addEventListener("game-action", () => {
+        eventCount++;
       });
 
-      element.socket.onmessage({
-        data: JSON.stringify({ error: { message: "Server error" } }),
-      });
-      await element.updateComplete;
+      // Trigger a seat action via the phg-seat component
+      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      await seats[0].updateComplete;
+      const sitButton = seats[0].shadowRoot.querySelector("phg-button");
+      sitButton.click();
 
-      expect(toastEvent).to.exist;
-      expect(toastEvent.detail.message).to.equal("Server error");
-      expect(toastEvent.detail.variant).to.equal("error");
+      // Should receive exactly one event, not two
+      expect(eventCount).to.equal(1);
     });
 
-    it("emits toast and navigate events for game not found", async () => {
-      let toastEvent = null;
-      let navigateEvent = null;
-      element.addEventListener("toast", (e) => {
-        toastEvent = e;
-      });
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
-      // Simulate game not found (socket close with code 1006)
-      element.socket.onclose({ code: 1006 });
+    it("emits only one game-action event for action panel actions", async () => {
+      element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      expect(toastEvent).to.exist;
-      expect(toastEvent.detail.message).to.equal("Game not found");
-      expect(toastEvent.detail.variant).to.equal("error");
-      expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.equal("/");
+      let eventCount = 0;
+      element.addEventListener("game-action", () => {
+        eventCount++;
+      });
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
+      checkButton.click();
+
+      // Should receive exactly one event, not two
+      expect(eventCount).to.equal(1);
     });
   });
 
-  describe("WebSocket connection", () => {
-    it('shows "Connecting" when readyState is 0', async () => {
+  describe("connection status", () => {
+    it('shows "Connecting" when connectionStatus is connecting', async () => {
       element.game = createMockGameState();
-      element.socket.readyState = 0;
+      element.connectionStatus = "connecting";
       await element.updateComplete;
 
       const status = element.shadowRoot.querySelector("#connection-status");
       expect(status.textContent).to.include("Connecting");
     });
 
-    it('shows "Connected" when readyState is 1', async () => {
+    it('shows "Connected" when connectionStatus is connected', async () => {
       element.game = createMockGameState();
-      element.socket.readyState = 1;
+      element.connectionStatus = "connected";
       await element.updateComplete;
 
       const status = element.shadowRoot.querySelector("#connection-status");
       expect(status.textContent).to.include("Connected");
     });
 
-    it('shows "Closing" when readyState is 2', async () => {
+    it('shows "Not connected" when connectionStatus is disconnected', async () => {
       element.game = createMockGameState();
-      element.socket.readyState = 2;
+      element.connectionStatus = "disconnected";
       await element.updateComplete;
 
       const status = element.shadowRoot.querySelector("#connection-status");
-      expect(status.textContent).to.include("Closing");
-    });
-
-    it('shows "Closed" when readyState is 3', async () => {
-      element.game = createMockGameState();
-      element.socket.readyState = 3;
-      await element.updateComplete;
-
-      const status = element.shadowRoot.querySelector("#connection-status");
-      expect(status.textContent).to.include("Closed");
+      expect(status.textContent).to.include("Not connected");
     });
   });
 
@@ -211,6 +199,11 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const input = element.shadowRoot.querySelector("#name-input");
       input.value = "TestPlayer";
 
@@ -219,9 +212,9 @@ describe("phg-game", () => {
       );
       saveBtn.click();
 
-      expect(element.socket.sent.length).to.equal(1);
-      expect(element.socket.sent[0].action).to.equal("setName");
-      expect(element.socket.sent[0].name).to.equal("TestPlayer");
+      expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("setName");
+      expect(sentMessage.name).to.equal("TestPlayer");
     });
 
     it("closes modal after saving", async () => {

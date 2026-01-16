@@ -239,7 +239,7 @@ class Game extends LitElement {
     return {
       gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
-      socket: { type: Object },
+      connectionStatus: { type: String },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
     };
@@ -248,81 +248,16 @@ class Game extends LitElement {
   constructor() {
     super();
     this.gameId = null;
+    this.game = null;
+    this.connectionStatus = "disconnected";
     this.showSettings = false;
     this.showRanking = false;
   }
 
-  firstUpdated() {
-    this.connect();
-  }
-
-  updated(changedProperties) {
-    if (
-      changedProperties.has("gameId") &&
-      changedProperties.get("gameId") !== undefined
-    ) {
-      // gameId changed, reconnect to new game
-      if (this.socket) {
-        this.socket.close();
-      }
-      this.game = null;
-      this.connect();
-    }
-  }
-
-  connect() {
-    if (!this.gameId) {
-      console.error("No game ID provided");
-      return;
-    }
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this.socket = new WebSocket(
-      `${protocol}//${window.location.host}/games/${this.gameId}`,
-    );
-
-    this.socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.error) {
-        this.dispatchEvent(
-          new CustomEvent("toast", {
-            detail: { message: data.error.message, variant: "error" },
-            bubbles: true,
-            composed: true,
-          }),
-        );
-      } else {
-        this.game = data;
-      }
-    };
-
-    this.socket.onerror = () => {
-      this.handleGameNotFound();
-    };
-
-    this.socket.onclose = (event) => {
-      // Code 1006 = abnormal closure (connection rejected)
-      if (!this.game && event.code === 1006) {
-        this.handleGameNotFound();
-      }
-    };
-  }
-
   send(message) {
-    this.socket.send(JSON.stringify(message));
-  }
-
-  handleGameNotFound() {
     this.dispatchEvent(
-      new CustomEvent("toast", {
-        detail: { message: "Game not found", variant: "error" },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: "/" },
+      new CustomEvent("game-action", {
+        detail: message,
         bubbles: true,
         composed: true,
       }),
@@ -330,10 +265,12 @@ class Game extends LitElement {
   }
 
   handleSeatAction(e) {
+    e.stopPropagation();
     this.send(e.detail);
   }
 
   handleGameAction(e) {
+    e.stopPropagation();
     this.send(e.detail);
   }
 
@@ -451,11 +388,9 @@ class Game extends LitElement {
           @game-action=${this.handleGameAction}
         ></phg-action-panel>
         <span id="connection-status">
-          ${!this.socket ? "Not connected" : ""}
-          ${this.socket?.readyState === 0 ? "Connecting ..." : ""}
-          ${this.socket?.readyState === 1 ? "Connected" : ""}
-          ${this.socket?.readyState === 2 ? "Closing ..." : ""}
-          ${this.socket?.readyState === 3 ? "Closed" : ""}
+          ${this.connectionStatus === "disconnected" ? "Not connected" : ""}
+          ${this.connectionStatus === "connecting" ? "Connecting ..." : ""}
+          ${this.connectionStatus === "connected" ? "Connected" : ""}
         </span>
         <button
           id="history-btn"

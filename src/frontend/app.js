@@ -23,6 +23,9 @@ class App extends LitElement {
     return {
       path: { type: String },
       toast: { type: Object },
+      // Game state (managed here, passed to phg-game)
+      game: { type: Object },
+      gameConnectionStatus: { type: String },
       // History state
       historyHand: { type: Object },
       historyView: { type: Object },
@@ -35,6 +38,11 @@ class App extends LitElement {
     super();
     this.path = window.location.pathname;
     this.toast = null;
+    // Game state
+    this.game = null;
+    this.gameConnectionStatus = "disconnected";
+    this._activeGameId = null;
+    this._socket = null;
     // History state
     this.historyHand = null;
     this.historyView = null;
@@ -59,6 +67,80 @@ class App extends LitElement {
     this.addEventListener("hand-select", (e) => {
       this.handleHandSelect(e.detail.handNumber);
     });
+    this.addEventListener("game-action", (e) => {
+      this.sendToGame(e.detail);
+    });
+  }
+
+  // --- Game WebSocket Management ---
+
+  connectToGame(gameId) {
+    // Already connected to this game
+    if (this._activeGameId === gameId && this._socket) {
+      return;
+    }
+
+    // Disconnect from previous game if different
+    if (this._activeGameId && this._activeGameId !== gameId) {
+      this.disconnectFromGame();
+    }
+
+    this._activeGameId = gameId;
+    this.game = null;
+    this.gameConnectionStatus = "connecting";
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    this._socket = new WebSocket(
+      `${protocol}//${window.location.host}/games/${gameId}`,
+    );
+
+    this._socket.onopen = () => {
+      this.gameConnectionStatus = "connected";
+    };
+
+    this._socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.error) {
+        this.toast = { message: data.error.message, variant: "error" };
+      } else {
+        this.game = data;
+      }
+    };
+
+    this._socket.onerror = () => {
+      this.handleGameNotFound();
+    };
+
+    this._socket.onclose = (event) => {
+      this.gameConnectionStatus = "disconnected";
+      // Code 1006 = abnormal closure (connection rejected)
+      if (!this.game && event.code === 1006) {
+        this.handleGameNotFound();
+      }
+    };
+  }
+
+  disconnectFromGame() {
+    if (this._socket) {
+      this._socket.close();
+      this._socket = null;
+    }
+    this._activeGameId = null;
+    this.game = null;
+    this.gameConnectionStatus = "disconnected";
+  }
+
+  sendToGame(message) {
+    if (this._socket?.readyState === WebSocket.OPEN) {
+      this._socket.send(JSON.stringify(message));
+    }
+  }
+
+  handleGameNotFound() {
+    this.toast = { message: "Game not found", variant: "error" };
+    this.disconnectFromGame();
+    history.replaceState({}, "", "/");
+    this.path = "/";
   }
 
   dismissToast() {
@@ -166,29 +248,43 @@ class App extends LitElement {
 
   render() {
     const gameMatch = this.path.match(/^\/games\/([a-z0-9]+)$/);
-    if (gameMatch) {
-      return html`${this.renderToast()}<phg-game
-          .gameId=${gameMatch[1]}
-        ></phg-game>`;
-    }
-
     const historyMatch = this.path.match(
       /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
     );
+
+    // Determine gameId from either route
+    const gameId = gameMatch?.[1] || historyMatch?.[1] || null;
+
+    // Manage WebSocket connection based on current route
+    if (gameId) {
+      this.connectToGame(gameId);
+    } else if (this._activeGameId) {
+      this.disconnectFromGame();
+    }
+
+    // Render game view
+    if (gameMatch) {
+      return html`${this.renderToast()}<phg-game
+          .gameId=${gameMatch[1]}
+          .game=${this.game}
+          .connectionStatus=${this.gameConnectionStatus}
+        ></phg-game>`;
+    }
+
+    // Render history view (connection stays alive for same gameId)
     if (historyMatch) {
-      const gameId = historyMatch[1];
       const handNumber = historyMatch[2] ? parseInt(historyMatch[2], 10) : null;
 
       // Trigger data fetch if needed
       if (
-        gameId !== this._historyGameId ||
+        historyMatch[1] !== this._historyGameId ||
         handNumber !== this._historyHandNumber
       ) {
-        this.fetchHistoryData(gameId, handNumber);
+        this.fetchHistoryData(historyMatch[1], handNumber);
       }
 
       return html`${this.renderToast()}<phg-history
-          .gameId=${gameId}
+          .gameId=${historyMatch[1]}
           .handNumber=${this._historyHandNumber}
           .hand=${this.historyHand}
           .view=${this.historyView}

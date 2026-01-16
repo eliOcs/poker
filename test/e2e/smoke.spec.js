@@ -27,7 +27,7 @@ test.describe("Poker Game Smoke Test", () => {
     await player1.sit(0);
     await player2.sit(1);
 
-    // Players buy in (20 big blinds = 1000 chips each)
+    // Players buy in with 20 big blinds each (20 * $50 BB = $1000 each = $2000 total)
     await player1.buyIn(20);
     await player2.buyIn(20);
 
@@ -149,8 +149,8 @@ test.describe("Poker Game Smoke Test", () => {
       `Final stacks - P1: ${p1Stack}, P2: ${p2Stack}, Total: ${totalChips}`,
     );
 
-    // Total chips should be preserved (2000) or close to it
-    // (next hand may have started and taken blinds before we read stacks)
+    // Total chips should be preserved (2000 = 1000 per player)
+    // Allow slight variance for blinds if next hand already started
     expect(totalChips).toBeGreaterThanOrEqual(1925); // 2000 - 75 (SB + BB)
     expect(totalChips).toBeLessThanOrEqual(2000);
     // At least one player should have chips

@@ -230,14 +230,19 @@ describe("phg-seat", () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
+    let sentMessage = null;
+    element.addEventListener("game-action", (e) => {
+      sentMessage = e.detail;
+    });
+
     const seats = element.shadowRoot.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     const sitButton = seats[0].shadowRoot.querySelector("phg-button");
     sitButton.click();
 
-    expect(element.socket.sent.length).to.equal(1);
-    expect(element.socket.sent[0].action).to.equal("sit");
-    expect(element.socket.sent[0].seat).to.be.a("number");
+    expect(sentMessage).to.exist;
+    expect(sentMessage.action).to.equal("sit");
+    expect(sentMessage.seat).to.be.a("number");
   });
 
   it("displays lastAction when set (check, call, bet, raise)", async () => {
