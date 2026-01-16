@@ -93,12 +93,16 @@ export class PokerPlayer {
   }
 
   /**
-   * Buy in with amount using slider
-   * @param {number} amount
+   * Buy in with amount (in big blinds)
+   * @param {number} bbAmount - Number of big blinds to buy in with
    */
-  async buyIn(amount) {
+  async buyIn(bbAmount) {
     const slider = this.actionPanel.locator('input[type="range"]');
-    await this.dragSliderToValue(slider, amount);
+    // Set slider value directly via JavaScript for reliability
+    await slider.evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    }, bbAmount);
     await this.actionPanel.getByRole("button", { name: "Buy In" }).click();
     // Wait for stack to appear in our seat
     await this.mySeat.locator(".stack").waitFor();

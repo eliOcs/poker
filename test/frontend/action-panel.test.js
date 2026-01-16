@@ -204,11 +204,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       buyInButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "buyIn");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("buyIn");
       expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
@@ -220,11 +225,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const checkButton = actionPanel.shadowRoot.querySelector("button.check");
       checkButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "check");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("check");
       expect(sentMessage.seat).to.be.a("number");
     });
 
@@ -235,11 +245,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const callButton = actionPanel.shadowRoot.querySelector("button.call");
       callButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "call");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("call");
       expect(sentMessage.seat).to.be.a("number");
     });
 
@@ -250,11 +265,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const foldButton = actionPanel.shadowRoot.querySelector("button.fold");
       foldButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "fold");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("fold");
       expect(sentMessage.seat).to.be.a("number");
     });
 
@@ -265,11 +285,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const betButton = actionPanel.shadowRoot.querySelector("button.bet");
       betButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "bet");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("bet");
       expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
@@ -281,11 +306,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const raiseButton = actionPanel.shadowRoot.querySelector("button.raise");
       raiseButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "raise");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("raise");
       expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
@@ -298,11 +328,16 @@ describe("phg-action-panel", () => {
       actionPanel.betAmount = 1000; // Set to max
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
       allInButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "allIn");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("allIn");
       expect(sentMessage.seat).to.be.a("number");
     });
 
@@ -395,15 +430,18 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const sitOutButton = actionPanel.shadowRoot.querySelector(
         'phg-button[variant="secondary"]',
       );
       sitOutButton.click();
 
-      const sentMessage = element.socket.sent.find(
-        (m) => m.action === "sitOut",
-      );
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("sitOut");
       expect(sentMessage.seat).to.be.a("number");
     });
 
@@ -423,13 +461,18 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
       const sitInButton = actionPanel.shadowRoot.querySelector(
         'phg-button[variant="success"]',
       );
       sitInButton.click();
 
-      const sentMessage = element.socket.sent.find((m) => m.action === "sitIn");
       expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("sitIn");
       expect(sentMessage.seat).to.be.a("number");
     });
   });
