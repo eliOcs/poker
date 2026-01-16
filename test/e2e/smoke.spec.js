@@ -158,7 +158,7 @@ test.describe("Poker Game Smoke Test", () => {
 
     // === VERIFY HAND HISTORY ===
     console.log("--- Verifying Hand History ---");
-    await player1.goToHistory(gameId);
+    await player1.openHistory();
     await player1.waitForHistoryLoaded();
 
     // Verify hands are shown in the list (we played 3 hands)

@@ -401,7 +401,18 @@ export class PokerPlayer {
   }
 
   /**
-   * Navigate to history page for a game
+   * Click the history button to navigate to history page
+   */
+  async openHistory() {
+    await this.game.locator("#history-btn").click();
+    // Wait for URL to change to history page
+    await this.page.waitForURL(/\/history\//, { timeout: 10000 });
+    // Wait for history component to load
+    await this.page.locator("phg-history").waitFor({ timeout: 10000 });
+  }
+
+  /**
+   * Navigate to history page for a game via URL (for testing URL-based routing)
    * @param {string} gameId
    */
   async goToHistory(gameId) {
