@@ -3,6 +3,8 @@
  * Uses Math.random by default, but can be seeded via RNG_SEED env var
  */
 
+import * as logger from "../logger.js";
+
 /**
  * Mulberry32 - Simple, fast seeded PRNG
  * @param {number} seed
@@ -25,7 +27,7 @@ if (process.env.RNG_SEED) {
   const seed = parseInt(process.env.RNG_SEED, 10);
   if (!isNaN(seed)) {
     random = mulberry32(seed);
-    console.log(`[RNG] Using seeded PRNG with seed: ${seed}`);
+    logger.debug("using seeded PRNG", { seed });
   }
 }
 

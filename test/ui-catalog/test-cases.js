@@ -10,22 +10,35 @@ import { html, render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/history.js";
+import "/src/frontend/toast.js";
 import { mockEmptySeat } from "/fixtures.js";
 
 // Helper to create a game component with mock data
 function gameView(gameState, options = {}) {
-  const { showRanking = false, notFound = false, error = null } = options;
+  const { showRanking = false } = options;
 
   // Create a mock element that bypasses WebSocket connection
   return html`
     <div style="height: 100vh; width: 100%;">
       <phg-game
-        .game=${notFound ? null : gameState}
+        .game=${gameState}
         .socket=${{ readyState: 1 }}
-        .notFound=${notFound}
-        .error=${error}
         .showRanking=${showRanking}
       ></phg-game>
+    </div>
+  `;
+}
+
+// Helper to show a game with a toast overlay
+function gameViewWithToast(gameState, toastMessage, toastVariant = "error") {
+  return html`
+    <div style="height: 100vh; width: 100%;">
+      <phg-toast
+        variant=${toastVariant}
+        .duration=${0}
+        message=${toastMessage}
+      ></phg-toast>
+      <phg-game .game=${gameState} .socket=${{ readyState: 1 }}></phg-game>
     </div>
   `;
 }
@@ -707,12 +720,10 @@ const TEST_CASES = {
       }),
     ),
 
-  // === ERROR & NOT FOUND STATES ===
-
-  "game-not-found": () => gameView(null, { notFound: true }),
+  // === ERROR STATES (using toast) ===
 
   "game-error": () =>
-    gameView(
+    gameViewWithToast(
       createGame({
         seats: [
           createPlayer("You", { isCurrentPlayer: true, stack: 5000 }),
@@ -723,7 +734,7 @@ const TEST_CASES = {
           { ...mockEmptySeat, actions: [] },
         ],
       }),
-      { error: "Insufficient funds to make that bet" },
+      "Insufficient funds to make that bet",
     ),
 
   // === MODAL STATES ===

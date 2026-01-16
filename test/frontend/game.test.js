@@ -58,35 +58,44 @@ describe("phg-game", () => {
   });
 
   describe("error handling", () => {
-    it("displays error message when error property set", async () => {
-      element.game = createMockGameState();
-      element.error = "Test error message";
-      await element.updateComplete;
-
-      const errorDiv = element.shadowRoot.querySelector(".error-message");
-      expect(errorDiv).to.exist;
-      expect(errorDiv.textContent).to.include("Test error message");
-    });
-
-    it("error message has correct styling", async () => {
-      element.game = createMockGameState();
-      element.error = "Test error";
-      await element.updateComplete;
-
-      const errorDiv = element.shadowRoot.querySelector(".error-message");
-      expect(errorDiv).to.exist;
-    });
-
-    it("handles server error responses", async () => {
+    it("emits toast event for server errors", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
+
+      let toastEvent = null;
+      element.addEventListener("toast", (e) => {
+        toastEvent = e;
+      });
 
       element.socket.onmessage({
         data: JSON.stringify({ error: { message: "Server error" } }),
       });
       await element.updateComplete;
 
-      expect(element.error).to.equal("Server error");
+      expect(toastEvent).to.exist;
+      expect(toastEvent.detail.message).to.equal("Server error");
+      expect(toastEvent.detail.variant).to.equal("error");
+    });
+
+    it("emits toast and navigate events for game not found", async () => {
+      let toastEvent = null;
+      let navigateEvent = null;
+      element.addEventListener("toast", (e) => {
+        toastEvent = e;
+      });
+      element.addEventListener("navigate", (e) => {
+        navigateEvent = e;
+      });
+
+      // Simulate game not found (socket close with code 1006)
+      element.socket.onclose({ code: 1006 });
+      await element.updateComplete;
+
+      expect(toastEvent).to.exist;
+      expect(toastEvent.detail.message).to.equal("Game not found");
+      expect(toastEvent.detail.variant).to.equal("error");
+      expect(navigateEvent).to.exist;
+      expect(navigateEvent.detail.path).to.equal("/");
     });
   });
 

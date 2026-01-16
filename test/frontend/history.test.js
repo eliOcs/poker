@@ -302,21 +302,19 @@ describe("phg-history", () => {
       await element.updateComplete;
     });
 
-    it("dispatches navigate event when clicking hand item", async () => {
-      let navigateEvent = null;
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
+    it("updates handNumber when clicking hand item", async () => {
       const handItems = element.shadowRoot.querySelectorAll(".hand-item");
       handItems[0].click();
 
-      expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.include("/history/test123/1");
+      expect(element.handNumber).to.equal(1);
     });
 
-    it("dispatches navigate event on goBack", async () => {
+    it("dispatches close and navigate events on goBack", async () => {
+      let closeEvent = null;
       let navigateEvent = null;
+      element.addEventListener("close", (e) => {
+        closeEvent = e;
+      });
       element.addEventListener("navigate", (e) => {
         navigateEvent = e;
       });
@@ -324,60 +322,39 @@ describe("phg-history", () => {
       const backBtn = element.shadowRoot.querySelector(".sidebar-back");
       backBtn.click();
 
+      expect(closeEvent).to.exist;
       expect(navigateEvent).to.exist;
       expect(navigateEvent.detail.path).to.equal("/games/test123");
     });
 
-    it("navigates to previous hand with navigatePrev", async () => {
-      let navigateEvent = null;
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
+    it("updates handNumber to previous hand with navigatePrev", async () => {
       element.navigatePrev();
 
-      expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.include("/history/test123/1");
+      expect(element.handNumber).to.equal(1);
     });
 
-    it("navigates to next hand with navigateNext", async () => {
-      let navigateEvent = null;
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
+    it("updates handNumber to next hand with navigateNext", async () => {
       element.navigateNext();
 
-      expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.include("/history/test123/3");
+      expect(element.handNumber).to.equal(3);
     });
 
-    it("does not navigate prev when at first hand", async () => {
+    it("does not change handNumber when at first hand", async () => {
       element.handNumber = 1;
       await element.updateComplete;
 
-      let navigateEvent = null;
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
       element.navigatePrev();
 
-      expect(navigateEvent).to.be.null;
+      expect(element.handNumber).to.equal(1);
     });
 
-    it("does not navigate next when at last hand", async () => {
+    it("does not change handNumber when at last hand", async () => {
       element.handNumber = 3;
       await element.updateComplete;
 
-      let navigateEvent = null;
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
-
       element.navigateNext();
 
-      expect(navigateEvent).to.be.null;
+      expect(element.handNumber).to.equal(3);
     });
 
     it("fetches new hand data when handNumber changes", async () => {
