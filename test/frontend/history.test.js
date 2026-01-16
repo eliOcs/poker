@@ -10,13 +10,21 @@ describe("phg-history", () => {
 
   describe("loading state", () => {
     it("shows loading message initially", async () => {
-      element = await fixture(
-        html`<phg-history .gameId=${"test123"}></phg-history>`,
-      );
+      // Mock fetch to return a pending promise so loading state persists
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = () => new Promise(() => {}); // Never resolves
 
-      const loading = element.shadowRoot.querySelector(".loading");
-      expect(loading).to.exist;
-      expect(loading.textContent).to.include("Loading");
+      try {
+        element = await fixture(
+          html`<phg-history .gameId=${"test123"}></phg-history>`,
+        );
+
+        const loading = element.shadowRoot.querySelector(".loading");
+        expect(loading).to.exist;
+        expect(loading.textContent).to.include("Loading");
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 
