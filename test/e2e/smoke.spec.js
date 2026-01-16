@@ -155,5 +155,22 @@ test.describe("Poker Game Smoke Test", () => {
     expect(totalChips).toBeLessThanOrEqual(2000);
     // At least one player should have chips
     expect(Math.max(p1Stack, p2Stack)).toBeGreaterThan(0);
+
+    // === VERIFY HAND HISTORY ===
+    console.log("--- Verifying Hand History ---");
+    await player1.goToHistory(gameId);
+    await player1.waitForHistoryLoaded();
+
+    // Verify hands are shown in the list (we played 3 hands)
+    const handCount = await player1.getHistoryHandCount();
+    console.log(`Hand history shows ${handCount} hands`);
+    expect(handCount).toBe(3);
+
+    // Verify table state is rendered with players
+    const playerCount = await player1.getHistoryPlayerCount();
+    console.log(`History shows ${playerCount} players`);
+    expect(playerCount).toBe(2);
+
+    console.log("Hand history verified successfully!");
   });
 });
