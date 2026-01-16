@@ -106,8 +106,10 @@ class App extends LitElement {
         targetHand =
           this.historyHandList[this.historyHandList.length - 1].hand_number;
         this._historyHandNumber = targetHand;
-        // Update URL to include hand number
-        history.replaceState({}, "", `/history/${gameId}/${targetHand}`);
+        // Update URL and path to include hand number
+        const newPath = `/history/${gameId}/${targetHand}`;
+        history.replaceState({}, "", newPath);
+        this.path = newPath;
       }
 
       // Fetch specific hand data

@@ -152,7 +152,7 @@ server.on("request", (req, res) => {
           HandHistory.getHandSummary(hand, player.id),
         );
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify(summaries));
+        res.end(JSON.stringify({ hands: summaries }));
       })
       .catch((err) => {
         logger.error("api error", { path: url, error: err.message });

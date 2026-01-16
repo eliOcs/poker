@@ -399,4 +399,60 @@ export class PokerPlayer {
       .locator(".countdown")
       .waitFor({ state: "hidden", timeout });
   }
+
+  /**
+   * Navigate to history page for a game
+   * @param {string} gameId
+   */
+  async goToHistory(gameId) {
+    await this.page.goto(`/history/${gameId}`);
+    // Wait for history component to load
+    await this.page.locator("phg-history").waitFor({ timeout: 10000 });
+  }
+
+  /**
+   * Get the history element locator
+   */
+  get history() {
+    return this.page.locator("phg-history");
+  }
+
+  /**
+   * Wait for history to finish loading (loading state is false)
+   * @param {number} [timeout=10000]
+   */
+  async waitForHistoryLoaded(timeout = 10000) {
+    // Wait for the hand list sidebar and table state to be visible
+    await this.history.locator(".hand-list").waitFor({ timeout });
+    await this.history.locator(".table-state").waitFor({ timeout });
+  }
+
+  /**
+   * Get the number of hands in the history list
+   * @returns {Promise<number>}
+   */
+  async getHistoryHandCount() {
+    const items = this.history.locator(".hand-list .hand-item");
+    return await items.count();
+  }
+
+  /**
+   * Get the number of board cards shown in history
+   * @returns {Promise<number>}
+   */
+  async getHistoryBoardCardCount() {
+    const cards = this.history.locator(
+      ".table-state phg-board .community-cards phg-card",
+    );
+    return await cards.count();
+  }
+
+  /**
+   * Get the number of players shown in history table state
+   * @returns {Promise<number>}
+   */
+  async getHistoryPlayerCount() {
+    const seats = this.history.locator(".table-state phg-seat:not(.empty)");
+    return await seats.count();
+  }
 }
