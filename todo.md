@@ -1,6 +1,5 @@
 # To do
 
-- Hand history
 - Avatar creator: wii style but pixel art
 - Chat: to talk to players but also announcements: shows who won the hand, blind announcments
 - Emotes
