@@ -7,6 +7,7 @@ import "./action-panel.js";
 import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
+import "./history.js";
 
 class Game extends LitElement {
   static get styles() {
@@ -166,20 +167,6 @@ class Game extends LitElement {
           font-size: var(--font-sm);
         }
 
-        .error-message {
-          position: absolute;
-          top: 10px;
-          left: 50%;
-          transform: translateX(-50%);
-          background-color: var(--color-error);
-          color: var(--color-fg-white);
-          padding: var(--space-md) var(--space-lg);
-          border: 3px solid var(--color-bg-dark);
-          font-size: var(--font-sm);
-          z-index: 100;
-          box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
-        }
-
         #settings-btn {
           position: absolute;
           right: 0.5%;
@@ -212,28 +199,6 @@ class Game extends LitElement {
           display: flex;
           gap: var(--space-md);
           justify-content: flex-end;
-        }
-
-        .not-found {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-        }
-
-        .not-found h1 {
-          font-size: var(--font-md);
-          line-height: 2;
-          color: var(--color-fg-muted);
-          margin: 0 0 2em;
-          text-align: center;
-        }
-
-        @media (width >= 600px) {
-          .not-found h1 {
-            font-size: var(--font-md);
-          }
         }
 
         #ranking-btn {
@@ -276,20 +241,18 @@ class Game extends LitElement {
       gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
       socket: { type: Object },
-      error: { type: String },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
-      notFound: { type: Boolean },
+      showHistory: { type: Boolean },
     };
   }
 
   constructor() {
     super();
     this.gameId = null;
-    this.error = null;
     this.showSettings = false;
     this.showRanking = false;
-    this.notFound = false;
+    this.showHistory = false;
   }
 
   firstUpdated() {
@@ -306,7 +269,6 @@ class Game extends LitElement {
         this.socket.close();
       }
       this.game = null;
-      this.notFound = false;
       this.connect();
     }
   }
@@ -325,28 +287,49 @@ class Game extends LitElement {
     this.socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.error) {
-        this.error = data.error.message;
-        setTimeout(() => (this.error = null), 3000);
+        this.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: { message: data.error.message, variant: "error" },
+            bubbles: true,
+            composed: true,
+          }),
+        );
       } else {
         this.game = data;
-        this.error = null;
       }
     };
 
     this.socket.onerror = () => {
-      this.notFound = true;
+      this.handleGameNotFound();
     };
 
     this.socket.onclose = (event) => {
       // Code 1006 = abnormal closure (connection rejected)
       if (!this.game && event.code === 1006) {
-        this.notFound = true;
+        this.handleGameNotFound();
       }
     };
   }
 
   send(message) {
     this.socket.send(JSON.stringify(message));
+  }
+
+  handleGameNotFound() {
+    this.dispatchEvent(
+      new CustomEvent("toast", {
+        detail: { message: "Game not found", variant: "error" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: "/" },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   handleSeatAction(e) {
@@ -374,13 +357,18 @@ class Game extends LitElement {
   }
 
   openHistory() {
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: `/history/${this.gameId}` },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.showHistory = true;
+  }
+
+  closeHistory() {
+    this.showHistory = false;
+  }
+
+  handleHistoryClose(e) {
+    // Stop navigate event from bubbling to router when closing embedded history
+    if (e.detail.path === `/games/${this.gameId}`) {
+      e.stopPropagation();
+    }
   }
 
   saveSettings() {
@@ -419,40 +407,21 @@ class Game extends LitElement {
     return null;
   }
 
-  async handleCreateGame() {
-    try {
-      const response = await fetch("/games", { method: "POST" });
-      const { id } = await response.json();
-      this.dispatchEvent(
-        new CustomEvent("navigate", {
-          detail: { path: `/games/${id}` },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    } catch (err) {
-      console.error("Failed to create game:", err);
-    }
-  }
-
   render() {
-    if (this.notFound) {
-      return html`
-        <div class="not-found">
-          <h1>Game not found</h1>
-          <phg-button
-            variant="primary"
-            size="large"
-            @click=${this.handleCreateGame}
-          >
-            Create Game
-          </phg-button>
-        </div>
-      `;
-    }
-
     if (!this.game) {
       return html`<p>Loading ...</p>`;
+    }
+
+    // Show history view when showHistory is true
+    if (this.showHistory) {
+      return html`
+        <phg-history
+          .gameId=${this.gameId}
+          .playerId=${this.game?.playerId}
+          @close=${this.closeHistory}
+          @navigate=${this.handleHistoryClose}
+        ></phg-history>
+      `;
     }
 
     const { seatIndex, actions } = this.getMySeatInfo();
@@ -460,9 +429,6 @@ class Game extends LitElement {
 
     return html`
       <div id="wrapper">
-        ${this.error
-          ? html`<div class="error-message">${this.error}</div>`
-          : ""}
         <div id="container">
           <phg-board
             .board=${this.game.board}

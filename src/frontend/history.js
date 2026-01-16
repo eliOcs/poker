@@ -539,13 +539,8 @@ class History extends LitElement {
   }
 
   navigateTo(handNumber) {
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: `/history/${this.gameId}/${handNumber}` },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    // Update handNumber directly for internal navigation
+    this.handNumber = handNumber;
   }
 
   navigatePrev() {
@@ -569,6 +564,14 @@ class History extends LitElement {
   }
 
   goBack() {
+    // Emit close event for embedded mode (inside phg-game)
+    this.dispatchEvent(
+      new CustomEvent("close", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    // Also emit navigate for standalone mode (direct URL access)
     this.dispatchEvent(
       new CustomEvent("navigate", {
         detail: { path: `/games/${this.gameId}` },

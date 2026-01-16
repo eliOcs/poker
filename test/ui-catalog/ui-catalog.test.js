@@ -38,8 +38,7 @@ const TEST_CASES = [
   "game-disconnected-player",
   "game-full-table",
 
-  // Error states
-  "game-not-found",
+  // Error states (using toast)
   "game-error",
 
   // Modal states

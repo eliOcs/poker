@@ -16,6 +16,7 @@ import {
   resetActingTicks,
   startClockTicks,
 } from "./poker/game-tick.js";
+import * as logger from "./logger.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -80,6 +81,20 @@ function generateGameId() {
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
+  const startTime = Date.now();
+
+  // Log HTTP request when response finishes
+  res.on("finish", () => {
+    // Skip health check endpoint to reduce noise
+    if (url !== "/up") {
+      logger.info("http request", {
+        method,
+        path: url,
+        status: res.statusCode,
+        duration: Date.now() - startTime,
+      });
+    }
+  });
 
   // Health check endpoint (for Kamal Proxy)
   if (method === "GET" && url === "/up") {
@@ -97,9 +112,12 @@ server.on("request", (req, res) => {
 
   // Create game
   if (method === "POST" && url === "/games") {
+    getOrCreatePlayer(req, res);
     const gameId = generateGameId();
     const game = PokerGame.create();
     games.set(gameId, game);
+
+    logger.info("game created", { gameId });
 
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ id: gameId }));
@@ -137,6 +155,7 @@ server.on("request", (req, res) => {
         res.end(JSON.stringify(summaries));
       })
       .catch((err) => {
+        logger.error("api error", { path: url, error: err.message });
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ error: err.message }));
       });
@@ -163,6 +182,7 @@ server.on("request", (req, res) => {
         res.end(JSON.stringify({ hand: filteredHand }));
       })
       .catch((err) => {
+        logger.error("api error", { path: url, error: err.message });
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ error: err.message }));
       });
@@ -194,6 +214,11 @@ server.on("upgrade", function upgrade(request, socket, head) {
       wss.emit("connection", ws, request, player, game, gameId),
     );
   } else {
+    logger.warn("ws upgrade rejected", {
+      url: request.url,
+      hasPlayer: !!player,
+      hasGame: !!game,
+    });
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
   }
 });
@@ -266,6 +291,14 @@ function processGameFlow(game, gameId) {
             awards: [{ seat: result.winner, amount: result.amount }],
           },
         ]);
+
+        logger.info("hand ended", {
+          gameId,
+          handNumber: HandHistory.getHandNumber(gameId),
+          winner: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
+          wonBy: "fold",
+          amount: result.amount,
+        });
       }
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
@@ -336,6 +369,25 @@ function processGameFlow(game, gameId) {
 
       // Finalize hand history with pot results
       HandHistory.finalizeHand(gameId, game, potResults);
+
+      // Log hand ended with showdown results
+      if (potResults.length > 0 && potResults[0].winners.length > 0) {
+        const mainPot = potResults[0];
+        const winnerSeatIndex = mainPot.winners[0];
+        const winnerSeat =
+          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+            game.seats[winnerSeatIndex]
+          );
+        logger.info("hand ended", {
+          gameId,
+          handNumber: HandHistory.getHandNumber(gameId),
+          winner: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
+          wonBy: mainPot.winningHand
+            ? HandRankings.formatHand(mainPot.winningHand)
+            : "showdown",
+          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
+        });
+      }
 
       PokerActions.endHand(game);
       autoStartNextHand(game, gameId);
@@ -424,6 +476,16 @@ function startHand(game, gameId) {
 
   // Start hand history recording
   HandHistory.startHand(gameId, game);
+
+  // Count active players
+  const playerCount = game.seats.filter(
+    (s) => !s.empty && !s.sittingOut,
+  ).length;
+  logger.info("hand started", {
+    gameId,
+    handNumber: HandHistory.getHandNumber(gameId),
+    playerCount,
+  });
 
   // Post blinds and record them
   const sbSeat = Betting.getSmallBlindSeat(game);
@@ -533,6 +595,7 @@ wss.on(
   "connection",
   async function connection(ws, request, player, game, gameId) {
     clientConnections.set(ws, { player, gameId });
+    logger.info("ws connected", { gameId, playerId: player.id });
 
     // Mark player as connected if they have a seat
     const seatIndex = findPlayerSeatIndex(game, player);
@@ -556,6 +619,11 @@ wss.on(
       clientConnections.delete(ws);
 
       if (!conn) return;
+
+      logger.info("ws disconnected", {
+        gameId: conn.gameId,
+        playerId: conn.player.id,
+      });
 
       const { player: closedPlayer, gameId: closedGameId } = conn;
       const closedGame = games.get(closedGameId);
@@ -603,6 +671,12 @@ wss.on(
 
       try {
         PokerActions[action](game, { player, ...args });
+
+        // Log game actions (debug for betting, info for others)
+        const logFn = bettingActions.includes(action)
+          ? logger.debug
+          : logger.info;
+        logFn("game action", { gameId, playerId: player.id, action });
 
         // Record betting actions to history
         if (bettingActions.includes(action) && seatBefore) {
@@ -699,6 +773,12 @@ wss.on(
           startClockTicks(game);
         }
       } catch (err) {
+        logger.error("action error", {
+          gameId,
+          playerId: player.id,
+          action,
+          error: err instanceof Error ? err.message : String(err),
+        });
         ws.send(
           JSON.stringify(
             {
