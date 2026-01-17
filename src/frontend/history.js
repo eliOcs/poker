@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
 import "./button.js";
 import "./seat.js";
@@ -567,7 +567,7 @@ class History extends LitElement {
               ? "You won"
               : summary?.winner_name || "Unknown"}
           </span>
-          <span class="nav-pot">$${summary?.pot || 0}</span>
+          <span class="nav-pot">${formatCurrency(summary?.pot || 0)}</span>
         </div>
         <button
           class="nav-btn"
@@ -653,7 +653,7 @@ class History extends LitElement {
                           ${action.action}
                           ${action.amount
                             ? html`<span class="action-amount"
-                                >$${action.amount}</span
+                                >${formatCurrency(action.amount)}</span
                               >`
                             : ""}
                         </div>
@@ -695,7 +695,7 @@ class History extends LitElement {
         return html`
           <div class="showdown-winner ${isYou ? "you" : ""}">
             <span class="winner-name">${playerName}</span> won
-            <span class="winner-amount">$${winAmount}</span>
+            <span class="winner-amount">${formatCurrency(winAmount)}</span>
           </div>
         `;
       })}
@@ -735,7 +735,7 @@ class History extends LitElement {
                 <span class="hand-winner ${isWinner ? "you" : ""}">
                   ${isWinner ? "You ★" : item.winner_name || "?"}
                 </span>
-                <span class="hand-pot">$${item.pot}</span>
+                <span class="hand-pot">${formatCurrency(item.pot)}</span>
               </li>
             `;
           })}
