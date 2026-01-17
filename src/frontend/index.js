@@ -74,34 +74,34 @@ class Game extends LitElement {
           z-index: 1;
         }
 
-        phg-seat:nth-child(1) {
+        phg-seat[data-seat="0"] {
           top: 15%;
           left: 0;
         }
 
-        phg-seat:nth-child(2) {
+        phg-seat[data-seat="1"] {
           top: 2.5%;
           left: 50%;
           transform: translateX(-50%);
         }
 
-        phg-seat:nth-child(3) {
+        phg-seat[data-seat="2"] {
           top: 15%;
           right: 0;
         }
 
-        phg-seat:nth-child(4) {
+        phg-seat[data-seat="3"] {
           bottom: 15%;
           right: 0;
         }
 
-        phg-seat:nth-child(5) {
+        phg-seat[data-seat="4"] {
           bottom: 5%;
           left: 50%;
           transform: translateX(-50%);
         }
 
-        phg-seat:nth-child(6) {
+        phg-seat[data-seat="5"] {
           bottom: 15%;
           left: 0;
         }
@@ -360,6 +360,7 @@ class Game extends LitElement {
               if (seat.empty && isSeated) return "";
               return html`
                 <phg-seat
+                  data-seat="${i}"
                   .seat=${seat}
                   .seatNumber=${i}
                   .isButton=${this.game.button === i}
