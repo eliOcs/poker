@@ -77,7 +77,7 @@ class Seat extends LitElement {
           position: absolute;
           top: calc(-1 * var(--space-md));
           right: calc(-1 * var(--space-md));
-          background-color: var(--color-primary);
+          background-color: var(--color-fg-white);
           color: var(--color-bg-dark);
           width: 20px;
           height: 20px;
