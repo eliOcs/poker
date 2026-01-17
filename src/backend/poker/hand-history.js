@@ -596,7 +596,7 @@ export function getHandView(hand, playerId) {
   /** @type {HistoryViewSeat[]} */
   const seats = [];
   for (let i = 0; i < hand.table_size; i++) {
-    const player = hand.players.find((p) => p.seat === i);
+    const player = hand.players.find((p) => p.seat === i + 1);
     if (!player) {
       seats.push({ empty: true });
       continue;
@@ -605,7 +605,8 @@ export function getHandView(hand, playerId) {
     const isCurrentPlayer = player.id === playerId;
     const isWinner = winAmounts.has(player.id);
     const winAmount = winAmounts.get(player.id) || 0;
-    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+    const playerName = player.name || `Seat ${player.seat}`;
+    const displayName = isCurrentPlayer ? `${playerName} (you)` : playerName;
 
     seats.push({
       empty: false,

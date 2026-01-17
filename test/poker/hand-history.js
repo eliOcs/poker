@@ -530,6 +530,157 @@ describe("hand-history", function () {
     });
   });
 
+  describe("getHandView", function () {
+    it("maps 1-indexed OHH seats to correct view positions", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 3, name: "Bob", starting_stack: 500 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Dealt Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+        ],
+        pots: [],
+      };
+
+      const view = HandHistory.getHandView(hand, "player1");
+
+      // Seat 1 in OHH should be at index 0 in view
+      assert.strictEqual(view.seats[0].empty, false);
+      assert.strictEqual(view.seats[0].player.name, "Alice (you)");
+      assert.strictEqual(view.seats[0].stack, 1000);
+
+      // Seat 2 should be empty (no player)
+      assert.strictEqual(view.seats[1].empty, true);
+
+      // Seat 3 in OHH should be at index 2 in view
+      assert.strictEqual(view.seats[2].empty, false);
+      assert.strictEqual(view.seats[2].player.name, "Bob");
+      assert.strictEqual(view.seats[2].stack, 500);
+    });
+
+    it("handles null player names gracefully", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: null, starting_stack: 1000 },
+          { id: "player2", seat: 2, name: null, starting_stack: 500 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [],
+          },
+        ],
+        pots: [],
+      };
+
+      const view = HandHistory.getHandView(hand, "player1");
+
+      // Null name for current player should show "Seat N (you)", not "null (you)"
+      assert.strictEqual(view.seats[0].player.name, "Seat 1 (you)");
+      assert.ok(!view.seats[0].player.name.includes("null"));
+
+      // Null name for other player should show "Seat N", not "null"
+      assert.strictEqual(view.seats[1].player.name, "Seat 2");
+      assert.ok(!view.seats[1].player.name.includes("null"));
+    });
+
+    it("includes winner information in seat data", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 500 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [],
+          },
+        ],
+        pots: [
+          {
+            number: 0,
+            amount: 200,
+            winning_hand: "Two Pair, Aces and Kings",
+            winning_cards: ["Ah", "Ad", "Kh", "Kd", "Qc"],
+            player_wins: [
+              { player_id: "player1", win_amount: 200, contributed_rake: 0 },
+            ],
+          },
+        ],
+      };
+
+      const view = HandHistory.getHandView(hand, "player1");
+
+      // Winner should have handResult and handRank
+      assert.strictEqual(view.seats[0].handResult, 200);
+      assert.strictEqual(view.seats[0].handRank, "Two Pair, Aces and Kings");
+      assert.deepStrictEqual(view.seats[0].winningCards, [
+        "Ah",
+        "Ad",
+        "Kh",
+        "Kd",
+        "Qc",
+      ]);
+
+      // Non-winner should not have handResult
+      assert.strictEqual(view.seats[1].handResult, null);
+      assert.strictEqual(view.seats[1].handRank, null);
+    });
+  });
+
   describe("getAllHands", function () {
     it("returns empty array for non-existent game", async function () {
       process.env.DATA_DIR = TEST_DATA_DIR;
