@@ -14,6 +14,22 @@ export async function createGame(request, stakes) {
 }
 
 /**
+ * Create a new game via UI stakes selector
+ * @param {import('@playwright/test').Page} page
+ * @param {number} stakesIndex - Index of stakes option to select (0-10)
+ * @returns {Promise<string>} - Game ID from URL
+ */
+export async function createGameViaUI(page, stakesIndex) {
+  await page.goto("/");
+  await page.selectOption("select", String(stakesIndex));
+  await page.click("text=Create Game");
+  await page.waitForURL(/\/games\/[a-z0-9]+$/);
+  const url = page.url();
+  const match = url.match(/\/games\/([a-z0-9]+)$/);
+  return match[1];
+}
+
+/**
  * Wait for a specific game phase using UI
  * @param {import('./poker-player.js').PokerPlayer} player
  * @param {string} phase
