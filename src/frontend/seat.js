@@ -269,7 +269,7 @@ class Seat extends LitElement {
             .card=${card}
             ?winning=${isWinning}
           ></phg-card>`;
-        }) || ""}
+        })}
       </div>
     `;
   }

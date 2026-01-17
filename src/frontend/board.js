@@ -108,7 +108,7 @@ class Board extends LitElement {
   }
 
   render() {
-    const cards = this.board?.cards || [];
+    const cards = this.board?.cards ?? [];
 
     // Show winner message if present (with cards still visible)
     if (this.winnerMessage) {
@@ -166,7 +166,7 @@ class Board extends LitElement {
               ></phg-card>`,
           )}
         </div>
-        ${this.hand?.pot !== undefined
+        ${this.hand
           ? html`<div class="pot">Pot: ${formatCurrency(this.hand.pot)}</div>`
           : ""}
         ${this.renderStakes()}
