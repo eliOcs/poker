@@ -9,9 +9,9 @@ import {
 
 const STAKES_OPTIONS = [
   { index: 0, label: "$0.01/$0.02" },
-  { index: 2, label: "$0.05/$0.1" },
-  { index: 6, label: "$1/$2" },
-  { index: 10, label: "$10/$20" },
+  { index: 2, label: "$0.05/$0.10" },
+  { index: 6, label: "$1.00/$2.00" },
+  { index: 10, label: "$10.00/$20.00" },
 ];
 
 test.describe("Poker Game Smoke Test", () => {
@@ -30,7 +30,7 @@ test.describe("Poker Game Smoke Test", () => {
     // Verify stakes are displayed on the board
     const stakes = await player1.getStakes();
     console.log("Stakes displayed:", stakes);
-    expect(stakes).toBe("$0.05/$0.1");
+    expect(stakes).toBe("$0.05/$0.10");
 
     const gameUrl = await player1.copyGameLink();
     console.log("Game URL copied:", gameUrl);
