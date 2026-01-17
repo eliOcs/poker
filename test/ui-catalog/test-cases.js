@@ -132,9 +132,9 @@ const TEST_CASES = {
             stack: 5000,
             actions: [{ action: "start" }, { action: "sitOut" }],
           }),
-          createPlayer("Alice", { stack: 3000 }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
+          createPlayer("Alice", { stack: 3000 }), // seat 3 (bottom-right)
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
         ],
@@ -145,13 +145,14 @@ const TEST_CASES = {
     gameView(
       createGame({
         countdown: 3,
+        button: 2,
         seats: [
-          createPlayer("You", { isCurrentPlayer: true, stack: 5000 }),
-          createPlayer("Alice", { stack: 3000 }),
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
+          createPlayer("You", { isCurrentPlayer: true, stack: 5000 }), // seat 2 (top-right)
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
+          createPlayer("Alice", { stack: 3000 }), // seat 5 (bottom-left)
         ],
       }),
     ),
@@ -692,7 +693,12 @@ const TEST_CASES = {
     gameView(
       createGame({
         seats: [
+          { ...mockEmptySeat, actions: [] },
+          createPlayer("Alice", { stack: 3000 }), // seat 1 (top-center)
+          { ...mockEmptySeat, actions: [] },
+          { ...mockEmptySeat, actions: [] },
           {
+            // seat 4 (bottom-center)
             empty: false,
             player: { id: "you", name: null },
             stack: 0,
@@ -711,10 +717,6 @@ const TEST_CASES = {
             handResult: null,
             handRank: null,
           },
-          createPlayer("Alice", { stack: 3000 }),
-          { ...mockEmptySeat, actions: [] },
-          { ...mockEmptySeat, actions: [] },
-          { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
         ],
       }),
@@ -726,11 +728,11 @@ const TEST_CASES = {
     gameViewWithToast(
       createGame({
         seats: [
-          createPlayer("You", { isCurrentPlayer: true, stack: 5000 }),
-          createPlayer("Alice", { stack: 3000 }),
+          createPlayer("You", { isCurrentPlayer: true, stack: 5000 }), // seat 0 (top-left)
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
           { ...mockEmptySeat, actions: [] },
+          createPlayer("Alice", { stack: 3000 }), // seat 4 (bottom-center)
           { ...mockEmptySeat, actions: [] },
         ],
       }),
