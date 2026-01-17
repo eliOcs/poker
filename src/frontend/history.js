@@ -537,6 +537,8 @@ class History extends LitElement {
 
   renderNavBar() {
     const summary = this.getCurrentHandSummary();
+    if (!summary) return "";
+
     const currentIndex = this.handList.findIndex(
       (h) => h.hand_number === this.handNumber,
     );
@@ -558,16 +560,14 @@ class History extends LitElement {
         </button>
         <div class="nav-info">
           <div class="nav-cards">
-            ${(summary?.hole_cards || []).map(
+            ${summary.hole_cards.map(
               (card) => html`<phg-card .card=${card}></phg-card>`,
             )}
           </div>
-          <span class="nav-result ${summary?.is_winner ? "winner" : ""}">
-            ${summary?.is_winner
-              ? "You won"
-              : summary?.winner_name || "Unknown"}
+          <span class="nav-result ${summary.is_winner ? "winner" : ""}">
+            ${summary.is_winner ? "You won" : summary.winner_name || "Unknown"}
           </span>
-          <span class="nav-pot">${formatCurrency(summary?.pot || 0)}</span>
+          <span class="nav-pot">${formatCurrency(summary.pot)}</span>
         </div>
         <button
           class="nav-btn"
