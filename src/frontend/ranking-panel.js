@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 
 class RankingPanel extends LitElement {
   static get styles() {
@@ -85,9 +85,9 @@ class RankingPanel extends LitElement {
 
   formatNet(value) {
     if (value >= 0) {
-      return `+$${value}`;
+      return `+${formatCurrency(value)}`;
     }
-    return `-$${Math.abs(value)}`;
+    return `-${formatCurrency(Math.abs(value))}`;
   }
 
   formatWinRate(value) {
