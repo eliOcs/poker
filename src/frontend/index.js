@@ -355,8 +355,10 @@ class Game extends LitElement {
             .winningCards=${this.getWinningCards()}
           ></phg-board>
           <div id="seats">
-            ${this.game.seats.map(
-              (seat, i) => html`
+            ${this.game.seats.map((seat, i) => {
+              // Hide empty seats when player is already seated
+              if (seat.empty && isSeated) return "";
+              return html`
                 <phg-seat
                   .seat=${seat}
                   .seatNumber=${i}
@@ -367,8 +369,8 @@ class Game extends LitElement {
                     : 0}
                   @seat-action=${this.handleSeatAction}
                 ></phg-seat>
-              `,
-            )}
+              `;
+            })}
           </div>
           <div id="bets">
             ${this.game.seats.map((seat, i) =>
