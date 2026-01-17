@@ -18,6 +18,12 @@ export default [
         ...globals.es2024,
       },
     },
+    rules: {
+      "max-lines": [
+        "error",
+        { max: 1000, skipBlankLines: true, skipComments: true },
+      ],
+    },
   },
   {
     files: ["src/frontend/**/*.js"],
@@ -47,6 +53,12 @@ export default [
         ...globals.browser,
         ...globals.node,
       },
+    },
+  },
+  {
+    files: ["test/ui-catalog/test-cases.js"],
+    rules: {
+      "max-lines": "off",
     },
   },
 ];
