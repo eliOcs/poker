@@ -1,18 +1,19 @@
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./seat.js').Seat} SeatType
  * @typedef {import('./seat.js').OccupiedSeat} OccupiedSeat
  */
 
 /**
  * @typedef {object} Pot
- * @property {number} amount - Chips in this pot
+ * @property {Cents} amount - Chips in this pot
  * @property {number[]} eligibleSeats - Seat indices eligible to win this pot
  */
 
 /**
  * @typedef {object} Award
  * @property {number} seat - Seat index
- * @property {number} amount - Amount awarded
+ * @property {Cents} amount - Amount awarded
  */
 
 /**
@@ -80,7 +81,7 @@ export function calculatePots(seats) {
 /**
  * Calculates total pot (sum of all pots)
  * @param {Pot[]} pots
- * @returns {number}
+ * @returns {Cents}
  */
 export function getTotalPot(pots) {
   return pots.reduce((sum, pot) => sum + pot.amount, 0);

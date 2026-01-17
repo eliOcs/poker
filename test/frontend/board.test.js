@@ -72,7 +72,7 @@ describe("phg-board", () => {
       element.game = createMockGameWithWinner({
         playerName: "player1",
         handRank: "Full House, Kings over 5s",
-        amount: 200,
+        amount: 20000, // $200 in cents
       });
       await element.updateComplete;
 
@@ -88,7 +88,7 @@ describe("phg-board", () => {
       element.game = createMockGameWithWinner({
         playerName: "player1",
         handRank: "Straight Flush, K high",
-        amount: 150,
+        amount: 15000, // $150 in cents
       });
       await element.updateComplete;
 
@@ -103,7 +103,7 @@ describe("phg-board", () => {
       element.game = createMockGameWithWinner({
         playerName: "player1",
         handRank: "Pair of Aces",
-        amount: 300,
+        amount: 30000, // $300 in cents
       });
       await element.updateComplete;
 
@@ -111,14 +111,14 @@ describe("phg-board", () => {
       await board.updateComplete;
       const winnerAmount = board.shadowRoot.querySelector(".winner-amount");
       expect(winnerAmount).to.exist;
-      expect(winnerAmount.textContent).to.include("300");
+      expect(winnerAmount.textContent).to.include("$300");
     });
 
     it("does not display hand rank when won by fold", async () => {
       element.game = createMockGameWithWinner({
         playerName: "player1",
         handRank: null,
-        amount: 100,
+        amount: 10000, // $100 in cents
       });
       await element.updateComplete;
 
@@ -132,7 +132,7 @@ describe("phg-board", () => {
       element.game = createMockGameWithWinner({
         playerName: "player1",
         handRank: "Royal Flush",
-        amount: 500,
+        amount: 50000, // $500 in cents
       });
       await element.updateComplete;
 

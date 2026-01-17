@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
 import "./button.js";
 
@@ -231,12 +231,12 @@ class Seat extends LitElement {
                 : ""}"
           >
             ${this.seat.handResult > 0
-              ? `+$${this.seat.handResult}`
+              ? `+${formatCurrency(this.seat.handResult)}`
               : this.seat.handResult < 0
-                ? `-$${Math.abs(this.seat.handResult)}`
-                : "$0"}
+                ? `-${formatCurrency(Math.abs(this.seat.handResult))}`
+                : formatCurrency(0)}
           </div>`
-        : html`<div class="stack">$${this.seat.stack}</div>`}
+        : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`}
       ${this._clockRemaining !== null
         ? html`<div
             class="clock-countdown ${this._clockRemaining <= 10

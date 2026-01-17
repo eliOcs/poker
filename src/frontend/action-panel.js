@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./button.js";
 
 class ActionPanel extends LitElement {
@@ -318,7 +318,7 @@ class ActionPanel extends LitElement {
   }
 
   handleManualInput(e, min, max) {
-    const value = parseInt(e.target.value) || min;
+    const value = parseFloat(e.target.value) || min;
     this.betAmount = Math.max(min, Math.min(max, value));
   }
 
@@ -360,7 +360,7 @@ class ActionPanel extends LitElement {
       const action = actionMap.buyIn;
       const min = action.min || 20;
       const max = action.max || 100;
-      const bigBlind = action.bigBlind || 50;
+      const bigBlind = action.bigBlind || this.bigBlind;
       const defaultBuyIn = Math.min(80, max);
       const bbCount =
         this.betAmount >= min && this.betAmount <= max
@@ -415,7 +415,7 @@ class ActionPanel extends LitElement {
                 })}
             >
               <span>Buy In</span>
-              <span class="amount">$${stack}</span>
+              <span class="amount">${formatCurrency(stack)}</span>
             </button>
           </div>
         </div>
@@ -513,8 +513,9 @@ class ActionPanel extends LitElement {
               type="range"
               min="${min}"
               max="${max}"
+              step="any"
               .value="${currentValue}"
-              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
+              @input=${(e) => (this.betAmount = parseFloat(e.target.value))}
             />
             <button
               class="step-btn"
@@ -557,7 +558,9 @@ class ActionPanel extends LitElement {
                       this.sendAction({ action: "call", seat: this.seatIndex })}
                   >
                     <span>Call</span>
-                    <span class="amount">$${actionMap.call.amount}</span>
+                    <span class="amount"
+                      >${formatCurrency(actionMap.call.amount)}</span
+                    >
                   </button>
                 `
               : null}
@@ -575,7 +578,7 @@ class ActionPanel extends LitElement {
                 )}
             >
               <span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span>
-              <span class="amount">$${currentValue}</span>
+              <span class="amount">${formatCurrency(currentValue)}</span>
             </button>
           </div>
         </div>
@@ -617,7 +620,7 @@ class ActionPanel extends LitElement {
             this.sendAction({ action: "call", seat: this.seatIndex })}
         >
           <span>Call</span>
-          <span class="amount">$${actionMap.call.amount}</span>
+          <span class="amount">${formatCurrency(actionMap.call.amount)}</span>
         </button>
       `);
     }

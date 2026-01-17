@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import HandRankings from "./hand-rankings.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').OccupiedSeat} OccupiedSeat
@@ -54,11 +55,27 @@ import HandRankings from "./hand-rankings.js";
  * @property {number} actionCounter
  * @property {string} currentStreet
  * @property {string|null} startTime
- * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
+ * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: Cents }>} players
  * @property {number} dealerSeat
- * @property {{ ante: number, small: number, big: number }} blinds
+ * @property {{ ante: Cents, small: Cents, big: Cents }} blinds
  * @property {Map<string, string[]>} boardByStreet
  */
+
+/**
+ * @param {Cents} cents
+ * @returns {number}
+ */
+function toDollars(cents) {
+  return cents / 100;
+}
+
+/**
+ * @param {number} dollars
+ * @returns {Cents}
+ */
+function toCents(dollars) {
+  return Math.round(dollars * 100);
+}
 
 // FIFO cache for recent hands
 const CACHE_LIMIT = 1000;
@@ -137,7 +154,7 @@ export function startHand(gameId, game) {
  * @param {string} gameId
  * @param {string} playerId
  * @param {'sb' | 'bb' | 'ante'} blindType
- * @param {number} amount
+ * @param {Cents} amount
  */
 export function recordBlind(gameId, playerId, blindType, amount) {
   const recorder = getRecorder(gameId);
@@ -174,7 +191,7 @@ export function recordDealtCards(gameId, playerId, cards) {
  * @param {string} gameId
  * @param {string} playerId
  * @param {string} action - fold, check, call, bet, raise
- * @param {number} [amount]
+ * @param {Cents} [amount]
  * @param {boolean} [isAllIn]
  */
 export function recordAction(
@@ -275,9 +292,11 @@ function buildRounds(recorder) {
       rounds.push(currentRound);
     }
 
-    // Clone action without the street field for the output
     const actionCopy = { ...action };
     delete actionCopy.street;
+    if (actionCopy.amount !== undefined) {
+      actionCopy.amount = toDollars(actionCopy.amount);
+    }
     currentRound.actions.push(actionCopy);
   }
 
@@ -297,10 +316,9 @@ export async function finalizeHand(gameId, game, potResults = []) {
     return; // No actions recorded, skip
   }
 
-  // Build pots array
   const pots = potResults.map((pot, index) => ({
     number: index,
-    amount: pot.potAmount,
+    amount: toDollars(pot.potAmount),
     winning_hand: pot.winningHand
       ? HandRankings.formatHand(pot.winningHand)
       : null,
@@ -309,13 +327,17 @@ export async function finalizeHand(gameId, game, potResults = []) {
       const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
       return {
         player_id: seat.player.id,
-        win_amount: Math.floor(pot.potAmount / pot.winners.length),
+        win_amount: toDollars(Math.floor(pot.potAmount / pot.winners.length)),
         contributed_rake: 0,
       };
     }),
   }));
 
-  // Build the OHH hand object
+  const playersInDollars = recorder.players.map((p) => ({
+    ...p,
+    starting_stack: toDollars(p.starting_stack),
+  }));
+
   /** @type {OHHHand} */
   const hand = {
     spec_version: "1.4.6",
@@ -326,10 +348,10 @@ export async function finalizeHand(gameId, game, potResults = []) {
     bet_limit: { bet_type: "NL" },
     table_size: game.seats.length,
     dealer_seat: recorder.dealerSeat,
-    small_blind_amount: recorder.blinds.small,
-    big_blind_amount: recorder.blinds.big,
-    ante_amount: recorder.blinds.ante,
-    players: recorder.players,
+    small_blind_amount: toDollars(recorder.blinds.small),
+    big_blind_amount: toDollars(recorder.blinds.big),
+    ante_amount: toDollars(recorder.blinds.ante),
+    players: playersInDollars,
     rounds: buildRounds(recorder),
     pots,
   };
@@ -484,7 +506,7 @@ export function filterHandForPlayer(hand, playerId) {
  * Gets a summary of a hand for the hand list
  * @param {OHHHand} hand
  * @param {string} playerId - The requesting player's ID
- * @returns {{ game_number: string, hand_number: number, hole_cards: (Card | string)[], winner_name: string|null, winner_id: string|null, pot: number, is_winner: boolean }}
+ * @returns {{ game_number: string, hand_number: number, hole_cards: (Card | string)[], winner_name: string|null, winner_id: string|null, pot: Cents, is_winner: boolean }}
  */
 export function getHandSummary(hand, playerId) {
   // Extract hand number from game_number (format: "gameId-handNumber")
@@ -509,7 +531,7 @@ export function getHandSummary(hand, playerId) {
 
   if (hand.pots.length > 0) {
     const mainPot = hand.pots[0];
-    totalPot = mainPot.amount;
+    totalPot = toCents(mainPot.amount);
 
     if (mainPot.player_wins.length > 0) {
       winnerId = mainPot.player_wins[0].player_id;
@@ -536,9 +558,9 @@ export function getHandSummary(hand, playerId) {
  * @typedef {object} HistoryViewSeat
  * @property {boolean} empty
  * @property {{ id: string, name: string }} [player]
- * @property {number} [stack]
+ * @property {Cents} [stack]
  * @property {string[]} [cards]
- * @property {number|null} [handResult]
+ * @property {Cents|null} [handResult]
  * @property {string|null} [handRank]
  * @property {string[]|null} [winningCards]
  * @property {boolean} [isCurrentPlayer]
@@ -553,8 +575,8 @@ export function getHandSummary(hand, playerId) {
  * @typedef {object} HistoryView
  * @property {HistoryViewSeat[]} seats
  * @property {{ cards: string[], phase: string }} board
- * @property {number} pot
- * @property {{ playerName: string, handRank: string|null, amount: number }|null} winnerMessage
+ * @property {Cents} pot
+ * @property {{ playerName: string, handRank: string|null, amount: Cents }|null} winnerMessage
  * @property {string[]|null} winningCards
  * @property {number} button
  */
@@ -577,13 +599,12 @@ export function getHandView(hand, playerId) {
     }
   }
 
-  // Build a set of winners and their win amounts
   /** @type {Map<string, number>} */
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
       const current = winAmounts.get(win.player_id) || 0;
-      winAmounts.set(win.player_id, current + win.win_amount);
+      winAmounts.set(win.player_id, current + toCents(win.win_amount));
     }
   }
 
@@ -611,7 +632,7 @@ export function getHandView(hand, playerId) {
     seats.push({
       empty: false,
       player: { id: player.id, name: displayName || `Seat ${i + 1}` },
-      stack: player.starting_stack,
+      stack: toCents(player.starting_stack),
       cards: playerCards.get(player.id) || [],
       handResult: winAmount > 0 ? winAmount : null,
       handRank: isWinner ? winningHand : null,
@@ -638,13 +659,11 @@ export function getHandView(hand, playerId) {
     }
   }
 
-  // Calculate total pot
   let totalPot = 0;
   for (const pot of hand.pots) {
-    totalPot += pot.amount || 0;
+    totalPot += toCents(pot.amount || 0);
   }
 
-  // Build winner message
   let winnerMessage = null;
   if (mainPot?.player_wins?.length > 0) {
     const winnerId = mainPot.player_wins[0].player_id;
@@ -653,7 +672,7 @@ export function getHandView(hand, playerId) {
     winnerMessage = {
       playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
       handRank: winningHand,
-      amount: winAmount,
+      amount: toCents(winAmount),
     };
   }
 

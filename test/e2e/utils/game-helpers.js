@@ -1,10 +1,14 @@
 /**
  * Create a new game via API
  * @param {import('@playwright/test').APIRequestContext} request
+ * @param {{ small?: number, big?: number }} [stakes] - Optional stakes
  * @returns {Promise<string>} - Game ID
  */
-export async function createGame(request) {
-  const response = await request.post("/games");
+export async function createGame(request, stakes) {
+  const options = stakes
+    ? { data: { small: stakes.small, big: stakes.big } }
+    : undefined;
+  const response = await request.post("/games", options);
   const { id } = await response.json();
   return id;
 }

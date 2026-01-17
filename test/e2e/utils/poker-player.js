@@ -238,8 +238,19 @@ export class PokerPlayer {
    */
   async act(action) {
     if (action === "allIn") {
-      const slider = this.actionPanel.locator('input[type="range"]');
-      await this.dragSliderToMax(slider);
+      // Click the + button repeatedly to reach max bet (All-In)
+      const plusBtn = this.actionPanel.locator("button.step-btn").last();
+      // Click until All-In button appears (max 50 clicks to prevent infinite loop)
+      for (let i = 0; i < 50; i++) {
+        const allInBtn = this.actionPanel.getByRole("button", {
+          name: "All-In",
+        });
+        if (await allInBtn.isVisible().catch(() => false)) {
+          break;
+        }
+        await plusBtn.click();
+        await this.page.waitForTimeout(50);
+      }
       await this.actionPanel.getByRole("button", { name: "All-In" }).click();
     } else if (action === "call") {
       await this.actionPanel.getByRole("button", { name: /^Call \$/ }).click();
@@ -286,6 +297,15 @@ export class PokerPlayer {
   async getPhase() {
     const phaseText = await this.board.locator(".phase").textContent();
     return phaseText?.toLowerCase().trim() ?? "";
+  }
+
+  /**
+   * Get the stakes displayed on the board
+   * @returns {Promise<string>}
+   */
+  async getStakes() {
+    const stakesText = await this.board.locator(".stakes").textContent();
+    return stakesText?.trim() ?? "";
   }
 
   /**

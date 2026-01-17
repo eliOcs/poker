@@ -1,4 +1,5 @@
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./seat.js').OccupiedSeat} OccupiedSeat
  */
@@ -8,9 +9,9 @@
  * @property {number} seatIndex - Seat index
  * @property {string} playerId - Player ID
  * @property {string|null} playerName - Player display name
- * @property {number} stack - Current stack
- * @property {number} totalBuyIn - Total buy-ins
- * @property {number} netWinnings - Current stack minus total buy-ins
+ * @property {Cents} stack - Current stack
+ * @property {Cents} totalBuyIn - Total buy-ins
+ * @property {Cents} netWinnings - Current stack minus total buy-ins
  * @property {number} handsPlayed - Number of hands played
  * @property {number|null} winRate - BB/100 win rate (null if < 10 hands)
  */

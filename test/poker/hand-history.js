@@ -477,7 +477,7 @@ describe("hand-history", function () {
       assert.deepStrictEqual(summary.hole_cards, ["Ah", "Kh"]);
       assert.strictEqual(summary.winner_name, "Alice");
       assert.strictEqual(summary.winner_id, "player1");
-      assert.strictEqual(summary.pot, 200);
+      assert.strictEqual(summary.pot, 20000); // 200 dollars → 20000 cents
       assert.strictEqual(summary.is_winner, true);
     });
 
@@ -574,9 +574,10 @@ describe("hand-history", function () {
       const view = HandHistory.getHandView(hand, "player1");
 
       // Seat 1 in OHH should be at index 0 in view
+      // Stack is converted from OHH dollars to cents for frontend
       assert.strictEqual(view.seats[0].empty, false);
       assert.strictEqual(view.seats[0].player.name, "Alice (you)");
-      assert.strictEqual(view.seats[0].stack, 1000);
+      assert.strictEqual(view.seats[0].stack, 100000); // 1000 dollars → 100000 cents
 
       // Seat 2 should be empty (no player)
       assert.strictEqual(view.seats[1].empty, true);
@@ -584,7 +585,7 @@ describe("hand-history", function () {
       // Seat 3 in OHH should be at index 2 in view
       assert.strictEqual(view.seats[2].empty, false);
       assert.strictEqual(view.seats[2].player.name, "Bob");
-      assert.strictEqual(view.seats[2].stack, 500);
+      assert.strictEqual(view.seats[2].stack, 50000); // 500 dollars → 50000 cents
     });
 
     it("handles null player names gracefully", function () {
@@ -664,8 +665,8 @@ describe("hand-history", function () {
 
       const view = HandHistory.getHandView(hand, "player1");
 
-      // Winner should have handResult and handRank
-      assert.strictEqual(view.seats[0].handResult, 200);
+      // Winner should have handResult (converted to cents) and handRank
+      assert.strictEqual(view.seats[0].handResult, 20000); // 200 dollars → 20000 cents
       assert.strictEqual(view.seats[0].handRank, "Two Pair, Aces and Kings");
       assert.deepStrictEqual(view.seats[0].winningCards, [
         "Ah",

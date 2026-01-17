@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
 
 class Board extends LitElement {
@@ -40,6 +40,11 @@ class Board extends LitElement {
         .pot {
           font-size: var(--font-md);
           color: var(--color-primary);
+        }
+
+        .stakes {
+          font-size: var(--font-sm);
+          color: var(--color-fg-muted);
         }
 
         .phase {
@@ -87,11 +92,19 @@ class Board extends LitElement {
       countdown: { type: Number },
       winnerMessage: { type: Object },
       winningCards: { type: Array },
+      blinds: { type: Object },
     };
   }
 
   isWinningCard(card) {
     return this.winningCards?.includes(card);
+  }
+
+  renderStakes() {
+    if (!this.blinds) return "";
+    return html`<div class="stakes">
+      ${formatCurrency(this.blinds.small)}/${formatCurrency(this.blinds.big)}
+    </div>`;
   }
 
   render() {
@@ -119,8 +132,11 @@ class Board extends LitElement {
                   ${this.winnerMessage.handRank}
                 </div>`
               : ""}
-            <div class="winner-amount">+$${this.winnerMessage.amount}</div>
+            <div class="winner-amount">
+              +${formatCurrency(this.winnerMessage.amount)}
+            </div>
           </div>
+          ${this.renderStakes()}
         </div>
       `;
     }
@@ -131,6 +147,7 @@ class Board extends LitElement {
         <div class="board-info">
           <div class="phase">Starting in...</div>
           <div class="countdown">${this.countdown}</div>
+          ${this.renderStakes()}
         </div>
       `;
     }
@@ -150,8 +167,9 @@ class Board extends LitElement {
           )}
         </div>
         ${this.hand?.pot !== undefined
-          ? html`<div class="pot">Pot: $${this.hand.pot}</div>`
+          ? html`<div class="pot">Pot: ${formatCurrency(this.hand.pot)}</div>`
           : ""}
+        ${this.renderStakes()}
       </div>
     `;
   }

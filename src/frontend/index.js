@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
 import "./board.js";
 import "./seat.js";
@@ -353,6 +353,7 @@ class Game extends LitElement {
             .countdown=${this.game.countdown}
             .winnerMessage=${this.game.winnerMessage}
             .winningCards=${this.getWinningCards()}
+            .blinds=${this.game.blinds}
           ></phg-board>
           <div id="seats">
             ${this.game.seats.map((seat, i) => {
@@ -377,7 +378,7 @@ class Game extends LitElement {
             ${this.game.seats.map((seat, i) =>
               !seat.empty && seat.bet > 0
                 ? html`<div class="bet-indicator" data-seat="${i}">
-                    $${seat.bet}
+                    ${formatCurrency(seat.bet)}
                   </div>`
                 : "",
             )}

@@ -2,6 +2,7 @@ import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').Seat} Seat
  */
@@ -12,9 +13,9 @@ import * as Seat from "./seat.js";
 
 /**
  * @typedef {object} Blinds
- * @property {number} ante - Ante amount
- * @property {number} small - Small blind amount
- * @property {number} big - Big blind amount
+ * @property {Cents} ante - Ante amount
+ * @property {Cents} small - Small blind amount
+ * @property {Cents} big - Big blind amount
  */
 
 /**
@@ -25,18 +26,18 @@ import * as Seat from "./seat.js";
 /**
  * @typedef {object} Hand
  * @property {Phase} phase - Current phase of the hand
- * @property {number} pot - Total chips in pot
- * @property {number} currentBet - Highest bet in current round
+ * @property {Cents} pot - Total chips in pot
+ * @property {Cents} currentBet - Highest bet in current round
  * @property {number} lastRaiser - Seat index of last raiser (-1 if none)
  * @property {number} actingSeat - Seat index of player to act (-1 if none)
- * @property {number} lastRaiseSize - Size of the last raise (for min-raise calculation)
+ * @property {Cents} lastRaiseSize - Size of the last raise (for min-raise calculation)
  */
 
 /**
  * @typedef {object} WinnerMessage
  * @property {string} playerName - Winner's player name/ID
  * @property {string|null} handRank - Winning hand description (null if won by fold)
- * @property {number} amount - Amount won
+ * @property {Cents} amount - Amount won
  */
 
 /**
