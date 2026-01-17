@@ -72,14 +72,14 @@ export const baseStyles = css`
 /**
  * Format an amount in cents as currency using Intl.NumberFormat
  * @param {number} amountInCents - The amount in cents to format
- * @returns {string} - Formatted currency string (e.g., "$1.50", "$100")
+ * @returns {string} - Formatted currency string (e.g., "$1.50", "$100.00")
  */
 export function formatCurrency(amountInCents) {
   const dollars = amountInCents / 100;
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   return formatter.format(dollars);
