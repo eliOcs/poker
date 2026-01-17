@@ -318,8 +318,10 @@ class ActionPanel extends LitElement {
   }
 
   handleManualInput(e, min, max) {
-    const value = parseFloat(e.target.value) || min;
-    this.betAmount = Math.max(min, Math.min(max, value));
+    // Input is in dollars, convert to cents
+    const dollars = parseFloat(e.target.value) || 0;
+    const cents = Math.round(dollars * 100);
+    this.betAmount = Math.max(min, Math.min(max, cents));
   }
 
   render() {
@@ -498,9 +500,10 @@ class ActionPanel extends LitElement {
           <div class="slider-row">
             <input
               type="number"
-              min="${min}"
-              max="${max}"
-              .value="${currentValue}"
+              min="${min / 100}"
+              max="${max / 100}"
+              step="0.01"
+              .value="${(currentValue / 100).toFixed(2)}"
               @input=${(e) => this.handleManualInput(e, min, max)}
             />
             <button
@@ -513,9 +516,9 @@ class ActionPanel extends LitElement {
               type="range"
               min="${min}"
               max="${max}"
-              step="any"
+              step="1"
               .value="${currentValue}"
-              @input=${(e) => (this.betAmount = parseFloat(e.target.value))}
+              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
             />
             <button
               class="step-btn"
