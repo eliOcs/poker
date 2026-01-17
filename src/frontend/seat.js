@@ -37,19 +37,14 @@ class Seat extends LitElement {
             0 0 0 var(--space-sm) var(--color-primary);
         }
 
-        :host(.folded) {
-          opacity: 0.4;
-        }
 
         :host(.sitting-out) {
-          opacity: 0.5;
           border-style: dashed;
         }
 
         :host(.disconnected) {
           border-color: var(--color-error);
           border-style: dotted;
-          opacity: 0.7;
         }
 
         :host(.all-in) {

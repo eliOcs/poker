@@ -677,7 +677,7 @@ const TEST_CASES = {
             lastAction: "Call $50",
           }),
           createPlayer("Eve", {
-            folded: true,
+            sittingOut: true,
             stack: 2000,
             bet: 0,
             cards: [],
