@@ -1,9 +1,9 @@
 import { describe, it } from "node:test";
 import * as assert from "assert";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Player from "../../src/backend/poker/player.js";
-import * as Actions from "../../src/backend/poker/actions.js";
-import playerView from "../../src/backend/poker/player-view.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Player from "../../../src/backend/poker/player.js";
+import * as Actions from "../../../src/backend/poker/actions.js";
+import playerView from "../../../src/backend/poker/player-view.js";
 
 describe("Player View", function () {
   describe("Seat", function () {

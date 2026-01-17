@@ -35,7 +35,7 @@ describe("logger", function () {
 
       // Re-import to pick up new env
       const { debug, info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-1`
+        `../../../src/backend/logger.js?t=${Date.now()}-1`
       );
 
       debug("debug message");
@@ -53,7 +53,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-2`
+        `../../../src/backend/logger.js?t=${Date.now()}-2`
       );
 
       debug("debug message");
@@ -70,7 +70,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info, warn } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-3`
+        `../../../src/backend/logger.js?t=${Date.now()}-3`
       );
 
       debug("debug message");
@@ -88,7 +88,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info, warn, error } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-4`
+        `../../../src/backend/logger.js?t=${Date.now()}-4`
       );
 
       debug("debug message");
@@ -109,7 +109,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-5`
+        `../../../src/backend/logger.js?t=${Date.now()}-5`
       );
 
       info("test message", { foo: "bar", count: 42 });
@@ -126,7 +126,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-6`
+        `../../../src/backend/logger.js?t=${Date.now()}-6`
       );
 
       info("test message", { foo: "bar", count: 42 });
@@ -148,7 +148,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { child } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-7`
+        `../../../src/backend/logger.js?t=${Date.now()}-7`
       );
 
       const gameLogger = child({ gameId: "abc123", handNumber: 5 });
@@ -169,7 +169,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { child } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-8`
+        `../../../src/backend/logger.js?t=${Date.now()}-8`
       );
 
       const gameLogger = child({ gameId: "abc123", value: "original" });
@@ -187,7 +187,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { child } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-9`
+        `../../../src/backend/logger.js?t=${Date.now()}-9`
       );
 
       const gameLogger = child({ gameId: "abc123" });
@@ -209,7 +209,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { error } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-10`
+        `../../../src/backend/logger.js?t=${Date.now()}-10`
       );
 
       error("error message");
@@ -223,7 +223,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { warn } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-11`
+        `../../../src/backend/logger.js?t=${Date.now()}-11`
       );
 
       warn("warn message");
@@ -237,7 +237,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-12`
+        `../../../src/backend/logger.js?t=${Date.now()}-12`
       );
 
       debug("debug message");

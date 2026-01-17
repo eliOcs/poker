@@ -1,9 +1,9 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Seat from "../../src/backend/poker/seat.js";
-import * as Actions from "../../src/backend/poker/actions.js";
-import * as Ranking from "../../src/backend/poker/ranking.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
+import * as Actions from "../../../src/backend/poker/actions.js";
+import * as Ranking from "../../../src/backend/poker/ranking.js";
 
 describe("ranking", () => {
   let game;

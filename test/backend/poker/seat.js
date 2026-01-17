@@ -1,9 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "assert";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Seat from "../../src/backend/poker/seat.js";
-import * as Player from "../../src/backend/poker/player.js";
-import { sit } from "../../src/backend/poker/actions.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
+import * as Player from "../../../src/backend/poker/player.js";
+import { sit } from "../../../src/backend/poker/actions.js";
 
 describe("sit", function () {
   it("player occupies seat inmediately when no hand is ongoing", function () {

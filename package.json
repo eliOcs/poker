@@ -9,7 +9,7 @@
   "private": true,
   "scripts": {
     "coverage": "npm run coverage:backend && npm run coverage:frontend",
-    "coverage:backend": "node --test --experimental-test-coverage --test-coverage-include='src/backend/**/*.js' 'test/poker/**/*.js'",
+    "coverage:backend": "node --test --experimental-test-coverage --test-coverage-include='src/backend/**/*.js' 'test/backend/**/*.js'",
     "coverage:frontend": "web-test-runner --coverage",
     "duplicates": "jscpd src test --ignore 'test/**/fixtures.js'",
     "format": "prettier --write .",
@@ -17,7 +17,7 @@
     "lint:css": "stylelint 'src/frontend/**/*.js'",
     "start": "node --env-file=.env --watch src/backend",
     "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "node --test 'test/poker/**/*.js'",
+    "test:backend": "node --test 'test/backend/**/*.js'",
     "test:e2e": "playwright test",
     "test:frontend": "web-test-runner",
     "test:ui-catalog": "playwright test --config=playwright.ui-catalog.config.js",

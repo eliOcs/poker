@@ -4,7 +4,7 @@ import {
   PRESETS,
   DEFAULT,
   isValidPreset,
-} from "../../src/backend/poker/stakes.js";
+} from "../../../src/backend/poker/stakes.js";
 
 describe("stakes", () => {
   describe("PRESETS", () => {

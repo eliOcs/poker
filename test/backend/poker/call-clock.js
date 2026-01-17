@@ -1,17 +1,17 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Actions from "../../src/backend/poker/actions.js";
-import * as Betting from "../../src/backend/poker/betting.js";
-import * as Player from "../../src/backend/poker/player.js";
-import playerView from "../../src/backend/poker/player-view.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Actions from "../../../src/backend/poker/actions.js";
+import * as Betting from "../../../src/backend/poker/betting.js";
+import * as Player from "../../../src/backend/poker/player.js";
+import playerView from "../../../src/backend/poker/player-view.js";
 import {
   CLOCK_WAIT_TICKS,
   CLOCK_DURATION_TICKS,
-} from "../../src/backend/poker/game-tick.js";
+} from "../../../src/backend/poker/game-tick.js";
 
 describe("call the clock", () => {
-  /** @type {import('../../src/backend/poker/game.js').Game} */
+  /** @type {import('../../../src/backend/poker/game.js').Game} */
   let game;
   let player1;
   let player2;

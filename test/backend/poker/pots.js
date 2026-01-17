@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import * as Seat from "../../src/backend/poker/seat.js";
-import * as Pots from "../../src/backend/poker/pots.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
+import * as Pots from "../../../src/backend/poker/pots.js";
 
 describe("pots", () => {
   describe("calculatePots", () => {
