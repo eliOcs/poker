@@ -1,10 +1,18 @@
 import { test, expect } from "./utils/fixtures.js";
 import {
   createGame,
+  createGameViaUI,
   waitForPhase,
   playBettingRound,
   waitForHandEnd,
 } from "./utils/game-helpers.js";
+
+const STAKES_OPTIONS = [
+  { index: 0, label: "$0.01/$0.02" },
+  { index: 2, label: "$0.05/$0.1" },
+  { index: 6, label: "$1/$2" },
+  { index: 10, label: "$10/$20" },
+];
 
 test.describe("Poker Game Smoke Test", () => {
   test("plays 3 hands with varied actions (check, call, raise, all-in)", async ({
@@ -180,4 +188,17 @@ test.describe("Poker Game Smoke Test", () => {
 
     console.log("Hand history verified successfully!");
   });
+
+  for (const { index, label } of STAKES_OPTIONS) {
+    test(`stakes selector: ${label} displays correctly in game`, async ({
+      player1,
+    }) => {
+      const gameId = await createGameViaUI(player1.page, index);
+      console.log(`Created game ${gameId} with stakes ${label}`);
+
+      const stakes = await player1.getStakes();
+      console.log(`Stakes displayed: ${stakes}`);
+      expect(stakes).toBe(label);
+    });
+  }
 });
