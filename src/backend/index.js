@@ -44,12 +44,11 @@ function parseCookies(rawCookies) {
  * Gets or creates a player from cookie
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
- * @returns {{ player: PlayerType, isNew: boolean }}
+ * @returns {PlayerType}
  */
 function getOrCreatePlayer(req, res) {
   const cookies = parseCookies(req.headers.cookie ?? "");
   let player = players[cookies.phg];
-  let isNew = false;
 
   if (!player) {
     player = Player.create();
@@ -58,10 +57,9 @@ function getOrCreatePlayer(req, res) {
       "Set-Cookie",
       `phg=${player.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
     );
-    isNew = true;
   }
 
-  return { player, isNew };
+  return player;
 }
 
 /** @type {Record<string, PlayerType>} */
@@ -144,7 +142,7 @@ server.on("request", (req, res) => {
   const historyListMatch = url.match(/^\/api\/history\/([a-z0-9]+)$/);
   if (method === "GET" && historyListMatch) {
     const historyGameId = historyListMatch[1];
-    const { player } = getOrCreatePlayer(req, res);
+    const player = getOrCreatePlayer(req, res);
 
     HandHistory.getAllHands(historyGameId)
       .then((hands) => {
@@ -167,7 +165,7 @@ server.on("request", (req, res) => {
   if (method === "GET" && historyHandMatch) {
     const historyGameId = historyHandMatch[1];
     const handNumber = parseInt(historyHandMatch[2], 10);
-    const { player } = getOrCreatePlayer(req, res);
+    const player = getOrCreatePlayer(req, res);
 
     HandHistory.getHand(historyGameId, handNumber)
       .then((hand) => {

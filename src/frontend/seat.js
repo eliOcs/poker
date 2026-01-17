@@ -37,7 +37,6 @@ class Seat extends LitElement {
             0 0 0 var(--space-sm) var(--color-primary);
         }
 
-
         :host(.sitting-out) {
           border-style: dashed;
         }
