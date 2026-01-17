@@ -17,6 +17,7 @@ import {
   startClockTicks,
 } from "./poker/game-tick.js";
 import * as logger from "./logger.js";
+import * as PlayerStore from "./player-store.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -26,7 +27,6 @@ import * as logger from "./logger.js";
 const server = http.createServer();
 
 /**
- * Parses cookie header into object
  * @param {string} rawCookies
  * @returns {Record<string, string>}
  */
@@ -41,7 +41,6 @@ function parseCookies(rawCookies) {
 }
 
 /**
- * Gets or creates a player from cookie
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
  * @returns {PlayerType}
@@ -51,12 +50,23 @@ function getOrCreatePlayer(req, res) {
   let player = players[cookies.phg];
 
   if (!player) {
-    player = Player.create();
-    players[player.id] = player;
-    res.setHeader(
-      "Set-Cookie",
-      `phg=${player.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
-    );
+    // Check database for returning visitor
+    const loadedPlayer = PlayerStore.load(cookies.phg);
+
+    if (loadedPlayer) {
+      // Returning player - add to memory cache
+      player = loadedPlayer;
+      players[player.id] = player;
+    } else {
+      // New player - create and persist
+      player = Player.create();
+      players[player.id] = player;
+      PlayerStore.save(player);
+      res.setHeader(
+        "Set-Cookie",
+        `phg=${player.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
+      );
+    }
   }
 
   return player;
@@ -68,10 +78,7 @@ const players = {};
 /** @type {Map<string, Game>} */
 const games = new Map();
 
-/**
- * Generates a short game ID
- * @returns {string}
- */
+/** @returns {string} */
 function generateGameId() {
   return crypto.randomBytes(4).toString("hex");
 }
@@ -81,9 +88,8 @@ server.on("request", (req, res) => {
   const method = req.method ?? "GET";
   const startTime = Date.now();
 
-  // Log HTTP request when response finishes
   res.on("finish", () => {
-    // Skip health check endpoint to reduce noise
+    // Skip health check to reduce noise
     if (url !== "/up") {
       logger.info("http request", {
         method,
@@ -94,21 +100,19 @@ server.on("request", (req, res) => {
     }
   });
 
-  // Health check endpoint (for Kamal Proxy)
+  // Health check for Kamal Proxy
   if (method === "GET" && url === "/up") {
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("OK");
     return;
   }
 
-  // Home page
   if (method === "GET" && url === "/") {
     getOrCreatePlayer(req, res);
     respondWithFile("src/frontend/index.html", res);
     return;
   }
 
-  // Create game
   if (method === "POST" && url === "/games") {
     getOrCreatePlayer(req, res);
     const gameId = generateGameId();
@@ -122,7 +126,7 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // Game page - serve SPA for all game routes, let frontend handle not-found
+  // Serve SPA, let frontend handle not-found
   const gameMatch = url.match(/^\/games\/([a-z0-9]+)$/);
   if (method === "GET" && gameMatch) {
     getOrCreatePlayer(req, res);
@@ -130,7 +134,6 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // History page - serve SPA
   const historyPageMatch = url.match(/^\/history\/([a-z0-9]+)(\/\d+)?$/);
   if (method === "GET" && historyPageMatch) {
     getOrCreatePlayer(req, res);
@@ -138,7 +141,6 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // API: List hands for a game
   const historyListMatch = url.match(/^\/api\/history\/([a-z0-9]+)$/);
   if (method === "GET" && historyListMatch) {
     const historyGameId = historyListMatch[1];
@@ -160,7 +162,6 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // API: Get specific hand
   const historyHandMatch = url.match(/^\/api\/history\/([a-z0-9]+)\/(\d+)$/);
   if (method === "GET" && historyHandMatch) {
     const historyGameId = historyHandMatch[1];
@@ -188,7 +189,6 @@ server.on("request", (req, res) => {
     return;
   }
 
-  // Static files and node modules
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {
     respondWithFile(filePath, res);
@@ -203,7 +203,6 @@ server.on("upgrade", function upgrade(request, socket, head) {
   const cookies = parseCookies(request.headers.cookie ?? "");
   const player = players[cookies.phg];
 
-  // Parse game ID from URL: /games/:id
   const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
   const gameId = gameMatch?.[1];
   const game = gameId ? games.get(gameId) : undefined;
@@ -224,10 +223,7 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const wss = new WebSocketServer({ noServer: true });
 
-/**
- * Exhausts a generator (runs all steps without delay)
- * @param {Generator} gen
- */
+/** @param {Generator} gen */
 function runAll(gen) {
   while (!gen.next().done);
 }
@@ -235,10 +231,7 @@ function runAll(gen) {
 /** @type {Map<import('ws').WebSocket, { player: PlayerType, gameId: string }>} */
 const clientConnections = new Map();
 
-/**
- * Broadcasts game state to all clients in a specific game
- * @param {string} gameId
- */
+/** @param {string} gameId */
 function broadcastGameState(gameId) {
   const game = games.get(gameId);
   if (!game) return;
@@ -251,9 +244,7 @@ function broadcastGameState(gameId) {
 }
 
 /**
- * Processes game flow after a betting action
- * Checks if round is complete and advances to next phase
- * Loops through all remaining streets when everyone is all-in
+ * Advances to next phase, loops through streets when everyone is all-in
  * @param {Game} game
  * @param {string} gameId
  */
@@ -310,10 +301,8 @@ function processGameFlow(game, gameId) {
       return;
     }
 
-    // Collect bets
     Betting.collectBets(game);
 
-    // Advance to next phase
     if (phase === "preflop") {
       runAll(PokerActions.dealFlop(game));
       HandHistory.recordStreet(gameId, "flop", game.board.cards);
@@ -327,7 +316,6 @@ function processGameFlow(game, gameId) {
       HandHistory.recordStreet(gameId, "river", [game.board.cards[4]]);
       Betting.startBettingRound(game, "river");
     } else if (phase === "river") {
-      // Go to showdown
       const gen = Showdown.showdown(game);
       let result = gen.next();
       while (!result.done) {
@@ -399,12 +387,10 @@ function processGameFlow(game, gameId) {
 }
 
 /**
- * Automatically starts countdown for next hand if enough players
  * @param {Game} game
  * @param {string} gameId
  */
 function autoStartNextHand(game, gameId) {
-  // Sit out any disconnected players
   sitOutDisconnectedPlayers(game);
 
   if (PokerActions.countPlayersWithChips(game) >= 2) {
@@ -419,10 +405,9 @@ const TIMER_INTERVAL = process.env.TIMER_SPEED
   : 1000;
 
 /**
- * Finds the seat index for a player in a game
  * @param {Game} game
  * @param {PlayerType} player
- * @returns {number} - Seat index or -1 if not found
+ * @returns {number} Seat index or -1 if not found
  */
 function findPlayerSeatIndex(game, player) {
   return game.seats.findIndex(
@@ -431,7 +416,6 @@ function findPlayerSeatIndex(game, player) {
 }
 
 /**
- * Performs auto check/fold for a seat
  * @param {Game} game
  * @param {string} gameId
  * @param {number} seatIndex
@@ -457,7 +441,6 @@ function performAutoAction(game, gameId, seatIndex) {
 }
 
 /**
- * Starts the hand (called when countdown reaches 0)
  * @param {Game} game
  * @param {string} gameId
  */
@@ -467,16 +450,10 @@ function startHand(game, gameId) {
     return;
   }
 
-  // Clear winner message from previous hand
   game.winnerMessage = null;
-
-  // Start the hand
   PokerActions.startHand(game);
-
-  // Start hand history recording
   HandHistory.startHand(gameId, game);
 
-  // Count active players
   const playerCount = game.seats.filter(
     (s) => !s.empty && !s.sittingOut,
   ).length;
@@ -486,12 +463,10 @@ function startHand(game, gameId) {
     playerCount,
   });
 
-  // Post blinds and record them
   const sbSeat = Betting.getSmallBlindSeat(game);
   const bbSeat = Betting.getBigBlindSeat(game);
   runAll(PokerActions.blinds(game));
 
-  // Record blinds to history
   const sbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
     game.seats[sbSeat]
   );
@@ -501,29 +476,20 @@ function startHand(game, gameId) {
   HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
   HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
 
-  // Deal preflop and record cards
   runAll(PokerActions.dealPreflop(game));
 
-  // Record dealt cards for each player
   for (const seat of game.seats) {
     if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
       HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
     }
   }
 
-  // Initialize betting round
   Betting.startBettingRound(game, "preflop");
-  // Set currentBet to big blind (blinds already posted)
-  game.hand.currentBet = game.blinds.big;
-
-  // Reset tick counters for first player to act
+  game.hand.currentBet = game.blinds.big; // Blinds already posted
   resetActingTicks(game);
 }
 
-/**
- * Sits out all disconnected players at end of hand
- * @param {Game} game
- */
+/** @param {Game} game */
 function sitOutDisconnectedPlayers(game) {
   for (const seat of game.seats) {
     if (!seat.empty && seat.disconnected && !seat.sittingOut) {
@@ -532,10 +498,7 @@ function sitOutDisconnectedPlayers(game) {
   }
 }
 
-/**
- * Stops the game tick timer
- * @param {Game} game
- */
+/** @param {Game} game */
 function stopGameTick(game) {
   if (game.tickTimer) {
     clearInterval(game.tickTimer);
@@ -544,8 +507,6 @@ function stopGameTick(game) {
 }
 
 /**
- * Starts the unified game tick timer
- * Handles countdown, disconnect timeout, and clock expiry
  * @param {Game} game
  * @param {string} gameId
  */
@@ -580,7 +541,6 @@ function startGameTick(game, gameId) {
 }
 
 /**
- * Ensures the game tick is running if needed
  * @param {Game} game
  * @param {string} gameId
  */
@@ -636,13 +596,8 @@ wss.on(
         closedGame.seats[closedSeatIndex]
       );
 
-      // Mark seat as disconnected
       closedSeat.disconnected = true;
-
-      // Ensure tick is running to handle disconnect timeout
       ensureGameTick(closedGame, closedGameId);
-
-      // Broadcast updated state (shows DISCONNECTED status)
       broadcastGameState(closedGameId);
     });
 
@@ -654,6 +609,7 @@ wss.on(
       if (action === "setName") {
         const name = args.name?.trim().substring(0, 20) || null;
         player.name = name;
+        PlayerStore.save(player);
         broadcastGameState(gameId);
         return;
       }
@@ -802,5 +758,34 @@ wss.on(
     ws.send(JSON.stringify(playerView(game, player), null, 2));
   },
 );
+
+PlayerStore.initialize();
+
+/** @param {string} signal */
+function gracefulShutdown(signal) {
+  logger.info("shutdown initiated", { signal });
+
+  server.close(() => logger.info("http server closed"));
+
+  for (const [ws] of clientConnections) {
+    ws.close(1001, "Server shutting down");
+  }
+  clientConnections.clear();
+
+  for (const [, game] of games) {
+    if (game.tickTimer) {
+      clearInterval(game.tickTimer);
+      game.tickTimer = null;
+    }
+  }
+  games.clear();
+
+  PlayerStore.close();
+  logger.info("shutdown complete");
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
 server.listen(process.env.PORT);
