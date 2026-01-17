@@ -111,117 +111,165 @@ function generateGameId() {
 }
 
 /**
- * Main request handler
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res
+ * @typedef {import('http').IncomingMessage} Request
+ * @typedef {import('http').ServerResponse} Response
+ */
+
+/**
+ * @typedef {object} RouteContext
+ * @property {Request} req
+ * @property {Response} res
+ * @property {RegExpMatchArray|null} match
+ */
+
+/**
+ * @typedef {object} Route
+ * @property {string} method
+ * @property {RegExp|string} path
+ * @property {(ctx: RouteContext) => Promise<void>|void} handler
+ */
+
+/** @type {Route[]} */
+const routes = [
+  {
+    method: "GET",
+    path: "/up",
+    handler: ({ res }) => {
+      res.writeHead(200, { "content-type": "text/plain" });
+      res.end("OK");
+    },
+  },
+  {
+    method: "GET",
+    path: "/",
+    handler: ({ req, res }) => {
+      getOrCreatePlayer(req, res);
+      respondWithFile("src/frontend/index.html", res);
+    },
+  },
+  {
+    method: "POST",
+    path: "/games",
+    handler: async ({ req, res }) => {
+      getOrCreatePlayer(req, res);
+
+      const data = await parseBody(req);
+      let blinds = {
+        ante: 0,
+        small: Stakes.DEFAULT.small,
+        big: Stakes.DEFAULT.big,
+      };
+
+      if (
+        data &&
+        typeof data === "object" &&
+        "small" in data &&
+        "big" in data &&
+        Stakes.isValidPreset({
+          small: /** @type {number} */ (data.small),
+          big: /** @type {number} */ (data.big),
+        })
+      ) {
+        blinds = {
+          ante: 0,
+          small: /** @type {number} */ (data.small),
+          big: /** @type {number} */ (data.big),
+        };
+      }
+
+      const gameId = generateGameId();
+      const game = PokerGame.create({ blinds });
+      games.set(gameId, game);
+
+      logger.info("game created", {
+        gameId,
+        blinds: `${blinds.small}/${blinds.big}`,
+      });
+
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ id: gameId }));
+    },
+  },
+  {
+    method: "GET",
+    path: /^\/games\/([a-z0-9]+)$/,
+    handler: ({ req, res }) => {
+      getOrCreatePlayer(req, res);
+      respondWithFile("src/frontend/index.html", res);
+    },
+  },
+  {
+    method: "GET",
+    path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
+    handler: ({ req, res }) => {
+      getOrCreatePlayer(req, res);
+      respondWithFile("src/frontend/index.html", res);
+    },
+  },
+  {
+    method: "GET",
+    path: /^\/api\/history\/([a-z0-9]+)$/,
+    handler: async ({ req, res, match }) => {
+      const gameId = /** @type {RegExpMatchArray} */ (match)[1];
+      const player = getOrCreatePlayer(req, res);
+
+      const hands = await HandHistory.getAllHands(gameId);
+      const summaries = hands.map((hand) =>
+        HandHistory.getHandSummary(hand, player.id),
+      );
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ hands: summaries }));
+    },
+  },
+  {
+    method: "GET",
+    path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
+    handler: async ({ req, res, match }) => {
+      const m = /** @type {RegExpMatchArray} */ (match);
+      const gameId = m[1];
+      const handNumber = parseInt(m[2], 10);
+      const player = getOrCreatePlayer(req, res);
+
+      const hand = await HandHistory.getHand(gameId, handNumber);
+      if (!hand) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "Hand not found" }));
+        return;
+      }
+
+      const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
+      const view = HandHistory.getHandView(filteredHand, player.id);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ hand: filteredHand, view }));
+    },
+  },
+];
+
+/**
+ * @param {Request} req
+ * @param {Response} res
  */
 async function handleRequest(req, res) {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
 
-  // Health check for Kamal Proxy
-  if (method === "GET" && url === "/up") {
-    res.writeHead(200, { "content-type": "text/plain" });
-    res.end("OK");
-    return;
-  }
+  for (const route of routes) {
+    if (route.method !== method) continue;
 
-  if (method === "GET" && url === "/") {
-    getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/index.html", res);
-    return;
-  }
-
-  if (method === "POST" && url === "/games") {
-    getOrCreatePlayer(req, res);
-
-    const data = await parseBody(req);
-    let blinds = {
-      ante: 0,
-      small: Stakes.DEFAULT.small,
-      big: Stakes.DEFAULT.big,
-    };
-
-    if (
-      data &&
-      typeof data === "object" &&
-      "small" in data &&
-      "big" in data &&
-      Stakes.isValidPreset({
-        small: /** @type {number} */ (data.small),
-        big: /** @type {number} */ (data.big),
-      })
-    ) {
-      blinds = {
-        ante: 0,
-        small: /** @type {number} */ (data.small),
-        big: /** @type {number} */ (data.big),
-      };
+    /** @type {RegExpMatchArray|null} */
+    let match = null;
+    if (typeof route.path === "string") {
+      if (route.path !== url) continue;
+    } else {
+      match = url.match(route.path);
+      if (!match) continue;
     }
 
-    const gameId = generateGameId();
-    const game = PokerGame.create({ blinds });
-    games.set(gameId, game);
-
-    logger.info("game created", {
-      gameId,
-      blinds: `${blinds.small}/${blinds.big}`,
-    });
-
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ id: gameId }));
+    await route.handler({ req, res, match });
     return;
   }
 
-  // Serve SPA, let frontend handle not-found
-  const gameMatch = url.match(/^\/games\/([a-z0-9]+)$/);
-  if (method === "GET" && gameMatch) {
-    getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/index.html", res);
-    return;
-  }
-
-  const historyPageMatch = url.match(/^\/history\/([a-z0-9]+)(\/\d+)?$/);
-  if (method === "GET" && historyPageMatch) {
-    getOrCreatePlayer(req, res);
-    respondWithFile("src/frontend/index.html", res);
-    return;
-  }
-
-  const historyListMatch = url.match(/^\/api\/history\/([a-z0-9]+)$/);
-  if (method === "GET" && historyListMatch) {
-    const historyGameId = historyListMatch[1];
-    const player = getOrCreatePlayer(req, res);
-
-    const hands = await HandHistory.getAllHands(historyGameId);
-    const summaries = hands.map((hand) =>
-      HandHistory.getHandSummary(hand, player.id),
-    );
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ hands: summaries }));
-    return;
-  }
-
-  const historyHandMatch = url.match(/^\/api\/history\/([a-z0-9]+)\/(\d+)$/);
-  if (method === "GET" && historyHandMatch) {
-    const historyGameId = historyHandMatch[1];
-    const handNumber = parseInt(historyHandMatch[2], 10);
-    const player = getOrCreatePlayer(req, res);
-
-    const hand = await HandHistory.getHand(historyGameId, handNumber);
-    if (!hand) {
-      res.writeHead(404, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "Hand not found" }));
-      return;
-    }
-
-    const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
-    const view = HandHistory.getHandView(filteredHand, player.id);
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ hand: filteredHand, view }));
-    return;
-  }
-
+  // Static file fallback
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {
     respondWithFile(filePath, res);
