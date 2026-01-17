@@ -10,9 +10,9 @@ export const mockEmptySeat = {
 export const mockOccupiedSeat = {
   empty: false,
   player: { id: "test-player-123", name: null },
-  stack: 1000,
-  bet: 50,
-  totalBuyIn: 1000,
+  stack: 100000, // $1,000 in cents
+  bet: 5000, // $50 in cents
+  totalBuyIn: 100000, // $1,000 in cents
   handsPlayed: 0,
   folded: false,
   allIn: false,
@@ -56,7 +56,7 @@ export const mockSittingOutSeat = {
   ...mockOccupiedSeat,
   sittingOut: true,
   cards: [],
-  actions: [{ action: "sitIn", cost: 50 }],
+  actions: [{ action: "sitIn", cost: 5000 }], // $50 in cents
   isActing: false,
 };
 
@@ -75,7 +75,7 @@ export function createMockGameState(overrides = {}) {
   return {
     running: true,
     button: 0,
-    blinds: { ante: 5, small: 25, big: 50 },
+    blinds: { ante: 500, small: 2500, big: 5000 }, // $5/$25/$50 in cents
     board: { cards: [] },
     hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
     seats: [
@@ -93,15 +93,15 @@ export function createMockGameState(overrides = {}) {
 
 export function createMockGameWithPlayers() {
   return createMockGameState({
-    hand: { phase: "preflop", pot: 75, currentBet: 50, actingSeat: 0 },
+    hand: { phase: "preflop", pot: 7500, currentBet: 5000, actingSeat: 0 }, // $75/$50 in cents
     board: { cards: [] },
     seats: [
       {
         ...mockOccupiedSeat,
         actions: [
-          { action: "call", amount: 25 },
-          { action: "raise", min: 100, max: 1000 },
-          { action: "allIn", amount: 1000 },
+          { action: "call", amount: 2500 }, // $25 in cents
+          { action: "raise", min: 10000, max: 100000 }, // $100-$1,000 in cents
+          { action: "allIn", amount: 100000 }, // $1,000 in cents
           { action: "fold" },
         ],
       },
@@ -116,7 +116,7 @@ export function createMockGameWithPlayers() {
 
 export function createMockGameAtFlop() {
   return createMockGameState({
-    hand: { phase: "flop", pot: 200, currentBet: 0, actingSeat: 0 },
+    hand: { phase: "flop", pot: 20000, currentBet: 0, actingSeat: 0 }, // $200 in cents
     board: {
       cards: ["Ah", "Kd", "Qc"],
     },
@@ -126,8 +126,8 @@ export function createMockGameAtFlop() {
         bet: 0,
         actions: [
           { action: "check" },
-          { action: "bet", min: 50, max: 1000 },
-          { action: "allIn", amount: 1000 },
+          { action: "bet", min: 5000, max: 100000 }, // $50-$1,000 in cents
+          { action: "allIn", amount: 100000 }, // $1,000 in cents
         ],
       },
       { ...mockOpponentSeat, bet: 0 },
@@ -150,7 +150,7 @@ export function createMockGameWithBuyIn() {
         folded: false,
         allIn: false,
         cards: [],
-        actions: [{ action: "buyIn", min: 20, max: 100, bigBlind: 50 }],
+        actions: [{ action: "buyIn", min: 20, max: 100, bigBlind: 5000 }], // $50 big blind in cents
         isCurrentPlayer: true,
         isActing: false,
         lastAction: null,
@@ -199,15 +199,15 @@ export function createMockGameWithRankings() {
       {
         ...mockOccupiedSeat,
         player: { id: "test-player-123", name: "Alice" },
-        stack: 1200,
-        totalBuyIn: 1000,
+        stack: 120000, // $1,200 in cents
+        totalBuyIn: 100000, // $1,000 in cents
         handsPlayed: 50,
       },
       {
         ...mockOpponentSeat,
         player: { id: "opponent-456", name: null },
-        stack: 800,
-        totalBuyIn: 1000,
+        stack: 80000, // $800 in cents
+        totalBuyIn: 100000, // $1,000 in cents
         handsPlayed: 50,
       },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
@@ -220,9 +220,9 @@ export function createMockGameWithRankings() {
         seatIndex: 0,
         playerId: "test-player-123",
         playerName: "Alice",
-        stack: 1200,
-        totalBuyIn: 1000,
-        netWinnings: 200,
+        stack: 120000, // $1,200 in cents
+        totalBuyIn: 100000, // $1,000 in cents
+        netWinnings: 20000, // $200 in cents
         handsPlayed: 50,
         winRate: 8.0,
       },
@@ -230,9 +230,9 @@ export function createMockGameWithRankings() {
         seatIndex: 1,
         playerId: "opponent-456",
         playerName: null,
-        stack: 800,
-        totalBuyIn: 1000,
-        netWinnings: -200,
+        stack: 80000, // $800 in cents
+        totalBuyIn: 100000, // $1,000 in cents
+        netWinnings: -20000, // -$200 in cents
         handsPlayed: 50,
         winRate: -8.0,
       },
@@ -249,7 +249,7 @@ export const mockHandSummary = {
   hole_cards: ["Ah", "Kh"],
   winner_name: "Alice",
   winner_id: "player1",
-  pot: 200,
+  pot: 20000, // $200 in cents
   is_winner: true,
 };
 
@@ -259,7 +259,7 @@ export const mockHandSummaryLost = {
   hole_cards: ["7s", "2d"],
   winner_name: "Bob",
   winner_id: "player2",
-  pot: 150,
+  pot: 15000, // $150 in cents
   is_winner: false,
 };
 
@@ -405,15 +405,29 @@ export function createMockHandList() {
   return [
     mockHandSummary,
     mockHandSummaryLost,
-    { ...mockHandSummary, game_number: "test123-3", hand_number: 3, pot: 300 },
+    {
+      ...mockHandSummary,
+      game_number: "test123-3",
+      hand_number: 3,
+      pot: 30000,
+    }, // $300 in cents
   ];
 }
 
 /**
+ * Convert OHH dollars to cents for frontend display
+ * @param {number} dollars
+ * @returns {number}
+ */
+function toCents(dollars) {
+  return Math.round(dollars * 100);
+}
+
+/**
  * Creates a mock view object from an OHH hand (mirrors backend getHandView)
- * @param {object} hand - OHH hand data
+ * @param {object} hand - OHH hand data (in dollars)
  * @param {string} playerId - The requesting player's ID
- * @returns {object} View object for rendering
+ * @returns {object} View object for rendering (in cents)
  */
 export function createMockView(hand, playerId) {
   // Build a map of player cards from Dealt Cards actions
@@ -426,12 +440,12 @@ export function createMockView(hand, playerId) {
     }
   }
 
-  // Build win amounts map
+  // Build win amounts map (convert from OHH dollars to cents)
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
       const current = winAmounts.get(win.player_id) || 0;
-      winAmounts.set(win.player_id, current + win.win_amount);
+      winAmounts.set(win.player_id, current + toCents(win.win_amount));
     }
   }
 
@@ -457,7 +471,7 @@ export function createMockView(hand, playerId) {
     seats.push({
       empty: false,
       player: { id: player.id, name: displayName || `Seat ${i + 1}` },
-      stack: player.starting_stack,
+      stack: toCents(player.starting_stack), // Convert to cents
       cards: playerCards.get(player.id) || [],
       handResult: winAmount > 0 ? winAmount : null,
       handRank: isWinner ? winningHand : null,
@@ -483,13 +497,13 @@ export function createMockView(hand, playerId) {
     }
   }
 
-  // Calculate total pot
+  // Calculate total pot (convert from OHH dollars to cents)
   let totalPot = 0;
   for (const pot of hand.pots) {
-    totalPot += pot.amount || 0;
+    totalPot += toCents(pot.amount || 0);
   }
 
-  // Build winner message
+  // Build winner message (convert from OHH dollars to cents)
   let winnerMessage = null;
   if (mainPot?.player_wins?.length > 0) {
     const winnerId = mainPot.player_wins[0].player_id;
@@ -498,7 +512,7 @@ export function createMockView(hand, playerId) {
     winnerMessage = {
       playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
       handRank: winningHand,
-      amount: winAmount,
+      amount: toCents(winAmount),
     };
   }
 

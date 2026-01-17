@@ -71,8 +71,8 @@ describe("phg-action-panel", () => {
 
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
       expect(buyInButton).to.exist;
-      // default=80 BB, bigBlind=50, so initial display should be $4000
-      expect(buyInButton.textContent).to.include("$4000");
+      // default=80 BB, bigBlind=50, so initial display should be $4,000
+      expect(buyInButton.textContent).to.include("$4,000");
     });
 
     it("updates buyIn stack display when slider changes", async () => {
@@ -90,8 +90,8 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
-      // 50 BB * $50 = $2500
-      expect(buyInButton.textContent).to.include("$2500");
+      // 50 BB * $50 = $2,500
+      expect(buyInButton.textContent).to.include("$2,500");
     });
 
     it("uses fallback values for buyIn when action properties missing", async () => {
@@ -111,8 +111,8 @@ describe("phg-action-panel", () => {
       expect(slider.max).to.equal("100"); // fallback
 
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
-      // fallback: default=80 BB, bigBlind=50, so $4000
-      expect(buyInButton.textContent).to.include("$4000");
+      // fallback: default=80 BB, bigBlind=50, so $4,000
+      expect(buyInButton.textContent).to.include("$4,000");
     });
 
     it("renders Check button", async () => {
@@ -137,7 +137,7 @@ describe("phg-action-panel", () => {
       const callButton = actionPanel.shadowRoot.querySelector("button.call");
       expect(callButton).to.exist;
       expect(callButton.textContent).to.include("Call");
-      expect(callButton.textContent).to.include("25");
+      expect(callButton.textContent).to.include("$25"); // $25 from 2500 cents
     });
 
     it("renders Fold button", async () => {
@@ -187,7 +187,7 @@ describe("phg-action-panel", () => {
       await element.updateComplete;
 
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      actionPanel.betAmount = 1000; // Set to max
+      actionPanel.betAmount = 100000; // Set to max ($1,000 in cents)
       await actionPanel.updateComplete;
 
       const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
@@ -325,7 +325,7 @@ describe("phg-action-panel", () => {
       await element.updateComplete;
 
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      actionPanel.betAmount = 1000; // Set to max
+      actionPanel.betAmount = 100000; // Set to max ($1,000 in cents)
       await actionPanel.updateComplete;
 
       let sentMessage = null;
@@ -487,10 +487,10 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       // Set a high bet amount (e.g., simulating an all-in)
-      actionPanel.betAmount = 500;
+      actionPanel.betAmount = 50000; // $500 in cents
       await actionPanel.updateComplete;
 
-      expect(actionPanel.betAmount).to.equal(500);
+      expect(actionPanel.betAmount).to.equal(50000);
 
       // Switch to buyIn context (e.g., after losing the hand)
       element.game = createMockGameWithBuyIn();
@@ -509,19 +509,19 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      // Set buy-in amount
+      // Set buy-in amount (BB count, not cents)
       actionPanel.betAmount = 60;
       await actionPanel.updateComplete;
 
       expect(actionPanel.betAmount).to.equal(60);
 
-      // Switch to betting context (raise min=100, max=1000)
+      // Switch to betting context (raise min=10000, max=100000 cents)
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
       await actionPanel.updateComplete;
 
-      // betAmount is reset to 0, then set to min (100) by render logic
-      expect(actionPanel.betAmount).to.equal(100);
+      // betAmount is reset to 0, then set to min (10000 cents) by render logic
+      expect(actionPanel.betAmount).to.equal(10000);
     });
 
     it("uses default buyIn when betAmount exceeds max", async () => {
@@ -529,13 +529,13 @@ describe("phg-action-panel", () => {
       await element.updateComplete;
 
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      // Manually set betAmount above max (100)
+      // Manually set betAmount above max (100 BB)
       actionPanel.betAmount = 500;
       await actionPanel.updateComplete;
 
-      // The buy-in button should show default (80 BB * $50 = $4000)
+      // The buy-in button should show default (80 BB * $50 = $4,000)
       const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
-      expect(buyInButton.textContent).to.include("$4000");
+      expect(buyInButton.textContent).to.include("$4,000");
     });
 
     it("preserves betAmount when staying in same action context", async () => {
@@ -546,18 +546,23 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      actionPanel.betAmount = 300;
+      actionPanel.betAmount = 30000; // $300 in cents
       await actionPanel.updateComplete;
 
       // Update to different betting state (still has raise)
       element.game = createMockGameState({
-        hand: { phase: "preflop", pot: 150, currentBet: 100, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          pot: 15000,
+          currentBet: 10000,
+          actingSeat: 0,
+        }, // $150/$100 in cents
         seats: [
           {
             ...mockOccupiedSeat,
             actions: [
-              { action: "call", amount: 50 },
-              { action: "raise", min: 200, max: 1000 },
+              { action: "call", amount: 5000 }, // $50 in cents
+              { action: "raise", min: 20000, max: 100000 }, // $200-$1,000 in cents
               { action: "fold" },
             ],
           },
@@ -572,7 +577,7 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       // betAmount should be preserved since we're still in betting context
-      expect(actionPanel.betAmount).to.equal(300);
+      expect(actionPanel.betAmount).to.equal(30000);
     });
   });
 });

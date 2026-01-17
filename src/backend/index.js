@@ -8,6 +8,7 @@ import * as PokerActions from "./poker/actions.js";
 import * as Player from "./poker/player.js";
 import * as Betting from "./poker/betting.js";
 import * as Showdown from "./poker/showdown.js";
+import * as Stakes from "./poker/stakes.js";
 import HandRankings from "./poker/hand-rankings.js";
 import * as HandHistory from "./poker/hand-history.js";
 import {
@@ -25,6 +26,32 @@ import * as PlayerStore from "./player-store.js";
  */
 
 const server = http.createServer();
+
+/**
+ * Parses the request body as JSON
+ * @param {import('http').IncomingMessage} req
+ * @returns {Promise<unknown>}
+ */
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (err) {
+        reject(err);
+      }
+    });
+    req.on("error", reject);
+  });
+}
 
 /**
  * @param {string} rawCookies
@@ -83,22 +110,14 @@ function generateGameId() {
   return crypto.randomBytes(4).toString("hex");
 }
 
-server.on("request", (req, res) => {
+/**
+ * Main request handler
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
+ */
+async function handleRequest(req, res) {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
-  const startTime = Date.now();
-
-  res.on("finish", () => {
-    // Skip health check to reduce noise
-    if (url !== "/up") {
-      logger.info("http request", {
-        method,
-        path: url,
-        status: res.statusCode,
-        duration: Date.now() - startTime,
-      });
-    }
-  });
 
   // Health check for Kamal Proxy
   if (method === "GET" && url === "/up") {
@@ -115,11 +134,39 @@ server.on("request", (req, res) => {
 
   if (method === "POST" && url === "/games") {
     getOrCreatePlayer(req, res);
+
+    const data = await parseBody(req);
+    let blinds = {
+      ante: 0,
+      small: Stakes.DEFAULT.small,
+      big: Stakes.DEFAULT.big,
+    };
+
+    if (
+      data &&
+      typeof data === "object" &&
+      "small" in data &&
+      "big" in data &&
+      Stakes.isValidPreset({
+        small: /** @type {number} */ (data.small),
+        big: /** @type {number} */ (data.big),
+      })
+    ) {
+      blinds = {
+        ante: 0,
+        small: /** @type {number} */ (data.small),
+        big: /** @type {number} */ (data.big),
+      };
+    }
+
     const gameId = generateGameId();
-    const game = PokerGame.create();
+    const game = PokerGame.create({ blinds });
     games.set(gameId, game);
 
-    logger.info("game created", { gameId });
+    logger.info("game created", {
+      gameId,
+      blinds: `${blinds.small}/${blinds.big}`,
+    });
 
     res.writeHead(200, { "content-type": "application/json" });
     res.end(JSON.stringify({ id: gameId }));
@@ -146,19 +193,12 @@ server.on("request", (req, res) => {
     const historyGameId = historyListMatch[1];
     const player = getOrCreatePlayer(req, res);
 
-    HandHistory.getAllHands(historyGameId)
-      .then((hands) => {
-        const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, player.id),
-        );
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries }));
-      })
-      .catch((err) => {
-        logger.error("api error", { path: url, error: err.message });
-        res.writeHead(500, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
-      });
+    const hands = await HandHistory.getAllHands(historyGameId);
+    const summaries = hands.map((hand) =>
+      HandHistory.getHandSummary(hand, player.id),
+    );
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ hands: summaries }));
     return;
   }
 
@@ -168,24 +208,17 @@ server.on("request", (req, res) => {
     const handNumber = parseInt(historyHandMatch[2], 10);
     const player = getOrCreatePlayer(req, res);
 
-    HandHistory.getHand(historyGameId, handNumber)
-      .then((hand) => {
-        if (!hand) {
-          res.writeHead(404, { "content-type": "application/json" });
-          res.end(JSON.stringify({ error: "Hand not found" }));
-          return;
-        }
+    const hand = await HandHistory.getHand(historyGameId, handNumber);
+    if (!hand) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "Hand not found" }));
+      return;
+    }
 
-        const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
-        const view = HandHistory.getHandView(filteredHand, player.id);
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hand: filteredHand, view }));
-      })
-      .catch((err) => {
-        logger.error("api error", { path: url, error: err.message });
-        res.writeHead(500, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
-      });
+    const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
+    const view = HandHistory.getHandView(filteredHand, player.id);
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ hand: filteredHand, view }));
     return;
   }
 
@@ -197,6 +230,36 @@ server.on("request", (req, res) => {
 
   res.writeHead(404);
   res.end();
+}
+
+server.on("request", (req, res) => {
+  const url = req.url ?? "";
+  const method = req.method ?? "GET";
+  const startTime = Date.now();
+
+  res.on("finish", () => {
+    // Skip health check to reduce noise
+    if (url !== "/up") {
+      logger.info("http request", {
+        method,
+        path: url,
+        status: res.statusCode,
+        duration: Date.now() - startTime,
+      });
+    }
+  });
+
+  handleRequest(req, res).catch((err) => {
+    logger.error("request error", {
+      method,
+      path: url,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    if (!res.headersSent) {
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "Internal server error" }));
+    }
+  });
 });
 
 server.on("upgrade", function upgrade(request, socket, head) {

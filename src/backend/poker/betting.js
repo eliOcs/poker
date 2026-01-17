@@ -2,6 +2,7 @@ import * as Seat from "./seat.js";
 import { nextIndex, findIndex } from "./circular-array.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./game.js').Phase} Phase
  */
@@ -103,7 +104,7 @@ export function getNextToAct(game) {
 /**
  * Gets the minimum bet amount
  * @param {Game} game
- * @returns {number}
+ * @returns {Cents}
  */
 export function getMinBet(game) {
   return game.blinds.big;
@@ -112,7 +113,7 @@ export function getMinBet(game) {
 /**
  * Gets the minimum raise amount (total bet, not raise increment)
  * @param {Game} game
- * @returns {number}
+ * @returns {Cents}
  */
 export function getMinRaise(game) {
   const raiseSize = Math.max(game.hand.lastRaiseSize, game.blinds.big);
@@ -123,7 +124,7 @@ export function getMinRaise(game) {
  * Gets the amount needed to call for a specific seat
  * @param {Game} game
  * @param {number} seatIndex
- * @returns {number}
+ * @returns {Cents}
  */
 export function getCallAmount(game, seatIndex) {
   const seat = game.seats[seatIndex];

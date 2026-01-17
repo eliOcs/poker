@@ -56,7 +56,7 @@ describe("phg-seat", () => {
         expect(playerName.textContent).to.include("Seat 1");
 
         const stack = seat.shadowRoot.querySelector(".stack");
-        expect(stack.textContent).to.include("1000");
+        expect(stack.textContent).to.include("$1,000");
         break;
       }
     }
@@ -88,7 +88,7 @@ describe("phg-seat", () => {
 
     const betIndicators = element.shadowRoot.querySelectorAll(".bet-indicator");
     expect(betIndicators.length).to.be.greaterThan(0);
-    expect(betIndicators[0].textContent).to.include("50");
+    expect(betIndicators[0].textContent).to.include("$50"); // $50 from 5000 cents
   });
 
   it("shows dealer button at correct position", async () => {
@@ -312,7 +312,7 @@ describe("phg-seat", () => {
   it("displays handResult when player won", async () => {
     element.game = createMockGameState({
       seats: [
-        { ...mockOccupiedSeat, handResult: 150 },
+        { ...mockOccupiedSeat, handResult: 15000 }, // $150 in cents
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
@@ -333,7 +333,7 @@ describe("phg-seat", () => {
   it("displays handResult when player lost", async () => {
     element.game = createMockGameState({
       seats: [
-        { ...mockOccupiedSeat, handResult: -100 },
+        { ...mockOccupiedSeat, handResult: -10000 }, // -$100 in cents
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
@@ -354,7 +354,7 @@ describe("phg-seat", () => {
   it("displays handResult instead of lastAction when set", async () => {
     element.game = createMockGameState({
       seats: [
-        { ...mockOccupiedSeat, lastAction: "bet", handResult: 50 },
+        { ...mockOccupiedSeat, lastAction: "bet", handResult: 5000 }, // $50 in cents
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
@@ -375,7 +375,7 @@ describe("phg-seat", () => {
   it("displays handResult instead of FOLDED status when set", async () => {
     element.game = createMockGameState({
       seats: [
-        { ...mockFoldedSeat, handResult: -50 },
+        { ...mockFoldedSeat, handResult: -5000 }, // -$50 in cents
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },

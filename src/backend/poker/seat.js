@@ -1,4 +1,5 @@
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./deck.js').Card} Card
  */
 
@@ -17,10 +18,10 @@
  * @typedef {object} OccupiedSeat
  * @property {false} empty
  * @property {Player} player - Player object with id
- * @property {number} stack - Chips behind (not in pot)
- * @property {number} bet - Current bet in this betting round
- * @property {number} totalInvested - Total chips put in pot this hand (for side pots)
- * @property {number} totalBuyIn - Cumulative buy-ins for this session (for ranking)
+ * @property {Cents} stack - Chips behind (not in pot)
+ * @property {Cents} bet - Current bet in this betting round
+ * @property {Cents} totalInvested - Total chips put in pot this hand (for side pots)
+ * @property {Cents} totalBuyIn - Cumulative buy-ins for this session (for ranking)
  * @property {number} handsPlayed - Number of hands played this session (for ranking)
  * @property {Card[]} cards - Hole cards
  * @property {boolean} folded - Has folded this hand
@@ -29,7 +30,7 @@
  * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
  * @property {boolean} disconnected - Whether player's WebSocket is disconnected
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
- * @property {number|null} handResult - Result of the hand (positive for win, negative for loss)
+ * @property {Cents|null} handResult - Result of the hand (positive for win, negative for loss)
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  */
 
@@ -48,7 +49,7 @@ export function empty() {
 /**
  * Creates an occupied seat with a player
  * @param {Player} player - Player object with id
- * @param {number} [stack] - Initial chip stack
+ * @param {Cents} [stack] - Initial chip stack
  * @returns {OccupiedSeat}
  */
 export function occupied(player, stack = 0) {

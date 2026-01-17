@@ -4,6 +4,7 @@ import * as Betting from "./betting.js";
 import { isClockCallable } from "./game-tick.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./seat.js').Player} Player
  * @typedef {import('./seat.js').Seat} SeatType
@@ -97,7 +98,7 @@ export function check(game, { seat }) {
 /**
  * Player places a bet
  * @param {Game} game
- * @param {{ seat: number, amount: number }} options
+ * @param {{ seat: number, amount: Cents }} options
  */
 export function bet(game, { seat, amount }) {
   const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
@@ -165,7 +166,7 @@ export function call(game, { seat }) {
 /**
  * Player raises the bet
  * @param {Game} game
- * @param {{ seat: number, amount: number }} options
+ * @param {{ seat: number, amount: Cents }} options
  */
 export function raise(game, { seat, amount }) {
   const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);

@@ -3,6 +3,7 @@ import * as Pots from "./pots.js";
 import * as Seat from "./seat.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').Seat} SeatType
@@ -29,7 +30,7 @@ import * as Seat from "./seat.js";
 
 /**
  * @typedef {object} PotResult
- * @property {number} potAmount - Amount in this pot
+ * @property {Cents} potAmount - Amount in this pot
  * @property {number[]} winners - Seat indices of winners
  * @property {EvaluatedHand|null} winningHand - The winning hand (for display)
  * @property {Card[]|null} winningCards - The 5 cards that form the winning hand
@@ -39,7 +40,7 @@ import * as Seat from "./seat.js";
 /**
  * @typedef {object} LastPlayerResult
  * @property {number} winner - Seat index of winner
- * @property {number} amount - Amount won
+ * @property {Cents} amount - Amount won
  */
 
 /**

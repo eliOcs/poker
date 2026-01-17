@@ -6,6 +6,7 @@ import * as Ranking from "./ranking.js";
 import { HIDDEN, getRank } from "./deck.js";
 
 /**
+ * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./game.js').Blinds} Blinds
  * @typedef {import('./game.js').Board} Board
@@ -30,7 +31,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {'buyIn'} action
  * @property {number} min
  * @property {number} max
- * @property {number} bigBlind
+ * @property {Cents} bigBlind
  */
 
 /**
@@ -41,27 +42,27 @@ import { HIDDEN, getRank } from "./deck.js";
 /**
  * @typedef {object} ActionCall
  * @property {'call'} action
- * @property {number} amount
+ * @property {Cents} amount
  */
 
 /**
  * @typedef {object} ActionBet
  * @property {'bet'} action
- * @property {number} min
- * @property {number} max
+ * @property {Cents} min
+ * @property {Cents} max
  */
 
 /**
  * @typedef {object} ActionRaise
  * @property {'raise'} action
- * @property {number} min
- * @property {number} max
+ * @property {Cents} min
+ * @property {Cents} max
  */
 
 /**
  * @typedef {object} ActionAllIn
  * @property {'allIn'} action
- * @property {number} amount
+ * @property {Cents} amount
  */
 
 /**
@@ -82,7 +83,7 @@ import { HIDDEN, getRank } from "./deck.js";
 /**
  * @typedef {object} ActionSitIn
  * @property {'sitIn'} action
- * @property {number} cost - Big blind cost to sit back in (0 if no missed blinds)
+ * @property {Cents} cost - Big blind cost to sit back in (0 if no missed blinds)
  */
 
 /**
@@ -109,8 +110,8 @@ import { HIDDEN, getRank } from "./deck.js";
  * @typedef {object} ViewSeatOccupied
  * @property {false} empty
  * @property {Player} player
- * @property {number} stack
- * @property {number} bet
+ * @property {Cents} stack
+ * @property {Cents} bet
  * @property {boolean} folded
  * @property {boolean} allIn
  * @property {boolean} sittingOut
@@ -120,7 +121,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {boolean} isCurrentPlayer
  * @property {boolean} isActing
  * @property {string|null} lastAction
- * @property {number|null} handResult
+ * @property {Cents|null} handResult
  * @property {string|null} handRank
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  */
@@ -132,8 +133,8 @@ import { HIDDEN, getRank } from "./deck.js";
 /**
  * @typedef {object} ViewHand
  * @property {string} phase
- * @property {number} pot
- * @property {number} currentBet
+ * @property {Cents} pot
+ * @property {Cents} currentBet
  * @property {number} actingSeat
  * @property {number} actingTicks - Ticks the current player has been acting
  * @property {number} clockTicks - Ticks since clock was called (0 if not called)
@@ -143,7 +144,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @typedef {object} WinnerMessage
  * @property {string} playerName - Winner's player name/ID
  * @property {string|null} handRank - Winning hand description (null if won by fold)
- * @property {number} amount - Amount won
+ * @property {Cents} amount - Amount won
  */
 
 /**
