@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "assert";
-import * as Player from "../../src/backend/poker/player.js";
+import * as Player from "../../../src/backend/poker/player.js";
 
 describe("player", function () {
   describe("create", function () {

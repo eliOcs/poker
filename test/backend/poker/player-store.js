@@ -3,7 +3,7 @@ import assert from "assert";
 import { rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import crypto from "crypto";
-import * as PlayerStore from "../../src/backend/player-store.js";
+import * as PlayerStore from "../../../src/backend/player-store.js";
 
 // Use unique directory per test to avoid parallel test conflicts
 let testDataDir;

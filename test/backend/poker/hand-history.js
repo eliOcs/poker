@@ -2,10 +2,10 @@ import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
 import { rm, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import * as HandHistory from "../../src/backend/poker/hand-history.js";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Player from "../../src/backend/poker/player.js";
-import * as Seat from "../../src/backend/poker/seat.js";
+import * as HandHistory from "../../../src/backend/poker/hand-history.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Player from "../../../src/backend/poker/player.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
 
 // Test data directory
 const TEST_DATA_DIR = "test-data";

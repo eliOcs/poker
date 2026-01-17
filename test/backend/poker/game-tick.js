@@ -1,8 +1,8 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../src/backend/poker/game.js";
-import * as Seat from "../../src/backend/poker/seat.js";
-import * as Betting from "../../src/backend/poker/betting.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
+import * as Betting from "../../../src/backend/poker/betting.js";
 import {
   tick,
   shouldTickBeRunning,
@@ -12,10 +12,10 @@ import {
   DISCONNECT_TICKS,
   CLOCK_WAIT_TICKS,
   CLOCK_DURATION_TICKS,
-} from "../../src/backend/poker/game-tick.js";
+} from "../../../src/backend/poker/game-tick.js";
 
 describe("game-tick", () => {
-  /** @type {import('../../src/backend/poker/game.js').Game} */
+  /** @type {import('../../../src/backend/poker/game.js').Game} */
   let game;
 
   beforeEach(() => {
