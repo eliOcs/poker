@@ -527,7 +527,7 @@ class History extends LitElement {
   }
 
   getPlayerName(playerId) {
-    const player = this.hand?.players?.find((p) => p.id === playerId);
+    const player = this.hand?.players.find((p) => p.id === playerId);
     return player?.name || `Seat ${player?.seat || "?"}`;
   }
 
@@ -670,13 +670,13 @@ class History extends LitElement {
   }
 
   renderShowdownResult() {
-    const mainPot = this.hand?.pots?.[0];
+    const mainPot = this.hand?.pots[0];
     if (!mainPot) return "";
 
     const winningHand = mainPot.winning_hand;
     const winningCards = mainPot.winning_cards;
-    const winnerIds = mainPot.player_wins?.map((w) => w.player_id) || [];
-    const winAmount = mainPot.player_wins?.[0]?.win_amount || mainPot.amount;
+    const winnerIds = mainPot.player_wins.map((w) => w.player_id);
+    const winAmount = mainPot.player_wins[0]?.win_amount || mainPot.amount;
 
     return html`
       ${winningHand
