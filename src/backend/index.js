@@ -6,17 +6,9 @@ import playerView from "./poker/player-view.js";
 import * as PokerGame from "./poker/game.js";
 import * as PokerActions from "./poker/actions.js";
 import * as Player from "./poker/player.js";
-import * as Betting from "./poker/betting.js";
-import * as Showdown from "./poker/showdown.js";
 import * as Stakes from "./poker/stakes.js";
-import HandRankings from "./poker/hand-rankings.js";
 import * as HandHistory from "./poker/hand-history.js";
-import {
-  tick,
-  shouldTickBeRunning,
-  resetActingTicks,
-  startClockTicks,
-} from "./poker/game-tick.js";
+import { resetActingTicks, startClockTicks } from "./poker/game-tick.js";
 import * as logger from "./logger.js";
 import * as PlayerStore from "./player-store.js";
 
@@ -334,11 +326,6 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const wss = new WebSocketServer({ noServer: true });
 
-/** @param {Generator} gen */
-function runAll(gen) {
-  while (!gen.next().done);
-}
-
 /** @type {Map<import('ws').WebSocket, { player: PlayerType, gameId: string }>} */
 const clientConnections = new Map();
 
@@ -354,313 +341,6 @@ function broadcastGameState(gameId) {
   }
 }
 
-/**
- * Advances to next phase, loops through streets when everyone is all-in
- * @param {Game} game
- * @param {string} gameId
- */
-function processGameFlow(game, gameId) {
-  // Loop to handle all-in situations where we need to run out the board
-  while (true) {
-    const phase = game.hand.phase;
-
-    // Only process if we're in a betting phase
-    if (!["preflop", "flop", "turn", "river"].includes(phase)) {
-      return;
-    }
-
-    // Check if only one player remains (everyone else folded)
-    if (Betting.countActivePlayers(game) <= 1) {
-      const result = Showdown.awardToLastPlayer(game);
-      if (result.winner !== -1) {
-        const winnerSeat =
-          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-            game.seats[result.winner]
-          );
-        game.winnerMessage = {
-          playerName: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
-          handRank: null, // No showdown, won by fold
-          amount: result.amount,
-        };
-        // Finalize hand history (won by fold)
-        HandHistory.finalizeHand(gameId, game, [
-          {
-            potAmount: result.amount,
-            winners: [result.winner],
-            winningHand: null,
-            winningCards: null,
-            awards: [{ seat: result.winner, amount: result.amount }],
-          },
-        ]);
-
-        logger.info("hand ended", {
-          gameId,
-          handNumber: HandHistory.getHandNumber(gameId),
-          winner: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
-          wonBy: "fold",
-          amount: result.amount,
-        });
-      }
-      PokerActions.endHand(game);
-      autoStartNextHand(game, gameId);
-      return;
-    }
-
-    // Check if betting round is complete
-    if (game.hand.actingSeat !== -1) {
-      // Someone still needs to act
-      return;
-    }
-
-    Betting.collectBets(game);
-
-    if (phase === "preflop") {
-      runAll(PokerActions.dealFlop(game));
-      HandHistory.recordStreet(gameId, "flop", game.board.cards);
-      Betting.startBettingRound(game, "flop");
-    } else if (phase === "flop") {
-      runAll(PokerActions.dealTurn(game));
-      HandHistory.recordStreet(gameId, "turn", [game.board.cards[3]]);
-      Betting.startBettingRound(game, "turn");
-    } else if (phase === "turn") {
-      runAll(PokerActions.dealRiver(game));
-      HandHistory.recordStreet(gameId, "river", [game.board.cards[4]]);
-      Betting.startBettingRound(game, "river");
-    } else if (phase === "river") {
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
-      // result.value contains PotResult[] when done
-      const potResults = result.value || [];
-
-      // Record showdown actions to history
-      for (const seat of game.seats) {
-        if (
-          !seat.empty &&
-          !seat.folded &&
-          !seat.sittingOut &&
-          seat.cards.length > 0
-        ) {
-          // Players who made it to showdown show their cards
-          HandHistory.recordShowdown(gameId, seat.player.id, seat.cards, true);
-        }
-      }
-
-      // Use the first pot result (main pot) for winner message
-      if (potResults.length > 0 && potResults[0].winners.length > 0) {
-        const mainPot = potResults[0];
-        const winnerSeatIndex = mainPot.winners[0];
-        const winnerSeat =
-          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-            game.seats[winnerSeatIndex]
-          );
-        game.winnerMessage = {
-          playerName: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
-          handRank: mainPot.winningHand
-            ? HandRankings.formatHand(mainPot.winningHand)
-            : null,
-          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
-        };
-      }
-
-      // Finalize hand history with pot results
-      HandHistory.finalizeHand(gameId, game, potResults);
-
-      // Log hand ended with showdown results
-      if (potResults.length > 0 && potResults[0].winners.length > 0) {
-        const mainPot = potResults[0];
-        const winnerSeatIndex = mainPot.winners[0];
-        const winnerSeat =
-          /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-            game.seats[winnerSeatIndex]
-          );
-        logger.info("hand ended", {
-          gameId,
-          handNumber: HandHistory.getHandNumber(gameId),
-          winner: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
-          wonBy: mainPot.winningHand
-            ? HandRankings.formatHand(mainPot.winningHand)
-            : "showdown",
-          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
-        });
-      }
-
-      PokerActions.endHand(game);
-      autoStartNextHand(game, gameId);
-      return;
-    }
-
-    // If actingSeat is still -1 after starting new round (everyone all-in),
-    // continue looping to deal next street
-  }
-}
-
-/**
- * @param {Game} game
- * @param {string} gameId
- */
-function autoStartNextHand(game, gameId) {
-  sitOutDisconnectedPlayers(game);
-
-  if (PokerActions.countPlayersWithChips(game) >= 2) {
-    game.countdown = 3; // Shorter countdown between hands
-    startGameTick(game, gameId);
-  }
-}
-
-// Timer interval in ms (can be reduced via TIMER_SPEED env var for faster e2e tests)
-const TIMER_INTERVAL = process.env.TIMER_SPEED
-  ? Math.floor(1000 / parseInt(process.env.TIMER_SPEED, 10))
-  : 1000;
-
-/**
- * @param {Game} game
- * @param {PlayerType} player
- * @returns {number} Seat index or -1 if not found
- */
-function findPlayerSeatIndex(game, player) {
-  return game.seats.findIndex(
-    (seat) => !seat.empty && seat.player?.id === player.id,
-  );
-}
-
-/**
- * @param {Game} game
- * @param {string} gameId
- * @param {number} seatIndex
- */
-function performAutoAction(game, gameId, seatIndex) {
-  const seat = game.seats[seatIndex];
-  if (seat.empty) return;
-
-  // Auto check/fold: check if possible, otherwise fold
-  if (seat.bet === game.hand.currentBet) {
-    PokerActions.check(game, { seat: seatIndex });
-    HandHistory.recordAction(gameId, seat.player.id, "check");
-  } else {
-    PokerActions.fold(game, { seat: seatIndex });
-    HandHistory.recordAction(gameId, seat.player.id, "fold");
-  }
-
-  // Reset tick counters since action was taken
-  resetActingTicks(game);
-
-  // Process game flow after the auto-action
-  processGameFlow(game, gameId);
-}
-
-/**
- * @param {Game} game
- * @param {string} gameId
- */
-function startHand(game, gameId) {
-  // Check if we still have enough players (someone might have sat out)
-  if (PokerActions.countPlayersWithChips(game) < 2) {
-    return;
-  }
-
-  game.winnerMessage = null;
-  PokerActions.startHand(game);
-  HandHistory.startHand(gameId, game);
-
-  const playerCount = game.seats.filter(
-    (s) => !s.empty && !s.sittingOut,
-  ).length;
-  logger.info("hand started", {
-    gameId,
-    handNumber: HandHistory.getHandNumber(gameId),
-    playerCount,
-  });
-
-  const sbSeat = Betting.getSmallBlindSeat(game);
-  const bbSeat = Betting.getBigBlindSeat(game);
-  runAll(PokerActions.blinds(game));
-
-  const sbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-    game.seats[sbSeat]
-  );
-  const bbPlayer = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-    game.seats[bbSeat]
-  );
-  HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
-  HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
-
-  runAll(PokerActions.dealPreflop(game));
-
-  for (const seat of game.seats) {
-    if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
-      HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
-    }
-  }
-
-  Betting.startBettingRound(game, "preflop");
-  game.hand.currentBet = game.blinds.big; // Blinds already posted
-  resetActingTicks(game);
-}
-
-/** @param {Game} game */
-function sitOutDisconnectedPlayers(game) {
-  for (const seat of game.seats) {
-    if (!seat.empty && seat.disconnected && !seat.sittingOut) {
-      seat.sittingOut = true;
-    }
-  }
-}
-
-/** @param {Game} game */
-function stopGameTick(game) {
-  if (game.tickTimer) {
-    clearInterval(game.tickTimer);
-    game.tickTimer = null;
-  }
-}
-
-/**
- * @param {Game} game
- * @param {string} gameId
- */
-function startGameTick(game, gameId) {
-  if (game.tickTimer) {
-    return; // Already running
-  }
-
-  game.tickTimer = setInterval(() => {
-    const result = tick(game);
-
-    // Handle startHand event
-    if (result.startHand) {
-      startHand(game, gameId);
-    }
-
-    // Handle auto-action (disconnect or clock expiry)
-    if (result.autoActionSeat !== null) {
-      performAutoAction(game, gameId, result.autoActionSeat);
-    }
-
-    // Stop tick if no longer needed
-    if (result.shouldStopTick) {
-      stopGameTick(game);
-    }
-
-    // Broadcast state to all clients
-    if (result.shouldBroadcast) {
-      broadcastGameState(gameId);
-    }
-  }, TIMER_INTERVAL);
-}
-
-/**
- * @param {Game} game
- * @param {string} gameId
- */
-function ensureGameTick(game, gameId) {
-  if (shouldTickBeRunning(game) && !game.tickTimer) {
-    startGameTick(game, gameId);
-  }
-}
-
 wss.on(
   "connection",
   async function connection(ws, request, player, game, gameId) {
@@ -668,7 +348,7 @@ wss.on(
     logger.info("ws connected", { gameId, playerId: player.id });
 
     // Mark player as connected if they have a seat
-    const seatIndex = findPlayerSeatIndex(game, player);
+    const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
     if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
       const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
         game.seats[seatIndex]
@@ -699,7 +379,7 @@ wss.on(
       const closedGame = games.get(closedGameId);
       if (!closedGame) return;
 
-      const closedSeatIndex = findPlayerSeatIndex(closedGame, closedPlayer);
+      const closedSeatIndex = PokerGame.findPlayerSeatIndex(closedGame, closedPlayer);
       if (closedSeatIndex === -1 || closedGame.seats[closedSeatIndex].empty)
         return;
 
@@ -708,7 +388,7 @@ wss.on(
       );
 
       closedSeat.disconnected = true;
-      ensureGameTick(closedGame, closedGameId);
+      PokerGame.ensureGameTick(closedGame, closedGameId, broadcastGameState);
       broadcastGameState(closedGameId);
     });
 
@@ -729,7 +409,7 @@ wss.on(
       }
 
       // Capture seat state before action for history recording
-      const seatIndex = findPlayerSeatIndex(game, player);
+      const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
       const seatBefore =
         seatIndex !== -1 && !game.seats[seatIndex].empty
           ? /** @type {import('./poker/seat.js').OccupiedSeat} */ (
@@ -810,7 +490,7 @@ wss.on(
 
         // If start action was called, begin game tick
         if (action === "start" && game.countdown !== null) {
-          startGameTick(game, gameId);
+          PokerGame.startGameTick(game, gameId, broadcastGameState);
         }
 
         // Cancel countdown if sitOut or leave reduces active players below 2
@@ -820,7 +500,7 @@ wss.on(
         ) {
           if (PokerActions.countPlayersWithChips(game) < 2) {
             game.countdown = null;
-            stopGameTick(game);
+            PokerGame.stopGameTick(game);
           }
         }
 
@@ -828,7 +508,7 @@ wss.on(
         if (bettingActions.includes(action)) {
           // Reset tick counters since player took action
           resetActingTicks(game);
-          processGameFlow(game, gameId);
+          PokerGame.processGameFlow(game, gameId, broadcastGameState);
         }
 
         // Start clock countdown when callClock action is called
@@ -859,7 +539,7 @@ wss.on(
       broadcastGameState(gameId);
 
       // Ensure tick is running if needed (e.g., someone is acting)
-      ensureGameTick(game, gameId);
+      PokerGame.ensureGameTick(game, gameId, broadcastGameState);
     });
 
     // Send initial game state
