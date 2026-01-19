@@ -7,36 +7,15 @@
 
 import * as http from "node:http";
 import * as fs from "node:fs";
-import * as path from "node:path";
-import { respondWithFile } from "../../src/backend/static-files.js";
+import {
+  respondWithFile,
+  buildNodeModulesMap,
+} from "../../src/backend/static-files.js";
 
 const PORT = process.env.UI_CATALOG_PORT || 8445;
 
-// Collect all .js files from a directory recursively
-function collectJsFiles(dir, baseUrl) {
-  const files = {};
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const filePath = path.join(dir, entry.name);
-    const urlPath = baseUrl + "/" + entry.name;
-    if (entry.isDirectory()) {
-      Object.assign(files, collectJsFiles(filePath, urlPath));
-    } else if (entry.name.endsWith(".js")) {
-      files[urlPath] = filePath;
-    }
-  }
-  return files;
-}
-
-// Build the node_modules file map (same as static-files.js)
-const nodeModulesFiles = {
-  ...collectJsFiles("node_modules/lit", "/node_modules/lit"),
-  ...collectJsFiles("node_modules/lit-html", "/node_modules/lit-html"),
-  ...collectJsFiles("node_modules/lit-element", "/node_modules/lit-element"),
-  ...collectJsFiles(
-    "node_modules/@lit/reactive-element",
-    "/node_modules/@lit/reactive-element",
-  ),
-};
+// Build the node_modules file map (reusing logic from static-files.js)
+const nodeModulesFiles = buildNodeModulesMap();
 
 // Route mapping
 const routes = {
@@ -65,8 +44,11 @@ function handleRequest(req, res) {
     return;
   }
 
-  // Serve frontend source files
-  if (pathname.startsWith("/src/frontend/")) {
+  // Serve frontend and shared source files
+  if (
+    pathname.startsWith("/src/frontend/") ||
+    pathname.startsWith("/src/shared/")
+  ) {
     const filePath = pathname.slice(1); // Remove leading /
     if (fs.existsSync(filePath)) {
       console.log(`[200] ${pathname} -> ${filePath}`);

@@ -9,7 +9,7 @@ import mime from "mime-types";
  * @param {string} baseUrl
  * @returns {Record<string, string>}
  */
-function collectJsFiles(dir, baseUrl) {
+export function collectJsFiles(dir, baseUrl) {
   /** @type {Record<string, string>} */
   const files = {};
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -35,15 +35,26 @@ for (const file of fs.readdirSync("src/frontend")) {
   }
 }
 
-const nodeModulesFiles = {
-  ...collectJsFiles("node_modules/lit", "/node_modules/lit"),
-  ...collectJsFiles("node_modules/lit-html", "/node_modules/lit-html"),
-  ...collectJsFiles("node_modules/lit-element", "/node_modules/lit-element"),
-  ...collectJsFiles(
-    "node_modules/@lit/reactive-element",
-    "/node_modules/@lit/reactive-element",
-  ),
-};
+// Add shared files (accessible from frontend)
+const sharedFiles = collectJsFiles("src/shared", "/src/shared");
+
+/**
+ * Builds a map of node_modules files for Lit packages
+ * @returns {Record<string, string>}
+ */
+export function buildNodeModulesMap() {
+  return {
+    ...collectJsFiles("node_modules/lit", "/node_modules/lit"),
+    ...collectJsFiles("node_modules/lit-html", "/node_modules/lit-html"),
+    ...collectJsFiles("node_modules/lit-element", "/node_modules/lit-element"),
+    ...collectJsFiles(
+      "node_modules/@lit/reactive-element",
+      "/node_modules/@lit/reactive-element",
+    ),
+  };
+}
+
+const nodeModulesFiles = buildNodeModulesMap();
 
 /**
  * Gets the file path for a URL, or undefined if not found
@@ -51,7 +62,7 @@ const nodeModulesFiles = {
  * @returns {string | undefined}
  */
 export function getFilePath(url) {
-  return staticFiles[url] ?? nodeModulesFiles[url];
+  return staticFiles[url] ?? sharedFiles[url] ?? nodeModulesFiles[url];
 }
 
 /**

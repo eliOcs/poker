@@ -1,14 +1,14 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../../src/backend/poker/game.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Showdown from "../../../src/backend/poker/showdown.js";
+import { createTestGame, drainGenerator } from "./test-helpers.js";
 
 describe("showdown", () => {
   let game;
 
   beforeEach(() => {
-    game = Game.create({ seats: 6, blinds: { ante: 0, small: 25, big: 50 } });
+    game = createTestGame();
   });
 
   describe("evaluateHand", () => {
@@ -356,11 +356,7 @@ describe("showdown", () => {
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
       // Run the showdown generator to completion
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
+      drainGenerator(Showdown.showdown(game));
 
       // Winner (seat 0) gains opponent's bet
       assert.equal(game.seats[0].handResult, 100);
@@ -386,11 +382,7 @@ describe("showdown", () => {
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
+      drainGenerator(Showdown.showdown(game));
 
       assert.equal(game.seats[0].lastAction, null);
       assert.equal(game.seats[2].lastAction, null);
@@ -412,11 +404,7 @@ describe("showdown", () => {
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
+      drainGenerator(Showdown.showdown(game));
 
       // Winner (seat 0) should have winningCards set
       assert.ok(game.seats[0].winningCards);
@@ -442,11 +430,7 @@ describe("showdown", () => {
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
       game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
 
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
+      drainGenerator(Showdown.showdown(game));
 
       // Loser (seat 2) should NOT have winningCards set
       assert.equal(game.seats[2].winningCards, null);
