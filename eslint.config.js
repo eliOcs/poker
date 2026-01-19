@@ -19,6 +19,7 @@ export default [
       },
     },
     rules: {
+      complexity: ["error", 10],
       "max-lines": [
         "error",
         { max: 1000, skipBlankLines: true, skipComments: true },
