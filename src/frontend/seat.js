@@ -169,25 +169,25 @@ class Seat extends LitElement {
     return null;
   }
 
+  static _seatClassStates = [
+    ["empty", (s) => !s || s.empty],
+    ["acting", (s) => s?.isActing],
+    ["folded", (s) => s?.folded],
+    ["all-in", (s) => s?.allIn],
+    ["sitting-out", (s) => s?.sittingOut],
+    ["disconnected", (s) => s?.disconnected],
+    ["current-player", (s) => s?.isCurrentPlayer],
+    ["winner", (s) => s?.handResult > 0],
+  ];
+
   updated(changedProperties) {
-    // Update host classes based on seat state
-    if (changedProperties.has("seat")) {
-      const isEmpty = !this.seat || this.seat.empty;
-      this.classList.toggle("empty", isEmpty);
-      // Only apply game state classes to occupied seats
-      this.classList.toggle("acting", !isEmpty && this.seat?.isActing);
-      this.classList.toggle("folded", !isEmpty && this.seat?.folded);
-      this.classList.toggle("all-in", !isEmpty && this.seat?.allIn);
-      this.classList.toggle("sitting-out", !isEmpty && this.seat?.sittingOut);
+    if (!changedProperties.has("seat")) return;
+    const isEmpty = !this.seat || this.seat.empty;
+    for (const [cls, condition] of Seat._seatClassStates) {
       this.classList.toggle(
-        "disconnected",
-        !isEmpty && this.seat?.disconnected,
+        cls,
+        cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
-      this.classList.toggle(
-        "current-player",
-        !isEmpty && this.seat?.isCurrentPlayer,
-      );
-      this.classList.toggle("winner", !isEmpty && this.seat?.handResult > 0);
     }
   }
 
@@ -204,72 +204,90 @@ class Seat extends LitElement {
     }
   }
 
+  _getStatusLabel() {
+    const s = this.seat;
+    if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
+    if (s.sittingOut) return { label: "SITTING OUT", isStatus: true };
+    if (s.folded) return { label: "FOLDED", isStatus: true };
+    if (s.allIn) return { label: "ALL-IN", isStatus: true };
+    if (s.lastAction) return { label: s.lastAction, isStatus: false };
+    return null;
+  }
+
+  _formatHandResult(result) {
+    if (result > 0) return `+${formatCurrency(result)}`;
+    if (result < 0) return `-${formatCurrency(Math.abs(result))}`;
+    return formatCurrency(0);
+  }
+
+  _getResultClass(result) {
+    if (result > 0) return "won";
+    if (result < 0) return "lost";
+    return "";
+  }
+
+  _renderEmptySeat() {
+    const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
+    return html`
+      <span class="empty-label">Empty</span>
+      ${sitAction && this.showSitAction
+        ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
+        : ""}
+    `;
+  }
+
+  _renderStatusOrAction() {
+    if (this.seat.handResult != null) return "";
+    const status = this._getStatusLabel();
+    if (!status) return "";
+    return status.isStatus
+      ? html`<div class="status-label">${status.label}</div>`
+      : html`<div class="last-action">${status.label}</div>`;
+  }
+
+  _renderStackOrResult() {
+    return this.seat.handResult != null
+      ? html`<div
+          class="hand-result ${this._getResultClass(this.seat.handResult)}"
+        >
+          ${this._formatHandResult(this.seat.handResult)}
+        </div>`
+      : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`;
+  }
+
+  _renderClock() {
+    return this._clockRemaining !== null
+      ? html`<div
+          class="clock-countdown ${this._clockRemaining <= 10 ? "urgent" : ""}"
+        >
+          <span>⏱</span><span>${this._clockRemaining}s</span>
+        </div>`
+      : "";
+  }
+
   render() {
-    if (!this.seat || this.seat.empty) {
-      const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
-      return html`
-        <span class="empty-label">Empty</span>
-        ${sitAction && this.showSitAction
-          ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
-          : ""}
-      `;
-    }
+    if (!this.seat || this.seat.empty) return this._renderEmptySeat();
 
     return html`
       ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
       <div class="player-info">
-        <span class="player-name">
-          ${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}
-        </span>
+        <span class="player-name"
+          >${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}</span
+        >
       </div>
-      ${this.seat.handResult != null
-        ? html`<div
-            class="hand-result ${this.seat.handResult > 0
-              ? "won"
-              : this.seat.handResult < 0
-                ? "lost"
-                : ""}"
-          >
-            ${this.seat.handResult > 0
-              ? `+${formatCurrency(this.seat.handResult)}`
-              : this.seat.handResult < 0
-                ? `-${formatCurrency(Math.abs(this.seat.handResult))}`
-                : formatCurrency(0)}
-          </div>`
-        : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`}
-      ${this._clockRemaining !== null
-        ? html`<div
-            class="clock-countdown ${this._clockRemaining <= 10
-              ? "urgent"
-              : ""}"
-          >
-            <span>⏱</span><span>${this._clockRemaining}s</span>
-          </div>`
-        : ""}
-      ${this.seat.handResult != null
-        ? ""
-        : this.seat.disconnected
-          ? html`<div class="status-label">DISCONNECTED</div>`
-          : this.seat.sittingOut
-            ? html`<div class="status-label">SITTING OUT</div>`
-            : this.seat.folded
-              ? html`<div class="status-label">FOLDED</div>`
-              : this.seat.allIn
-                ? html`<div class="status-label">ALL-IN</div>`
-                : this.seat.lastAction
-                  ? html`<div class="last-action">${this.seat.lastAction}</div>`
-                  : ""}
+      ${this._renderStackOrResult()} ${this._renderClock()}
+      ${this._renderStatusOrAction()}
       ${this.seat.handRank
         ? html`<div class="hand-rank">${this.seat.handRank}</div>`
         : ""}
       <div class="hole-cards">
-        ${this.seat.cards?.map((card) => {
-          const isWinning = this.seat.winningCards?.includes(card);
-          return html`<phg-card
-            .card=${card}
-            ?winning=${isWinning}
-          ></phg-card>`;
-        })}
+        ${this.seat.cards?.map(
+          (card) =>
+            html`<phg-card
+              .card=${card}
+              ?winning=${this.seat.winningCards?.includes(card)}
+            ></phg-card>`,
+        )}
       </div>
     `;
   }

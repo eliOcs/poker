@@ -57,7 +57,6 @@ class ActionPanel extends LitElement {
           margin: 0;
         }
 
-
         .slider-row input[type="range"] {
           flex: 1;
           height: var(--space-md);
@@ -217,351 +216,335 @@ class ActionPanel extends LitElement {
     this.betAmount = Math.max(min, Math.min(max, cents));
   }
 
-  render() {
-    if (!this.actions || this.actions.length === 0) {
-      if (this.seatedCount < 2) {
-        return html`
-          <div class="waiting-panel">
-            <span class="waiting">Waiting for players...</span>
-            <div class="share-buttons">
-              <phg-button
-                variant="${this.copied ? "success" : "action"}"
-                @click=${this.copyGameLink}
-              >
-                ${this.copied ? "Copied!" : "Copy Link"}
-              </phg-button>
-              ${this.canShare()
-                ? html`
-                    <phg-button variant="action" @click=${this.shareGameLink}>
-                      Share
-                    </phg-button>
-                  `
-                : ""}
-            </div>
-          </div>
-        `;
-      }
-      return html`<span class="waiting">Waiting for your turn...</span>`;
-    }
+  _renderWaitingForPlayers() {
+    return html`
+      <div class="waiting-panel">
+        <span class="waiting">Waiting for players...</span>
+        <div class="share-buttons">
+          <phg-button
+            variant="${this.copied ? "success" : "action"}"
+            @click=${this.copyGameLink}
+          >
+            ${this.copied ? "Copied!" : "Copy Link"}
+          </phg-button>
+          ${this.canShare()
+            ? html`<phg-button variant="action" @click=${this.shareGameLink}
+                >Share</phg-button
+              >`
+            : ""}
+        </div>
+      </div>
+    `;
+  }
 
-    // Collect actions by type
-    const actionMap = {};
-    for (const action of this.actions) {
-      actionMap[action.action] = action;
-    }
+  _renderBuyIn(action) {
+    const min = action.min || 20;
+    const max = action.max || 100;
+    const bigBlind = action.bigBlind || this.bigBlind;
+    const defaultBuyIn = Math.min(80, max);
+    const bbCount =
+      this.betAmount >= min && this.betAmount <= max
+        ? this.betAmount
+        : defaultBuyIn;
+    const stack = bbCount * bigBlind;
+    const minStack = min * bigBlind;
+    const maxStack = max * bigBlind;
 
-    // Handle buy-in separately
-    if (actionMap.buyIn) {
-      const action = actionMap.buyIn;
-      const min = action.min || 20;
-      const max = action.max || 100;
-      const bigBlind = action.bigBlind || this.bigBlind;
-      const defaultBuyIn = Math.min(80, max);
-      const bbCount =
-        this.betAmount >= min && this.betAmount <= max
-          ? this.betAmount
-          : defaultBuyIn;
-      const stack = bbCount * bigBlind;
-      const minStack = min * bigBlind;
-      const maxStack = max * bigBlind;
-      return html`
-        <div class="betting-panel">
-          <div class="slider-row">
-            <input
-              type="number"
-              min="${minStack}"
-              max="${maxStack}"
-              step="${bigBlind}"
-              .value="${stack}"
-              @input=${(e) => {
-                const stackValue = parseInt(e.target.value) || minStack;
-                const bb = Math.round(stackValue / bigBlind);
-                this.betAmount = Math.max(min, Math.min(max, bb));
-              }}
-            />
-            <phg-button
-              variant="muted"
-              size="compact"
-              @click=${() => this.adjustBet(-10, min, max)}
+    return html`
+      <div class="betting-panel">
+        <div class="slider-row">
+          <input
+            type="number"
+            min="${minStack}"
+            max="${maxStack}"
+            step="${bigBlind}"
+            .value="${stack}"
+            @input=${(e) => {
+              const stackValue = parseInt(e.target.value) || minStack;
+              this.betAmount = Math.max(
+                min,
+                Math.min(max, Math.round(stackValue / bigBlind)),
+              );
+            }}
+          />
+          <phg-button
+            variant="muted"
+            size="compact"
+            @click=${() => this.adjustBet(-10, min, max)}
+            >-</phg-button
+          >
+          <input
+            type="range"
+            min="${min}"
+            max="${max}"
+            .value="${bbCount}"
+            @input=${(e) => (this.betAmount = parseInt(e.target.value))}
+          />
+          <phg-button
+            variant="muted"
+            size="compact"
+            @click=${() => this.adjustBet(10, min, max)}
+            >+</phg-button
+          >
+        </div>
+        <div class="action-row">
+          <phg-button
+            variant="secondary"
+            full-width
+            @click=${() =>
+              this.sendAction({
+                action: "buyIn",
+                seat: this.seatIndex,
+                amount: bbCount,
+              })}
+          >
+            <span class="stacked"
+              ><span>Buy In</span
+              ><span class="amount">${formatCurrency(stack)}</span></span
             >
-              -
-            </phg-button>
-            <input
-              type="range"
-              min="${min}"
-              max="${max}"
-              .value="${bbCount}"
-              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-            />
-            <phg-button
-              variant="muted"
-              size="compact"
-              @click=${() => this.adjustBet(10, min, max)}
-            >
-              +
-            </phg-button>
-          </div>
-          <div class="action-row">
-            <phg-button
+          </phg-button>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderSitInLeave(actionMap) {
+    return html`
+      <div class="waiting-actions">
+        ${actionMap.sitIn
+          ? html`<phg-button
+              variant="success"
+              @click=${() =>
+                this.sendAction({ action: "sitIn", seat: this.seatIndex })}
+              >Sit In</phg-button
+            >`
+          : ""}
+        ${actionMap.leave
+          ? html`<phg-button
               variant="secondary"
-              full-width
               @click=${() =>
-                this.sendAction({
-                  action: "buyIn",
+                this.sendAction({ action: "leave", seat: this.seatIndex })}
+              >Leave Table</phg-button
+            >`
+          : ""}
+      </div>
+    `;
+  }
+
+  _renderStartSitOut(actionMap) {
+    return html`
+      <div class="waiting-actions">
+        ${actionMap.sitOut
+          ? html`<phg-button
+              variant="secondary"
+              @click=${() =>
+                this.sendAction({ action: "sitOut", seat: this.seatIndex })}
+              >Sit Out</phg-button
+            >`
+          : ""}
+        ${actionMap.start
+          ? html`<phg-button
+              variant="primary"
+              @click=${() => this.sendAction({ action: "start" })}
+              >Start Game</phg-button
+            >`
+          : ""}
+      </div>
+    `;
+  }
+
+  _renderBettingSlider(actionMap, betAction) {
+    const isBet = actionMap.bet != null;
+    const min = betAction.min;
+    const max = betAction.max;
+    const step = this.bigBlind;
+    if (this.betAmount < min) this.betAmount = min;
+    const currentValue = Math.max(min, Math.min(max, this.betAmount));
+    const isAllIn = currentValue >= max;
+
+    return html`
+      <div class="betting-panel">
+        <div class="slider-row">
+          <input
+            type="number"
+            min="${min / 100}"
+            max="${max / 100}"
+            step="0.01"
+            .value="${(currentValue / 100).toFixed(2)}"
+            @input=${(e) => this.handleManualInput(e, min, max)}
+          />
+          <phg-button
+            variant="muted"
+            size="compact"
+            @click=${() => this.adjustBet(-step, min, max)}
+            >-</phg-button
+          >
+          <input
+            type="range"
+            min="${min}"
+            max="${max}"
+            step="1"
+            .value="${currentValue}"
+            @input=${(e) => (this.betAmount = parseInt(e.target.value))}
+          />
+          <phg-button
+            variant="muted"
+            size="compact"
+            @click=${() => this.adjustBet(step, min, max)}
+            >+</phg-button
+          >
+        </div>
+        <div class="action-row">
+          ${this._renderBettingButtons(actionMap, isBet, currentValue, isAllIn)}
+        </div>
+      </div>
+    `;
+  }
+
+  _renderBettingButtons(actionMap, isBet, currentValue, isAllIn) {
+    return html`
+      ${actionMap.fold
+        ? html`<phg-button
+            variant="danger"
+            full-width
+            @click=${() =>
+              this.sendAction({ action: "fold", seat: this.seatIndex })}
+            >Fold</phg-button
+          >`
+        : null}
+      ${actionMap.check
+        ? html`<phg-button
+            variant="success"
+            full-width
+            @click=${() =>
+              this.sendAction({ action: "check", seat: this.seatIndex })}
+            >Check</phg-button
+          >`
+        : null}
+      ${actionMap.call
+        ? html`<phg-button
+            variant="success"
+            full-width
+            @click=${() =>
+              this.sendAction({ action: "call", seat: this.seatIndex })}
+            ><span class="stacked"
+              ><span>Call</span
+              ><span class="amount"
+                >${formatCurrency(actionMap.call.amount)}</span
+              ></span
+            ></phg-button
+          >`
+        : null}
+      <phg-button
+        variant="${isAllIn ? "primary" : "action"}"
+        full-width
+        @click=${() =>
+          this.sendAction(
+            isAllIn
+              ? { action: "allIn", seat: this.seatIndex }
+              : {
+                  action: isBet ? "bet" : "raise",
                   seat: this.seatIndex,
-                  amount: bbCount,
-                })}
-            >
-              <span class="stacked">
-                <span>Buy In</span>
-                <span class="amount">${formatCurrency(stack)}</span>
-              </span>
-            </phg-button>
-          </div>
-        </div>
-      `;
-    }
+                  amount: currentValue,
+                },
+          )}
+      >
+        <span class="stacked"
+          ><span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span
+          ><span class="amount">${formatCurrency(currentValue)}</span></span
+        >
+      </phg-button>
+    `;
+  }
 
-    // Handle sit in / leave actions (player is sitting out)
-    if (actionMap.sitIn || actionMap.leave) {
-      return html`
-        <div class="waiting-actions">
-          ${actionMap.sitIn
-            ? html`<phg-button
-                variant="success"
-                @click=${() =>
-                  this.sendAction({ action: "sitIn", seat: this.seatIndex })}
-              >
-                Sit In
-              </phg-button>`
-            : ""}
-          ${actionMap.leave
-            ? html`<phg-button
-                variant="secondary"
-                @click=${() =>
-                  this.sendAction({ action: "leave", seat: this.seatIndex })}
-              >
-                Leave Table
-              </phg-button>`
-            : ""}
-        </div>
-      `;
-    }
-
-    // Handle start action (with optional sit out)
-    if (actionMap.start || actionMap.sitOut) {
-      return html`
-        <div class="waiting-actions">
-          ${actionMap.sitOut
-            ? html`
-                <phg-button
-                  variant="secondary"
-                  @click=${() =>
-                    this.sendAction({ action: "sitOut", seat: this.seatIndex })}
-                >
-                  Sit Out
-                </phg-button>
-              `
-            : ""}
-          ${actionMap.start
-            ? html`
-                <phg-button
-                  variant="primary"
-                  @click=${() => this.sendAction({ action: "start" })}
-                >
-                  Start Game
-                </phg-button>
-              `
-            : ""}
-        </div>
-      `;
-    }
-
-    // Handle betting actions (bet or raise with fold/check/call)
-    const betAction = actionMap.bet || actionMap.raise;
-    if (betAction) {
-      const isBet = actionMap.bet != null;
-      const min = betAction.min;
-      const max = betAction.max;
-      const step = this.bigBlind;
-
-      // Initialize betAmount if not set
-      if (this.betAmount < min) {
-        this.betAmount = min;
-      }
-
-      const currentValue = Math.max(min, Math.min(max, this.betAmount));
-      const isAllIn = currentValue >= max;
-
-      return html`
-        <div class="betting-panel">
-          <div class="slider-row">
-            <input
-              type="number"
-              min="${min / 100}"
-              max="${max / 100}"
-              step="0.01"
-              .value="${(currentValue / 100).toFixed(2)}"
-              @input=${(e) => this.handleManualInput(e, min, max)}
-            />
-            <phg-button
-              variant="muted"
-              size="compact"
-              @click=${() => this.adjustBet(-step, min, max)}
-            >
-              -
-            </phg-button>
-            <input
-              type="range"
-              min="${min}"
-              max="${max}"
-              step="1"
-              .value="${currentValue}"
-              @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-            />
-            <phg-button
-              variant="muted"
-              size="compact"
-              @click=${() => this.adjustBet(step, min, max)}
-            >
-              +
-            </phg-button>
-          </div>
-          <div class="action-row">
-            ${actionMap.fold
-              ? html`
-                  <phg-button
-                    variant="danger"
-                    full-width
-                    @click=${() =>
-                      this.sendAction({ action: "fold", seat: this.seatIndex })}
-                  >
-                    Fold
-                  </phg-button>
-                `
-              : null}
-            ${actionMap.check
-              ? html`
-                  <phg-button
-                    variant="success"
-                    full-width
-                    @click=${() =>
-                      this.sendAction({
-                        action: "check",
-                        seat: this.seatIndex,
-                      })}
-                  >
-                    Check
-                  </phg-button>
-                `
-              : null}
-            ${actionMap.call
-              ? html`
-                  <phg-button
-                    variant="success"
-                    full-width
-                    @click=${() =>
-                      this.sendAction({ action: "call", seat: this.seatIndex })}
-                  >
-                    <span class="stacked">
-                      <span>Call</span>
-                      <span class="amount"
-                        >${formatCurrency(actionMap.call.amount)}</span
-                      >
-                    </span>
-                  </phg-button>
-                `
-              : null}
-            <phg-button
-              variant="${isAllIn ? "primary" : "action"}"
-              full-width
-              @click=${() =>
-                this.sendAction(
-                  isAllIn
-                    ? { action: "allIn", seat: this.seatIndex }
-                    : {
-                        action: isBet ? "bet" : "raise",
-                        seat: this.seatIndex,
-                        amount: currentValue,
-                      },
-                )}
-            >
-              <span class="stacked">
-                <span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span>
-                <span class="amount">${formatCurrency(currentValue)}</span>
-              </span>
-            </phg-button>
-          </div>
-        </div>
-      `;
-    }
-
-    // Simple actions only (check/call/fold without bet/raise)
-    const simpleButtons = [];
-
-    if (actionMap.fold) {
-      simpleButtons.push(html`
-        <phg-button
+  _renderSimpleActions(actionMap) {
+    const buttons = [];
+    if (actionMap.fold)
+      buttons.push(
+        html`<phg-button
           variant="danger"
           full-width
           @click=${() =>
             this.sendAction({ action: "fold", seat: this.seatIndex })}
-        >
-          Fold
-        </phg-button>
-      `);
-    }
-
-    if (actionMap.check) {
-      simpleButtons.push(html`
-        <phg-button
+          >Fold</phg-button
+        >`,
+      );
+    if (actionMap.check)
+      buttons.push(
+        html`<phg-button
           variant="success"
           full-width
           @click=${() =>
             this.sendAction({ action: "check", seat: this.seatIndex })}
-        >
-          Check
-        </phg-button>
-      `);
-    }
-
-    if (actionMap.call) {
-      simpleButtons.push(html`
-        <phg-button
+          >Check</phg-button
+        >`,
+      );
+    if (actionMap.call)
+      buttons.push(
+        html`<phg-button
           variant="success"
           full-width
           @click=${() =>
             this.sendAction({ action: "call", seat: this.seatIndex })}
+          ><span class="stacked"
+            ><span>Call</span
+            ><span class="amount"
+              >${formatCurrency(actionMap.call.amount)}</span
+            ></span
+          ></phg-button
+        >`,
+      );
+    return buttons.length > 0
+      ? html`<div class="simple-actions">${buttons}</div>`
+      : null;
+  }
+
+  _renderCallClock() {
+    return html`
+      <div class="simple-actions">
+        <phg-button
+          variant="warning"
+          full-width
+          @click=${() =>
+            this.sendAction({ action: "callClock", seat: this.seatIndex })}
+          >Call Clock</phg-button
         >
-          <span class="stacked">
-            <span>Call</span>
-            <span class="amount">${formatCurrency(actionMap.call.amount)}</span>
-          </span>
-        </phg-button>
-      `);
-    }
+      </div>
+    `;
+  }
 
-    if (simpleButtons.length > 0) {
-      return html`<div class="simple-actions">${simpleButtons}</div>`;
+  _buildActionMap() {
+    const actionMap = {};
+    if (this.actions) {
+      for (const action of this.actions) actionMap[action.action] = action;
     }
+    return actionMap;
+  }
 
-    // Call clock action (when waiting for another player)
-    if (actionMap.callClock) {
-      return html`
-        <div class="simple-actions">
-          <phg-button
-            variant="warning"
-            full-width
-            @click=${() =>
-              this.sendAction({ action: "callClock", seat: this.seatIndex })}
-          >
-            Call Clock
-          </phg-button>
-        </div>
-      `;
+  _renderForActionMap(actionMap) {
+    if (actionMap.buyIn) return this._renderBuyIn(actionMap.buyIn);
+    if (actionMap.sitIn || actionMap.leave)
+      return this._renderSitInLeave(actionMap);
+    if (actionMap.start || actionMap.sitOut)
+      return this._renderStartSitOut(actionMap);
+    const betAction = actionMap.bet || actionMap.raise;
+    if (betAction) return this._renderBettingSlider(actionMap, betAction);
+    return (
+      this._renderSimpleActions(actionMap) ||
+      (actionMap.callClock ? this._renderCallClock() : null)
+    );
+  }
+
+  render() {
+    if (!this.actions || this.actions.length === 0) {
+      return this.seatedCount < 2
+        ? this._renderWaitingForPlayers()
+        : html`<span class="waiting">Waiting for your turn...</span>`;
     }
-
-    return html`<span class="waiting">Waiting for your turn...</span>`;
+    return (
+      this._renderForActionMap(this._buildActionMap()) ||
+      html`<span class="waiting">Waiting for your turn...</span>`
+    );
   }
 }
 

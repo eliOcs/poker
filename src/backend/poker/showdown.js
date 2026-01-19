@@ -161,14 +161,10 @@ export function runShowdown(game) {
 }
 
 /**
- * Generator for showdown with yields for animation
+ * Collects remaining bets into pot
  * @param {Game} game
- * @returns {Generator<void|PotResult, PotResult[]>}
  */
-export function* showdown(game) {
-  game.hand.phase = "showdown";
-
-  // First, collect any remaining bets
+function collectRemainingBets(game) {
   for (const seat of game.seats) {
     if (!seat.empty) {
       game.hand.pot += seat.bet;
@@ -176,25 +172,21 @@ export function* showdown(game) {
       seat.bet = 0;
     }
   }
+}
 
-  yield; // Pause for pot collection animation
-
-  // Track winnings per seat to calculate hand results
+/**
+ * Processes pot results and builds winnings/cards maps
+ * @param {PotResult[]} results
+ * @returns {{ winnings: Map<number, number>, winningCardsMap: Map<number, import('./deck.js').Card[]> }}
+ */
+function processResults(results) {
   const winnings = new Map();
-
-  // Run showdown and get results
-  const results = runShowdown(game);
-
-  // Track winning cards for each winner
   const winningCardsMap = new Map();
 
-  // Yield after each pot is awarded (for animation)
   for (const result of results) {
-    // Track winnings for each award
     for (const award of result.awards) {
       winnings.set(award.seat, (winnings.get(award.seat) || 0) + award.amount);
     }
-    // Store winning cards for winners (only if not already set)
     if (result.winningCards) {
       for (const winner of result.winners) {
         if (!winningCardsMap.has(winner)) {
@@ -202,20 +194,45 @@ export function* showdown(game) {
         }
       }
     }
-    yield result;
   }
 
-  // Set hand results for all players and clear lastAction
+  return { winnings, winningCardsMap };
+}
+
+/**
+ * Sets final hand results on seats
+ * @param {Game} game
+ * @param {Map<number, number>} winnings
+ * @param {Map<number, import('./deck.js').Card[]>} winningCardsMap
+ */
+function setFinalHandResults(game, winnings, winningCardsMap) {
   for (let i = 0; i < game.seats.length; i++) {
     const seat = game.seats[i];
     if (!seat.empty) {
-      const won = winnings.get(i) || 0;
-      seat.handResult = won - seat.totalInvested;
+      seat.handResult = (winnings.get(i) || 0) - seat.totalInvested;
       seat.lastAction = null;
-      // Set winning cards for winners
       seat.winningCards = winningCardsMap.get(i) || null;
     }
   }
+}
+
+/**
+ * Generator for showdown with yields for animation
+ * @param {Game} game
+ * @returns {Generator<void|PotResult, PotResult[]>}
+ */
+export function* showdown(game) {
+  game.hand.phase = "showdown";
+  collectRemainingBets(game);
+  yield;
+
+  const results = runShowdown(game);
+  for (const result of results) {
+    yield result;
+  }
+
+  const { winnings, winningCardsMap } = processResults(results);
+  setFinalHandResults(game, winnings, winningCardsMap);
 
   return results;
 }

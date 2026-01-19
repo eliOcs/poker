@@ -15,7 +15,173 @@ import * as PlayerStore from "./player-store.js";
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./poker/seat.js').OccupiedSeat} OccupiedSeat
  */
+
+const BETTING_ACTIONS = ["check", "call", "bet", "raise", "fold", "allIn"];
+
+/**
+ * Classifies an all-in action as call, bet, or raise based on game context
+ * @param {number} betBefore - Player's bet before the action
+ * @param {number} currentBet - Current bet to match
+ * @param {number} finalBet - Player's bet after going all-in
+ * @returns {'call'|'bet'|'raise'}
+ */
+function classifyAllInAction(betBefore, currentBet, finalBet) {
+  if (betBefore >= currentBet || finalBet <= currentBet) {
+    return "call";
+  }
+  if (currentBet === 0) {
+    return "bet";
+  }
+  return "raise";
+}
+
+/**
+ * Records a betting action to hand history
+ * @param {string} gameId
+ * @param {string} playerId
+ * @param {string} action
+ * @param {OccupiedSeat} seatAfter
+ * @param {number} betBefore
+ * @param {Game} game
+ */
+function recordBettingAction(
+  gameId,
+  playerId,
+  action,
+  seatAfter,
+  betBefore,
+  game,
+) {
+  const isAllIn = seatAfter.allIn;
+
+  if (action === "fold" || action === "check") {
+    HandHistory.recordAction(gameId, playerId, action);
+    return;
+  }
+
+  if (action === "allIn") {
+    const historyAction = classifyAllInAction(
+      betBefore,
+      game.hand.currentBet,
+      seatAfter.bet,
+    );
+    HandHistory.recordAction(
+      gameId,
+      playerId,
+      historyAction,
+      seatAfter.bet,
+      true,
+    );
+    return;
+  }
+
+  // call, bet, raise
+  HandHistory.recordAction(gameId, playerId, action, seatAfter.bet, isAllIn);
+}
+
+/**
+ * Handles the start action
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {(gameId: string) => void} broadcastGameState
+ */
+function handleStartAction(game, gameId, broadcastGameState) {
+  if (game.countdown !== null) {
+    PokerGame.startGameTick(game, gameId, broadcastGameState);
+  }
+}
+
+/**
+ * Handles sitOut/leave actions that may cancel countdown
+ * @param {Game} game
+ */
+function handleSitOutOrLeave(game) {
+  if (game.countdown !== null && PokerActions.countPlayersWithChips(game) < 2) {
+    game.countdown = null;
+    PokerGame.stopGameTick(game);
+  }
+}
+
+/**
+ * Handles betting actions (processes game flow)
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {(gameId: string) => void} broadcastGameState
+ */
+function handleBettingAction(game, gameId, broadcastGameState) {
+  resetActingTicks(game);
+  PokerGame.processGameFlow(game, gameId, broadcastGameState);
+}
+
+/** @type {Record<string, (game: Game, gameId: string, broadcastGameState: (gameId: string) => void) => void>} */
+const POST_ACTION_HANDLERS = {
+  start: handleStartAction,
+  sitOut: handleSitOutOrLeave,
+  leave: handleSitOutOrLeave,
+  callClock: (game) => startClockTicks(game),
+};
+
+/**
+ * Handles post-action side effects for specific actions
+ * @param {string} action
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {(gameId: string) => void} broadcastGameState
+ */
+function handlePostAction(action, game, gameId, broadcastGameState) {
+  const handler = POST_ACTION_HANDLERS[action];
+  if (handler) {
+    handler(game, gameId, broadcastGameState);
+  } else if (BETTING_ACTIONS.includes(action)) {
+    handleBettingAction(game, gameId, broadcastGameState);
+  }
+}
+
+/**
+ * Gets the player's seat data before an action
+ * @param {Game} game
+ * @param {PlayerType} player
+ * @returns {{ seatIndex: number, seatBefore: OccupiedSeat|null, betBefore: number }}
+ */
+function getSeatStateBefore(game, player) {
+  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+  const seatBefore =
+    seatIndex !== -1 && !game.seats[seatIndex].empty
+      ? /** @type {OccupiedSeat} */ (game.seats[seatIndex])
+      : null;
+  return { seatIndex, seatBefore, betBefore: seatBefore?.bet || 0 };
+}
+
+/**
+ * Processes a poker action and records to history
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {PlayerType} player
+ * @param {string} action
+ * @param {Record<string, unknown>} args
+ * @param {(gameId: string) => void} broadcastGameState
+ */
+function processPokerAction(
+  game,
+  gameId,
+  player,
+  action,
+  args,
+  broadcastGameState,
+) {
+  const { seatIndex, seatBefore, betBefore } = getSeatStateBefore(game, player);
+
+  PokerActions[action](game, { player, ...args });
+
+  if (BETTING_ACTIONS.includes(action) && seatBefore) {
+    const seatAfter = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
+    recordBettingAction(gameId, player.id, action, seatAfter, betBefore, game);
+  }
+
+  handlePostAction(action, game, gameId, broadcastGameState);
+}
 
 const server = http.createServer();
 
@@ -379,7 +545,10 @@ wss.on(
       const closedGame = games.get(closedGameId);
       if (!closedGame) return;
 
-      const closedSeatIndex = PokerGame.findPlayerSeatIndex(closedGame, closedPlayer);
+      const closedSeatIndex = PokerGame.findPlayerSeatIndex(
+        closedGame,
+        closedPlayer,
+      );
       if (closedSeatIndex === -1 || closedGame.seats[closedSeatIndex].empty)
         return;
 
@@ -394,151 +563,42 @@ wss.on(
 
     ws.on("message", function (rawMessage) {
       const { action, ...args } = JSON.parse(rawMessage);
-      const bettingActions = ["check", "call", "bet", "raise", "fold", "allIn"];
 
-      // Log all WebSocket messages like HTTP requests
-      logger.info("ws message", { gameId, playerId: player.id, action, ...args });
+      logger.info("ws message", {
+        gameId,
+        playerId: player.id,
+        action,
+        ...args,
+      });
 
-      // Handle setName separately (not a poker action)
       if (action === "setName") {
-        const name = args.name?.trim().substring(0, 20) || null;
-        player.name = name;
+        player.name = args.name?.trim().substring(0, 20) || null;
         PlayerStore.save(player);
         broadcastGameState(gameId);
         return;
       }
 
-      // Capture seat state before action for history recording
-      const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-      const seatBefore =
-        seatIndex !== -1 && !game.seats[seatIndex].empty
-          ? /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-              game.seats[seatIndex]
-            )
-          : null;
-      const betBefore = seatBefore?.bet || 0;
-
       try {
-        PokerActions[action](game, { player, ...args });
-
-        // Record betting actions to history
-        if (bettingActions.includes(action) && seatBefore) {
-          const seatAfter =
-            /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-              game.seats[seatIndex]
-            );
-          const isAllIn = seatAfter.allIn;
-
-          if (action === "fold") {
-            HandHistory.recordAction(gameId, player.id, "fold");
-          } else if (action === "check") {
-            HandHistory.recordAction(gameId, player.id, "check");
-          } else if (action === "call") {
-            HandHistory.recordAction(
-              gameId,
-              player.id,
-              "call",
-              seatAfter.bet,
-              isAllIn,
-            );
-          } else if (action === "bet") {
-            HandHistory.recordAction(
-              gameId,
-              player.id,
-              "bet",
-              seatAfter.bet,
-              isAllIn,
-            );
-          } else if (action === "raise") {
-            HandHistory.recordAction(
-              gameId,
-              player.id,
-              "raise",
-              seatAfter.bet,
-              isAllIn,
-            );
-          } else if (action === "allIn") {
-            // Determine if it's a call, bet, or raise based on context
-            const currentBet = game.hand.currentBet;
-            if (betBefore >= currentBet || seatAfter.bet <= currentBet) {
-              HandHistory.recordAction(
-                gameId,
-                player.id,
-                "call",
-                seatAfter.bet,
-                true,
-              );
-            } else if (currentBet === 0) {
-              HandHistory.recordAction(
-                gameId,
-                player.id,
-                "bet",
-                seatAfter.bet,
-                true,
-              );
-            } else {
-              HandHistory.recordAction(
-                gameId,
-                player.id,
-                "raise",
-                seatAfter.bet,
-                true,
-              );
-            }
-          }
-        }
-
-        // If start action was called, begin game tick
-        if (action === "start" && game.countdown !== null) {
-          PokerGame.startGameTick(game, gameId, broadcastGameState);
-        }
-
-        // Cancel countdown if sitOut or leave reduces active players below 2
-        if (
-          (action === "sitOut" || action === "leave") &&
-          game.countdown !== null
-        ) {
-          if (PokerActions.countPlayersWithChips(game) < 2) {
-            game.countdown = null;
-            PokerGame.stopGameTick(game);
-          }
-        }
-
-        // Process game flow after betting actions
-        if (bettingActions.includes(action)) {
-          // Reset tick counters since player took action
-          resetActingTicks(game);
-          PokerGame.processGameFlow(game, gameId, broadcastGameState);
-        }
-
-        // Start clock countdown when callClock action is called
-        if (action === "callClock") {
-          startClockTicks(game);
-        }
+        processPokerAction(
+          game,
+          gameId,
+          player,
+          action,
+          args,
+          broadcastGameState,
+        );
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         logger.error("action error", {
           gameId,
           playerId: player.id,
           action,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
-        ws.send(
-          JSON.stringify(
-            {
-              error: {
-                message: err instanceof Error ? err.message : String(err),
-              },
-            },
-            null,
-            2,
-          ),
-        );
+        ws.send(JSON.stringify({ error: { message } }, null, 2));
       }
 
-      // Broadcast updated game state to clients in this game
       broadcastGameState(gameId);
-
-      // Ensure tick is running if needed (e.g., someone is acting)
       PokerGame.ensureGameTick(game, gameId, broadcastGameState);
     });
 

@@ -424,13 +424,9 @@ function toCents(dollars) {
 }
 
 /**
- * Creates a mock view object from an OHH hand (mirrors backend getHandView)
- * @param {object} hand - OHH hand data (in dollars)
- * @param {string} playerId - The requesting player's ID
- * @returns {object} View object for rendering (in cents)
+ * Builds player cards map from dealt cards actions
  */
-export function createMockView(hand, playerId) {
-  // Build a map of player cards from Dealt Cards actions
+function buildMockPlayerCardsMap(hand) {
   const playerCards = new Map();
   for (const round of hand.rounds) {
     for (const action of round.actions) {
@@ -439,8 +435,13 @@ export function createMockView(hand, playerId) {
       }
     }
   }
+  return playerCards;
+}
 
-  // Build win amounts map (convert from OHH dollars to cents)
+/**
+ * Builds win amounts map from pots
+ */
+function buildMockWinAmountsMap(hand) {
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
@@ -448,79 +449,117 @@ export function createMockView(hand, playerId) {
       winAmounts.set(win.player_id, current + toCents(win.win_amount));
     }
   }
+  return winAmounts;
+}
 
-  // Get winning hand info from main pot
+/**
+ * Builds a mock occupied seat
+ */
+function buildMockOccupiedSeat(
+  player,
+  playerCards,
+  winAmounts,
+  winningHand,
+  winningCards,
+  playerId,
+  seatIndex,
+) {
+  const isCurrentPlayer = player.id === playerId;
+  const isWinner = winAmounts.has(player.id);
+  const winAmount = winAmounts.get(player.id) || 0;
+  const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+
+  return {
+    empty: false,
+    player: { id: player.id, name: displayName || `Seat ${seatIndex + 1}` },
+    stack: toCents(player.starting_stack),
+    cards: playerCards.get(player.id) || [],
+    handResult: winAmount > 0 ? winAmount : null,
+    handRank: isWinner ? winningHand : null,
+    winningCards: isWinner ? winningCards : null,
+    isCurrentPlayer,
+    folded: false,
+    allIn: false,
+    sittingOut: false,
+    disconnected: false,
+    isActing: false,
+  };
+}
+
+/**
+ * Extracts board info from hand rounds
+ */
+function extractMockBoardInfo(hand) {
+  const boardCards = [];
+  let lastStreet = "Preflop";
+  for (const round of hand.rounds) {
+    if (round.cards) boardCards.push(...round.cards);
+    if (round.street) lastStreet = round.street;
+  }
+  return { boardCards, lastStreet };
+}
+
+/**
+ * Calculates total pot from hand pots
+ */
+function calculateMockTotalPot(hand) {
+  return hand.pots.reduce((sum, pot) => sum + toCents(pot.amount || 0), 0);
+}
+
+/**
+ * Builds winner message from main pot
+ */
+function buildMockWinnerMessage(mainPot, players, winningHand) {
+  if (!mainPot?.player_wins?.length) return null;
+  const winnerId = mainPot.player_wins[0].player_id;
+  const winner = players.find((p) => p.id === winnerId);
+  return {
+    playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
+    handRank: winningHand,
+    amount: toCents(mainPot.player_wins[0].win_amount),
+  };
+}
+
+/**
+ * Creates a mock view object from an OHH hand (mirrors backend getHandView)
+ * @param {object} hand - OHH hand data (in dollars)
+ * @param {string} playerId - The requesting player's ID
+ * @returns {object} View object for rendering (in cents)
+ */
+export function createMockView(hand, playerId) {
+  const playerCards = buildMockPlayerCardsMap(hand);
+  const winAmounts = buildMockWinAmountsMap(hand);
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
   const winningCards = mainPot?.winning_cards || null;
 
-  // Build seats array
   const seats = [];
   for (let i = 0; i < hand.table_size; i++) {
     const player = hand.players.find((p) => p.seat === i);
     if (!player) {
       seats.push({ empty: true });
-      continue;
-    }
-
-    const isCurrentPlayer = player.id === playerId;
-    const isWinner = winAmounts.has(player.id);
-    const winAmount = winAmounts.get(player.id) || 0;
-    const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
-
-    seats.push({
-      empty: false,
-      player: { id: player.id, name: displayName || `Seat ${i + 1}` },
-      stack: toCents(player.starting_stack), // Convert to cents
-      cards: playerCards.get(player.id) || [],
-      handResult: winAmount > 0 ? winAmount : null,
-      handRank: isWinner ? winningHand : null,
-      winningCards: isWinner ? winningCards : null,
-      isCurrentPlayer,
-      folded: false,
-      allIn: false,
-      sittingOut: false,
-      disconnected: false,
-      isActing: false,
-    });
-  }
-
-  // Extract board cards and last street
-  const boardCards = [];
-  let lastStreet = "Preflop";
-  for (const round of hand.rounds) {
-    if (round.cards) {
-      boardCards.push(...round.cards);
-    }
-    if (round.street) {
-      lastStreet = round.street;
+    } else {
+      seats.push(
+        buildMockOccupiedSeat(
+          player,
+          playerCards,
+          winAmounts,
+          winningHand,
+          winningCards,
+          playerId,
+          i,
+        ),
+      );
     }
   }
 
-  // Calculate total pot (convert from OHH dollars to cents)
-  let totalPot = 0;
-  for (const pot of hand.pots) {
-    totalPot += toCents(pot.amount || 0);
-  }
-
-  // Build winner message (convert from OHH dollars to cents)
-  let winnerMessage = null;
-  if (mainPot?.player_wins?.length > 0) {
-    const winnerId = mainPot.player_wins[0].player_id;
-    const winAmount = mainPot.player_wins[0].win_amount;
-    const winner = hand.players.find((p) => p.id === winnerId);
-    winnerMessage = {
-      playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
-      handRank: winningHand,
-      amount: toCents(winAmount),
-    };
-  }
+  const { boardCards, lastStreet } = extractMockBoardInfo(hand);
 
   return {
     seats,
     board: { cards: boardCards, phase: lastStreet },
-    pot: totalPot,
-    winnerMessage,
+    pot: calculateMockTotalPot(hand),
+    winnerMessage: buildMockWinnerMessage(mainPot, hand.players, winningHand),
     winningCards,
     button: hand.dealer_seat,
   };

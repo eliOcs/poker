@@ -5,11 +5,7 @@ import * as Showdown from "./showdown.js";
 import * as Actions from "./actions.js";
 import * as HandHistory from "./hand-history.js";
 import HandRankings from "./hand-rankings.js";
-import {
-  tick,
-  shouldTickBeRunning,
-  resetActingTicks,
-} from "./game-tick.js";
+import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import * as logger from "../logger.js";
 
 /**
@@ -297,6 +293,156 @@ export function performAutoAction(game, gameId, seatIndex, onBroadcast) {
 }
 
 /**
+ * Gets winner info from pot results
+ * @param {Game} game
+ * @param {import('./showdown.js').PotResult[]} potResults
+ * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank: string|null } | null}
+ */
+function getWinnerInfo(game, potResults) {
+  if (potResults.length === 0 || potResults[0].winners.length === 0) {
+    return null;
+  }
+  const mainPot = potResults[0];
+  const seatIndex = mainPot.winners[0];
+  const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
+    game.seats[seatIndex]
+  );
+  const amount = mainPot.awards.reduce((sum, a) => sum + a.amount, 0);
+  const handRank = mainPot.winningHand
+    ? HandRankings.formatHand(mainPot.winningHand)
+    : null;
+  return { winnerSeat, seatIndex, amount, handRank };
+}
+
+/**
+ * Logs hand ended event
+ * @param {string} gameId
+ * @param {string} winnerName
+ * @param {string} wonBy
+ * @param {number} amount
+ */
+function logHandEnded(gameId, winnerName, wonBy, amount) {
+  logger.info("hand ended", {
+    gameId,
+    handNumber: HandHistory.getHandNumber(gameId),
+    winner: winnerName,
+    wonBy,
+    amount,
+  });
+}
+
+/**
+ * Handles fold victory (all other players folded)
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {(gameId: string) => void} [onBroadcast]
+ */
+function handleFoldWin(game, gameId, onBroadcast) {
+  const result = Showdown.awardToLastPlayer(game);
+  if (result.winner !== -1) {
+    const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
+      game.seats[result.winner]
+    );
+    const winnerName = winnerSeat.player?.name || `Seat ${result.winner + 1}`;
+
+    game.winnerMessage = {
+      playerName: winnerName,
+      handRank: null,
+      amount: result.amount,
+    };
+
+    HandHistory.finalizeHand(gameId, game, [
+      {
+        potAmount: result.amount,
+        winners: [result.winner],
+        winningHand: null,
+        winningCards: null,
+        awards: [{ seat: result.winner, amount: result.amount }],
+      },
+    ]);
+
+    logHandEnded(gameId, winnerName, "fold", result.amount);
+  }
+  Actions.endHand(game);
+  autoStartNextHand(game, gameId, onBroadcast);
+}
+
+/**
+ * Records showdown cards for active players
+ * @param {Game} game
+ * @param {string} gameId
+ */
+function recordShowdownCards(game, gameId) {
+  for (const seat of game.seats) {
+    if (
+      !seat.empty &&
+      !seat.folded &&
+      !seat.sittingOut &&
+      seat.cards.length > 0
+    ) {
+      HandHistory.recordShowdown(gameId, seat.player.id, seat.cards, true);
+    }
+  }
+}
+
+/**
+ * Handles showdown at river
+ * @param {Game} game
+ * @param {string} gameId
+ * @param {(gameId: string) => void} [onBroadcast]
+ */
+function handleShowdown(game, gameId, onBroadcast) {
+  const gen = Showdown.showdown(game);
+  let result = gen.next();
+  while (!result.done) {
+    result = gen.next();
+  }
+  const potResults = result.value || [];
+
+  recordShowdownCards(game, gameId);
+
+  const winnerInfo = getWinnerInfo(game, potResults);
+  if (winnerInfo) {
+    const winnerName =
+      winnerInfo.winnerSeat.player?.name || `Seat ${winnerInfo.seatIndex + 1}`;
+    game.winnerMessage = {
+      playerName: winnerName,
+      handRank: winnerInfo.handRank,
+      amount: winnerInfo.amount,
+    };
+    logHandEnded(
+      gameId,
+      winnerName,
+      winnerInfo.handRank || "showdown",
+      winnerInfo.amount,
+    );
+  }
+
+  HandHistory.finalizeHand(gameId, game, potResults);
+  Actions.endHand(game);
+  autoStartNextHand(game, gameId, onBroadcast);
+}
+
+/** @type {Record<string, { next: Phase, deal: (game: Game) => Generator, getCards: (game: Game) => Card[] }>} */
+const STREET_HANDLERS = {
+  preflop: {
+    next: "flop",
+    deal: Actions.dealFlop,
+    getCards: (g) => g.board.cards,
+  },
+  flop: {
+    next: "turn",
+    deal: Actions.dealTurn,
+    getCards: (g) => [g.board.cards[3]],
+  },
+  turn: {
+    next: "river",
+    deal: Actions.dealRiver,
+    getCards: (g) => [g.board.cards[4]],
+  },
+};
+
+/**
  * Advances to next phase, loops through streets when everyone is all-in
  * @param {Game} game
  * @param {string} gameId
@@ -314,125 +460,29 @@ export function processGameFlow(game, gameId, onBroadcast) {
 
     // Check if only one player remains (everyone else folded)
     if (Betting.countActivePlayers(game) <= 1) {
-      const result = Showdown.awardToLastPlayer(game);
-      if (result.winner !== -1) {
-        const winnerSeat =
-          /** @type {import('./seat.js').OccupiedSeat} */ (
-            game.seats[result.winner]
-          );
-        game.winnerMessage = {
-          playerName: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
-          handRank: null, // No showdown, won by fold
-          amount: result.amount,
-        };
-        // Finalize hand history (won by fold)
-        HandHistory.finalizeHand(gameId, game, [
-          {
-            potAmount: result.amount,
-            winners: [result.winner],
-            winningHand: null,
-            winningCards: null,
-            awards: [{ seat: result.winner, amount: result.amount }],
-          },
-        ]);
-
-        logger.info("hand ended", {
-          gameId,
-          handNumber: HandHistory.getHandNumber(gameId),
-          winner: winnerSeat.player?.name || `Seat ${result.winner + 1}`,
-          wonBy: "fold",
-          amount: result.amount,
-        });
-      }
-      Actions.endHand(game);
-      autoStartNextHand(game, gameId, onBroadcast);
+      handleFoldWin(game, gameId, onBroadcast);
       return;
     }
 
     // Check if betting round is complete
     if (game.hand.actingSeat !== -1) {
-      // Someone still needs to act
       return;
     }
 
     Betting.collectBets(game);
 
-    if (phase === "preflop") {
-      runAll(Actions.dealFlop(game));
-      HandHistory.recordStreet(gameId, "flop", game.board.cards);
-      Betting.startBettingRound(game, "flop");
-    } else if (phase === "flop") {
-      runAll(Actions.dealTurn(game));
-      HandHistory.recordStreet(gameId, "turn", [game.board.cards[3]]);
-      Betting.startBettingRound(game, "turn");
-    } else if (phase === "turn") {
-      runAll(Actions.dealRiver(game));
-      HandHistory.recordStreet(gameId, "river", [game.board.cards[4]]);
-      Betting.startBettingRound(game, "river");
-    } else if (phase === "river") {
-      const gen = Showdown.showdown(game);
-      let result = gen.next();
-      while (!result.done) {
-        result = gen.next();
-      }
-      // result.value contains PotResult[] when done
-      const potResults = result.value || [];
-
-      // Record showdown actions to history
-      for (const seat of game.seats) {
-        if (
-          !seat.empty &&
-          !seat.folded &&
-          !seat.sittingOut &&
-          seat.cards.length > 0
-        ) {
-          // Players who made it to showdown show their cards
-          HandHistory.recordShowdown(gameId, seat.player.id, seat.cards, true);
-        }
-      }
-
-      // Use the first pot result (main pot) for winner message
-      if (potResults.length > 0 && potResults[0].winners.length > 0) {
-        const mainPot = potResults[0];
-        const winnerSeatIndex = mainPot.winners[0];
-        const winnerSeat =
-          /** @type {import('./seat.js').OccupiedSeat} */ (
-            game.seats[winnerSeatIndex]
-          );
-        game.winnerMessage = {
-          playerName: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
-          handRank: mainPot.winningHand
-            ? HandRankings.formatHand(mainPot.winningHand)
-            : null,
-          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
-        };
-      }
-
-      // Finalize hand history with pot results
-      HandHistory.finalizeHand(gameId, game, potResults);
-
-      // Log hand ended with showdown results
-      if (potResults.length > 0 && potResults[0].winners.length > 0) {
-        const mainPot = potResults[0];
-        const winnerSeatIndex = mainPot.winners[0];
-        const winnerSeat =
-          /** @type {import('./seat.js').OccupiedSeat} */ (
-            game.seats[winnerSeatIndex]
-          );
-        logger.info("hand ended", {
-          gameId,
-          handNumber: HandHistory.getHandNumber(gameId),
-          winner: winnerSeat.player?.name || `Seat ${winnerSeatIndex + 1}`,
-          wonBy: mainPot.winningHand
-            ? HandRankings.formatHand(mainPot.winningHand)
-            : "showdown",
-          amount: mainPot.awards.reduce((sum, a) => sum + a.amount, 0),
-        });
-      }
-
-      Actions.endHand(game);
-      autoStartNextHand(game, gameId, onBroadcast);
+    // Handle river (showdown) separately
+    if (phase === "river") {
+      handleShowdown(game, gameId, onBroadcast);
       return;
+    }
+
+    // Advance to next street using dispatch map
+    const handler = STREET_HANDLERS[phase];
+    if (handler) {
+      runAll(handler.deal(game));
+      HandHistory.recordStreet(gameId, handler.next, handler.getCards(game));
+      Betting.startBettingRound(game, handler.next);
     }
 
     // If actingSeat is still -1 after starting new round (everyone all-in),

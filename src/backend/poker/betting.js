@@ -133,49 +133,42 @@ export function getCallAmount(game, seatIndex) {
 }
 
 /**
+ * Checks if all active (non-all-in) players have matched the current bet
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function allBetsMatched(game) {
+  for (const seat of game.seats) {
+    if (!Seat.isActive(seat)) continue;
+    const activeSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
+    if (activeSeat.allIn) continue;
+    if (activeSeat.bet !== game.hand.currentBet) return false;
+  }
+  return true;
+}
+
+/**
+ * Checks if the betting round has cycled back to its starting point
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function isRoundCycleComplete(game) {
+  if (game.hand.lastRaiser !== -1) {
+    return game.hand.actingSeat === game.hand.lastRaiser;
+  }
+  return game.hand.actingSeat === -1;
+}
+
+/**
  * Checks if the betting round is complete
  * @param {Game} game
  * @returns {boolean}
  */
 export function isBettingRoundComplete(game) {
-  const activePlayers = countActivePlayers(game);
-
-  // Only one player left - hand is over
-  if (activePlayers <= 1) {
-    return true;
-  }
-
-  // All remaining players are all-in
-  if (countPlayersWhoCanAct(game) === 0) {
-    return true;
-  }
-
-  // Check if all active players have acted and bets are equal
-  for (const seat of game.seats) {
-    if (!Seat.isActive(seat)) continue;
-    const activeSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
-    if (activeSeat.allIn) continue;
-
-    // Player hasn't matched the current bet
-    if (activeSeat.bet !== game.hand.currentBet) {
-      return false;
-    }
-  }
-
-  // If we have a last raiser and current player is back to them, round is complete
-  if (
-    game.hand.lastRaiser !== -1 &&
-    game.hand.actingSeat === game.hand.lastRaiser
-  ) {
-    return true;
-  }
-
-  // If no one raised (all checks) and we're back to first actor, round is complete
-  if (game.hand.lastRaiser === -1 && game.hand.actingSeat === -1) {
-    return true;
-  }
-
-  return false;
+  if (countActivePlayers(game) <= 1) return true;
+  if (countPlayersWhoCanAct(game) === 0) return true;
+  if (!allBetsMatched(game)) return false;
+  return isRoundCycleComplete(game);
 }
 
 /**

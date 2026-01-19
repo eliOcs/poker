@@ -336,10 +336,53 @@ class Game extends LitElement {
     return null;
   }
 
+  static _connectionStatusLabels = {
+    disconnected: "Not connected",
+    connecting: "Connecting ...",
+    connected: "Connected",
+  };
+
+  _renderConnectionStatus() {
+    return Game._connectionStatusLabels[this.connectionStatus] || "";
+  }
+
+  _renderRankingModal() {
+    if (!this.showRanking) return "";
+    return html`<phg-modal title="Table Ranking" @close=${this.closeRanking}
+      ><phg-ranking-panel
+        .rankings=${this.game?.rankings || []}
+      ></phg-ranking-panel
+    ></phg-modal>`;
+  }
+
+  _renderSettingsModal() {
+    if (!this.showSettings) return "";
+    return html`
+      <phg-modal title="Settings" @close=${this.closeSettings}>
+        <div class="settings-content">
+          <input
+            id="name-input"
+            type="text"
+            placeholder="Enter your name"
+            maxlength="20"
+            .value=${this.getCurrentPlayerName()}
+            @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
+          />
+          <div class="buttons">
+            <phg-button variant="secondary" @click=${this.closeSettings}
+              >Cancel</phg-button
+            >
+            <phg-button variant="success" @click=${this.saveSettings}
+              >Save</phg-button
+            >
+          </div>
+        </div>
+      </phg-modal>
+    `;
+  }
+
   render() {
-    if (!this.game) {
-      return html`<p>Loading ...</p>`;
-    }
+    if (!this.game) return html`<p>Loading ...</p>`;
 
     const { seatIndex, actions } = this.getMySeatInfo();
     const isSeated = this.isPlayerSeated();
@@ -356,23 +399,21 @@ class Game extends LitElement {
             .blinds=${this.game.blinds}
           ></phg-board>
           <div id="seats">
-            ${this.game.seats.map((seat, i) => {
-              // Hide empty seats when player is already seated
-              if (seat.empty && isSeated) return "";
-              return html`
-                <phg-seat
-                  data-seat="${i}"
-                  .seat=${seat}
-                  .seatNumber=${i}
-                  .isButton=${this.game.button === i}
-                  .showSitAction=${!isSeated}
-                  .clockTicks=${this.game.hand?.actingSeat === i
-                    ? this.game.hand?.clockTicks
-                    : 0}
-                  @seat-action=${this.handleSeatAction}
-                ></phg-seat>
-              `;
-            })}
+            ${this.game.seats.map((seat, i) =>
+              seat.empty && isSeated
+                ? ""
+                : html`<phg-seat
+                    data-seat="${i}"
+                    .seat=${seat}
+                    .seatNumber=${i}
+                    .isButton=${this.game.button === i}
+                    .showSitAction=${!isSeated}
+                    .clockTicks=${this.game.hand?.actingSeat === i
+                      ? this.game.hand?.clockTicks
+                      : 0}
+                    @seat-action=${this.handleSeatAction}
+                  ></phg-seat>`,
+            )}
           </div>
           <div id="bets">
             ${this.game.seats.map((seat, i) =>
@@ -391,11 +432,7 @@ class Game extends LitElement {
           .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
           @game-action=${this.handleGameAction}
         ></phg-action-panel>
-        <span id="connection-status">
-          ${this.connectionStatus === "disconnected" ? "Not connected" : ""}
-          ${this.connectionStatus === "connecting" ? "Connecting ..." : ""}
-          ${this.connectionStatus === "connected" ? "Connected" : ""}
-        </span>
+        <span id="connection-status">${this._renderConnectionStatus()}</span>
         <button
           id="history-btn"
           @click=${this.openHistory}
@@ -409,42 +446,7 @@ class Game extends LitElement {
         <button id="settings-btn" @click=${this.openSettings} title="Settings">
           ⚙
         </button>
-        ${this.showRanking
-          ? html`
-              <phg-modal title="Table Ranking" @close=${this.closeRanking}>
-                <phg-ranking-panel
-                  .rankings=${this.game?.rankings || []}
-                ></phg-ranking-panel>
-              </phg-modal>
-            `
-          : ""}
-        ${this.showSettings
-          ? html`
-              <phg-modal title="Settings" @close=${this.closeSettings}>
-                <div class="settings-content">
-                  <input
-                    id="name-input"
-                    type="text"
-                    placeholder="Enter your name"
-                    maxlength="20"
-                    .value=${this.getCurrentPlayerName()}
-                    @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
-                  />
-                  <div class="buttons">
-                    <phg-button
-                      variant="secondary"
-                      @click=${this.closeSettings}
-                    >
-                      Cancel
-                    </phg-button>
-                    <phg-button variant="success" @click=${this.saveSettings}>
-                      Save
-                    </phg-button>
-                  </div>
-                </div>
-              </phg-modal>
-            `
-          : ""}
+        ${this._renderRankingModal()} ${this._renderSettingsModal()}
       </div>
     `;
   }
