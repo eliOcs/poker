@@ -23,100 +23,6 @@ class ActionPanel extends LitElement {
           min-height: 100px;
         }
 
-        button {
-          padding: var(--space-md) var(--space-lg);
-          font-family: inherit;
-          font-size: var(--font-md);
-          cursor: pointer;
-          border: 3px solid var(--color-bg-dark);
-          box-shadow:
-            3px 3px 0 var(--color-bg-dark),
-            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        button:active {
-          box-shadow:
-            1px 1px 0 var(--color-bg-dark),
-            inset 2px 2px 0 rgba(0, 0, 0, 0.2),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.2);
-          transform: translate(2px, 2px);
-        }
-
-        button.fold {
-          background-color: var(--color-error);
-          color: var(--color-fg-white);
-        }
-
-        button.fold:hover {
-          background-color: color-mix(in oklch, var(--color-error) 80%, white);
-        }
-
-        button.check,
-        button.call {
-          background-color: var(--color-success);
-          color: var(--color-fg-white);
-        }
-
-        button.check:hover,
-        button.call:hover {
-          background-color: color-mix(
-            in oklch,
-            var(--color-success) 80%,
-            white
-          );
-        }
-
-        button.bet,
-        button.raise {
-          background-color: var(--color-accent);
-          color: var(--color-fg-white);
-        }
-
-        button.bet:hover,
-        button.raise:hover {
-          background-color: color-mix(in oklch, var(--color-accent) 80%, white);
-        }
-
-        button.all-in {
-          background-color: var(--color-primary);
-          color: var(--color-fg-white);
-        }
-
-        button.all-in:hover {
-          background-color: color-mix(
-            in oklch,
-            var(--color-primary) 80%,
-            white
-          );
-        }
-
-        button.buy-in {
-          background-color: var(--color-secondary);
-          color: var(--color-fg-white);
-        }
-
-        button.buy-in:hover {
-          background-color: color-mix(
-            in oklch,
-            var(--color-secondary) 80%,
-            white
-          );
-        }
-
-        button.call-clock {
-          background-color: var(--color-warning);
-          color: var(--color-fg-white);
-        }
-
-        button.call-clock:hover {
-          background-color: color-mix(
-            in oklch,
-            var(--color-warning) 80%,
-            white
-          );
-        }
-
         /* Betting panel styles */
         .betting-panel {
           display: flex;
@@ -151,21 +57,6 @@ class ActionPanel extends LitElement {
           margin: 0;
         }
 
-        .slider-row button.step-btn {
-          padding: var(--space-md) var(--space-md);
-          font-size: var(--font-md);
-          min-width: auto;
-          background-color: var(--color-bg-disabled);
-          color: var(--color-fg-white);
-        }
-
-        .slider-row button.step-btn:hover {
-          background-color: color-mix(
-            in oklch,
-            var(--color-bg-disabled) 80%,
-            white
-          );
-        }
 
         .slider-row input[type="range"] {
           flex: 1;
@@ -202,20 +93,22 @@ class ActionPanel extends LitElement {
           width: 100%;
         }
 
-        .action-row button,
-        .simple-actions button {
+        .action-row phg-button,
+        .simple-actions phg-button {
+          display: block;
           width: 100%;
+        }
+
+        .action-row .amount,
+        .simple-actions .amount {
+          font-size: var(--font-md);
+        }
+
+        .stacked {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
           gap: var(--space-md);
-          padding: var(--space-md) var(--space-lg);
-          white-space: nowrap;
-        }
-
-        .action-row .amount {
-          font-size: var(--font-md);
         }
 
         .waiting {
@@ -386,12 +279,13 @@ class ActionPanel extends LitElement {
                 this.betAmount = Math.max(min, Math.min(max, bb));
               }}
             />
-            <button
-              class="step-btn"
+            <phg-button
+              variant="muted"
+              size="compact"
               @click=${() => this.adjustBet(-10, min, max)}
             >
               -
-            </button>
+            </phg-button>
             <input
               type="range"
               min="${min}"
@@ -399,16 +293,18 @@ class ActionPanel extends LitElement {
               .value="${bbCount}"
               @input=${(e) => (this.betAmount = parseInt(e.target.value))}
             />
-            <button
-              class="step-btn"
+            <phg-button
+              variant="muted"
+              size="compact"
               @click=${() => this.adjustBet(10, min, max)}
             >
               +
-            </button>
+            </phg-button>
           </div>
           <div class="action-row">
-            <button
-              class="buy-in"
+            <phg-button
+              variant="secondary"
+              full-width
               @click=${() =>
                 this.sendAction({
                   action: "buyIn",
@@ -416,9 +312,11 @@ class ActionPanel extends LitElement {
                   amount: bbCount,
                 })}
             >
-              <span>Buy In</span>
-              <span class="amount">${formatCurrency(stack)}</span>
-            </button>
+              <span class="stacked">
+                <span>Buy In</span>
+                <span class="amount">${formatCurrency(stack)}</span>
+              </span>
+            </phg-button>
           </div>
         </div>
       `;
@@ -506,12 +404,13 @@ class ActionPanel extends LitElement {
               .value="${(currentValue / 100).toFixed(2)}"
               @input=${(e) => this.handleManualInput(e, min, max)}
             />
-            <button
-              class="step-btn"
+            <phg-button
+              variant="muted"
+              size="compact"
               @click=${() => this.adjustBet(-step, min, max)}
             >
               -
-            </button>
+            </phg-button>
             <input
               type="range"
               min="${min}"
@@ -520,29 +419,32 @@ class ActionPanel extends LitElement {
               .value="${currentValue}"
               @input=${(e) => (this.betAmount = parseInt(e.target.value))}
             />
-            <button
-              class="step-btn"
+            <phg-button
+              variant="muted"
+              size="compact"
               @click=${() => this.adjustBet(step, min, max)}
             >
               +
-            </button>
+            </phg-button>
           </div>
           <div class="action-row">
             ${actionMap.fold
               ? html`
-                  <button
-                    class="fold"
+                  <phg-button
+                    variant="danger"
+                    full-width
                     @click=${() =>
                       this.sendAction({ action: "fold", seat: this.seatIndex })}
                   >
                     Fold
-                  </button>
+                  </phg-button>
                 `
               : null}
             ${actionMap.check
               ? html`
-                  <button
-                    class="check"
+                  <phg-button
+                    variant="success"
+                    full-width
                     @click=${() =>
                       this.sendAction({
                         action: "check",
@@ -550,25 +452,29 @@ class ActionPanel extends LitElement {
                       })}
                   >
                     Check
-                  </button>
+                  </phg-button>
                 `
               : null}
             ${actionMap.call
               ? html`
-                  <button
-                    class="call"
+                  <phg-button
+                    variant="success"
+                    full-width
                     @click=${() =>
                       this.sendAction({ action: "call", seat: this.seatIndex })}
                   >
-                    <span>Call</span>
-                    <span class="amount"
-                      >${formatCurrency(actionMap.call.amount)}</span
-                    >
-                  </button>
+                    <span class="stacked">
+                      <span>Call</span>
+                      <span class="amount"
+                        >${formatCurrency(actionMap.call.amount)}</span
+                      >
+                    </span>
+                  </phg-button>
                 `
               : null}
-            <button
-              class="${isAllIn ? "all-in" : isBet ? "bet" : "raise"}"
+            <phg-button
+              variant="${isAllIn ? "primary" : "action"}"
+              full-width
               @click=${() =>
                 this.sendAction(
                   isAllIn
@@ -580,9 +486,11 @@ class ActionPanel extends LitElement {
                       },
                 )}
             >
-              <span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span>
-              <span class="amount">${formatCurrency(currentValue)}</span>
-            </button>
+              <span class="stacked">
+                <span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span>
+                <span class="amount">${formatCurrency(currentValue)}</span>
+              </span>
+            </phg-button>
           </div>
         </div>
       `;
@@ -593,38 +501,43 @@ class ActionPanel extends LitElement {
 
     if (actionMap.fold) {
       simpleButtons.push(html`
-        <button
-          class="fold"
+        <phg-button
+          variant="danger"
+          full-width
           @click=${() =>
             this.sendAction({ action: "fold", seat: this.seatIndex })}
         >
           Fold
-        </button>
+        </phg-button>
       `);
     }
 
     if (actionMap.check) {
       simpleButtons.push(html`
-        <button
-          class="check"
+        <phg-button
+          variant="success"
+          full-width
           @click=${() =>
             this.sendAction({ action: "check", seat: this.seatIndex })}
         >
           Check
-        </button>
+        </phg-button>
       `);
     }
 
     if (actionMap.call) {
       simpleButtons.push(html`
-        <button
-          class="call"
+        <phg-button
+          variant="success"
+          full-width
           @click=${() =>
             this.sendAction({ action: "call", seat: this.seatIndex })}
         >
-          <span>Call</span>
-          <span class="amount">${formatCurrency(actionMap.call.amount)}</span>
-        </button>
+          <span class="stacked">
+            <span>Call</span>
+            <span class="amount">${formatCurrency(actionMap.call.amount)}</span>
+          </span>
+        </phg-button>
       `);
     }
 
@@ -636,13 +549,14 @@ class ActionPanel extends LitElement {
     if (actionMap.callClock) {
       return html`
         <div class="simple-actions">
-          <button
-            class="call-clock"
+          <phg-button
+            variant="warning"
+            full-width
             @click=${() =>
               this.sendAction({ action: "callClock", seat: this.seatIndex })}
           >
             Call Clock
-          </button>
+          </phg-button>
         </div>
       `;
     }

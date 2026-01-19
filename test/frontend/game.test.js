@@ -8,6 +8,17 @@ import {
   mockEmptySeat,
 } from "./setup.js";
 
+// Helper to find phg-button by text content
+function findButtonByText(root, text) {
+  const buttons = root.querySelectorAll("phg-button");
+  for (const btn of buttons) {
+    if (btn.textContent.includes(text)) {
+      return btn;
+    }
+  }
+  return null;
+}
+
 describe("phg-game", () => {
   let element;
 
@@ -88,7 +99,7 @@ describe("phg-game", () => {
 
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
-      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
+      const checkButton = findButtonByText(actionPanel.shadowRoot, "Check");
       checkButton.click();
 
       // Should receive exactly one event, not two

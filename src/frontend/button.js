@@ -17,6 +17,10 @@ class Button extends LitElement {
         }
 
         button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
           padding: var(--space-md) var(--space-lg);
           font-family: inherit;
           font-size: var(--font-md);
@@ -64,10 +68,22 @@ class Button extends LitElement {
         }
 
         :host([variant="secondary"]) button {
+          background-color: var(--color-secondary);
+        }
+
+        :host([variant="muted"]) button {
           background-color: var(--color-bg-disabled);
         }
 
+        :host([variant="warning"]) button {
+          background-color: var(--color-warning);
+        }
+
         /* Sizes */
+        :host([size="compact"]) button {
+          padding: var(--space-md) var(--space-md);
+        }
+
         :host([size="large"]) button {
           padding: calc(var(--space-lg) * 1.25) calc(var(--space-lg) * 2.5);
           font-size: var(--font-lg);
@@ -108,9 +124,23 @@ class Button extends LitElement {
     };
   }
 
+  constructor() {
+    super();
+    this._lastClickTime = 0;
+  }
+
+  handleClick(e) {
+    const now = Date.now();
+    if (now - this._lastClickTime < 100) {
+      e.stopPropagation();
+      return;
+    }
+    this._lastClickTime = now;
+  }
+
   render() {
     return html`
-      <button ?disabled=${this.disabled}>
+      <button ?disabled=${this.disabled} @click=${this.handleClick}>
         <slot></slot>
       </button>
     `;

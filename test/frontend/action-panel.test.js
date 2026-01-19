@@ -11,6 +11,17 @@ import {
   mockSittingOutSeat,
 } from "./setup.js";
 
+// Helper to find phg-button by text content
+function findButtonByText(root, text) {
+  const buttons = root.querySelectorAll("phg-button");
+  for (const btn of buttons) {
+    if (btn.textContent.includes(text)) {
+      return btn;
+    }
+  }
+  return null;
+}
+
 describe("phg-action-panel", () => {
   let element;
 
@@ -57,7 +68,7 @@ describe("phg-action-panel", () => {
       expect(slider.min).to.equal("20");
       expect(slider.max).to.equal("100");
 
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       expect(buyInButton).to.exist;
       expect(buyInButton.textContent).to.include("Buy In");
     });
@@ -69,7 +80,7 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       expect(buyInButton).to.exist;
       // default=80 BB, bigBlind=50, so initial display should be $4,000
       expect(buyInButton.textContent).to.include("$4,000");
@@ -89,7 +100,7 @@ describe("phg-action-panel", () => {
       slider.dispatchEvent(new Event("input"));
       await actionPanel.updateComplete;
 
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       // 50 BB * $50 = $2,500
       expect(buyInButton.textContent).to.include("$2,500");
     });
@@ -110,7 +121,7 @@ describe("phg-action-panel", () => {
       expect(slider.min).to.equal("20"); // fallback
       expect(slider.max).to.equal("100"); // fallback
 
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       // fallback: default=80 BB, bigBlind=50, so $4,000
       expect(buyInButton.textContent).to.include("$4,000");
     });
@@ -122,9 +133,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
+      const checkButton = findButtonByText(actionPanel.shadowRoot, "Check");
       expect(checkButton).to.exist;
-      expect(checkButton.textContent.trim()).to.equal("Check");
+      expect(checkButton.textContent).to.include("Check");
     });
 
     it("renders Call button with amount", async () => {
@@ -134,7 +145,7 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const callButton = actionPanel.shadowRoot.querySelector("button.call");
+      const callButton = findButtonByText(actionPanel.shadowRoot, "Call");
       expect(callButton).to.exist;
       expect(callButton.textContent).to.include("Call");
       expect(callButton.textContent).to.include("$25"); // $25 from 2500 cents
@@ -147,9 +158,9 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const foldButton = actionPanel.shadowRoot.querySelector("button.fold");
+      const foldButton = findButtonByText(actionPanel.shadowRoot, "Fold");
       expect(foldButton).to.exist;
-      expect(foldButton.textContent.trim()).to.equal("Fold");
+      expect(foldButton.textContent).to.include("Fold");
     });
 
     it("renders Bet slider and button", async () => {
@@ -159,7 +170,7 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const betButton = actionPanel.shadowRoot.querySelector("button.bet");
+      const betButton = findButtonByText(actionPanel.shadowRoot, "Bet");
       expect(betButton).to.exist;
       expect(betButton.textContent).to.include("Bet");
       expect(betButton.textContent).to.include("$"); // Now shows amount
@@ -177,7 +188,7 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const raiseButton = actionPanel.shadowRoot.querySelector("button.raise");
+      const raiseButton = findButtonByText(actionPanel.shadowRoot, "Raise");
       expect(raiseButton).to.exist;
       expect(raiseButton.textContent).to.include("Raise");
     });
@@ -190,7 +201,7 @@ describe("phg-action-panel", () => {
       actionPanel.betAmount = 100000; // Set to max ($1,000 in cents)
       await actionPanel.updateComplete;
 
-      const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
+      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
     });
@@ -209,7 +220,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       buyInButton.click();
 
       expect(sentMessage).to.exist;
@@ -230,7 +241,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const checkButton = actionPanel.shadowRoot.querySelector("button.check");
+      const checkButton = findButtonByText(actionPanel.shadowRoot, "Check");
       checkButton.click();
 
       expect(sentMessage).to.exist;
@@ -250,7 +261,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const callButton = actionPanel.shadowRoot.querySelector("button.call");
+      const callButton = findButtonByText(actionPanel.shadowRoot, "Call");
       callButton.click();
 
       expect(sentMessage).to.exist;
@@ -270,7 +281,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const foldButton = actionPanel.shadowRoot.querySelector("button.fold");
+      const foldButton = findButtonByText(actionPanel.shadowRoot, "Fold");
       foldButton.click();
 
       expect(sentMessage).to.exist;
@@ -290,7 +301,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const betButton = actionPanel.shadowRoot.querySelector("button.bet");
+      const betButton = findButtonByText(actionPanel.shadowRoot, "Bet");
       betButton.click();
 
       expect(sentMessage).to.exist;
@@ -311,7 +322,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const raiseButton = actionPanel.shadowRoot.querySelector("button.raise");
+      const raiseButton = findButtonByText(actionPanel.shadowRoot, "Raise");
       raiseButton.click();
 
       expect(sentMessage).to.exist;
@@ -333,7 +344,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const allInButton = actionPanel.shadowRoot.querySelector("button.all-in");
+      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
       allInButton.click();
 
       expect(sentMessage).to.exist;
@@ -534,7 +545,7 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       // The buy-in button should show default (80 BB * $50 = $4,000)
-      const buyInButton = actionPanel.shadowRoot.querySelector("button.buy-in");
+      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       expect(buyInButton.textContent).to.include("$4,000");
     });
 
