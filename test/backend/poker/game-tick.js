@@ -1,7 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import * as Game from "../../../src/backend/poker/game.js";
-import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
 import {
   tick,
@@ -13,16 +12,14 @@ import {
   CLOCK_WAIT_TICKS,
   CLOCK_DURATION_TICKS,
 } from "../../../src/backend/poker/game-tick.js";
+import { createHeadsUpGame } from "./test-helpers.js";
 
 describe("game-tick", () => {
   /** @type {import('../../../src/backend/poker/game.js').Game} */
   let game;
 
   beforeEach(() => {
-    game = Game.create({ seats: 6, blinds: { ante: 0, small: 25, big: 50 } });
-    game.seats[0] = Seat.occupied({ id: "player1" }, 1000);
-    game.seats[2] = Seat.occupied({ id: "player2" }, 1000);
-    game.button = 0;
+    game = createHeadsUpGame();
   });
 
   describe("tick", () => {

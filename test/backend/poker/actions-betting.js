@@ -1,20 +1,14 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../../src/backend/poker/game.js";
-import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
+import { createGameWithPlayers } from "./test-helpers.js";
 
 describe("betting actions", () => {
   let game;
 
   beforeEach(() => {
-    game = Game.create({ seats: 6, blinds: { ante: 0, small: 25, big: 50 } });
-    // Set up 3 players at seats 0, 2, 4
-    game.seats[0] = Seat.occupied({ id: "player1" }, 1000);
-    game.seats[2] = Seat.occupied({ id: "player2" }, 1000);
-    game.seats[4] = Seat.occupied({ id: "player3" }, 1000);
-    game.button = 0;
+    game = createGameWithPlayers();
     // Start a betting round
     Betting.startBettingRound(game, "flop");
   });

@@ -9,6 +9,7 @@ import {
   CLOCK_WAIT_TICKS,
   CLOCK_DURATION_TICKS,
 } from "../../../src/backend/poker/game-tick.js";
+import { drainGenerator } from "./test-helpers.js";
 
 describe("call the clock", () => {
   /** @type {import('../../../src/backend/poker/game.js').Game} */
@@ -41,7 +42,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
 
       // actingTicks is managed by the tick system, not betting
@@ -56,7 +57,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -79,7 +80,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -98,7 +99,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -116,7 +117,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -137,7 +138,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -192,7 +193,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -216,7 +217,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -240,7 +241,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -270,7 +271,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
@@ -296,7 +297,7 @@ describe("call the clock", () => {
       blindsGen.next();
       blindsGen.next();
       const dealGen = Actions.dealPreflop(game);
-      while (!dealGen.next().done);
+      drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 

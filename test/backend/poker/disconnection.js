@@ -1,18 +1,14 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Game from "../../../src/backend/poker/game.js";
-import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
 import playerView from "../../../src/backend/poker/player-view.js";
+import { createHeadsUpGame } from "./test-helpers.js";
 
 describe("disconnection handling", () => {
   let game;
 
   beforeEach(() => {
-    game = Game.create({ seats: 6, blinds: { ante: 0, small: 25, big: 50 } });
-    game.seats[0] = Seat.occupied({ id: "player1" }, 1000);
-    game.seats[2] = Seat.occupied({ id: "player2" }, 1000);
-    game.button = 0;
+    game = createHeadsUpGame();
   });
 
   describe("seat disconnected property", () => {
