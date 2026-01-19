@@ -23,28 +23,41 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 ```
 src/
 ├── backend/             # Server-side code
-│   ├── index.js         # HTTP + WebSocket server
+│   ├── index.js         # HTTP + WebSocket server entry
+│   ├── http-routes.js   # HTTP route handlers
+│   ├── websocket-handler.js # WebSocket message handling
 │   ├── static-files.js  # Static file serving
+│   ├── logger.js        # Logging utilities
+│   ├── player-store.js  # Player session management
 │   └── poker/           # Game logic (pure functions)
 │       ├── game.js          # Game state initialization
+│       ├── game-tick.js     # Game tick orchestration
 │       ├── actions.js       # Game actions (generators)
 │       ├── betting.js       # Betting logic and turn management
+│       ├── dealing.js       # Card dealing logic
 │       ├── hand-rankings.js # Hand evaluation & comparison
-│       ├── hand-history.js  # OHH format hand history
+│       ├── hand-history/    # OHH format hand history
+│       │   ├── index.js     # History generation
+│       │   ├── io.js        # File I/O operations
+│       │   └── view.js      # History view formatting
 │       ├── player.js        # Player identity
 │       ├── player-view.js   # Server-side view filtering
 │       ├── pots.js          # Pot calculation and side pots
 │       ├── ranking.js       # Hand ranking utilities
 │       ├── seat.js          # Seat representation
 │       ├── showdown.js      # Showdown logic
+│       ├── stakes.js        # Blind/ante configuration
 │       ├── deck.js          # Card deck management
 │       ├── rng.js           # Random number generation
+│       ├── types.js         # TypeScript type definitions
 │       └── circular-array.js
 └── frontend/            # Browser UI (Lit web components)
     ├── index.html       # Entry point with importmap
+    ├── manifest.json    # PWA manifest
     ├── app.js           # Main app router
     ├── index.js         # Game table component
     ├── history.js       # Hand history viewer
+    ├── history-styles.js # History page styles
     ├── home.js          # Landing page
     ├── action-panel.js  # Betting action buttons
     ├── board.js         # Community cards
@@ -53,13 +66,17 @@ src/
     ├── button.js        # Generic button component
     ├── modal.js         # Modal dialog
     ├── ranking-panel.js # Hand rankings display
+    ├── toast.js         # Toast notifications
     └── styles.js        # Design tokens and base styles
 
 test/
-├── poker/               # Backend unit tests (mirrors src/backend/poker)
+├── backend/poker/       # Backend unit tests (mirrors src/backend/poker)
 ├── frontend/            # Frontend component tests (web-test-runner)
+│   └── fixtures/        # Test fixtures for components
 ├── e2e/                 # End-to-end tests (Playwright)
+│   └── utils/           # Test utilities and helpers
 └── ui-catalog/          # Visual regression tests (Playwright screenshots)
+    └── test-cases/      # Modular test case definitions
 ```
 
 ## Communication Model
@@ -162,6 +179,8 @@ npm run test:frontend           # Run frontend component tests (web-test-runner)
 npm run test:e2e                # Run end-to-end tests (Playwright)
 npm run test:ui-catalog         # Run visual regression tests
 npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
+npm run coverage                # Run tests with coverage reporting
+npm run duplicates              # Check for code duplication (jscpd)
 npm run lint                    # ESLint + Stylelint
 npm run format                  # Prettier
 npm run typecheck               # TypeScript type checking
@@ -198,7 +217,7 @@ PORT=3000
 
 ### Testing
 
-**Backend tests** (`test/poker/`):
+**Backend tests** (`test/backend/poker/`):
 
 - Use `node:test` and `node:assert`
 - Test generators by calling `.next()` explicitly
@@ -288,3 +307,4 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `@open-wc/testing`, `web-test-runner` - Frontend testing
 - `@playwright/test` - E2E and visual regression testing
 - `sinon` - Test mocks
+- `jscpd` - Code duplication detection
