@@ -239,7 +239,7 @@ export class PokerPlayer {
   async act(action) {
     if (action === "allIn") {
       // Click the + button repeatedly to reach max bet (All-In)
-      const plusBtn = this.actionPanel.locator("button.step-btn").last();
+      const plusBtn = this.actionPanel.getByRole("button", { name: "+" });
       // Click until All-In button appears (max 50 clicks to prevent infinite loop)
       for (let i = 0; i < 50; i++) {
         const allInBtn = this.actionPanel.getByRole("button", {

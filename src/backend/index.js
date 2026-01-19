@@ -716,6 +716,9 @@ wss.on(
       const { action, ...args } = JSON.parse(rawMessage);
       const bettingActions = ["check", "call", "bet", "raise", "fold", "allIn"];
 
+      // Log all WebSocket messages like HTTP requests
+      logger.info("ws message", { gameId, playerId: player.id, action, ...args });
+
       // Handle setName separately (not a poker action)
       if (action === "setName") {
         const name = args.name?.trim().substring(0, 20) || null;
@@ -737,12 +740,6 @@ wss.on(
 
       try {
         PokerActions[action](game, { player, ...args });
-
-        // Log game actions (debug for betting, info for others)
-        const logFn = bettingActions.includes(action)
-          ? logger.debug
-          : logger.info;
-        logFn("game action", { gameId, playerId: player.id, action });
 
         // Record betting actions to history
         if (bettingActions.includes(action) && seatBefore) {
