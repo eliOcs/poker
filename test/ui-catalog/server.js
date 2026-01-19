@@ -42,6 +42,7 @@ const nodeModulesFiles = {
 const routes = {
   "/": "test/ui-catalog/index.html",
   "/test-cases.js": "test/ui-catalog/test-cases.js",
+  "/test-cases-history.js": "test/ui-catalog/test-cases-history.js",
   "/fixtures.js": "test/frontend/fixtures.js",
   "/logo.png": "src/frontend/logo.png",
 };

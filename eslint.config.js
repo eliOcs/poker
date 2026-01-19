@@ -56,10 +56,4 @@ export default [
       },
     },
   },
-  {
-    files: ["test/ui-catalog/test-cases.js"],
-    rules: {
-      "max-lines": "off",
-    },
-  },
 ];
