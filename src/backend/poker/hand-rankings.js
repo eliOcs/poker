@@ -465,36 +465,29 @@ function formatRank(rank) {
   return rank;
 }
 
+/** @type {Record<string, (hand: any) => string>} */
+const HAND_FORMATTERS = {
+  "royal flush": () => "Royal Flush",
+  "straight flush": (h) => `Straight Flush, ${formatRank(h.to)} high`,
+  "4 of a kind": (h) => `Four ${formatRank(h.of)}s`,
+  "full house": (h) =>
+    `Full House, ${formatRank(h.of)}s over ${formatRank(h.and)}s`,
+  flush: (h) => `Flush, ${formatRank(h.high)} high`,
+  straight: (h) => `Straight, ${formatRank(h.to)} high`,
+  "3 of a kind": (h) => `Three ${formatRank(h.of)}s`,
+  "2 pair": (h) => `Two Pair, ${formatRank(h.of)}s and ${formatRank(h.and)}s`,
+  pair: (h) => `Pair of ${formatRank(h.of)}s`,
+  "high card": (h) => `${formatRank(h.ranks[0])} High`,
+};
+
 /**
  * Formats an evaluated hand as a human-readable string
  * @param {EvaluatedHand} hand
  * @returns {string}
  */
 function formatHand(hand) {
-  switch (hand.name) {
-    case "royal flush":
-      return "Royal Flush";
-    case "straight flush":
-      return `Straight Flush, ${formatRank(hand.to)} high`;
-    case "4 of a kind":
-      return `Four ${formatRank(hand.of)}s`;
-    case "full house":
-      return `Full House, ${formatRank(hand.of)}s over ${formatRank(hand.and)}s`;
-    case "flush":
-      return `Flush, ${formatRank(hand.high)} high`;
-    case "straight":
-      return `Straight, ${formatRank(hand.to)} high`;
-    case "3 of a kind":
-      return `Three ${formatRank(hand.of)}s`;
-    case "2 pair":
-      return `Two Pair, ${formatRank(hand.of)}s and ${formatRank(hand.and)}s`;
-    case "pair":
-      return `Pair of ${formatRank(hand.of)}s`;
-    case "high card":
-      return `${formatRank(hand.ranks[0])} High`;
-    default:
-      return "";
-  }
+  const formatter = HAND_FORMATTERS[hand.name];
+  return formatter ? formatter(hand) : "";
 }
 
 export default {

@@ -1,7 +1,6 @@
 import { test, expect } from "./utils/fixtures.js";
 import {
   createGame,
-  createGameViaUI,
   waitForPhase,
   playBettingRound,
   waitForHandEnd,

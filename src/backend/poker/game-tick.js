@@ -26,13 +26,57 @@ export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
  */
 
 /**
+ * Handles countdown tick logic
+ * @param {Game} game
+ * @param {TickResult} result
+ */
+function handleCountdown(game, result) {
+  if (game.countdown === null) return;
+
+  game.countdown -= 1;
+  result.shouldBroadcast = true;
+
+  if (game.countdown <= 0) {
+    game.countdown = null;
+    result.startHand = true;
+  }
+}
+
+/**
+ * Handles disconnect auto-action check
+ * @param {Game} game
+ * @param {number} actingSeat
+ * @param {TickResult} result
+ */
+function handleDisconnectAutoAction(game, actingSeat, result) {
+  const seat = game.seats[actingSeat];
+  if (seat.empty || !seat.disconnected) return;
+
+  game.disconnectedActingTicks += 1;
+  if (game.disconnectedActingTicks >= DISCONNECT_TICKS) {
+    result.autoActionSeat = actingSeat;
+    result.autoActionReason = "disconnect";
+  }
+}
+
+/**
+ * Handles clock expiry auto-action check
+ * @param {Game} game
+ * @param {number} actingSeat
+ * @param {TickResult} result
+ */
+function handleClockExpiry(game, actingSeat, result) {
+  if (game.clockTicks === 0 || result.autoActionSeat !== null) return;
+
+  game.clockTicks += 1;
+  if (game.clockTicks >= CLOCK_DURATION_TICKS) {
+    result.autoActionSeat = actingSeat;
+    result.autoActionReason = "clock";
+  }
+}
+
+/**
  * Processes one game tick (called every second, or faster with TIMER_SPEED)
- * Handles:
- * - Countdown to start hand
- * - Disconnect timeout (auto check/fold after DISCONNECT_TICKS)
- * - Clock expiry (auto check/fold after CLOCK_DURATION_TICKS)
- * - Acting time tracking (for call clock availability)
- *
  * @param {Game} game
  * @returns {TickResult}
  */
@@ -46,51 +90,19 @@ export function tick(game) {
     autoActionReason: null,
   };
 
-  // 1. Countdown logic (before hand starts)
-  if (game.countdown !== null) {
-    game.countdown -= 1;
-    result.shouldBroadcast = true;
-
-    if (game.countdown <= 0) {
-      game.countdown = null;
-      result.startHand = true;
-    }
-  }
+  handleCountdown(game, result);
 
   const actingSeat = game.hand?.actingSeat;
   const isActing = actingSeat !== -1 && actingSeat !== undefined;
 
   if (isActing) {
-    const seat = game.seats[actingSeat];
-
-    // Increment acting ticks
     game.actingTicks += 1;
-
-    // 2. Disconnect auto-action
-    if (!seat.empty && seat.disconnected) {
-      game.disconnectedActingTicks += 1;
-      if (game.disconnectedActingTicks >= DISCONNECT_TICKS) {
-        result.autoActionSeat = actingSeat;
-        result.autoActionReason = "disconnect";
-      }
-    }
-
-    // 3. Clock expiry auto-action
-    if (game.clockTicks > 0 && result.autoActionSeat === null) {
-      game.clockTicks += 1;
-      if (game.clockTicks >= CLOCK_DURATION_TICKS) {
-        result.autoActionSeat = actingSeat;
-        result.autoActionReason = "clock";
-      }
-    }
-
-    // Always broadcast while someone is acting (keeps clients in sync)
+    handleDisconnectAutoAction(game, actingSeat, result);
+    handleClockExpiry(game, actingSeat, result);
     result.shouldBroadcast = true;
   }
 
-  // Determine if tick should continue running
-  const hasActivity = game.countdown !== null || isActing;
-  if (!hasActivity) {
+  if (game.countdown === null && !isActing) {
     result.shouldStopTick = true;
   }
 

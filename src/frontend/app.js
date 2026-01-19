@@ -246,53 +246,51 @@ class App extends LitElement {
     }
   }
 
-  render() {
-    const gameMatch = this.path.match(/^\/games\/([a-z0-9]+)$/);
-    const historyMatch = this.path.match(
-      /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
-    );
-
-    // Determine gameId from either route
-    const gameId = gameMatch?.[1] || historyMatch?.[1] || null;
-
-    // Manage WebSocket connection based on current route
+  _manageConnection(gameId) {
     if (gameId) {
       this.connectToGame(gameId);
     } else if (this._activeGameId) {
       this.disconnectFromGame();
     }
+  }
 
-    // Render game view
-    if (gameMatch) {
-      return html`${this.renderToast()}<phg-game
-          .gameId=${gameMatch[1]}
-          .game=${this.game}
-          .connectionStatus=${this.gameConnectionStatus}
-        ></phg-game>`;
+  _renderGameView(gameMatch) {
+    return html`${this.renderToast()}<phg-game
+        .gameId=${gameMatch[1]}
+        .game=${this.game}
+        .connectionStatus=${this.gameConnectionStatus}
+      ></phg-game>`;
+  }
+
+  _renderHistoryView(historyMatch) {
+    const handNumber = historyMatch[2] ? parseInt(historyMatch[2], 10) : null;
+    if (
+      historyMatch[1] !== this._historyGameId ||
+      handNumber !== this._historyHandNumber
+    ) {
+      this.fetchHistoryData(historyMatch[1], handNumber);
     }
+    return html`${this.renderToast()}<phg-history
+        .gameId=${historyMatch[1]}
+        .handNumber=${this._historyHandNumber}
+        .hand=${this.historyHand}
+        .view=${this.historyView}
+        .handList=${this.historyHandList}
+        .loading=${this.historyLoading}
+      ></phg-history>`;
+  }
 
-    // Render history view (connection stays alive for same gameId)
-    if (historyMatch) {
-      const handNumber = historyMatch[2] ? parseInt(historyMatch[2], 10) : null;
+  render() {
+    const gameMatch = this.path.match(/^\/games\/([a-z0-9]+)$/);
+    const historyMatch = this.path.match(
+      /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
+    );
+    const gameId = gameMatch?.[1] || historyMatch?.[1] || null;
 
-      // Trigger data fetch if needed
-      if (
-        historyMatch[1] !== this._historyGameId ||
-        handNumber !== this._historyHandNumber
-      ) {
-        this.fetchHistoryData(historyMatch[1], handNumber);
-      }
+    this._manageConnection(gameId);
 
-      return html`${this.renderToast()}<phg-history
-          .gameId=${historyMatch[1]}
-          .handNumber=${this._historyHandNumber}
-          .hand=${this.historyHand}
-          .view=${this.historyView}
-          .handList=${this.historyHandList}
-          .loading=${this.historyLoading}
-        ></phg-history>`;
-    }
-
+    if (gameMatch) return this._renderGameView(gameMatch);
+    if (historyMatch) return this._renderHistoryView(historyMatch);
     return html`${this.renderToast()}<phg-home></phg-home>`;
   }
 }

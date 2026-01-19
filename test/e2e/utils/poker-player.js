@@ -233,60 +233,69 @@ export class PokerPlayer {
   }
 
   /**
+   * Move slider to 25% position
+   */
+  async _moveSliderTo25Percent() {
+    const slider = this.actionPanel.locator('input[type="range"]');
+    const box = await slider.boundingBox();
+    if (box) {
+      const targetX = box.x + box.width * 0.25;
+      const centerY = box.y + box.height / 2;
+      await slider.hover();
+      await this.page.mouse.down();
+      await this.page.mouse.move(targetX, centerY);
+      await this.page.mouse.up();
+    }
+  }
+
+  /**
+   * Click + until All-In button appears
+   */
+  async _clickToAllIn() {
+    const plusBtn = this.actionPanel.getByRole("button", { name: "+" });
+    for (let i = 0; i < 50; i++) {
+      const allInBtn = this.actionPanel.getByRole("button", { name: "All-In" });
+      if (await allInBtn.isVisible().catch(() => false)) break;
+      await plusBtn.click();
+      await this.page.waitForTimeout(50);
+    }
+  }
+
+  /**
    * Perform a betting action
    * @param {'check' | 'call' | 'fold' | 'bet' | 'raise' | 'allIn'} action
    */
   async act(action) {
-    if (action === "allIn") {
-      // Click the + button repeatedly to reach max bet (All-In)
-      const plusBtn = this.actionPanel.getByRole("button", { name: "+" });
-      // Click until All-In button appears (max 50 clicks to prevent infinite loop)
-      for (let i = 0; i < 50; i++) {
-        const allInBtn = this.actionPanel.getByRole("button", {
-          name: "All-In",
-        });
-        if (await allInBtn.isVisible().catch(() => false)) {
-          break;
-        }
-        await plusBtn.click();
-        await this.page.waitForTimeout(50);
-      }
-      await this.actionPanel.getByRole("button", { name: "All-In" }).click();
-    } else if (action === "call") {
-      await this.actionPanel.getByRole("button", { name: /^Call \$/ }).click();
-    } else if (action === "check") {
-      await this.actionPanel.getByRole("button", { name: "Check" }).click();
-    } else if (action === "fold") {
-      await this.actionPanel.getByRole("button", { name: "Fold" }).click();
-    } else if (action === "bet") {
-      const slider = this.actionPanel.locator('input[type="range"]');
-      const box = await slider.boundingBox();
-      if (box) {
-        const targetX = box.x + box.width * 0.25;
-        const centerY = box.y + box.height / 2;
-        await slider.hover();
-        await this.page.mouse.down();
-        await this.page.mouse.move(targetX, centerY);
-        await this.page.mouse.up();
-      }
-      await this.actionPanel.getByRole("button", { name: "Bet" }).click();
-    } else if (action === "raise") {
-      const slider = this.actionPanel.locator('input[type="range"]');
-      const box = await slider.boundingBox();
-      if (box) {
-        const targetX = box.x + box.width * 0.25;
-        const centerY = box.y + box.height / 2;
-        await slider.hover();
-        await this.page.mouse.down();
-        await this.page.mouse.move(targetX, centerY);
-        await this.page.mouse.up();
-      }
-      await this.actionPanel.getByRole("button", { name: /^Raise to/ }).click();
-    } else {
-      throw new Error(`Unknown action: ${action}`);
-    }
-
-    // Wait for state to propagate via WebSocket
+    const handlers = {
+      allIn: async () => {
+        await this._clickToAllIn();
+        await this.actionPanel.getByRole("button", { name: "All-In" }).click();
+      },
+      call: async () => {
+        await this.actionPanel
+          .getByRole("button", { name: /^Call \$/ })
+          .click();
+      },
+      check: async () => {
+        await this.actionPanel.getByRole("button", { name: "Check" }).click();
+      },
+      fold: async () => {
+        await this.actionPanel.getByRole("button", { name: "Fold" }).click();
+      },
+      bet: async () => {
+        await this._moveSliderTo25Percent();
+        await this.actionPanel.getByRole("button", { name: "Bet" }).click();
+      },
+      raise: async () => {
+        await this._moveSliderTo25Percent();
+        await this.actionPanel
+          .getByRole("button", { name: /^Raise to/ })
+          .click();
+      },
+    };
+    const handler = handlers[action];
+    if (!handler) throw new Error(`Unknown action: ${action}`);
+    await handler();
     await this.page.waitForTimeout(200);
   }
 

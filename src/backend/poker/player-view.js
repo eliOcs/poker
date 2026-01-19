@@ -247,93 +247,63 @@ function calculateHandRank(holeCards, boardCards) {
 }
 
 /**
- * Gets available actions for a seat
+ * Gets waiting phase actions for a seated player
+ * @param {import('./seat.js').OccupiedSeat} seat
  * @param {Game} game
- * @param {number} seatIndex
- * @param {number} playerSeatIndex
  * @returns {PlayerAction[]}
  */
-function getAvailableActions(game, seatIndex, playerSeatIndex) {
+function getWaitingPhaseActions(seat, game) {
   /** @type {PlayerAction[]} */
   const actions = [];
-  const seat = game.seats[seatIndex];
 
-  // Empty seat - can sit only if not already seated
-  if (seat.empty) {
-    if (playerSeatIndex === -1) {
-      actions.push({ action: "sit", seat: seatIndex });
+  if (seat.sittingOut) {
+    if (seat.stack >= game.blinds.big) {
+      const cost = seat.missedBigBlind ? game.blinds.big : 0;
+      actions.push({ action: "sitIn", cost });
     }
+    actions.push({ action: "leave" });
     return actions;
   }
 
-  // Not the player's seat - only callClock action possible
-  if (seatIndex !== playerSeatIndex) {
-    // Call clock action - available when someone else is taking too long
-    // This is checked on the player's OWN seat actions, not the acting player's seat
+  if (seat.stack === 0) {
+    actions.push({
+      action: "buyIn",
+      min: 20,
+      max: 100,
+      bigBlind: game.blinds.big,
+    });
     return actions;
   }
 
-  // Call clock action - available when someone else is taking too long
-  if (
-    game.hand?.actingSeat !== -1 &&
-    game.hand?.actingSeat !== playerSeatIndex &&
-    isClockCallable(game)
-  ) {
-    actions.push({ action: "callClock" });
+  if (game.countdown === null && countPlayersWithChips(game) >= 2) {
+    actions.push({ action: "start" });
   }
+  actions.push({ action: "sitOut" });
+  return actions;
+}
 
-  // Player is seated but hand not active - can buy in if no stack, or start game
-  if (game.hand?.phase === "waiting") {
-    if (seat.sittingOut) {
-      // Sitting out - can sit back in if has enough chips for big blind
-      if (seat.stack >= game.blinds.big) {
-        const cost = seat.missedBigBlind ? game.blinds.big : 0;
-        actions.push({ action: "sitIn", cost });
-      }
-      // Can always leave when sitting out
-      actions.push({ action: "leave" });
-    } else if (seat.stack === 0) {
-      actions.push({
-        action: "buyIn",
-        min: 20,
-        max: 100,
-        bigBlind: game.blinds.big,
-      });
-    } else {
-      // Player has chips and not sitting out
-      if (game.countdown === null && countPlayersWithChips(game) >= 2) {
-        // No countdown active, enough players - can start
-        actions.push({ action: "start" });
-      }
-      // Can sit out if has chips
-      actions.push({ action: "sitOut" });
-    }
-    return actions;
-  }
-
-  // Not this player's turn - no betting actions
-  if (game.hand?.actingSeat !== seatIndex) {
-    return actions;
-  }
-
-  // Player's turn to act - generate valid betting actions
+/**
+ * Gets betting actions when it's the player's turn
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @returns {PlayerAction[]}
+ */
+function getBettingActions(seat, game) {
+  /** @type {PlayerAction[]} */
+  const actions = [];
   const currentBet = game.hand.currentBet;
   const playerBet = seat.bet;
   const playerStack = seat.stack;
   const toCall = currentBet - playerBet;
 
-  // Check is valid when there's nothing to call
   if (toCall === 0) {
     actions.push({ action: "check" });
   }
 
-  // Call is valid when there's something to call
   if (toCall > 0 && playerStack > 0) {
-    const callAmount = Math.min(toCall, playerStack);
-    actions.push({ action: "call", amount: callAmount });
+    actions.push({ action: "call", amount: Math.min(toCall, playerStack) });
   }
 
-  // Bet is valid when no one has bet yet (postflop)
   if (currentBet === 0 && playerStack > 0) {
     const minBet = Betting.getMinBet(game);
     actions.push({
@@ -343,30 +313,89 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     });
   }
 
-  // Raise is valid when there's a bet and player has more than call amount
   if (currentBet > 0 && playerStack > toCall) {
-    const minRaise = Betting.getMinRaise(game);
-    const maxRaise = playerBet + playerStack;
-    if (maxRaise >= minRaise) {
-      actions.push({
-        action: "raise",
-        min: Math.min(minRaise, maxRaise),
-        max: maxRaise,
-      });
-    }
+    addRaiseAction(actions, seat, game);
   }
 
-  // All-in is always available if player has chips
   if (playerStack > 0) {
     actions.push({ action: "allIn", amount: playerStack });
   }
 
-  // Fold is always available when there's something to call
   if (toCall > 0) {
     actions.push({ action: "fold" });
   }
 
   return actions;
+}
+
+/**
+ * Adds raise action if valid
+ * @param {PlayerAction[]} actions
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ */
+function addRaiseAction(actions, seat, game) {
+  const minRaise = Betting.getMinRaise(game);
+  const maxRaise = seat.bet + seat.stack;
+  if (maxRaise >= minRaise) {
+    actions.push({
+      action: "raise",
+      min: Math.min(minRaise, maxRaise),
+      max: maxRaise,
+    });
+  }
+}
+
+/**
+ * Checks if call clock action is available
+ * @param {Game} game
+ * @param {number} playerSeatIndex
+ * @returns {boolean}
+ */
+function canCallClock(game, playerSeatIndex) {
+  return (
+    game.hand?.actingSeat !== -1 &&
+    game.hand?.actingSeat !== playerSeatIndex &&
+    isClockCallable(game)
+  );
+}
+
+/**
+ * Gets available actions for a seat
+ * @param {Game} game
+ * @param {number} seatIndex
+ * @param {number} playerSeatIndex
+ * @returns {PlayerAction[]}
+ */
+function getAvailableActions(game, seatIndex, playerSeatIndex) {
+  const seat = game.seats[seatIndex];
+
+  // Empty seat - can sit only if not already seated
+  if (seat.empty) {
+    return playerSeatIndex === -1 ? [{ action: "sit", seat: seatIndex }] : [];
+  }
+
+  // Not the player's seat - no actions
+  if (seatIndex !== playerSeatIndex) {
+    return [];
+  }
+
+  /** @type {PlayerAction[]} */
+  const actions = [];
+
+  if (canCallClock(game, playerSeatIndex)) {
+    actions.push({ action: "callClock" });
+  }
+
+  if (game.hand?.phase === "waiting") {
+    return actions.concat(getWaitingPhaseActions(seat, game));
+  }
+
+  if (game.hand?.actingSeat !== seatIndex) {
+    return actions;
+  }
+
+  return actions.concat(getBettingActions(seat, game));
 }
 
 /**
