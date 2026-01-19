@@ -43,7 +43,12 @@ const routes = {
   "/": "test/ui-catalog/index.html",
   "/test-cases.js": "test/ui-catalog/test-cases.js",
   "/test-cases-history.js": "test/ui-catalog/test-cases-history.js",
-  "/fixtures.js": "test/frontend/fixtures.js",
+  "/test-cases/history-extended.js":
+    "test/ui-catalog/test-cases/history-extended.js",
+  "/test-cases/game-helpers.js": "test/ui-catalog/test-cases/game-helpers.js",
+  "/test-cases/game-special.js": "test/ui-catalog/test-cases/game-special.js",
+  "/fixtures.js": "test/frontend/fixtures/index.js",
+  "/history.js": "test/frontend/fixtures/history.js",
   "/logo.png": "src/frontend/logo.png",
 };
 
@@ -51,9 +56,11 @@ const routes = {
 function handleRequest(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = url.pathname;
+  console.log(`[REQ] ${pathname}`);
 
   // Check static routes
   if (routes[pathname]) {
+    console.log(`[200] ${pathname} -> ${routes[pathname]}`);
     respondWithFile(routes[pathname], res, { noCache: true });
     return;
   }
@@ -62,6 +69,7 @@ function handleRequest(req, res) {
   if (pathname.startsWith("/src/frontend/")) {
     const filePath = pathname.slice(1); // Remove leading /
     if (fs.existsSync(filePath)) {
+      console.log(`[200] ${pathname} -> ${filePath}`);
       respondWithFile(filePath, res, { noCache: true });
       return;
     }
@@ -69,11 +77,13 @@ function handleRequest(req, res) {
 
   // Serve node_modules (Lit)
   if (nodeModulesFiles[pathname]) {
+    console.log(`[200] ${pathname} -> ${nodeModulesFiles[pathname]}`);
     respondWithFile(nodeModulesFiles[pathname], res, { noCache: true });
     return;
   }
 
   // 404
+  console.log(`[404] ${pathname}`);
   res.writeHead(404, { "content-type": "text/plain" });
   res.end("Not found");
 }

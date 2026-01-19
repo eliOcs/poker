@@ -84,3 +84,123 @@ export function formatCurrency(amountInCents) {
   });
   return formatter.format(dollars);
 }
+
+/**
+ * Action panel component styles
+ */
+export const actionPanelStyles = css`
+  :host {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border: var(--space-sm) solid var(--color-fg-muted);
+    background-color: var(--color-bg-light);
+    box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+    box-sizing: border-box;
+    width: min(560px, calc(100vw - 24px));
+    min-height: 100px;
+  }
+
+  /* Betting panel styles */
+  .betting-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+
+  .slider-row input[type="number"] {
+    width: 80px;
+    padding: var(--space-sm);
+    font-family: inherit;
+    font-size: var(--font-sm);
+    text-align: center;
+    border: 2px solid var(--color-bg-dark);
+    background: var(--color-bg-disabled);
+    color: var(--color-fg-white);
+    line-height: 2;
+    appearance: textfield;
+  }
+
+  .slider-row input[type="number"]::-webkit-inner-spin-button,
+  .slider-row input[type="number"]::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  .slider-row input[type="range"] {
+    flex: 1;
+    height: var(--space-md);
+    appearance: none;
+    background: var(--color-bg-disabled);
+    border: 2px solid var(--color-bg-dark);
+    min-width: 80px;
+  }
+
+  .slider-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: var(--space-lg);
+    height: var(--space-lg);
+    background: var(--color-primary);
+    border: 2px solid var(--color-bg-dark);
+    cursor: pointer;
+  }
+
+  .action-row,
+  .simple-actions {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: var(--space-md);
+    width: 100%;
+  }
+
+  .share-buttons,
+  .waiting-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+    width: 100%;
+  }
+
+  .action-row phg-button,
+  .simple-actions phg-button {
+    display: block;
+    width: 100%;
+  }
+
+  .action-row .amount,
+  .simple-actions .amount {
+    font-size: var(--font-md);
+  }
+
+  .stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .waiting {
+    color: var(--color-fg-muted);
+    font-size: var(--font-md);
+    text-align: center;
+  }
+
+  .waiting-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+  }
+`;

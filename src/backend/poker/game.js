@@ -3,7 +3,7 @@ import * as Seat from "./seat.js";
 import * as Betting from "./betting.js";
 import * as Showdown from "./showdown.js";
 import * as Actions from "./actions.js";
-import * as HandHistory from "./hand-history.js";
+import * as HandHistory from "./hand-history/index.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import * as logger from "../logger.js";

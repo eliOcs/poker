@@ -21,7 +21,7 @@ import {
   createMockView,
   mockOhhHandView,
   mockOhhHandWithShowdownView,
-} from "./fixtures.js";
+} from "./fixtures/index.js";
 
 // Mock WebSocket before importing components
 const OriginalWebSocket = globalThis.WebSocket;

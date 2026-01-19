@@ -11,91 +11,20 @@ import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/history.js";
 import "/src/frontend/toast.js";
-import { mockEmptySeat } from "/fixtures.js";
 import { HISTORY_TEST_CASES, HISTORY_CATEGORY } from "./test-cases-history.js";
-
-// === HELPER FACTORIES ===
-
-// Empty seat with no actions (used when player cannot sit)
-const emptySeat = { ...mockEmptySeat, actions: [] };
-
-// Create array of empty seats with no actions
-const emptySeats = (count) => Array(count).fill(emptySeat);
-
-// Create 6 empty seats with sit actions (default table)
-const emptyTableSeats = () =>
-  Array.from({ length: 6 }, (_, i) => ({
-    ...mockEmptySeat,
-    actions: [{ action: "sit", seat: i }],
-  }));
-
-// Helper to create a game component with mock data
-function gameView(gameState, options = {}) {
-  const { showRanking = false } = options;
-  return html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-game
-        .game=${gameState}
-        .socket=${{ readyState: 1 }}
-        .showRanking=${showRanking}
-      ></phg-game>
-    </div>
-  `;
-}
-
-// Helper to show a game with a toast overlay
-function gameViewWithToast(gameState, toastMessage, toastVariant = "error") {
-  return html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-toast
-        variant=${toastVariant}
-        .duration=${0}
-        message=${toastMessage}
-      ></phg-toast>
-      <phg-game .game=${gameState} .socket=${{ readyState: 1 }}></phg-game>
-    </div>
-  `;
-}
-
-// Base game state factory
-function createGame(overrides = {}) {
-  return {
-    running: true,
-    button: 0,
-    blinds: { ante: 0, small: 25, big: 50 },
-    board: { cards: [] },
-    hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
-    countdown: null,
-    winnerMessage: null,
-    rankings: [],
-    seats: emptyTableSeats(),
-    ...overrides,
-  };
-}
-
-// Player seat factory
-function createPlayer(name, overrides = {}) {
-  return {
-    empty: false,
-    player: { id: `player-${name}`, name },
-    stack: 1000,
-    bet: 0,
-    totalBuyIn: 1000,
-    handsPlayed: 0,
-    folded: false,
-    allIn: false,
-    sittingOut: false,
-    disconnected: false,
-    cards: [],
-    actions: [],
-    isCurrentPlayer: false,
-    isActing: false,
-    lastAction: null,
-    handResult: null,
-    handRank: null,
-    ...overrides,
-  };
-}
+import {
+  emptySeat,
+  emptySeats,
+  emptyTableSeats,
+  gameView,
+  gameViewWithToast,
+  createGame,
+  createPlayer,
+} from "./test-cases/game-helpers.js";
+import {
+  SPECIAL_GAME_TEST_CASES,
+  SPECIAL_GAME_IDS,
+} from "./test-cases/game-special.js";
 
 // === GAME TEST CASES ===
 
@@ -398,192 +327,6 @@ const GAME_TEST_CASES = {
       }),
     ),
 
-  // === SPECIAL STATES ===
-  "game-all-in-situation": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "turn", pot: 6000, currentBet: 0, actingSeat: -1 },
-        board: { cards: ["Js", "Ts", "9h", "2c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            allIn: true,
-            stack: 0,
-            cards: ["Qs", "8s"],
-            handRank: "Straight",
-          }),
-          createPlayer("Alice", { allIn: true, stack: 0, cards: ["??", "??"] }),
-          ...emptySeats(4),
-        ],
-      }),
-    ),
-
-  "game-with-folded-players": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "turn", pot: 800, currentBet: 200, actingSeat: 0 },
-        board: { cards: ["Ah", "Kd", "7c", "3s"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4500,
-            cards: ["As", "Qs"],
-            actions: [
-              { action: "fold" },
-              { action: "call", amount: 200 },
-              { action: "raise", min: 400, max: 4500 },
-            ],
-            handRank: "Pair of Aces",
-          }),
-          createPlayer("Alice", { folded: true, stack: 2800, cards: [] }),
-          createPlayer("Bob", {
-            stack: 2600,
-            bet: 200,
-            cards: ["??", "??"],
-            lastAction: "Bet $200",
-          }),
-          createPlayer("Charlie", { folded: true, stack: 3200, cards: [] }),
-          ...emptySeats(2),
-        ],
-      }),
-    ),
-
-  "game-clock-called": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: {
-          phase: "flop",
-          pot: 300,
-          currentBet: 100,
-          actingSeat: 1,
-          actingTicks: 75,
-          clockTicks: 15,
-        },
-        board: { cards: ["Jh", "Td", "5c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4900,
-            bet: 100,
-            cards: ["As", "Ks"],
-            lastAction: "Call $100",
-            handRank: "A High",
-          }),
-          createPlayer("Alice", {
-            isActing: true,
-            stack: 2800,
-            bet: 100,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(4),
-        ],
-      }),
-    ),
-
-  "game-sitting-out": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: { phase: "preflop", pot: 75, currentBet: 50, actingSeat: 2 },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            sittingOut: true,
-            stack: 5000,
-            cards: [],
-            actions: [{ action: "sitIn", cost: 50 }, { action: "leave" }],
-          }),
-          createPlayer("Alice", {
-            stack: 2975,
-            bet: 25,
-            cards: ["??", "??"],
-            lastAction: "SB $25",
-          }),
-          createPlayer("Bob", {
-            isActing: true,
-            stack: 2950,
-            bet: 50,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(3),
-        ],
-      }),
-    ),
-
-  "game-disconnected-player": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 200, currentBet: 0, actingSeat: 0 },
-        board: { cards: ["Ah", "Kd", "7c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4900,
-            cards: ["Qh", "Jh"],
-            actions: [
-              { action: "check" },
-              { action: "bet", min: 50, max: 4900 },
-            ],
-            handRank: "Q High",
-          }),
-          createPlayer("Alice", {
-            disconnected: true,
-            stack: 2900,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(4),
-        ],
-      }),
-    ),
-
-  "game-full-table": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "preflop", pot: 175, currentBet: 50, actingSeat: 3 },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4950,
-            bet: 50,
-            cards: ["9h", "9d"],
-            lastAction: "Call $50",
-            handRank: "Pair of Nines",
-          }),
-          createPlayer("Alice", {
-            stack: 2975,
-            bet: 25,
-            cards: ["??", "??"],
-            lastAction: "SB $25",
-          }),
-          createPlayer("Bob", {
-            stack: 2950,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "BB $50",
-          }),
-          createPlayer("Charlie", {
-            isActing: true,
-            stack: 3000,
-            cards: ["??", "??"],
-          }),
-          createPlayer("Diana", {
-            stack: 1500,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "Call $50",
-          }),
-          createPlayer("Eve", { sittingOut: true, stack: 2000, cards: [] }),
-        ],
-      }),
-    ),
-
   // === BUY-IN STATE ===
   "game-buy-in": () =>
     gameView(
@@ -676,7 +419,11 @@ const GAME_TEST_CASES = {
 };
 
 // Merge all test cases
-const TEST_CASES = { ...GAME_TEST_CASES, ...HISTORY_TEST_CASES };
+const TEST_CASES = {
+  ...GAME_TEST_CASES,
+  ...SPECIAL_GAME_TEST_CASES,
+  ...HISTORY_TEST_CASES,
+};
 
 // Export test case IDs for Playwright
 export const TEST_CASE_IDS = Object.keys(TEST_CASES);
@@ -696,14 +443,7 @@ const CATEGORIES = {
   Turn: ["game-turn"],
   River: ["game-river-all-in-decision"],
   Showdown: ["game-showdown-you-win", "game-showdown-you-lose"],
-  "Special States": [
-    "game-all-in-situation",
-    "game-with-folded-players",
-    "game-clock-called",
-    "game-sitting-out",
-    "game-disconnected-player",
-    "game-full-table",
-  ],
+  "Special States": SPECIAL_GAME_IDS,
   Errors: ["game-not-found", "game-error"],
   Modals: ["game-rankings-modal"],
   [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,
