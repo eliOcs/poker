@@ -86,9 +86,15 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const betIndicators = element.shadowRoot.querySelectorAll(".bet-indicator");
-    expect(betIndicators.length).to.be.greaterThan(0);
-    expect(betIndicators[0].textContent).to.include("$50"); // $50 from 5000 cents
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    let betIndicator = null;
+    for (const seat of seats) {
+      await seat.updateComplete;
+      betIndicator = seat.shadowRoot.querySelector(".bet-indicator");
+      if (betIndicator) break;
+    }
+    expect(betIndicator).to.exist;
+    expect(betIndicator.textContent).to.include("$50"); // $50 from 5000 cents
   });
 
   it("shows dealer button at correct position", async () => {
