@@ -115,9 +115,7 @@ describe("phg-history", () => {
     });
 
     it("highlights winner with winning class", async () => {
-      const winners = element.shadowRoot.querySelectorAll(
-        ".player-seat.winner",
-      );
+      const winners = element.shadowRoot.querySelectorAll("phg-seat.winner");
       expect(winners.length).to.be.greaterThan(0);
     });
 
