@@ -273,36 +273,24 @@ class Seat extends LitElement {
           :host([data-seat="0"]) .bet-indicator,
           :host([data-seat="7"]) .bet-indicator,
           :host([data-seat="8"]) .bet-indicator {
-            bottom: -2em;
-            top: auto;
-            right: 0;
-            left: auto;
+            inset: auto 0 -2em auto;
             transform: none;
           }
 
           :host([data-seat="2"]) .bet-indicator,
           :host([data-seat="3"]) .bet-indicator,
           :host([data-seat="4"]) .bet-indicator {
-            bottom: -2em;
-            top: auto;
-            left: 0;
-            right: auto;
+            inset: auto auto -2em 0;
             transform: none;
           }
 
           :host([data-seat="6"]) .bet-indicator {
-            top: -4em;
-            bottom: auto;
-            right: 0;
-            left: auto;
+            inset: -4em 0 auto auto;
             transform: none;
           }
 
           :host([data-seat="5"]) .bet-indicator {
-            top: -4em;
-            bottom: auto;
-            left: 0;
-            right: auto;
+            inset: -4em auto auto 0;
             transform: none;
           }
         }
@@ -433,21 +421,34 @@ class Seat extends LitElement {
       : "";
   }
 
+  _renderDealerButton() {
+    return this.isButton ? html`<span class="dealer-button">D</span>` : "";
+  }
+
+  _renderHandRank() {
+    return this.seat.handRank && !this.seat.lastAction
+      ? html`<div class="hand-rank">${this.seat.handRank}</div>`
+      : "";
+  }
+
+  _renderBetIndicator() {
+    return this.seat.bet > 0
+      ? html`<div class="bet-indicator">${formatCurrency(this.seat.bet)}</div>`
+      : "";
+  }
+
   render() {
     if (!this.seat || this.seat.empty) return this._renderEmptySeat();
 
     return html`
-      ${this.isButton ? html`<span class="dealer-button">D</span>` : ""}
+      ${this._renderDealerButton()}
       <div class="player-info">
         <span class="player-name"
           >${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}</span
         >
       </div>
       ${this._renderStackOrResult()} ${this._renderClock()}
-      ${this._renderStatusOrAction()}
-      ${this.seat.handRank && !this.seat.lastAction
-        ? html`<div class="hand-rank">${this.seat.handRank}</div>`
-        : ""}
+      ${this._renderStatusOrAction()} ${this._renderHandRank()}
       <div class="hole-cards ${this._areCardsRevealed() ? "revealed" : ""}">
         ${this.seat.cards?.map(
           (card) =>
@@ -457,11 +458,7 @@ class Seat extends LitElement {
             ></phg-card>`,
         )}
       </div>
-      ${this.seat.bet > 0
-        ? html`<div class="bet-indicator">
-            ${formatCurrency(this.seat.bet)}
-          </div>`
-        : ""}
+      ${this._renderBetIndicator()}
     `;
   }
 }

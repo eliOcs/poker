@@ -236,7 +236,9 @@ export function createRoutes(players, games) {
         const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
         const view = HandHistory.getHandView(filteredHand, player.id);
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hand: filteredHand, view, playerId: player.id }));
+        res.end(
+          JSON.stringify({ hand: filteredHand, view, playerId: player.id }),
+        );
       },
     },
   ];
