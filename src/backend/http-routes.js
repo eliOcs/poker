@@ -162,13 +162,24 @@ export function createRoutes(players, games) {
           };
         }
 
+        let seats = 9;
+        if (
+          data &&
+          typeof data === "object" &&
+          "seats" in data &&
+          [2, 6, 9].includes(/** @type {number} */ (data.seats))
+        ) {
+          seats = /** @type {number} */ (data.seats);
+        }
+
         const gameId = generateGameId();
-        const game = PokerGame.create({ blinds });
+        const game = PokerGame.create({ blinds, seats });
         games.set(gameId, game);
 
         logger.info("game created", {
           gameId,
           blinds: `${blinds.small}/${blinds.big}`,
+          seats,
         });
 
         res.writeHead(200, { "content-type": "application/json" });
@@ -203,7 +214,7 @@ export function createRoutes(players, games) {
           HandHistory.getHandSummary(hand, player.id),
         );
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries }));
+        res.end(JSON.stringify({ hands: summaries, playerId: player.id }));
       },
     },
     {
@@ -225,7 +236,7 @@ export function createRoutes(players, games) {
         const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
         const view = HandHistory.getHandView(filteredHand, player.id);
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hand: filteredHand, view }));
+        res.end(JSON.stringify({ hand: filteredHand, view, playerId: player.id }));
       },
     },
   ];

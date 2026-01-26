@@ -40,11 +40,11 @@ class Card extends LitElement {
           align-items: center;
           justify-content: center;
           width: 36px;
-          height: 48px;
+          height: 50px;
           background-color: var(--color-fg-white);
           border: 3px solid var(--color-bg-dark);
           line-height: 1;
-          font-size: 16px;
+          font-size: 14px;
         }
 
         .card .rank {
@@ -98,17 +98,17 @@ class Card extends LitElement {
         /* Larger cards on desktop */
         @media (width >= 800px) {
           .card {
-            width: 44px;
-            height: 60px;
-            font-size: 20px;
-          }
-
-          .card .rank {
+            width: 57px;
+            height: 77px;
             font-size: 18px;
           }
 
+          .card .rank {
+            font-size: 20px;
+          }
+
           .card .suit {
-            font-size: 26px;
+            font-size: 28px;
           }
         }
       `,

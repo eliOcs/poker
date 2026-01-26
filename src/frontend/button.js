@@ -14,6 +14,7 @@ class Button extends LitElement {
         :host([full-width]) {
           display: block;
           width: 100%;
+          height: 100%;
         }
 
         button {
@@ -36,6 +37,7 @@ class Button extends LitElement {
 
         :host([full-width]) button {
           width: 100%;
+          height: 100%;
         }
 
         button:hover {

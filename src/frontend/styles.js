@@ -8,14 +8,14 @@ import { css } from "lit";
  * - 3 spacing sizes (sm, md, lg)
  * - Semantic colors
  *
- * Tokens are responsive - values change at mobile breakpoint (<600px)
+ * Tokens are responsive - values change at mobile breakpoint (<800px)
  */
 export const designTokens = css`
   :host {
     /* Font sizes */
-    --font-sm: 0.5em;
-    --font-md: 0.7em;
-    --font-lg: 1em;
+    --font-sm: 10px;
+    --font-md: 12px;
+    --font-lg: 14px;
 
     /* Spacing */
     --space-sm: 4px;
@@ -45,12 +45,12 @@ export const designTokens = css`
     --color-fg-white: #f0f0f0;
   }
 
-  @media (width <= 599px) {
+  @media (width < 800px) {
     :host {
       /* Smaller sizes for mobile */
-      --font-sm: 0.45em;
-      --font-md: 0.6em;
-      --font-lg: 0.85em;
+      --font-sm: 9px;
+      --font-md: 10px;
+      --font-lg: 12px;
 
       --space-sm: 3px;
       --space-md: 6px;
@@ -163,6 +163,7 @@ export const actionPanelStyles = css`
     grid-auto-flow: column;
     gap: var(--space-md);
     width: 100%;
+    align-items: stretch;
   }
 
   .share-buttons,
@@ -177,6 +178,7 @@ export const actionPanelStyles = css`
   .simple-actions phg-button {
     display: block;
     width: 100%;
+    height: 100%;
   }
 
   .action-row .amount,

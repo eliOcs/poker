@@ -105,55 +105,36 @@ export const historyStyles = css`
   .table-state {
     flex: 1;
     position: relative;
-    min-height: 450px;
-    max-height: 550px;
+    min-height: 85vh;
+    max-height: none;
   }
 
   @media (width >= 800px) {
     .table-state {
-      max-height: none;
+      min-height: 450px;
     }
   }
 
-  .board {
+  phg-board {
     position: absolute;
-    top: 15%;
-    left: 10%;
-    width: 80%;
-    height: 70%;
+    transform: translate(-50%, -50%);
+    left: 50%;
   }
 
-  /* Player seat positions around the table */
-  .player-seat {
-    position: absolute;
-    min-width: 100px;
+  @media (width >= 800px) {
+    phg-board {
+      top: 50%;
+      width: 78%;
+      height: 70%;
+    }
   }
 
-  .player-seat[data-seat="0"] {
-    top: 10%;
-    left: 5%;
-  }
-  .player-seat[data-seat="1"] {
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .player-seat[data-seat="2"] {
-    top: 10%;
-    right: 5%;
-  }
-  .player-seat[data-seat="3"] {
-    bottom: 10%;
-    right: 5%;
-  }
-  .player-seat[data-seat="4"] {
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .player-seat[data-seat="5"] {
-    bottom: 10%;
-    left: 5%;
+  @media (width < 800px) {
+    phg-board {
+      top: 52%;
+      width: 85%;
+      height: 85%;
+    }
   }
 
   /* Action timeline */
@@ -167,6 +148,11 @@ export const historyStyles = css`
 
   /* Desktop: horizontal layout */
   @media (width >= 800px) {
+    .timeline {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
     .timeline-content {
       display: flex;
       gap: var(--space-lg);
@@ -174,7 +160,7 @@ export const historyStyles = css`
 
     .street {
       flex: 1;
-      min-width: 120px;
+      min-width: 200px;
     }
   }
 
@@ -201,7 +187,8 @@ export const historyStyles = css`
   }
 
   .street-cards phg-card,
-  .showdown-cards phg-card {
+  .showdown-cards phg-card,
+  .action-cards phg-card {
     transform: scale(0.7);
     transform-origin: top left;
     margin-right: -10px;
@@ -209,7 +196,8 @@ export const historyStyles = css`
 
   @media (width >= 800px) {
     .street-cards phg-card,
-    .showdown-cards phg-card {
+    .showdown-cards phg-card,
+    .action-cards phg-card {
       margin-right: -12px;
     }
   }
@@ -223,6 +211,7 @@ export const historyStyles = css`
   .action-item {
     font-size: var(--font-sm);
     color: var(--color-fg-medium);
+    line-height: 1.5;
   }
 
   .action-player {
@@ -237,18 +226,10 @@ export const historyStyles = css`
     color: var(--color-primary);
   }
 
-  .showdown-hand {
-    font-size: var(--font-sm);
-    color: var(--color-fg-light);
-    font-weight: bold;
-    margin-top: var(--space-md);
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--color-bg-light);
-  }
-
-  .showdown-cards {
-    display: flex;
-    margin-top: var(--space-sm);
+  .action-cards {
+    display: inline-flex;
+    vertical-align: middle;
+    margin-left: var(--space-sm);
   }
 
   .showdown-winner {
@@ -257,12 +238,31 @@ export const historyStyles = css`
     margin-top: var(--space-sm);
   }
 
-  .showdown-winner.you {
-    color: var(--color-success);
+  .showdown-winner:first-of-type {
+    margin-top: var(--space-md);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--color-bg-light);
+  }
+
+  .showdown-hand {
+    font-size: var(--font-sm);
+    color: var(--color-fg-light);
+    font-weight: bold;
+    margin-top: var(--space-sm);
+  }
+
+  .showdown-cards {
+    display: flex;
+    margin-top: var(--space-sm);
   }
 
   .winner-name {
     font-weight: bold;
+    color: var(--color-fg-light);
+  }
+
+  .showdown-winner.you .winner-name {
+    color: var(--color-success);
   }
 
   .winner-amount {
@@ -274,8 +274,9 @@ export const historyStyles = css`
     display: none;
     width: 250px;
     background-color: var(--color-bg-dark);
-    border-left: 3px solid var(--color-bg-light);
+    border-right: 3px solid var(--color-bg-light);
     overflow-y: auto;
+    order: -1;
   }
 
   @media (width >= 800px) {
@@ -342,6 +343,16 @@ export const historyStyles = css`
   .hand-cards {
     display: flex;
     gap: 2px;
+  }
+
+  /* Use smaller cards in sidebar on desktop */
+  @media (width >= 800px) {
+    .hand-cards phg-card {
+      transform: scale(0.63);
+      transform-origin: top left;
+      margin-right: -21px;
+      margin-bottom: -29px;
+    }
   }
 
   .hand-winner {

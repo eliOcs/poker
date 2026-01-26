@@ -14,51 +14,68 @@ class Seat extends LitElement {
           display: flex;
           flex-direction: column;
           gap: var(--space-sm);
-          border: var(--space-sm) solid var(--color-fg-muted);
-          background: var(--color-bg-light);
           padding: var(--space-md);
-          font-size: var(--font-sm);
-          box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+          font-size: var(--font-md);
+          line-height: 1.2;
           box-sizing: border-box;
-          min-height: 130px;
+          min-height: calc(4 * 1.2em);
+          width: 14ch;
+        }
+
+        :host::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: var(--color-bg-light);
+          border: 3px solid var(--color-fg-muted);
+          box-shadow: 3px 3px 0 var(--color-bg-dark);
+          z-index: 0;
+        }
+
+        @media (width >= 800px) {
+          :host {
+            padding: var(--space-lg);
+            gap: var(--space-md);
+            width: 16ch;
+          }
         }
 
         :host(.empty) {
           justify-content: center;
           align-items: center;
           gap: var(--space-lg);
-          font-size: var(--font-md);
+          font-size: var(--font-lg);
         }
 
-        :host(.acting) {
+        :host(.acting)::before {
           border-color: var(--color-primary);
           box-shadow:
-            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
-            0 0 0 var(--space-sm) var(--color-primary);
+            3px 3px 0 var(--color-bg-dark),
+            0 0 0 3px var(--color-primary);
         }
 
-        :host(.sitting-out) {
+        :host(.sitting-out)::before {
           border-style: dashed;
         }
 
-        :host(.disconnected) {
+        :host(.disconnected)::before {
           border-color: var(--color-error);
           border-style: dotted;
         }
 
-        :host(.all-in) {
+        :host(.all-in)::before {
           border-color: var(--color-error);
         }
 
-        :host(.current-player) {
+        :host(.current-player)::before {
           border-color: var(--color-highlight);
         }
 
-        :host(.winner) {
+        :host(.winner)::before {
           border-color: var(--color-primary);
           box-shadow:
-            var(--space-sm) var(--space-sm) 0 var(--color-bg-dark),
-            0 0 0 var(--space-sm) var(--color-primary);
+            3px 3px 0 var(--color-bg-dark),
+            0 0 0 3px var(--color-primary);
         }
 
         .player-name {
@@ -74,8 +91,8 @@ class Seat extends LitElement {
 
         .dealer-button {
           position: absolute;
-          top: calc(-1 * var(--space-md));
-          right: calc(-1 * var(--space-md));
+          top: calc(-1 * var(--space-sm));
+          right: calc(-1 * var(--space-sm));
           background-color: var(--color-fg-white);
           color: var(--color-bg-dark);
           width: 20px;
@@ -88,14 +105,55 @@ class Seat extends LitElement {
           z-index: 1;
         }
 
+        @media (width >= 800px) {
+          .dealer-button {
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+          }
+        }
+
         .hole-cards {
+          position: absolute;
+          top: -20px;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           gap: var(--space-sm);
-          margin-top: auto;
+          justify-content: center;
+          transition: top 0.3s ease;
+          z-index: -1;
+        }
+
+        .player-info,
+        .stack,
+        .hand-result,
+        .status-label,
+        .last-action,
+        .hand-rank,
+        .clock-countdown,
+        phg-button {
+          position: relative;
+          z-index: 1;
+        }
+
+        .hole-cards.revealed {
+          top: -50px;
+        }
+
+        @media (width >= 800px) {
+          .hole-cards {
+            gap: var(--space-md);
+            top: -30px;
+          }
+
+          .hole-cards.revealed {
+            top: -65px;
+          }
         }
 
         .status-label {
-          font-size: var(--font-md);
+          font-size: var(--font-sm);
           color: var(--color-primary);
         }
 
@@ -124,20 +182,129 @@ class Seat extends LitElement {
           margin-top: auto;
         }
 
-        .empty-label {
-          color: var(--color-fg-muted);
-        }
-
         .clock-countdown {
           display: flex;
           align-items: center;
-          gap: 2px;
-          font-size: var(--font-lg);
+          gap: var(--space-sm);
+          font-size: var(--font-md);
           color: var(--color-warning);
         }
 
         .clock-countdown.urgent {
           color: var(--color-error);
+        }
+
+        .bet-indicator {
+          position: absolute;
+          color: var(--color-primary);
+          font-size: var(--font-md);
+          white-space: nowrap;
+          z-index: 1;
+        }
+
+        /* Seat 0: bottom right */
+        :host([data-seat="0"]) .bet-indicator {
+          bottom: -3em;
+          right: 0;
+        }
+
+        /* Seat 1: bottom center */
+        :host([data-seat="1"]) .bet-indicator {
+          bottom: -3em;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Seat 2: bottom left */
+        :host([data-seat="2"]) .bet-indicator {
+          bottom: -3em;
+          left: 0;
+        }
+
+        /* Seat 3: left center */
+        :host([data-seat="3"]) .bet-indicator {
+          top: 50%;
+          left: -5em;
+          transform: translateY(-50%);
+        }
+
+        /* Seat 4: top left */
+        :host([data-seat="4"]) .bet-indicator {
+          top: -4em;
+          left: -4em;
+        }
+
+        /* Seat 5: top center */
+        :host([data-seat="5"]) .bet-indicator {
+          top: -2em;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Seat 6: top center */
+        :host([data-seat="6"]) .bet-indicator {
+          top: -5em;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        /* Seat 7: top right */
+        :host([data-seat="7"]) .bet-indicator {
+          top: -4em;
+          right: -4em;
+        }
+
+        /* Seat 8: right center */
+        :host([data-seat="8"]) .bet-indicator {
+          top: 50%;
+          right: -5em;
+          transform: translateY(-50%);
+        }
+
+        /* === MOBILE BET POSITIONING === */
+        @media (width < 800px) {
+          :host([data-seat="1"]) .bet-indicator {
+            bottom: -2em;
+            top: auto;
+            left: 50%;
+            transform: translateX(-50%);
+          }
+
+          :host([data-seat="0"]) .bet-indicator,
+          :host([data-seat="7"]) .bet-indicator,
+          :host([data-seat="8"]) .bet-indicator {
+            bottom: -2em;
+            top: auto;
+            right: 0;
+            left: auto;
+            transform: none;
+          }
+
+          :host([data-seat="2"]) .bet-indicator,
+          :host([data-seat="3"]) .bet-indicator,
+          :host([data-seat="4"]) .bet-indicator {
+            bottom: -2em;
+            top: auto;
+            left: 0;
+            right: auto;
+            transform: none;
+          }
+
+          :host([data-seat="6"]) .bet-indicator {
+            top: -4em;
+            bottom: auto;
+            right: 0;
+            left: auto;
+            transform: none;
+          }
+
+          :host([data-seat="5"]) .bet-indicator {
+            top: -4em;
+            bottom: auto;
+            left: 0;
+            right: auto;
+            transform: none;
+          }
         }
       `,
     ];
@@ -228,12 +395,9 @@ class Seat extends LitElement {
 
   _renderEmptySeat() {
     const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
-    return html`
-      <span class="empty-label">Empty</span>
-      ${sitAction && this.showSitAction
-        ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
-        : ""}
-    `;
+    return sitAction && this.showSitAction
+      ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
+      : "";
   }
 
   _renderStatusOrAction() {
@@ -253,6 +417,10 @@ class Seat extends LitElement {
           ${this._formatHandResult(this.seat.handResult)}
         </div>`
       : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`;
+  }
+
+  _areCardsRevealed() {
+    return this.seat.cards?.length > 0 && this.seat.cards[0] !== "??";
   }
 
   _renderClock() {
@@ -277,10 +445,10 @@ class Seat extends LitElement {
       </div>
       ${this._renderStackOrResult()} ${this._renderClock()}
       ${this._renderStatusOrAction()}
-      ${this.seat.handRank
+      ${this.seat.handRank && !this.seat.lastAction
         ? html`<div class="hand-rank">${this.seat.handRank}</div>`
         : ""}
-      <div class="hole-cards">
+      <div class="hole-cards ${this._areCardsRevealed() ? "revealed" : ""}">
         ${this.seat.cards?.map(
           (card) =>
             html`<phg-card
@@ -289,6 +457,11 @@ class Seat extends LitElement {
             ></phg-card>`,
         )}
       </div>
+      ${this.seat.bet > 0
+        ? html`<div class="bet-indicator">
+            ${formatCurrency(this.seat.bet)}
+          </div>`
+        : ""}
     `;
   }
 }

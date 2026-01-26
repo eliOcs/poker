@@ -102,7 +102,7 @@ export function createHand() {
  * @returns {Game}
  */
 export function create({
-  seats: numberOfSeats = 6,
+  seats: numberOfSeats = 9,
   blinds = { ante: 5, small: 25, big: 50 },
 } = {}) {
   /** @type {Seat[]} */

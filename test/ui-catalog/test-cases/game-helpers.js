@@ -16,9 +16,9 @@ export const emptySeat = { ...mockEmptySeat, actions: [] };
 // Create array of empty seats with no actions
 export const emptySeats = (count) => Array(count).fill(emptySeat);
 
-// Create 6 empty seats with sit actions (default table)
+// Create 9 empty seats with sit actions (default table)
 export const emptyTableSeats = () =>
-  Array.from({ length: 6 }, (_, i) => ({
+  Array.from({ length: 9 }, (_, i) => ({
     ...mockEmptySeat,
     actions: [{ action: "sit", seat: i }],
   }));

@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { seatPositions } from "./game-layout.js";
 import "./card.js";
 import "./board.js";
 import "./seat.js";
@@ -13,6 +14,7 @@ class Game extends LitElement {
     return [
       designTokens,
       baseStyles,
+      seatPositions,
       css`
         :host {
           height: 100%;
@@ -29,133 +31,48 @@ class Game extends LitElement {
         #wrapper {
           position: relative;
           height: 100%;
-          max-width: 1600px;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
         #container {
           position: absolute;
-          top: 0%;
-          left: 2.5%;
-          height: 80%;
-          width: 95%;
+          inset: 0 0 120px;
         }
 
         phg-board {
           position: absolute;
-          top: 15%;
-          left: 10%;
-          height: 70%;
-          width: 80%;
+          transform: translate(-50%, -50%);
+          left: 50%;
+        }
+
+        @media (width >= 800px) {
+          phg-board {
+            top: 50%;
+            left: 50%;
+            width: 78%;
+            height: 70%;
+          }
+        }
+
+        @media (width < 800px) {
+          phg-board {
+            top: 52%;
+            width: 85%;
+            height: 85%;
+          }
         }
 
         #seats {
-          height: 100%;
-          width: 100%;
-        }
-
-        #bets {
           position: absolute;
-          top: 0;
-          left: 0;
-          height: 100%;
-          width: 100%;
-          pointer-events: none;
-        }
-
-        phg-seat {
-          position: absolute;
-          height: 20%;
-          width: 30%;
-          min-width: 100px;
-          max-width: 200px;
-          min-height: 150px;
-          max-height: 200px;
-          z-index: 1;
-        }
-
-        phg-seat[data-seat="0"] {
-          top: 15%;
-          left: 0;
-        }
-
-        phg-seat[data-seat="1"] {
-          top: 2.5%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        phg-seat[data-seat="2"] {
-          top: 15%;
-          right: 0;
-        }
-
-        phg-seat[data-seat="3"] {
-          bottom: 15%;
-          right: 0;
-        }
-
-        phg-seat[data-seat="4"] {
-          bottom: 5%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        phg-seat[data-seat="5"] {
-          bottom: 15%;
-          left: 0;
-        }
-
-        .bet-indicator {
-          position: absolute;
-          z-index: 2;
-          color: var(--color-primary);
-          font-size: var(--font-md);
-        }
-
-        /* Seat 1: top-left - position bet toward table center */
-        .bet-indicator[data-seat="0"] {
-          top: 42%;
-          left: 35%;
-        }
-
-        /* Seat 2: top-center - position bet below player, toward table center */
-        .bet-indicator[data-seat="1"] {
-          top: 28%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        /* Seat 3: top-right - position bet toward table center */
-        .bet-indicator[data-seat="2"] {
-          top: 42%;
-          right: 35%;
-        }
-
-        /* Seat 4: bottom-right - position bet toward table center */
-        .bet-indicator[data-seat="3"] {
-          bottom: 46%;
-          right: 35%;
-        }
-
-        /* Seat 5: bottom-center - position bet above player, toward table center */
-        .bet-indicator[data-seat="4"] {
-          bottom: 40%;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        /* Seat 6: bottom-left - position bet toward table center */
-        .bet-indicator[data-seat="5"] {
-          bottom: 46%;
-          left: 35%;
+          inset: 0;
         }
 
         phg-action-panel {
           position: absolute;
-          bottom: 10%;
+          bottom: var(--space-md);
           left: 50%;
-          transform: translate(-50%, 50%);
+          transform: translate(-50%, 0);
         }
 
         #connection-status {
@@ -413,15 +330,6 @@ class Game extends LitElement {
                       : 0}
                     @seat-action=${this.handleSeatAction}
                   ></phg-seat>`,
-            )}
-          </div>
-          <div id="bets">
-            ${this.game.seats.map((seat, i) =>
-              !seat.empty && seat.bet > 0
-                ? html`<div class="bet-indicator" data-seat="${i}">
-                    ${formatCurrency(seat.bet)}
-                  </div>`
-                : "",
             )}
           </div>
         </div>

@@ -6,6 +6,13 @@ import {
   DEFAULT as DEFAULT_STAKES,
 } from "/src/shared/stakes.js";
 
+const TABLE_SIZES = [
+  { seats: 2, label: "Heads-Up" },
+  { seats: 6, label: "6-Max" },
+  { seats: 9, label: "9-Max" },
+];
+const DEFAULT_TABLE_SIZE = 9;
+
 class Home extends LitElement {
   static get styles() {
     return [
@@ -83,6 +90,7 @@ class Home extends LitElement {
     return {
       creating: { type: Boolean },
       selectedStakes: { type: Object },
+      selectedTableSize: { type: Number },
     };
   }
 
@@ -90,11 +98,16 @@ class Home extends LitElement {
     super();
     this.creating = false;
     this.selectedStakes = DEFAULT_STAKES;
+    this.selectedTableSize = DEFAULT_TABLE_SIZE;
   }
 
   handleStakesChange(e) {
     const index = parseInt(e.target.value, 10);
     this.selectedStakes = STAKES_PRESETS[index];
+  }
+
+  handleTableSizeChange(e) {
+    this.selectedTableSize = parseInt(e.target.value, 10);
   }
 
   async createGame() {
@@ -106,6 +119,7 @@ class Home extends LitElement {
         body: JSON.stringify({
           small: this.selectedStakes.small,
           big: this.selectedStakes.big,
+          seats: this.selectedTableSize,
         }),
       });
       const { id } = await response.json();
@@ -139,6 +153,21 @@ class Home extends LitElement {
             (stakes, i) => html`
               <option value="${i}" ?selected=${i === selectedIndex}>
                 ${stakes.label}
+              </option>
+            `,
+          )}
+        </select>
+      </div>
+      <div class="stakes-selector">
+        <span class="stakes-label">Table Size</span>
+        <select @change=${this.handleTableSizeChange}>
+          ${TABLE_SIZES.map(
+            (size) => html`
+              <option
+                value="${size.seats}"
+                ?selected=${size.seats === this.selectedTableSize}
+              >
+                ${size.label}
               </option>
             `,
           )}
