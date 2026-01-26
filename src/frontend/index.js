@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { designTokens, baseStyles } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import "./card.js";
 import "./board.js";

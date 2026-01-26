@@ -216,9 +216,8 @@ describe("phg-history", () => {
 
     it("uses playerId prop to determine 'You' highlighting", async () => {
       // With player1 as playerId, player1's actions should show "You"
-      const player1Actions = element.shadowRoot.querySelectorAll(
-        ".action-player.you",
-      );
+      const player1Actions =
+        element.shadowRoot.querySelectorAll(".action-player.you");
       expect(player1Actions.length).to.be.greaterThan(0);
 
       // Change playerId to player2
@@ -226,9 +225,8 @@ describe("phg-history", () => {
       await element.updateComplete;
 
       // Now player2's actions should show "You" instead
-      const player2Actions = element.shadowRoot.querySelectorAll(
-        ".action-player.you",
-      );
+      const player2Actions =
+        element.shadowRoot.querySelectorAll(".action-player.you");
       expect(player2Actions.length).to.be.greaterThan(0);
 
       // Verify that player1's actions no longer have the "you" class
