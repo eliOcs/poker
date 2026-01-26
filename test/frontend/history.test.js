@@ -214,6 +214,50 @@ describe("phg-history", () => {
       expect(youLabels[0].textContent.trim()).to.equal("You");
     });
 
+    it("uses playerId prop to determine 'You' highlighting", async () => {
+      // With player1 as playerId, player1's actions should show "You"
+      const player1Actions = element.shadowRoot.querySelectorAll(
+        ".action-player.you",
+      );
+      expect(player1Actions.length).to.be.greaterThan(0);
+
+      // Change playerId to player2
+      element.playerId = "player2";
+      await element.updateComplete;
+
+      // Now player2's actions should show "You" instead
+      const player2Actions = element.shadowRoot.querySelectorAll(
+        ".action-player.you",
+      );
+      expect(player2Actions.length).to.be.greaterThan(0);
+
+      // Verify that player1's actions no longer have the "you" class
+      const actionItems = element.shadowRoot.querySelectorAll(".action-item");
+      const player1ActionsWithoutYou = Array.from(actionItems).filter((item) =>
+        item.textContent.includes("Alice"),
+      );
+      expect(player1ActionsWithoutYou.length).to.be.greaterThan(0);
+    });
+
+    it("shows player name instead of 'You' when playerId does not match", async () => {
+      // Set playerId to a non-existent player
+      element.playerId = "unknown-player";
+      await element.updateComplete;
+
+      // No actions should have the "you" class
+      const youLabels =
+        element.shadowRoot.querySelectorAll(".action-player.you");
+      expect(youLabels.length).to.equal(0);
+
+      // All actions should show actual player names
+      const actionPlayers =
+        element.shadowRoot.querySelectorAll(".action-player");
+      const names = Array.from(actionPlayers).map((el) =>
+        el.textContent.trim(),
+      );
+      expect(names.some((name) => name === "You")).to.be.false;
+    });
+
     it("shows street cards on Flop/Turn/River", async () => {
       element.hand = mockOhhHandWithShowdown;
       element.view = mockOhhHandWithShowdownView;

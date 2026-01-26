@@ -31,6 +31,7 @@ class App extends LitElement {
       historyView: { type: Object },
       historyHandList: { type: Array },
       historyLoading: { type: Boolean },
+      historyPlayerId: { type: String },
     };
   }
 
@@ -48,6 +49,7 @@ class App extends LitElement {
     this.historyView = null;
     this.historyHandList = null;
     this.historyLoading = true;
+    this.historyPlayerId = null;
     this._historyGameId = null;
     this._historyHandNumber = null;
   }
@@ -180,6 +182,7 @@ class App extends LitElement {
         }
         const listData = await listRes.json();
         this.historyHandList = listData.hands || [];
+        this.historyPlayerId = listData.playerId;
       }
 
       // Determine which hand to load
@@ -277,6 +280,7 @@ class App extends LitElement {
         .view=${this.historyView}
         .handList=${this.historyHandList}
         .loading=${this.historyLoading}
+        .playerId=${this.historyPlayerId}
       ></phg-history>`;
   }
 

@@ -1,6 +1,7 @@
 import { html, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
+import { seatPositions } from "./game-layout.js";
 import "./card.js";
 import "./button.js";
 import "./seat.js";
@@ -8,7 +9,7 @@ import "./board.js";
 
 class History extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, historyStyles];
+    return [designTokens, baseStyles, historyStyles, seatPositions];
   }
 
   static get properties() {
@@ -33,7 +34,7 @@ class History extends LitElement {
     this.handList = null;
     this.loading = true;
     this.error = null;
-    this.playerId = localStorage.getItem("playerId") || null;
+    this.playerId = null;
     this.touchStartX = null;
   }
 
@@ -197,7 +198,6 @@ class History extends LitElement {
     return html`
       <div class="table-state">
         <phg-board
-          class="board"
           .board=${this.view.board}
           .hand=${hand}
           .winnerMessage=${this.view.winnerMessage}
@@ -209,7 +209,6 @@ class History extends LitElement {
 
           return html`
             <phg-seat
-              class="player-seat"
               data-seat="${index}"
               .seat=${seat}
               .seatNumber=${index}
@@ -259,6 +258,14 @@ class History extends LitElement {
                             >${playerName}</span
                           >
                           ${action.action}
+                          ${action.cards?.length
+                            ? html`<span class="action-cards"
+                                >${action.cards.map(
+                                  (card) =>
+                                    html`<phg-card .card=${card}></phg-card>`,
+                                )}</span
+                              >`
+                            : ""}
                           ${action.amount
                             ? html`<span class="action-amount"
                                 >${formatCurrency(action.amount)}</span
@@ -287,16 +294,6 @@ class History extends LitElement {
     const winAmount = mainPot.player_wins[0]?.win_amount || mainPot.amount;
 
     return html`
-      ${winningHand
-        ? html`<div class="showdown-hand">${winningHand}</div>`
-        : ""}
-      ${winningCards?.length
-        ? html`<div class="showdown-cards">
-            ${winningCards.map(
-              (card) => html`<phg-card .card=${card}></phg-card>`,
-            )}
-          </div>`
-        : ""}
       ${winnerIds.map((winnerId) => {
         const isYou = winnerId === this.playerId;
         const playerName = isYou ? "You" : this.getPlayerName(winnerId);
@@ -307,6 +304,16 @@ class History extends LitElement {
           </div>
         `;
       })}
+      ${winningHand
+        ? html`<div class="showdown-hand">${winningHand}</div>`
+        : ""}
+      ${winningCards?.length
+        ? html`<div class="showdown-cards">
+            ${winningCards.map(
+              (card) => html`<phg-card .card=${card}></phg-card>`,
+            )}
+          </div>`
+        : ""}
     `;
   }
 
