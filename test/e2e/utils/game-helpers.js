@@ -44,50 +44,46 @@ export async function waitForPhase(player, phase, timeout = 15000) {
 
 /**
  * Play through a betting round with all players checking/calling
- * Uses UI-based turn detection
+ * Uses UI-based turn detection with proper Playwright waits
  * @param {import('./poker-player.js').PokerPlayer[]} players
  */
 export async function playBettingRound(players) {
   const startingPhase = await players[0].getPhase();
-  console.log(`Playing betting round: ${startingPhase}`);
 
-  let iterations = 0;
-  const maxIterations = 20;
-
-  while (iterations < maxIterations) {
-    iterations++;
-    let actionTaken = false;
+  for (let i = 0; i < 20; i++) {
+    let acted = false;
 
     for (const player of players) {
-      await player.page.waitForTimeout(300);
-
       const currentPhase = await player.getPhase();
-      if (currentPhase !== startingPhase) {
-        console.log(`Phase changed from ${startingPhase} to ${currentPhase}`);
-        return;
-      }
+      if (currentPhase !== startingPhase) return;
 
       if (await player.isMyTurn()) {
         if (await player.hasAction("check")) {
-          console.log(`${player.name} checking`);
           await player.act("check");
-          actionTaken = true;
-          await player.page.waitForTimeout(300);
-          break;
         } else if (await player.hasAction("call")) {
-          console.log(`${player.name} calling`);
           await player.act("call");
-          actionTaken = true;
-          await player.page.waitForTimeout(300);
-          break;
+        } else {
+          continue;
         }
+        // Wait for action to be processed: either buttons disappear
+        // (turn passed to another player) or phase changes (round ended
+        // and same player acts first on the next street)
+        await Promise.any([
+          player.actionPanel
+            .getByRole("button", { name: /(Check|Call|Fold)/ })
+            .first()
+            .waitFor({ state: "hidden", timeout: 5000 }),
+          player.board
+            .locator(".phase")
+            .filter({ hasNotText: startingPhase })
+            .waitFor({ timeout: 5000 }),
+        ]);
+        acted = true;
+        break;
       }
     }
 
-    if (!actionTaken) {
-      console.log("No action taken, round complete");
-      break;
-    }
+    if (!acted) return;
   }
 }
 
