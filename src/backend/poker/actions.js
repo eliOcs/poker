@@ -45,6 +45,10 @@ export function start(game) {
   if (countPlayersWithChips(game) < 2) {
     throw new Error("need at least 2 players with chips");
   }
+  // Cannot start during tournament break
+  if (game.tournament?.onBreak) {
+    throw new Error("cannot start during break");
+  }
   game.countdown = 5;
 }
 
@@ -62,6 +66,13 @@ export function sit(game, { seat, player }) {
       game.seats[playerSeat] = Seat.empty();
     }
     game.seats[seat] = Seat.occupied(player);
+
+    // For tournaments, automatically give starting stack
+    if (game.tournament?.active) {
+      const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+      seatObj.stack = game.tournament.initialStack;
+      seatObj.totalBuyIn = game.tournament.initialStack;
+    }
   } else {
     throw new Error("seat is already occupied");
   }
@@ -73,6 +84,11 @@ export function sit(game, { seat, player }) {
  * @param {{ seat: number, amount: number }} options
  */
 export function buyIn(game, { seat, amount }) {
+  // No buy-in allowed in tournaments
+  if (game.tournament?.active) {
+    throw new Error("buy-in not allowed in tournaments");
+  }
+
   const seatObj = game.seats[seat];
   if (!seatObj.empty) {
     const chipAmount = game.blinds.big * amount;
@@ -320,10 +336,16 @@ export function endHand(game) {
     }
   }
 
-  // Auto sit-out players with 0 stack
+  // Auto sit-out players with 0 stack (and mark busted in tournaments)
   for (const seat of game.seats) {
-    if (!seat.empty && seat.stack === 0) {
+    if (!seat.empty && seat.stack === 0 && !seat.sittingOut) {
       seat.sittingOut = true;
+      // In tournaments, record the busted position
+      if (game.tournament?.active) {
+        // Position = number of players still with chips + 1
+        const playersWithChips = countPlayersWithChips(game);
+        seat.bustedPosition = playersWithChips + 1;
+      }
     }
   }
 
@@ -412,6 +434,11 @@ export function sitIn(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function leave(game, { seat }) {
+  // Cannot leave during a tournament
+  if (game.tournament?.active) {
+    throw new Error("cannot leave during a tournament");
+  }
+
   const seatObj = game.seats[seat];
 
   if (seatObj.empty) {

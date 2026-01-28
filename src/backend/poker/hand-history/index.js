@@ -42,6 +42,19 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  */
 
 /**
+ * @typedef {object} OHHTournamentInfo
+ * @property {string} tournament_number
+ * @property {string} name
+ * @property {string} start_date_utc
+ * @property {string} currency
+ * @property {number} buyin_amount
+ * @property {number} fee_amount
+ * @property {number} initial_stack
+ * @property {string} type
+ * @property {string} speed
+ */
+
+/**
  * @typedef {object} OHHHand
  * @property {string} spec_version
  * @property {string} site_name
@@ -57,6 +70,16 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
  * @property {OHHRound[]} rounds
  * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards: string[]|null, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
+ * @property {boolean} [tournament] - True if this is a tournament hand
+ * @property {OHHTournamentInfo} [tournament_info] - Tournament metadata (only for tournaments)
+ */
+
+/**
+ * @typedef {object} TournamentRecordInfo
+ * @property {boolean} active
+ * @property {string|null} startTime
+ * @property {number} initialStack
+ * @property {number} level
  */
 
 /**
@@ -71,6 +94,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {number} dealerSeat
  * @property {{ ante: Cents, small: Cents, big: Cents }} blinds
  * @property {Map<string, string[]>} boardByStreet
+ * @property {TournamentRecordInfo|null} tournament
  */
 
 /** @type {Map<string, Recorder>} */
@@ -95,6 +119,7 @@ export function getRecorder(gameId) {
       dealerSeat: 0,
       blinds: { ante: 0, small: 0, big: 0 },
       boardByStreet: new Map(),
+      tournament: null,
     };
     recorders.set(gameId, recorder);
   }
@@ -116,6 +141,22 @@ export function startHand(gameId, game) {
   recorder.dealerSeat = game.button + 1; // OHH uses 1-indexed seats
   recorder.blinds = { ...game.blinds };
   recorder.boardByStreet = new Map();
+
+  // Capture tournament info if this is a tournament
+  if (game.tournament?.active) {
+    // Set tournament start time on first hand
+    if (!game.tournament.startTime) {
+      game.tournament.startTime = recorder.startTime;
+    }
+    recorder.tournament = {
+      active: true,
+      startTime: game.tournament.startTime,
+      initialStack: game.tournament.initialStack,
+      level: game.tournament.level,
+    };
+  } else {
+    recorder.tournament = null;
+  }
 
   // Capture players at hand start
   recorder.players = [];
@@ -339,6 +380,25 @@ export async function finalizeHand(gameId, game, potResults = []) {
     pots,
   };
 
+  // Add tournament info if this is a tournament hand
+  if (recorder.tournament?.active) {
+    hand.tournament = true;
+    hand.tournament_info = {
+      tournament_number: gameId,
+      name: "Sit & Go",
+      start_date_utc:
+        recorder.tournament.startTime ||
+        recorder.startTime ||
+        new Date().toISOString(),
+      currency: "USD",
+      buyin_amount: 0, // No buy-in tracking for v1
+      fee_amount: 0,
+      initial_stack: toDollars(recorder.tournament.initialStack),
+      type: "SnG",
+      speed: "Regular",
+    };
+  }
+
   // Add to cache
   const cacheKey = `${gameId}-${recorder.handNumber}`;
   addToCache(cacheKey, hand);
@@ -346,13 +406,14 @@ export async function finalizeHand(gameId, game, potResults = []) {
   // Write to file
   await writeHandToFile(gameId, hand);
 
-  // Reset for next hand (keep handNumber)
+  // Reset for next hand (keep handNumber and tournament info)
   recorder.actions = [];
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
   recorder.startTime = null;
   recorder.players = [];
   recorder.boardByStreet = new Map();
+  // Note: tournament info is kept but will be refreshed on next startHand
 }
 
 /**

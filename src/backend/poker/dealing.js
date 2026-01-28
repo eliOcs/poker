@@ -37,20 +37,30 @@ export function* createSeatIterator(game, predicate) {
  * @returns {Generator<void>}
  */
 export function* blinds(game) {
-  // Post small blind
+  // Calculate both blind seats upfront (before any state changes)
   const sbSeat = Betting.getSmallBlindSeat(game);
+  const bbSeat = Betting.getBigBlindSeat(game);
+
+  // Post small blind
   const sbPlayer = /** @type {OccupiedSeat} */ (game.seats[sbSeat]);
   const sbAmount = Math.min(game.blinds.small, sbPlayer.stack);
   sbPlayer.bet = sbAmount;
   sbPlayer.stack -= sbAmount;
+  // In tournaments, sitting out players auto-fold after posting
+  if (sbPlayer.sittingOut) {
+    sbPlayer.folded = true;
+  }
   yield;
 
   // Post big blind
-  const bbSeat = Betting.getBigBlindSeat(game);
   const bbPlayer = /** @type {OccupiedSeat} */ (game.seats[bbSeat]);
   const bbAmount = Math.min(game.blinds.big, bbPlayer.stack);
   bbPlayer.bet = bbAmount;
   bbPlayer.stack -= bbAmount;
+  // In tournaments, sitting out players auto-fold after posting
+  if (bbPlayer.sittingOut) {
+    bbPlayer.folded = true;
+  }
   yield;
 }
 

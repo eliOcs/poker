@@ -7,6 +7,8 @@
  * TIMER_SPEED to affect all time-based actions uniformly.
  */
 
+import * as TournamentTick from "./tournament-tick.js";
+
 /**
  * @typedef {import('./game.js').Game} Game
  */
@@ -23,6 +25,10 @@ export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number|null} autoActionSeat - Seat index to auto-action (check/fold), or null
  * @property {'disconnect'|'clock'|null} autoActionReason - Why auto-action triggered
+ * @property {boolean} tournamentLevelChanged - Whether tournament blind level changed
+ * @property {boolean} tournamentBreakStarted - Whether tournament break started
+ * @property {boolean} tournamentBreakEnded - Whether tournament break ended
+ * @property {boolean} tournamentEnded - Whether tournament has a winner
  */
 
 /**
@@ -76,22 +82,63 @@ function handleClockExpiry(game, actingSeat, result) {
 }
 
 /**
- * Processes one game tick (called every second, or faster with TIMER_SPEED)
- * @param {Game} game
+ * Creates empty tick result
  * @returns {TickResult}
  */
-export function tick(game) {
-  /** @type {TickResult} */
-  const result = {
+function createTickResult() {
+  return {
     shouldBroadcast: false,
     shouldStopTick: false,
     startHand: false,
     autoActionSeat: null,
     autoActionReason: null,
+    tournamentLevelChanged: false,
+    tournamentBreakStarted: false,
+    tournamentBreakEnded: false,
+    tournamentEnded: false,
   };
+}
 
-  handleCountdown(game, result);
+/**
+ * Handles tournament tick and returns true if on break
+ * @param {Game} game
+ * @param {TickResult} result
+ * @returns {boolean} Whether tournament is on break
+ */
+function handleTournamentTick(game, result) {
+  if (!game.tournament?.active) return false;
 
+  const tournamentResult = TournamentTick.tick(game);
+  result.tournamentLevelChanged = tournamentResult.levelChanged;
+  result.tournamentBreakStarted = tournamentResult.breakStarted;
+  result.tournamentBreakEnded = tournamentResult.breakEnded;
+  result.tournamentEnded = tournamentResult.tournamentEnded;
+
+  const hasChange =
+    tournamentResult.levelChanged ||
+    tournamentResult.breakStarted ||
+    tournamentResult.breakEnded ||
+    tournamentResult.tournamentEnded;
+
+  if (hasChange) {
+    result.shouldBroadcast = true;
+  }
+
+  if (game.tournament.onBreak) {
+    result.shouldBroadcast = true;
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Handles acting player tick
+ * @param {Game} game
+ * @param {TickResult} result
+ * @returns {boolean} Whether there's an acting player
+ */
+function handleActingTick(game, result) {
   const actingSeat = game.hand?.actingSeat;
   const isActing = actingSeat !== -1 && actingSeat !== undefined;
 
@@ -102,7 +149,26 @@ export function tick(game) {
     result.shouldBroadcast = true;
   }
 
-  if (game.countdown === null && !isActing) {
+  return isActing;
+}
+
+/**
+ * Processes one game tick (called every second, or faster with TIMER_SPEED)
+ * @param {Game} game
+ * @returns {TickResult}
+ */
+export function tick(game) {
+  const result = createTickResult();
+
+  if (handleTournamentTick(game, result)) {
+    return result;
+  }
+
+  handleCountdown(game, result);
+  const isActing = handleActingTick(game, result);
+
+  const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
+  if (game.countdown === null && !isActing && !isTournamentTicking) {
     result.shouldStopTick = true;
   }
 
@@ -118,7 +184,8 @@ export function shouldTickBeRunning(game) {
   const hasCountdown = game.countdown !== null;
   const hasActingPlayer =
     game.hand?.actingSeat !== -1 && game.hand?.actingSeat !== undefined;
-  return hasCountdown || hasActingPlayer;
+  const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
+  return hasCountdown || hasActingPlayer || isTournamentTicking;
 }
 
 /**

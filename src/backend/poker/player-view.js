@@ -1,6 +1,7 @@
 import * as Betting from "./betting.js";
 import { countPlayersWithChips } from "./actions.js";
 import { isClockCallable } from "./game-tick.js";
+import * as TournamentTick from "./tournament-tick.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
 import { HIDDEN, getRank } from "./deck.js";
@@ -124,6 +125,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {Cents|null} handResult
  * @property {string|null} handRank
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
+ * @property {number|null} bustedPosition - Tournament finishing position (null if not busted)
  */
 
 /**
@@ -148,6 +150,14 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
+ * @typedef {object} TournamentView
+ * @property {number} level - Current blind level (1-7)
+ * @property {number} timeToNextLevel - Seconds until next level or break ends
+ * @property {boolean} onBreak - Whether currently on break
+ * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ */
+
+/**
  * @typedef {object} PlayerView
  * @property {boolean} running
  * @property {number} button
@@ -158,6 +168,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number|null} countdown
  * @property {WinnerMessage|null} winnerMessage
  * @property {Ranking.PlayerRanking[]} rankings
+ * @property {TournamentView|null} tournament - Tournament state (null for cash games)
  */
 
 /**
@@ -247,35 +258,51 @@ function calculateHandRank(holeCards, boardCards) {
 }
 
 /**
+ * Gets waiting phase actions for a sitting out player
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @param {boolean} isTournament
+ * @returns {PlayerAction[]}
+ */
+function getSittingOutActions(seat, game, isTournament) {
+  /** @type {PlayerAction[]} */
+  const actions = [];
+  if (seat.stack >= game.blinds.big) {
+    const cost = seat.missedBigBlind ? game.blinds.big : 0;
+    actions.push({ action: "sitIn", cost });
+  }
+  if (!isTournament) {
+    actions.push({ action: "leave" });
+  }
+  return actions;
+}
+
+/**
  * Gets waiting phase actions for a seated player
  * @param {import('./seat.js').OccupiedSeat} seat
  * @param {Game} game
  * @returns {PlayerAction[]}
  */
 function getWaitingPhaseActions(seat, game) {
-  /** @type {PlayerAction[]} */
-  const actions = [];
+  const isTournament = game.tournament?.active === true;
 
   if (seat.sittingOut) {
-    if (seat.stack >= game.blinds.big) {
-      const cost = seat.missedBigBlind ? game.blinds.big : 0;
-      actions.push({ action: "sitIn", cost });
-    }
-    actions.push({ action: "leave" });
-    return actions;
+    return getSittingOutActions(seat, game, isTournament);
   }
 
   if (seat.stack === 0) {
-    actions.push({
-      action: "buyIn",
-      min: 20,
-      max: 100,
-      bigBlind: game.blinds.big,
-    });
-    return actions;
+    if (isTournament) return [];
+    return [{ action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big }];
   }
 
-  if (game.countdown === null && countPlayersWithChips(game) >= 2) {
+  /** @type {PlayerAction[]} */
+  const actions = [];
+  const canStart =
+    game.countdown === null &&
+    countPlayersWithChips(game) >= 2 &&
+    !game.tournament?.onBreak;
+
+  if (canStart) {
     actions.push({ action: "start" });
   }
   actions.push({ action: "sitOut" });
@@ -411,6 +438,16 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
 export default function playerView(game, player) {
   const playerSeatIndex = findPlayerSeat(game, player.id);
 
+  /** @type {TournamentView|null} */
+  const tournament = game.tournament?.active
+    ? {
+        level: game.tournament.level,
+        timeToNextLevel: TournamentTick.getTimeToNextLevel(game) ?? 0,
+        onBreak: game.tournament.onBreak,
+        winner: game.tournament.winner,
+      }
+    : null;
+
   return {
     running: game.running,
     button: game.button,
@@ -429,6 +466,7 @@ export default function playerView(game, player) {
     countdown: game.countdown,
     winnerMessage: game.winnerMessage,
     rankings: Ranking.computeRankings(game),
+    tournament,
     seats: game.seats.map((seat, index) => {
       if (seat.empty) {
         return {
@@ -464,6 +502,7 @@ export default function playerView(game, player) {
         handResult: seat.handResult,
         handRank,
         winningCards: seat.winningCards,
+        bustedPosition: seat.bustedPosition,
       };
     }),
   };

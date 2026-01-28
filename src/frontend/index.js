@@ -314,6 +314,8 @@ class Game extends LitElement {
             .winnerMessage=${this.game.winnerMessage}
             .winningCards=${this.getWinningCards()}
             .blinds=${this.game.blinds}
+            .tournament=${this.game.tournament}
+            .seats=${this.game.seats}
           ></phg-board>
           <div id="seats">
             ${this.game.seats.map((seat, i) =>

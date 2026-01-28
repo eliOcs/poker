@@ -1,14 +1,17 @@
 /**
  * Create a new game via API
  * @param {import('@playwright/test').APIRequestContext} request
- * @param {{ small?: number, big?: number }} [stakes] - Optional stakes
+ * @param {{ small?: number, big?: number, type?: 'cash' | 'tournament' }} [options] - Optional config
  * @returns {Promise<string>} - Game ID
  */
-export async function createGame(request, stakes) {
-  const options = stakes
-    ? { data: { small: stakes.small, big: stakes.big } }
-    : undefined;
-  const response = await request.post("/games", options);
+export async function createGame(request, options) {
+  const data = {};
+  if (options?.small !== undefined) data.small = options.small;
+  if (options?.big !== undefined) data.big = options.big;
+  if (options?.type) data.type = options.type;
+
+  const requestOptions = Object.keys(data).length > 0 ? { data } : undefined;
+  const response = await request.post("/games", requestOptions);
   const { id } = await response.json();
   return id;
 }

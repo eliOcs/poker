@@ -164,6 +164,37 @@ describe("betting", () => {
       Betting.startBettingRound(game, "flop");
       assert.equal(game.hand.actingSeat, 2);
     });
+
+    it("should set currentBet to big blind for preflop", () => {
+      // Simulate blinds being posted
+      game.seats[0].bet = 25; // SB
+      game.seats[2].bet = 50; // BB
+      game.blinds = { small: 25, big: 50, ante: 0 };
+
+      Betting.startBettingRound(game, "preflop");
+
+      assert.equal(
+        game.hand.currentBet,
+        50,
+        "currentBet should be the big blind",
+      );
+    });
+
+    it("should set lastRaiseSize to big blind for preflop", () => {
+      game.blinds = { small: 25, big: 50, ante: 0 };
+
+      Betting.startBettingRound(game, "preflop");
+
+      assert.equal(game.hand.lastRaiseSize, 50);
+    });
+
+    it("should set currentBet to 0 for postflop rounds", () => {
+      game.hand.currentBet = 100; // From previous round
+
+      Betting.startBettingRound(game, "flop");
+
+      assert.equal(game.hand.currentBet, 0);
+    });
   });
 
   describe("collectBets", () => {
@@ -282,6 +313,115 @@ describe("betting", () => {
   });
 
   describe("advanceAction - betting round completion", () => {
+    describe("lastRaiser folds - round should still end", () => {
+      it("should end round when lastRaiser folds and all others call", () => {
+        // Set up 6-player game
+        game.seats[1] = Seat.occupied({ id: "player4" }, 1000);
+        game.seats[3] = Seat.occupied({ id: "player5" }, 1000);
+        game.seats[5] = Seat.occupied({ id: "player6" }, 1000);
+        game.button = 0;
+
+        // Start flop betting
+        // First to act postflop is first active after button (seat 1)
+        Betting.startBettingRound(game, "flop");
+
+        // Verify initial state
+        assert.equal(game.hand.actingSeat, 1, "first actor should be seat 1");
+        assert.equal(game.hand.lastRaiser, 1, "lastRaiser should be seat 1");
+
+        // Seat 1 (lastRaiser) folds
+        Actions.fold(game, { seat: 1 });
+
+        // Remaining players (2, 3, 4, 5, 0) all check
+        // This should eventually end the round
+        Actions.check(game, { seat: 2 });
+        Actions.check(game, { seat: 3 });
+        Actions.check(game, { seat: 4 });
+        Actions.check(game, { seat: 5 });
+        Actions.check(game, { seat: 0 });
+
+        // BUG: The round never ends because next never equals lastRaiser (seat 1 is folded)
+        assert.equal(
+          game.hand.actingSeat,
+          -1,
+          "betting round should end after all players have acted",
+        );
+      });
+
+      it("should end round when lastRaiser folds and others check in 3-player game", () => {
+        // Use the standard 3-player setup (seats 0, 2, 4)
+        game.button = 0;
+
+        // Start flop betting - first actor is seat 2 (first after button)
+        Betting.startBettingRound(game, "flop");
+
+        assert.equal(game.hand.actingSeat, 2);
+        assert.equal(game.hand.lastRaiser, 2);
+
+        // Seat 2 (lastRaiser) folds
+        Actions.fold(game, { seat: 2 });
+
+        // Remaining players check
+        Actions.check(game, { seat: 4 });
+        Actions.check(game, { seat: 0 });
+
+        // Round should end - all remaining players have acted
+        assert.equal(
+          game.hand.actingSeat,
+          -1,
+          "betting round should end after remaining players check",
+        );
+      });
+    });
+
+    describe("lastRaiser goes all-in - round should still end", () => {
+      it("should end round when lastRaiser goes all-in and others call", () => {
+        // Use the standard 3-player setup (seats 0, 2, 4)
+        game.button = 0;
+
+        // Start flop betting - first actor is seat 2 (first after button)
+        Betting.startBettingRound(game, "flop");
+
+        assert.equal(game.hand.actingSeat, 2);
+        assert.equal(game.hand.lastRaiser, 2);
+
+        // Seat 2 (lastRaiser) goes all-in
+        Actions.allIn(game, { seat: 2 });
+
+        // Remaining players call
+        Actions.call(game, { seat: 4 });
+        Actions.call(game, { seat: 0 });
+
+        // Round should end - all remaining players have called
+        assert.equal(
+          game.hand.actingSeat,
+          -1,
+          "betting round should end after all players call the all-in",
+        );
+      });
+
+      it("should end round when lastRaiser goes all-in and others fold", () => {
+        // Use the standard 3-player setup (seats 0, 2, 4)
+        game.button = 0;
+
+        Betting.startBettingRound(game, "flop");
+
+        // Seat 2 (lastRaiser) goes all-in
+        Actions.allIn(game, { seat: 2 });
+
+        // Others fold
+        Actions.fold(game, { seat: 4 });
+        Actions.fold(game, { seat: 0 });
+
+        // Round should end - only one player left
+        assert.equal(
+          game.hand.actingSeat,
+          -1,
+          "betting round should end when others fold",
+        );
+      });
+    });
+
     describe("postflop: all players check (no bet)", () => {
       beforeEach(() => {
         // Set up heads-up game for simpler testing

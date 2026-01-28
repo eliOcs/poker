@@ -26,24 +26,32 @@ export function countPlayersWhoCanAct(game) {
 }
 
 /**
+ * Gets the predicate for finding blind seats based on game type
+ * In tournaments, sitting out players must still post blinds
+ * @param {Game} game
+ * @returns {(seat: import('./seat.js').Seat) => boolean}
+ */
+function getBlindPredicate(game) {
+  return game.tournament?.active ? Seat.canPostBlinds : Seat.isActive;
+}
+
+/**
  * Gets the index of the small blind seat
  * @param {Game} game
  * @returns {number}
  */
 export function getSmallBlindSeat(game) {
+  // Always count active players for heads-up detection (not sitting out ones)
   const activePlayers = game.seats.filter(Seat.isActive).length;
 
-  // Heads-up: button is small blind
+  // Heads-up: button is small blind (must be active player)
   if (activePlayers === 2) {
     return findIndex(game.seats, Seat.isActive, game.button);
   }
 
-  // Normal: first active player after button
-  return findIndex(
-    game.seats,
-    Seat.isActive,
-    nextIndex(game.seats, game.button),
-  );
+  // Normal: first eligible player after button (includes sitting out in tournaments)
+  const predicate = getBlindPredicate(game);
+  return findIndex(game.seats, predicate, nextIndex(game.seats, game.button));
 }
 
 /**
@@ -53,11 +61,11 @@ export function getSmallBlindSeat(game) {
  */
 export function getBigBlindSeat(game) {
   const smallBlind = getSmallBlindSeat(game);
-  return findIndex(
-    game.seats,
-    Seat.isActive,
-    nextIndex(game.seats, smallBlind),
-  );
+  // In heads-up, BB must be an active player (not sitting out)
+  const activePlayers = game.seats.filter(Seat.isActive).length;
+  const predicate =
+    activePlayers === 2 ? Seat.isActive : getBlindPredicate(game);
+  return findIndex(game.seats, predicate, nextIndex(game.seats, smallBlind));
 }
 
 /**
@@ -192,6 +200,8 @@ export function startBettingRound(game, phase) {
     game.hand.currentBet = 0;
     game.hand.lastRaiseSize = 0;
   } else {
+    // Preflop: currentBet is the big blind (already posted)
+    game.hand.currentBet = game.blinds.big;
     game.hand.lastRaiseSize = game.blinds.big;
   }
 
@@ -253,6 +263,14 @@ export function advanceAction(game) {
   if (game.hand.lastRaiser !== -1 && next === game.hand.lastRaiser) {
     game.hand.actingSeat = -1;
     return;
+  }
+
+  // If lastRaiser can't act (folded or all-in), update it to the next player.
+  // This ensures the round will end when action returns to them.
+  // We do this AFTER the cycle check to avoid immediately ending the round.
+  const lastRaiserSeat = game.seats[game.hand.lastRaiser];
+  if (game.hand.lastRaiser !== -1 && !Seat.canAct(lastRaiserSeat)) {
+    game.hand.lastRaiser = next;
   }
 
   game.hand.actingSeat = next;

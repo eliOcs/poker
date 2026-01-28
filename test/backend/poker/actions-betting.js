@@ -218,9 +218,7 @@ describe("betting actions", () => {
       assert.equal(game.hand.currentBet, 1000);
     });
 
-    it("should set lastRaiser only if it's a full raise", () => {
-      // lastRaiser starts as first actor (seat 2) from startBettingRound
-      const initialLastRaiser = game.hand.lastRaiser;
+    it("should not make all-in player lastRaiser if it's not a full raise", () => {
       game.hand.actingSeat = 2;
       game.hand.currentBet = 800;
       game.hand.lastRaiseSize = 400;
@@ -229,8 +227,9 @@ describe("betting actions", () => {
 
       Actions.allIn(game, { seat: 2 });
 
-      // 500 < 400 (min raise), so lastRaiser shouldn't change
-      assert.equal(game.hand.lastRaiser, initialLastRaiser);
+      // 500 < 400 (min raise), so seat 2 should NOT be lastRaiser
+      // (advanceAction will update lastRaiser to next player since seat 2 is all-in)
+      assert.notEqual(game.hand.lastRaiser, 2);
     });
   });
 

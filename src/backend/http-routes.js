@@ -93,6 +93,59 @@ export function generateGameId() {
 }
 
 /**
+ * Parses seat count from request data
+ * @param {unknown} data
+ * @param {number} defaultSeats
+ * @returns {number}
+ */
+function parseSeats(data, defaultSeats) {
+  if (
+    data &&
+    typeof data === "object" &&
+    "seats" in data &&
+    [2, 6, 9].includes(/** @type {number} */ (data.seats))
+  ) {
+    return /** @type {number} */ (data.seats);
+  }
+  return defaultSeats;
+}
+
+/**
+ * Parses blinds from request data
+ * @param {unknown} data
+ * @returns {{ ante: number, small: number, big: number }}
+ */
+function parseBlinds(data) {
+  if (
+    data &&
+    typeof data === "object" &&
+    "small" in data &&
+    "big" in data &&
+    Stakes.isValidPreset({
+      small: /** @type {number} */ (data.small),
+      big: /** @type {number} */ (data.big),
+    })
+  ) {
+    return {
+      ante: 0,
+      small: /** @type {number} */ (data.small),
+      big: /** @type {number} */ (data.big),
+    };
+  }
+  return { ante: 0, small: Stakes.DEFAULT.small, big: Stakes.DEFAULT.big };
+}
+
+/**
+ * Sends a JSON response
+ * @param {import('http').ServerResponse} res
+ * @param {unknown} data
+ */
+function respondWithJson(res, data) {
+  res.writeHead(200, { "content-type": "application/json" });
+  res.end(JSON.stringify(data));
+}
+
+/**
  * @typedef {object} RouteContext
  * @property {Request} req
  * @property {Response} res
@@ -139,51 +192,35 @@ export function createRoutes(players, games) {
         getOrCreatePlayer(req, res, players);
 
         const data = await parseBody(req);
-        let blinds = {
-          ante: 0,
-          small: Stakes.DEFAULT.small,
-          big: Stakes.DEFAULT.big,
-        };
-
-        if (
-          data &&
-          typeof data === "object" &&
-          "small" in data &&
-          "big" in data &&
-          Stakes.isValidPreset({
-            small: /** @type {number} */ (data.small),
-            big: /** @type {number} */ (data.big),
-          })
-        ) {
-          blinds = {
-            ante: 0,
-            small: /** @type {number} */ (data.small),
-            big: /** @type {number} */ (data.big),
-          };
-        }
-
-        let seats = 9;
-        if (
-          data &&
-          typeof data === "object" &&
-          "seats" in data &&
-          [2, 6, 9].includes(/** @type {number} */ (data.seats))
-        ) {
-          seats = /** @type {number} */ (data.seats);
-        }
-
         const gameId = generateGameId();
-        const game = PokerGame.create({ blinds, seats });
-        games.set(gameId, game);
 
-        logger.info("game created", {
-          gameId,
-          blinds: `${blinds.small}/${blinds.big}`,
-          seats,
-        });
+        const isTournament =
+          data !== null &&
+          typeof data === "object" &&
+          "type" in data &&
+          data.type === "tournament";
+        const seats = parseSeats(data, isTournament ? 6 : 9);
 
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ id: gameId }));
+        if (isTournament) {
+          const game = PokerGame.createTournament({ seats });
+          games.set(gameId, game);
+          logger.info("tournament created", {
+            gameId,
+            seats,
+            initialStack: game.tournament?.initialStack,
+          });
+          respondWithJson(res, { id: gameId, type: "tournament" });
+        } else {
+          const blinds = parseBlinds(data);
+          const game = PokerGame.create({ blinds, seats });
+          games.set(gameId, game);
+          logger.info("game created", {
+            gameId,
+            blinds: `${blinds.small}/${blinds.big}`,
+            seats,
+          });
+          respondWithJson(res, { id: gameId, type: "cash" });
+        }
       },
     },
     {
