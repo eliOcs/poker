@@ -138,20 +138,11 @@ export class PokerPlayer {
    * @returns {Promise<boolean>}
    */
   async isMyTurn() {
-    // If we can see action buttons (Check, Call, Fold, Bet, Raise, All-In), it's our turn
-    const hasCheck = await this.actionPanel
-      .getByRole("button", { name: "Check" })
+    return await this.actionPanel
+      .getByRole("button", { name: /(Check|Call|Fold)/ })
+      .first()
       .isVisible()
       .catch(() => false);
-    const hasCall = await this.actionPanel
-      .getByRole("button", { name: /^Call/ })
-      .isVisible()
-      .catch(() => false);
-    const hasFold = await this.actionPanel
-      .getByRole("button", { name: "Fold" })
-      .isVisible()
-      .catch(() => false);
-    return hasCheck || hasCall || hasFold;
   }
 
   /**
