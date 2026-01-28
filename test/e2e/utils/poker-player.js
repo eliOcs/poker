@@ -256,6 +256,8 @@ export class PokerPlayer {
       el.value = el.min;
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
+    // Wait a moment for UI to update
+    await this.page.waitForTimeout(100);
   }
 
   /**
