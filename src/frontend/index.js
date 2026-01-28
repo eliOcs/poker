@@ -234,9 +234,21 @@ class Game extends LitElement {
       (s) => s.isCurrentPlayer && !s.empty,
     );
     if (seatIndex === -1) {
-      return { seatIndex: -1, actions: [] };
+      return {
+        seatIndex: -1,
+        actions: [],
+        bustedPosition: null,
+        isWinner: false,
+      };
     }
-    return { seatIndex, actions: this.game.seats[seatIndex].actions || [] };
+    const seat = this.game.seats[seatIndex];
+    const isWinner = this.game.tournament?.winner === seatIndex;
+    return {
+      seatIndex,
+      actions: seat.actions || [],
+      bustedPosition: seat.bustedPosition || null,
+      isWinner,
+    };
   }
 
   isPlayerSeated() {
@@ -301,7 +313,8 @@ class Game extends LitElement {
   render() {
     if (!this.game) return html`<p>Loading ...</p>`;
 
-    const { seatIndex, actions } = this.getMySeatInfo();
+    const { seatIndex, actions, bustedPosition, isWinner } =
+      this.getMySeatInfo();
     const isSeated = this.isPlayerSeated();
 
     return html`
@@ -340,6 +353,8 @@ class Game extends LitElement {
           .seatIndex=${seatIndex}
           .bigBlind=${this.game.blinds?.big || 1}
           .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
+          .bustedPosition=${bustedPosition}
+          .isWinner=${isWinner}
           @game-action=${this.handleGameAction}
         ></phg-action-panel>
         <span id="connection-status">${this._renderConnectionStatus()}</span>

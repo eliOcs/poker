@@ -160,21 +160,34 @@ describe("tournament-tick", () => {
     });
   });
 
-  describe("winner detection", () => {
-    it("should detect winner when only one player has chips", () => {
-      game.seats[1].stack = 0;
+  describe("winner reporting", () => {
+    it("should report tournamentEnded when winner is already set", () => {
+      game.tournament.winner = 0;
 
       const result = TournamentTick.tick(game);
 
       assert.equal(result.tournamentEnded, true);
-      assert.equal(game.tournament.winner, 0);
     });
 
-    it("should not detect winner when multiple players have chips", () => {
+    it("should not report tournamentEnded when no winner yet", () => {
       const result = TournamentTick.tick(game);
 
       assert.equal(result.tournamentEnded, false);
       assert.equal(game.tournament.winner, null);
+    });
+
+    it("should not set winner (that is done by autoStartNextHand)", () => {
+      // Even with only one player having chips, tick does not set winner
+      game.seats[1].stack = 0;
+
+      const result = TournamentTick.tick(game);
+
+      assert.equal(
+        game.tournament.winner,
+        null,
+        "tick should not detect winner - autoStartNextHand does that",
+      );
+      assert.equal(result.tournamentEnded, false);
     });
   });
 });

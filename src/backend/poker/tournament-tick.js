@@ -3,7 +3,6 @@
  */
 
 import * as Tournament from "../../shared/tournament.js";
-import * as TournamentSummary from "./tournament-summary.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -37,15 +36,6 @@ function advanceLevel(game) {
 }
 
 /**
- * Counts players with chips remaining
- * @param {Game} game
- * @returns {number}
- */
-function countPlayersWithChips(game) {
-  return game.seats.filter((s) => !s.empty && s.stack > 0).length;
-}
-
-/**
  * Creates empty tick result
  * @returns {TournamentTickResult}
  */
@@ -59,25 +49,20 @@ function createEmptyResult() {
 }
 
 /**
- * Checks for tournament winner and updates result
+ * Checks if tournament has a winner (set by autoStartNextHand after endHand)
  * @param {Game} game
  * @param {TournamentTickResult} result
- * @returns {boolean} Whether to return early
+ * @returns {boolean} Whether tournament has ended
  */
 function checkWinner(game, result) {
   const tournament = game.tournament;
   if (!tournament) return false;
 
-  const playersWithChips = countPlayersWithChips(game);
-  if (playersWithChips === 1 && tournament.winner === null) {
-    const winnerIndex = game.seats.findIndex((s) => !s.empty && s.stack > 0);
-    tournament.winner = winnerIndex;
+  if (tournament.winner !== null) {
     result.tournamentEnded = true;
-    // Write tournament summary (fire and forget - no need to wait)
-    TournamentSummary.finalizeTournament(game);
     return true;
   }
-  return tournament.winner !== null;
+  return false;
 }
 
 /**

@@ -20,6 +20,8 @@ class ActionPanel extends LitElement {
       bigBlind: { type: Number },
       seatedCount: { type: Number },
       copied: { type: Boolean },
+      bustedPosition: { type: Number },
+      isWinner: { type: Boolean },
     };
   }
 
@@ -31,6 +33,8 @@ class ActionPanel extends LitElement {
     this.bigBlind = 1;
     this.seatedCount = 0;
     this.copied = false;
+    this.bustedPosition = null;
+    this.isWinner = false;
     this._lastActionType = null;
   }
 
@@ -407,6 +411,28 @@ class ActionPanel extends LitElement {
     return actionMap;
   }
 
+  _formatPosition(position) {
+    const suffixes = ["th", "st", "nd", "rd"];
+    const v = position % 100;
+    const suffix = suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
+    return `${position}${suffix}`;
+  }
+
+  _renderTournamentResult() {
+    if (this.isWinner) {
+      return html`<span class="waiting tournament-result winner"
+        >You've won!</span
+      >`;
+    }
+    if (this.bustedPosition != null) {
+      return html`<span class="waiting tournament-result"
+        >You finished in ${this._formatPosition(this.bustedPosition)}
+        place</span
+      >`;
+    }
+    return null;
+  }
+
   _renderForActionMap(actionMap) {
     if (actionMap.buyIn) return this._renderBuyIn(actionMap.buyIn);
     if (actionMap.sitIn || actionMap.leave)
@@ -422,6 +448,12 @@ class ActionPanel extends LitElement {
   }
 
   render() {
+    // Show tournament result for busted players or winner
+    const tournamentResult = this._renderTournamentResult();
+    if (tournamentResult) {
+      return tournamentResult;
+    }
+
     if (!this.actions || this.actions.length === 0) {
       return this.seatedCount < 2
         ? this._renderWaitingForPlayers()
