@@ -7,6 +7,7 @@ import * as HandHistory from "./hand-history/index.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import * as logger from "../logger.js";
+import * as Tournament from "../../shared/tournament.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -49,6 +50,18 @@ import * as logger from "../logger.js";
  */
 
 /**
+ * @typedef {object} TournamentState
+ * @property {boolean} active - Whether this is a tournament game
+ * @property {number} level - Current blind level (1-7)
+ * @property {number} levelTicks - Ticks elapsed in current level
+ * @property {boolean} onBreak - Currently in break period
+ * @property {number} breakTicks - Ticks elapsed in current break
+ * @property {string|null} startTime - Tournament start time (ISO string)
+ * @property {number} initialStack - Starting stack for each player
+ * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ */
+
+/**
  * @typedef {object} Game
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
@@ -63,6 +76,7 @@ import * as logger from "../logger.js";
  * @property {number} actingTicks - Ticks the current player has been acting (for call clock availability)
  * @property {number} disconnectedActingTicks - Ticks a disconnected player has been acting (for auto-fold)
  * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
+ * @property {TournamentState|null} tournament - Tournament state (null for cash games)
  */
 
 /**
@@ -124,7 +138,44 @@ export function create({
     actingTicks: 0,
     disconnectedActingTicks: 0,
     clockTicks: 0,
+    tournament: null,
   };
+}
+
+/**
+ * @typedef {object} TournamentOptions
+ * @property {number} [seats] - Number of seats (default: 6)
+ */
+
+/**
+ * Creates a new tournament game
+ * @param {TournamentOptions} [options] - Tournament options
+ * @returns {Game}
+ */
+export function createTournament({
+  seats: numberOfSeats = Tournament.DEFAULT_SEATS,
+} = {}) {
+  const level1Blinds = Tournament.getBlindsForLevel(1);
+  const blinds = {
+    ante: level1Blinds.ante,
+    small: level1Blinds.small,
+    big: level1Blinds.big,
+  };
+
+  const game = create({ seats: numberOfSeats, blinds });
+
+  game.tournament = {
+    active: true,
+    level: 1,
+    levelTicks: 0,
+    onBreak: false,
+    breakTicks: 0,
+    startTime: null,
+    initialStack: Tournament.INITIAL_STACK,
+    winner: null,
+  };
+
+  return game;
 }
 
 /**

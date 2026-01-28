@@ -39,6 +39,12 @@ export const test = base.extend({
   player2: createPlayerFixture("Player 2"),
   /** @type {PokerPlayer} */
   player3: createPlayerFixture("Player 3"),
+  /** @type {PokerPlayer} */
+  player4: createPlayerFixture("Player 4"),
+  /** @type {PokerPlayer} */
+  player5: createPlayerFixture("Player 5"),
+  /** @type {PokerPlayer} */
+  player6: createPlayerFixture("Player 6"),
 });
 
 export { expect } from "@playwright/test";

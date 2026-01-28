@@ -184,6 +184,14 @@ export class PokerPlayer {
         .isVisible()
         .catch(() => false);
     }
+    if (actionName === "allIn") {
+      // All-In is available if there's a bet/raise slider (we can always go max)
+      const hasSlider = await this.actionPanel
+        .locator('input[type="range"]')
+        .isVisible()
+        .catch(() => false);
+      return hasSlider;
+    }
     const buttonName = actionName.charAt(0).toUpperCase() + actionName.slice(1);
     return await this.actionPanel
       .getByRole("button", { name: buttonName })
@@ -233,32 +241,29 @@ export class PokerPlayer {
   }
 
   /**
-   * Move slider to 25% position
+   * Move slider to minimum position (for min raise/bet)
    */
-  async _moveSliderTo25Percent() {
+  async _moveSliderToMin() {
     const slider = this.actionPanel.locator('input[type="range"]');
-    const box = await slider.boundingBox();
-    if (box) {
-      const targetX = box.x + box.width * 0.25;
-      const centerY = box.y + box.height / 2;
-      await slider.hover();
-      await this.page.mouse.down();
-      await this.page.mouse.move(targetX, centerY);
-      await this.page.mouse.up();
-    }
+    // Set slider to min value directly via JavaScript
+    await slider.evaluate((el) => {
+      el.value = el.min;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
   }
 
   /**
-   * Click + until All-In button appears
+   * Set slider to max value to enable All-In button
    */
   async _clickToAllIn() {
-    const plusBtn = this.actionPanel.getByRole("button", { name: "+" });
-    for (let i = 0; i < 50; i++) {
-      const allInBtn = this.actionPanel.getByRole("button", { name: "All-In" });
-      if (await allInBtn.isVisible().catch(() => false)) break;
-      await plusBtn.click();
-      await this.page.waitForTimeout(50);
-    }
+    const slider = this.actionPanel.locator('input[type="range"]');
+    // Set slider to max value directly via JavaScript
+    await slider.evaluate((el) => {
+      el.value = el.max;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    // Wait a moment for UI to update
+    await this.page.waitForTimeout(100);
   }
 
   /**
@@ -283,11 +288,11 @@ export class PokerPlayer {
         await this.actionPanel.getByRole("button", { name: "Fold" }).click();
       },
       bet: async () => {
-        await this._moveSliderTo25Percent();
+        await this._moveSliderToMin();
         await this.actionPanel.getByRole("button", { name: "Bet" }).click();
       },
       raise: async () => {
-        await this._moveSliderTo25Percent();
+        await this._moveSliderToMin();
         await this.actionPanel
           .getByRole("button", { name: /^Raise to/ })
           .click();
@@ -296,7 +301,7 @@ export class PokerPlayer {
     const handler = handlers[action];
     if (!handler) throw new Error(`Unknown action: ${action}`);
     await handler();
-    await this.page.waitForTimeout(200);
+    await this.page.waitForTimeout(50);
   }
 
   /**
@@ -346,9 +351,9 @@ export class PokerPlayer {
    */
   async getStack() {
     const stackText = await this.mySeat.locator(".stack").textContent();
-    // Parse "$1000" -> 1000
-    const match = stackText?.match(/\$(\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
+    // Parse "$5,000" or "$1000" -> 5000 or 1000
+    const match = stackText?.match(/\$([\d,]+)/);
+    return match ? parseInt(match[1].replace(/,/g, ""), 10) : 0;
   }
 
   /**
@@ -459,6 +464,114 @@ export class PokerPlayer {
    */
   get history() {
     return this.page.locator("phg-history");
+  }
+
+  /**
+   * Check if tournament winner overlay is displayed
+   * @returns {Promise<boolean>}
+   */
+  async hasTournamentWinner() {
+    return await this.board
+      .locator(".tournament-winner-overlay")
+      .isVisible()
+      .catch(() => false);
+  }
+
+  /**
+   * Get the tournament winner name from the overlay
+   * @returns {Promise<string|null>}
+   */
+  async getTournamentWinnerName() {
+    const winnerEl = this.board.locator(".tournament-winner-name");
+    if (await winnerEl.isVisible().catch(() => false)) {
+      return await winnerEl.textContent();
+    }
+    return null;
+  }
+
+  /**
+   * Wait for tournament winner overlay to appear
+   * @param {number} [timeout=60000]
+   */
+  async waitForTournamentWinner(timeout = 60000) {
+    await this.board.locator(".tournament-winner-overlay").waitFor({ timeout });
+  }
+
+  /**
+   * Check if player is eliminated (has zero stack and not waiting for a hand)
+   * @returns {Promise<boolean>}
+   */
+  async isEliminated() {
+    const stack = await this.getStack();
+    return stack === 0;
+  }
+
+  /**
+   * Get the current tournament level from the UI
+   * @returns {Promise<number|null>}
+   */
+  async getTournamentLevel() {
+    const levelEl = this.board.locator(".tournament-level");
+    if (await levelEl.isVisible().catch(() => false)) {
+      const text = await levelEl.textContent();
+      const match = text?.match(/Level (\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    }
+    return null;
+  }
+
+  /**
+   * Get the current blinds from the UI
+   * @returns {Promise<{small: number, big: number}|null>}
+   */
+  async getBlinds() {
+    const stakesEl = this.board.locator(".stakes");
+    if (await stakesEl.isVisible().catch(() => false)) {
+      const text = await stakesEl.textContent();
+      // Parse "$25/$50" or "$1,000/$2,000" format (with optional decimals and commas)
+      const match = text?.match(/\$([\d,]+(?:\.\d+)?)\/\$([\d,]+(?:\.\d+)?)/);
+      if (match) {
+        return {
+          small: parseFloat(match[1].replace(/,/g, "")),
+          big: parseFloat(match[2].replace(/,/g, "")),
+        };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Check if tournament is on break
+   * @returns {Promise<boolean>}
+   */
+  async isOnBreak() {
+    // Break overlay has "BREAK" text
+    return await this.board
+      .locator(".break-overlay, :text('BREAK')")
+      .isVisible()
+      .catch(() => false);
+  }
+
+  /**
+   * Wait for tournament break to start
+   * @param {number} [timeout=120000]
+   */
+  async waitForBreak(timeout = 120000) {
+    await this.board.locator(".break-overlay").waitFor({ timeout });
+  }
+
+  /**
+   * Get hand number from the board UI (if displayed)
+   * @returns {Promise<number|null>}
+   */
+  async getHandNumber() {
+    const handEl = this.board.locator(".hand-number");
+    if (await handEl.isVisible().catch(() => false)) {
+      const text = await handEl.textContent();
+      const match = text?.match(/Hand #?(\d+)/i);
+      return match ? parseInt(match[1], 10) : null;
+    }
+    return null;
   }
 
   /**

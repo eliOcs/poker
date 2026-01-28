@@ -32,6 +32,7 @@
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
  * @property {Cents|null} handResult - Result of the hand (positive for win, negative for loss)
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
+ * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
  */
 
 /**
@@ -70,6 +71,7 @@ export function occupied(player, stack = 0) {
     lastAction: null,
     handResult: null,
     winningCards: null,
+    bustedPosition: null,
   };
 }
 
@@ -109,4 +111,14 @@ export function isActive(seat) {
 export function canAct(seat) {
   if (seat.empty) return false;
   return isActive(seat) && !seat.allIn;
+}
+
+/**
+ * Checks if a seat can post blinds (occupied, not folded, has chips)
+ * Used for tournament blind posting where sitting out players still pay blinds
+ * @param {Seat} seat
+ * @returns {seat is OccupiedSeat}
+ */
+export function canPostBlinds(seat) {
+  return !seat.empty && !seat.folded && seat.stack > 0;
 }

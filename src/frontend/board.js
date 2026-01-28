@@ -81,6 +81,64 @@ class Board extends LitElement {
           color: var(--color-success);
           margin-top: var(--space-md);
         }
+
+        .tournament-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-xs);
+          padding: var(--space-sm) var(--space-md);
+          background: rgba(0, 0, 0, 0.3);
+          border-radius: var(--space-sm);
+          margin-bottom: var(--space-md);
+        }
+
+        .tournament-level {
+          font-size: var(--font-sm);
+          color: var(--color-fg-white);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .tournament-timer {
+          font-size: var(--font-md);
+          color: var(--color-primary);
+          font-variant-numeric: tabular-nums;
+        }
+
+        .tournament-break {
+          background: var(--color-warning);
+          color: var(--color-bg-dark);
+          padding: var(--space-xs) var(--space-sm);
+          font-size: var(--font-sm);
+          font-weight: bold;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .tournament-winner-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.8);
+          border-radius: 9999px;
+          z-index: 10;
+        }
+
+        .tournament-winner-title {
+          font-size: calc(var(--font-lg) * 1.5);
+          color: var(--color-primary);
+          text-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+          margin-bottom: var(--space-md);
+        }
+
+        .tournament-winner-name {
+          font-size: var(--font-lg);
+          color: var(--color-fg-white);
+        }
       `,
     ];
   }
@@ -93,7 +151,59 @@ class Board extends LitElement {
       winnerMessage: { type: Object },
       winningCards: { type: Array },
       blinds: { type: Object },
+      tournament: { type: Object },
+      seats: { type: Array },
     };
+  }
+
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  getTournamentWinnerName() {
+    if (this.tournament?.winner === null || !this.seats) return null;
+    const winnerSeat = this.seats[this.tournament.winner];
+    if (winnerSeat && !winnerSeat.empty) {
+      return winnerSeat.player?.name || `Seat ${this.tournament.winner + 1}`;
+    }
+    return `Seat ${this.tournament.winner + 1}`;
+  }
+
+  renderTournamentInfo() {
+    if (!this.tournament) return "";
+
+    if (this.tournament.onBreak) {
+      return html`
+        <div class="tournament-info">
+          <div class="tournament-break">Break</div>
+          <div class="tournament-timer">
+            ${this.formatTime(this.tournament.timeToNextLevel)}
+          </div>
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="tournament-info">
+        <div class="tournament-level">Level ${this.tournament.level}</div>
+        <div class="tournament-timer">
+          ${this.formatTime(this.tournament.timeToNextLevel)}
+        </div>
+      </div>
+    `;
+  }
+
+  renderTournamentWinner() {
+    if (!this.tournament || this.tournament.winner === null) return "";
+    const winnerName = this.getTournamentWinnerName();
+    return html`
+      <div class="tournament-winner-overlay">
+        <div class="tournament-winner-title">Tournament Winner!</div>
+        <div class="tournament-winner-name">${winnerName}</div>
+      </div>
+    `;
   }
 
   isWinningCard(card) {
@@ -107,71 +217,105 @@ class Board extends LitElement {
     </div>`;
   }
 
-  render() {
-    const cards = this.board?.cards ?? [];
+  renderCommunityCards(cards) {
+    return html`
+      <div class="community-cards">
+        ${cards.map(
+          (card) =>
+            html`<phg-card
+              .card=${card}
+              ?winning=${this.isWinningCard(card)}
+            ></phg-card>`,
+        )}
+      </div>
+    `;
+  }
 
-    // Show winner message if present (with cards still visible)
-    if (this.winnerMessage) {
-      return html`
-        <div class="board-info">
-          <div class="community-cards">
-            ${cards.map(
-              (card) =>
-                html`<phg-card
-                  .card=${card}
-                  ?winning=${this.isWinningCard(card)}
-                ></phg-card>`,
-            )}
-          </div>
-          <div class="winner-message">
-            <div class="winner-name">
-              ${this.winnerMessage.playerName} wins!
-            </div>
-            ${this.winnerMessage.handRank
-              ? html`<div class="winner-hand">
-                  ${this.winnerMessage.handRank}
-                </div>`
-              : ""}
-            <div class="winner-amount">
-              +${formatCurrency(this.winnerMessage.amount)}
-            </div>
-          </div>
-          ${this.renderStakes()}
+  renderWinnerMessage() {
+    return html`
+      <div class="winner-message">
+        <div class="winner-name">${this.winnerMessage.playerName} wins!</div>
+        ${this.winnerMessage.handRank
+          ? html`<div class="winner-hand">${this.winnerMessage.handRank}</div>`
+          : ""}
+        <div class="winner-amount">
+          +${formatCurrency(this.winnerMessage.amount)}
         </div>
-      `;
-    }
+      </div>
+    `;
+  }
 
-    // Show countdown if active
-    if (this.countdown !== null && this.countdown !== undefined) {
-      return html`
-        <div class="board-info">
-          <div class="phase">Starting in...</div>
-          <div class="countdown">${this.countdown}</div>
-          ${this.renderStakes()}
-        </div>
-      `;
-    }
+  hasTournamentWinner() {
+    return (
+      this.tournament?.winner !== null && this.tournament?.winner !== undefined
+    );
+  }
 
+  hasCountdown() {
+    return this.countdown !== null && this.countdown !== undefined;
+  }
+
+  renderCountdownView() {
     return html`
       <div class="board-info">
-        ${this.hand?.phase
-          ? html`<div class="phase">${this.hand.phase}</div>`
-          : html`<div class="phase">Waiting</div>`}
-        <div class="community-cards">
-          ${cards.map(
-            (card) =>
-              html`<phg-card
-                .card=${card}
-                ?winning=${this.isWinningCard(card)}
-              ></phg-card>`,
-          )}
-        </div>
+        ${this.renderTournamentInfo()}
+        <div class="phase">Starting in...</div>
+        <div class="countdown">${this.countdown}</div>
+        ${this.renderStakes()}
+      </div>
+    `;
+  }
+
+  renderBreakView() {
+    return html`
+      <div class="board-info">
+        ${this.renderTournamentInfo()}
+        <div class="phase">On Break</div>
+        ${this.renderStakes()}
+      </div>
+    `;
+  }
+
+  renderDefaultView(cards) {
+    const phase = this.hand?.phase || "Waiting";
+    return html`
+      <div class="board-info">
+        ${this.renderTournamentInfo()}
+        <div class="phase">${phase}</div>
+        ${this.renderCommunityCards(cards)}
         ${this.hand
           ? html`<div class="pot">Pot: ${formatCurrency(this.hand.pot)}</div>`
           : ""}
         ${this.renderStakes()}
       </div>
     `;
+  }
+
+  render() {
+    const cards = this.board?.cards ?? [];
+
+    if (this.hasTournamentWinner()) {
+      return html`
+        ${this.renderTournamentWinner()}
+        <div class="board-info">
+          ${this.renderTournamentInfo()} ${this.renderCommunityCards(cards)}
+          ${this.renderStakes()}
+        </div>
+      `;
+    }
+
+    if (this.winnerMessage) {
+      return html`
+        <div class="board-info">
+          ${this.renderTournamentInfo()} ${this.renderCommunityCards(cards)}
+          ${this.renderWinnerMessage()} ${this.renderStakes()}
+        </div>
+      `;
+    }
+
+    if (this.hasCountdown()) return this.renderCountdownView();
+    if (this.tournament?.onBreak) return this.renderBreakView();
+    return this.renderDefaultView(cards);
   }
 }
 

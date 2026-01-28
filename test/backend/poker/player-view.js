@@ -265,6 +265,87 @@ describe("Player View", function () {
     });
   });
 
+  describe("preflop betting actions", function () {
+    it("should NOT show check for player who hasn't matched the big blind", function () {
+      const g = Game.create({ seats: 3 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      const p3 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.sit(g, { seat: 2, player: p3 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+      Actions.buyIn(g, { seat: 2, amount: 50 });
+
+      // Simulate preflop with blinds posted
+      // Button at seat 0, SB at seat 1 ($0.25), BB at seat 2 ($0.50)
+      g.button = 0;
+      g.blinds = { small: 25, big: 50, ante: 0 };
+      g.seats[1].bet = 25; // SB posted
+      g.seats[2].bet = 50; // BB posted
+      g.hand = {
+        phase: "preflop",
+        pot: 0,
+        currentBet: 50, // Big blind amount
+        actingSeat: 0, // UTG (button in 3-handed) to act
+        lastRaiser: 0,
+        lastRaiseSize: 50,
+      };
+
+      // Player at seat 0 (UTG) hasn't posted anything (bet = 0)
+      // They should NOT be able to check, only call/raise/fold
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+
+      const checkAction = p1Actions.find((a) => a.action === "check");
+      const callAction = p1Actions.find((a) => a.action === "call");
+      const foldAction = p1Actions.find((a) => a.action === "fold");
+
+      assert.ok(
+        !checkAction,
+        "check should NOT be available preflop for player who hasn't posted",
+      );
+      assert.ok(callAction, "call should be available");
+      assert.ok(foldAction, "fold should be available");
+    });
+
+    it("should show check for big blind when all players have called", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = Player.create();
+      const p2 = Player.create();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 50 });
+      Actions.buyIn(g, { seat: 1, amount: 50 });
+
+      // Heads-up: button posts SB, other posts BB
+      // Button has called, now BB has option
+      g.button = 0;
+      g.blinds = { small: 25, big: 50, ante: 0 };
+      g.seats[0].bet = 50; // SB called to 50
+      g.seats[1].bet = 50; // BB posted 50
+      g.hand = {
+        phase: "preflop",
+        pot: 0,
+        currentBet: 50,
+        actingSeat: 1, // BB to act (their option)
+        lastRaiser: 0,
+        lastRaiseSize: 50,
+      };
+
+      // BB can check (their bet matches currentBet)
+      const view = playerView(g, p2);
+      const p2Actions = view.seats[1].actions;
+
+      const checkAction = p2Actions.find((a) => a.action === "check");
+      assert.ok(
+        checkAction,
+        "check should be available for BB when all bets matched",
+      );
+    });
+  });
+
   describe("callClock action", function () {
     it("should appear on waiting player's seat when opponent is acting too long", function () {
       const g = Game.create({ seats: 2 });

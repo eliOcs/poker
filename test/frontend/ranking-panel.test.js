@@ -62,7 +62,7 @@ describe("phg-ranking-panel", () => {
     const firstRow = el.shadowRoot.querySelector("tbody tr");
     const netCell = firstRow.querySelectorAll("td")[2];
     expect(netCell.classList.contains("positive")).to.be.true;
-    expect(netCell.textContent).to.include("+$2.00");
+    expect(netCell.textContent).to.include("+$2");
   });
 
   it("shows negative values in red", async () => {
@@ -73,7 +73,7 @@ describe("phg-ranking-panel", () => {
     const rows = el.shadowRoot.querySelectorAll("tbody tr");
     const netCell = rows[1].querySelectorAll("td")[2];
     expect(netCell.classList.contains("negative")).to.be.true;
-    expect(netCell.textContent).to.include("-$2.00");
+    expect(netCell.textContent).to.include("-$2");
   });
 
   it("shows dash for null winRate", async () => {

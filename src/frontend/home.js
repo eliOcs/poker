@@ -11,7 +11,8 @@ const TABLE_SIZES = [
   { seats: 6, label: "6-Max" },
   { seats: 9, label: "9-Max" },
 ];
-const DEFAULT_TABLE_SIZE = 9;
+const DEFAULT_TABLE_SIZE_CASH = 9;
+const DEFAULT_TABLE_SIZE_TOURNAMENT = 6;
 
 class Home extends LitElement {
   static get styles() {
@@ -73,6 +74,49 @@ class Home extends LitElement {
           cursor: pointer;
         }
 
+        .game-type-selector {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-sm);
+          margin-bottom: 2em;
+        }
+
+        .radio-group {
+          display: flex;
+          gap: var(--space-md);
+        }
+
+        .radio-group label {
+          display: flex;
+          align-items: center;
+          gap: var(--space-xs);
+          cursor: pointer;
+          font-size: var(--font-md);
+          padding: var(--space-sm) var(--space-md);
+          background: var(--color-bg-light);
+          border: 2px solid var(--color-bg-dark);
+          transition: border-color 0.2s;
+        }
+
+        .radio-group label:has(input:checked) {
+          border-color: var(--color-accent);
+        }
+
+        .radio-group input[type="radio"] {
+          appearance: none;
+          width: 1em;
+          height: 1em;
+          border: 2px solid var(--color-fg-muted);
+          border-radius: 50%;
+          cursor: pointer;
+        }
+
+        .radio-group input[type="radio"]:checked {
+          border-color: var(--color-accent);
+          background: var(--color-accent);
+        }
+
         @media (width >= 600px) {
           .logo {
             width: 60%;
@@ -89,6 +133,7 @@ class Home extends LitElement {
   static get properties() {
     return {
       creating: { type: Boolean },
+      selectedGameType: { type: String },
       selectedStakes: { type: Object },
       selectedTableSize: { type: Number },
     };
@@ -97,8 +142,19 @@ class Home extends LitElement {
   constructor() {
     super();
     this.creating = false;
+    this.selectedGameType = "cash";
     this.selectedStakes = DEFAULT_STAKES;
-    this.selectedTableSize = DEFAULT_TABLE_SIZE;
+    this.selectedTableSize = DEFAULT_TABLE_SIZE_CASH;
+  }
+
+  handleGameTypeChange(e) {
+    this.selectedGameType = e.target.value;
+    // Update default table size based on game type
+    if (this.selectedGameType === "tournament") {
+      this.selectedTableSize = DEFAULT_TABLE_SIZE_TOURNAMENT;
+    } else {
+      this.selectedTableSize = DEFAULT_TABLE_SIZE_CASH;
+    }
   }
 
   handleStakesChange(e) {
@@ -113,14 +169,23 @@ class Home extends LitElement {
   async createGame() {
     this.creating = true;
     try {
+      const body =
+        this.selectedGameType === "tournament"
+          ? {
+              type: "tournament",
+              seats: this.selectedTableSize,
+            }
+          : {
+              type: "cash",
+              small: this.selectedStakes.small,
+              big: this.selectedStakes.big,
+              seats: this.selectedTableSize,
+            };
+
       const response = await fetch("/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          small: this.selectedStakes.small,
-          big: this.selectedStakes.big,
-          seats: this.selectedTableSize,
-        }),
+        body: JSON.stringify(body),
       });
       const { id } = await response.json();
       this.dispatchEvent(
@@ -142,22 +207,52 @@ class Home extends LitElement {
         s.small === this.selectedStakes.small &&
         s.big === this.selectedStakes.big,
     );
+    const isTournament = this.selectedGameType === "tournament";
 
     return html`
       <img src="logo.png" alt="Pluton Poker" class="logo" />
       <p>Create a new game and invite your friends to play</p>
-      <div class="stakes-selector">
-        <span class="stakes-label">Stakes</span>
-        <select @change=${this.handleStakesChange}>
-          ${STAKES_PRESETS.map(
-            (stakes, i) => html`
-              <option value="${i}" ?selected=${i === selectedIndex}>
-                ${stakes.label}
-              </option>
-            `,
-          )}
-        </select>
+      <div class="game-type-selector">
+        <span class="stakes-label">Game Type</span>
+        <div class="radio-group">
+          <label>
+            <input
+              type="radio"
+              name="gameType"
+              value="cash"
+              ?checked=${!isTournament}
+              @change=${this.handleGameTypeChange}
+            />
+            Cash
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="gameType"
+              value="tournament"
+              ?checked=${isTournament}
+              @change=${this.handleGameTypeChange}
+            />
+            Sit & Go
+          </label>
+        </div>
       </div>
+      ${!isTournament
+        ? html`
+            <div class="stakes-selector">
+              <span class="stakes-label">Stakes</span>
+              <select @change=${this.handleStakesChange}>
+                ${STAKES_PRESETS.map(
+                  (stakes, i) => html`
+                    <option value="${i}" ?selected=${i === selectedIndex}>
+                      ${stakes.label}
+                    </option>
+                  `,
+                )}
+              </select>
+            </div>
+          `
+        : ""}
       <div class="stakes-selector">
         <span class="stakes-label">Table Size</span>
         <select @change=${this.handleTableSizeChange}>
