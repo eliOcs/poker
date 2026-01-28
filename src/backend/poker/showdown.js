@@ -209,7 +209,11 @@ function setFinalHandResults(game, winnings, winningCardsMap) {
   for (let i = 0; i < game.seats.length; i++) {
     const seat = game.seats[i];
     if (!seat.empty) {
-      seat.handResult = (winnings.get(i) || 0) - seat.totalInvested;
+      const won = winnings.get(i) || 0;
+      // Only set handResult for players who participated (invested or won)
+      if (seat.totalInvested > 0 || won > 0) {
+        seat.handResult = won - seat.totalInvested;
+      }
       seat.lastAction = null;
       seat.winningCards = winningCardsMap.get(i) || null;
     }
@@ -271,15 +275,18 @@ export function awardToLastPlayer(game) {
   winnerSeat.stack += totalPot;
   game.hand.pot = 0;
 
-  // Set hand results for all players and clear lastAction
+  // Set hand results for players who participated and clear lastAction
   for (let i = 0; i < game.seats.length; i++) {
     const seat = game.seats[i];
     if (!seat.empty) {
       const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
-      if (i === winner) {
-        occupiedSeat.handResult = totalPot - occupiedSeat.totalInvested;
-      } else {
-        occupiedSeat.handResult = -occupiedSeat.totalInvested;
+      // Only set handResult for players who participated (invested something)
+      if (occupiedSeat.totalInvested > 0 || i === winner) {
+        if (i === winner) {
+          occupiedSeat.handResult = totalPot - occupiedSeat.totalInvested;
+        } else {
+          occupiedSeat.handResult = -occupiedSeat.totalInvested;
+        }
       }
       occupiedSeat.lastAction = null;
     }

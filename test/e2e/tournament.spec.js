@@ -104,7 +104,7 @@ test.describe("Tournament E2E", () => {
 
       if (roll < 0.005 && availableActions.includes("allIn")) {
         return "allIn";
-      } else if (roll < 0.05 && availableActions.includes("raise")) {
+      } else if (roll < 0.1 && availableActions.includes("raise")) {
         return "raise";
       } else if (roll < 0.1 && availableActions.includes("bet")) {
         return "bet";
