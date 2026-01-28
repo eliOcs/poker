@@ -58,10 +58,4 @@ export default [
       },
     },
   },
-  {
-    files: ["test/ui-catalog/*.test.js"],
-    rules: {
-      "playwright/valid-title": "off",
-    },
-  },
 ];
