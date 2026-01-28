@@ -232,6 +232,7 @@ describe("hand-history", function () {
           potAmount: 400,
           winners: [1],
           winningHand: null,
+          awards: [{ seat: 1, amount: 400 }],
         },
       ]);
 
@@ -262,6 +263,55 @@ describe("hand-history", function () {
       assert.strictEqual(showdownActions.length, 2);
       assert.strictEqual(showdownActions[0].action, "Shows Cards");
       assert.strictEqual(showdownActions[1].action, "Shows Cards");
+
+      delete process.env.DATA_DIR;
+    });
+
+    it("records split pot win amounts correctly with remainder", async function () {
+      const { game, players } = createGameWithPlayers();
+      // Add a third player
+      game.seats[2] = {
+        empty: false,
+        player: { id: "player3", name: "Player 3" },
+        cards: [],
+        stack: 4900,
+        bet: 0,
+        sittingOut: false,
+      };
+      players.push(game.seats[2].player);
+
+      process.env.DATA_DIR = TEST_DATA_DIR;
+
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
+      HandHistory.recordDealtCards(game.id, players[0].id, ["Ah", "Kh"]);
+      HandHistory.recordDealtCards(game.id, players[1].id, ["As", "Ks"]);
+      HandHistory.recordDealtCards(game.id, players[2].id, ["Ad", "Kd"]);
+
+      // 3-way split of 100 cents = 34 + 33 + 33
+      await HandHistory.finalizeHand(game, [
+        {
+          potAmount: 100,
+          winners: [0, 1, 2],
+          winningHand: null,
+          winningCards: null,
+          awards: [
+            { seat: 0, amount: 34 }, // First winner gets remainder
+            { seat: 1, amount: 33 },
+            { seat: 2, amount: 33 },
+          ],
+        },
+      ]);
+
+      const hand = await HandHistory.getHand(game.id, 1);
+      assert.ok(hand);
+
+      // Verify the win amounts are correct (in dollars)
+      const wins = hand.pots[0].player_wins;
+      assert.strictEqual(wins[0].win_amount, 0.34); // 34 cents
+      assert.strictEqual(wins[1].win_amount, 0.33); // 33 cents
+      assert.strictEqual(wins[2].win_amount, 0.33); // 33 cents
 
       delete process.env.DATA_DIR;
     });

@@ -345,11 +345,11 @@ export async function finalizeHand(game, potResults = []) {
       ? HandRankings.formatHand(pot.winningHand)
       : null,
     winning_cards: pot.winningCards || null,
-    player_wins: pot.winners.map((seatIndex) => {
-      const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
+    player_wins: pot.awards.map((award) => {
+      const seat = /** @type {OccupiedSeat} */ (game.seats[award.seat]);
       return {
         player_id: seat.player.id,
-        win_amount: toDollars(Math.floor(pot.potAmount / pot.winners.length)),
+        win_amount: toDollars(award.amount),
         contributed_rake: 0,
       };
     }),
