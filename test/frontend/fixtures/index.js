@@ -66,6 +66,16 @@ export const mockDisconnectedSeat = {
   isActing: false,
 };
 
+export const mockBustedSeat = {
+  ...mockOccupiedSeat,
+  stack: 0,
+  sittingOut: true,
+  bustedPosition: 3,
+  cards: [],
+  actions: [],
+  isActing: false,
+};
+
 export const mockOccupiedSeatWithName = {
   ...mockOccupiedSeat,
   player: { id: "test-player-123", name: "Alice" },

@@ -9,6 +9,7 @@ import {
   mockEmptySeat,
   mockSittingOutSeat,
   mockDisconnectedSeat,
+  mockBustedSeat,
   mockOccupiedSeatWithName,
 } from "./setup.js";
 
@@ -535,5 +536,64 @@ describe("phg-seat", () => {
     const seats = element.shadowRoot.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("disconnected")).to.be.false;
+  });
+
+  it("applies .busted class when bustedPosition is set", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockBustedSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    expect(seats[0].classList.contains("busted")).to.be.true;
+    expect(seats[0].classList.contains("sitting-out")).to.be.false;
+  });
+
+  it("displays busted position as status label", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockBustedSeat,
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("3rd");
+  });
+
+  it("displays busted position even when handResult is set", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockBustedSeat, handResult: -10000 },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    expect(statusLabel).to.exist;
+    expect(statusLabel.textContent).to.include("3rd");
   });
 });
