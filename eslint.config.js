@@ -48,7 +48,6 @@ export default [
     },
   },
   {
-    // Playwright e2e and ui-catalog tests
     files: ["test/e2e/**/*.js", "test/ui-catalog/*.test.js"],
     ...playwright.configs["flat/recommended"],
     languageOptions: {
