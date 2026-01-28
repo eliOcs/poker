@@ -53,23 +53,22 @@ const TEST_CASES = [
   "history-multiple-hands",
 ];
 
+function getComponentSelector(testCase) {
+  if (testCase === "landing-page") return "phg-home";
+  if (testCase.startsWith("history-")) return "phg-history";
+  return "phg-game";
+}
+
 for (const testCase of TEST_CASES) {
   test(testCase, async ({ page }) => {
     await page.goto(`/?test=${testCase}`);
 
-    // Wait for the appropriate component to render
-    let selector;
-    if (testCase === "landing-page") {
-      selector = "phg-home";
-    } else if (testCase.startsWith("history-")) {
-      selector = "phg-history";
-    } else {
-      selector = "phg-game";
-    }
-    await page.waitForSelector(selector);
+    const selector = getComponentSelector(testCase);
+    const component = page.locator(selector);
+    await component.waitFor();
 
-    // Give Lit components time to fully render
-    await page.waitForTimeout(100);
+    // Wait for Lit component to fully render
+    await component.evaluate((el) => el.updateComplete);
 
     // Take screenshot of the root element (full viewport)
     await expect(page.locator("#root")).toHaveScreenshot(`${testCase}.png`, {

@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import lit from "eslint-plugin-lit";
+import playwright from "eslint-plugin-playwright";
 
 export default [
   js.configs.recommended,
@@ -47,13 +48,20 @@ export default [
     },
   },
   {
-    // Playwright e2e tests - waitForFunction callbacks run in browser context
-    files: ["test/e2e/**/*.js"],
+    // Playwright e2e and ui-catalog tests
+    files: ["test/e2e/**/*.js", "test/ui-catalog/*.test.js"],
+    ...playwright.configs["flat/recommended"],
     languageOptions: {
       globals: {
         ...globals.browser,
         ...globals.node,
       },
+    },
+  },
+  {
+    files: ["test/ui-catalog/*.test.js"],
+    rules: {
+      "playwright/valid-title": "off",
     },
   },
 ];

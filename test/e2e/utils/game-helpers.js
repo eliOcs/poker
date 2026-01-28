@@ -53,10 +53,11 @@ export async function playBettingRound(players) {
   for (let i = 0; i < 20; i++) {
     let acted = false;
 
-    for (const player of players) {
-      const currentPhase = await player.getPhase();
-      if (currentPhase !== startingPhase) return;
+    // Check phase from the reference player only - other players may lag behind
+    const currentPhase = await players[0].getPhase();
+    if (currentPhase !== startingPhase) return;
 
+    for (const player of players) {
       if (await player.isMyTurn()) {
         if (await player.hasAction("check")) {
           await player.act("check");

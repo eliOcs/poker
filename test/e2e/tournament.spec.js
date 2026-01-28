@@ -1,4 +1,4 @@
-/* eslint-disable complexity */
+/* eslint-disable playwright/no-conditional-in-test */
 import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
 import * as fs from "node:fs";
@@ -11,6 +11,225 @@ const ACTIONS_FILE = path.join(
   process.cwd(),
   "test/e2e/data/tournament-actions.json",
 );
+
+const WEIGHTED_ACTIONS = [
+  { threshold: 0.005, action: "allIn" },
+  { threshold: 0.1, action: "raise" },
+  { threshold: 0.1, action: "bet" },
+  { threshold: 0.4, action: "call" },
+];
+
+const PASSIVE_FALLBACKS = ["check", "fold"];
+
+/**
+ * Check all active players for a tournament winner
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @returns {Promise<string|null>} Winner name or null
+ */
+async function checkForWinner(players, activePlayers) {
+  for (const idx of activePlayers) {
+    try {
+      if (await players[idx].hasTournamentWinner()) {
+        for (const idx2 of activePlayers) {
+          try {
+            const name = await players[idx2].getTournamentWinnerName();
+            if (name) return name;
+          } catch {
+            // Continue to next player
+          }
+        }
+        return "unknown";
+      }
+    } catch {
+      // Player page might be closed
+    }
+  }
+  return null;
+}
+
+/**
+ * Find the first active player whose page is still usable
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @returns {Promise<import('./utils/poker-player.js').PokerPlayer|null>}
+ */
+async function findActivePlayer(players, activePlayers) {
+  for (const idx of activePlayers) {
+    try {
+      await players[idx].page.evaluate(() => true);
+      return players[idx];
+    } catch {
+      activePlayers.delete(idx);
+    }
+  }
+  return null;
+}
+
+/**
+ * Get available actions for a player
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ * @returns {Promise<string[]>}
+ */
+async function getAvailableActions(player) {
+  const actions = [];
+  if (await player.hasAction("check")) actions.push("check");
+  if (await player.hasAction("call")) actions.push("call");
+  if (await player.hasAction("fold")) actions.push("fold");
+  if (await player.hasAction("bet")) actions.push("bet");
+  if (await player.hasAction("raise")) actions.push("raise");
+  if (await player.hasAction("allIn")) actions.push("allIn");
+  return actions;
+}
+
+/**
+ * Select an action using random weighted strategy
+ * @param {string[]} availableActions
+ * @returns {string}
+ */
+function selectRandomAction(availableActions) {
+  const roll = Math.random();
+  for (const { threshold, action } of WEIGHTED_ACTIONS) {
+    if (roll < threshold && availableActions.includes(action)) return action;
+  }
+  const fallback = PASSIVE_FALLBACKS.find((a) => availableActions.includes(a));
+  return fallback || availableActions[0];
+}
+
+/**
+ * Try to take one action among active players
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @returns {Promise<{seatIdx: number, action: string}|null>}
+ */
+async function tryTakeAction(players, activePlayers) {
+  for (const seatIdx of activePlayers) {
+    try {
+      const player = players[seatIdx];
+      if (await player.isMyTurn().catch(() => false)) {
+        const availableActions = await getAvailableActions(player);
+        if (availableActions.length > 0) {
+          const action = selectRandomAction(availableActions);
+          await player.act(action);
+          return { seatIdx, action };
+        }
+      }
+    } catch {
+      activePlayers.delete(seatIdx);
+    }
+  }
+  return null;
+}
+
+/**
+ * Wait for any active player to get their turn
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ */
+async function waitForAnyTurn(players, activePlayers) {
+  await Promise.any(
+    [...activePlayers].map((idx) =>
+      players[idx].actionPanel
+        .getByRole("button", { name: /(Check|Call|Fold)/ })
+        .first()
+        .waitFor({ timeout: 2000 }),
+    ),
+  ).catch(() => {});
+}
+
+/**
+ * Check for level changes and log them
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ * @param {{maxLevelSeen: number}} state
+ */
+async function checkLevelChange(player, state) {
+  const currentLevel = await player.getTournamentLevel().catch(() => null);
+  if (currentLevel && currentLevel > state.maxLevelSeen) {
+    state.maxLevelSeen = currentLevel;
+    const blinds = await player.getBlinds();
+    console.log(
+      `Level change: now level ${currentLevel}, blinds $${blinds?.small}/$${blinds?.big}`,
+    );
+  }
+}
+
+/**
+ * Track hand transitions via phase changes
+ * @param {string} currentPhase
+ * @param {{handCount: number, lastActionWasNonPreflop: boolean}} state
+ */
+function trackHandTransition(currentPhase, state) {
+  if (currentPhase && currentPhase !== "preflop") {
+    state.lastActionWasNonPreflop = true;
+  }
+  if (state.lastActionWasNonPreflop && currentPhase === "preflop") {
+    state.handCount++;
+    state.lastActionWasNonPreflop = false;
+    if (state.handCount % 10 === 0) {
+      console.log(`Completed ${state.handCount} hands...`);
+    }
+  }
+}
+
+/**
+ * Save recorded actions to file
+ * @param {Array} actions
+ * @param {string} filePath
+ */
+function saveActionsFile(actions, filePath) {
+  if (actions.length > 0) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(actions, null, 2));
+    console.log(`Saved ${actions.length} actions to ${filePath}`);
+  }
+}
+
+/**
+ * Run the tournament game loop until a winner is found
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @param {{handCount: number, maxLevelSeen: number, lastActionWasNonPreflop: boolean}} state
+ * @param {Array} newActions
+ * @returns {Promise<string|null>} Winner name or null
+ */
+async function runTournamentLoop(players, activePlayers, state, newActions) {
+  const maxActions = 8000;
+
+  for (let actionCount = 0; actionCount < maxActions; actionCount++) {
+    const winnerName = await checkForWinner(players, activePlayers);
+    if (winnerName) return winnerName;
+
+    const activePlayer = await findActivePlayer(players, activePlayers);
+    if (!activePlayer) return null;
+
+    await checkLevelChange(activePlayer, state);
+
+    const onBreak = await activePlayer.isOnBreak().catch(() => false);
+    if (onBreak) {
+      console.log("Tournament on break - waiting...");
+      await activePlayer.board
+        .locator(".break-overlay")
+        .waitFor({ state: "hidden", timeout: 30000 });
+      continue;
+    }
+
+    const currentPhase = await activePlayer.getPhase().catch(() => "");
+    trackHandTransition(currentPhase, state);
+
+    const result = await tryTakeAction(players, activePlayers);
+    if (result) {
+      newActions.push({
+        seat: result.seatIdx,
+        action: result.action,
+        hand: state.handCount,
+      });
+    } else {
+      await waitForAnyTurn(players, activePlayers);
+    }
+  }
+
+  return null;
+}
 
 test.describe("Tournament E2E", () => {
   test("6 players play at least 50 hands until one wins", async ({
@@ -32,13 +251,7 @@ test.describe("Tournament E2E", () => {
     await player1.joinGame(gameId);
     const gameUrl = await player1.copyGameLink();
 
-    await Promise.all([
-      player2.joinGameByUrl(gameUrl),
-      player3.joinGameByUrl(gameUrl),
-      player4.joinGameByUrl(gameUrl),
-      player5.joinGameByUrl(gameUrl),
-      player6.joinGameByUrl(gameUrl),
-    ]);
+    await Promise.all(players.slice(1).map((p) => p.joinGameByUrl(gameUrl)));
 
     // Each player sits at their seat (0-5)
     for (let i = 0; i < players.length; i++) {
@@ -66,219 +279,30 @@ test.describe("Tournament E2E", () => {
     await player1.waitForHandStart();
     console.log("Tournament started");
 
-    // Tracking for verification - start at hand 1 since we just started a hand
-    let handCount = 1;
-    let actionCount = 0;
-    const maxActions = 8000;
-    let maxLevelSeen = 1;
-    let lastActionWasNonPreflop = false; // Track when we leave preflop
-
-    // Load or create actions record
-    let recordedActions = [];
-    let isRecording = true;
-    try {
-      recordedActions = require(".data/tournament-actions.json");
-      isRecording = false;
-      console.log(`Replaying  recorded actions`);
-    } catch {
-      console.log("Starting fresh recording");
-    }
-
+    // Run tournament loop
+    const state = {
+      handCount: 1,
+      maxLevelSeen: 1,
+      lastActionWasNonPreflop: false,
+    };
     const newActions = [];
-    let actionIndex = 0;
-
-    /**
-     * Select an action using recorded data or random strategy
-     */
-    function selectAction(availableActions) {
-      if (!isRecording && actionIndex < recordedActions.length) {
-        const recorded = recordedActions[actionIndex];
-        actionIndex++;
-        // Return recorded action if it's available, otherwise fall back
-        if (availableActions.includes(recorded.action)) {
-          return recorded.action;
-        }
-      }
-
-      const roll = Math.random();
-
-      if (roll < 0.005 && availableActions.includes("allIn")) {
-        return "allIn";
-      } else if (roll < 0.1 && availableActions.includes("raise")) {
-        return "raise";
-      } else if (roll < 0.1 && availableActions.includes("bet")) {
-        return "bet";
-      } else if (roll < 0.4 && availableActions.includes("call")) {
-        return "call";
-      } else if (availableActions.includes("check")) {
-        return "check";
-      } else if (availableActions.includes("fold")) {
-        return "fold";
-      }
-      return availableActions[0];
-    }
-
-    /**
-     * Get available actions for a player
-     */
-    async function getAvailableActions(player) {
-      const actions = [];
-      if (await player.hasAction("check")) actions.push("check");
-      if (await player.hasAction("call")) actions.push("call");
-      if (await player.hasAction("fold")) actions.push("fold");
-      if (await player.hasAction("bet")) actions.push("bet");
-      if (await player.hasAction("raise")) actions.push("raise");
-      if (await player.hasAction("allIn")) actions.push("allIn");
-      return actions;
-    }
-
-    // Track active players (not eliminated)
     const activePlayers = new Set([0, 1, 2, 3, 4, 5]);
 
-    while (actionCount < maxActions) {
-      actionCount++;
+    const winnerName = await runTournamentLoop(
+      players,
+      activePlayers,
+      state,
+      newActions,
+    );
 
-      // Check for tournament winner on all active player views
-      let hasWinner = false;
-      for (const idx of activePlayers) {
-        try {
-          if (await players[idx].hasTournamentWinner()) {
-            hasWinner = true;
-            break;
-          }
-        } catch {
-          // Player page might be closed
-        }
-      }
+    console.log(`Max level seen: ${state.maxLevelSeen}`);
 
-      if (hasWinner) {
-        // Find any player that can tell us the winner name
-        let winnerName = null;
-        for (const idx of activePlayers) {
-          try {
-            winnerName = await players[idx].getTournamentWinnerName();
-            if (winnerName) break;
-          } catch {
-            // Continue to next player
-          }
-        }
-        console.log(
-          `Tournament Winner: ${winnerName} (after ${handCount} hands)`,
-        );
-        console.log(`Max level seen: ${maxLevelSeen}`);
-        expect(winnerName).toBeTruthy();
-
-        // Save actions if recording
-        if (isRecording && newActions.length > 0) {
-          fs.mkdirSync(path.dirname(ACTIONS_FILE), { recursive: true });
-          fs.writeFileSync(ACTIONS_FILE, JSON.stringify(newActions, null, 2));
-          console.log(`Saved ${newActions.length} actions to ${ACTIONS_FILE}`);
-        }
-        return;
-      }
-
-      // Find an active player to check game state
-      let activePlayer = null;
-      for (const idx of activePlayers) {
-        try {
-          // Check if page is still usable
-          await players[idx].page.evaluate(() => true);
-          activePlayer = players[idx];
-          break;
-        } catch {
-          activePlayers.delete(idx);
-        }
-      }
-
-      if (!activePlayer) {
-        console.log("No active players left");
-        break;
-      }
-
-      // Check for level changes
-      const currentLevel = await activePlayer
-        .getTournamentLevel()
-        .catch(() => null);
-      if (currentLevel && currentLevel > maxLevelSeen) {
-        maxLevelSeen = currentLevel;
-        const blinds = await activePlayer.getBlinds();
-        console.log(
-          `Level change: now level ${currentLevel}, blinds $${blinds?.small}/$${blinds?.big}`,
-        );
-      }
-
-      // Check for break
-      const onBreak = await activePlayer.isOnBreak().catch(() => false);
-      if (onBreak) {
-        console.log("Tournament on break - waiting...");
-        await activePlayer.page.waitForTimeout(1000);
-        continue;
-      }
-
-      // Track hand transitions via phase
-      const currentPhase = await activePlayer.getPhase().catch(() => "");
-      // Track when we're not in preflop
-      if (currentPhase && currentPhase !== "preflop") {
-        lastActionWasNonPreflop = true;
-      }
-      // If we're back to preflop after being in another phase, it's a new hand
-      if (lastActionWasNonPreflop && currentPhase === "preflop") {
-        handCount++;
-        lastActionWasNonPreflop = false;
-        if (handCount % 10 === 0) {
-          console.log(`Completed ${handCount} hands...`);
-        }
-      }
-
-      // Take one action - find who can act (only among active players)
-      let acted = false;
-      for (const seatIdx of activePlayers) {
-        try {
-          const player = players[seatIdx];
-          if (await player.isMyTurn().catch(() => false)) {
-            const availableActions = await getAvailableActions(player);
-            if (availableActions.length > 0) {
-              const action = selectAction(availableActions);
-
-              // Record action
-              if (isRecording) {
-                newActions.push({ seat: seatIdx, action, hand: handCount });
-              }
-
-              await player.act(action);
-              acted = true;
-              break;
-            }
-          }
-        } catch {
-          // Player eliminated or page closed
-          activePlayers.delete(seatIdx);
-        }
-      }
-
-      if (!acted && activePlayer) {
-        try {
-          await activePlayer.page.waitForTimeout(50);
-        } catch {
-          // Player page closed, continue
-        }
-      }
-    }
-
-    // Should have found a winner by now
-    const hasWinner = await player1.hasTournamentWinner();
-    if (hasWinner) {
-      const winnerName = await player1.getTournamentWinnerName();
+    if (winnerName) {
       console.log(
-        `Tournament Winner: ${winnerName} (after ${handCount} hands)`,
+        `Tournament Winner: ${winnerName} (after ${state.handCount} hands)`,
       );
-      if (isRecording && newActions.length > 0) {
-        fs.mkdirSync(path.dirname(ACTIONS_FILE), { recursive: true });
-        fs.writeFileSync(ACTIONS_FILE, JSON.stringify(newActions, null, 2));
-        console.log(`Saved ${newActions.length} actions to ${ACTIONS_FILE}`);
-      }
-    } else {
-      expect(hasWinner).toBe(true);
+      saveActionsFile(newActions, ACTIONS_FILE);
     }
+    expect(winnerName).toBeTruthy();
   });
 });
