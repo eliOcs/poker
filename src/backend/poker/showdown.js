@@ -275,22 +275,9 @@ export function awardToLastPlayer(game) {
   winnerSeat.stack += totalPot;
   game.hand.pot = 0;
 
-  // Set hand results for players who participated and clear lastAction
-  for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
-    if (!seat.empty) {
-      const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
-      // Only set handResult for players who participated (invested something)
-      if (occupiedSeat.totalInvested > 0 || i === winner) {
-        if (i === winner) {
-          occupiedSeat.handResult = totalPot - occupiedSeat.totalInvested;
-        } else {
-          occupiedSeat.handResult = -occupiedSeat.totalInvested;
-        }
-      }
-      occupiedSeat.lastAction = null;
-    }
-  }
+  // Set hand results and clear lastAction
+  const winnings = new Map([[winner, totalPot]]);
+  setFinalHandResults(game, winnings, new Map());
 
   return { winner, amount: totalPot };
 }

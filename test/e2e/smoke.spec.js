@@ -144,9 +144,6 @@ test.describe("Poker Game Smoke Test", () => {
 
     console.log("Hand 3 complete (all-in showdown)");
 
-    // Wait a moment for state to settle after showdown
-    await player1.page.waitForTimeout(500);
-
     // Verify game state after all-in
     const p1Stack = await player1.getStack();
     const p2Stack = await player2.getStack();

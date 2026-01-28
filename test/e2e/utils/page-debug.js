@@ -87,7 +87,7 @@ export async function debugPage(url, selector, timeout = 5000) {
   console.log("Page loaded, waiting for component...");
 
   try {
-    await page.waitForSelector(selector, { timeout });
+    await page.locator(selector).waitFor({ timeout });
     console.log(`Component ${selector} found!`);
   } catch {
     console.log(`Component ${selector} NOT found after ${timeout}ms`);

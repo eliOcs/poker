@@ -247,8 +247,8 @@ export class PokerPlayer {
       el.value = el.min;
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    // Wait a moment for UI to update
-    await this.page.waitForTimeout(100);
+    // Wait for Lit component to re-render with new slider value
+    await this.actionPanel.evaluate((el) => el.updateComplete);
   }
 
   /**
@@ -261,8 +261,8 @@ export class PokerPlayer {
       el.value = el.max;
       el.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    // Wait a moment for UI to update
-    await this.page.waitForTimeout(100);
+    // Wait for Lit component to re-render with new slider value
+    await this.actionPanel.evaluate((el) => el.updateComplete);
   }
 
   /**
@@ -300,6 +300,9 @@ export class PokerPlayer {
     const handler = handlers[action];
     if (!handler) throw new Error(`Unknown action: ${action}`);
     await handler();
+    // Brief wait for the click handler to dispatch the WebSocket message.
+    // There is no observable UI state change between click and server processing.
+    // eslint-disable-next-line playwright/no-wait-for-timeout
     await this.page.waitForTimeout(50);
   }
 
