@@ -24,10 +24,14 @@ function createGameWithPlayers() {
 }
 
 describe("hand-history", function () {
+  let testGame;
+
   beforeEach(function () {
+    // Create a fresh game for each test
+    testGame = Game.create({ seats: 6 });
     // Clear cache and recorders before each test
     HandHistory.clearCache();
-    HandHistory.clearRecorder("test-game");
+    HandHistory.clearRecorder(testGame.id);
   });
 
   afterEach(async function () {
@@ -39,16 +43,16 @@ describe("hand-history", function () {
 
   describe("getRecorder", function () {
     it("creates a new recorder for a game", function () {
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(testGame.id);
 
-      assert.strictEqual(recorder.gameId, "test-game");
+      assert.strictEqual(recorder.gameId, testGame.id);
       assert.strictEqual(recorder.handNumber, 0);
       assert.deepStrictEqual(recorder.actions, []);
     });
 
     it("returns same recorder for same game", function () {
-      const r1 = HandHistory.getRecorder("test-game");
-      const r2 = HandHistory.getRecorder("test-game");
+      const r1 = HandHistory.getRecorder(testGame.id);
+      const r2 = HandHistory.getRecorder(testGame.id);
 
       assert.strictEqual(r1, r2);
     });
@@ -58,18 +62,18 @@ describe("hand-history", function () {
     it("increments hand number", function () {
       const { game } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      assert.strictEqual(HandHistory.getHandNumber("test-game"), 1);
+      HandHistory.startHand(game);
+      assert.strictEqual(HandHistory.getHandNumber(game.id), 1);
 
-      HandHistory.startHand("test-game", game);
-      assert.strictEqual(HandHistory.getHandNumber("test-game"), 2);
+      HandHistory.startHand(game);
+      assert.strictEqual(HandHistory.getHandNumber(game.id), 2);
     });
 
     it("captures players at hand start", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      const recorder = HandHistory.getRecorder("test-game");
+      HandHistory.startHand(game);
+      const recorder = HandHistory.getRecorder(game.id);
 
       assert.strictEqual(recorder.players.length, 3);
       assert.strictEqual(recorder.players[0].id, players[0].id);
@@ -82,10 +86,10 @@ describe("hand-history", function () {
     it("records betting actions with correct format", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordAction("test-game", players[0].id, "raise", 100, false);
+      HandHistory.startHand(game);
+      HandHistory.recordAction(game.id, players[0].id, "raise", 100, false);
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.actions.length, 1);
       assert.strictEqual(recorder.actions[0].action, "Raise");
       assert.strictEqual(recorder.actions[0].amount, 100);
@@ -95,12 +99,12 @@ describe("hand-history", function () {
     it("increments action number", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordAction("test-game", players[0].id, "check");
-      HandHistory.recordAction("test-game", players[1].id, "bet", 50);
-      HandHistory.recordAction("test-game", players[0].id, "fold");
+      HandHistory.startHand(game);
+      HandHistory.recordAction(game.id, players[0].id, "check");
+      HandHistory.recordAction(game.id, players[1].id, "bet", 50);
+      HandHistory.recordAction(game.id, players[0].id, "fold");
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.actions[0].action_number, 1);
       assert.strictEqual(recorder.actions[1].action_number, 2);
       assert.strictEqual(recorder.actions[2].action_number, 3);
@@ -111,10 +115,10 @@ describe("hand-history", function () {
     it("records small blind", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordBlind("test-game", players[0].id, "sb", 25);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.actions[0].action, "Post SB");
       assert.strictEqual(recorder.actions[0].amount, 25);
     });
@@ -122,10 +126,10 @@ describe("hand-history", function () {
     it("records big blind", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordBlind("test-game", players[1].id, "bb", 50);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.actions[0].action, "Post BB");
       assert.strictEqual(recorder.actions[0].amount, 50);
     });
@@ -135,10 +139,10 @@ describe("hand-history", function () {
     it("records dealt cards in OHH format", function () {
       const { game, players } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordDealtCards("test-game", players[0].id, ["Ah", "Ks"]);
+      HandHistory.startHand(game);
+      HandHistory.recordDealtCards(game.id, players[0].id, ["Ah", "Ks"]);
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.actions[0].action, "Dealt Cards");
       assert.deepStrictEqual(recorder.actions[0].cards, ["Ah", "Ks"]);
     });
@@ -148,10 +152,10 @@ describe("hand-history", function () {
     it("records street with board cards", function () {
       const { game } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordStreet("test-game", "flop", ["Qh", "Jc", "2d"]);
+      HandHistory.startHand(game);
+      HandHistory.recordStreet(game.id, "flop", ["Qh", "Jc", "2d"]);
 
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.strictEqual(recorder.currentStreet, "Flop");
       assert.deepStrictEqual(recorder.boardByStreet.get("Flop"), [
         "Qh",
@@ -163,21 +167,21 @@ describe("hand-history", function () {
     it("stores a copy of board cards to prevent mutation", function () {
       const { game } = createGameWithPlayers();
 
-      HandHistory.startHand("test-game", game);
+      HandHistory.startHand(game);
 
       // Simulate how the game deals cards - using a mutable array
       const boardCards = ["Qh", "Jc", "2d"];
-      HandHistory.recordStreet("test-game", "flop", boardCards);
+      HandHistory.recordStreet(game.id, "flop", boardCards);
 
       // Simulate turn and river being added to the same array
       boardCards.push("Tc");
-      HandHistory.recordStreet("test-game", "turn", [boardCards[3]]);
+      HandHistory.recordStreet(game.id, "turn", [boardCards[3]]);
 
       boardCards.push("3h");
-      HandHistory.recordStreet("test-game", "river", [boardCards[4]]);
+      HandHistory.recordStreet(game.id, "river", [boardCards[4]]);
 
       // Verify flop still only has 3 cards (not 5)
-      const recorder = HandHistory.getRecorder("test-game");
+      const recorder = HandHistory.getRecorder(game.id);
       assert.deepStrictEqual(recorder.boardByStreet.get("Flop"), [
         "Qh",
         "Jc",
@@ -192,47 +196,37 @@ describe("hand-history", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
-      HandHistory.startHand("test-game", game);
+      HandHistory.startHand(game);
 
       // Preflop: blinds and dealt cards
-      HandHistory.recordBlind("test-game", players[0].id, "sb", 25);
-      HandHistory.recordBlind("test-game", players[1].id, "bb", 50);
-      HandHistory.recordDealtCards("test-game", players[0].id, ["Ah", "Kh"]);
-      HandHistory.recordDealtCards("test-game", players[1].id, ["Qc", "Jc"]);
-      HandHistory.recordAction("test-game", players[0].id, "call", 50);
-      HandHistory.recordAction("test-game", players[1].id, "check");
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
+      HandHistory.recordDealtCards(game.id, players[0].id, ["Ah", "Kh"]);
+      HandHistory.recordDealtCards(game.id, players[1].id, ["Qc", "Jc"]);
+      HandHistory.recordAction(game.id, players[0].id, "call", 50);
+      HandHistory.recordAction(game.id, players[1].id, "check");
 
       // Flop
-      HandHistory.recordStreet("test-game", "flop", ["Qh", "Jd", "2s"]);
-      HandHistory.recordAction("test-game", players[1].id, "check");
-      HandHistory.recordAction("test-game", players[0].id, "bet", 50);
-      HandHistory.recordAction("test-game", players[1].id, "call", 50);
+      HandHistory.recordStreet(game.id, "flop", ["Qh", "Jd", "2s"]);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+      HandHistory.recordAction(game.id, players[0].id, "bet", 50);
+      HandHistory.recordAction(game.id, players[1].id, "call", 50);
 
       // Turn
-      HandHistory.recordStreet("test-game", "turn", ["Tc"]);
-      HandHistory.recordAction("test-game", players[1].id, "check");
-      HandHistory.recordAction("test-game", players[0].id, "check");
+      HandHistory.recordStreet(game.id, "turn", ["Tc"]);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+      HandHistory.recordAction(game.id, players[0].id, "check");
 
       // River
-      HandHistory.recordStreet("test-game", "river", ["3h"]);
-      HandHistory.recordAction("test-game", players[1].id, "bet", 100);
-      HandHistory.recordAction("test-game", players[0].id, "call", 100);
+      HandHistory.recordStreet(game.id, "river", ["3h"]);
+      HandHistory.recordAction(game.id, players[1].id, "bet", 100);
+      HandHistory.recordAction(game.id, players[0].id, "call", 100);
 
       // Showdown
-      HandHistory.recordShowdown(
-        "test-game",
-        players[0].id,
-        ["Ah", "Kh"],
-        true,
-      );
-      HandHistory.recordShowdown(
-        "test-game",
-        players[1].id,
-        ["Qc", "Jc"],
-        true,
-      );
+      HandHistory.recordShowdown(game.id, players[0].id, ["Ah", "Kh"], true);
+      HandHistory.recordShowdown(game.id, players[1].id, ["Qc", "Jc"], true);
 
-      await HandHistory.finalizeHand("test-game", game, [
+      await HandHistory.finalizeHand(game, [
         {
           visibleSeats: [0, 1],
           potAmount: 400,
@@ -241,7 +235,7 @@ describe("hand-history", function () {
         },
       ]);
 
-      const hand = await HandHistory.getHand("test-game", 1);
+      const hand = await HandHistory.getHand(game.id, 1);
 
       // Should have 5 rounds: Preflop, Flop, Turn, River, Showdown
       assert.strictEqual(hand.rounds.length, 5);
@@ -284,10 +278,10 @@ describe("hand-history", function () {
       // Set test data directory
       process.env.DATA_DIR = TEST_DATA_DIR;
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordBlind("test-game", players[0].id, "sb", 25);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 
-      await HandHistory.finalizeHand("test-game", game, []);
+      await HandHistory.finalizeHand(game, []);
 
       assert.strictEqual(HandHistory.getCacheSize(), 1);
 
@@ -300,14 +294,14 @@ describe("hand-history", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
-      HandHistory.startHand("test-game", game);
-      HandHistory.recordBlind("test-game", players[0].id, "sb", 25);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 
-      await HandHistory.finalizeHand("test-game", game, []);
+      await HandHistory.finalizeHand(game, []);
 
-      const hand = await HandHistory.getHand("test-game", 1);
+      const hand = await HandHistory.getHand(game.id, 1);
       assert.ok(hand);
-      assert.strictEqual(hand.game_number, "test-game-1");
+      assert.strictEqual(hand.game_number, `${game.id}-1`);
 
       delete process.env.DATA_DIR;
     });

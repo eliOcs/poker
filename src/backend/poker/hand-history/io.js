@@ -1,9 +1,10 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 
 /**
  * @typedef {import('../types.js').Cents} Cents
  * @typedef {import('./index.js').OHHHand} OHHHand
+ * @typedef {import('../tournament-summary.js').OTSSummary} OTSSummary
  */
 
 /**
@@ -154,4 +155,23 @@ export function clearCache() {
  */
 export function getCacheSize() {
   return cache.size;
+}
+
+/**
+ * Writes a tournament summary to the .ots file
+ * @param {string} gameId
+ * @param {OTSSummary} summary
+ */
+export async function writeTournamentSummary(gameId, summary) {
+  const dataDir = getDataDir();
+
+  // Ensure data directory exists
+  if (!existsSync(dataDir)) {
+    await mkdir(dataDir, { recursive: true });
+  }
+
+  const filePath = `${dataDir}/${gameId}.ots`;
+  const content = JSON.stringify({ ots: summary }, null, 2);
+
+  await writeFile(filePath, content, "utf8");
 }

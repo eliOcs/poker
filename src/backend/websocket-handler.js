@@ -37,25 +37,23 @@ export function classifyAllInAction(betBefore, currentBet, finalBet) {
 
 /**
  * Records a betting action to hand history
- * @param {string} gameId
+ * @param {Game} game
  * @param {string} playerId
  * @param {string} action
  * @param {OccupiedSeat} seatAfter
  * @param {number} betBefore
- * @param {Game} game
  */
 export function recordBettingAction(
-  gameId,
+  game,
   playerId,
   action,
   seatAfter,
   betBefore,
-  game,
 ) {
   const isAllIn = seatAfter.allIn;
 
   if (action === "fold" || action === "check") {
-    HandHistory.recordAction(gameId, playerId, action);
+    HandHistory.recordAction(game.id, playerId, action);
     return;
   }
 
@@ -66,7 +64,7 @@ export function recordBettingAction(
       seatAfter.bet,
     );
     HandHistory.recordAction(
-      gameId,
+      game.id,
       playerId,
       historyAction,
       seatAfter.bet,
@@ -76,18 +74,17 @@ export function recordBettingAction(
   }
 
   // call, bet, raise
-  HandHistory.recordAction(gameId, playerId, action, seatAfter.bet, isAllIn);
+  HandHistory.recordAction(game.id, playerId, action, seatAfter.bet, isAllIn);
 }
 
 /**
  * Handles the start action
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} broadcastGameState
  */
-function handleStartAction(game, gameId, broadcastGameState) {
+function handleStartAction(game, broadcastGameState) {
   if (game.countdown !== null) {
-    PokerGame.startGameTick(game, gameId, broadcastGameState);
+    PokerGame.startGameTick(game, broadcastGameState);
   }
 }
 
@@ -105,15 +102,14 @@ function handleSitOutOrLeave(game) {
 /**
  * Handles betting actions (processes game flow)
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} broadcastGameState
  */
-function handleBettingAction(game, gameId, broadcastGameState) {
+function handleBettingAction(game, broadcastGameState) {
   resetActingTicks(game);
-  PokerGame.processGameFlow(game, gameId, broadcastGameState);
+  PokerGame.processGameFlow(game, broadcastGameState);
 }
 
-/** @type {Record<string, (game: Game, gameId: string, broadcastGameState: (gameId: string) => void) => void>} */
+/** @type {Record<string, (game: Game, broadcastGameState: (gameId: string) => void) => void>} */
 export const POST_ACTION_HANDLERS = {
   start: handleStartAction,
   sitOut: handleSitOutOrLeave,
@@ -125,15 +121,14 @@ export const POST_ACTION_HANDLERS = {
  * Handles post-action side effects for specific actions
  * @param {string} action
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} broadcastGameState
  */
-export function handlePostAction(action, game, gameId, broadcastGameState) {
+export function handlePostAction(action, game, broadcastGameState) {
   const handler = POST_ACTION_HANDLERS[action];
   if (handler) {
-    handler(game, gameId, broadcastGameState);
+    handler(game, broadcastGameState);
   } else if (BETTING_ACTIONS.includes(action)) {
-    handleBettingAction(game, gameId, broadcastGameState);
+    handleBettingAction(game, broadcastGameState);
   }
 }
 
@@ -155,7 +150,6 @@ export function getSeatStateBefore(game, player) {
 /**
  * Processes a poker action and records to history
  * @param {Game} game
- * @param {string} gameId
  * @param {PlayerType} player
  * @param {string} action
  * @param {Record<string, unknown>} args
@@ -163,7 +157,6 @@ export function getSeatStateBefore(game, player) {
  */
 export function processPokerAction(
   game,
-  gameId,
   player,
   action,
   args,
@@ -175,8 +168,8 @@ export function processPokerAction(
 
   if (BETTING_ACTIONS.includes(action) && seatBefore) {
     const seatAfter = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
-    recordBettingAction(gameId, player.id, action, seatAfter, betBefore, game);
+    recordBettingAction(game, player.id, action, seatAfter, betBefore);
   }
 
-  handlePostAction(action, game, gameId, broadcastGameState);
+  handlePostAction(action, game, broadcastGameState);
 }

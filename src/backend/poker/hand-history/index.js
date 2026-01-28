@@ -128,11 +128,10 @@ export function getRecorder(gameId) {
 
 /**
  * Starts recording a new hand
- * @param {string} gameId
  * @param {Game} game
  */
-export function startHand(gameId, game) {
-  const recorder = getRecorder(gameId);
+export function startHand(game) {
+  const recorder = getRecorder(game.id);
   recorder.handNumber++;
   recorder.actions = [];
   recorder.actionCounter = 0;
@@ -329,12 +328,11 @@ function buildRounds(recorder) {
 
 /**
  * Finalizes and saves the current hand
- * @param {string} gameId
  * @param {Game} game
  * @param {PotResult[]} [potResults]
  */
-export async function finalizeHand(gameId, game, potResults = []) {
-  const recorder = getRecorder(gameId);
+export async function finalizeHand(game, potResults = []) {
+  const recorder = getRecorder(game.id);
 
   if (recorder.actions.length === 0) {
     return; // No actions recorded, skip
@@ -366,7 +364,7 @@ export async function finalizeHand(gameId, game, potResults = []) {
   const hand = {
     spec_version: "1.4.6",
     site_name: "Pluton Poker",
-    game_number: `${gameId}-${recorder.handNumber}`,
+    game_number: `${game.id}-${recorder.handNumber}`,
     start_date_utc: recorder.startTime || new Date().toISOString(),
     game_type: "Holdem",
     bet_limit: { bet_type: "NL" },
@@ -384,7 +382,7 @@ export async function finalizeHand(gameId, game, potResults = []) {
   if (recorder.tournament?.active) {
     hand.tournament = true;
     hand.tournament_info = {
-      tournament_number: gameId,
+      tournament_number: game.id,
       name: "Sit & Go",
       start_date_utc:
         recorder.tournament.startTime ||
@@ -400,11 +398,11 @@ export async function finalizeHand(gameId, game, potResults = []) {
   }
 
   // Add to cache
-  const cacheKey = `${gameId}-${recorder.handNumber}`;
+  const cacheKey = `${game.id}-${recorder.handNumber}`;
   addToCache(cacheKey, hand);
 
   // Write to file
-  await writeHandToFile(gameId, hand);
+  await writeHandToFile(game.id, hand);
 
   // Reset for next hand (keep handNumber and tournament info)
   recorder.actions = [];

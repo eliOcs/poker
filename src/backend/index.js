@@ -177,7 +177,7 @@ wss.on(
       );
 
       closedSeat.disconnected = true;
-      PokerGame.ensureGameTick(closedGame, closedGameId, broadcastGameState);
+      PokerGame.ensureGameTick(closedGame, broadcastGameState);
       broadcastGameState(closedGameId);
     });
 
@@ -199,14 +199,7 @@ wss.on(
       }
 
       try {
-        processPokerAction(
-          game,
-          gameId,
-          player,
-          action,
-          args,
-          broadcastGameState,
-        );
+        processPokerAction(game, player, action, args, broadcastGameState);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error("action error", {
@@ -219,7 +212,7 @@ wss.on(
       }
 
       broadcastGameState(gameId);
-      PokerGame.ensureGameTick(game, gameId, broadcastGameState);
+      PokerGame.ensureGameTick(game, broadcastGameState);
     });
 
     // Send initial game state

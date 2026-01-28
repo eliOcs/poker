@@ -3,6 +3,7 @@
  */
 
 import * as Tournament from "../../shared/tournament.js";
+import * as TournamentSummary from "./tournament-summary.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -72,6 +73,8 @@ function checkWinner(game, result) {
     const winnerIndex = game.seats.findIndex((s) => !s.empty && s.stack > 0);
     tournament.winner = winnerIndex;
     result.tournamentEnded = true;
+    // Write tournament summary (fire and forget - no need to wait)
+    TournamentSummary.finalizeTournament(game);
     return true;
   }
   return tournament.winner !== null;

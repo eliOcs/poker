@@ -4,6 +4,7 @@ import * as logger from "./logger.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} Player
+ * @typedef {import('./poker/id.js').Id} Id
  */
 
 /** @type {DatabaseSync | null} */
@@ -65,7 +66,7 @@ export function load(id) {
   if (!row) return null;
 
   return {
-    id: /** @type {string} */ (row.id),
+    id: /** @type {Id} */ (row.id),
     name: /** @type {string|null} */ (row.name),
   };
 }
