@@ -58,6 +58,16 @@ class Seat extends LitElement {
           border-style: dashed;
         }
 
+        :host(.busted)::before {
+          border-style: dashed;
+          opacity: 0.6;
+        }
+
+        :host(.busted) .player-name,
+        :host(.busted) .status-label {
+          opacity: 0.8;
+        }
+
         :host(.disconnected)::before {
           border-color: var(--color-error);
           border-style: dotted;
@@ -329,7 +339,8 @@ class Seat extends LitElement {
     ["acting", (s) => s?.isActing],
     ["folded", (s) => s?.folded],
     ["all-in", (s) => s?.allIn],
-    ["sitting-out", (s) => s?.sittingOut],
+    ["sitting-out", (s) => s?.sittingOut && s?.bustedPosition == null],
+    ["busted", (s) => s?.bustedPosition != null],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
     ["winner", (s) => s?.handResult > 0],
@@ -362,11 +373,21 @@ class Seat extends LitElement {
   _getStatusLabel() {
     const s = this.seat;
     if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
+    if (s.bustedPosition != null) {
+      return { label: this._formatPosition(s.bustedPosition), isStatus: true };
+    }
     if (s.sittingOut) return { label: "SITTING OUT", isStatus: true };
     if (s.folded) return { label: "FOLDED", isStatus: true };
     if (s.allIn) return { label: "ALL-IN", isStatus: true };
     if (s.lastAction) return { label: s.lastAction, isStatus: false };
     return null;
+  }
+
+  _formatPosition(position) {
+    const suffixes = ["th", "st", "nd", "rd"];
+    const v = position % 100;
+    const suffix = suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
+    return `${position}${suffix}`;
   }
 
   _formatHandResult(result) {
@@ -389,6 +410,12 @@ class Seat extends LitElement {
   }
 
   _renderStatusOrAction() {
+    // Always show busted position, even during showdown
+    if (this.seat.bustedPosition != null) {
+      return html`<div class="status-label">
+        ${this._formatPosition(this.seat.bustedPosition)}
+      </div>`;
+    }
     if (this.seat.handResult != null) return "";
     const status = this._getStatusLabel();
     if (!status) return "";
@@ -398,6 +425,10 @@ class Seat extends LitElement {
   }
 
   _renderStackOrResult() {
+    // Don't show stack for busted players (it's always $0)
+    if (this.seat.bustedPosition != null) {
+      return "";
+    }
     return this.seat.handResult != null
       ? html`<div
           class="hand-result ${this._getResultClass(this.seat.handResult)}"
