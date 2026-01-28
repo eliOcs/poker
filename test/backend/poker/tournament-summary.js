@@ -2,6 +2,7 @@ import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import { existsSync, readFileSync, rmSync, mkdirSync } from "node:fs";
 import * as Game from "../../../src/backend/poker/game.js";
+import * as Actions from "../../../src/backend/poker/actions.js";
 import * as TournamentSummary from "../../../src/backend/poker/tournament-summary.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Tournament from "../../../src/shared/tournament.js";
@@ -222,6 +223,102 @@ describe("tournament-summary", () => {
       const recorder = TournamentSummary.getRecorderForTest(game.id);
       assert.equal(recorder.players.length, 3);
       assert.equal(recorder.eliminations.length, 2);
+    });
+  });
+
+  describe("integration with endHand and autoStartNextHand", () => {
+    const testDataDir = "data";
+
+    afterEach(() => {
+      const otsFilePath = `${testDataDir}/${game.id}.ots`;
+      if (existsSync(otsFilePath)) {
+        rmSync(otsFilePath);
+      }
+    });
+
+    it("should record 2nd place elimination before finalizing (regression test)", async () => {
+      // This tests the bug where checkWinner ran during a hand (while a player
+      // was all-in with stack 0) and finalized the tournament BEFORE endHand
+      // could record the 2nd place elimination.
+
+      TournamentSummary.startTournament(game);
+
+      // Simulate a heads-up situation: player 3 already eliminated
+      const seat3 =
+        /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+          game.seats[2]
+        );
+      TournamentSummary.recordElimination(game, seat3, 3);
+      game.seats[2].stack = 0;
+      game.seats[2].sittingOut = true;
+
+      // Player 2 loses the final hand (stack goes to 0)
+      game.seats[1].stack = 0;
+      game.hand.phase = "preflop"; // Hand still in progress
+
+      // At this point, if we called the old checkWinner (from tick), it would
+      // see only 1 player with chips and finalize prematurely.
+      // Instead, endHand should run first...
+
+      // Simulate endHand processing the elimination
+      Actions.endHand(game);
+
+      // Verify position 2 was recorded BEFORE autoStartNextHand finalizes
+      const recorder = TournamentSummary.getRecorderForTest(game.id);
+      assert.ok(recorder, "recorder should still exist before finalization");
+      assert.equal(
+        recorder.eliminations.length,
+        2,
+        "should have 2 eliminations",
+      );
+      assert.equal(
+        recorder.eliminations[1].position,
+        2,
+        "2nd place should be recorded",
+      );
+
+      // Verify winner detection and finalization
+      // (autoStartNextHand calls finalizeTournament which is fire-and-forget)
+      if (!existsSync(testDataDir)) {
+        mkdirSync(testDataDir, { recursive: true });
+      }
+
+      // Directly call finalizeTournament to test the OTS output
+      // (autoStartNextHand would do this but we need to await it)
+      game.tournament.winner = 0; // Set winner as autoStartNextHand would
+      await TournamentSummary.finalizeTournament(game);
+
+      // Verify OTS file has all 3 finishes
+      const otsFilePath = `${testDataDir}/${game.id}.ots`;
+      assert.ok(existsSync(otsFilePath), "OTS file should exist");
+
+      const content = readFileSync(otsFilePath, "utf-8");
+      const data = JSON.parse(content);
+      const finishes = data.ots.tournament_finishes_and_winnings;
+
+      assert.equal(finishes.length, 3, "should have all 3 finishes");
+      assert.equal(finishes[0].finish_position, 1);
+      assert.equal(finishes[1].finish_position, 2);
+      assert.equal(finishes[2].finish_position, 3);
+    });
+
+    it("autoStartNextHand should detect winner and set tournament.winner", () => {
+      TournamentSummary.startTournament(game);
+
+      // Heads-up: player 2 and 3 are eliminated
+      game.seats[1].stack = 0;
+      game.seats[1].sittingOut = true;
+      game.seats[2].stack = 0;
+      game.seats[2].sittingOut = true;
+      game.hand.phase = "waiting";
+
+      // Before autoStartNextHand, no winner
+      assert.equal(game.tournament.winner, null);
+
+      Game.autoStartNextHand(game);
+
+      // After autoStartNextHand, winner should be set
+      assert.equal(game.tournament.winner, 0, "should detect seat 0 as winner");
     });
   });
 });

@@ -311,7 +311,23 @@ export function startHand(game) {
 export function autoStartNextHand(game, onBroadcast) {
   sitOutDisconnectedPlayers(game);
 
-  if (Actions.countPlayersWithChips(game) >= 2) {
+  const playersWithChips = Actions.countPlayersWithChips(game);
+
+  // Check for tournament winner
+  if (
+    game.tournament?.active &&
+    game.tournament.winner === null &&
+    playersWithChips === 1
+  ) {
+    const winnerIndex = game.seats.findIndex(
+      (s) => !s.empty && s.stack > 0 && !s.sittingOut,
+    );
+    game.tournament.winner = winnerIndex;
+    TournamentSummary.finalizeTournament(game);
+    return;
+  }
+
+  if (playersWithChips >= 2) {
     game.countdown = 3; // Shorter countdown between hands
     if (onBroadcast) {
       startGameTick(game, onBroadcast);

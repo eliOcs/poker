@@ -201,6 +201,16 @@ export const actionPanelStyles = css`
     text-align: center;
   }
 
+  .tournament-result {
+    color: var(--color-fg);
+    font-size: var(--font-lg);
+    font-weight: bold;
+  }
+
+  .tournament-result.winner {
+    color: var(--color-success);
+  }
+
   .waiting-panel {
     display: flex;
     flex-direction: column;
