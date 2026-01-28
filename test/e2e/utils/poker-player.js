@@ -184,6 +184,12 @@ export class PokerPlayer {
         .isVisible()
         .catch(() => false);
     }
+    if (actionName === "bet") {
+      return await this.actionPanel
+        .getByRole("button", { name: /^Bet/ })
+        .isVisible()
+        .catch(() => false);
+    }
     if (actionName === "allIn") {
       // All-In is available if there's a bet/raise slider (we can always go max)
       const hasSlider = await this.actionPanel
@@ -289,7 +295,7 @@ export class PokerPlayer {
       },
       bet: async () => {
         await this._moveSliderToMin();
-        await this.actionPanel.getByRole("button", { name: "Bet" }).click();
+        await this.actionPanel.getByRole("button", { name: /^Bet/ }).click();
       },
       raise: async () => {
         await this._moveSliderToMin();
