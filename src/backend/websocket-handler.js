@@ -26,12 +26,15 @@ export const BETTING_ACTIONS = [
  * @returns {'call'|'bet'|'raise'}
  */
 export function classifyAllInAction(betBefore, currentBet, finalBet) {
-  if (betBefore >= currentBet || finalBet <= currentBet) {
-    return "call";
-  }
+  // No current bet means this is an opening bet
   if (currentBet === 0) {
     return "bet";
   }
+  // Final bet <= current bet means calling (possibly for less)
+  if (finalBet <= currentBet) {
+    return "call";
+  }
+  // Going all-in for more than current bet is a raise
   return "raise";
 }
 
