@@ -1,4 +1,4 @@
-import { randomBytes } from "crypto";
+import * as Id from "./id.js";
 
 /**
  * @typedef {import('./seat.js').Player} Player
@@ -9,5 +9,5 @@ import { randomBytes } from "crypto";
  * @returns {Player}
  */
 export function create() {
-  return { id: randomBytes(16).toString("hex"), name: null };
+  return { id: Id.generate(), name: null };
 }

@@ -1,9 +1,11 @@
+import * as Id from "./id.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Betting from "./betting.js";
 import * as Showdown from "./showdown.js";
 import * as Actions from "./actions.js";
 import * as HandHistory from "./hand-history/index.js";
+import * as TournamentSummary from "./tournament-summary.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import * as logger from "../logger.js";
@@ -63,6 +65,7 @@ import * as Tournament from "../../shared/tournament.js";
 
 /**
  * @typedef {object} Game
+ * @property {import('./id.js').Id} id - Game unique identifier
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
  * @property {Blinds} blinds - Blind structure
@@ -119,12 +122,14 @@ export function create({
   seats: numberOfSeats = 9,
   blinds = { ante: 5, small: 25, big: 50 },
 } = {}) {
+  const id = Id.generate();
   /** @type {Seat[]} */
   const seats = [];
   for (let i = 0; i < numberOfSeats; i += 1) {
     seats.push(Seat.empty());
   }
   return {
+    id,
     running: true,
     button: 0,
     blinds,
@@ -208,10 +213,9 @@ export function stopGameTick(game) {
 
 /**
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} onBroadcast - Callback to broadcast game state
  */
-export function startGameTick(game, gameId, onBroadcast) {
+export function startGameTick(game, onBroadcast) {
   if (game.tickTimer) {
     return; // Already running
   }
@@ -221,12 +225,12 @@ export function startGameTick(game, gameId, onBroadcast) {
 
     // Handle startHand event
     if (result.startHand) {
-      startHand(game, gameId);
+      startHand(game);
     }
 
     // Handle auto-action (disconnect or clock expiry)
     if (result.autoActionSeat !== null) {
-      performAutoAction(game, gameId, result.autoActionSeat, onBroadcast);
+      performAutoAction(game, result.autoActionSeat, onBroadcast);
     }
 
     // Stop tick if no longer needed
@@ -236,27 +240,25 @@ export function startGameTick(game, gameId, onBroadcast) {
 
     // Broadcast state to all clients
     if (result.shouldBroadcast) {
-      onBroadcast(gameId);
+      onBroadcast(game.id);
     }
   }, TIMER_INTERVAL);
 }
 
 /**
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} onBroadcast - Callback to broadcast game state
  */
-export function ensureGameTick(game, gameId, onBroadcast) {
+export function ensureGameTick(game, onBroadcast) {
   if (shouldTickBeRunning(game) && !game.tickTimer) {
-    startGameTick(game, gameId, onBroadcast);
+    startGameTick(game, onBroadcast);
   }
 }
 
 /**
  * @param {Game} game
- * @param {string} gameId
  */
-export function startHand(game, gameId) {
+export function startHand(game) {
   // Check if we still have enough players (someone might have sat out)
   if (Actions.countPlayersWithChips(game) < 2) {
     return;
@@ -264,14 +266,15 @@ export function startHand(game, gameId) {
 
   game.winnerMessage = null;
   Actions.startHand(game);
-  HandHistory.startHand(gameId, game);
+  HandHistory.startHand(game);
+  TournamentSummary.startTournament(game);
 
   const playerCount = game.seats.filter(
     (s) => !s.empty && !s.sittingOut,
   ).length;
   logger.info("hand started", {
-    gameId,
-    handNumber: HandHistory.getHandNumber(gameId),
+    gameId: game.id,
+    handNumber: HandHistory.getHandNumber(game.id),
     playerCount,
   });
 
@@ -285,14 +288,14 @@ export function startHand(game, gameId) {
   const bbPlayer = /** @type {import('./seat.js').OccupiedSeat} */ (
     game.seats[bbSeat]
   );
-  HandHistory.recordBlind(gameId, sbPlayer.player.id, "sb", sbPlayer.bet);
-  HandHistory.recordBlind(gameId, bbPlayer.player.id, "bb", bbPlayer.bet);
+  HandHistory.recordBlind(game.id, sbPlayer.player.id, "sb", sbPlayer.bet);
+  HandHistory.recordBlind(game.id, bbPlayer.player.id, "bb", bbPlayer.bet);
 
   runAll(Actions.dealPreflop(game));
 
   for (const seat of game.seats) {
     if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
-      HandHistory.recordDealtCards(gameId, seat.player.id, seat.cards);
+      HandHistory.recordDealtCards(game.id, seat.player.id, seat.cards);
     }
   }
 
@@ -303,44 +306,42 @@ export function startHand(game, gameId) {
 
 /**
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
  */
-export function autoStartNextHand(game, gameId, onBroadcast) {
+export function autoStartNextHand(game, onBroadcast) {
   sitOutDisconnectedPlayers(game);
 
   if (Actions.countPlayersWithChips(game) >= 2) {
     game.countdown = 3; // Shorter countdown between hands
     if (onBroadcast) {
-      startGameTick(game, gameId, onBroadcast);
+      startGameTick(game, onBroadcast);
     }
   }
 }
 
 /**
  * @param {Game} game
- * @param {string} gameId
  * @param {number} seatIndex
  * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
  */
-export function performAutoAction(game, gameId, seatIndex, onBroadcast) {
+export function performAutoAction(game, seatIndex, onBroadcast) {
   const seat = game.seats[seatIndex];
   if (seat.empty) return;
 
   // Auto check/fold: check if possible, otherwise fold
   if (seat.bet === game.hand.currentBet) {
     Actions.check(game, { seat: seatIndex });
-    HandHistory.recordAction(gameId, seat.player.id, "check");
+    HandHistory.recordAction(game.id, seat.player.id, "check");
   } else {
     Actions.fold(game, { seat: seatIndex });
-    HandHistory.recordAction(gameId, seat.player.id, "fold");
+    HandHistory.recordAction(game.id, seat.player.id, "fold");
   }
 
   // Reset tick counters since action was taken
   resetActingTicks(game);
 
   // Process game flow after the auto-action
-  processGameFlow(game, gameId, onBroadcast);
+  processGameFlow(game, onBroadcast);
 }
 
 /**
@@ -367,15 +368,15 @@ function getWinnerInfo(game, potResults) {
 
 /**
  * Logs hand ended event
- * @param {string} gameId
+ * @param {Game} game
  * @param {string} winnerName
  * @param {string} wonBy
  * @param {number} amount
  */
-function logHandEnded(gameId, winnerName, wonBy, amount) {
+function logHandEnded(game, winnerName, wonBy, amount) {
   logger.info("hand ended", {
-    gameId,
-    handNumber: HandHistory.getHandNumber(gameId),
+    gameId: game.id,
+    handNumber: HandHistory.getHandNumber(game.id),
     winner: winnerName,
     wonBy,
     amount,
@@ -385,10 +386,9 @@ function logHandEnded(gameId, winnerName, wonBy, amount) {
 /**
  * Handles fold victory (all other players folded)
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} [onBroadcast]
  */
-function handleFoldWin(game, gameId, onBroadcast) {
+function handleFoldWin(game, onBroadcast) {
   const result = Showdown.awardToLastPlayer(game);
   if (result.winner !== -1) {
     const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
@@ -402,7 +402,7 @@ function handleFoldWin(game, gameId, onBroadcast) {
       amount: result.amount,
     };
 
-    HandHistory.finalizeHand(gameId, game, [
+    HandHistory.finalizeHand(game, [
       {
         potAmount: result.amount,
         winners: [result.winner],
@@ -412,18 +412,17 @@ function handleFoldWin(game, gameId, onBroadcast) {
       },
     ]);
 
-    logHandEnded(gameId, winnerName, "fold", result.amount);
+    logHandEnded(game, winnerName, "fold", result.amount);
   }
   Actions.endHand(game);
-  autoStartNextHand(game, gameId, onBroadcast);
+  autoStartNextHand(game, onBroadcast);
 }
 
 /**
  * Records showdown cards for active players
  * @param {Game} game
- * @param {string} gameId
  */
-function recordShowdownCards(game, gameId) {
+function recordShowdownCards(game) {
   for (const seat of game.seats) {
     if (
       !seat.empty &&
@@ -431,7 +430,7 @@ function recordShowdownCards(game, gameId) {
       !seat.sittingOut &&
       seat.cards.length > 0
     ) {
-      HandHistory.recordShowdown(gameId, seat.player.id, seat.cards, true);
+      HandHistory.recordShowdown(game.id, seat.player.id, seat.cards, true);
     }
   }
 }
@@ -439,10 +438,9 @@ function recordShowdownCards(game, gameId) {
 /**
  * Handles showdown at river
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} [onBroadcast]
  */
-function handleShowdown(game, gameId, onBroadcast) {
+function handleShowdown(game, onBroadcast) {
   const gen = Showdown.showdown(game);
   let result = gen.next();
   while (!result.done) {
@@ -450,7 +448,7 @@ function handleShowdown(game, gameId, onBroadcast) {
   }
   const potResults = result.value || [];
 
-  recordShowdownCards(game, gameId);
+  recordShowdownCards(game);
 
   const winnerInfo = getWinnerInfo(game, potResults);
   if (winnerInfo) {
@@ -462,16 +460,16 @@ function handleShowdown(game, gameId, onBroadcast) {
       amount: winnerInfo.amount,
     };
     logHandEnded(
-      gameId,
+      game,
       winnerName,
       winnerInfo.handRank || "showdown",
       winnerInfo.amount,
     );
   }
 
-  HandHistory.finalizeHand(gameId, game, potResults);
+  HandHistory.finalizeHand(game, potResults);
   Actions.endHand(game);
-  autoStartNextHand(game, gameId, onBroadcast);
+  autoStartNextHand(game, onBroadcast);
 }
 
 /** @type {Record<string, { next: Phase, deal: (game: Game) => Generator, getCards: (game: Game) => Card[] }>} */
@@ -496,10 +494,9 @@ const STREET_HANDLERS = {
 /**
  * Advances to next phase, loops through streets when everyone is all-in
  * @param {Game} game
- * @param {string} gameId
  * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
  */
-export function processGameFlow(game, gameId, onBroadcast) {
+export function processGameFlow(game, onBroadcast) {
   // Loop to handle all-in situations where we need to run out the board
   while (true) {
     const phase = game.hand.phase;
@@ -511,7 +508,7 @@ export function processGameFlow(game, gameId, onBroadcast) {
 
     // Check if only one player remains (everyone else folded)
     if (Betting.countActivePlayers(game) <= 1) {
-      handleFoldWin(game, gameId, onBroadcast);
+      handleFoldWin(game, onBroadcast);
       return;
     }
 
@@ -524,7 +521,7 @@ export function processGameFlow(game, gameId, onBroadcast) {
 
     // Handle river (showdown) separately
     if (phase === "river") {
-      handleShowdown(game, gameId, onBroadcast);
+      handleShowdown(game, onBroadcast);
       return;
     }
 
@@ -532,7 +529,7 @@ export function processGameFlow(game, gameId, onBroadcast) {
     const handler = STREET_HANDLERS[phase];
     if (handler) {
       runAll(handler.deal(game));
-      HandHistory.recordStreet(gameId, handler.next, handler.getCards(game));
+      HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
       Betting.startBettingRound(game, handler.next);
     }
 

@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
 import * as Player from "./poker/player.js";
@@ -85,11 +84,6 @@ export function getOrCreatePlayer(req, res, players) {
   }
 
   return player;
-}
-
-/** @returns {string} */
-export function generateGameId() {
-  return crypto.randomBytes(4).toString("hex");
 }
 
 /**
@@ -192,7 +186,6 @@ export function createRoutes(players, games) {
         getOrCreatePlayer(req, res, players);
 
         const data = await parseBody(req);
-        const gameId = generateGameId();
 
         const isTournament =
           data !== null &&
@@ -203,23 +196,23 @@ export function createRoutes(players, games) {
 
         if (isTournament) {
           const game = PokerGame.createTournament({ seats });
-          games.set(gameId, game);
+          games.set(game.id, game);
           logger.info("tournament created", {
-            gameId,
+            gameId: game.id,
             seats,
             initialStack: game.tournament?.initialStack,
           });
-          respondWithJson(res, { id: gameId, type: "tournament" });
+          respondWithJson(res, { id: game.id, type: "tournament" });
         } else {
           const blinds = parseBlinds(data);
           const game = PokerGame.create({ blinds, seats });
-          games.set(gameId, game);
+          games.set(game.id, game);
           logger.info("game created", {
-            gameId,
+            gameId: game.id,
             blinds: `${blinds.small}/${blinds.big}`,
             seats,
           });
-          respondWithJson(res, { id: gameId, type: "cash" });
+          respondWithJson(res, { id: game.id, type: "cash" });
         }
       },
     },

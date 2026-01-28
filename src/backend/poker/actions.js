@@ -2,6 +2,7 @@ import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
 import { isClockCallable } from "./game-tick.js";
+import * as TournamentSummary from "./tournament-summary.js";
 
 // Re-export dealing functions for backward compatibility
 export {
@@ -345,6 +346,8 @@ export function endHand(game) {
         // Position = number of players still with chips + 1
         const playersWithChips = countPlayersWithChips(game);
         seat.bustedPosition = playersWithChips + 1;
+        // Record elimination for tournament summary
+        TournamentSummary.recordElimination(game, seat, seat.bustedPosition);
       }
     }
   }

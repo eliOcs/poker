@@ -24,10 +24,14 @@ function createGameWithPlayers() {
 }
 
 describe("hand-history-view", function () {
+  let testGame;
+
   beforeEach(function () {
+    // Create a fresh game for each test
+    testGame = Game.create({ seats: 6 });
     // Clear cache and recorders before each test
     HandHistory.clearCache();
-    HandHistory.clearRecorder("test-game-view");
+    HandHistory.clearRecorder(testGame.id);
   });
 
   afterEach(async function () {
@@ -422,18 +426,18 @@ describe("hand-history-view", function () {
       process.env.DATA_DIR = TEST_DATA_DIR;
 
       // Create two hands
-      HandHistory.startHand("test-game-view", game);
-      HandHistory.recordBlind("test-game-view", players[0].id, "sb", 25);
-      await HandHistory.finalizeHand("test-game-view", game, []);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      await HandHistory.finalizeHand(game, []);
 
-      HandHistory.startHand("test-game-view", game);
-      HandHistory.recordBlind("test-game-view", players[0].id, "sb", 25);
-      await HandHistory.finalizeHand("test-game-view", game, []);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      await HandHistory.finalizeHand(game, []);
 
-      const hands = await HandHistory.getAllHands("test-game-view");
+      const hands = await HandHistory.getAllHands(game.id);
       assert.strictEqual(hands.length, 2);
-      assert.strictEqual(hands[0].game_number, "test-game-view-1");
-      assert.strictEqual(hands[1].game_number, "test-game-view-2");
+      assert.strictEqual(hands[0].game_number, `${game.id}-1`);
+      assert.strictEqual(hands[1].game_number, `${game.id}-2`);
 
       delete process.env.DATA_DIR;
     });
@@ -445,14 +449,14 @@ describe("hand-history-view", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
-      HandHistory.startHand("test-game-view", game);
-      HandHistory.recordBlind("test-game-view", players[0].id, "sb", 25);
-      HandHistory.recordBlind("test-game-view", players[1].id, "bb", 50);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
 
-      await HandHistory.finalizeHand("test-game-view", game, []);
+      await HandHistory.finalizeHand(game, []);
 
       // Verify file exists and contains valid JSON
-      const filePath = `${TEST_DATA_DIR}/test-game-view.ohh`;
+      const filePath = `${TEST_DATA_DIR}/${game.id}.ohh`;
       assert.ok(existsSync(filePath));
 
       const content = await readFile(filePath, "utf8");
@@ -473,26 +477,23 @@ describe("hand-history-view", function () {
       process.env.DATA_DIR = TEST_DATA_DIR;
 
       // First hand
-      HandHistory.startHand("test-game-view", game);
-      HandHistory.recordBlind("test-game-view", players[0].id, "sb", 25);
-      await HandHistory.finalizeHand("test-game-view", game, []);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      await HandHistory.finalizeHand(game, []);
 
       // Second hand
-      HandHistory.startHand("test-game-view", game);
-      HandHistory.recordBlind("test-game-view", players[0].id, "sb", 25);
-      await HandHistory.finalizeHand("test-game-view", game, []);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      await HandHistory.finalizeHand(game, []);
 
-      const content = await readFile(
-        `${TEST_DATA_DIR}/test-game-view.ohh`,
-        "utf8",
-      );
+      const content = await readFile(`${TEST_DATA_DIR}/${game.id}.ohh`, "utf8");
       const lines = content.split("\n\n").filter(Boolean);
       assert.strictEqual(lines.length, 2);
 
       const hand1 = JSON.parse(lines[0]).ohh;
       const hand2 = JSON.parse(lines[1]).ohh;
-      assert.strictEqual(hand1.game_number, "test-game-view-1");
-      assert.strictEqual(hand2.game_number, "test-game-view-2");
+      assert.strictEqual(hand1.game_number, `${game.id}-1`);
+      assert.strictEqual(hand2.game_number, `${game.id}-2`);
 
       delete process.env.DATA_DIR;
     });
