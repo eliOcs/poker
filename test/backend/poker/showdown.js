@@ -464,6 +464,30 @@ describe("showdown", () => {
       assert.equal(game.seats[2].winningCards, null);
     });
 
+    it("should set handResult to 0 for split pot players who break even", () => {
+      // Two players with identical hands split the pot
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: ["As", "Kd"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: ["Ac", "Ks"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.board.cards = ["Ah", "Kh", "Qh", "Jc", "2d"];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      drainGenerator(Showdown.showdown(game));
+
+      // Both players split evenly: handResult should be 0 (not null)
+      assert.strictEqual(game.seats[0].handResult, 0);
+      assert.strictEqual(game.seats[2].handResult, 0);
+    });
+
     it("should not set handResult for players who did not participate", () => {
       game.seats[0] = {
         ...Seat.occupied({ id: "p1" }, 0),
