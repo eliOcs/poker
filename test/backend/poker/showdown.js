@@ -334,6 +334,34 @@ describe("showdown", () => {
       assert.equal(game.seats[0].lastAction, null);
       assert.equal(game.seats[2].lastAction, null);
     });
+
+    it("should not set handResult for players who did not participate", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        bet: 50,
+        folded: true,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 100),
+        bet: 50,
+      };
+      // Seat 3 is sitting out - didn't invest anything
+      game.seats[3] = {
+        ...Seat.occupied({ id: "p3" }, 500),
+        sittingOut: true,
+        totalInvested: 0,
+        bet: 0,
+      };
+      game.hand.pot = 0;
+
+      Showdown.awardToLastPlayer(game);
+
+      // Winner and loser should have handResult
+      assert.equal(game.seats[2].handResult, 50);
+      assert.equal(game.seats[0].handResult, -50);
+      // Sitting out player should NOT have handResult
+      assert.equal(game.seats[3].handResult, null);
+    });
   });
 
   describe("showdown generator", () => {
@@ -434,6 +462,37 @@ describe("showdown", () => {
 
       // Loser (seat 2) should NOT have winningCards set
       assert.equal(game.seats[2].winningCards, null);
+    });
+
+    it("should not set handResult for players who did not participate", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: ["As", "Ah"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: ["2c", "3d"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      // Seat 3 is sitting out - didn't invest anything
+      game.seats[3] = {
+        ...Seat.occupied({ id: "p3" }, 500),
+        sittingOut: true,
+        totalInvested: 0,
+      };
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      drainGenerator(Showdown.showdown(game));
+
+      // Players who participated should have handResult
+      assert.equal(game.seats[0].handResult, 100);
+      assert.equal(game.seats[2].handResult, -100);
+      // Sitting out player should NOT have handResult
+      assert.equal(game.seats[3].handResult, null);
     });
   });
 });
