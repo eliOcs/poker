@@ -26,6 +26,7 @@ const routes = {
     "test/ui-catalog/test-cases/history-extended.js",
   "/test-cases/game-helpers.js": "test/ui-catalog/test-cases/game-helpers.js",
   "/test-cases/game-special.js": "test/ui-catalog/test-cases/game-special.js",
+  "/test-cases/table-sizes.js": "test/ui-catalog/test-cases/table-sizes.js",
   "/fixtures.js": "test/frontend/fixtures/index.js",
   "/history.js": "test/frontend/fixtures/history.js",
   "/logo.png": "src/frontend/logo.png",

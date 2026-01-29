@@ -25,6 +25,10 @@ import {
   SPECIAL_GAME_TEST_CASES,
   SPECIAL_GAME_IDS,
 } from "./test-cases/game-special.js";
+import {
+  TABLE_SIZE_TEST_CASES,
+  TABLE_SIZE_IDS,
+} from "./test-cases/table-sizes.js";
 
 // === GAME TEST CASES ===
 
@@ -423,6 +427,7 @@ const GAME_TEST_CASES = {
 const TEST_CASES = {
   ...GAME_TEST_CASES,
   ...SPECIAL_GAME_TEST_CASES,
+  ...TABLE_SIZE_TEST_CASES,
   ...HISTORY_TEST_CASES,
 };
 
@@ -445,6 +450,7 @@ const CATEGORIES = {
   River: ["game-river-all-in-decision"],
   Showdown: ["game-showdown-you-win", "game-showdown-you-lose"],
   "Special States": SPECIAL_GAME_IDS,
+  "Table Sizes": TABLE_SIZE_IDS,
   Errors: ["game-not-found", "game-error"],
   Modals: ["game-rankings-modal"],
   [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,

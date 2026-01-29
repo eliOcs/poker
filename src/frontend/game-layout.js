@@ -12,7 +12,6 @@ export const seatPositions = css`
 
   /* === DESKTOP LAYOUT (9 seats evenly distributed around oval) === */
   @media (width >= 800px) {
-    /* Top row - 3 seats following the curve */
     phg-seat[data-seat="0"] {
       top: 14%;
       left: 11%;
@@ -37,7 +36,6 @@ export const seatPositions = css`
       right: 1%;
     }
 
-    /* Bottom row - 2 seats */
     phg-seat[data-seat="5"] {
       bottom: 3%;
       right: 26%;
@@ -56,11 +54,54 @@ export const seatPositions = css`
       top: 45%;
       left: 0;
     }
+
+    /* === HEADS UP (2 seats) === */
+    #seats[data-table-size="2"] phg-seat[data-seat="0"] {
+      top: auto;
+      bottom: 3%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="2"] phg-seat[data-seat="1"] {
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* === 6-MAX (6 seats) === */
+    #seats[data-table-size="6"] phg-seat[data-seat="0"] {
+      top: 22%;
+      left: 3%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="1"] {
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="2"] {
+      top: 22%;
+      right: 3%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="3"] {
+      top: auto;
+      bottom: 18%;
+      right: 3%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="4"] {
+      top: auto;
+      bottom: 3%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="5"] {
+      top: auto;
+      bottom: 18%;
+      left: 3%;
+    }
   }
 
   /* === MOBILE LAYOUT === */
   @media (width < 800px) {
-    /* Top row */
     phg-seat[data-seat="0"] {
       top: 22%;
       left: 0;
@@ -85,7 +126,6 @@ export const seatPositions = css`
       right: 0;
     }
 
-    /* Bottom row */
     phg-seat[data-seat="5"] {
       bottom: 5%;
       right: 8%;
@@ -102,6 +142,50 @@ export const seatPositions = css`
     }
     phg-seat[data-seat="8"] {
       top: 38%;
+      left: 0;
+    }
+
+    /* === HEADS UP (2 seats) === */
+    #seats[data-table-size="2"] phg-seat[data-seat="0"] {
+      top: auto;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="2"] phg-seat[data-seat="1"] {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* === 6-MAX (6 seats) === */
+    #seats[data-table-size="6"] phg-seat[data-seat="0"] {
+      top: 30%;
+      left: 0;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="1"] {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="2"] {
+      top: 30%;
+      right: 0;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="3"] {
+      top: auto;
+      bottom: 30%;
+      right: 0;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="4"] {
+      top: auto;
+      bottom: 3%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="5"] {
+      top: auto;
+      bottom: 30%;
       left: 0;
     }
   }

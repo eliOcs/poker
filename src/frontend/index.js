@@ -58,8 +58,8 @@ class Game extends LitElement {
         @media (width < 800px) {
           phg-board {
             top: 52%;
-            width: 85%;
-            height: 85%;
+            width: 80%;
+            height: 80%;
           }
         }
 
@@ -330,12 +330,13 @@ class Game extends LitElement {
             .tournament=${this.game.tournament}
             .seats=${this.game.seats}
           ></phg-board>
-          <div id="seats">
+          <div id="seats" data-table-size="${this.game.seats.length}">
             ${this.game.seats.map((seat, i) =>
               seat.empty && isSeated
                 ? ""
                 : html`<phg-seat
                     data-seat="${i}"
+                    data-table-size="${this.game.seats.length}"
                     .seat=${seat}
                     .seatNumber=${i}
                     .isButton=${this.game.button === i}

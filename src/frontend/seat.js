@@ -234,19 +234,19 @@ class Seat extends LitElement {
         /* Seat 3: left center */
         :host([data-seat="3"]) .bet-indicator {
           top: 50%;
-          left: -5em;
+          right: calc(100% + 1em);
           transform: translateY(-50%);
         }
 
         /* Seat 4: top left */
         :host([data-seat="4"]) .bet-indicator {
-          top: -4em;
+          top: -3em;
           left: -4em;
         }
 
         /* Seat 5: top center */
         :host([data-seat="5"]) .bet-indicator {
-          top: -2em;
+          top: -6em;
           left: 50%;
           transform: translateX(-50%);
         }
@@ -260,15 +260,47 @@ class Seat extends LitElement {
 
         /* Seat 7: top right */
         :host([data-seat="7"]) .bet-indicator {
-          top: -4em;
+          top: -3em;
           right: -4em;
         }
 
         /* Seat 8: right center */
         :host([data-seat="8"]) .bet-indicator {
           top: 50%;
-          right: -5em;
+          left: calc(100% + 1em);
           transform: translateY(-50%);
+        }
+
+        /* === HEADS UP BET POSITIONING === */
+        :host([data-table-size="2"][data-seat="0"]) .bet-indicator {
+          inset: -7em auto auto 50%;
+          transform: translateX(-50%);
+        }
+
+        :host([data-table-size="2"][data-seat="1"]) .bet-indicator {
+          inset: auto auto -3em 50%;
+          transform: translateX(-50%);
+        }
+
+        /* === 6-MAX BET POSITIONING === */
+
+        /* Left side seats - bet to the right */
+        :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
+        :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
+          inset: 50% auto auto calc(100% + 1em);
+          transform: translateY(-50%);
+        }
+
+        /* Right side seats - bet to the left */
+        :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
+        :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
+          inset: 50% calc(100% + 1em) auto auto;
+          transform: translateY(-50%);
+        }
+
+        :host([data-table-size="6"][data-seat="4"]) .bet-indicator {
+          inset: -6em auto auto 50%;
+          transform: translateX(-50%);
         }
 
         /* === MOBILE BET POSITIONING === */
@@ -301,6 +333,18 @@ class Seat extends LitElement {
 
           :host([data-seat="5"]) .bet-indicator {
             inset: -4em auto auto 0;
+            transform: none;
+          }
+
+          /* 6-MAX mobile overrides */
+          :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
+          :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
+            inset: auto 0 -2em auto;
+            transform: none;
+          }
+          :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
+          :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
+            inset: auto auto -2em 0;
             transform: none;
           }
         }

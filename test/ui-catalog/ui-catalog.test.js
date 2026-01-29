@@ -38,6 +38,11 @@ const TEST_CASES = [
   "game-disconnected-player",
   "game-full-table",
 
+  // Table sizes
+  "table-heads-up",
+  "table-6max",
+  "table-full-ring",
+
   // Error states (using toast)
   "game-error",
 
@@ -56,6 +61,7 @@ const TEST_CASES = [
 function getComponentSelector(testCase) {
   if (testCase === "landing-page") return "phg-home";
   if (testCase.startsWith("history-")) return "phg-history";
+  // game-*, table-* all use phg-game
   return "phg-game";
 }
 
