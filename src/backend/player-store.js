@@ -26,6 +26,8 @@ export function initialize() {
   const dbPath = `${dataDir}/players.db`;
   db = new DatabaseSync(dbPath);
 
+  db.exec("PRAGMA journal_mode=WAL");
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS players (
       id TEXT PRIMARY KEY,
