@@ -1,146 +1,150 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
-import { createMockHandList, mockOhhHand, mockOhhHandView } from "./setup.js";
+import {
+  OriginalFetch,
+  createMockHandList,
+  mockOhhHand,
+  mockOhhHandView,
+} from "./setup.js";
 import "../../src/frontend/app.js";
 
+/**
+ * Creates a mock fetch function that returns predefined responses
+ */
+function createMockFetch(options = {}) {
+  const { hands = createMockHandList(), onFetch } = options;
+  return async (url) => {
+    onFetch?.(url);
+    if (url.match(/\/api\/users\/me$/)) {
+      return { ok: true, json: async () => ({ id: "user1", name: "Test" }) };
+    }
+    if (url.match(/\/api\/history\/[^/]+$/)) {
+      return {
+        ok: true,
+        json: async () => ({ hands, playerId: "player1" }),
+      };
+    }
+    if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
+      return {
+        ok: true,
+        json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
+      };
+    }
+    return { ok: false };
+  };
+}
+
 describe("phg-app", () => {
-  let element;
-  let fetchCallCount;
-  let originalFetch;
-
-  beforeEach(() => {
-    fetchCallCount = 0;
-    originalFetch = globalThis.fetch;
-
-    // Mock fetch to track calls and return mock data
-    globalThis.fetch = async (url) => {
-      fetchCallCount++;
-
-      if (url.match(/\/api\/users\/me$/)) {
-        return { ok: true, json: async () => ({ id: "user1", name: "Test" }) };
-      }
-      if (url.match(/\/api\/history\/[^/]+$/)) {
-        return {
-          ok: true,
-          json: async () => ({
-            hands: createMockHandList(),
-            playerId: "player1",
-          }),
-        };
-      }
-      if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
-        return {
-          ok: true,
-          json: async () => ({
-            hand: mockOhhHand,
-            view: mockOhhHandView,
-          }),
-        };
-      }
-      return { ok: false };
-    };
-  });
-
   afterEach(() => {
-    globalThis.fetch = originalFetch;
+    // Always restore original fetch after each test
+    globalThis.fetch = OriginalFetch;
   });
 
   describe("history data fetching", () => {
     it("shows empty state when no hands exist, then shows hands after playing", async () => {
       let handsToReturn = [];
+      const fetchedUrls = [];
 
+      globalThis.fetch = createMockFetch({
+        hands: handsToReturn,
+        onFetch: (url) => fetchedUrls.push(url),
+      });
+
+      // Dynamically update the hands for subsequent fetches
+      const originalFetch = globalThis.fetch;
       globalThis.fetch = async (url) => {
-        fetchCallCount++;
-        if (url.match(/\/api\/users\/me$/)) {
-          return { ok: true, json: async () => ({ id: "user1", name: "Test" }) };
-        }
+        fetchedUrls.push(url);
         if (url.match(/\/api\/history\/[^/]+$/)) {
           return {
             ok: true,
             json: async () => ({ hands: handsToReturn, playerId: "player1" }),
           };
         }
-        if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
-          return {
-            ok: true,
-            json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
-          };
-        }
-        return { ok: false };
+        return originalFetch(url);
       };
 
-      element = await fixture(html`<phg-app></phg-app>`);
-      await waitUntil(() => fetchCallCount >= 1, { timeout: 2000 });
-      const afterUserFetch = fetchCallCount;
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
       // Enter history with no hands
       element.path = "/history/testgame123";
       await element.updateComplete;
-      await waitUntil(() => fetchCallCount >= afterUserFetch + 1, {
-        timeout: 2000,
-      });
+      await waitUntil(
+        () => fetchedUrls.some((u) => u === "/api/history/testgame123"),
+        { timeout: 2000 },
+      );
 
       // Should have fetched list (empty)
       expect(element.historyHandList).to.deep.equal([]);
-      const afterEmptyFetch = fetchCallCount;
 
       // Navigate away
       element.path = "/games/testgame123";
       await element.updateComplete;
 
-      // Simulate hands being played - update mock to return hands
+      // Simulate hands being played
       handsToReturn = createMockHandList();
 
       // Re-enter history
       element.path = "/history/testgame123";
       await element.updateComplete;
-      await waitUntil(() => fetchCallCount >= afterEmptyFetch + 2, {
-        timeout: 2000,
-      });
+
+      // Wait for refetch and redirect
+      await waitUntil(
+        () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
+        { timeout: 2000 },
+      );
 
       // Should now have hands
       expect(element.historyHandList.length).to.be.greaterThan(0);
     });
 
     it("refetches hand list when reopening history", async () => {
-      element = await fixture(html`<phg-app></phg-app>`);
+      const fetchedUrls = [];
+      globalThis.fetch = createMockFetch({
+        onFetch: (url) => fetchedUrls.push(url),
+      });
 
-      // Wait for initial user fetch
-      await waitUntil(() => fetchCallCount >= 1, { timeout: 2000 });
-      const initialFetchCount = fetchCallCount;
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
       // Navigate to history (first time)
       element.path = "/history/testgame123";
-      await element.updateComplete;
 
-      // Wait for history data to be fetched (list + hand)
-      await waitUntil(() => fetchCallCount >= initialFetchCount + 2, {
-        timeout: 2000,
-      });
-      const afterFirstHistoryFetch = fetchCallCount;
+      // Wait for list + hand fetch
+      await waitUntil(
+        () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
+        { timeout: 2000 },
+      );
 
-      // Navigate away from history
+      expect(fetchedUrls).to.include("/api/history/testgame123");
+      expect(fetchedUrls).to.include("/api/history/testgame123/3");
+      const afterFirstFetch = fetchedUrls.length;
+
+      // Navigate away
       element.path = "/games/testgame123";
       await element.updateComplete;
 
-      // Navigate back to history (should refetch)
+      // Navigate back (should refetch)
       element.path = "/history/testgame123";
-      await element.updateComplete;
 
-      // Wait for history data to be fetched again
-      await waitUntil(() => fetchCallCount >= afterFirstHistoryFetch + 2, {
-        timeout: 2000,
-      });
+      // Wait for another list fetch
+      await waitUntil(
+        () =>
+          fetchedUrls.filter((u) => u === "/api/history/testgame123").length >=
+          2,
+        { timeout: 2000 },
+      );
 
-      // Verify that fetch was called again for the hand list
-      // Initial: 1 (user), First history: 2 (list + hand), Second history: 2 (list + hand)
-      expect(fetchCallCount).to.be.greaterThanOrEqual(initialFetchCount + 4);
+      expect(fetchedUrls.length).to.be.greaterThan(afterFirstFetch);
     });
 
     it("refetches when re-entering history that was previously empty", async () => {
-      element = await fixture(html`<phg-app></phg-app>`);
+      const fetchedUrls = [];
+      globalThis.fetch = createMockFetch({
+        onFetch: (url) => fetchedUrls.push(url),
+      });
 
-      // Wait for initial user fetch
-      await waitUntil(() => fetchCallCount >= 1, { timeout: 2000 });
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
       // Simulate first visit with empty history
       element._historyGameId = "testgame123";
@@ -152,49 +156,56 @@ describe("phg-app", () => {
       element.path = "/games/testgame123";
       await element.updateComplete;
 
-      const fetchCountBefore = fetchCallCount;
+      const fetchCountBefore = fetchedUrls.length;
 
-      // Navigate back to history (should refetch because handNumber is null)
+      // Navigate back to history (should refetch)
       element.path = "/history/testgame123";
       await element.updateComplete;
 
       // Wait for refetch
-      await waitUntil(() => fetchCallCount > fetchCountBefore, {
+      await waitUntil(() => fetchedUrls.length > fetchCountBefore, {
         timeout: 2000,
       });
 
-      // Verify a new fetch was triggered
-      expect(fetchCallCount).to.be.greaterThan(fetchCountBefore);
+      expect(fetchedUrls.length).to.be.greaterThan(fetchCountBefore);
     });
 
     it("does not refetch list when navigating between hands", async () => {
-      element = await fixture(html`<phg-app></phg-app>`);
+      // Reset browser location to avoid inheriting from previous tests
+      history.replaceState({}, "", "/");
 
-      // Wait for initial user fetch
-      await waitUntil(() => fetchCallCount >= 1, { timeout: 2000 });
-      const initialFetchCount = fetchCallCount;
-
-      // Navigate to history without hand number (triggers list fetch)
-      element.path = "/history/testgame123";
-      await element.updateComplete;
-
-      // Wait for history data to be fetched (list + default hand)
-      await waitUntil(() => fetchCallCount >= initialFetchCount + 2, {
-        timeout: 2000,
+      const fetchedUrls = [];
+      globalThis.fetch = createMockFetch({
+        onFetch: (url) => fetchedUrls.push(url),
       });
-      const afterListFetch = fetchCallCount;
 
-      // Navigate to specific hand via URL (simulates clicking a hand in the sidebar)
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
+
+      // Navigate to history (will redirect to /3)
+      element.path = "/history/testgame123";
+
+      // Wait for list + hand fetch
+      await waitUntil(
+        () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
+        { timeout: 2000 },
+      );
+
+      // Navigate to different hand
       element.path = "/history/testgame123/2";
       await element.updateComplete;
 
-      // Wait for hand fetch
-      await waitUntil(() => fetchCallCount >= afterListFetch + 1, {
-        timeout: 2000,
-      });
+      // Wait for hand 2 fetch
+      await waitUntil(
+        () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/2")),
+        { timeout: 2000 },
+      );
 
-      // Should only fetch the specific hand, not the list again
-      expect(fetchCallCount).to.equal(afterListFetch + 1);
+      // Should have fetched hand 2 without refetching list
+      const listFetches = fetchedUrls.filter(
+        (u) => u === "/api/history/testgame123",
+      ).length;
+      expect(listFetches).to.equal(1);
     });
   });
 });

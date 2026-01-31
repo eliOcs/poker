@@ -56,6 +56,7 @@ class App extends LitElement {
     this.historyPlayerId = null;
     this._historyGameId = null;
     this._historyHandNumber = null;
+    this._fetchingHistory = false;
   }
 
   connectedCallback() {
@@ -195,78 +196,75 @@ class App extends LitElement {
     `;
   }
 
-  async _fetchHandList(gameId) {
-    const listRes = await fetch(`/api/history/${gameId}`);
-    if (!listRes.ok) {
-      throw new Error("Failed to load hand history");
-    }
-    const listData = await listRes.json();
-    this.historyHandList = listData.hands || [];
-    this.historyPlayerId = listData.playerId;
-  }
+  // Route: /history/gameId - fetch list and redirect to latest hand
+  async _enterHistoryList(gameId) {
+    if (this._fetchingHistory) return;
+    this._fetchingHistory = true;
 
-  async _fetchHand(gameId, handNumber) {
-    const handRes = await fetch(`/api/history/${gameId}/${handNumber}`);
-    if (!handRes.ok) {
-      throw new Error("Hand not found");
-    }
-    const handData = await handRes.json();
-    this.historyHand = handData.hand;
-    this.historyView = handData.view;
-  }
-
-  _shouldFetchHistory(gameId, handNumber) {
-    const isEntering = handNumber === null;
-    const isNewHand = handNumber !== this._historyHandNumber;
-
-    // Skip if already fetching
-    if (this.historyLoading) return false;
-
-    // Skip if we already fetched for this game (list is loaded, even if empty)
-    if (isEntering && gameId === this._historyGameId && this.historyHandList !== null) {
-      return false;
-    }
-
-    // Skip if just navigating to same hand
-    if (!isEntering && !isNewHand) return false;
-
-    return true;
-  }
-
-  _getTargetHand(gameId, handNumber) {
-    if (handNumber) return handNumber;
-    if (this.historyHandList.length === 0) return null;
-
-    const targetHand =
-      this.historyHandList[this.historyHandList.length - 1].hand_number;
-    const newPath = `/history/${gameId}/${targetHand}`;
-    history.replaceState({}, "", newPath);
-    this.path = newPath;
-    return targetHand;
-  }
-
-  async fetchHistoryData(gameId, handNumber) {
-    if (!this._shouldFetchHistory(gameId, handNumber)) return;
-
-    const isEntering = handNumber === null;
     this._historyGameId = gameId;
+    this.historyLoading = true;
+    this.historyHand = null;
+    this.historyView = null;
+    this.historyHandList = null;
 
     try {
-      if (isEntering) {
-        this.historyLoading = true;
-        this.historyHand = null;
-        this.historyView = null;
-        this.historyHandList = null;
-        await this._fetchHandList(gameId);
+      const res = await fetch(`/api/history/${gameId}`);
+      if (!res.ok) throw new Error("Failed to load hand history");
+
+      const data = await res.json();
+      this.historyHandList = data.hands || [];
+      this.historyPlayerId = data.playerId;
+
+      // Redirect to latest hand if available
+      if (this.historyHandList.length > 0) {
+        const latest =
+          this.historyHandList[this.historyHandList.length - 1].hand_number;
+        // Only redirect if still on the list route (not already navigated elsewhere)
+        if (this.path === `/history/${gameId}`) {
+          history.replaceState({}, "", `/history/${gameId}/${latest}`);
+          this.path = `/history/${gameId}/${latest}`;
+          await this._enterHistoryHand(gameId, latest);
+        } else {
+          // Path changed during fetch, just finish loading
+          this.historyLoading = false;
+        }
+      } else {
+        this.historyLoading = false;
+      }
+    } catch (err) {
+      this.toast = { message: err.message, variant: "error" };
+      history.replaceState({}, "", `/games/${gameId}`);
+      this.path = `/games/${gameId}`;
+    } finally {
+      this._fetchingHistory = false;
+    }
+  }
+
+  // Route: /history/gameId/handNumber - fetch specific hand
+  async _enterHistoryHand(gameId, handNumber) {
+    if (handNumber === this._historyHandNumber) return;
+
+    this._historyGameId = gameId;
+    this._historyHandNumber = handNumber;
+
+    try {
+      // Fetch list if not loaded (direct navigation to hand URL)
+      // Skip if _enterHistoryList is already fetching
+      if (this.historyHandList === null && !this._fetchingHistory) {
+        const listRes = await fetch(`/api/history/${gameId}`);
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          this.historyHandList = listData.hands || [];
+          this.historyPlayerId = listData.playerId;
+        }
       }
 
-      const targetHand = this._getTargetHand(gameId, handNumber);
-      this._historyHandNumber = targetHand;
+      const res = await fetch(`/api/history/${gameId}/${handNumber}`);
+      if (!res.ok) throw new Error("Hand not found");
 
-      if (targetHand) {
-        await this._fetchHand(gameId, targetHand);
-      }
-
+      const data = await res.json();
+      this.historyHand = data.hand;
+      this.historyView = data.view;
       this.historyLoading = false;
     } catch (err) {
       this.toast = { message: err.message, variant: "error" };
@@ -277,8 +275,6 @@ class App extends LitElement {
 
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
-
-    // Update URL - fetchHistoryData will be called via _renderHistoryView
     history.pushState({}, "", `/history/${this._historyGameId}/${handNumber}`);
     this.path = `/history/${this._historyGameId}/${handNumber}`;
   }
@@ -313,26 +309,31 @@ class App extends LitElement {
   }
 
   _clearHistoryState() {
-    if (this._historyGameId !== null) {
-      this._historyGameId = null;
-      this._historyHandNumber = null;
-      this.historyHandList = null;
-      this.historyHand = null;
-      this.historyView = null;
-      this.historyLoading = false;
-    }
+    this._historyGameId = null;
+    this._historyHandNumber = null;
+    this.historyHandList = null;
+    this.historyHand = null;
+    this.historyView = null;
+    this.historyLoading = false;
+    this._fetchingHistory = false;
   }
 
-  updated(changedProperties) {
+  willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
       const historyMatch = this.path.match(
         /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
       );
       if (historyMatch) {
+        const gameId = historyMatch[1];
         const handNumber = historyMatch[2]
           ? parseInt(historyMatch[2], 10)
           : null;
-        this.fetchHistoryData(historyMatch[1], handNumber);
+
+        if (handNumber === null) {
+          this._enterHistoryList(gameId);
+        } else {
+          this._enterHistoryHand(gameId, handNumber);
+        }
       }
     }
   }
