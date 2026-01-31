@@ -1,18 +1,20 @@
 import HandRankings from "../hand-rankings.js";
 import { toDollars, writeHandToFile, addToCache } from "./io.js";
 
-// Re-export from io.js for backward compatibility
-export {
-  toDollars,
-  toCents,
-  getHand,
-  getAllHands,
-  clearCache,
-  getCacheSize,
-} from "./io.js";
+// Re-export from io.js (only non-currency-conversion functions)
+export { getHand, getAllHands, clearCache, getCacheSize } from "./io.js";
 
-// Re-export from view.js for backward compatibility
+// Re-export types and functions from view.js
+// All currency values in these exports are in Cents
 export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
+
+/**
+ * Re-export types for external use
+ * @typedef {import('./view.js').FilteredHand} FilteredHand
+ * @typedef {import('./view.js').HandSummary} HandSummary
+ * @typedef {import('./view.js').HistoryView} HistoryView
+ * @typedef {import('./view.js').HistoryViewSeat} HistoryViewSeat
+ */
 
 /**
  * @typedef {import('../types.js').Cents} Cents

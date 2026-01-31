@@ -485,9 +485,7 @@ class Seat extends LitElement {
     // History view: show net result and ending stack
     if (this.seat.netResult !== undefined) {
       return html`
-        <div
-          class="hand-result ${this._getResultClass(this.seat.netResult)}"
-        >
+        <div class="hand-result ${this._getResultClass(this.seat.netResult)}">
           ${this._formatHandResult(this.seat.netResult)}
         </div>
         <div class="stack ending-stack">

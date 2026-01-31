@@ -7,6 +7,72 @@ import { toCents } from "./io.js";
  */
 
 /**
+ * @typedef {object} HandAction
+ * @property {number} action_number
+ * @property {string} player_id
+ * @property {string} action
+ * @property {Cents} [amount]
+ * @property {boolean} [is_allin]
+ * @property {string[]} [cards]
+ */
+
+/**
+ * @typedef {object} HandRound
+ * @property {number} id
+ * @property {string} street
+ * @property {string[]} [cards]
+ * @property {HandAction[]} actions
+ */
+
+/**
+ * @typedef {object} HandPlayer
+ * @property {string} id
+ * @property {number} seat
+ * @property {string|null} name
+ * @property {Cents} starting_stack
+ */
+
+/**
+ * @typedef {object} HandPot
+ * @property {number} number
+ * @property {Cents} amount
+ * @property {string|null} winning_hand
+ * @property {string[]|null} winning_cards
+ * @property {Array<{ player_id: string, win_amount: Cents, contributed_rake: number }>} player_wins
+ */
+
+/**
+ * Hand data filtered for a player's view (output of filterHandForPlayer)
+ * @typedef {object} FilteredHand
+ * @property {string} spec_version
+ * @property {string} site_name
+ * @property {string} game_number
+ * @property {string} start_date_utc
+ * @property {string} game_type
+ * @property {{ bet_type: string }} bet_limit
+ * @property {number} table_size
+ * @property {number} dealer_seat
+ * @property {Cents} small_blind_amount
+ * @property {Cents} big_blind_amount
+ * @property {Cents} ante_amount
+ * @property {HandPlayer[]} players
+ * @property {HandRound[]} rounds
+ * @property {HandPot[]} pots
+ */
+
+/**
+ * Hand summary for the hand list
+ * @typedef {object} HandSummary
+ * @property {string} game_number
+ * @property {number} hand_number
+ * @property {(Card | string)[]} hole_cards
+ * @property {string|null} winner_name
+ * @property {string|null} winner_id
+ * @property {Cents} pot
+ * @property {boolean} is_winner
+ */
+
+/**
  * @typedef {object} HistoryViewSeat
  * @property {boolean} empty
  * @property {{ id: string, name: string }} [player]
@@ -50,10 +116,10 @@ function convertActionAmount(action) {
 /**
  * Filters a hand for a specific player's view
  * - Hides opponent hole cards unless shown at showdown
- * - Converts amounts from dollars (OHH format) to cents (frontend format)
+ * - Converts all amounts from dollars (OHH format) to Cents (app format)
  * @param {OHHHand} hand
  * @param {string} playerId
- * @returns {OHHHand}
+ * @returns {FilteredHand}
  */
 export function filterHandForPlayer(hand, playerId) {
   // Find which players showed their cards at showdown
@@ -105,12 +171,17 @@ export function filterHandForPlayer(hand, playerId) {
     starting_stack: toCents(player.starting_stack),
   }));
 
-  return {
+  /** @type {FilteredHand} */
+  const filtered = {
     ...hand,
+    small_blind_amount: toCents(hand.small_blind_amount),
+    big_blind_amount: toCents(hand.big_blind_amount),
+    ante_amount: toCents(hand.ante_amount),
     players: convertedPlayers,
     rounds: filteredRounds,
     pots: convertedPots,
   };
+  return filtered;
 }
 
 /**
@@ -158,9 +229,10 @@ function getWinnerInfoFromPots(hand, playerId) {
 
 /**
  * Gets a summary of a hand for the hand list
- * @param {OHHHand} hand
+ * Converts pot amount from dollars (OHH format) to Cents (app format)
+ * @param {OHHHand} hand - Raw OHH hand data (amounts in dollars)
  * @param {string} playerId - The requesting player's ID
- * @returns {{ game_number: string, hand_number: number, hole_cards: (Card | string)[], winner_name: string|null, winner_id: string|null, pot: Cents, is_winner: boolean }}
+ * @returns {HandSummary}
  */
 export function getHandSummary(hand, playerId) {
   const handNumber = parseInt(hand.game_number.split("-").pop() || "0", 10);
@@ -183,7 +255,7 @@ export function getHandSummary(hand, playerId) {
 
 /**
  * Builds a map of player IDs to their hole cards from dealt cards actions
- * @param {OHHHand} hand
+ * @param {FilteredHand} hand
  * @returns {Map<string, string[]>}
  */
 function buildPlayerCardsMap(hand) {
@@ -201,8 +273,7 @@ function buildPlayerCardsMap(hand) {
 
 /**
  * Builds a map of player IDs to their total win amounts
- * Expects hand data with amounts already converted to cents
- * @param {OHHHand} hand
+ * @param {FilteredHand} hand - Hand data with amounts in Cents
  * @returns {Map<string, Cents>}
  */
 function buildWinAmountsMap(hand) {
@@ -219,8 +290,7 @@ function buildWinAmountsMap(hand) {
 
 /**
  * Builds a map of player IDs to their total contributions (bets put into the pot)
- * Expects hand data with amounts already converted to cents
- * @param {OHHHand} hand
+ * @param {FilteredHand} hand - Hand data with amounts in Cents
  * @returns {Map<string, Cents>}
  */
 function buildContributionsMap(hand) {
@@ -298,7 +368,7 @@ function buildOccupiedSeat(
 
 /**
  * Extracts board cards and last street from hand rounds
- * @param {OHHHand} hand
+ * @param {FilteredHand} hand
  * @returns {{ boardCards: string[], lastStreet: string }}
  */
 function extractBoardInfo(hand) {
@@ -314,8 +384,7 @@ function extractBoardInfo(hand) {
 
 /**
  * Calculates total pot amount from all pots
- * Expects hand data with amounts already converted to cents
- * @param {OHHHand} hand
+ * @param {FilteredHand} hand - Hand data with amounts in Cents
  * @returns {Cents}
  */
 function calculateTotalPot(hand) {
@@ -324,9 +393,8 @@ function calculateTotalPot(hand) {
 
 /**
  * Builds winner message from main pot
- * Expects hand data with amounts already converted to cents
- * @param {OHHHand['pots'][0]|undefined} mainPot
- * @param {OHHHand['players']} players
+ * @param {HandPot|undefined} mainPot - Pot data with amounts in Cents
+ * @param {HandPlayer[]} players - Player data with amounts in Cents
  * @returns {{ playerName: string, handRank: string|null, amount: Cents }|null}
  */
 function buildViewWinnerMessage(mainPot, players) {
@@ -342,8 +410,8 @@ function buildViewWinnerMessage(mainPot, players) {
 }
 
 /**
- * Converts OHH hand data to game view format for rendering
- * @param {OHHHand} hand - The OHH hand data
+ * Converts filtered hand data to game view format for rendering
+ * @param {FilteredHand} hand - Hand data with amounts in Cents (from filterHandForPlayer)
  * @param {string} playerId - The requesting player's ID
  * @returns {HistoryView}
  */
