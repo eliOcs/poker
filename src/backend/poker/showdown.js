@@ -228,6 +228,14 @@ function setFinalHandResults(game, winnings, winningCardsMap) {
 export function* showdown(game) {
   game.hand.phase = "showdown";
   collectRemainingBets(game);
+
+  // Mark cards as revealed for all active players
+  for (const seat of game.seats) {
+    if (!seat.empty && !seat.folded && !seat.sittingOut) {
+      seat.cardsRevealed = true;
+    }
+  }
+
   yield;
 
   const results = runShowdown(game);

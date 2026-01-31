@@ -75,7 +75,7 @@ describe("Player View", function () {
   });
 
   describe("card visibility", function () {
-    it("shows opponent cards when they have a handResult (post-showdown)", function () {
+    it("shows opponent cards when they were revealed at showdown", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
       const p2 = createPlayer();
@@ -86,20 +86,20 @@ describe("Player View", function () {
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
-      // Both players have hand results (participated in showdown)
-      g.seats[0].handResult = 100;
-      g.seats[1].handResult = -100;
+      // Both players revealed cards at showdown
+      g.seats[0].cardsRevealed = true;
+      g.seats[1].cardsRevealed = true;
 
       const view = playerView(g, p1);
 
       // Own cards should be visible
       assert.equal(view.seats[0].cards[0], "As");
-      // Opponent cards should also be visible (they have handResult)
+      // Opponent cards should also be visible (they were revealed at showdown)
       assert.equal(view.seats[1].cards[0], "Qd");
       assert.equal(view.seats[1].cards[1], "Jc");
     });
 
-    it("hides opponent cards when they have no handResult (folded)", function () {
+    it("hides opponent cards when they folded (not revealed)", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
       const p2 = createPlayer();
@@ -110,17 +110,40 @@ describe("Player View", function () {
       g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
-      // Only winner has hand result (opponent folded)
-      g.seats[0].handResult = 100;
-      g.seats[1].handResult = null;
+      // Opponent folded, cards not revealed
+      g.seats[0].cardsRevealed = false;
+      g.seats[1].cardsRevealed = false;
 
       const view = playerView(g, p1);
 
       // Own cards should be visible
       assert.equal(view.seats[0].cards[0], "As");
-      // Opponent cards should be hidden (no handResult)
+      // Opponent cards should be hidden (not revealed)
       assert.equal(view.seats[1].cards[0], "??");
       assert.equal(view.seats[1].cards[1], "??");
+    });
+
+    it("hides winner cards when they won by fold", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      // Simulate post-hand state where p1 won by fold
+      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[1].cards = ["Qd", "Jc"];
+      g.seats[1].folded = true;
+      // Winner has handResult but cards not revealed (won by fold)
+      g.seats[0].handResult = 100;
+      g.seats[0].cardsRevealed = false;
+
+      const view = playerView(g, p2);
+
+      // Winner's cards should be hidden from opponent (won by fold)
+      assert.equal(view.seats[0].cards[0], "??");
+      assert.equal(view.seats[0].cards[1], "??");
     });
 
     it("shows all cards during showdown phase", function () {

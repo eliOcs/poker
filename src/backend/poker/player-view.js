@@ -201,8 +201,8 @@ function shouldShowCards(seat, seatIndex, playerSeatIndex, game) {
     return true;
   }
 
-  // Show at showdown or when hand result is set (post-showdown)
-  if (game.hand?.phase === "showdown" || seat.handResult !== null) {
+  // Show at showdown or when cards were revealed at showdown
+  if (game.hand?.phase === "showdown" || seat.cardsRevealed) {
     return true;
   }
 

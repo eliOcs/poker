@@ -362,6 +362,27 @@ describe("showdown", () => {
       // Sitting out player should NOT have handResult
       assert.equal(game.seats[3].handResult, null);
     });
+
+    it("should not set cardsRevealed when winning by fold", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: ["Ah", "Kh"],
+        bet: 50,
+        folded: true,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 100),
+        cards: ["Qd", "Jc"],
+        bet: 50,
+      };
+      game.hand.pot = 0;
+
+      Showdown.awardToLastPlayer(game);
+
+      // Neither player's cards should be revealed (winner won by fold)
+      assert.equal(game.seats[0].cardsRevealed, false);
+      assert.equal(game.seats[2].cardsRevealed, false);
+    });
   });
 
   describe("showdown generator", () => {
@@ -414,6 +435,37 @@ describe("showdown", () => {
 
       assert.equal(game.seats[0].lastAction, null);
       assert.equal(game.seats[2].lastAction, null);
+    });
+
+    it("should set cardsRevealed for active players at showdown", () => {
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: ["As", "Ah"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: ["2c", "3d"],
+        bet: 0,
+        totalInvested: 100,
+      };
+      // Seat 1 folded earlier
+      game.seats[1] = {
+        ...Seat.occupied({ id: "p3" }, 500),
+        cards: ["Kc", "Qc"],
+        folded: true,
+      };
+      game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
+      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+
+      drainGenerator(Showdown.showdown(game));
+
+      // Active players should have cardsRevealed set
+      assert.equal(game.seats[0].cardsRevealed, true);
+      assert.equal(game.seats[2].cardsRevealed, true);
+      // Folded player should NOT have cardsRevealed set
+      assert.equal(game.seats[1].cardsRevealed, false);
     });
 
     it("should set winningCards for winner", () => {

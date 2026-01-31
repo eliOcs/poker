@@ -33,6 +33,7 @@
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
  * @property {Cents|null} handResult - Result of the hand (positive for win, negative for loss)
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
+ * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
  */
 
@@ -72,6 +73,7 @@ export function occupied(player, stack = 0) {
     lastAction: null,
     handResult: null,
     winningCards: null,
+    cardsRevealed: false,
     bustedPosition: null,
   };
 }
@@ -89,6 +91,7 @@ export function resetForNewHand(seat) {
   seat.lastAction = null;
   seat.handResult = null;
   seat.winningCards = null;
+  seat.cardsRevealed = false;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;
