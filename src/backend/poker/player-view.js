@@ -310,28 +310,57 @@ function getWaitingPhaseActions(seat, game) {
 }
 
 /**
- * Gets betting actions when it's the player's turn
- * @param {import('./seat.js').OccupiedSeat} seat
+ * Checks if any opponent can respond to a bet/raise
+ * Returns true if at least one non-folded opponent has chips remaining
  * @param {Game} game
- * @returns {PlayerAction[]}
+ * @param {number} seatIndex - The current player's seat
+ * @returns {boolean}
  */
-function getBettingActions(seat, game) {
-  /** @type {PlayerAction[]} */
-  const actions = [];
-  const currentBet = game.hand.currentBet;
-  const playerBet = seat.bet;
-  const playerStack = seat.stack;
-  const toCall = currentBet - playerBet;
+function canAnyOpponentRespond(game, seatIndex) {
+  for (let i = 0; i < game.seats.length; i++) {
+    if (i === seatIndex) continue;
+    const seat = game.seats[i];
+    if (seat.empty || seat.folded) continue;
+    // Opponent can respond if they have chips and aren't all-in
+    if (seat.stack > 0 && !seat.allIn) {
+      return true;
+    }
+  }
+  return false;
+}
 
+/**
+ * Adds check/call/fold actions based on bet state
+ * @param {PlayerAction[]} actions
+ * @param {Cents} toCall
+ * @param {Cents} playerStack
+ */
+function addBasicActions(actions, toCall, playerStack) {
   if (toCall === 0) {
     actions.push({ action: "check" });
   }
-
   if (toCall > 0 && playerStack > 0) {
     actions.push({ action: "call", amount: Math.min(toCall, playerStack) });
   }
+  if (toCall > 0) {
+    actions.push({ action: "fold" });
+  }
+}
 
-  if (currentBet === 0 && playerStack > 0) {
+/**
+ * Adds bet/raise/all-in actions if opponents can respond
+ * @param {PlayerAction[]} actions
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @param {Cents} toCall
+ * @param {boolean} opponentsCanRespond
+ */
+function addAggressiveActions(actions, seat, game, toCall, opponentsCanRespond) {
+  const { currentBet } = game.hand;
+  const { bet: playerBet, stack: playerStack } = seat;
+
+  // Only allow bet if opponents can respond
+  if (currentBet === 0 && playerStack > 0 && opponentsCanRespond) {
     const minBet = Betting.getMinBet(game);
     actions.push({
       action: "bet",
@@ -340,17 +369,35 @@ function getBettingActions(seat, game) {
     });
   }
 
-  if (currentBet > 0 && playerStack > toCall) {
+  // Only allow raise if opponents can respond
+  if (currentBet > 0 && playerStack > toCall && opponentsCanRespond) {
     addRaiseAction(actions, seat, game);
   }
 
+  // Only allow all-in if it would be meaningful (opponents can respond OR it's a call)
   if (playerStack > 0) {
-    actions.push({ action: "allIn", amount: playerStack });
+    const wouldBeRaise = playerBet + playerStack > currentBet;
+    if (!wouldBeRaise || opponentsCanRespond) {
+      actions.push({ action: "allIn", amount: playerStack });
+    }
   }
+}
 
-  if (toCall > 0) {
-    actions.push({ action: "fold" });
-  }
+/**
+ * Gets betting actions when it's the player's turn
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @param {number} seatIndex - The current player's seat index
+ * @returns {PlayerAction[]}
+ */
+function getBettingActions(seat, game, seatIndex) {
+  /** @type {PlayerAction[]} */
+  const actions = [];
+  const toCall = game.hand.currentBet - seat.bet;
+  const opponentsCanRespond = canAnyOpponentRespond(game, seatIndex);
+
+  addBasicActions(actions, toCall, seat.stack);
+  addAggressiveActions(actions, seat, game, toCall, opponentsCanRespond);
 
   return actions;
 }
@@ -422,7 +469,7 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     return actions;
   }
 
-  return actions.concat(getBettingActions(seat, game));
+  return actions.concat(getBettingActions(seat, game, seatIndex));
 }
 
 /**
