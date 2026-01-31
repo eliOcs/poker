@@ -122,6 +122,7 @@ class Game extends LitElement {
           display: block;
           margin-bottom: var(--space-sm);
           color: var(--color-fg-medium);
+          font-size: var(--font-sm);
         }
 
         .volume-slider {
@@ -380,6 +381,7 @@ class Game extends LitElement {
     return html`
       <phg-modal title="Settings" @close=${this.closeSettings}>
         <div class="settings-content">
+          <label>Name</label>
           <input
             id="name-input"
             type="text"

@@ -48,6 +48,7 @@ const TEST_CASES = [
 
   // Modal states
   "game-rankings-modal",
+  "game-settings-modal",
 
   // Hand history states
   "history-loading",

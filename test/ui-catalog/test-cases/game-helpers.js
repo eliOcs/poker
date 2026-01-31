@@ -25,13 +25,15 @@ export const emptyTableSeats = () =>
 
 // Helper to create a game component with mock data
 export function gameView(gameState, options = {}) {
-  const { showRanking = false } = options;
+  const { showRanking = false, showSettings = false, volume = 0.75 } = options;
   return html`
     <div style="height: 100vh; width: 100%;">
       <phg-game
         .game=${gameState}
         .socket=${{ readyState: 1 }}
         .showRanking=${showRanking}
+        .showSettings=${showSettings}
+        .volume=${volume}
       ></phg-game>
     </div>
   `;

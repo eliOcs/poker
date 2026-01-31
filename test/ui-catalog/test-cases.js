@@ -421,6 +421,21 @@ const GAME_TEST_CASES = {
       }),
       { showRanking: true },
     ),
+
+  "game-settings-modal": () =>
+    gameView(
+      createGame({
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 5000,
+          }),
+          createPlayer("Alice", { stack: 3000 }),
+          ...emptySeats(7),
+        ],
+      }),
+      { showSettings: true },
+    ),
 };
 
 // Merge all test cases
@@ -452,7 +467,7 @@ const CATEGORIES = {
   "Special States": SPECIAL_GAME_IDS,
   "Table Sizes": TABLE_SIZE_IDS,
   Errors: ["game-not-found", "game-error"],
-  Modals: ["game-rankings-modal"],
+  Modals: ["game-rankings-modal", "game-settings-modal"],
   [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,
 };
 
