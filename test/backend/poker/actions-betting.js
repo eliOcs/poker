@@ -178,14 +178,15 @@ describe("betting actions", () => {
   });
 
   describe("fold", () => {
-    it("should mark player as folded", () => {
+    it("should mark player as folded and keep cards", () => {
       game.hand.actingSeat = 2;
       game.seats[2].cards = [{ rank: "ace", suit: "spades" }];
 
       Actions.fold(game, { seat: 2 });
 
       assert.equal(game.seats[2].folded, true);
-      assert.deepEqual(game.seats[2].cards, []);
+      // Cards are kept so player can review their hand
+      assert.deepEqual(game.seats[2].cards, [{ rank: "ace", suit: "spades" }]);
     });
 
     it("should throw when not player turn", () => {

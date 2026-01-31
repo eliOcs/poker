@@ -242,7 +242,6 @@ export function fold(game, { seat }) {
   }
 
   seatObj.folded = true;
-  seatObj.cards = [];
   seatObj.lastAction = "fold";
 
   Betting.advanceAction(game);

@@ -162,6 +162,10 @@ class Seat extends LitElement {
           }
         }
 
+        :host(.folded) .hole-cards {
+          opacity: 0.5;
+        }
+
         .status-label {
           font-size: var(--font-sm);
           color: var(--color-primary);
