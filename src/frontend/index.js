@@ -1,6 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
+import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
 import "./seat.js";
@@ -183,6 +184,9 @@ class Game extends LitElement {
 
   handleSeatAction(e) {
     e.stopPropagation();
+    if (e.detail.action === "sit") {
+      Audio.resume();
+    }
     this.send(e.detail);
   }
 
@@ -253,6 +257,21 @@ class Game extends LitElement {
 
   isPlayerSeated() {
     return this.game.seats.some((s) => s.isCurrentPlayer && !s.empty);
+  }
+
+  _checkTurnSounds(prev, curr) {
+    if (curr.actingSeat !== prev.actingSeat) Audio.playTurnSound();
+    if (!prev.clockTicks && curr.clockTicks) Audio.playClockSound();
+  }
+
+  updated(changedProperties) {
+    if (!changedProperties.has("game") || !this.game) return;
+    const { seatIndex } = this.getMySeatInfo();
+    const prev = changedProperties.get("game")?.hand ?? {};
+    const curr = this.game.hand ?? {};
+    if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
+      this._checkTurnSounds(prev, curr);
+    }
   }
 
   getWinningCards() {
