@@ -164,32 +164,26 @@ describe("game-tick", () => {
       });
     });
 
-    describe("shouldStopTick", () => {
-      it("should stop tick when no countdown and no one acting", () => {
+    describe("shouldTickBeRunning", () => {
+      it("should return false when no countdown and no one acting", () => {
         game.countdown = null;
         game.hand.actingSeat = -1;
 
-        const result = tick(game);
-
-        assert.strictEqual(result.shouldStopTick, true);
+        assert.strictEqual(shouldTickBeRunning(game), false);
       });
 
-      it("should continue tick when countdown is active", () => {
+      it("should return true when countdown is active", () => {
         game.countdown = 2;
         game.hand.actingSeat = -1;
 
-        const result = tick(game);
-
-        assert.strictEqual(result.shouldStopTick, false);
+        assert.strictEqual(shouldTickBeRunning(game), true);
       });
 
-      it("should continue tick when someone is acting", () => {
+      it("should return true when someone is acting", () => {
         game.countdown = null;
         Betting.startBettingRound(game, "flop");
 
-        const result = tick(game);
-
-        assert.strictEqual(result.shouldStopTick, false);
+        assert.strictEqual(shouldTickBeRunning(game), true);
       });
     });
 

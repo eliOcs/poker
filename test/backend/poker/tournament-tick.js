@@ -13,6 +13,8 @@ describe("tournament-tick", () => {
     // Add players
     game.seats[0] = Seat.occupied({ id: "player1" }, Tournament.INITIAL_STACK);
     game.seats[1] = Seat.occupied({ id: "player2" }, Tournament.INITIAL_STACK);
+    // Simulate tournament started (first hand dealt)
+    game.tournament.startTime = new Date().toISOString();
   });
 
   describe("tick", () => {
@@ -110,6 +112,19 @@ describe("tournament-tick", () => {
       assert.equal(result.breakStarted, true);
       assert.equal(game.tournament.onBreak, true);
     });
+
+    it("should not increment levelTicks before tournament starts", () => {
+      game.tournament.startTime = null;
+      const initialTicks = game.tournament.levelTicks;
+
+      TournamentTick.tick(game);
+
+      assert.equal(
+        game.tournament.levelTicks,
+        initialTicks,
+        "level timer should not advance before first hand starts",
+      );
+    });
   });
 
   describe("shouldTournamentTick", () => {
@@ -135,6 +150,15 @@ describe("tournament-tick", () => {
     it("should return false for non-tournament games", () => {
       const cashGame = Game.create({ seats: 6 });
       assert.equal(TournamentTick.shouldTournamentTick(cashGame), false);
+    });
+
+    it("should return false before tournament starts (no startTime)", () => {
+      game.tournament.startTime = null;
+      assert.equal(
+        TournamentTick.shouldTournamentTick(game),
+        false,
+        "tournament should not tick before first hand starts",
+      );
     });
   });
 

@@ -21,7 +21,6 @@ export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
 /**
  * @typedef {Object} TickResult
  * @property {boolean} shouldBroadcast - Whether to broadcast state to clients
- * @property {boolean} shouldStopTick - Whether to stop the tick timer
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number|null} autoActionSeat - Seat index to auto-action (check/fold), or null
  * @property {'disconnect'|'clock'|null} autoActionReason - Why auto-action triggered
@@ -88,7 +87,6 @@ function handleClockExpiry(game, actingSeat, result) {
 function createTickResult() {
   return {
     shouldBroadcast: false,
-    shouldStopTick: false,
     startHand: false,
     autoActionSeat: null,
     autoActionReason: null,
@@ -165,12 +163,7 @@ export function tick(game) {
   }
 
   handleCountdown(game, result);
-  const isActing = handleActingTick(game, result);
-
-  const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
-  if (game.countdown === null && !isActing && !isTournamentTicking) {
-    result.shouldStopTick = true;
-  }
+  handleActingTick(game, result);
 
   return result;
 }

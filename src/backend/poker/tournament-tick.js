@@ -118,7 +118,7 @@ function handleLevelTick(game, result) {
 export function tick(game) {
   const result = createEmptyResult();
 
-  if (!game.tournament?.active) {
+  if (!game.tournament?.active || !game.tournament.startTime) {
     return result;
   }
 
@@ -159,6 +159,7 @@ export function getTimeToNextLevel(game) {
  */
 export function shouldTournamentTick(game) {
   if (!game.tournament?.active) return false;
-  // Always keep ticking during active tournaments (level timer runs continuously)
+  // Only tick after tournament has started (first hand dealt)
+  if (!game.tournament.startTime) return false;
   return true;
 }

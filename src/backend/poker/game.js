@@ -234,7 +234,7 @@ export function startGameTick(game, onBroadcast) {
     }
 
     // Stop tick if no longer needed
-    if (result.shouldStopTick) {
+    if (!shouldTickBeRunning(game)) {
       stopGameTick(game);
     }
 
@@ -267,6 +267,11 @@ export function startHand(game) {
   game.winnerMessage = null;
   Actions.startHand(game);
   HandHistory.startHand(game);
+
+  // Mark tournament start time on first hand
+  if (game.tournament?.active && !game.tournament.startTime) {
+    game.tournament.startTime = new Date().toISOString();
+  }
   TournamentSummary.startTournament(game);
 
   const playerCount = game.seats.filter(
