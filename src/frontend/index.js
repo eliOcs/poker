@@ -118,6 +118,39 @@ class Game extends LitElement {
           justify-content: flex-end;
         }
 
+        .settings-content label {
+          display: block;
+          margin-bottom: var(--space-sm);
+          color: var(--color-fg-medium);
+        }
+
+        .volume-slider {
+          display: flex;
+          gap: var(--space-sm);
+          margin-bottom: var(--space-lg);
+        }
+
+        .volume-slider button {
+          flex: 1;
+          padding: var(--space-md);
+          font-family: inherit;
+          font-size: var(--font-md);
+          border: 3px solid var(--color-bg-dark);
+          background: var(--color-bg-medium);
+          color: var(--color-fg-medium);
+          cursor: pointer;
+        }
+
+        .volume-slider button:hover {
+          background: var(--color-bg-dark);
+        }
+
+        .volume-slider button.active {
+          background: var(--color-primary);
+          color: var(--color-fg-white);
+          border-color: var(--color-primary);
+        }
+
         #ranking-btn {
           position: absolute;
           right: 40px;
@@ -160,8 +193,11 @@ class Game extends LitElement {
       connectionStatus: { type: String },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
+      volume: { type: Number },
     };
   }
+
+  static volumeSteps = [0, 0.25, 0.75, 1];
 
   constructor() {
     super();
@@ -170,6 +206,23 @@ class Game extends LitElement {
     this.connectionStatus = "disconnected";
     this.showSettings = false;
     this.showRanking = false;
+    this.volume = this._loadVolume();
+    Audio.setVolume(this.volume);
+  }
+
+  _loadVolume() {
+    const stored = localStorage.getItem("phg-volume");
+    return stored !== null ? parseFloat(stored) : 0.75;
+  }
+
+  _saveVolume(v) {
+    localStorage.setItem("phg-volume", v.toString());
+  }
+
+  setVolume(v) {
+    this.volume = v;
+    Audio.setVolume(v);
+    this._saveVolume(v);
   }
 
   send(message) {
@@ -303,6 +356,25 @@ class Game extends LitElement {
     ></phg-modal>`;
   }
 
+  _renderVolumeSlider() {
+    const labels = ["Off", "25%", "75%", "100%"];
+    return html`
+      <label>Sound Volume</label>
+      <div class="volume-slider">
+        ${Game.volumeSteps.map(
+          (v, i) => html`
+            <button
+              class=${this.volume === v ? "active" : ""}
+              @click=${() => this.setVolume(v)}
+            >
+              ${labels[i]}
+            </button>
+          `,
+        )}
+      </div>
+    `;
+  }
+
   _renderSettingsModal() {
     if (!this.showSettings) return "";
     return html`
@@ -316,6 +388,7 @@ class Game extends LitElement {
             .value=${this.getCurrentPlayerName()}
             @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
           />
+          ${this._renderVolumeSlider()}
           <div class="buttons">
             <phg-button variant="secondary" @click=${this.closeSettings}
               >Cancel</phg-button

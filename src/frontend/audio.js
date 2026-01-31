@@ -1,4 +1,13 @@
 let audioContext = null;
+let volume = 0.75;
+
+export function getVolume() {
+  return volume;
+}
+
+export function setVolume(v) {
+  volume = v;
+}
 
 function getContext() {
   if (audioContext) return audioContext;
@@ -12,13 +21,14 @@ function getContext() {
 }
 
 function playBeep(ctx, frequency, startTime, duration, gain = 0.15) {
+  if (volume === 0) return;
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
 
   oscillator.type = "square";
   oscillator.frequency.setValueAtTime(frequency, startTime);
 
-  gainNode.gain.setValueAtTime(gain, startTime);
+  gainNode.gain.setValueAtTime(gain * volume, startTime);
   gainNode.gain.setValueAtTime(0, startTime + duration);
 
   oscillator.connect(gainNode);
