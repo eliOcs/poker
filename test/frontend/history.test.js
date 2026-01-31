@@ -205,6 +205,17 @@ describe("phg-history", () => {
       expect(amounts.length).to.be.greaterThan(0);
     });
 
+    it("shows action amounts in correct dollar format", async () => {
+      // OHH stores amounts in dollars (e.g., 150 = $150)
+      // formatCurrency expects cents, so we need to convert
+      const amounts = element.shadowRoot.querySelectorAll(".action-amount");
+      const amountTexts = Array.from(amounts).map((a) => a.textContent.trim());
+
+      // mockOhhHand has a Raise action with amount: 150 (dollars)
+      // This should show as "$150", not "$1.50"
+      expect(amountTexts.some((text) => text === "$150")).to.be.true;
+    });
+
     it("highlights current player as 'You'", async () => {
       const youLabels =
         element.shadowRoot.querySelectorAll(".action-player.you");

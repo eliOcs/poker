@@ -7,6 +7,16 @@ import "./button.js";
 import "./seat.js";
 import "./board.js";
 
+/**
+ * Converts dollars to cents for formatCurrency
+ * OHH format stores amounts in dollars, but formatCurrency expects cents
+ * @param {number} dollars
+ * @returns {number}
+ */
+function toCents(dollars) {
+  return Math.round(dollars * 100);
+}
+
 class History extends LitElement {
   static get styles() {
     return [designTokens, baseStyles, historyStyles, seatPositions];
@@ -268,7 +278,7 @@ class History extends LitElement {
                             : ""}
                           ${action.amount
                             ? html`<span class="action-amount"
-                                >${formatCurrency(action.amount)}</span
+                                >${formatCurrency(toCents(action.amount))}</span
                               >`
                             : ""}
                         </div>
@@ -291,7 +301,9 @@ class History extends LitElement {
     const winningHand = mainPot.winning_hand;
     const winningCards = mainPot.winning_cards;
     const winnerIds = mainPot.player_wins.map((w) => w.player_id);
-    const winAmount = mainPot.player_wins[0]?.win_amount || mainPot.amount;
+    // OHH format stores amounts in dollars, convert to cents for formatCurrency
+    const winAmountDollars =
+      mainPot.player_wins[0]?.win_amount || mainPot.amount;
 
     return html`
       ${winnerIds.map((winnerId) => {
@@ -300,7 +312,9 @@ class History extends LitElement {
         return html`
           <div class="showdown-winner ${isYou ? "you" : ""}">
             <span class="winner-name">${playerName}</span> won
-            <span class="winner-amount">${formatCurrency(winAmount)}</span>
+            <span class="winner-amount"
+              >${formatCurrency(toCents(winAmountDollars))}</span
+            >
           </div>
         `;
       })}
