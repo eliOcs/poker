@@ -1,17 +1,18 @@
 # To do
 
+- Vibrate API if availble to announce turn
 - when sit out shows waiting for your turn
 - if folded you can't sitout
 - https://plutonpoker.com/history/ml1c1ixx2027/36 why not sho2wing cards on board (last hand of tournament)
 - Ready button to skip the break
 - Break should start at the end of the hand not at the middle
 - https://plutonpoker.com/history/ml1c1ixx2027/26 won on turn
-- buy in amount is in cents in cash game
 - Larger suit icon
 - Bounties
 - Don't allow cent bets in sitngos
 - Left side in history wider if space available
-- ESC key exit history
+- ESC key exit history page
+- ESC key close modals
 - Poker history not respecting seat positioning
 - All-in annimate each turn
 - Announcements chat
@@ -26,7 +27,7 @@
 - level with number of hands click to show tournament structures move to top left
 - action panel fixed
 - sb/bb button
-- betting slider cents
+- betting slider cents (define a minimum denomitation for each blinds and respect that)
 - Ready button and then start
 - sit n go, only allow player to seat in the frist level of blinds
 - history in a new tab (in desktop)
