@@ -67,6 +67,37 @@ export const SPECIAL_GAME_TEST_CASES = {
       }),
     ),
 
+  // Test case showing the current player has folded but can still see their cards
+  "game-player-folded": () =>
+    gameView(
+      createGame({
+        button: 0,
+        hand: { phase: "river", pot: 1200, currentBet: 0, actingSeat: 1 },
+        board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            folded: true,
+            stack: 4700,
+            cards: ["Qs", "Jd"], // Cards visible at reduced opacity
+            handRank: "Pair of Jacks",
+          }),
+          createPlayer("Alice", {
+            isActing: true,
+            stack: 2400,
+            cards: ["??", "??"],
+          }),
+          createPlayer("Bob", {
+            stack: 2300,
+            bet: 0,
+            cards: ["??", "??"],
+            lastAction: "Check",
+          }),
+          ...emptySeats(6),
+        ],
+      }),
+    ),
+
   "game-clock-called": () =>
     gameView(
       createGame({
@@ -218,6 +249,7 @@ export const SPECIAL_GAME_TEST_CASES = {
 export const SPECIAL_GAME_IDS = [
   "game-all-in-situation",
   "game-with-folded-players",
+  "game-player-folded",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",

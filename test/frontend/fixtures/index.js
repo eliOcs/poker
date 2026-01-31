@@ -30,7 +30,8 @@ export const mockOccupiedSeat = {
 export const mockFoldedSeat = {
   ...mockOccupiedSeat,
   folded: true,
-  cards: [],
+  // Cards are kept so player can review their hand after folding
+  cards: ["As", "Kh"],
   actions: [],
   isActing: false,
 };

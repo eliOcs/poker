@@ -33,6 +33,7 @@ const TEST_CASES = [
   // Special states
   "game-all-in-situation",
   "game-with-folded-players",
+  "game-player-folded",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
