@@ -13,6 +13,8 @@ import { toCents } from "./io.js";
  * @property {Cents} [stack]
  * @property {string[]} [cards]
  * @property {Cents|null} [handResult]
+ * @property {Cents} [netResult] - Net gain/loss for this hand (winnings - contributions)
+ * @property {Cents} [endingStack] - Stack after the hand completed
  * @property {string|null} [handRank]
  * @property {string[]|null} [winningCards]
  * @property {boolean} [isCurrentPlayer]
@@ -193,10 +195,10 @@ function buildPlayerCardsMap(hand) {
 /**
  * Builds a map of player IDs to their total win amounts
  * @param {OHHHand} hand
- * @returns {Map<string, number>}
+ * @returns {Map<string, Cents>}
  */
 function buildWinAmountsMap(hand) {
-  /** @type {Map<string, number>} */
+  /** @type {Map<string, Cents>} */
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
@@ -208,10 +210,39 @@ function buildWinAmountsMap(hand) {
 }
 
 /**
+ * Builds a map of player IDs to their total contributions (bets put into the pot)
+ * @param {OHHHand} hand
+ * @returns {Map<string, Cents>}
+ */
+function buildContributionsMap(hand) {
+  const contributionActions = new Set([
+    "Post SB",
+    "Post BB",
+    "Post Ante",
+    "Bet",
+    "Raise",
+    "Call",
+  ]);
+
+  /** @type {Map<string, Cents>} */
+  const contributions = new Map();
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (contributionActions.has(action.action) && action.amount) {
+        const current = contributions.get(action.player_id) || 0;
+        contributions.set(action.player_id, current + toCents(action.amount));
+      }
+    }
+  }
+  return contributions;
+}
+
+/**
  * Builds an occupied seat view
  * @param {{ id: string, seat: number, name: string|null, starting_stack: number }} player
  * @param {Map<string, string[]>} playerCards
- * @param {Map<string, number>} winAmounts
+ * @param {Map<string, Cents>} winAmounts
+ * @param {Map<string, Cents>} contributions
  * @param {string|null} winningHand
  * @param {string[]|null} winningCards
  * @param {string} playerId
@@ -221,6 +252,7 @@ function buildOccupiedSeat(
   player,
   playerCards,
   winAmounts,
+  contributions,
   winningHand,
   winningCards,
   playerId,
@@ -228,15 +260,21 @@ function buildOccupiedSeat(
   const isCurrentPlayer = player.id === playerId;
   const isWinner = winAmounts.has(player.id);
   const winAmount = winAmounts.get(player.id) || 0;
+  const contributed = contributions.get(player.id) || 0;
+  const startingStack = toCents(player.starting_stack);
+  const netResult = winAmount - contributed;
+  const endingStack = startingStack + netResult;
   const playerName = player.name || `Seat ${player.seat}`;
   const displayName = isCurrentPlayer ? `${playerName} (you)` : playerName;
 
   return {
     empty: false,
     player: { id: player.id, name: displayName },
-    stack: toCents(player.starting_stack),
+    stack: startingStack,
     cards: playerCards.get(player.id) || [],
     handResult: winAmount > 0 ? winAmount : null,
+    netResult,
+    endingStack,
     handRank: isWinner ? winningHand : null,
     winningCards: isWinner ? winningCards : null,
     isCurrentPlayer,
@@ -300,6 +338,7 @@ function buildViewWinnerMessage(mainPot, players) {
 export function getHandView(hand, playerId) {
   const playerCards = buildPlayerCardsMap(hand);
   const winAmounts = buildWinAmountsMap(hand);
+  const contributions = buildContributionsMap(hand);
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
   const winningCards = mainPot?.winning_cards || null;
@@ -315,6 +354,7 @@ export function getHandView(hand, playerId) {
           player,
           playerCards,
           winAmounts,
+          contributions,
           winningHand,
           winningCards,
           playerId,

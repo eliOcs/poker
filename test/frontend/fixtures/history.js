@@ -228,10 +228,37 @@ function buildMockWinAmountsMap(hand) {
 }
 
 /**
+ * Builds contributions map from betting actions
+ * @param {object} hand
+ * @returns {Map<string, Cents>}
+ */
+function buildMockContributionsMap(hand) {
+  const contributionActions = new Set([
+    "Post SB",
+    "Post BB",
+    "Post Ante",
+    "Bet",
+    "Raise",
+    "Call",
+  ]);
+  const contributions = new Map();
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (contributionActions.has(action.action) && action.amount) {
+        const current = contributions.get(action.player_id) || 0;
+        contributions.set(action.player_id, current + action.amount);
+      }
+    }
+  }
+  return contributions;
+}
+
+/**
  * Builds a mock occupied seat
  * @param {object} player
  * @param {Map<string, string[]>} playerCards
  * @param {Map<string, Cents>} winAmounts
+ * @param {Map<string, Cents>} contributions
  * @param {string|null} winningHand
  * @param {string[]|null} winningCards
  * @param {string} playerId
@@ -241,6 +268,7 @@ function buildMockOccupiedSeat(
   player,
   playerCards,
   winAmounts,
+  contributions,
   winningHand,
   winningCards,
   playerId,
@@ -249,16 +277,20 @@ function buildMockOccupiedSeat(
   const isCurrentPlayer = player.id === playerId;
   const isWinner = winAmounts.has(player.id);
   const winAmount = winAmounts.get(player.id) || 0;
+  const contributed = contributions.get(player.id) || 0;
+  const startingStack = player.starting_stack * 100;
+  const netResult = winAmount - contributed;
+  const endingStack = startingStack + netResult;
   const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
 
-  // Note: starting_stack in OHH is in dollars, but we use cents in the view
-  // For test fixtures, we convert manually (1000 dollars = 100000 cents)
   return {
     empty: false,
     player: { id: player.id, name: displayName || `Seat ${seatIndex + 1}` },
-    stack: player.starting_stack * 100,
+    stack: startingStack,
     cards: playerCards.get(player.id) || [],
     handResult: winAmount > 0 ? winAmount : null,
+    netResult,
+    endingStack,
     handRank: isWinner ? winningHand : null,
     winningCards: isWinner ? winningCards : null,
     isCurrentPlayer,
@@ -319,6 +351,7 @@ function buildMockWinnerMessage(mainPot, players, winningHand) {
 export function createMockView(hand, playerId) {
   const playerCards = buildMockPlayerCardsMap(hand);
   const winAmounts = buildMockWinAmountsMap(hand);
+  const contributions = buildMockContributionsMap(hand);
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
   const winningCards = mainPot?.winning_cards || null;
@@ -334,6 +367,7 @@ export function createMockView(hand, playerId) {
           player,
           playerCards,
           winAmounts,
+          contributions,
           winningHand,
           winningCards,
           playerId,

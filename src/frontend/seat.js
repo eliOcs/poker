@@ -190,6 +190,11 @@ class Seat extends LitElement {
           color: var(--color-error);
         }
 
+        .ending-stack {
+          font-size: var(--font-sm);
+          color: var(--color-fg-muted);
+        }
+
         .hand-rank {
           font-size: var(--font-md);
           color: var(--color-fg-medium);
@@ -391,7 +396,7 @@ class Seat extends LitElement {
     ["busted", (s) => s?.bustedPosition != null],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
-    ["winner", (s) => s?.handResult > 0],
+    ["winner", (s) => (s?.netResult ?? s?.handResult) > 0],
   ];
 
   updated(changedProperties) {
@@ -477,6 +482,20 @@ class Seat extends LitElement {
     if (this.seat.bustedPosition != null) {
       return "";
     }
+    // History view: show net result and ending stack
+    if (this.seat.netResult !== undefined) {
+      return html`
+        <div
+          class="hand-result ${this._getResultClass(this.seat.netResult)}"
+        >
+          ${this._formatHandResult(this.seat.netResult)}
+        </div>
+        <div class="stack ending-stack">
+          ${formatCurrency(this.seat.endingStack)}
+        </div>
+      `;
+    }
+    // Live view: show hand result (win amount) or current stack
     return this.seat.handResult != null
       ? html`<div
           class="hand-result ${this._getResultClass(this.seat.handResult)}"
