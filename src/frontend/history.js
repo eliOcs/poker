@@ -331,7 +331,7 @@ class History extends LitElement {
           <span>Hands (${this.handList.length})</span>
         </div>
         <ul class="hand-list">
-          ${this.handList.map((item) => {
+          ${[...this.handList].reverse().map((item) => {
             const isActive = item.hand_number === this.handNumber;
             const isWinner = item.is_winner;
 

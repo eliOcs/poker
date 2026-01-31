@@ -361,11 +361,12 @@ describe("phg-history", () => {
         selectEvent = e;
       });
 
+      // List is reversed (latest first), so first item is hand 3
       const handItems = element.shadowRoot.querySelectorAll(".hand-item");
       handItems[0].click();
 
       expect(selectEvent).to.exist;
-      expect(selectEvent.detail.handNumber).to.equal(1);
+      expect(selectEvent.detail.handNumber).to.equal(3);
     });
 
     it("dispatches close and navigate events on goBack", async () => {
