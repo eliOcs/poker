@@ -43,8 +43,8 @@ export const mockOhhHand = {
   big_blind_amount: 50,
   ante_amount: 0,
   players: [
-    { id: "player1", seat: 3, name: "Alice", starting_stack: 1000 },
-    { id: "player2", seat: 5, name: "Bob", starting_stack: 1000 },
+    { id: "player1", seat: 3, name: "Alice", starting_stack: 100000 },
+    { id: "player2", seat: 5, name: "Bob", starting_stack: 100000 },
   ],
   rounds: [
     {
@@ -278,7 +278,7 @@ function buildMockOccupiedSeat(
   const isWinner = winAmounts.has(player.id);
   const winAmount = winAmounts.get(player.id) || 0;
   const contributed = contributions.get(player.id) || 0;
-  const startingStack = player.starting_stack * 100;
+  const startingStack = player.starting_stack;
   const netResult = winAmount - contributed;
   const endingStack = startingStack + netResult;
   const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;

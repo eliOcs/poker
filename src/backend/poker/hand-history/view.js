@@ -99,8 +99,15 @@ export function filterHandForPlayer(hand, playerId) {
     })),
   }));
 
+  // Convert player starting stacks to cents
+  const convertedPlayers = hand.players.map((player) => ({
+    ...player,
+    starting_stack: toCents(player.starting_stack),
+  }));
+
   return {
     ...hand,
+    players: convertedPlayers,
     rounds: filteredRounds,
     pots: convertedPots,
   };
@@ -194,6 +201,7 @@ function buildPlayerCardsMap(hand) {
 
 /**
  * Builds a map of player IDs to their total win amounts
+ * Expects hand data with amounts already converted to cents
  * @param {OHHHand} hand
  * @returns {Map<string, Cents>}
  */
@@ -203,7 +211,7 @@ function buildWinAmountsMap(hand) {
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
       const current = winAmounts.get(win.player_id) || 0;
-      winAmounts.set(win.player_id, current + toCents(win.win_amount));
+      winAmounts.set(win.player_id, current + win.win_amount);
     }
   }
   return winAmounts;
@@ -211,6 +219,7 @@ function buildWinAmountsMap(hand) {
 
 /**
  * Builds a map of player IDs to their total contributions (bets put into the pot)
+ * Expects hand data with amounts already converted to cents
  * @param {OHHHand} hand
  * @returns {Map<string, Cents>}
  */
@@ -230,7 +239,7 @@ function buildContributionsMap(hand) {
     for (const action of round.actions) {
       if (contributionActions.has(action.action) && action.amount) {
         const current = contributions.get(action.player_id) || 0;
-        contributions.set(action.player_id, current + toCents(action.amount));
+        contributions.set(action.player_id, current + action.amount);
       }
     }
   }
@@ -239,7 +248,8 @@ function buildContributionsMap(hand) {
 
 /**
  * Builds an occupied seat view
- * @param {{ id: string, seat: number, name: string|null, starting_stack: number }} player
+ * Expects player data with starting_stack already converted to cents
+ * @param {{ id: string, seat: number, name: string|null, starting_stack: Cents }} player
  * @param {Map<string, string[]>} playerCards
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
@@ -261,7 +271,7 @@ function buildOccupiedSeat(
   const isWinner = winAmounts.has(player.id);
   const winAmount = winAmounts.get(player.id) || 0;
   const contributed = contributions.get(player.id) || 0;
-  const startingStack = toCents(player.starting_stack);
+  const startingStack = player.starting_stack;
   const netResult = winAmount - contributed;
   const endingStack = startingStack + netResult;
   const playerName = player.name || `Seat ${player.seat}`;
@@ -304,15 +314,17 @@ function extractBoardInfo(hand) {
 
 /**
  * Calculates total pot amount from all pots
+ * Expects hand data with amounts already converted to cents
  * @param {OHHHand} hand
  * @returns {Cents}
  */
 function calculateTotalPot(hand) {
-  return hand.pots.reduce((sum, pot) => sum + toCents(pot.amount || 0), 0);
+  return hand.pots.reduce((sum, pot) => sum + (pot.amount || 0), 0);
 }
 
 /**
  * Builds winner message from main pot
+ * Expects hand data with amounts already converted to cents
  * @param {OHHHand['pots'][0]|undefined} mainPot
  * @param {OHHHand['players']} players
  * @returns {{ playerName: string, handRank: string|null, amount: Cents }|null}
@@ -325,7 +337,7 @@ function buildViewWinnerMessage(mainPot, players) {
   return {
     playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
     handRank: mainPot.winning_hand || null,
-    amount: toCents(mainPot.player_wins[0].win_amount),
+    amount: mainPot.player_wins[0].win_amount,
   };
 }
 
