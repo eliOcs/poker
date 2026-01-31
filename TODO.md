@@ -1,5 +1,7 @@
 # To do
 
+- when sit out shows waiting for your turn
+- if folded you can't sitout
 - https://plutonpoker.com/history/ml1c1ixx2027/36 why not sho2wing cards on board (last hand of tournament)
 - Ready button to skip the break
 - Break should start at the end of the hand not at the middle
