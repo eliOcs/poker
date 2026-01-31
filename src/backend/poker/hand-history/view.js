@@ -34,8 +34,21 @@ import { toCents } from "./io.js";
  */
 
 /**
+ * Converts an action's amount from dollars to cents if present
+ * @param {object} action
+ * @returns {object}
+ */
+function convertActionAmount(action) {
+  if (action.amount !== undefined) {
+    return { ...action, amount: toCents(action.amount) };
+  }
+  return action;
+}
+
+/**
  * Filters a hand for a specific player's view
- * Hides opponent hole cards unless shown at showdown
+ * - Hides opponent hole cards unless shown at showdown
+ * - Converts amounts from dollars (OHH format) to cents (frontend format)
  * @param {OHHHand} hand
  * @param {string} playerId
  * @returns {OHHHand}
@@ -51,7 +64,7 @@ export function filterHandForPlayer(hand, playerId) {
     }
   }
 
-  // Clone and filter rounds
+  // Clone and filter rounds, converting amounts to cents
   const filteredRounds = hand.rounds.map((round) => ({
     ...round,
     actions: round.actions.map((action) => {
@@ -61,22 +74,33 @@ export function filterHandForPlayer(hand, playerId) {
         const wasShown = shownPlayerIds.has(action.player_id);
 
         if (isOwnCards || wasShown) {
-          return action; // Show cards
+          return convertActionAmount(action);
         } else {
           // Hide cards
-          return {
+          return convertActionAmount({
             ...action,
             cards: ["??", "??"],
-          };
+          });
         }
       }
-      return action;
+      return convertActionAmount(action);
     }),
+  }));
+
+  // Convert pot amounts to cents
+  const convertedPots = hand.pots.map((pot) => ({
+    ...pot,
+    amount: toCents(pot.amount),
+    player_wins: pot.player_wins.map((win) => ({
+      ...win,
+      win_amount: toCents(win.win_amount),
+    })),
   }));
 
   return {
     ...hand,
     rounds: filteredRounds,
+    pots: convertedPots,
   };
 }
 

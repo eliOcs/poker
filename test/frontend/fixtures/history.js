@@ -2,26 +2,34 @@
  * Mock hand history fixtures for testing the phg-history component
  */
 
+/** @typedef {import('../../../src/backend/poker/types.js').Cents} Cents */
+
+/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean }} */
 export const mockHandSummary = {
   game_number: "test123-1",
   hand_number: 1,
   hole_cards: ["Ah", "Kh"],
   winner_name: "Alice",
   winner_id: "player1",
-  pot: 20000, // $200 in cents
+  pot: 20000,
   is_winner: true,
 };
 
+/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean }} */
 export const mockHandSummaryLost = {
   game_number: "test123-2",
   hand_number: 2,
   hole_cards: ["7s", "2d"],
   winner_name: "Bob",
   winner_id: "player2",
-  pot: 15000, // $150 in cents
+  pot: 15000,
   is_winner: false,
 };
 
+/**
+ * Mock OHH hand data with amounts in cents (as returned by filterHandForPlayer).
+ * The backend converts OHH dollar amounts to cents before sending to frontend.
+ */
 export const mockOhhHand = {
   spec_version: "1.4.6",
   site_name: "Pluton Poker",
@@ -47,13 +55,13 @@ export const mockOhhHand = {
           action_number: 1,
           player_id: "player1",
           action: "Post SB",
-          amount: 25,
+          amount: 2500,
         },
         {
           action_number: 2,
           player_id: "player2",
           action: "Post BB",
-          amount: 50,
+          amount: 5000,
         },
         {
           action_number: 3,
@@ -71,9 +79,14 @@ export const mockOhhHand = {
           action_number: 5,
           player_id: "player1",
           action: "Raise",
-          amount: 150,
+          amount: 15000,
         },
-        { action_number: 6, player_id: "player2", action: "Call", amount: 150 },
+        {
+          action_number: 6,
+          player_id: "player2",
+          action: "Call",
+          amount: 15000,
+        },
       ],
     },
     {
@@ -82,7 +95,12 @@ export const mockOhhHand = {
       cards: ["Qh", "Jd", "2s"],
       actions: [
         { action_number: 7, player_id: "player2", action: "Check" },
-        { action_number: 8, player_id: "player1", action: "Bet", amount: 100 },
+        {
+          action_number: 8,
+          player_id: "player1",
+          action: "Bet",
+          amount: 10000,
+        },
         { action_number: 9, player_id: "player2", action: "Fold" },
       ],
     },
@@ -90,11 +108,11 @@ export const mockOhhHand = {
   pots: [
     {
       number: 0,
-      amount: 400,
+      amount: 40000,
       winning_hand: "A High",
       winning_cards: null,
       player_wins: [
-        { player_id: "player1", win_amount: 400, contributed_rake: 0 },
+        { player_id: "player1", win_amount: 40000, contributed_rake: 0 },
       ],
     },
   ],
@@ -119,12 +137,17 @@ export const mockOhhHandWithShowdown = {
       street: "River",
       cards: ["8h"],
       actions: [
-        { action_number: 12, player_id: "player2", action: "Bet", amount: 100 },
+        {
+          action_number: 12,
+          player_id: "player2",
+          action: "Bet",
+          amount: 10000,
+        },
         {
           action_number: 13,
           player_id: "player1",
           action: "Call",
-          amount: 100,
+          amount: 10000,
         },
       ],
     },
@@ -150,11 +173,11 @@ export const mockOhhHandWithShowdown = {
   pots: [
     {
       number: 0,
-      amount: 500,
+      amount: 50000,
       winning_hand: "Two Pair, Qs and Js",
       winning_cards: ["Qc", "Qh", "Jc", "Jd", "8h"],
       player_wins: [
-        { player_id: "player2", win_amount: 500, contributed_rake: 0 },
+        { player_id: "player2", win_amount: 50000, contributed_rake: 0 },
       ],
     },
   ],
@@ -169,17 +192,8 @@ export function createMockHandList() {
       game_number: "test123-3",
       hand_number: 3,
       pot: 30000,
-    }, // $300 in cents
+    },
   ];
-}
-
-/**
- * Convert OHH dollars to cents for frontend display
- * @param {number} dollars
- * @returns {number}
- */
-function toCents(dollars) {
-  return Math.round(dollars * 100);
 }
 
 /**
@@ -199,13 +213,15 @@ function buildMockPlayerCardsMap(hand) {
 
 /**
  * Builds win amounts map from pots
+ * @param {object} hand
+ * @returns {Map<string, Cents>}
  */
 function buildMockWinAmountsMap(hand) {
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
       const current = winAmounts.get(win.player_id) || 0;
-      winAmounts.set(win.player_id, current + toCents(win.win_amount));
+      winAmounts.set(win.player_id, current + win.win_amount);
     }
   }
   return winAmounts;
@@ -213,6 +229,13 @@ function buildMockWinAmountsMap(hand) {
 
 /**
  * Builds a mock occupied seat
+ * @param {object} player
+ * @param {Map<string, string[]>} playerCards
+ * @param {Map<string, Cents>} winAmounts
+ * @param {string|null} winningHand
+ * @param {string[]|null} winningCards
+ * @param {string} playerId
+ * @param {number} seatIndex
  */
 function buildMockOccupiedSeat(
   player,
@@ -228,10 +251,12 @@ function buildMockOccupiedSeat(
   const winAmount = winAmounts.get(player.id) || 0;
   const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
 
+  // Note: starting_stack in OHH is in dollars, but we use cents in the view
+  // For test fixtures, we convert manually (1000 dollars = 100000 cents)
   return {
     empty: false,
     player: { id: player.id, name: displayName || `Seat ${seatIndex + 1}` },
-    stack: toCents(player.starting_stack),
+    stack: player.starting_stack * 100,
     cards: playerCards.get(player.id) || [],
     handResult: winAmount > 0 ? winAmount : null,
     handRank: isWinner ? winningHand : null,
@@ -260,13 +285,19 @@ function extractMockBoardInfo(hand) {
 
 /**
  * Calculates total pot from hand pots
+ * @param {object} hand
+ * @returns {Cents}
  */
 function calculateMockTotalPot(hand) {
-  return hand.pots.reduce((sum, pot) => sum + toCents(pot.amount || 0), 0);
+  return hand.pots.reduce((sum, pot) => sum + (pot.amount || 0), 0);
 }
 
 /**
  * Builds winner message from main pot
+ * @param {object} mainPot
+ * @param {object[]} players
+ * @param {string|null} winningHand
+ * @returns {{ playerName: string, handRank: string|null, amount: Cents }|null}
  */
 function buildMockWinnerMessage(mainPot, players, winningHand) {
   if (!mainPot?.player_wins?.length) return null;
@@ -275,15 +306,15 @@ function buildMockWinnerMessage(mainPot, players, winningHand) {
   return {
     playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
     handRank: winningHand,
-    amount: toCents(mainPot.player_wins[0].win_amount),
+    amount: mainPot.player_wins[0].win_amount,
   };
 }
 
 /**
  * Creates a mock view object from an OHH hand (mirrors backend getHandView)
- * @param {object} hand - OHH hand data (in dollars)
+ * @param {object} hand - OHH hand data with amounts in cents
  * @param {string} playerId - The requesting player's ID
- * @returns {object} View object for rendering (in cents)
+ * @returns {object} View object for rendering
  */
 export function createMockView(hand, playerId) {
   const playerCards = buildMockPlayerCardsMap(hand);

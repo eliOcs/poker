@@ -355,7 +355,13 @@ function addBasicActions(actions, toCall, playerStack) {
  * @param {Cents} toCall
  * @param {boolean} opponentsCanRespond
  */
-function addAggressiveActions(actions, seat, game, toCall, opponentsCanRespond) {
+function addAggressiveActions(
+  actions,
+  seat,
+  game,
+  toCall,
+  opponentsCanRespond,
+) {
   const { currentBet } = game.hand;
   const { bet: playerBet, stack: playerStack } = seat;
 

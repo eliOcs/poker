@@ -96,6 +96,72 @@ describe("hand-history-view", function () {
       assert.deepStrictEqual(filtered.rounds[0].actions[1].cards, ["??", "??"]);
     });
 
+    it("converts action amounts from dollars to cents", function () {
+      const hand = {
+        spec_version: "1.4.6",
+        site_name: "Pluton Poker",
+        game_number: "test-1",
+        start_date_utc: "2024-01-01T00:00:00Z",
+        game_type: "Holdem",
+        bet_limit: { bet_type: "NL" },
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 1000 },
+        ],
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Post SB",
+                amount: 25,
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Post BB",
+                amount: 50,
+              },
+              {
+                action_number: 3,
+                player_id: "player1",
+                action: "Raise",
+                amount: 150,
+              },
+            ],
+          },
+        ],
+        pots: [
+          {
+            number: 0,
+            amount: 400,
+            player_wins: [
+              { player_id: "player1", win_amount: 400, contributed_rake: 0 },
+            ],
+          },
+        ],
+      };
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1");
+
+      // Action amounts converted from dollars to cents
+      assert.strictEqual(filtered.rounds[0].actions[0].amount, 2500);
+      assert.strictEqual(filtered.rounds[0].actions[1].amount, 5000);
+      assert.strictEqual(filtered.rounds[0].actions[2].amount, 15000);
+
+      // Pot amounts converted from dollars to cents
+      assert.strictEqual(filtered.pots[0].amount, 40000);
+      assert.strictEqual(filtered.pots[0].player_wins[0].win_amount, 40000);
+    });
+
     it("shows opponent cards if they showed at showdown", function () {
       const hand = {
         spec_version: "1.4.6",
