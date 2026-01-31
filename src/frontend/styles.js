@@ -37,6 +37,7 @@ export const designTokens = css`
     --color-bg-light: #2d2d44;
     --color-bg-disabled: #4a4a5e;
     --color-table: #2d5a27;
+    --color-table-history: #622028;
 
     /* Colors - Foregrounds */
     --color-fg-muted: #88a;

@@ -15,7 +15,7 @@ class Board extends LitElement {
           justify-content: center;
           height: 100%;
           width: 100%;
-          background-color: var(--color-table);
+          background-color: var(--board-bg, var(--color-table));
           border: 6px solid var(--color-bg-dark);
           border-radius: 9999px;
           box-shadow:

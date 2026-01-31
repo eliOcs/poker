@@ -107,6 +107,7 @@ export const historyStyles = css`
     position: relative;
     min-height: 85vh;
     max-height: none;
+    --board-bg: var(--color-table-history);
   }
 
   @media (width >= 800px) {
