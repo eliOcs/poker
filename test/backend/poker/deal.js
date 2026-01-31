@@ -1,6 +1,7 @@
 import { describe, it, before } from "node:test";
 import assert from "assert";
 import * as Game from "../../../src/backend/poker/game.js";
+import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import {
   dealFlop,
@@ -8,6 +9,11 @@ import {
   sit,
 } from "../../../src/backend/poker/actions.js";
 import { isValidCard } from "../../../src/backend/poker/deck.js";
+
+/** Helper to create a test player */
+function createPlayer() {
+  return Player.fromUser(User.create());
+}
 
 function assertCard(card) {
   assert.ok(isValidCard(card), `Expected valid card, got: ${card}`);
@@ -20,8 +26,8 @@ describe("deal", function () {
 
     before(function () {
       g = Game.create();
-      sit(g, { seat: 0, player: Player.create() });
-      sit(g, { seat: 1, player: Player.create() });
+      sit(g, { seat: 0, player: createPlayer() });
+      sit(g, { seat: 1, player: createPlayer() });
       dp = dealPreflop(g);
     });
 

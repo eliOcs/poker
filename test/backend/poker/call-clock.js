@@ -3,6 +3,7 @@ import assert from "node:assert";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
+import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import playerView from "../../../src/backend/poker/player-view.js";
 import {
@@ -10,6 +11,11 @@ import {
   CLOCK_DURATION_TICKS,
 } from "../../../src/backend/poker/game-tick.js";
 import { drainGenerator } from "./test-helpers.js";
+
+/** Helper to create a test player */
+function createPlayer() {
+  return Player.fromUser(User.create());
+}
 
 describe("call the clock", () => {
   /** @type {import('../../../src/backend/poker/game.js').Game} */
@@ -19,8 +25,8 @@ describe("call the clock", () => {
 
   beforeEach(() => {
     game = Game.create();
-    player1 = Player.create();
-    player2 = Player.create();
+    player1 = createPlayer();
+    player2 = createPlayer();
 
     // Sit players
     Actions.sit(game, { seat: 0, player: player1 });

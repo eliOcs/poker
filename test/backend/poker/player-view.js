@@ -1,16 +1,22 @@
 import { describe, it } from "node:test";
 import * as assert from "assert";
 import * as Game from "../../../src/backend/poker/game.js";
+import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import playerView from "../../../src/backend/poker/player-view.js";
+
+/** Helper to create a test player */
+function createPlayer() {
+  return Player.fromUser(User.create());
+}
 
 describe("Player View", function () {
   describe("Seat", function () {
     it("add sit action to empty seats", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       const p2View = playerView(g, p2);
       assert.deepEqual(p2View.seats[0].actions, []);
@@ -21,7 +27,7 @@ describe("Player View", function () {
   describe("winnerMessage", function () {
     it("should include winnerMessage when set", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.winnerMessage = {
@@ -41,7 +47,7 @@ describe("Player View", function () {
 
     it("should be null when no winner message", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       const view = playerView(g, p1);
@@ -51,7 +57,7 @@ describe("Player View", function () {
 
     it("should include winnerMessage without handRank for fold wins", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.winnerMessage = {
@@ -71,8 +77,8 @@ describe("Player View", function () {
   describe("card visibility", function () {
     it("shows opponent cards when they have a handResult (post-showdown)", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
@@ -95,8 +101,8 @@ describe("Player View", function () {
 
     it("hides opponent cards when they have no handResult (folded)", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
@@ -119,8 +125,8 @@ describe("Player View", function () {
 
     it("shows all cards during showdown phase", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
@@ -139,7 +145,7 @@ describe("Player View", function () {
   describe("handRank calculation", function () {
     it("calculates handRank for 7 cards (2 hole + 5 board)", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
@@ -157,7 +163,7 @@ describe("Player View", function () {
 
     it("calculates flush correctly with 7 cards", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
@@ -174,7 +180,7 @@ describe("Player View", function () {
 
     it("calculates straight correctly with 7 cards", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
@@ -191,7 +197,7 @@ describe("Player View", function () {
 
     it("calculates full house correctly with 7 cards", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
@@ -208,7 +214,7 @@ describe("Player View", function () {
 
     it("does not calculate handRank for folded players", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
+      const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
       g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
@@ -227,8 +233,8 @@ describe("Player View", function () {
   describe("winningCards", function () {
     it("includes winningCards in view for winning seats", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
@@ -245,8 +251,8 @@ describe("Player View", function () {
 
     it("does not include winningCards for losing seats", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
@@ -268,9 +274,9 @@ describe("Player View", function () {
   describe("preflop betting actions", function () {
     it("should NOT show check for player who hasn't matched the big blind", function () {
       const g = Game.create({ seats: 3 });
-      const p1 = Player.create();
-      const p2 = Player.create();
-      const p3 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      const p3 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.sit(g, { seat: 2, player: p3 });
@@ -312,8 +318,8 @@ describe("Player View", function () {
 
     it("should show check for big blind when all players have called", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });
@@ -349,8 +355,8 @@ describe("Player View", function () {
   describe("callClock action", function () {
     it("should appear on waiting player's seat when opponent is acting too long", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });
@@ -378,8 +384,8 @@ describe("Player View", function () {
 
     it("should NOT appear on acting player's own seat", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });
@@ -410,8 +416,8 @@ describe("Player View", function () {
 
     it("should NOT appear before 60 ticks have passed", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });
@@ -442,8 +448,8 @@ describe("Player View", function () {
 
     it("should NOT appear if clock is already called", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });
@@ -474,8 +480,8 @@ describe("Player View", function () {
 
     it("should NOT appear when no one is acting", function () {
       const g = Game.create({ seats: 2 });
-      const p1 = Player.create();
-      const p2 = Player.create();
+      const p1 = createPlayer();
+      const p2 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
       Actions.buyIn(g, { seat: 0, amount: 50 });

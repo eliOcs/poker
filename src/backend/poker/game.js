@@ -1,4 +1,4 @@
-import * as Id from "./id.js";
+import * as Id from "../id.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Betting from "./betting.js";
@@ -65,7 +65,7 @@ import * as Tournament from "../../shared/tournament.js";
 
 /**
  * @typedef {object} Game
- * @property {import('./id.js').Id} id - Game unique identifier
+ * @property {import('../id.js').Id} id - Game unique identifier
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
  * @property {Blinds} blinds - Blind structure

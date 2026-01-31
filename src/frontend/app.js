@@ -23,6 +23,8 @@ class App extends LitElement {
     return {
       path: { type: String },
       toast: { type: Object },
+      // User state (fetched via HTTP)
+      user: { type: Object },
       // Game state (managed here, passed to phg-game)
       game: { type: Object },
       gameConnectionStatus: { type: String },
@@ -39,6 +41,8 @@ class App extends LitElement {
     super();
     this.path = window.location.pathname;
     this.toast = null;
+    // User state
+    this.user = null;
     // Game state
     this.game = null;
     this.gameConnectionStatus = "disconnected";
@@ -56,6 +60,7 @@ class App extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    this._fetchUser();
     window.addEventListener("popstate", () => {
       this.path = window.location.pathname;
     });
@@ -72,6 +77,35 @@ class App extends LitElement {
     this.addEventListener("game-action", (e) => {
       this.sendToGame(e.detail);
     });
+    this.addEventListener("update-user", (e) => {
+      this._updateUser(e.detail);
+    });
+  }
+
+  async _fetchUser() {
+    try {
+      const res = await fetch("/api/users/me");
+      if (res.ok) {
+        this.user = await res.json();
+      }
+    } catch {
+      // Ignore fetch errors - user will be created on next request
+    }
+  }
+
+  async _updateUser(updates) {
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (res.ok) {
+        this.user = await res.json();
+      }
+    } catch {
+      // Ignore update errors
+    }
   }
 
   // --- Game WebSocket Management ---
@@ -261,6 +295,7 @@ class App extends LitElement {
     return html`${this.renderToast()}<phg-game
         .gameId=${gameMatch[1]}
         .game=${this.game}
+        .user=${this.user}
         .connectionStatus=${this.gameConnectionStatus}
       ></phg-game>`;
   }

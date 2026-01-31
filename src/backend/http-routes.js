@@ -1,13 +1,13 @@
 import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
-import * as Player from "./poker/player.js";
+import * as User from "./user.js";
 import * as Stakes from "./poker/stakes.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as logger from "./logger.js";
-import * as PlayerStore from "./player-store.js";
+import * as Store from "./store.js";
 
 /**
- * @typedef {import('./poker/seat.js').Player} PlayerType
+ * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('http').IncomingMessage} Request
  * @typedef {import('http').ServerResponse} Response
@@ -56,34 +56,34 @@ export function parseCookies(rawCookies) {
 /**
  * @param {Request} req
  * @param {Response} res
- * @param {Record<string, PlayerType>} players
- * @returns {PlayerType}
+ * @param {Record<string, UserType>} users
+ * @returns {UserType}
  */
-export function getOrCreatePlayer(req, res, players) {
+export function getOrCreateUser(req, res, users) {
   const cookies = parseCookies(req.headers.cookie ?? "");
-  let player = players[cookies.phg];
+  let user = users[cookies.phg];
 
-  if (!player) {
+  if (!user) {
     // Check database for returning visitor
-    const loadedPlayer = PlayerStore.load(cookies.phg);
+    const loadedUser = Store.loadUser(cookies.phg);
 
-    if (loadedPlayer) {
-      // Returning player - add to memory cache
-      player = loadedPlayer;
-      players[player.id] = player;
+    if (loadedUser) {
+      // Returning user - add to memory cache
+      user = loadedUser;
+      users[user.id] = user;
     } else {
-      // New player - create and persist
-      player = Player.create();
-      players[player.id] = player;
-      PlayerStore.save(player);
+      // New user - create and persist
+      user = User.create();
+      users[user.id] = user;
+      Store.saveUser(user);
       res.setHeader(
         "Set-Cookie",
-        `phg=${player.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
+        `phg=${user.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
       );
     }
   }
 
-  return player;
+  return user;
 }
 
 /**
@@ -140,12 +140,32 @@ function respondWithJson(res, data) {
 }
 
 /**
+ * Syncs user changes to all game seats where the user is seated
+ * @param {UserType} user
+ * @param {Map<string, Game>} games
+ * @param {(gameId: string) => void} broadcast
+ */
+function syncUserToGames(user, games, broadcast) {
+  for (const [gameId, game] of games) {
+    let changed = false;
+    for (const seat of game.seats) {
+      if (!seat.empty && seat.player.id === user.id) {
+        seat.player.name = user.name;
+        changed = true;
+      }
+    }
+    if (changed) broadcast(gameId);
+  }
+}
+
+/**
  * @typedef {object} RouteContext
  * @property {Request} req
  * @property {Response} res
  * @property {RegExpMatchArray|null} match
- * @property {Record<string, PlayerType>} players
+ * @property {Record<string, UserType>} users
  * @property {Map<string, Game>} games
+ * @property {(gameId: string) => void} broadcast
  */
 
 /**
@@ -157,11 +177,12 @@ function respondWithJson(res, data) {
 
 /**
  * Creates the routes array
- * @param {Record<string, PlayerType>} players
+ * @param {Record<string, UserType>} users
  * @param {Map<string, Game>} games
+ * @param {(gameId: string) => void} broadcast
  * @returns {Route[]}
  */
-export function createRoutes(players, games) {
+export function createRoutes(users, games, broadcast) {
   return [
     {
       method: "GET",
@@ -175,15 +196,58 @@ export function createRoutes(players, games) {
       method: "GET",
       path: "/",
       handler: ({ req, res }) => {
-        getOrCreatePlayer(req, res, players);
+        getOrCreateUser(req, res, users);
         respondWithFile("src/frontend/index.html", res);
+      },
+    },
+    {
+      method: "GET",
+      path: "/api/users/me",
+      handler: ({ req, res }) => {
+        const user = getOrCreateUser(req, res, users);
+        respondWithJson(res, {
+          id: user.id,
+          name: user.name,
+          settings: user.settings,
+        });
+      },
+    },
+    {
+      method: "PUT",
+      path: "/api/users/me",
+      handler: async ({ req, res }) => {
+        const user = getOrCreateUser(req, res, users);
+        const data = await parseBody(req);
+
+        if (data && typeof data === "object") {
+          if ("name" in data) {
+            const name = /** @type {string|null} */ (data.name);
+            user.name = name?.trim().substring(0, 20) || null;
+          }
+          if (
+            "settings" in data &&
+            typeof data.settings === "object" &&
+            data.settings !== null
+          ) {
+            user.settings = { ...user.settings, ...data.settings };
+          }
+        }
+
+        Store.saveUser(user);
+        syncUserToGames(user, games, broadcast);
+
+        respondWithJson(res, {
+          id: user.id,
+          name: user.name,
+          settings: user.settings,
+        });
       },
     },
     {
       method: "POST",
       path: "/games",
       handler: async ({ req, res }) => {
-        getOrCreatePlayer(req, res, players);
+        getOrCreateUser(req, res, users);
 
         const data = await parseBody(req);
 
@@ -220,7 +284,7 @@ export function createRoutes(players, games) {
       method: "GET",
       path: /^\/games\/([a-z0-9]+)$/,
       handler: ({ req, res }) => {
-        getOrCreatePlayer(req, res, players);
+        getOrCreateUser(req, res, users);
         respondWithFile("src/frontend/index.html", res);
       },
     },
@@ -228,7 +292,7 @@ export function createRoutes(players, games) {
       method: "GET",
       path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
       handler: ({ req, res }) => {
-        getOrCreatePlayer(req, res, players);
+        getOrCreateUser(req, res, users);
         respondWithFile("src/frontend/index.html", res);
       },
     },
@@ -237,14 +301,14 @@ export function createRoutes(players, games) {
       path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match }) => {
         const gameId = /** @type {RegExpMatchArray} */ (match)[1];
-        const player = getOrCreatePlayer(req, res, players);
+        const user = getOrCreateUser(req, res, users);
 
         const hands = await HandHistory.getAllHands(gameId);
         const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, player.id),
+          HandHistory.getHandSummary(hand, user.id),
         );
         res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries, playerId: player.id }));
+        res.end(JSON.stringify({ hands: summaries, playerId: user.id }));
       },
     },
     {
@@ -254,7 +318,7 @@ export function createRoutes(players, games) {
         const m = /** @type {RegExpMatchArray} */ (match);
         const gameId = m[1];
         const handNumber = parseInt(m[2], 10);
-        const player = getOrCreatePlayer(req, res, players);
+        const user = getOrCreateUser(req, res, users);
 
         const hand = await HandHistory.getHand(gameId, handNumber);
         if (!hand) {
@@ -263,11 +327,11 @@ export function createRoutes(players, games) {
           return;
         }
 
-        const filteredHand = HandHistory.filterHandForPlayer(hand, player.id);
-        const view = HandHistory.getHandView(filteredHand, player.id);
+        const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
+        const view = HandHistory.getHandView(filteredHand, user.id);
         res.writeHead(200, { "content-type": "application/json" });
         res.end(
-          JSON.stringify({ hand: filteredHand, view, playerId: player.id }),
+          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
         );
       },
     },
@@ -295,7 +359,14 @@ export async function handleRequest(req, res, routes) {
       if (!match) continue;
     }
 
-    await route.handler({ req, res, match, players: {}, games: new Map() });
+    await route.handler({
+      req,
+      res,
+      match,
+      users: {},
+      games: new Map(),
+      broadcast: () => {},
+    });
     return;
   }
 

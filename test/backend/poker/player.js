@@ -3,28 +3,45 @@ import assert from "assert";
 import * as Player from "../../../src/backend/poker/player.js";
 
 describe("player", function () {
-  describe("create", function () {
-    it("creates a player with a unique id", function () {
-      const p1 = Player.create();
-      const p2 = Player.create();
+  describe("fromUser", function () {
+    it("creates a player from a user", function () {
+      const user = {
+        id: "user-123",
+        name: "Alice",
+        settings: { volume: 0.5 },
+      };
 
-      assert.ok(p1.id);
-      assert.ok(p2.id);
-      assert.notEqual(p1.id, p2.id);
+      const player = Player.fromUser(user);
+
+      assert.strictEqual(player.id, "user-123");
+      assert.strictEqual(player.name, "Alice");
     });
 
-    it("creates a player with name set to null", function () {
-      const p = Player.create();
+    it("excludes settings from player", function () {
+      const user = {
+        id: "user-456",
+        name: "Bob",
+        settings: { volume: 1 },
+      };
 
-      assert.strictEqual(p.name, null);
+      const player = Player.fromUser(user);
+
+      assert.strictEqual(Object.keys(player).length, 2);
+      assert.ok("id" in player);
+      assert.ok("name" in player);
+      assert.ok(!("settings" in player));
     });
 
-    it("player object has id and name properties", function () {
-      const p = Player.create();
+    it("handles null name", function () {
+      const user = {
+        id: "user-789",
+        name: null,
+        settings: { volume: 0.75 },
+      };
 
-      assert.ok("id" in p);
-      assert.ok("name" in p);
-      assert.strictEqual(Object.keys(p).length, 2);
+      const player = Player.fromUser(user);
+
+      assert.strictEqual(player.name, null);
     });
   });
 });

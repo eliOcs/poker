@@ -4,16 +4,22 @@ import { rm, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as HandHistory from "../../../../src/backend/poker/hand-history/index.js";
 import * as Game from "../../../../src/backend/poker/game.js";
+import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
 
 // Test data directory (unique to avoid conflicts with hand-history.js tests)
 const TEST_DATA_DIR = "test-data-view";
 
+/** Helper to create a test player */
+function createPlayer() {
+  return Player.fromUser(User.create());
+}
+
 // Helper to create a game with players
 function createGameWithPlayers() {
   const game = Game.create({ seats: 6 });
-  const players = [Player.create(), Player.create(), Player.create()];
+  const players = [createPlayer(), createPlayer(), createPlayer()];
 
   // Seat players
   game.seats[0] = Seat.occupied(players[0], 1000);

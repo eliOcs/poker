@@ -196,7 +196,7 @@ describe("phg-game", () => {
       expect(closedModal).to.not.exist;
     });
 
-    it("sends setName action when save button clicked", async () => {
+    it("sends update-user event when save button clicked", async () => {
       element.game = createMockGameState({
         seats: [
           { ...mockOccupiedSeat, isCurrentPlayer: true },
@@ -211,7 +211,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       let sentMessage = null;
-      element.addEventListener("game-action", (e) => {
+      element.addEventListener("update-user", (e) => {
         sentMessage = e.detail;
       });
 
@@ -224,7 +224,6 @@ describe("phg-game", () => {
       saveBtn.click();
 
       expect(sentMessage).to.exist;
-      expect(sentMessage.action).to.equal("setName");
       expect(sentMessage.name).to.equal("TestPlayer");
     });
 
@@ -243,21 +242,13 @@ describe("phg-game", () => {
       expect(modal).to.not.exist;
     });
 
-    it("pre-fills input with current player name", async () => {
-      element.game = createMockGameState({
-        seats: [
-          {
-            ...mockOccupiedSeat,
-            isCurrentPlayer: true,
-            player: { id: "test", name: "CurrentName" },
-          },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
-        ],
-      });
+    it("pre-fills input with current user name", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "test",
+        name: "CurrentName",
+        settings: { volume: 0.75 },
+      };
       element.showSettings = true;
       await element.updateComplete;
 

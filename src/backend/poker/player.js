@@ -1,13 +1,13 @@
-import * as Id from "./id.js";
-
 /**
  * @typedef {import('./seat.js').Player} Player
+ * @typedef {import('../user.js').User} User
  */
 
 /**
- * Creates a new player with a unique ID
+ * Creates a Player from a User (extracts only id and name for in-game use)
+ * @param {User} user
  * @returns {Player}
  */
-export function create() {
-  return { id: Id.generate(), name: null };
+export function fromUser(user) {
+  return { id: user.id, name: user.name };
 }

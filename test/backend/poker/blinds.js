@@ -1,18 +1,24 @@
 import { describe, it, before, beforeEach } from "node:test";
 import assert from "assert";
 import * as Game from "../../../src/backend/poker/game.js";
+import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import { sit, buyIn, blinds } from "../../../src/backend/poker/actions.js";
 import { drainGenerator } from "./test-helpers.js";
+
+/** Helper to create a test player */
+function createPlayer() {
+  return Player.fromUser(User.create());
+}
 
 describe("blinds", function () {
   let g;
   let b;
   before(function () {
     g = Game.create({ blinds: { small: 25, big: 50 } });
-    sit(g, { seat: 0, player: Player.create() });
+    sit(g, { seat: 0, player: createPlayer() });
     buyIn(g, { seat: 0, amount: 1000 });
-    sit(g, { seat: 1, player: Player.create() });
+    sit(g, { seat: 1, player: createPlayer() });
     buyIn(g, { seat: 1, amount: 1000 });
     b = blinds(g);
   });
@@ -38,10 +44,10 @@ describe("tournament blinds", function () {
   beforeEach(function () {
     game = Game.createTournament();
     // Set up 4 players at seats 0, 1, 2, 4 (need 3+ active to avoid heads-up)
-    sit(game, { seat: 0, player: Player.create() });
-    sit(game, { seat: 1, player: Player.create() });
-    sit(game, { seat: 2, player: Player.create() });
-    sit(game, { seat: 4, player: Player.create() });
+    sit(game, { seat: 0, player: createPlayer() });
+    sit(game, { seat: 1, player: createPlayer() });
+    sit(game, { seat: 2, player: createPlayer() });
+    sit(game, { seat: 4, player: createPlayer() });
     game.button = 0;
   });
 

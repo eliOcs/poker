@@ -191,6 +191,7 @@ class Game extends LitElement {
     return {
       gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
+      user: { type: Object },
       connectionStatus: { type: String },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
@@ -204,26 +205,35 @@ class Game extends LitElement {
     super();
     this.gameId = null;
     this.game = null;
+    this.user = null;
     this.connectionStatus = "disconnected";
     this.showSettings = false;
     this.showRanking = false;
-    this.volume = this._loadVolume();
+    this.volume = 0.75; // Default, will be overwritten by user settings
+    this._settingsInitialized = false;
     Audio.setVolume(this.volume);
   }
 
-  _loadVolume() {
-    const stored = localStorage.getItem("phg-volume");
-    return stored !== null ? parseFloat(stored) : 0.75;
-  }
-
-  _saveVolume(v) {
-    localStorage.setItem("phg-volume", v.toString());
+  _initializeVolumeFromSettings() {
+    if (this._settingsInitialized || !this.user?.settings) return;
+    this._settingsInitialized = true;
+    const userVolume = this.user.settings.volume;
+    if (userVolume !== undefined && userVolume !== this.volume) {
+      this.volume = userVolume;
+      Audio.setVolume(this.volume);
+    }
   }
 
   setVolume(v) {
     this.volume = v;
     Audio.setVolume(v);
-    this._saveVolume(v);
+    this.dispatchEvent(
+      new CustomEvent("update-user", {
+        detail: { settings: { volume: v } },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   send(message) {
@@ -278,13 +288,18 @@ class Game extends LitElement {
   saveSettings() {
     const input = this.shadowRoot.querySelector("#name-input");
     const name = input?.value?.trim() || "";
-    this.send({ action: "setName", name });
+    this.dispatchEvent(
+      new CustomEvent("update-user", {
+        detail: { name },
+        bubbles: true,
+        composed: true,
+      }),
+    );
     this.showSettings = false;
   }
 
   getCurrentPlayerName() {
-    const seat = this.game?.seats?.find((s) => s.isCurrentPlayer && !s.empty);
-    return seat?.player?.name || "";
+    return this.user?.name || "";
   }
 
   getMySeatInfo() {
@@ -319,12 +334,16 @@ class Game extends LitElement {
   }
 
   updated(changedProperties) {
-    if (!changedProperties.has("game") || !this.game) return;
-    const { seatIndex } = this.getMySeatInfo();
-    const prev = changedProperties.get("game")?.hand ?? {};
-    const curr = this.game.hand ?? {};
-    if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
-      this._checkTurnSounds(prev, curr);
+    if (changedProperties.has("user") && this.user) {
+      this._initializeVolumeFromSettings();
+    }
+    if (changedProperties.has("game") && this.game) {
+      const { seatIndex } = this.getMySeatInfo();
+      const prev = changedProperties.get("game")?.hand ?? {};
+      const curr = this.game.hand ?? {};
+      if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
+        this._checkTurnSounds(prev, curr);
+      }
     }
   }
 

@@ -2,26 +2,40 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { getFilePath, respondWithFile } from "./static-files.js";
 import playerView from "./poker/player-view.js";
+import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
 import * as logger from "./logger.js";
-import * as PlayerStore from "./player-store.js";
+import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
 
 /**
- * @typedef {import('./poker/seat.js').Player} PlayerType
+ * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  */
 
 const server = http.createServer();
 
-/** @type {Record<string, PlayerType>} */
-const players = {};
+/** @type {Record<string, UserType>} */
+const users = {};
 
 /** @type {Map<string, Game>} */
 const games = new Map();
 
-const routes = createRoutes(players, games);
+/** @param {string} gameId */
+function broadcastGameState(gameId) {
+  const game = games.get(gameId);
+  if (!game) return;
+
+  for (const [ws, conn] of clientConnections) {
+    if (conn.gameId === gameId && ws.readyState === 1) {
+      const player = Player.fromUser(conn.user);
+      ws.send(JSON.stringify(playerView(game, player), null, 2));
+    }
+  }
+}
+
+const routes = createRoutes(users, games, broadcastGameState);
 
 /**
  * @param {import('http').IncomingMessage} req
@@ -43,7 +57,14 @@ async function handleRequest(req, res) {
       if (!match) continue;
     }
 
-    await route.handler({ req, res, match, players, games });
+    await route.handler({
+      req,
+      res,
+      match,
+      users,
+      games,
+      broadcast: broadcastGameState,
+    });
     return;
   }
 
@@ -90,20 +111,20 @@ server.on("request", (req, res) => {
 
 server.on("upgrade", function upgrade(request, socket, head) {
   const cookies = parseCookies(request.headers.cookie ?? "");
-  const player = players[cookies.phg];
+  const user = users[cookies.phg];
 
   const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
   const gameId = gameMatch?.[1];
   const game = gameId ? games.get(gameId) : undefined;
 
-  if (player && game && gameId) {
+  if (user && game && gameId) {
     wss.handleUpgrade(request, socket, head, (ws) =>
-      wss.emit("connection", ws, request, player, game, gameId),
+      wss.emit("connection", ws, request, user, game, gameId),
     );
   } else {
     logger.warn("ws upgrade rejected", {
       url: request.url,
-      hasPlayer: !!player,
+      hasUser: !!user,
       hasGame: !!game,
     });
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -112,26 +133,17 @@ server.on("upgrade", function upgrade(request, socket, head) {
 
 const wss = new WebSocketServer({ noServer: true });
 
-/** @type {Map<import('ws').WebSocket, { player: PlayerType, gameId: string }>} */
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
 const clientConnections = new Map();
-
-/** @param {string} gameId */
-function broadcastGameState(gameId) {
-  const game = games.get(gameId);
-  if (!game) return;
-
-  for (const [ws, conn] of clientConnections) {
-    if (conn.gameId === gameId && ws.readyState === 1) {
-      ws.send(JSON.stringify(playerView(game, conn.player), null, 2));
-    }
-  }
-}
 
 wss.on(
   "connection",
-  async function connection(ws, request, player, game, gameId) {
-    clientConnections.set(ws, { player, gameId });
-    logger.info("ws connected", { gameId, playerId: player.id });
+  async function connection(ws, request, user, game, gameId) {
+    clientConnections.set(ws, { user, gameId });
+    logger.info("ws connected", { gameId, playerId: user.id });
+
+    // Create player from user for game operations
+    const player = Player.fromUser(user);
 
     // Mark player as connected if they have a seat
     const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
@@ -158,10 +170,11 @@ wss.on(
 
       logger.info("ws disconnected", {
         gameId: conn.gameId,
-        playerId: conn.player.id,
+        playerId: conn.user.id,
       });
 
-      const { player: closedPlayer, gameId: closedGameId } = conn;
+      const closedPlayer = Player.fromUser(conn.user);
+      const closedGameId = conn.gameId;
       const closedGame = games.get(closedGameId);
       if (!closedGame) return;
 
@@ -186,25 +199,19 @@ wss.on(
 
       logger.info("ws message", {
         gameId,
-        playerId: player.id,
+        playerId: user.id,
         action,
         ...args,
       });
 
-      if (action === "setName") {
-        player.name = args.name?.trim().substring(0, 20) || null;
-        PlayerStore.save(player);
-        broadcastGameState(gameId);
-        return;
-      }
-
       try {
+        const player = Player.fromUser(user);
         processPokerAction(game, player, action, args, broadcastGameState);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         logger.error("action error", {
           gameId,
-          playerId: player.id,
+          playerId: user.id,
           action,
           error: message,
         });
@@ -220,7 +227,7 @@ wss.on(
   },
 );
 
-PlayerStore.initialize();
+Store.initialize();
 
 /** @param {string} signal */
 function gracefulShutdown(signal) {
@@ -241,7 +248,7 @@ function gracefulShutdown(signal) {
   }
   games.clear();
 
-  PlayerStore.close();
+  Store.close();
   logger.info("shutdown complete");
   process.exit(0);
 }

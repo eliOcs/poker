@@ -1,7 +1,7 @@
 /**
  * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./deck.js').Card} Card
- * @typedef {import('./id.js').Id} Id
+ * @typedef {import('../id.js').Id} Id
  */
 
 /**
