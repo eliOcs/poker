@@ -6,6 +6,7 @@ import {
   actionPanelStyles,
 } from "./styles.js";
 import "./button.js";
+import "./currency-slider.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
@@ -94,18 +95,6 @@ class ActionPanel extends LitElement {
     );
   }
 
-  adjustBet(delta, min, max) {
-    const newValue = Math.max(min, Math.min(max, this.betAmount + delta));
-    this.betAmount = newValue;
-  }
-
-  handleManualInput(e, min, max) {
-    // Input is in dollars, convert to cents
-    const dollars = parseFloat(e.target.value) || 0;
-    const cents = Math.round(dollars * 100);
-    this.betAmount = Math.max(min, Math.min(max, cents));
-  }
-
   _renderWaitingForPlayers() {
     return html`
       <div class="waiting-panel">
@@ -128,55 +117,29 @@ class ActionPanel extends LitElement {
   }
 
   _renderBuyIn(action) {
-    const min = action.min || 20;
-    const max = action.max || 100;
+    const minBB = action.min || 20;
+    const maxBB = action.max || 100;
     const bigBlind = action.bigBlind || this.bigBlind;
-    const defaultBuyIn = Math.min(80, max);
-    const bbCount =
-      this.betAmount >= min && this.betAmount <= max
+    const minStack = minBB * bigBlind;
+    const maxStack = maxBB * bigBlind;
+    const defaultStack = Math.min(80, maxBB) * bigBlind;
+
+    // betAmount stores stack in cents for buy-in
+    const stack =
+      this.betAmount >= minStack && this.betAmount <= maxStack
         ? this.betAmount
-        : defaultBuyIn;
-    const stack = bbCount * bigBlind;
-    const minStack = min * bigBlind;
-    const maxStack = max * bigBlind;
+        : defaultStack;
+    const bbCount = Math.round(stack / bigBlind);
 
     return html`
       <div class="betting-panel">
-        <div class="slider-row">
-          <input
-            type="number"
-            min="${minStack}"
-            max="${maxStack}"
-            step="${bigBlind}"
-            .value="${stack}"
-            @input=${(e) => {
-              const stackValue = parseInt(e.target.value) || minStack;
-              this.betAmount = Math.max(
-                min,
-                Math.min(max, Math.round(stackValue / bigBlind)),
-              );
-            }}
-          />
-          <phg-button
-            variant="muted"
-            size="compact"
-            @click=${() => this.adjustBet(-10, min, max)}
-            >-</phg-button
-          >
-          <input
-            type="range"
-            min="${min}"
-            max="${max}"
-            .value="${bbCount}"
-            @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-          />
-          <phg-button
-            variant="muted"
-            size="compact"
-            @click=${() => this.adjustBet(10, min, max)}
-            >+</phg-button
-          >
-        </div>
+        <phg-currency-slider
+          .value=${stack}
+          .min=${minStack}
+          .max=${maxStack}
+          .step=${bigBlind * 10}
+          @value-changed=${(e) => (this.betAmount = e.detail.value)}
+        ></phg-currency-slider>
         <div class="action-row">
           <phg-button
             variant="secondary"
@@ -247,43 +210,19 @@ class ActionPanel extends LitElement {
     const isBet = actionMap.bet != null;
     const min = betAction.min;
     const max = betAction.max;
-    const step = this.bigBlind;
     if (this.betAmount < min) this.betAmount = min;
     const currentValue = Math.max(min, Math.min(max, this.betAmount));
     const isAllIn = currentValue >= max;
 
     return html`
       <div class="betting-panel">
-        <div class="slider-row">
-          <input
-            type="number"
-            min="${min / 100}"
-            max="${max / 100}"
-            step="0.01"
-            .value="${(currentValue / 100).toFixed(2)}"
-            @input=${(e) => this.handleManualInput(e, min, max)}
-          />
-          <phg-button
-            variant="muted"
-            size="compact"
-            @click=${() => this.adjustBet(-step, min, max)}
-            >-</phg-button
-          >
-          <input
-            type="range"
-            min="${min}"
-            max="${max}"
-            step="1"
-            .value="${currentValue}"
-            @input=${(e) => (this.betAmount = parseInt(e.target.value))}
-          />
-          <phg-button
-            variant="muted"
-            size="compact"
-            @click=${() => this.adjustBet(step, min, max)}
-            >+</phg-button
-          >
-        </div>
+        <phg-currency-slider
+          .value=${currentValue}
+          .min=${min}
+          .max=${max}
+          .step=${this.bigBlind}
+          @value-changed=${(e) => (this.betAmount = e.detail.value)}
+        ></phg-currency-slider>
         <div class="action-row">
           ${this._renderBettingButtons(actionMap, isBet, currentValue, isAllIn)}
         </div>

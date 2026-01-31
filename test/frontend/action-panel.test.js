@@ -22,6 +22,16 @@ function findButtonByText(root, text) {
   return null;
 }
 
+// Helper to get currency slider's internal range input
+async function getCurrencySliderRange(actionPanel) {
+  const currencySlider = actionPanel.shadowRoot.querySelector(
+    "phg-currency-slider",
+  );
+  if (!currencySlider) return null;
+  await currencySlider.updateComplete;
+  return currencySlider.shadowRoot.querySelector('input[type="range"]');
+}
+
 describe("phg-action-panel", () => {
   let element;
 
@@ -61,12 +71,11 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const slider = actionPanel.shadowRoot.querySelector(
-        'input[type="range"]',
-      );
+      const slider = await getCurrencySliderRange(actionPanel);
       expect(slider).to.exist;
-      expect(slider.min).to.equal("20");
-      expect(slider.max).to.equal("100");
+      // min=20 BB * 5000 cents = 100000, max=100 BB * 5000 cents = 500000
+      expect(slider.min).to.equal("100000");
+      expect(slider.max).to.equal("500000");
 
       const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
       expect(buyInButton).to.exist;
@@ -93,15 +102,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const slider = actionPanel.shadowRoot.querySelector(
-        'input[type="range"]',
+      const currencySlider = actionPanel.shadowRoot.querySelector(
+        "phg-currency-slider",
       );
-      slider.value = "50";
-      slider.dispatchEvent(new Event("input"));
+      // 50 BB * 5000 cents = 250000 cents = $2,500
+      currencySlider.dispatchEvent(
+        new CustomEvent("value-changed", { detail: { value: 250000 } }),
+      );
       await actionPanel.updateComplete;
 
       const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
-      // 50 BB * $50 = $2,500
       expect(buyInButton.textContent).to.include("$2,500");
     });
 
@@ -114,15 +124,14 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const slider = actionPanel.shadowRoot.querySelector(
-        'input[type="range"]',
-      );
+      const slider = await getCurrencySliderRange(actionPanel);
       expect(slider).to.exist;
-      expect(slider.min).to.equal("20"); // fallback
-      expect(slider.max).to.equal("100"); // fallback
+      // fallback: min=20 BB * 5000 cents = 100000, max=100 BB * 5000 cents = 500000
+      expect(slider.min).to.equal("100000");
+      expect(slider.max).to.equal("500000");
 
       const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
-      // fallback: default=80 BB, bigBlind=50, so $4,000
+      // fallback: default=80 BB * $50 = $4,000
       expect(buyInButton.textContent).to.include("$4,000");
     });
 
@@ -175,9 +184,7 @@ describe("phg-action-panel", () => {
       expect(betButton.textContent).to.include("Bet");
       expect(betButton.textContent).to.include("$"); // Now shows amount
 
-      const slider = actionPanel.shadowRoot.querySelector(
-        'input[type="range"]',
-      );
+      const slider = await getCurrencySliderRange(actionPanel);
       expect(slider).to.exist;
     });
 
@@ -359,14 +366,16 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const slider = actionPanel.shadowRoot.querySelector(
-        'input[type="range"]',
+      const currencySlider = actionPanel.shadowRoot.querySelector(
+        "phg-currency-slider",
       );
-      slider.value = "75";
-      slider.dispatchEvent(new Event("input"));
+      // 75 BB * 5000 cents = 375000 cents = $3,750
+      currencySlider.dispatchEvent(
+        new CustomEvent("value-changed", { detail: { value: 375000 } }),
+      );
       await actionPanel.updateComplete;
 
-      expect(actionPanel.betAmount).to.equal(75);
+      expect(actionPanel.betAmount).to.equal(375000);
     });
   });
 
@@ -520,11 +529,11 @@ describe("phg-action-panel", () => {
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      // Set buy-in amount (BB count, not cents)
-      actionPanel.betAmount = 60;
+      // Set buy-in amount (now in cents: 60 BB * 5000 = 300000)
+      actionPanel.betAmount = 300000;
       await actionPanel.updateComplete;
 
-      expect(actionPanel.betAmount).to.equal(60);
+      expect(actionPanel.betAmount).to.equal(300000);
 
       // Switch to betting context (raise min=10000, max=100000 cents)
       element.game = createMockGameWithPlayers();
@@ -540,8 +549,8 @@ describe("phg-action-panel", () => {
       await element.updateComplete;
 
       const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      // Manually set betAmount above max (100 BB)
-      actionPanel.betAmount = 500;
+      // Manually set betAmount above max (100 BB * 5000 = 500000, so 600000 exceeds)
+      actionPanel.betAmount = 600000;
       await actionPanel.updateComplete;
 
       // The buy-in button should show default (80 BB * $50 = $4,000)
