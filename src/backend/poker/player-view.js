@@ -218,6 +218,26 @@ function hiddenCard() {
 }
 
 /**
+ * Determines which cards to send to the client for a seat
+ * @param {import('./seat.js').OccupiedSeat} seat - The occupied seat
+ * @param {boolean} showCards - Whether cards should be revealed
+ * @param {boolean} isOwnSeat - Whether this is the viewing player's seat
+ * @returns {Card[]|HiddenCard[]}
+ */
+function getCardsForView(seat, showCards, isOwnSeat) {
+  // Show actual cards if visible (own cards, showdown, revealed)
+  if (showCards) {
+    return seat.cards;
+  }
+  // Don't render cards for folded opponents
+  if (seat.folded && !isOwnSeat) {
+    return [];
+  }
+  // Show face-down cards for active opponents
+  return seat.cards?.map(() => hiddenCard()) || [];
+}
+
+/**
  * @param {Card[]} holeCards
  * @param {Card[]} boardCards
  * @returns {string|null}
@@ -529,6 +549,7 @@ export default function playerView(game, player) {
       }
 
       const showCards = shouldShowCards(seat, index, playerSeatIndex, game);
+      const isOwnSeat = index === playerSeatIndex;
 
       // Calculate hand rank only for visible cards of non-folded players
       const handRank =
@@ -545,9 +566,7 @@ export default function playerView(game, player) {
         allIn: seat.allIn,
         sittingOut: seat.sittingOut,
         disconnected: seat.disconnected,
-        cards: showCards
-          ? seat.cards
-          : seat.cards?.map(() => hiddenCard()) || [],
+        cards: getCardsForView(seat, showCards, isOwnSeat),
         actions: getAvailableActions(game, index, playerSeatIndex),
         isCurrentPlayer: index === playerSeatIndex,
         isActing: index === game.hand?.actingSeat,
