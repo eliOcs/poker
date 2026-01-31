@@ -51,6 +51,7 @@ export function buildNodeModulesMap() {
       "node_modules/@lit/reactive-element",
       "/node_modules/@lit/reactive-element",
     ),
+    ...collectJsFiles("node_modules/@lit/task", "/node_modules/@lit/task"),
   };
 }
 
