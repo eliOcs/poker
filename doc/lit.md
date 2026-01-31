@@ -592,6 +592,112 @@ customElements.define("counter-a", CounterA);
 
 Multiple components using the same signal stay synchronized automatically.
 
+### Task for Async Data Fetching
+
+The `@lit/task` package provides a reactive controller for managing async operations like HTTP requests:
+
+```bash
+npm install @lit/task
+```
+
+Task handles the complexity of fetching data, tracking status, and managing race conditions:
+
+```javascript
+import { LitElement, html } from "lit";
+import { Task } from "@lit/task";
+
+export class UserProfile extends LitElement {
+  static properties = {
+    userId: { type: String },
+  };
+
+  constructor() {
+    super();
+    this.userId = null;
+  }
+
+  _userTask = new Task(this, {
+    task: async ([userId], { signal }) => {
+      if (!userId) return null;
+      const res = await fetch(`/api/users/${userId}`, { signal });
+      if (!res.ok) throw new Error("User not found");
+      return res.json();
+    },
+    args: () => [this.userId],
+  });
+
+  render() {
+    return this._userTask.render({
+      initial: () => html`<p>Enter a user ID</p>`,
+      pending: () => html`<p>Loading...</p>`,
+      complete: (user) => html`<p>Hello, ${user.name}!</p>`,
+      error: (err) => html`<p>Error: ${err.message}</p>`,
+    });
+  }
+}
+
+customElements.define("user-profile", UserProfile);
+```
+
+**Task Status States:**
+
+| Status     | Description                 |
+| ---------- | --------------------------- |
+| `INITIAL`  | Task hasn't run yet         |
+| `PENDING`  | Task is executing           |
+| `COMPLETE` | Task succeeded with a value |
+| `ERROR`    | Task failed with an error   |
+
+**Key features:**
+
+- **Auto-run on arg change** — Task re-executes when `args()` return values change
+- **Race condition handling** — AbortController cancels stale requests automatically
+- **Status-based rendering** — `task.render()` provides declarative UI for each state
+- **Manual control** — Set `autoRun: false` and call `task.run()` explicitly
+
+**Manual execution mode:**
+
+```javascript
+_submitTask = new Task(this, {
+  task: async ([data]) => {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return res.json();
+  },
+  args: () => [this.formData],
+  autoRun: false,
+});
+
+_handleSubmit() {
+  this._submitTask.run();
+}
+```
+
+**Task properties:**
+
+| Property   | Description                     |
+| ---------- | ------------------------------- |
+| `status`   | Current TaskStatus enum value   |
+| `value`    | Result when complete            |
+| `error`    | Error when failed               |
+| `render()` | Status-based template rendering |
+
+**Chaining tasks** (second task depends on first):
+
+```javascript
+_listTask = new Task(this, {
+  task: ([id]) => fetchList(id),
+  args: () => [this.listId],
+});
+
+_detailTask = new Task(this, {
+  task: ([item]) => fetchDetail(item.id),
+  args: () => [this._listTask.value?.[0]], // Depends on list result
+});
+```
+
 ---
 
 ## Composition and Component Communication
@@ -716,25 +822,6 @@ router.setRoutes([
   },
 ]);
 ```
-
-### Server-Side Rendering
-
-`@lit-labs/ssr` enables SSR with hydration:
-
-```javascript
-// Server
-import { render } from "@lit-labs/ssr";
-import { html } from "lit";
-
-const ssrResult = render(html`<my-app></my-app>`);
-const htmlString = await collectResult(ssrResult);
-
-// Client (load hydration support first)
-import "@lit-labs/ssr-client/lit-element-hydrate-support.js";
-import "./my-app.js";
-```
-
-Only `constructor()`, `willUpdate()`, and `render()` execute on the server—use `connectedCallback()` for client-only code.
 
 ### Application Architecture
 

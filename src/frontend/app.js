@@ -1,4 +1,5 @@
 import { html, css, LitElement } from "lit";
+import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
 import "./home.js";
 import "./index.js";
@@ -28,12 +29,9 @@ class App extends LitElement {
       // Game state (managed here, passed to phg-game)
       game: { type: Object },
       gameConnectionStatus: { type: String },
-      // History state
-      historyHand: { type: Object },
-      historyView: { type: Object },
-      historyHandList: { type: Array },
-      historyLoading: { type: Boolean },
-      historyPlayerId: { type: String },
+      // History route params (triggers tasks)
+      _historyGameId: { state: true },
+      _historyHandNumber: { state: true },
     };
   }
 
@@ -48,16 +46,48 @@ class App extends LitElement {
     this.gameConnectionStatus = "disconnected";
     this._activeGameId = null;
     this._socket = null;
-    // History state
-    this.historyHand = null;
-    this.historyView = null;
-    this.historyHandList = null;
-    this.historyLoading = false;
-    this.historyPlayerId = null;
+    // History route params
     this._historyGameId = null;
     this._historyHandNumber = null;
-    this._fetchingHistory = false;
   }
+
+  // --- History Tasks ---
+
+  // Getters for backward compatibility with tests
+  get historyHandList() {
+    // Return null if task hasn't completed, otherwise return hands array (or empty array)
+    if (this._historyListTask.status !== TaskStatus.COMPLETE) return null;
+    return this._historyListTask.value?.hands ?? [];
+  }
+
+  get historyLoading() {
+    return (
+      this._historyListTask.status === TaskStatus.PENDING ||
+      this._historyHandTask.status === TaskStatus.PENDING
+    );
+  }
+
+  _historyListTask = new Task(this, {
+    task: async ([gameId], { signal }) => {
+      if (!gameId) return null;
+      const res = await fetch(`/api/history/${gameId}`, { signal });
+      if (!res.ok) throw new Error("Failed to load hand history");
+      return res.json();
+    },
+    args: () => [this._historyGameId],
+  });
+
+  _historyHandTask = new Task(this, {
+    task: async ([gameId, handNumber], { signal }) => {
+      if (!gameId || !handNumber) return null;
+      const res = await fetch(`/api/history/${gameId}/${handNumber}`, {
+        signal,
+      });
+      if (!res.ok) throw new Error("Hand not found");
+      return res.json();
+    },
+    args: () => [this._historyGameId, this._historyHandNumber],
+  });
 
   connectedCallback() {
     super.connectedCallback();
@@ -196,83 +226,6 @@ class App extends LitElement {
     `;
   }
 
-  // Route: /history/gameId - fetch list and redirect to latest hand
-  async _enterHistoryList(gameId) {
-    if (this._fetchingHistory) return;
-    this._fetchingHistory = true;
-
-    this._historyGameId = gameId;
-    this.historyLoading = true;
-    this.historyHand = null;
-    this.historyView = null;
-    this.historyHandList = null;
-
-    try {
-      const res = await fetch(`/api/history/${gameId}`);
-      if (!res.ok) throw new Error("Failed to load hand history");
-
-      const data = await res.json();
-      this.historyHandList = data.hands || [];
-      this.historyPlayerId = data.playerId;
-
-      // Redirect to latest hand if available
-      if (this.historyHandList.length > 0) {
-        const latest =
-          this.historyHandList[this.historyHandList.length - 1].hand_number;
-        // Only redirect if still on the list route (not already navigated elsewhere)
-        if (this.path === `/history/${gameId}`) {
-          history.replaceState({}, "", `/history/${gameId}/${latest}`);
-          this.path = `/history/${gameId}/${latest}`;
-          await this._enterHistoryHand(gameId, latest);
-        } else {
-          // Path changed during fetch, just finish loading
-          this.historyLoading = false;
-        }
-      } else {
-        this.historyLoading = false;
-      }
-    } catch (err) {
-      this.toast = { message: err.message, variant: "error" };
-      history.replaceState({}, "", `/games/${gameId}`);
-      this.path = `/games/${gameId}`;
-    } finally {
-      this._fetchingHistory = false;
-    }
-  }
-
-  // Route: /history/gameId/handNumber - fetch specific hand
-  async _enterHistoryHand(gameId, handNumber) {
-    if (handNumber === this._historyHandNumber) return;
-
-    this._historyGameId = gameId;
-    this._historyHandNumber = handNumber;
-
-    try {
-      // Fetch list if not loaded (direct navigation to hand URL)
-      // Skip if _enterHistoryList is already fetching
-      if (this.historyHandList === null && !this._fetchingHistory) {
-        const listRes = await fetch(`/api/history/${gameId}`);
-        if (listRes.ok) {
-          const listData = await listRes.json();
-          this.historyHandList = listData.hands || [];
-          this.historyPlayerId = listData.playerId;
-        }
-      }
-
-      const res = await fetch(`/api/history/${gameId}/${handNumber}`);
-      if (!res.ok) throw new Error("Hand not found");
-
-      const data = await res.json();
-      this.historyHand = data.hand;
-      this.historyView = data.view;
-      this.historyLoading = false;
-    } catch (err) {
-      this.toast = { message: err.message, variant: "error" };
-      history.replaceState({}, "", `/games/${gameId}`);
-      this.path = `/games/${gameId}`;
-    }
-  }
-
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
     history.pushState({}, "", `/history/${this._historyGameId}/${handNumber}`);
@@ -297,25 +250,26 @@ class App extends LitElement {
   }
 
   _renderHistoryView(historyMatch) {
+    const listData = this._historyListTask.value;
+    const handData = this._historyHandTask.value;
+    const isLoading =
+      this._historyListTask.status === TaskStatus.PENDING ||
+      this._historyHandTask.status === TaskStatus.PENDING;
+
     return html`${this.renderToast()}<phg-history
         .gameId=${historyMatch[1]}
         .handNumber=${this._historyHandNumber}
-        .hand=${this.historyHand}
-        .view=${this.historyView}
-        .handList=${this.historyHandList}
-        .loading=${this.historyLoading}
-        .playerId=${this.historyPlayerId}
+        .hand=${handData?.hand}
+        .view=${handData?.view}
+        .handList=${listData?.hands}
+        .loading=${isLoading}
+        .playerId=${listData?.playerId}
       ></phg-history>`;
   }
 
   _clearHistoryState() {
     this._historyGameId = null;
     this._historyHandNumber = null;
-    this.historyHandList = null;
-    this.historyHand = null;
-    this.historyView = null;
-    this.historyLoading = false;
-    this._fetchingHistory = false;
   }
 
   willUpdate(changedProperties) {
@@ -329,12 +283,62 @@ class App extends LitElement {
           ? parseInt(historyMatch[2], 10)
           : null;
 
-        if (handNumber === null) {
-          this._enterHistoryList(gameId);
-        } else {
-          this._enterHistoryHand(gameId, handNumber);
+        // Set gameId - this triggers list task if changed
+        if (gameId !== this._historyGameId) {
+          this._historyGameId = gameId;
+          this._historyHandNumber = null; // Reset hand when game changes
         }
+
+        // Set handNumber - this triggers hand task if changed
+        if (handNumber !== null && handNumber !== this._historyHandNumber) {
+          this._historyHandNumber = handNumber;
+        }
+      } else {
+        // Clear history state when navigating away from history
+        this._clearHistoryState();
       }
+    }
+  }
+
+  updated() {
+    // Handle redirect to latest hand when list loads
+    if (this._historyListTask.status === TaskStatus.COMPLETE) {
+      const listData = this._historyListTask.value;
+      const hands = listData?.hands || [];
+
+      // Redirect if on list route (no hand number) and hands exist
+      if (
+        this._historyHandNumber === null &&
+        hands.length > 0 &&
+        this.path === `/history/${this._historyGameId}`
+      ) {
+        const latest = hands[hands.length - 1].hand_number;
+        history.replaceState(
+          {},
+          "",
+          `/history/${this._historyGameId}/${latest}`,
+        );
+        this.path = `/history/${this._historyGameId}/${latest}`;
+      }
+    }
+
+    // Handle task errors
+    if (this._historyListTask.status === TaskStatus.ERROR) {
+      this.toast = {
+        message: this._historyListTask.error.message,
+        variant: "error",
+      };
+      history.replaceState({}, "", `/games/${this._historyGameId}`);
+      this.path = `/games/${this._historyGameId}`;
+    }
+
+    if (this._historyHandTask.status === TaskStatus.ERROR) {
+      this.toast = {
+        message: this._historyHandTask.error.message,
+        variant: "error",
+      };
+      history.replaceState({}, "", `/games/${this._historyGameId}`);
+      this.path = `/games/${this._historyGameId}`;
     }
   }
 
@@ -347,12 +351,8 @@ class App extends LitElement {
 
     this._manageConnection(gameId);
 
-    if (gameMatch) {
-      this._clearHistoryState();
-      return this._renderGameView(gameMatch);
-    }
+    if (gameMatch) return this._renderGameView(gameMatch);
     if (historyMatch) return this._renderHistoryView(historyMatch);
-    this._clearHistoryState();
     return html`${this.renderToast()}<phg-home></phg-home>`;
   }
 }

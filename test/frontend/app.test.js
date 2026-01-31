@@ -73,10 +73,11 @@ describe("phg-app", () => {
       // Enter history with no hands
       element.path = "/history/testgame123";
       await element.updateComplete;
-      await waitUntil(
-        () => fetchedUrls.some((u) => u === "/api/history/testgame123"),
-        { timeout: 2000 },
-      );
+
+      // Wait for list task to complete
+      await waitUntil(() => element.historyHandList !== null, {
+        timeout: 2000,
+      });
 
       // Should have fetched list (empty)
       expect(element.historyHandList).to.deep.equal([]);
@@ -143,36 +144,69 @@ describe("phg-app", () => {
     });
 
     it("refetches when re-entering history that was previously empty", async () => {
+      // Start with empty hands, then add hands for second visit
+      let handsToReturn = [];
       const fetchedUrls = [];
-      globalThis.fetch = createMockFetch({
-        onFetch: (url) => fetchedUrls.push(url),
-      });
+
+      globalThis.fetch = async (url) => {
+        fetchedUrls.push(url);
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => ({ id: "user1", name: "Test" }),
+          };
+        }
+        if (url.match(/\/api\/history\/[^/]+$/)) {
+          return {
+            ok: true,
+            json: async () => ({ hands: handsToReturn, playerId: "player1" }),
+          };
+        }
+        if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
+          return {
+            ok: true,
+            json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
+          };
+        }
+        return { ok: false };
+      };
 
       const element = await fixture(html`<phg-app></phg-app>`);
       await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-      // Simulate first visit with empty history
-      element._historyGameId = "testgame123";
-      element._historyHandNumber = null;
-      element.historyHandList = [];
-      element.historyLoading = false;
+      // First visit - empty history
+      element.path = "/history/testgame123";
+      await element.updateComplete;
+
+      // Wait for list task to complete
+      await waitUntil(() => element.historyHandList !== null, {
+        timeout: 2000,
+      });
+
+      // Should have empty list
+      expect(element.historyHandList).to.deep.equal([]);
 
       // Navigate away
       element.path = "/games/testgame123";
       await element.updateComplete;
 
-      const fetchCountBefore = fetchedUrls.length;
+      // Simulate hands being played
+      handsToReturn = createMockHandList();
 
       // Navigate back to history (should refetch)
       element.path = "/history/testgame123";
       await element.updateComplete;
 
-      // Wait for refetch
-      await waitUntil(() => fetchedUrls.length > fetchCountBefore, {
-        timeout: 2000,
-      });
+      // Wait for refetch and list to be populated
+      await waitUntil(
+        () =>
+          element.historyHandList !== null &&
+          element.historyHandList.length > 0,
+        { timeout: 2000 },
+      );
 
-      expect(fetchedUrls.length).to.be.greaterThan(fetchCountBefore);
+      // Should now have hands
+      expect(element.historyHandList.length).to.be.greaterThan(0);
     });
 
     it("does not refetch list when navigating between hands", async () => {
