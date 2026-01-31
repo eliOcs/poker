@@ -9,10 +9,15 @@ import "../../src/frontend/app.js";
 
 /**
  * Creates a mock fetch function that returns predefined responses
+ * @param {object} options
+ * @param {Array} options.hands - Hand list to return from /api/history/:gameId
+ * @param {Function} options.onFetch - Callback invoked with URL on each fetch
+ * @param {boolean} options.debug - Log each fetch request to console
  */
 function createMockFetch(options = {}) {
-  const { hands = createMockHandList(), onFetch } = options;
+  const { hands = createMockHandList(), onFetch, debug = false } = options;
   return async (url) => {
+    if (debug) console.log("[createMockFetch]", url);
     onFetch?.(url);
     if (url.match(/\/api\/users\/me$/)) {
       return { ok: true, json: async () => ({ id: "user1", name: "Test" }) };
