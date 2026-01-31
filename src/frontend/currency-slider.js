@@ -1,5 +1,5 @@
-import { html, LitElement } from "lit";
-import { designTokens, baseStyles, actionPanelStyles } from "./styles.js";
+import { html, css, LitElement } from "lit";
+import { designTokens, baseStyles } from "./styles.js";
 import "./button.js";
 
 /**
@@ -10,7 +10,55 @@ import "./button.js";
  */
 class CurrencySlider extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, actionPanelStyles];
+    return [
+      designTokens,
+      baseStyles,
+      css`
+        :host {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-md);
+        }
+
+        input[type="number"] {
+          width: 80px;
+          padding: var(--space-sm);
+          font-family: inherit;
+          font-size: var(--font-sm);
+          text-align: center;
+          border: 2px solid var(--color-bg-dark);
+          background: var(--color-bg-disabled);
+          color: var(--color-fg-white);
+          line-height: 2;
+          appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          appearance: none;
+          margin: 0;
+        }
+
+        input[type="range"] {
+          flex: 1;
+          height: var(--space-md);
+          appearance: none;
+          background: var(--color-bg-disabled);
+          border: 2px solid var(--color-bg-dark);
+          min-width: 80px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+          appearance: none;
+          width: var(--space-lg);
+          height: var(--space-lg);
+          background: var(--color-primary);
+          border: 2px solid var(--color-bg-dark);
+          cursor: pointer;
+        }
+      `,
+    ];
   }
 
   static get properties() {
@@ -74,36 +122,28 @@ class CurrencySlider extends LitElement {
     const maxDollars = this.max / 100;
 
     return html`
-      <div class="slider-row">
-        <input
-          type="number"
-          min="${minDollars}"
-          max="${maxDollars}"
-          step="0.01"
-          .value="${displayValue}"
-          @input=${this._handleNumberInput}
-        />
-        <phg-button
-          variant="muted"
-          size="compact"
-          @click=${this._handleDecrement}
-          >-</phg-button
-        >
-        <input
-          type="range"
-          min="${this.min}"
-          max="${this.max}"
-          step="1"
-          .value="${this.value}"
-          @input=${this._handleRangeInput}
-        />
-        <phg-button
-          variant="muted"
-          size="compact"
-          @click=${this._handleIncrement}
-          >+</phg-button
-        >
-      </div>
+      <input
+        type="number"
+        min="${minDollars}"
+        max="${maxDollars}"
+        step="0.01"
+        .value="${displayValue}"
+        @input=${this._handleNumberInput}
+      />
+      <phg-button variant="muted" size="compact" @click=${this._handleDecrement}
+        >-</phg-button
+      >
+      <input
+        type="range"
+        min="${this.min}"
+        max="${this.max}"
+        step="1"
+        .value="${this.value}"
+        @input=${this._handleRangeInput}
+      />
+      <phg-button variant="muted" size="compact" @click=${this._handleIncrement}
+        >+</phg-button
+      >
     `;
   }
 }
