@@ -45,6 +45,7 @@ export function classifyAllInAction(betBefore, currentBet, finalBet) {
  * @param {string} action
  * @param {OccupiedSeat} seatAfter
  * @param {number} betBefore
+ * @param {number} currentBetBefore - The current bet BEFORE the action was executed
  */
 export function recordBettingAction(
   game,
@@ -52,6 +53,7 @@ export function recordBettingAction(
   action,
   seatAfter,
   betBefore,
+  currentBetBefore,
 ) {
   const isAllIn = seatAfter.allIn;
 
@@ -63,7 +65,7 @@ export function recordBettingAction(
   if (action === "allIn") {
     const historyAction = classifyAllInAction(
       betBefore,
-      game.hand.currentBet,
+      currentBetBefore,
       seatAfter.bet,
     );
     HandHistory.recordAction(
@@ -139,7 +141,7 @@ export function handlePostAction(action, game, broadcastGameState) {
  * Gets the player's seat data before an action
  * @param {Game} game
  * @param {PlayerType} player
- * @returns {{ seatIndex: number, seatBefore: OccupiedSeat|null, betBefore: number }}
+ * @returns {{ seatIndex: number, seatBefore: OccupiedSeat|null, betBefore: number, currentBetBefore: number }}
  */
 export function getSeatStateBefore(game, player) {
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
@@ -147,7 +149,12 @@ export function getSeatStateBefore(game, player) {
     seatIndex !== -1 && !game.seats[seatIndex].empty
       ? /** @type {OccupiedSeat} */ (game.seats[seatIndex])
       : null;
-  return { seatIndex, seatBefore, betBefore: seatBefore?.bet || 0 };
+  return {
+    seatIndex,
+    seatBefore,
+    betBefore: seatBefore?.bet || 0,
+    currentBetBefore: game.hand?.currentBet || 0,
+  };
 }
 
 /**
@@ -165,13 +172,21 @@ export function processPokerAction(
   args,
   broadcastGameState,
 ) {
-  const { seatIndex, seatBefore, betBefore } = getSeatStateBefore(game, player);
+  const { seatIndex, seatBefore, betBefore, currentBetBefore } =
+    getSeatStateBefore(game, player);
 
   PokerActions[action](game, { player, ...args });
 
   if (BETTING_ACTIONS.includes(action) && seatBefore) {
     const seatAfter = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
-    recordBettingAction(game, player.id, action, seatAfter, betBefore);
+    recordBettingAction(
+      game,
+      player.id,
+      action,
+      seatAfter,
+      betBefore,
+      currentBetBefore,
+    );
   }
 
   handlePostAction(action, game, broadcastGameState);
