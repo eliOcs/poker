@@ -295,6 +295,8 @@ function buildRounds(recorder) {
   /** @type {OHHRound|null} */
   let currentRound = null;
   let roundId = 0;
+  /** @type {Set<string>} */
+  const streetsWithRounds = new Set();
 
   for (const action of recorder.actions) {
     // Use the street stored with each action
@@ -315,6 +317,7 @@ function buildRounds(recorder) {
       }
 
       rounds.push(currentRound);
+      streetsWithRounds.add(actionStreet);
     }
 
     const actionCopy = { ...action };
@@ -323,6 +326,20 @@ function buildRounds(recorder) {
       actionCopy.amount = toDollars(actionCopy.amount);
     }
     currentRound.actions.push(actionCopy);
+  }
+
+  // Add rounds for streets that have board cards but no actions (all-in scenario)
+  // This ensures the river is recorded even when no one can act
+  const streetOrder = ["Flop", "Turn", "River"];
+  for (const street of streetOrder) {
+    if (!streetsWithRounds.has(street) && recorder.boardByStreet.has(street)) {
+      rounds.push({
+        id: roundId++,
+        street,
+        cards: recorder.boardByStreet.get(street),
+        actions: [],
+      });
+    }
   }
 
   return rounds;
