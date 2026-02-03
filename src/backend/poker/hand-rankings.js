@@ -361,7 +361,7 @@ const compare = {
           return kickerComparison;
         }
       }
-      return getRankValue(b.and) - getRankValue(a.and);
+      return 0;
     } else {
       return tripletComparison;
     }

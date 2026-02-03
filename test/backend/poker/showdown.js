@@ -238,6 +238,35 @@ describe("showdown", () => {
       assert.equal(game.seats[2].stack, 100);
     });
 
+    it("should split pot when both have same three-of-a-kind with same kicker", () => {
+      // This replicates production bug ml1c1ixx2027/13
+      // Board has QQQ, both players have an Ace kicker
+      game.seats[0] = {
+        ...Seat.occupied({ id: "p1" }, 0),
+        cards: ["3h", "Ac"], // Elio's hand
+        totalInvested: 100,
+      };
+      game.seats[2] = {
+        ...Seat.occupied({ id: "p2" }, 0),
+        cards: ["6h", "Ah"], // SBM's hand
+        totalInvested: 100,
+      };
+      // Board: Qc, 9d, Qh, Td, Qd - three queens
+      game.board.cards = ["Qc", "9d", "Qh", "Td", "Qd"];
+
+      const results = Showdown.runShowdown(game);
+
+      assert.equal(results.length, 1);
+      assert.equal(results[0].potAmount, 200);
+      // Both players should be winners - both have QQQ with A, T kickers
+      assert.equal(results[0].winners.length, 2);
+      assert.ok(results[0].winners.includes(0));
+      assert.ok(results[0].winners.includes(2));
+      // Each player gets half
+      assert.equal(game.seats[0].stack, 100);
+      assert.equal(game.seats[2].stack, 100);
+    });
+
     it("should give odd chip to first winner when pot cannot split evenly", () => {
       // Both players invest 50, creating a pot of 100 that splits to 50 each
       // But we create a scenario with 3 players where one folds, leaving odd pot

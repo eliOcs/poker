@@ -204,6 +204,18 @@ describe("Hand Rankings", function () {
           ) > 0,
         );
       });
+
+      it("identical hands are a tie", function () {
+        // This reproduces the production bug in hand ml1c1ixx2027/13
+        // Both players had QQQ with A, T kickers - should be a split pot
+        assert.strictEqual(
+          handRankings.compare(
+            { name: "3 of a kind", of: "Q", kickers: ["A", "T"] },
+            { name: "3 of a kind", of: "Q", kickers: ["A", "T"] },
+          ),
+          0,
+        );
+      });
     });
 
     describe("2 pair", function () {
