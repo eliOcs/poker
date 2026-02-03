@@ -8,6 +8,32 @@
  */
 
 /**
+ * Standard poker chip denominations in cents
+ * @type {number[]}
+ */
+export const CHIP_DENOMINATIONS = [
+  1, 5, 10, 25, 50, 100, 500, 1000, 2500, 5000, 10000,
+];
+
+/**
+ * Get the minimum chip denomination for given blinds.
+ * Returns the largest standard chip value that evenly divides both blinds.
+ * @param {number} small - Small blind in cents
+ * @param {number} big - Big blind in cents
+ * @returns {number} - Chip denomination in cents
+ */
+export function getChipDenomination(small, big) {
+  // Find largest chip that divides both blinds evenly
+  for (let i = CHIP_DENOMINATIONS.length - 1; i >= 0; i--) {
+    const chip = CHIP_DENOMINATIONS[i];
+    if (small % chip === 0 && big % chip === 0) {
+      return chip;
+    }
+  }
+  return 1; // Fallback to 1 cent
+}
+
+/**
  * Preset stakes options
  * @type {Stakes[]}
  */

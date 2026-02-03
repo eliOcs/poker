@@ -5,6 +5,7 @@ import {
   DEFAULT,
   isValidPreset,
 } from "../../../src/backend/poker/stakes.js";
+import { getChipDenomination } from "../../../src/shared/stakes.js";
 
 describe("stakes", () => {
   describe("PRESETS", () => {
@@ -66,6 +67,43 @@ describe("stakes", () => {
       assert.strictEqual(isValidPreset({ small: 1 }), false);
       assert.strictEqual(isValidPreset({ big: 2 }), false);
       assert.strictEqual(isValidPreset({}), false);
+    });
+  });
+
+  describe("getChipDenomination", () => {
+    it("returns 1 cent for micro stakes ($0.01/$0.02)", () => {
+      assert.strictEqual(getChipDenomination(1, 2), 1);
+    });
+
+    it("returns 5 cents for $0.05/$0.10", () => {
+      assert.strictEqual(getChipDenomination(5, 10), 5);
+    });
+
+    it("returns 25 cents for $0.25/$0.50", () => {
+      assert.strictEqual(getChipDenomination(25, 50), 25);
+    });
+
+    it("returns $1 for $1/$2 stakes", () => {
+      assert.strictEqual(getChipDenomination(100, 200), 100);
+    });
+
+    it("returns $1 for $5/$10 stakes", () => {
+      assert.strictEqual(getChipDenomination(500, 1000), 500);
+    });
+
+    it("returns $10 for $10/$20 stakes", () => {
+      assert.strictEqual(getChipDenomination(1000, 2000), 1000);
+    });
+
+    it("returns $25 for $25/$50 stakes (sit-n-go)", () => {
+      assert.strictEqual(getChipDenomination(2500, 5000), 2500);
+    });
+
+    it("returns largest chip that divides both blinds", () => {
+      // $0.10/$0.25 - GCD is 5, so 5 cents
+      assert.strictEqual(getChipDenomination(10, 25), 5);
+      // $3/$6 - GCD is 300, chips: 100 divides both
+      assert.strictEqual(getChipDenomination(300, 600), 100);
     });
   });
 });

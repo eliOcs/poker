@@ -465,6 +465,7 @@ class Game extends LitElement {
         <phg-action-panel
           .actions=${actions}
           .seatIndex=${seatIndex}
+          .smallBlind=${this.game.blinds?.small || 1}
           .bigBlind=${this.game.blinds?.big || 1}
           .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
           .bustedPosition=${bustedPosition}

@@ -2,7 +2,7 @@ import { fixture, expect, html } from "@open-wc/testing";
 import "../../src/frontend/currency-slider.js";
 
 describe("phg-currency-slider", () => {
-  it("displays value in dollars", async () => {
+  it("displays value in dollars (no decimals for whole amounts)", async () => {
     const el = await fixture(
       html`<phg-currency-slider
         .value=${15000}
@@ -12,7 +12,20 @@ describe("phg-currency-slider", () => {
     );
 
     const numberInput = el.shadowRoot.querySelector('input[type="number"]');
-    expect(numberInput.value).to.equal("150.00");
+    expect(numberInput.value).to.equal("150");
+  });
+
+  it("displays value with decimals when needed", async () => {
+    const el = await fixture(
+      html`<phg-currency-slider
+        .value=${15050}
+        .min=${10000}
+        .max=${100000}
+      ></phg-currency-slider>`,
+    );
+
+    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    expect(numberInput.value).to.equal("150.50");
   });
 
   it("sets min/max in dollars on number input", async () => {
@@ -41,6 +54,34 @@ describe("phg-currency-slider", () => {
     const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
     expect(rangeInput.min).to.equal("10000");
     expect(rangeInput.max).to.equal("100000");
+  });
+
+  it("sets step in cents on range input", async () => {
+    const el = await fixture(
+      html`<phg-currency-slider
+        .value=${15000}
+        .min=${10000}
+        .max=${100000}
+        .step=${2500}
+      ></phg-currency-slider>`,
+    );
+
+    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    expect(rangeInput.step).to.equal("2500");
+  });
+
+  it("sets step in dollars on number input", async () => {
+    const el = await fixture(
+      html`<phg-currency-slider
+        .value=${15000}
+        .min=${10000}
+        .max=${100000}
+        .step=${2500}
+      ></phg-currency-slider>`,
+    );
+
+    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    expect(numberInput.step).to.equal("25");
   });
 
   it("emits value-changed when number input changes", async () => {

@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatDollars } from "./styles.js";
 import "./button.js";
 
 /**
@@ -117,16 +117,17 @@ class CurrencySlider extends LitElement {
   }
 
   render() {
-    const displayValue = (this.value / 100).toFixed(2);
+    const displayValue = formatDollars(this.value);
     const minDollars = this.min / 100;
     const maxDollars = this.max / 100;
+    const stepDollars = this.step / 100;
 
     return html`
       <input
         type="number"
         min="${minDollars}"
         max="${maxDollars}"
-        step="0.01"
+        step="${stepDollars}"
         .value="${displayValue}"
         @input=${this._handleNumberInput}
       />
@@ -137,7 +138,7 @@ class CurrencySlider extends LitElement {
         type="range"
         min="${this.min}"
         max="${this.max}"
-        step="1"
+        step="${this.step}"
         .value="${this.value}"
         @input=${this._handleRangeInput}
       />

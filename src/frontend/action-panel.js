@@ -5,6 +5,7 @@ import {
   formatCurrency,
   actionPanelStyles,
 } from "./styles.js";
+import { getChipDenomination } from "/src/shared/stakes.js";
 import "./button.js";
 import "./currency-slider.js";
 
@@ -18,6 +19,7 @@ class ActionPanel extends LitElement {
       actions: { type: Array },
       seatIndex: { type: Number },
       betAmount: { type: Number },
+      smallBlind: { type: Number },
       bigBlind: { type: Number },
       seatedCount: { type: Number },
       copied: { type: Boolean },
@@ -31,12 +33,17 @@ class ActionPanel extends LitElement {
     this.actions = [];
     this.seatIndex = -1;
     this.betAmount = 0;
+    this.smallBlind = 1;
     this.bigBlind = 1;
     this.seatedCount = 0;
     this.copied = false;
     this.bustedPosition = null;
     this.isWinner = false;
     this._lastActionType = null;
+  }
+
+  get chipDenomination() {
+    return getChipDenomination(this.smallBlind, this.bigBlind);
   }
 
   updated(changedProperties) {
@@ -137,7 +144,7 @@ class ActionPanel extends LitElement {
           .value=${stack}
           .min=${minStack}
           .max=${maxStack}
-          .step=${bigBlind * 10}
+          .step=${this.chipDenomination * 10}
           @value-changed=${(e) => (this.betAmount = e.detail.value)}
         ></phg-currency-slider>
         <div class="action-row">
@@ -220,7 +227,7 @@ class ActionPanel extends LitElement {
           .value=${currentValue}
           .min=${min}
           .max=${max}
-          .step=${this.bigBlind}
+          .step=${this.chipDenomination}
           @value-changed=${(e) => (this.betAmount = e.detail.value)}
         ></phg-currency-slider>
         <div class="action-row">
