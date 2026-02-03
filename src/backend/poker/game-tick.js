@@ -28,6 +28,7 @@ export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
  * @property {boolean} tournamentBreakStarted - Whether tournament break started
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
  * @property {boolean} tournamentEnded - Whether tournament has a winner
+ * @property {boolean} dealNextStreet - Whether to deal next street in runout
  */
 
 /**
@@ -94,6 +95,7 @@ function createTickResult() {
     tournamentBreakStarted: false,
     tournamentBreakEnded: false,
     tournamentEnded: false,
+    dealNextStreet: false,
   };
 }
 
@@ -151,6 +153,22 @@ function handleActingTick(game, result) {
 }
 
 /**
+ * Handles runout tick (all-in scenario street dealing)
+ * @param {Game} game
+ * @param {TickResult} result
+ */
+function handleRunoutTick(game, result) {
+  if (!game.runout?.active) return;
+
+  game.runout.delayTicks -= 1;
+  result.shouldBroadcast = true;
+
+  if (game.runout.delayTicks <= 0) {
+    result.dealNextStreet = true;
+  }
+}
+
+/**
  * Processes one game tick (called every second, or faster with TIMER_SPEED)
  * @param {Game} game
  * @returns {TickResult}
@@ -164,6 +182,7 @@ export function tick(game) {
 
   handleCountdown(game, result);
   handleActingTick(game, result);
+  handleRunoutTick(game, result);
 
   return result;
 }
@@ -178,7 +197,8 @@ export function shouldTickBeRunning(game) {
   const hasActingPlayer =
     game.hand?.actingSeat !== -1 && game.hand?.actingSeat !== undefined;
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
-  return hasCountdown || hasActingPlayer || isTournamentTicking;
+  const isRunningOut = game.runout?.active === true;
+  return hasCountdown || hasActingPlayer || isTournamentTicking || isRunningOut;
 }
 
 /**

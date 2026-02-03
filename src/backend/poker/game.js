@@ -64,6 +64,12 @@ import * as Tournament from "../../shared/tournament.js";
  */
 
 /**
+ * @typedef {object} RunoutState
+ * @property {boolean} active - Whether runout is in progress
+ * @property {number} delayTicks - Ticks remaining before dealing next street
+ */
+
+/**
  * @typedef {object} Game
  * @property {import('../id.js').Id} id - Game unique identifier
  * @property {boolean} running - Whether game is running
@@ -80,6 +86,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {number} disconnectedActingTicks - Ticks a disconnected player has been acting (for auto-fold)
  * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
  * @property {TournamentState|null} tournament - Tournament state (null for cash games)
+ * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
  */
 
 /**
@@ -92,6 +99,9 @@ import * as Tournament from "../../shared/tournament.js";
 export const TIMER_INTERVAL = process.env.TIMER_SPEED
   ? Math.floor(1000 / parseInt(process.env.TIMER_SPEED, 10))
   : 1000;
+
+// Delay in ticks between dealing streets during runout (all-in scenario)
+export const RUNOUT_DELAY_TICKS = 2;
 
 /** @param {Generator} gen */
 function runAll(gen) {
@@ -144,6 +154,7 @@ export function create({
     disconnectedActingTicks: 0,
     clockTicks: 0,
     tournament: null,
+    runout: null,
   };
 }
 
@@ -231,6 +242,11 @@ export function startGameTick(game, onBroadcast) {
     // Handle auto-action (disconnect or clock expiry)
     if (result.autoActionSeat !== null) {
       performAutoAction(game, result.autoActionSeat, onBroadcast);
+    }
+
+    // Handle runout street dealing
+    if (result.dealNextStreet) {
+      dealRunoutStreet(game, onBroadcast);
     }
 
     // Stop tick if no longer needed
@@ -513,48 +529,79 @@ const STREET_HANDLERS = {
 };
 
 /**
- * Advances to next phase, loops through streets when everyone is all-in
+ * Advances to next phase, enters runout mode when everyone is all-in
  * @param {Game} game
  * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
  */
 export function processGameFlow(game, onBroadcast) {
-  // Loop to handle all-in situations where we need to run out the board
-  while (true) {
-    const phase = game.hand.phase;
+  const phase = game.hand.phase;
 
-    // Only process if we're in a betting phase
-    if (!["preflop", "flop", "turn", "river"].includes(phase)) {
-      return;
-    }
-
-    // Check if only one player remains (everyone else folded)
-    if (Betting.countActivePlayers(game) <= 1) {
-      handleFoldWin(game, onBroadcast);
-      return;
-    }
-
-    // Check if betting round is complete
-    if (game.hand.actingSeat !== -1) {
-      return;
-    }
-
-    Betting.collectBets(game);
-
-    // Handle river (showdown) separately
-    if (phase === "river") {
-      handleShowdown(game, onBroadcast);
-      return;
-    }
-
-    // Advance to next street using dispatch map
-    const handler = STREET_HANDLERS[phase];
-    if (handler) {
-      runAll(handler.deal(game));
-      HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
-      Betting.startBettingRound(game, handler.next);
-    }
-
-    // If actingSeat is still -1 after starting new round (everyone all-in),
-    // continue looping to deal next street
+  // Only process if we're in a betting phase
+  if (!["preflop", "flop", "turn", "river"].includes(phase)) {
+    return;
   }
+
+  // Check if only one player remains (everyone else folded)
+  if (Betting.countActivePlayers(game) <= 1) {
+    handleFoldWin(game, onBroadcast);
+    return;
+  }
+
+  // Check if betting round is complete
+  if (game.hand.actingSeat !== -1) {
+    return;
+  }
+
+  Betting.collectBets(game);
+
+  // Handle river (showdown) separately
+  if (phase === "river") {
+    handleShowdown(game, onBroadcast);
+    return;
+  }
+
+  // Check if everyone is all-in - enter runout mode
+  if (Betting.countPlayersWhoCanAct(game) <= 1) {
+    game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
+    if (onBroadcast) {
+      ensureGameTick(game, onBroadcast);
+    }
+    return;
+  }
+
+  // Normal: advance to next street
+  const handler = STREET_HANDLERS[phase];
+  if (handler) {
+    runAll(handler.deal(game));
+    HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
+    Betting.startBettingRound(game, handler.next);
+  }
+}
+
+/**
+ * Deals next street during runout (all-in scenario)
+ * @param {Game} game
+ * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
+ */
+export function dealRunoutStreet(game, onBroadcast) {
+  const phase = game.hand.phase;
+
+  // Handle river -> showdown
+  if (phase === "river") {
+    handleShowdown(game, onBroadcast);
+    return;
+  }
+
+  // Deal next street
+  const handler = STREET_HANDLERS[phase];
+  if (handler) {
+    runAll(handler.deal(game));
+    HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
+    game.hand.phase = handler.next;
+  }
+
+  // Reset delay for next street
+  game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
+
+  if (onBroadcast) onBroadcast(game.id);
 }

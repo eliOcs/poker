@@ -14,6 +14,8 @@ import {
 } from "../../../src/backend/poker/game-tick.js";
 import { createHeadsUpGame } from "./test-helpers.js";
 
+const { RUNOUT_DELAY_TICKS } = Game;
+
 describe("game-tick", () => {
   /** @type {import('../../../src/backend/poker/game.js').Game} */
   let game;
@@ -302,6 +304,73 @@ describe("game-tick", () => {
     it("should initialize clockTicks as 0", () => {
       const newGame = Game.create();
       assert.strictEqual(newGame.clockTicks, 0);
+    });
+
+    it("should initialize runout as null", () => {
+      const newGame = Game.create();
+      assert.strictEqual(newGame.runout, null);
+    });
+  });
+
+  describe("runout tick", () => {
+    it("should decrement delayTicks each tick", () => {
+      game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
+      game.hand.actingSeat = -1;
+
+      tick(game);
+
+      assert.strictEqual(game.runout.delayTicks, RUNOUT_DELAY_TICKS - 1);
+    });
+
+    it("should trigger dealNextStreet when delay reaches 0", () => {
+      game.runout = { active: true, delayTicks: 1 };
+      game.hand.actingSeat = -1;
+
+      const result = tick(game);
+
+      assert.strictEqual(result.dealNextStreet, true);
+      assert.strictEqual(result.shouldBroadcast, true);
+    });
+
+    it("should not trigger dealNextStreet when delay is above 0", () => {
+      game.runout = { active: true, delayTicks: 2 };
+      game.hand.actingSeat = -1;
+
+      const result = tick(game);
+
+      assert.strictEqual(result.dealNextStreet, false);
+      assert.strictEqual(game.runout.delayTicks, 1);
+    });
+
+    it("should not process runout when not active", () => {
+      game.runout = null;
+      game.hand.actingSeat = -1;
+
+      const result = tick(game);
+
+      assert.strictEqual(result.dealNextStreet, false);
+    });
+
+    it("shouldTickBeRunning returns true when runout is active", () => {
+      game.runout = { active: true, delayTicks: 2 };
+      game.countdown = null;
+      game.hand.actingSeat = -1;
+
+      assert.strictEqual(shouldTickBeRunning(game), true);
+    });
+
+    it("shouldTickBeRunning returns false when runout is inactive", () => {
+      game.runout = { active: false, delayTicks: 2 };
+      game.countdown = null;
+      game.hand.actingSeat = -1;
+
+      assert.strictEqual(shouldTickBeRunning(game), false);
+    });
+  });
+
+  describe("RUNOUT_DELAY_TICKS constant", () => {
+    it("should have correct default value", () => {
+      assert.strictEqual(RUNOUT_DELAY_TICKS, 2);
     });
   });
 });

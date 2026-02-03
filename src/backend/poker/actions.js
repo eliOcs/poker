@@ -328,6 +328,7 @@ export function endHand(game) {
   game.hand.lastRaiser = -1;
   game.hand.actingSeat = -1;
   game.hand.lastRaiseSize = 0;
+  game.runout = null;
 
   // Increment handsPlayed for all players who were dealt in (not sitting out)
   for (const seat of game.seats) {
