@@ -287,10 +287,9 @@ function calculateHandRank(holeCards, boardCards) {
 function getSittingOutActions(seat, game, isTournament) {
   /** @type {PlayerAction[]} */
   const actions = [];
-  if (seat.stack >= game.blinds.big) {
-    const cost = seat.missedBigBlind ? game.blinds.big : 0;
-    actions.push({ action: "sitIn", cost });
-  }
+  // Always allow sitting in - if player can't afford the big blind, they go all-in
+  const cost = seat.missedBigBlind ? Math.min(game.blinds.big, seat.stack) : 0;
+  actions.push({ action: "sitIn", cost });
   if (!isTournament) {
     actions.push({ action: "leave" });
   }

@@ -78,14 +78,17 @@ describe("sit out", () => {
       assert.equal(game.seats[0].missedBigBlind, false);
     });
 
-    it("should throw if not enough chips to post big blind", () => {
+    it("should go all-in if not enough chips to post big blind", () => {
       game.seats[0].missedBigBlind = true;
-      game.seats[0].stack = 25; // Less than big blind
+      game.seats[0].stack = 25; // Less than big blind of 50
 
-      assert.throws(
-        () => Actions.sitIn(game, { seat: 0 }),
-        /not enough chips to post big blind/,
-      );
+      Actions.sitIn(game, { seat: 0 });
+
+      // Player goes all-in with what they have
+      assert.equal(game.seats[0].stack, 0);
+      assert.equal(game.seats[0].bet, 25);
+      assert.equal(game.seats[0].sittingOut, false);
+      assert.equal(game.seats[0].missedBigBlind, false);
     });
 
     it("should not post big blind if missedBigBlind is false", () => {

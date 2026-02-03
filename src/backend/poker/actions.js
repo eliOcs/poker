@@ -416,14 +416,12 @@ export function sitIn(game, { seat }) {
     throw new Error("not sitting out");
   }
 
-  // Must post big blind to return if missed
+  // Must post big blind to return if missed (or go all-in if short stacked)
   if (seatObj.missedBigBlind) {
-    if (seatObj.stack < game.blinds.big) {
-      throw new Error("not enough chips to post big blind");
-    }
-    seatObj.stack -= game.blinds.big;
+    const postAmount = Math.min(game.blinds.big, seatObj.stack);
+    seatObj.stack -= postAmount;
     // The posted blind goes to the pot when the next hand starts
-    seatObj.bet = game.blinds.big;
+    seatObj.bet = postAmount;
     seatObj.missedBigBlind = false;
   }
 

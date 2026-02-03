@@ -532,4 +532,36 @@ describe("Player View", function () {
       );
     });
   });
+
+  describe("sitting out actions", function () {
+    it("should show sitIn for sitting out player with short stack", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      // Player has a short stack (less than big blind)
+      g.seats[0].stack = 25; // Less than big blind of 50
+      g.seats[0].sittingOut = true;
+
+      g.hand = {
+        phase: "waiting",
+        pot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
+
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+      const sitInAction = p1Actions.find((a) => a.action === "sitIn");
+
+      // Sitting out players should always be able to sit in
+      // If they can't afford the big blind, they go all-in
+      assert.ok(
+        sitInAction,
+        "sitIn should be available for sitting out player regardless of stack size",
+      );
+    });
+  });
 });
