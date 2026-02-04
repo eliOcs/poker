@@ -220,6 +220,8 @@ class History extends LitElement {
 
     const hand = { pot: this.view.pot, phase: this.view.board.phase };
 
+    const tableSize = this.view.seats.length;
+
     return html`
       <div class="table-state">
         <phg-board
@@ -228,20 +230,23 @@ class History extends LitElement {
           .winnerMessage=${this.view.winnerMessage}
           .winningCards=${this.view.winningCards}
         ></phg-board>
-        ${this.view.seats.map((seat, index) => {
-          if (seat.empty) return html``;
-          const isButton = index === this.view.button;
+        <div id="seats" data-table-size="${tableSize}">
+          ${this.view.seats.map((seat, index) => {
+            if (seat.empty) return html``;
+            const isButton = index === this.view.button;
 
-          return html`
-            <phg-seat
-              data-seat="${index}"
-              .seat=${seat}
-              .seatNumber=${index}
-              .isButton=${isButton}
-              .showSitAction=${false}
-            ></phg-seat>
-          `;
-        })}
+            return html`
+              <phg-seat
+                data-seat="${index}"
+                data-table-size="${tableSize}"
+                .seat=${seat}
+                .seatNumber=${index}
+                .isButton=${isButton}
+                .showSitAction=${false}
+              ></phg-seat>
+            `;
+          })}
+        </div>
       </div>
     `;
   }

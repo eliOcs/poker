@@ -5,7 +5,6 @@
 - Larger suit icon
 - Bounties
 - Left side in history wider if space available
-- Poker history not respecting seat positioning
 - Announcements chat
 - icons bigger and even buttons if space is avaiable
 - You shows cards

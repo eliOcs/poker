@@ -124,6 +124,11 @@ export const historyStyles = css`
     }
   }
 
+  #seats {
+    position: absolute;
+    inset: 0;
+  }
+
   phg-board {
     position: absolute;
     transform: translate(-50%, -50%);
