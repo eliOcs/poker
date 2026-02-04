@@ -1,35 +1,23 @@
 # To do
 
 - Vibrate API if availble to announce turn
-- when sit out shows waiting for your turn
-- if folded you can't sitout
-- https://plutonpoker.com/history/ml1c1ixx2027/36 why not showing cards on board (last hand of tournament)
 - Ready button to skip the break
-- Break should start at the end of the hand not at the middle
-- https://plutonpoker.com/history/ml1c1ixx2027/26 won on turn
 - Larger suit icon
 - Bounties
-- Don't allow cent bets in sitngos
 - Left side in history wider if space available
-- ESC key exit history page
-- ESC key close modals
 - Poker history not respecting seat positioning
-- All-in annimate each turn
 - Announcements chat
-- https://plutonpoker.com/games/ml1ayguxdc31 cañas disconnected
 - icons bigger and even buttons if space is avaiable
-- longer wait showdown
 - You shows cards
-- poker history show total win loss not only showdown
-- poker history value center board cent values
 - level with number of hands click to show tournament structures move to top left
 - action panel fixed
-- sb/bb button
 - Ready button and then start
 - sit n go, only allow player to seat in the frist level of blinds
 - history in a new tab (in desktop)
 - history tab guest players should be able to see cards if shown
 - Recontruct game from hand history
+- when sit out shows waiting for your turn
+- if folded you can't sitout
 - Sit out toggle
 - Version number / Release notes
 - Send diffs instead of the full game state to reduce traffic
@@ -50,3 +38,7 @@
 - Seasons: allow grouping games into a seasson to get aggregate results
 - Inspiration Chess.com - "Learn poker"
 - Inspiration Chess.com - "Ranked Poker"
+
+# Not right now
+
+- sb/bb indicators (more position information)

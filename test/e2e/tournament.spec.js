@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
-test.setTimeout(420000); // 7 minutes for longer tournament
+test.setTimeout(5 * 50 * 1000);
 
 const ACTIONS_FILE = path.join(
   process.cwd(),
@@ -13,10 +13,10 @@ const ACTIONS_FILE = path.join(
 );
 
 const WEIGHTED_ACTIONS = [
-  { threshold: 0.005, action: "allIn" },
-  { threshold: 0.1, action: "raise" },
-  { threshold: 0.1, action: "bet" },
-  { threshold: 0.4, action: "call" },
+  { threshold: 0.01, action: "allIn" },
+  { threshold: 0.15, action: "raise" },
+  { threshold: 0.15, action: "bet" },
+  { threshold: 0.6, action: "call" },
 ];
 
 const PASSIVE_FALLBACKS = ["check", "fold"];
