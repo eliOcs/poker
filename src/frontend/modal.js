@@ -79,6 +79,23 @@ class Modal extends LitElement {
     this.title = "";
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this.boundHandleKeydown = this.handleKeydown.bind(this);
+    window.addEventListener("keydown", this.boundHandleKeydown);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener("keydown", this.boundHandleKeydown);
+  }
+
+  handleKeydown(e) {
+    if (e.key === "Escape") {
+      this.close();
+    }
+  }
+
   close() {
     this.dispatchEvent(
       new CustomEvent("close", { bubbles: true, composed: true }),

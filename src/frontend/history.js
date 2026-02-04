@@ -60,6 +60,8 @@ class History extends LitElement {
       this.navigatePrev();
     } else if (e.key === "ArrowRight") {
       this.navigateNext();
+    } else if (e.key === "Escape") {
+      this.goBack();
     }
   }
 
