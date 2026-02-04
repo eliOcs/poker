@@ -104,7 +104,11 @@ class CurrencySlider extends LitElement {
 
   _handleRangeInput(e) {
     // Range is in cents
-    const cents = parseInt(e.target.value) || 0;
+    let cents = parseInt(e.target.value) || 0;
+    // Snap to max if within one step (handles non-divisible max values)
+    if (this.max - cents < this.step && cents !== this.max) {
+      cents = this.max;
+    }
     this._emitChange(cents);
   }
 

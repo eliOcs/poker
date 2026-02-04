@@ -215,4 +215,29 @@ describe("phg-currency-slider", () => {
     // 95000 + 10000 = 105000, but clamped to max of 100000
     expect(emittedValue).to.equal(100000);
   });
+
+  it("snaps slider to max when max is not divisible by step", async () => {
+    // Simulates a player with $12,125 stack and $100 step
+    const el = await fixture(
+      html`<phg-currency-slider
+        .value=${1200000}
+        .min=${30000}
+        .max=${1212500}
+        .step=${10000}
+      ></phg-currency-slider>`,
+    );
+
+    let emittedValue = null;
+    el.addEventListener("value-changed", (e) => {
+      emittedValue = e.detail.value;
+    });
+
+    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    // Slider can only reach 1210000 due to step, but should snap to max
+    rangeInput.value = "1210000";
+    rangeInput.dispatchEvent(new Event("input"));
+
+    // Should snap to max (1212500) since 1212500 - 1210000 < step (10000)
+    expect(emittedValue).to.equal(1212500);
+  });
 });
