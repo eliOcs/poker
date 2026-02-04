@@ -3,7 +3,6 @@ import {
   createGame,
   waitForPhase,
   playBettingRound,
-  waitForHandEnd,
 } from "./utils/game-helpers.js";
 
 test.describe("Poker Game Smoke Test", () => {
@@ -138,9 +137,10 @@ test.describe("Poker Game Smoke Test", () => {
     console.log("Player 2 calls the all-in");
     await player2.act("call");
 
-    // Wait for hand to complete (board runs out automatically when all-in)
-    await waitForHandEnd(player1, 10000);
-    console.log("Board ran out automatically - hand complete");
+    // After all-in showdown, wait for next hand to start (confirms hand 3 completed)
+    // The board runs out automatically and a new hand begins
+    await player1.waitForHandStart(15000);
+    console.log("Hand 4 started - hand 3 complete");
 
     console.log("Hand 3 complete (all-in showdown)");
 
