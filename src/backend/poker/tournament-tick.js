@@ -99,9 +99,14 @@ function handleLevelTick(game, result) {
     tournament.levelTicks = 0;
 
     if (tournament.level === Tournament.BREAK_AFTER_LEVEL) {
-      tournament.onBreak = true;
-      tournament.breakTicks = 0;
-      result.breakStarted = true;
+      // If hand is in progress, defer break until hand ends
+      if (game.hand.phase !== "waiting") {
+        tournament.pendingBreak = true;
+      } else {
+        tournament.onBreak = true;
+        tournament.breakTicks = 0;
+        result.breakStarted = true;
+      }
     } else {
       advanceLevel(game);
       result.levelChanged = true;
@@ -133,6 +138,27 @@ export function tick(game) {
 
   // Always advance level timer during active play (not just waiting phase)
   handleLevelTick(game, result);
+
+  return result;
+}
+
+/**
+ * Starts a pending break (called when a hand ends)
+ * @param {Game} game
+ * @returns {TournamentTickResult}
+ */
+export function startPendingBreak(game) {
+  const result = createEmptyResult();
+  const tournament = game.tournament;
+
+  if (!tournament?.pendingBreak) {
+    return result;
+  }
+
+  tournament.pendingBreak = false;
+  tournament.onBreak = true;
+  tournament.breakTicks = 0;
+  result.breakStarted = true;
 
   return result;
 }

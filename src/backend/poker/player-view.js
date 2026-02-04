@@ -154,6 +154,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} level - Current blind level (1-7)
  * @property {number} timeToNextLevel - Seconds until next level or break ends
  * @property {boolean} onBreak - Whether currently on break
+ * @property {boolean} pendingBreak - Whether break will start after current hand
  * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
  */
 
@@ -516,6 +517,7 @@ export default function playerView(game, player) {
         level: game.tournament.level,
         timeToNextLevel: TournamentTick.getTimeToNextLevel(game) ?? 0,
         onBreak: game.tournament.onBreak,
+        pendingBreak: game.tournament.pendingBreak,
         winner: game.tournament.winner,
       }
     : null;

@@ -3,6 +3,7 @@ import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
 import { isClockCallable } from "./game-tick.js";
 import * as TournamentSummary from "./tournament-summary.js";
+import * as TournamentTick from "./tournament-tick.js";
 
 // Re-export dealing functions for backward compatibility
 export {
@@ -354,6 +355,9 @@ export function endHand(game) {
 
   // Move button to next occupied seat
   moveButton(game);
+
+  // Start pending break if timer expired during this hand
+  TournamentTick.startPendingBreak(game);
 }
 
 /**

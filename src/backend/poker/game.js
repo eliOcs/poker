@@ -57,6 +57,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {number} level - Current blind level (1-7)
  * @property {number} levelTicks - Ticks elapsed in current level
  * @property {boolean} onBreak - Currently in break period
+ * @property {boolean} pendingBreak - Break will start after current hand ends
  * @property {number} breakTicks - Ticks elapsed in current break
  * @property {string|null} startTime - Tournament start time (ISO string)
  * @property {number} initialStack - Starting stack for each player
@@ -185,6 +186,7 @@ export function createTournament({
     level: 1,
     levelTicks: 0,
     onBreak: false,
+    pendingBreak: false,
     breakTicks: 0,
     startTime: null,
     initialStack: Tournament.INITIAL_STACK,

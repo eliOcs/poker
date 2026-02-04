@@ -103,14 +103,32 @@ describe("tournament-tick", () => {
       assert.equal(game.tournament.levelTicks, 0);
     });
 
-    it("should trigger break after level 4", () => {
+    it("should trigger break after level 4 when in waiting phase", () => {
       game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
       game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+      game.hand.phase = "waiting";
 
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakStarted, true);
       assert.equal(game.tournament.onBreak, true);
+      assert.equal(game.tournament.pendingBreak, false);
+    });
+
+    it("should set pendingBreak when level 4 ends during active hand", () => {
+      game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
+      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+      game.hand.phase = "flop"; // Hand in progress
+
+      const result = TournamentTick.tick(game);
+
+      assert.equal(result.breakStarted, false, "break should not start yet");
+      assert.equal(game.tournament.onBreak, false, "should not be on break");
+      assert.equal(
+        game.tournament.pendingBreak,
+        true,
+        "break should be pending",
+      );
     });
 
     it("should not increment levelTicks before tournament starts", () => {
@@ -181,6 +199,36 @@ describe("tournament-tick", () => {
     it("should return null for non-tournament games", () => {
       const cashGame = Game.create({ seats: 6 });
       assert.equal(TournamentTick.getTimeToNextLevel(cashGame), null);
+    });
+  });
+
+  describe("startPendingBreak", () => {
+    it("should start break when pendingBreak is true", () => {
+      game.tournament.pendingBreak = true;
+
+      const result = TournamentTick.startPendingBreak(game);
+
+      assert.equal(result.breakStarted, true);
+      assert.equal(game.tournament.onBreak, true);
+      assert.equal(game.tournament.pendingBreak, false);
+      assert.equal(game.tournament.breakTicks, 0);
+    });
+
+    it("should not start break when pendingBreak is false", () => {
+      game.tournament.pendingBreak = false;
+
+      const result = TournamentTick.startPendingBreak(game);
+
+      assert.equal(result.breakStarted, false);
+      assert.equal(game.tournament.onBreak, false);
+    });
+
+    it("should return empty result for non-tournament games", () => {
+      const cashGame = Game.create({ seats: 6 });
+
+      const result = TournamentTick.startPendingBreak(cashGame);
+
+      assert.equal(result.breakStarted, false);
     });
   });
 
