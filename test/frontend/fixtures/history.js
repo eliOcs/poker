@@ -4,7 +4,7 @@
 
 /** @typedef {import('../../../src/backend/poker/types.js').Cents} Cents */
 
-/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean }} */
+/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean, was_dealt: boolean, board_cards: string[], net_result: Cents, winner_hole_cards: string[] }} */
 export const mockHandSummary = {
   game_number: "test123-1",
   hand_number: 1,
@@ -13,9 +13,13 @@ export const mockHandSummary = {
   winner_id: "player1",
   pot: 20000,
   is_winner: true,
+  was_dealt: true,
+  board_cards: ["Qh", "Jd", "2s"],
+  net_result: 10000,
+  winner_hole_cards: ["Ah", "Kh"],
 };
 
-/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean }} */
+/** @type {{ game_number: string, hand_number: number, hole_cards: string[], winner_name: string, winner_id: string, pot: Cents, is_winner: boolean, was_dealt: boolean, board_cards: string[], net_result: Cents, winner_hole_cards: string[] }} */
 export const mockHandSummaryLost = {
   game_number: "test123-2",
   hand_number: 2,
@@ -24,6 +28,10 @@ export const mockHandSummaryLost = {
   winner_id: "player2",
   pot: 15000,
   is_winner: false,
+  was_dealt: true,
+  board_cards: ["Qc", "Jc", "8h", "5c", "2h"],
+  net_result: -5000,
+  winner_hole_cards: ["Qc", "Jc"],
 };
 
 /**
@@ -192,6 +200,7 @@ export function createMockHandList() {
       game_number: "test123-3",
       hand_number: 3,
       pot: 30000,
+      net_result: 15000,
     },
   ];
 }

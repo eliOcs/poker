@@ -327,14 +327,15 @@ describe("phg-history", () => {
       expect(winnerItems.length).to.equal(2); // hands 1 and 3 are winners
     });
 
-    it("shows 'You' for won hands", async () => {
-      const youLabels = element.shadowRoot.querySelectorAll(".hand-winner.you");
-      expect(youLabels.length).to.be.greaterThan(0);
+    it("shows positive net result for won hands", async () => {
+      const positiveResults =
+        element.shadowRoot.querySelectorAll(".hand-net.positive");
+      expect(positiveResults.length).to.be.greaterThan(0);
     });
 
-    it("shows pot amounts", async () => {
-      const pots = element.shadowRoot.querySelectorAll(".hand-pot");
-      expect(pots.length).to.equal(3);
+    it("shows net results for each hand", async () => {
+      const netResults = element.shadowRoot.querySelectorAll(".hand-net");
+      expect(netResults.length).to.equal(3);
     });
 
     it("shows hole cards for each hand", async () => {
@@ -482,21 +483,21 @@ describe("phg-history", () => {
       expect(cards.length).to.equal(2);
     });
 
-    it("shows winner info in nav bar", async () => {
-      const navResult = element.shadowRoot.querySelector(".nav-result");
-      expect(navResult).to.exist;
+    it("shows net result in nav bar", async () => {
+      const navNet = element.shadowRoot.querySelector(".nav-net");
+      expect(navNet).to.exist;
     });
 
-    it("shows 'You won' when current player won", async () => {
-      const navResult = element.shadowRoot.querySelector(".nav-result.winner");
-      expect(navResult).to.exist;
-      expect(navResult.textContent).to.include("You won");
+    it("shows positive net result when current player won", async () => {
+      const navNet = element.shadowRoot.querySelector(".nav-net.positive");
+      expect(navNet).to.exist;
+      expect(navNet.textContent).to.include("+");
     });
 
-    it("shows pot in nav bar", async () => {
-      const navPot = element.shadowRoot.querySelector(".nav-pot");
-      expect(navPot).to.exist;
-      expect(navPot.textContent).to.include("200");
+    it("shows hand number in nav bar", async () => {
+      const navNumber = element.shadowRoot.querySelector(".nav-number");
+      expect(navNumber).to.exist;
+      expect(navNumber.textContent).to.include("#");
     });
 
     it("has navigation buttons", async () => {

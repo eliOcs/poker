@@ -65,15 +65,23 @@ export const historyStyles = css`
     gap: var(--space-sm);
   }
 
-  .nav-result {
+  .nav-number {
     color: var(--color-fg-muted);
   }
 
-  .nav-result.winner {
+  .nav-net {
+    font-weight: bold;
+  }
+
+  .nav-net.positive {
     color: var(--color-success);
   }
 
-  .nav-pot {
+  .nav-net.negative {
+    color: var(--color-error);
+  }
+
+  .nav-net.neutral {
     color: var(--color-primary);
   }
 
@@ -289,11 +297,15 @@ export const historyStyles = css`
   .sidebar-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: var(--space-lg);
     font-size: var(--font-md);
     color: var(--color-fg-light);
     border-bottom: 3px solid var(--color-bg-light);
+  }
+
+  .sidebar-header span {
+    flex: 1;
+    text-align: center;
   }
 
   .sidebar-back {
@@ -356,21 +368,28 @@ export const historyStyles = css`
     }
   }
 
-  .hand-winner {
-    flex: 1;
+  .hand-number {
     font-size: var(--font-sm);
     color: var(--color-fg-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 35px;
   }
 
-  .hand-winner.you {
+  .hand-net {
+    font-size: var(--font-sm);
+    font-weight: bold;
+    min-width: 50px;
+    text-align: right;
+  }
+
+  .hand-net.positive {
     color: var(--color-success);
   }
 
-  .hand-pot {
-    font-size: var(--font-sm);
+  .hand-net.negative {
+    color: var(--color-error);
+  }
+
+  .hand-net.neutral {
     color: var(--color-primary);
   }
 

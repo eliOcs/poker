@@ -70,6 +70,10 @@ import { toCents } from "./io.js";
  * @property {string|null} winner_id
  * @property {Cents} pot
  * @property {boolean} is_winner
+ * @property {boolean} was_dealt - Whether the player was dealt cards in this hand
+ * @property {string[]} board_cards - Community cards dealt
+ * @property {Cents} net_result - Net gain/loss (positive = won, negative = lost)
+ * @property {string[]} winner_hole_cards - Winner's hole cards (if shown)
  */
 
 /**
@@ -203,6 +207,104 @@ function findPlayerHoleCards(hand, playerId) {
 }
 
 /**
+ * Gets board cards from hand rounds
+ * @param {OHHHand} hand
+ * @returns {string[]}
+ */
+function getBoardCards(hand) {
+  const boardCards = [];
+  for (const round of hand.rounds) {
+    if (round.cards) {
+      boardCards.push(...round.cards);
+    }
+  }
+  return boardCards;
+}
+
+/**
+ * Calculates a player's net result (winnings - contributions)
+ * @param {OHHHand} hand
+ * @param {string} playerId
+ * @returns {Cents}
+ */
+function calculateNetResult(hand, playerId) {
+  const contributionActions = new Set([
+    "Post SB",
+    "Post BB",
+    "Post Ante",
+    "Bet",
+    "Raise",
+    "Call",
+  ]);
+
+  let contributions = 0;
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (
+        action.player_id === playerId &&
+        contributionActions.has(action.action) &&
+        action.amount
+      ) {
+        contributions += toCents(action.amount);
+      }
+    }
+  }
+
+  let winnings = 0;
+  for (const pot of hand.pots) {
+    for (const win of pot.player_wins) {
+      if (win.player_id === playerId) {
+        winnings += toCents(win.win_amount);
+      }
+    }
+  }
+
+  return winnings - contributions;
+}
+
+/**
+ * Finds player cards from a specific action type in hand rounds
+ * @param {OHHHand} hand
+ * @param {string} playerId
+ * @param {string} actionType
+ * @returns {string[]|null}
+ */
+function findPlayerCards(hand, playerId, actionType) {
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (
+        action.action === actionType &&
+        action.player_id === playerId &&
+        action.cards
+      ) {
+        return action.cards;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Gets winner's hole cards if shown at showdown
+ * @param {OHHHand} hand
+ * @param {string|null} winnerId
+ * @returns {string[]}
+ */
+function getWinnerHoleCards(hand, winnerId) {
+  if (!winnerId) return [];
+
+  // First check showdown for shown cards
+  const shownCards = findPlayerCards(hand, winnerId, "Shows Cards");
+  if (shownCards) return shownCards;
+
+  // Fall back to dealt cards (visible if it was a fold win)
+  const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
+  if (dealtCards) return dealtCards;
+
+  return [];
+}
+
+/**
  * Gets winner info from hand pots
  * @param {OHHHand} hand
  * @param {string} playerId
@@ -241,6 +343,10 @@ export function getHandSummary(hand, playerId) {
     hand,
     playerId,
   );
+  const wasDealt = holeCards[0] !== "??" && holeCards[1] !== "??";
+  const boardCards = getBoardCards(hand);
+  const netResult = wasDealt ? calculateNetResult(hand, playerId) : 0;
+  const winnerHoleCards = getWinnerHoleCards(hand, winnerId);
 
   return {
     game_number: hand.game_number,
@@ -250,6 +356,10 @@ export function getHandSummary(hand, playerId) {
     winner_id: winnerId,
     pot: totalPot,
     is_winner: isWinner,
+    was_dealt: wasDealt,
+    board_cards: boardCards,
+    net_result: netResult,
+    winner_hole_cards: winnerHoleCards,
   };
 }
 

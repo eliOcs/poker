@@ -146,6 +146,35 @@ class History extends LitElement {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
+  renderHandSummaryCards(summary) {
+    // Show player's hole cards if dealt, otherwise winner's hole cards
+    const cards = summary.was_dealt
+      ? summary.hole_cards
+      : summary.winner_hole_cards || [];
+    return cards.map((card) => html`<phg-card .card=${card}></phg-card>`);
+  }
+
+  renderHandSummaryResult(summary) {
+    if (summary.was_dealt) {
+      // Player was dealt - show net result
+      const netClass =
+        summary.net_result > 0
+          ? "positive"
+          : summary.net_result < 0
+            ? "negative"
+            : "neutral";
+      const prefix = summary.net_result > 0 ? "+" : "";
+      return html`<span class="nav-net ${netClass}"
+        >${prefix}${formatCurrency(summary.net_result)}</span
+      >`;
+    } else {
+      // Spectating - show pot size in gold
+      return html`<span class="nav-net neutral"
+        >${formatCurrency(summary.pot)}</span
+      >`;
+    }
+  }
+
   renderNavBar() {
     const summary = this.getCurrentHandSummary();
     if (!summary) return "";
@@ -170,15 +199,9 @@ class History extends LitElement {
           ←
         </button>
         <div class="nav-info">
-          <div class="nav-cards">
-            ${summary.hole_cards.map(
-              (card) => html`<phg-card .card=${card}></phg-card>`,
-            )}
-          </div>
-          <span class="nav-result ${summary.is_winner ? "winner" : ""}">
-            ${summary.is_winner ? "You won" : summary.winner_name || "Unknown"}
-          </span>
-          <span class="nav-pot">${formatCurrency(summary.pot)}</span>
+          <span class="nav-number">#${summary.hand_number}</span>
+          <div class="nav-cards">${this.renderHandSummaryCards(summary)}</div>
+          ${this.renderHandSummaryResult(summary)}
         </div>
         <button
           class="nav-btn"
@@ -319,6 +342,27 @@ class History extends LitElement {
     `;
   }
 
+  renderHandListResult(item) {
+    if (item.was_dealt) {
+      // Player was dealt - show net result
+      const netClass =
+        item.net_result > 0
+          ? "positive"
+          : item.net_result < 0
+            ? "negative"
+            : "neutral";
+      const prefix = item.net_result > 0 ? "+" : "";
+      return html`<span class="hand-net ${netClass}"
+        >${prefix}${formatCurrency(item.net_result)}</span
+      >`;
+    } else {
+      // Spectating - show pot size in gold
+      return html`<span class="hand-net neutral"
+        >${formatCurrency(item.pot)}</span
+      >`;
+    }
+  }
+
   renderSidebar() {
     return html`
       <div class="sidebar">
@@ -336,6 +380,10 @@ class History extends LitElement {
           ${[...this.handList].reverse().map((item) => {
             const isActive = item.hand_number === this.handNumber;
             const isWinner = item.is_winner;
+            // Show player's hole cards if dealt, otherwise winner's hole cards
+            const cards = item.was_dealt
+              ? item.hole_cards
+              : item.winner_hole_cards || [];
 
             return html`
               <li
@@ -344,15 +392,13 @@ class History extends LitElement {
                   : ""}"
                 @click=${() => this.navigateTo(item.hand_number)}
               >
+                <span class="hand-number">#${item.hand_number}</span>
                 <div class="hand-cards">
-                  ${(item.hole_cards || []).map(
+                  ${cards.map(
                     (card) => html`<phg-card .card=${card}></phg-card>`,
                   )}
                 </div>
-                <span class="hand-winner ${isWinner ? "you" : ""}">
-                  ${isWinner ? "You ★" : item.winner_name || "?"}
-                </span>
-                <span class="hand-pot">${formatCurrency(item.pot)}</span>
+                ${this.renderHandListResult(item)}
               </li>
             `;
           })}

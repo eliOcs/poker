@@ -34,7 +34,7 @@ export function createOHHHand(overrides = {}) {
 
 // Hand list item factory
 export function createHandListItem(overrides = {}) {
-  return {
+  const base = {
     game_number: "test123-1",
     hand_number: 1,
     hole_cards: ["??", "??"],
@@ -42,8 +42,22 @@ export function createHandListItem(overrides = {}) {
     winner_id: "player1",
     pot: 100,
     is_winner: false,
+    was_dealt: true,
+    board_cards: [],
+    net_result: 0,
+    winner_hole_cards: [],
     ...overrides,
   };
+  // Calculate sensible defaults based on other fields
+  if (!overrides.was_dealt && base.hole_cards[0] === "??") {
+    base.was_dealt = false;
+  }
+  if (!overrides.net_result && base.is_winner) {
+    base.net_result = Math.round(base.pot * 0.5); // Assume ~50% profit on wins
+  } else if (!overrides.net_result && !base.is_winner && base.was_dealt) {
+    base.net_result = -Math.round(base.pot * 0.25); // Assume ~25% loss
+  }
+  return base;
 }
 
 // History component wrapper
@@ -150,6 +164,9 @@ const BASE_HISTORY_TEST_CASES = {
           winner_name: "Bob",
           pot: 75,
           is_winner: true,
+          board_cards: [],
+          net_result: 50,
+          winner_hole_cards: ["Ah", "Kh"],
         }),
       ],
       hand,
@@ -313,6 +330,9 @@ const BASE_HISTORY_TEST_CASES = {
           winner_name: "Bob",
           pot: 750,
           is_winner: true,
+          board_cards: ["Ah", "Kh", "Qh", "5c", "2d"],
+          net_result: 400,
+          winner_hole_cards: ["Jh", "Th"],
         }),
       ],
       hand,
