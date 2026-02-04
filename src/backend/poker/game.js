@@ -351,7 +351,7 @@ export function autoStartNextHand(game, onBroadcast) {
   }
 
   if (playersWithChips >= 2) {
-    game.countdown = 3; // Shorter countdown between hands
+    game.countdown = 5; // Countdown between hands
     if (onBroadcast) {
       startGameTick(game, onBroadcast);
     }
