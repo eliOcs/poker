@@ -113,7 +113,11 @@ describe("hand-history", () => {
 
       assert.ok(riverRound, "OHH should include a River round");
       assert.ok(riverRound.cards, "River round should have cards");
-      assert.equal(riverRound.cards.length, 1, "River round should have 1 card");
+      assert.equal(
+        riverRound.cards.length,
+        1,
+        "River round should have 1 card",
+      );
     });
 
     it("should include all 5 board cards across rounds when all-in on turn", async () => {
@@ -195,7 +199,11 @@ describe("hand-history", () => {
       // Verify River round exists
       const riverRound = hand.rounds.find((r) => r.street === "River");
       assert.ok(riverRound, "River round should exist");
-      assert.deepEqual(riverRound.actions, [], "River round should have no actions");
+      assert.deepEqual(
+        riverRound.actions,
+        [],
+        "River round should have no actions",
+      );
     });
   });
 });

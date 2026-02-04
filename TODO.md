@@ -3,7 +3,7 @@
 - Vibrate API if availble to announce turn
 - when sit out shows waiting for your turn
 - if folded you can't sitout
-- https://plutonpoker.com/history/ml1c1ixx2027/36 why not sho2wing cards on board (last hand of tournament)
+- https://plutonpoker.com/history/ml1c1ixx2027/36 why not showing cards on board (last hand of tournament)
 - Ready button to skip the break
 - Break should start at the end of the hand not at the middle
 - https://plutonpoker.com/history/ml1c1ixx2027/26 won on turn
@@ -16,8 +16,6 @@
 - Poker history not respecting seat positioning
 - All-in annimate each turn
 - Announcements chat
-- https://plutonpoker.com/history/ml1c1ixx2027/13 should be split pot
-- https://plutonpoker.com/history/ml1c1ixx2027/10 cañas folded own raise
 - https://plutonpoker.com/games/ml1ayguxdc31 cañas disconnected
 - icons bigger and even buttons if space is avaiable
 - longer wait showdown
@@ -27,14 +25,12 @@
 - level with number of hands click to show tournament structures move to top left
 - action panel fixed
 - sb/bb button
-- betting slider cents (define a minimum denomitation for each blinds and respect that)
 - Ready button and then start
 - sit n go, only allow player to seat in the frist level of blinds
 - history in a new tab (in desktop)
 - history tab guest players should be able to see cards if shown
 - Recontruct game from hand history
 - Sit out toggle
-- Not allowed to sit in (in tournament)
 - Version number / Release notes
 - Send diffs instead of the full game state to reduce traffic
 - Store hand history as gzip
