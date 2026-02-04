@@ -37,16 +37,16 @@ describe("stakes", () => {
   });
 
   describe("DEFAULT", () => {
-    it("is $1/$2 (100/200 cents)", () => {
+    it("is $0.02/$0.05 (2/5 cents)", () => {
       assert.deepStrictEqual(DEFAULT, {
-        label: "$1/$2",
-        small: 100,
-        big: 200,
+        label: "$0.02/$0.05",
+        small: 2,
+        big: 5,
       });
     });
 
-    it("is the 7th preset (index 6)", () => {
-      assert.strictEqual(PRESETS.indexOf(DEFAULT), 6);
+    it("is the 2nd preset (index 1)", () => {
+      assert.strictEqual(PRESETS.indexOf(DEFAULT), 1);
     });
   });
 

@@ -52,7 +52,7 @@ export const PRESETS = [
 ];
 
 /**
- * Default stakes ($1/$2)
+ * Default stakes ($0.02/$0.05)
  * @type {Stakes}
  */
-export const DEFAULT = PRESETS[6];
+export const DEFAULT = PRESETS[1];

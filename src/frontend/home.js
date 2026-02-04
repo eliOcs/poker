@@ -11,7 +11,7 @@ const TABLE_SIZES = [
   { seats: 6, label: "6-Max" },
   { seats: 9, label: "9-Max" },
 ];
-const DEFAULT_TABLE_SIZE_CASH = 9;
+const DEFAULT_TABLE_SIZE_CASH = 6;
 const DEFAULT_TABLE_SIZE_TOURNAMENT = 6;
 
 class Home extends LitElement {
