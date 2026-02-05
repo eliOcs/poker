@@ -109,8 +109,8 @@ describe("phg-history", () => {
         const nameEl = seat.shadowRoot.querySelector(".player-name");
         if (nameEl) names.push(nameEl.textContent.trim());
       }
-      // player1 is current player so shown as "Alice (you)", player2 is "Bob"
-      expect(names).to.include("Alice (you)");
+      // player1 is current player (styled with purple), player2 is "Bob"
+      expect(names).to.include("Alice");
       expect(names).to.include("Bob");
     });
 
@@ -216,15 +216,15 @@ describe("phg-history", () => {
       expect(amountTexts.some((text) => text === "$150")).to.be.true;
     });
 
-    it("highlights current player as 'You'", async () => {
+    it("highlights current player with 'you' class", async () => {
       const youLabels =
         element.shadowRoot.querySelectorAll(".action-player.you");
       expect(youLabels.length).to.be.greaterThan(0);
-      expect(youLabels[0].textContent.trim()).to.equal("You");
+      expect(youLabels[0].textContent.trim()).to.equal("Alice");
     });
 
-    it("uses playerId prop to determine 'You' highlighting", async () => {
-      // With player1 as playerId, player1's actions should show "You"
+    it("uses playerId prop to determine player highlighting", async () => {
+      // With player1 as playerId, player1's actions should have .you class
       const player1Actions =
         element.shadowRoot.querySelectorAll(".action-player.you");
       expect(player1Actions.length).to.be.greaterThan(0);

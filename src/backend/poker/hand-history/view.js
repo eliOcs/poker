@@ -455,7 +455,7 @@ function buildOccupiedSeat(
   const netResult = winAmount - contributed;
   const endingStack = startingStack + netResult;
   const playerName = player.name || `Seat ${player.seat}`;
-  const displayName = isCurrentPlayer ? `${playerName} (you)` : playerName;
+  const displayName = playerName;
 
   return {
     empty: false,

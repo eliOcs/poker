@@ -279,9 +279,7 @@ class History extends LitElement {
                     .filter((a) => a.action !== "Dealt Cards")
                     .map((action) => {
                       const isYou = action.player_id === this.playerId;
-                      const playerName = isYou
-                        ? "You"
-                        : this.getPlayerName(action.player_id);
+                      const playerName = this.getPlayerName(action.player_id);
                       return html`
                         <div class="action-item">
                           <span class="action-player ${isYou ? "you" : ""}"
@@ -326,7 +324,7 @@ class History extends LitElement {
     return html`
       ${winnerIds.map((winnerId) => {
         const isYou = winnerId === this.playerId;
-        const playerName = isYou ? "You" : this.getPlayerName(winnerId);
+        const playerName = this.getPlayerName(winnerId);
         return html`
           <div class="showdown-winner ${isYou ? "you" : ""}">
             <span class="winner-name">${playerName}</span> won

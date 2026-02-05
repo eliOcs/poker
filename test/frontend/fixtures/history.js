@@ -290,7 +290,7 @@ function buildMockOccupiedSeat(
   const startingStack = player.starting_stack;
   const netResult = winAmount - contributed;
   const endingStack = startingStack + netResult;
-  const displayName = isCurrentPlayer ? `${player.name} (you)` : player.name;
+  const displayName = player.name;
 
   return {
     empty: false,

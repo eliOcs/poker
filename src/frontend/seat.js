@@ -95,6 +95,10 @@ class Seat extends LitElement {
           color: var(--color-fg-white);
         }
 
+        :host(.current-player) .player-name {
+          color: var(--color-secondary);
+        }
+
         .stack {
           color: var(--color-success);
         }

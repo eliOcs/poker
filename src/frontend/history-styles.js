@@ -233,7 +233,7 @@ export const historyStyles = css`
   }
 
   .action-player.you {
-    color: var(--color-success);
+    color: var(--color-secondary);
   }
 
   .action-amount {
@@ -276,7 +276,7 @@ export const historyStyles = css`
   }
 
   .showdown-winner.you .winner-name {
-    color: var(--color-success);
+    color: var(--color-secondary);
   }
 
   .winner-amount {

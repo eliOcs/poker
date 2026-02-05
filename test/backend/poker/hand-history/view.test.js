@@ -305,7 +305,7 @@ describe("hand-history-view", function () {
       const view = HandHistory.getHandView(filtered, "player1");
 
       assert.strictEqual(view.seats[0].empty, false);
-      assert.strictEqual(view.seats[0].player.name, "Alice (you)");
+      assert.strictEqual(view.seats[0].player.name, "Alice");
       assert.strictEqual(view.seats[0].stack, 100000);
       assert.strictEqual(view.seats[1].empty, true);
       assert.strictEqual(view.seats[2].empty, false);
@@ -325,8 +325,8 @@ describe("hand-history-view", function () {
       const filtered = HandHistory.filterHandForPlayer(hand, "player1");
       const view = HandHistory.getHandView(filtered, "player1");
 
-      // Null name for current player should show "Seat N (you)", not "null (you)"
-      assert.strictEqual(view.seats[0].player.name, "Seat 1 (you)");
+      // Null name for current player should show "Seat N", not "null"
+      assert.strictEqual(view.seats[0].player.name, "Seat 1");
       assert.ok(!view.seats[0].player.name.includes("null"));
 
       // Null name for other player should show "Seat N", not "null"
