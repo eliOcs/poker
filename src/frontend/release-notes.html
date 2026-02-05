@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Release Notes - Pluton Poker</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Press Start 2P", monospace;
+        background-color: #1a1a2e;
+        color: #c0c0d0;
+        margin: 0;
+        padding: 2em;
+        line-height: 1.8;
+        font-size: 10px;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: #88a;
+        font-size: 14px;
+        margin-bottom: 1.5em;
+        text-align: center;
+      }
+
+      h2 {
+        color: #84a;
+        font-size: 11px;
+        margin-top: 2.5em;
+        margin-bottom: 1em;
+        border-bottom: 2px solid #2d2d44;
+        padding-bottom: 0.5em;
+      }
+
+      h3 {
+        color: #f4a020;
+        font-size: 10px;
+        margin-top: 2em;
+        margin-bottom: 0.75em;
+      }
+
+      h4 {
+        color: #f0f0f0;
+        font-size: 10px;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+      }
+
+      p {
+        margin: 0.75em 0;
+      }
+
+      strong {
+        color: #f0f0f0;
+      }
+
+      ul {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+      }
+
+      li {
+        margin: 0.5em 0;
+      }
+
+      a {
+        color: #36c;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-bottom: 2em;
+        color: #88a;
+        font-size: 9px;
+      }
+
+      .back-link:hover {
+        color: #f4a020;
+      }
+
+      @media (min-width: 600px) {
+        body {
+          font-size: 12px;
+          padding: 3em;
+        }
+
+        h1 {
+          font-size: 16px;
+        }
+
+        h2 {
+          font-size: 13px;
+        }
+
+        h3 {
+          font-size: 12px;
+        }
+
+        h4 {
+          font-size: 12px;
+        }
+
+        .back-link {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">&larr; Back to Home</a>
+
+      <h1>Release Notes</h1>
+
+      <h2>February 5, 2026</h2>
+
+      <h3>New Features</h3>
+
+      <h4>Sound Effects</h4>
+      <ul>
+        <li>8-bit turn notification sounds when it's your turn to act</li>
+        <li>Volume control slider in settings modal</li>
+      </ul>
+
+      <h4>All-In Runouts</h4>
+      <ul>
+        <li>Delayed card reveals when all players are all-in</li>
+        <li>Cards dealt one at a time for dramatic effect</li>
+      </ul>
+
+      <h4>Hand History Enhancements</h4>
+      <ul>
+        <li>Hole cards shown in the hand list sidebar</li>
+        <li>Net gain/loss displayed for each hand</li>
+        <li>Ending stack shown in seat positions</li>
+        <li>Your player name shown in purple instead of "You"</li>
+        <li>Burgundy table color to distinguish from live game</li>
+        <li>Latest hand shown first in sidebar</li>
+        <li>ESC key closes history page</li>
+      </ul>
+
+      <h3>Improvements</h3>
+
+      <ul>
+        <li>Cash game defaults changed to 6-max and $0.02/$0.05 blinds</li>
+        <li>Countdown between hands increased from 3 to 5 seconds</li>
+        <li>Tournament breaks now wait for current hand to finish</li>
+        <li>Betting slider uses chip denominations for step sizes</li>
+        <li>Folded players' cards hidden from opponents</li>
+        <li>Winner cards hidden when they win by fold</li>
+        <li>Your own folded cards remain visible (dimmed)</li>
+      </ul>
+
+      <h3>Bug Fixes</h3>
+
+      <ul>
+        <li>Fixed betting slider unable to reach max when stack not divisible by step</li>
+        <li>Fixed all-in action incorrectly shown as "Call" instead of "Raise"</li>
+        <li>Fixed three-of-a-kind tie comparison error</li>
+        <li>Fixed sitting out players unable to sit back in with short stack</li>
+        <li>Fixed raise/bet option showing when all opponents are all-in</li>
+        <li>Fixed tournament timer starting before first hand</li>
+        <li>Fixed history view seat positions not matching game table</li>
+      </ul>
+
+      <h2>January 27, 2026</h2>
+
+      <h3>New Features</h3>
+
+      <h4>Sit & Go Tournament Mode</h4>
+      <ul>
+        <li>6-player Sit & Go format with $5,000 starting stack</li>
+        <li>7 blind levels (15 min each) with a 5-min break after level 4</li>
+        <li>Blinds escalate from $25/$50 up to $500/$1,000</li>
+        <li>Tournament level and timer display on the board</li>
+        <li>Break overlay shown during tournament breaks</li>
+        <li>Game type selector on home page (Cash / Sit & Go)</li>
+        <li>Sitting out players still post blinds and auto-fold</li>
+        <li>Players cannot leave or buy-in during tournament</li>
+      </ul>
+
+      <h4>Tournament Results</h4>
+      <ul>
+        <li>
+          Busted players see their finishing position (e.g., "You finished in
+          3rd place")
+        </li>
+        <li>Winner overlay when one player remains ("You've won!")</li>
+      </ul>
+
+      <h3>Improvements</h3>
+
+      <h4>Hand History</h4>
+      <ul>
+        <li>Cards now shown in "Shows Cards" action in the timeline</li>
+        <li>Better player highlighting using server-side player ID</li>
+      </ul>
+
+      <h3>Bug Fixes</h3>
+      <ul>
+        <li>
+          Fixed non-participating players showing "$0" during showdown (now
+          shows stack)
+        </li>
+        <li>Fixed split pot win amounts in hand history</li>
+      </ul>
+
+      <h2>January 13, 2026</h2>
+
+      <h3>New Features</h3>
+
+      <h4>Hand History Viewer</h4>
+      <ul>
+        <li>View complete history of all hands played in a game</li>
+        <li>Access via the button on the game screen</li>
+        <li>See the final table state with player cards and board</li>
+        <li>
+          Timeline shows all actions street-by-street (Preflop, Flop, Turn,
+          River, Showdown)
+        </li>
+        <li>
+          Navigate between hands using:
+          <ul>
+            <li>Arrow keys</li>
+            <li>Swipe gestures on mobile</li>
+            <li>Sidebar hand list (desktop)</li>
+            <li>Nav bar buttons (mobile)</li>
+          </ul>
+        </li>
+        <li>Your actions are highlighted in green</li>
+        <li>Winners shown with golden border matching the live game</li>
+      </ul>
+
+      <h3>Improvements</h3>
+
+      <h4>Visual Polish</h4>
+      <ul>
+        <li>Rounded corners throughout the UI for a softer look</li>
+        <li>Consistent spacing and typography across all components</li>
+        <li>
+          Winner highlighting now matches between live game and hand history
+        </li>
+      </ul>
+
+      <h4>Call Clock</h4>
+      <ul>
+        <li>More reliable timing system (tick-based instead of timestamps)</li>
+        <li>Consistent behavior across all players</li>
+      </ul>
+
+      <h3>Bug Fixes</h3>
+      <ul>
+        <li>
+          Fixed hand history sometimes showing 7 cards on board instead of 5
+        </li>
+        <li>
+          Fixed history error page - now redirects back to game with a toast
+          message
+        </li>
+        <li>Fixed action timeline not grouping actions by street correctly</li>
+      </ul>
+    </div>
+  </body>
+</html>

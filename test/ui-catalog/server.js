@@ -30,6 +30,7 @@ const routes = {
   "/fixtures.js": "test/frontend/fixtures/index.js",
   "/history.js": "test/frontend/fixtures/history.js",
   "/logo.png": "src/frontend/logo.png",
+  "/release-notes.html": "src/frontend/release-notes.html",
 };
 
 // Handle requests

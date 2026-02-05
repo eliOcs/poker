@@ -85,3 +85,17 @@ for (const testCase of TEST_CASES) {
     });
   });
 }
+
+// Static pages (non-Lit components)
+test("release-notes", async ({ page }) => {
+  await page.goto("/release-notes.html");
+
+  // Wait for the container to be visible
+  await page.locator(".container").waitFor();
+
+  // Take full page screenshot
+  await expect(page).toHaveScreenshot("release-notes.png", {
+    fullPage: true,
+    maxDiffPixelRatio: 0.01,
+  });
+});

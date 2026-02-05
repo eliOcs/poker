@@ -117,6 +117,17 @@ class Home extends LitElement {
           background: var(--color-accent);
         }
 
+        .footer-link {
+          margin-top: 3em;
+          font-size: var(--font-sm);
+          color: var(--color-fg-muted);
+          text-decoration: none;
+        }
+
+        .footer-link:hover {
+          color: var(--color-primary);
+        }
+
         @media (width >= 600px) {
           .logo {
             width: 60%;
@@ -276,6 +287,7 @@ class Home extends LitElement {
       >
         ${this.creating ? "Creating..." : "Create Game"}
       </phg-button>
+      <a href="/release-notes.html" class="footer-link">Release Notes</a>
     `;
   }
 }
