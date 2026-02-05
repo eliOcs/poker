@@ -189,7 +189,7 @@ export const historyStyles = css`
 
   .street-header {
     font-size: var(--font-md);
-    color: var(--color-primary);
+    color: var(--color-fg-light);
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-sm);
     border-bottom: 2px solid var(--color-bg-light);
