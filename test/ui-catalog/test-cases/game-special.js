@@ -246,6 +246,104 @@ export const SPECIAL_GAME_TEST_CASES = {
     ),
 };
 
+// === RANKING MODAL TEST CASES ===
+
+export const RANKING_MODAL_TEST_CASES = {
+  "game-rankings-modal": () =>
+    gameView(
+      createGame({
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 6200,
+            totalBuyIn: 5000,
+            handsPlayed: 45,
+          }),
+          createPlayer("Alice", {
+            stack: 3800,
+            totalBuyIn: 5000,
+            handsPlayed: 45,
+          }),
+          ...emptySeats(7),
+        ],
+        rankings: [
+          {
+            seatIndex: 0,
+            playerId: "you",
+            playerName: "You",
+            stack: 6200,
+            totalBuyIn: 5000,
+            netWinnings: 1200,
+            handsPlayed: 45,
+            winRate: 5.33,
+          },
+          {
+            seatIndex: 1,
+            playerId: "alice",
+            playerName: "Alice",
+            stack: 3800,
+            totalBuyIn: 5000,
+            netWinnings: -1200,
+            handsPlayed: 45,
+            winRate: -5.33,
+          },
+        ],
+      }),
+      { showRanking: true },
+    ),
+
+  "game-rankings-modal-tournament": () =>
+    gameView(
+      createGame({
+        tournament: { level: 3, timeToNextLevel: 180, onBreak: false },
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 8500,
+          }),
+          createPlayer("Alice", { stack: 6200 }),
+          createPlayer("Bob", { stack: 3100 }),
+          ...emptySeats(6),
+        ],
+        rankings: [
+          {
+            seatIndex: 0,
+            playerId: "you",
+            playerName: "You",
+            stack: 8500,
+            totalBuyIn: 5000,
+            netWinnings: 3500,
+            handsPlayed: 30,
+            winRate: null,
+          },
+          {
+            seatIndex: 1,
+            playerId: "alice",
+            playerName: "Alice",
+            stack: 6200,
+            totalBuyIn: 5000,
+            netWinnings: 1200,
+            handsPlayed: 30,
+            winRate: null,
+          },
+          {
+            seatIndex: 2,
+            playerId: "bob",
+            playerName: "Bob",
+            stack: 3100,
+            totalBuyIn: 5000,
+            netWinnings: -1900,
+            handsPlayed: 30,
+            winRate: null,
+          },
+        ],
+      }),
+      { showRanking: true },
+    ),
+};
+
+export const RANKING_MODAL_IDS = Object.keys(RANKING_MODAL_TEST_CASES);
+
 export const SPECIAL_GAME_IDS = [
   "game-all-in-situation",
   "game-with-folded-players",

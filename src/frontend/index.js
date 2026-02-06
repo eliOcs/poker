@@ -415,6 +415,7 @@ class Game extends LitElement {
     return html`<phg-modal title="Table Ranking" @close=${this.closeRanking}
       ><phg-ranking-panel
         .rankings=${this.game?.rankings || []}
+        .tournament=${this.game?.tournament}
       ></phg-ranking-panel
     ></phg-modal>`;
   }

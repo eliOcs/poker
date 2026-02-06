@@ -212,5 +212,19 @@ describe("ranking", () => {
       assert.equal(rankings[0].stack, 0);
       assert.equal(rankings[0].totalBuyIn, 0);
     });
+
+    it("should sort by stack descending in tournaments", () => {
+      game.tournament = { active: true };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 3000);
+      game.seats[0].totalBuyIn = 5000;
+      game.seats[2] = Seat.occupied({ id: "p2", name: "Bob" }, 7000);
+      game.seats[2].totalBuyIn = 5000;
+
+      const rankings = Ranking.computeRankings(game);
+
+      // Bob has more chips, should be first despite same buy-in
+      assert.equal(rankings[0].playerId, "p2");
+      assert.equal(rankings[1].playerId, "p1");
+    });
   });
 });

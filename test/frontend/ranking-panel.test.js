@@ -146,4 +146,35 @@ describe("phg-ranking-panel", () => {
     expect(headers[3].textContent).to.include("BB/100");
     expect(headers[3].textContent).to.include("win rate");
   });
+
+  describe("tournament mode", () => {
+    const tournament = { level: 1, timeToNextLevel: 300 };
+
+    it("shows Stack column header instead of Net and BB/100", async () => {
+      const el = await fixture(html`
+        <phg-ranking-panel
+          .rankings=${mockRankings}
+          .tournament=${tournament}
+        ></phg-ranking-panel>
+      `);
+
+      const headers = el.shadowRoot.querySelectorAll("th");
+      expect(headers.length).to.equal(3);
+      expect(headers[2].textContent.trim()).to.equal("Stack");
+    });
+
+    it("shows stack values instead of net winnings", async () => {
+      const el = await fixture(html`
+        <phg-ranking-panel
+          .rankings=${mockRankings}
+          .tournament=${tournament}
+        ></phg-ranking-panel>
+      `);
+
+      const firstRow = el.shadowRoot.querySelector("tbody tr");
+      const cells = firstRow.querySelectorAll("td");
+      expect(cells.length).to.equal(3);
+      expect(cells[2].textContent).to.include("$12");
+    });
+  });
 });

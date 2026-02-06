@@ -75,12 +75,14 @@ class RankingPanel extends LitElement {
   static get properties() {
     return {
       rankings: { type: Array },
+      tournament: { type: Object },
     };
   }
 
   constructor() {
     super();
     this.rankings = [];
+    this.tournament = null;
   }
 
   formatNet(value) {
@@ -108,20 +110,26 @@ class RankingPanel extends LitElement {
       return html``;
     }
 
+    const isTournament = !!this.tournament;
+
     return html`
       <table>
         <thead>
           <tr>
             <th class="rank-col">#</th>
             <th>Player</th>
-            <th>
-              Net
-              <span class="tooltip">(profit/loss)</span>
-            </th>
-            <th>
-              BB/100
-              <span class="tooltip">(win rate)</span>
-            </th>
+            ${isTournament
+              ? html`<th>Stack</th>`
+              : html`
+                  <th>
+                    Net
+                    <span class="tooltip">(profit/loss)</span>
+                  </th>
+                  <th>
+                    BB/100
+                    <span class="tooltip">(win rate)</span>
+                  </th>
+                `}
           </tr>
         </thead>
         <tbody>
@@ -132,12 +140,16 @@ class RankingPanel extends LitElement {
                 <td class="player-name">
                   ${r.playerName || `Seat ${r.seatIndex + 1}`}
                 </td>
-                <td class="${this.getValueClass(r.netWinnings)}">
-                  ${this.formatNet(r.netWinnings)}
-                </td>
-                <td class="${this.getValueClass(r.winRate)}">
-                  ${this.formatWinRate(r.winRate)}
-                </td>
+                ${isTournament
+                  ? html`<td>${formatCurrency(r.stack)}</td>`
+                  : html`
+                      <td class="${this.getValueClass(r.netWinnings)}">
+                        ${this.formatNet(r.netWinnings)}
+                      </td>
+                      <td class="${this.getValueClass(r.winRate)}">
+                        ${this.formatWinRate(r.winRate)}
+                      </td>
+                    `}
               </tr>
             `,
           )}

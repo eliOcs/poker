@@ -49,6 +49,7 @@ const TEST_CASES = [
 
   // Modal states
   "game-rankings-modal",
+  "game-rankings-modal-tournament",
   "game-settings-modal",
 
   // Hand history states

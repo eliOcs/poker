@@ -24,6 +24,8 @@ import {
 import {
   SPECIAL_GAME_TEST_CASES,
   SPECIAL_GAME_IDS,
+  RANKING_MODAL_TEST_CASES,
+  RANKING_MODAL_IDS,
 } from "./test-cases/game-special.js";
 import {
   TABLE_SIZE_TEST_CASES,
@@ -379,49 +381,6 @@ const GAME_TEST_CASES = {
     ),
 
   // === MODAL STATES ===
-  "game-rankings-modal": () =>
-    gameView(
-      createGame({
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 6200,
-            totalBuyIn: 5000,
-            handsPlayed: 45,
-          }),
-          createPlayer("Alice", {
-            stack: 3800,
-            totalBuyIn: 5000,
-            handsPlayed: 45,
-          }),
-          ...emptySeats(7),
-        ],
-        rankings: [
-          {
-            seatIndex: 0,
-            playerId: "you",
-            playerName: "You",
-            stack: 6200,
-            totalBuyIn: 5000,
-            netWinnings: 1200,
-            handsPlayed: 45,
-            winRate: 5.33,
-          },
-          {
-            seatIndex: 1,
-            playerId: "alice",
-            playerName: "Alice",
-            stack: 3800,
-            totalBuyIn: 5000,
-            netWinnings: -1200,
-            handsPlayed: 45,
-            winRate: -5.33,
-          },
-        ],
-      }),
-      { showRanking: true },
-    ),
-
   "game-settings-modal": () =>
     gameView(
       createGame({
@@ -442,6 +401,7 @@ const GAME_TEST_CASES = {
 const TEST_CASES = {
   ...GAME_TEST_CASES,
   ...SPECIAL_GAME_TEST_CASES,
+  ...RANKING_MODAL_TEST_CASES,
   ...TABLE_SIZE_TEST_CASES,
   ...HISTORY_TEST_CASES,
 };
@@ -467,7 +427,7 @@ const CATEGORIES = {
   "Special States": SPECIAL_GAME_IDS,
   "Table Sizes": TABLE_SIZE_IDS,
   Errors: ["game-not-found", "game-error"],
-  Modals: ["game-rankings-modal", "game-settings-modal"],
+  Modals: [...RANKING_MODAL_IDS, "game-settings-modal"],
   [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,
 };
 

@@ -52,8 +52,13 @@ export function computeRankings(game) {
     });
   }
 
-  // Sort by net winnings (highest first)
-  rankings.sort((a, b) => b.netWinnings - a.netWinnings);
+  // Tournaments: sort by stack (chip leader first)
+  // Cash games: sort by net winnings (highest first)
+  if (game.tournament?.active) {
+    rankings.sort((a, b) => b.stack - a.stack);
+  } else {
+    rankings.sort((a, b) => b.netWinnings - a.netWinnings);
+  }
 
   return rankings;
 }
