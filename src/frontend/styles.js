@@ -69,6 +69,7 @@ export const baseStyles = css`
   :host {
     font-family: "Press Start 2P", monospace;
     image-rendering: pixelated;
+    user-select: none;
   }
 `;
 
