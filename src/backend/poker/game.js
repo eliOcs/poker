@@ -80,6 +80,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {Card[]} deck - Current deck
  * @property {Board} board - Community cards
  * @property {Hand} hand - Current hand state
+ * @property {number} handNumber - Current hand number (0 before first hand)
  * @property {number|null} countdown - Countdown ticks until hand starts (null if not counting)
  * @property {NodeJS.Timeout|null} tickTimer - Unified game tick timer (1 second interval)
  * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
@@ -148,6 +149,7 @@ export function create({
     deck: Deck.create(),
     board: { cards: [] },
     hand: createHand(),
+    handNumber: 0,
     countdown: null,
     tickTimer: null,
     winnerMessage: null,
@@ -283,6 +285,7 @@ export function startHand(game) {
   }
 
   game.winnerMessage = null;
+  game.handNumber++;
   Actions.startHand(game);
   HandHistory.startHand(game);
 
@@ -297,7 +300,7 @@ export function startHand(game) {
   ).length;
   logger.info("hand started", {
     gameId: game.id,
-    handNumber: HandHistory.getHandNumber(game.id),
+    handNumber: game.handNumber,
     playerCount,
   });
 
@@ -415,7 +418,7 @@ function getWinnerInfo(game, potResults) {
 function logHandEnded(game, winnerName, wonBy, amount) {
   logger.info("hand ended", {
     gameId: game.id,
-    handNumber: HandHistory.getHandNumber(game.id),
+    handNumber: game.handNumber,
     winner: winnerName,
     wonBy,
     amount,

@@ -42,11 +42,6 @@ class Board extends LitElement {
           color: var(--color-primary);
         }
 
-        .stakes {
-          font-size: var(--font-sm);
-          color: var(--color-fg-muted);
-        }
-
         .phase {
           font-size: var(--font-sm);
           color: var(--color-fg-white);
@@ -80,40 +75,6 @@ class Board extends LitElement {
           font-size: var(--font-md);
           color: var(--color-success);
           margin-top: var(--space-md);
-        }
-
-        .tournament-info {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-xs);
-          padding: var(--space-sm) var(--space-md);
-          background: rgba(0, 0, 0, 0.3);
-          border-radius: var(--space-sm);
-          margin-bottom: var(--space-md);
-        }
-
-        .tournament-level {
-          font-size: var(--font-sm);
-          color: var(--color-fg-white);
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .tournament-timer {
-          font-size: var(--font-md);
-          color: var(--color-primary);
-          font-variant-numeric: tabular-nums;
-        }
-
-        .tournament-break {
-          background: var(--color-warning);
-          color: var(--color-bg-dark);
-          padding: var(--space-xs) var(--space-sm);
-          font-size: var(--font-sm);
-          font-weight: bold;
-          text-transform: uppercase;
-          letter-spacing: 1px;
         }
 
         .tournament-winner-overlay {
@@ -150,16 +111,9 @@ class Board extends LitElement {
       countdown: { type: Number },
       winnerMessage: { type: Object },
       winningCards: { type: Array },
-      blinds: { type: Object },
       tournament: { type: Object },
       seats: { type: Array },
     };
-  }
-
-  formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
   getTournamentWinnerName() {
@@ -169,30 +123,6 @@ class Board extends LitElement {
       return winnerSeat.player?.name || `Seat ${this.tournament.winner + 1}`;
     }
     return `Seat ${this.tournament.winner + 1}`;
-  }
-
-  renderTournamentInfo() {
-    if (!this.tournament) return "";
-
-    if (this.tournament.onBreak) {
-      return html`
-        <div class="tournament-info">
-          <div class="tournament-break">Break</div>
-          <div class="tournament-timer">
-            ${this.formatTime(this.tournament.timeToNextLevel)}
-          </div>
-        </div>
-      `;
-    }
-
-    return html`
-      <div class="tournament-info">
-        <div class="tournament-level">Level ${this.tournament.level}</div>
-        <div class="tournament-timer">
-          ${this.formatTime(this.tournament.timeToNextLevel)}
-        </div>
-      </div>
-    `;
   }
 
   renderTournamentWinner() {
@@ -208,13 +138,6 @@ class Board extends LitElement {
 
   isWinningCard(card) {
     return this.winningCards?.includes(card);
-  }
-
-  renderStakes() {
-    if (!this.blinds) return "";
-    return html`<div class="stakes">
-      ${formatCurrency(this.blinds.small)}/${formatCurrency(this.blinds.big)}
-    </div>`;
   }
 
   renderCommunityCards(cards) {
@@ -258,10 +181,8 @@ class Board extends LitElement {
   renderCountdownView() {
     return html`
       <div class="board-info">
-        ${this.renderTournamentInfo()}
         <div class="phase">Starting in...</div>
         <div class="countdown">${this.countdown}</div>
-        ${this.renderStakes()}
       </div>
     `;
   }
@@ -269,9 +190,7 @@ class Board extends LitElement {
   renderBreakView() {
     return html`
       <div class="board-info">
-        ${this.renderTournamentInfo()}
         <div class="phase">On Break</div>
-        ${this.renderStakes()}
       </div>
     `;
   }
@@ -280,13 +199,11 @@ class Board extends LitElement {
     const phase = this.hand?.phase || "Waiting";
     return html`
       <div class="board-info">
-        ${this.renderTournamentInfo()}
         <div class="phase">${phase}</div>
         ${this.renderCommunityCards(cards)}
         ${this.hand
           ? html`<div class="pot">Pot: ${formatCurrency(this.hand.pot)}</div>`
           : ""}
-        ${this.renderStakes()}
       </div>
     `;
   }
@@ -297,18 +214,14 @@ class Board extends LitElement {
     if (this.hasTournamentWinner()) {
       return html`
         ${this.renderTournamentWinner()}
-        <div class="board-info">
-          ${this.renderTournamentInfo()} ${this.renderCommunityCards(cards)}
-          ${this.renderStakes()}
-        </div>
+        <div class="board-info">${this.renderCommunityCards(cards)}</div>
       `;
     }
 
     if (this.winnerMessage) {
       return html`
         <div class="board-info">
-          ${this.renderTournamentInfo()} ${this.renderCommunityCards(cards)}
-          ${this.renderWinnerMessage()} ${this.renderStakes()}
+          ${this.renderCommunityCards(cards)} ${this.renderWinnerMessage()}
         </div>
       `;
     }

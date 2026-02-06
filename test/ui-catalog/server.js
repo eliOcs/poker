@@ -42,7 +42,7 @@ function handleRequest(req, res) {
   // Check static routes
   if (routes[pathname]) {
     console.log(`[200] ${pathname} -> ${routes[pathname]}`);
-    respondWithFile(routes[pathname], res, { noCache: true });
+    respondWithFile(req, res, routes[pathname], { noCache: true });
     return;
   }
 
@@ -54,7 +54,7 @@ function handleRequest(req, res) {
     const filePath = pathname.slice(1); // Remove leading /
     if (fs.existsSync(filePath)) {
       console.log(`[200] ${pathname} -> ${filePath}`);
-      respondWithFile(filePath, res, { noCache: true });
+      respondWithFile(req, res, filePath, { noCache: true });
       return;
     }
   }
@@ -62,7 +62,7 @@ function handleRequest(req, res) {
   // Serve node_modules (Lit)
   if (nodeModulesFiles[pathname]) {
     console.log(`[200] ${pathname} -> ${nodeModulesFiles[pathname]}`);
-    respondWithFile(nodeModulesFiles[pathname], res, { noCache: true });
+    respondWithFile(req, res, nodeModulesFiles[pathname], { noCache: true });
     return;
   }
 

@@ -466,10 +466,12 @@ describe("hand-history-view", function () {
       process.env.DATA_DIR = TEST_DATA_DIR;
 
       // Create two hands
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       await HandHistory.finalizeHand(game, []);
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       await HandHistory.finalizeHand(game, []);
@@ -489,6 +491,7 @@ describe("hand-history-view", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
@@ -517,11 +520,13 @@ describe("hand-history-view", function () {
       process.env.DATA_DIR = TEST_DATA_DIR;
 
       // First hand
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       await HandHistory.finalizeHand(game, []);
 
       // Second hand
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       await HandHistory.finalizeHand(game, []);

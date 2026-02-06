@@ -52,7 +52,6 @@ describe("hand-history", function () {
       const recorder = HandHistory.getRecorder(testGame.id);
 
       assert.strictEqual(recorder.gameId, testGame.id);
-      assert.strictEqual(recorder.handNumber, 0);
       assert.deepStrictEqual(recorder.actions, []);
     });
 
@@ -65,19 +64,22 @@ describe("hand-history", function () {
   });
 
   describe("startHand", function () {
-    it("increments hand number", function () {
+    it("uses hand number from game object", function () {
       const { game } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
-      assert.strictEqual(HandHistory.getHandNumber(game.id), 1);
+      assert.strictEqual(game.handNumber, 1);
 
+      game.handNumber++;
       HandHistory.startHand(game);
-      assert.strictEqual(HandHistory.getHandNumber(game.id), 2);
+      assert.strictEqual(game.handNumber, 2);
     });
 
     it("captures players at hand start", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       const recorder = HandHistory.getRecorder(game.id);
 
@@ -92,6 +94,7 @@ describe("hand-history", function () {
     it("records betting actions with correct format", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordAction(game.id, players[0].id, "raise", 100, false);
 
@@ -105,6 +108,7 @@ describe("hand-history", function () {
     it("increments action number", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordAction(game.id, players[0].id, "check");
       HandHistory.recordAction(game.id, players[1].id, "bet", 50);
@@ -121,6 +125,7 @@ describe("hand-history", function () {
     it("records small blind", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 
@@ -132,6 +137,7 @@ describe("hand-history", function () {
     it("records big blind", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
 
@@ -145,6 +151,7 @@ describe("hand-history", function () {
     it("records dealt cards in OHH format", function () {
       const { game, players } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordDealtCards(game.id, players[0].id, ["Ah", "Ks"]);
 
@@ -158,6 +165,7 @@ describe("hand-history", function () {
     it("records street with board cards", function () {
       const { game } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordStreet(game.id, "flop", ["Qh", "Jc", "2d"]);
 
@@ -173,6 +181,7 @@ describe("hand-history", function () {
     it("stores a copy of board cards to prevent mutation", function () {
       const { game } = createGameWithPlayers();
 
+      game.handNumber++;
       HandHistory.startHand(game);
 
       // Simulate how the game deals cards - using a mutable array
@@ -202,6 +211,7 @@ describe("hand-history", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
+      game.handNumber++;
       HandHistory.startHand(game);
 
       // Preflop: blinds and dealt cards
@@ -288,6 +298,7 @@ describe("hand-history", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
@@ -334,6 +345,7 @@ describe("hand-history", function () {
       // Set test data directory
       process.env.DATA_DIR = TEST_DATA_DIR;
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 
@@ -350,6 +362,7 @@ describe("hand-history", function () {
 
       process.env.DATA_DIR = TEST_DATA_DIR;
 
+      game.handNumber++;
       HandHistory.startHand(game);
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
 

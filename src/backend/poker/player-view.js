@@ -168,6 +168,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {ViewSeat[]} seats
  * @property {number|null} countdown
  * @property {WinnerMessage|null} winnerMessage
+ * @property {number} handNumber
  * @property {Ranking.PlayerRanking[]} rankings
  * @property {TournamentView|null} tournament - Tournament state (null for cash games)
  */
@@ -526,6 +527,7 @@ export default function playerView(game, player) {
     running: game.running,
     button: game.button,
     blinds: game.blinds,
+    handNumber: game.handNumber,
     board: game.board,
     hand: game.hand
       ? {

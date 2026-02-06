@@ -107,35 +107,6 @@ describe("phg-game", () => {
     });
   });
 
-  describe("connection status", () => {
-    it('shows "Connecting" when connectionStatus is connecting', async () => {
-      element.game = createMockGameState();
-      element.connectionStatus = "connecting";
-      await element.updateComplete;
-
-      const status = element.shadowRoot.querySelector("#connection-status");
-      expect(status.textContent).to.include("Connecting");
-    });
-
-    it('shows "Connected" when connectionStatus is connected', async () => {
-      element.game = createMockGameState();
-      element.connectionStatus = "connected";
-      await element.updateComplete;
-
-      const status = element.shadowRoot.querySelector("#connection-status");
-      expect(status.textContent).to.include("Connected");
-    });
-
-    it('shows "Not connected" when connectionStatus is disconnected', async () => {
-      element.game = createMockGameState();
-      element.connectionStatus = "disconnected";
-      await element.updateComplete;
-
-      const status = element.shadowRoot.querySelector("#connection-status");
-      expect(status.textContent).to.include("Not connected");
-    });
-  });
-
   describe("settings", () => {
     it("shows settings button", async () => {
       element.game = createMockGameState();

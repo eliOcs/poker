@@ -28,6 +28,7 @@ describe("hand-history", () => {
       // because buildRounds only creates rounds for streets that have actions
 
       // Start the hand
+      game.handNumber++;
       HandHistory.startHand(game);
       Actions.startHand(game);
       drainGenerator(Actions.blinds(game));
@@ -103,10 +104,7 @@ describe("hand-history", () => {
       await HandHistory.finalizeHand(game, potResults);
 
       // Retrieve the hand from cache
-      const hand = await HandHistory.getHand(
-        game.id,
-        HandHistory.getHandNumber(game.id),
-      );
+      const hand = await HandHistory.getHand(game.id, game.handNumber);
 
       // Find the River round
       const riverRound = hand.rounds.find((r) => r.street === "River");
@@ -121,6 +119,7 @@ describe("hand-history", () => {
     });
 
     it("should include all 5 board cards across rounds when all-in on turn", async () => {
+      game.handNumber++;
       HandHistory.startHand(game);
       Actions.startHand(game);
       drainGenerator(Actions.blinds(game));
@@ -177,10 +176,7 @@ describe("hand-history", () => {
 
       await HandHistory.finalizeHand(game, potResults);
 
-      const hand = await HandHistory.getHand(
-        game.id,
-        HandHistory.getHandNumber(game.id),
-      );
+      const hand = await HandHistory.getHand(game.id, game.handNumber);
 
       // Count total board cards across all rounds
       let totalBoardCards = 0;

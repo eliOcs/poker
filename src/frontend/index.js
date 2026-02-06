@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import * as Audio from "./audio.js";
 import "./card.js";
@@ -9,6 +9,8 @@ import "./action-panel.js";
 import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
+
+const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
 class Game extends LitElement {
   static get styles() {
@@ -76,12 +78,21 @@ class Game extends LitElement {
           transform: translate(-50%, 0);
         }
 
-        #connection-status {
+        #info-bar {
           position: absolute;
           left: 0.5%;
           top: 0.5%;
-          color: var(--color-bg-disabled);
+          display: flex;
+          align-items: center;
+          gap: var(--space-sm);
           font-size: var(--font-sm);
+          color: var(--color-fg-medium);
+        }
+
+        .info-cell + .info-cell::before {
+          content: "|";
+          margin-right: var(--space-sm);
+          color: var(--color-bg-disabled);
         }
 
         #settings-btn {
@@ -192,7 +203,6 @@ class Game extends LitElement {
       gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
       user: { type: Object },
-      connectionStatus: { type: String },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
       volume: { type: Number },
@@ -206,7 +216,6 @@ class Game extends LitElement {
     this.gameId = null;
     this.game = null;
     this.user = null;
-    this.connectionStatus = "disconnected";
     this.showSettings = false;
     this.showRanking = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
@@ -357,14 +366,48 @@ class Game extends LitElement {
     return null;
   }
 
-  static _connectionStatusLabels = {
-    disconnected: "Not connected",
-    connecting: "Connecting ...",
-    connected: "Connected",
-  };
+  _formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
 
-  _renderConnectionStatus() {
-    return Game._connectionStatusLabels[this.connectionStatus] || "";
+  _renderInfoBar() {
+    if (!this.game) return "";
+    const isTournament = !!this.game.tournament;
+    const sizeLabel = TABLE_SIZE_LABELS[this.game.seats.length] || "";
+    const typeLabel = isTournament ? "Sit & Go" : "Cash";
+
+    const cells = [
+      html`<span class="info-cell info-type">${typeLabel}</span>`,
+      html`<span class="info-cell info-size">${sizeLabel}</span>`,
+    ];
+
+    if (this.game.blinds) {
+      cells.push(
+        html`<span class="info-cell info-blinds"
+          >${formatCurrency(this.game.blinds.small)}/${formatCurrency(
+            this.game.blinds.big,
+          )}</span
+        >`,
+      );
+    }
+
+    if (this.game.handNumber > 0) {
+      cells.push(
+        html`<span class="info-cell info-hand">#${this.game.handNumber}</span>`,
+      );
+    }
+
+    if (isTournament && this.game.tournament.timeToNextLevel != null) {
+      const t = this.game.tournament;
+      const timerText = t.onBreak
+        ? `Break ${this._formatTime(t.timeToNextLevel)}`
+        : `Level ${t.level}: ${this._formatTime(t.timeToNextLevel)}`;
+      cells.push(html`<span class="info-cell info-timer">${timerText}</span>`);
+    }
+
+    return html`<div id="info-bar">${cells}</div>`;
   }
 
   _renderRankingModal() {
@@ -439,7 +482,6 @@ class Game extends LitElement {
             .countdown=${this.game.countdown}
             .winnerMessage=${this.game.winnerMessage}
             .winningCards=${this.getWinningCards()}
-            .blinds=${this.game.blinds}
             .tournament=${this.game.tournament}
             .seats=${this.game.seats}
           ></phg-board>
@@ -472,7 +514,7 @@ class Game extends LitElement {
           .isWinner=${isWinner}
           @game-action=${this.handleGameAction}
         ></phg-action-panel>
-        <span id="connection-status">${this._renderConnectionStatus()}</span>
+        ${this._renderInfoBar()}
         <button
           id="history-btn"
           @click=${this.openHistory}

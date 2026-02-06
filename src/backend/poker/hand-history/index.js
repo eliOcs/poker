@@ -87,7 +87,6 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
 /**
  * @typedef {object} Recorder
  * @property {string} gameId
- * @property {number} handNumber
  * @property {OHHAction[]} actions
  * @property {number} actionCounter
  * @property {string} currentStreet
@@ -112,7 +111,6 @@ export function getRecorder(gameId) {
   if (!recorder) {
     recorder = {
       gameId,
-      handNumber: 0,
       actions: [],
       actionCounter: 0,
       currentStreet: "Preflop",
@@ -134,7 +132,6 @@ export function getRecorder(gameId) {
  */
 export function startHand(game) {
   const recorder = getRecorder(game.id);
-  recorder.handNumber++;
   recorder.actions = [];
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
@@ -383,7 +380,7 @@ export async function finalizeHand(game, potResults = []) {
   const hand = {
     spec_version: "1.4.6",
     site_name: "Pluton Poker",
-    game_number: `${game.id}-${recorder.handNumber}`,
+    game_number: `${game.id}-${game.handNumber}`,
     start_date_utc: recorder.startTime || new Date().toISOString(),
     game_type: "Holdem",
     bet_limit: { bet_type: "NL" },
@@ -417,13 +414,13 @@ export async function finalizeHand(game, potResults = []) {
   }
 
   // Add to cache
-  const cacheKey = `${game.id}-${recorder.handNumber}`;
+  const cacheKey = `${game.id}-${game.handNumber}`;
   addToCache(cacheKey, hand);
 
   // Write to file
   await writeHandToFile(game.id, hand);
 
-  // Reset for next hand (keep handNumber and tournament info)
+  // Reset for next hand (keep tournament info)
   recorder.actions = [];
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
@@ -431,16 +428,6 @@ export async function finalizeHand(game, potResults = []) {
   recorder.players = [];
   recorder.boardByStreet = new Map();
   // Note: tournament info is kept but will be refreshed on next startHand
-}
-
-/**
- * Gets the current hand number for a game
- * @param {string} gameId
- * @returns {number}
- */
-export function getHandNumber(gameId) {
-  const recorder = recorders.get(gameId);
-  return recorder?.handNumber || 0;
 }
 
 /**

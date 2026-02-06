@@ -9,7 +9,7 @@ import {
 const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
   { seats: 6, label: "6-Max" },
-  { seats: 9, label: "9-Max" },
+  { seats: 9, label: "Full Ring" },
 ];
 const DEFAULT_TABLE_SIZE_CASH = 6;
 const DEFAULT_TABLE_SIZE_TOURNAMENT = 6;
@@ -118,7 +118,7 @@ class Home extends LitElement {
         }
 
         .footer-link {
-          margin-top: 3em;
+          margin-top: 6em;
           font-size: var(--font-sm);
           color: var(--color-fg-muted);
           text-decoration: none;

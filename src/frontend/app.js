@@ -245,7 +245,6 @@ class App extends LitElement {
         .gameId=${gameMatch[1]}
         .game=${this.game}
         .user=${this.user}
-        .connectionStatus=${this.gameConnectionStatus}
       ></phg-game>`;
   }
 

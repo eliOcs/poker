@@ -320,7 +320,9 @@ export class PokerPlayer {
    * @returns {Promise<string>}
    */
   async getStakes() {
-    const stakesText = await this.board.locator(".stakes").textContent();
+    const stakesText = await this.game
+      .locator("#info-bar .info-blinds")
+      .textContent();
     return stakesText?.trim() ?? "";
   }
 
@@ -513,9 +515,9 @@ export class PokerPlayer {
    * @returns {Promise<number|null>}
    */
   async getTournamentLevel() {
-    const levelEl = this.board.locator(".tournament-level");
-    if (await levelEl.isVisible().catch(() => false)) {
-      const text = await levelEl.textContent();
+    const timerEl = this.game.locator("#info-bar .info-timer");
+    if (await timerEl.isVisible().catch(() => false)) {
+      const text = await timerEl.textContent();
       const match = text?.match(/Level (\d+)/);
       return match ? parseInt(match[1], 10) : null;
     }
@@ -527,9 +529,9 @@ export class PokerPlayer {
    * @returns {Promise<{small: number, big: number}|null>}
    */
   async getBlinds() {
-    const stakesEl = this.board.locator(".stakes");
-    if (await stakesEl.isVisible().catch(() => false)) {
-      const text = await stakesEl.textContent();
+    const blindsEl = this.game.locator("#info-bar .info-blinds");
+    if (await blindsEl.isVisible().catch(() => false)) {
+      const text = await blindsEl.textContent();
       // Parse "$25/$50" or "$1,000/$2,000" format (with optional decimals and commas)
       const match = text?.match(/\$([\d,]+(?:\.\d+)?)\/\$([\d,]+(?:\.\d+)?)/);
       if (match) {
