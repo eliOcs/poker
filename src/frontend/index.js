@@ -472,6 +472,7 @@ class Game extends LitElement {
     const { seatIndex, actions, bustedPosition, isWinner } =
       this.getMySeatInfo();
     const isSeated = this.isPlayerSeated();
+    const canSit = !isSeated && this.game.seats.some((s) => s.empty);
 
     return html`
       <div id="wrapper">
@@ -510,6 +511,7 @@ class Game extends LitElement {
           .smallBlind=${this.game.blinds?.small || 1}
           .bigBlind=${this.game.blinds?.big || 1}
           .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
+          .canSit=${canSit}
           .bustedPosition=${bustedPosition}
           .isWinner=${isWinner}
           @game-action=${this.handleGameAction}

@@ -25,6 +25,7 @@ class ActionPanel extends LitElement {
       copied: { type: Boolean },
       bustedPosition: { type: Number },
       isWinner: { type: Boolean },
+      canSit: { type: Boolean },
     };
   }
 
@@ -39,6 +40,7 @@ class ActionPanel extends LitElement {
     this.copied = false;
     this.bustedPosition = null;
     this.isWinner = false;
+    this.canSit = false;
     this._lastActionType = null;
   }
 
@@ -107,6 +109,13 @@ class ActionPanel extends LitElement {
       <div class="waiting-panel">
         <span class="waiting">Waiting for players...</span>
         <div class="share-buttons">
+          ${this.canSit
+            ? html`<phg-button
+                variant="primary"
+                @click=${() => this.sendAction({ action: "sit" })}
+                >Sit</phg-button
+              >`
+            : ""}
           <phg-button
             variant="${this.copied ? "success" : "action"}"
             @click=${this.copyGameLink}
@@ -171,20 +180,20 @@ class ActionPanel extends LitElement {
   _renderSitInLeave(actionMap) {
     return html`
       <div class="waiting-actions">
+        ${actionMap.leave
+          ? html`<phg-button
+              variant="muted"
+              @click=${() =>
+                this.sendAction({ action: "leave", seat: this.seatIndex })}
+              >Leave Table</phg-button
+            >`
+          : ""}
         ${actionMap.sitIn
           ? html`<phg-button
               variant="success"
               @click=${() =>
                 this.sendAction({ action: "sitIn", seat: this.seatIndex })}
               >Sit In</phg-button
-            >`
-          : ""}
-        ${actionMap.leave
-          ? html`<phg-button
-              variant="secondary"
-              @click=${() =>
-                this.sendAction({ action: "leave", seat: this.seatIndex })}
-              >Leave Table</phg-button
             >`
           : ""}
       </div>
@@ -196,7 +205,7 @@ class ActionPanel extends LitElement {
       <div class="waiting-actions">
         ${actionMap.sitOut
           ? html`<phg-button
-              variant="secondary"
+              variant="muted"
               @click=${() =>
                 this.sendAction({ action: "sitOut", seat: this.seatIndex })}
               >Sit Out</phg-button

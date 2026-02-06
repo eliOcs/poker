@@ -47,6 +47,10 @@ class Seat extends LitElement {
           font-size: var(--font-lg);
         }
 
+        :host(.empty)::before {
+          display: none;
+        }
+
         :host(.acting)::before {
           border-color: var(--color-primary);
           box-shadow:

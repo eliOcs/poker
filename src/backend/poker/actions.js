@@ -59,7 +59,9 @@ export function start(game) {
  * @param {Game} game
  * @param {{ seat: number, player: Player }} options
  */
-export function sit(game, { seat, player }) {
+export function sit(game, { seat: requestedSeat, player }) {
+  const seat = requestedSeat ?? game.seats.findIndex((s) => s.empty);
+  if (seat === -1) throw new Error("no empty seats");
   if (game.seats[seat].empty) {
     const playerSeat = game.seats.findIndex(
       (s) => !s.empty && s.player === player,

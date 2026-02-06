@@ -401,7 +401,7 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       const sitOutButton = actionPanel.shadowRoot.querySelector(
-        'phg-button[variant="secondary"]',
+        'phg-button[variant="muted"]',
       );
       expect(sitOutButton).to.exist;
       expect(sitOutButton.textContent.trim()).to.equal("Sit Out");
@@ -456,7 +456,7 @@ describe("phg-action-panel", () => {
       });
 
       const sitOutButton = actionPanel.shadowRoot.querySelector(
-        'phg-button[variant="secondary"]',
+        'phg-button[variant="muted"]',
       );
       sitOutButton.click();
 
