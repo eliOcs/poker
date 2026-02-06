@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import path from "path";
 import stream from "stream";
-import mime from "mime-types";
 
 /**
  * Recursively collects all .js files from a directory
@@ -24,13 +23,21 @@ export function collectJsFiles(dir, baseUrl) {
   return files;
 }
 
-const allowedExtensions = [".html", ".js", ".css", ".png", ".ico"];
+/** @type {Record<string, string>} */
+const mimeTypes = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
+  ".ico": "image/x-icon",
+};
 
 /** @type {Record<string, string>} */
 const staticFiles = {};
 for (const file of fs.readdirSync("src/frontend")) {
   const ext = path.extname(file);
-  if (allowedExtensions.includes(ext)) {
+  if (ext in mimeTypes) {
     staticFiles["/" + file] = "src/frontend/" + file;
   }
 }
@@ -77,7 +84,7 @@ export function getFilePath(url) {
  */
 export async function respondWithFile(req, res, filePath, options = {}) {
   const { replacements, noCache } = options;
-  const contentType = mime.contentType(path.extname(filePath));
+  const contentType = mimeTypes[path.extname(filePath)];
   const headers = {
     "content-type": contentType || "application/octet-stream",
   };
