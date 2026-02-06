@@ -18,7 +18,6 @@
 - when sit out shows waiting for your turn
 - if folded you can't sitout
 - Sit out toggle
-- Version number / Release notes
 - Send diffs instead of the full game state to reduce traffic
 - Store hand history as gzip
 - gzip between backend a frontend
@@ -26,7 +25,6 @@
 - Adapt stats table for tournaments
 - Allow buying amount for sit n gos
 - Allow different currencys USD, EUR and BTC
-- Different styles for table positions if table is 2max, 6max or 9max
 - Avatar creator: wii style but pixel art
 - Chat: to talk to players but also announcements: shows who won the hand, blind announcments
 - Emotes
