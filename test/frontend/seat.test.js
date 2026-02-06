@@ -3,6 +3,7 @@ import {
   MockWebSocket,
   createMockGameState,
   createMockGameWithPlayers,
+  createMockTournamentGameState,
   mockOccupiedSeat,
   mockFoldedSeat,
   mockAllInSeat,
@@ -247,6 +248,28 @@ describe("phg-seat", () => {
     expect(sentMessage).to.exist;
     expect(sentMessage.action).to.equal("sit");
     expect(sentMessage.seat).to.be.a("number");
+  });
+
+  it('shows "Sit" without buy-in for cash game empty seats', async () => {
+    element.game = createMockGameState();
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const sitBtn = seats[0].shadowRoot.querySelector("phg-button");
+    expect(sitBtn).to.exist;
+    expect(sitBtn.textContent.trim()).to.equal("Sit");
+  });
+
+  it('shows "Sit $5" with buy-in for tournament empty seats', async () => {
+    element.game = createMockTournamentGameState();
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const sitBtn = seats[0].shadowRoot.querySelector("phg-button");
+    expect(sitBtn).to.exist;
+    expect(sitBtn.textContent.trim()).to.equal("Sit $5");
   });
 
   it("displays lastAction when set (check, call, bet, raise)", async () => {

@@ -62,6 +62,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {string|null} startTime - Tournament start time (ISO string)
  * @property {number} initialStack - Starting stack for each player
  * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ * @property {Cents} buyIn - Buy-in amount in cents
  */
 
 /**
@@ -164,6 +165,7 @@ export function create({
 /**
  * @typedef {object} TournamentOptions
  * @property {number} [seats] - Number of seats (default: 6)
+ * @property {Cents} [buyIn] - Buy-in amount in cents
  */
 
 /**
@@ -173,6 +175,7 @@ export function create({
  */
 export function createTournament({
   seats: numberOfSeats = Tournament.DEFAULT_SEATS,
+  buyIn = Tournament.DEFAULT_BUYIN.amount,
 } = {}) {
   const level1Blinds = Tournament.getBlindsForLevel(1);
   const blinds = {
@@ -193,6 +196,7 @@ export function createTournament({
     startTime: null,
     initialStack: Tournament.INITIAL_STACK,
     winner: null,
+    buyIn,
   };
 
   return game;

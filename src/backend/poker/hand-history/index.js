@@ -82,6 +82,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {string|null} startTime
  * @property {number} initialStack
  * @property {number} level
+ * @property {Cents} buyIn
  */
 
 /**
@@ -151,6 +152,7 @@ export function startHand(game) {
       startTime: game.tournament.startTime,
       initialStack: game.tournament.initialStack,
       level: game.tournament.level,
+      buyIn: game.tournament.buyIn,
     };
   } else {
     recorder.tournament = null;
@@ -405,7 +407,7 @@ export async function finalizeHand(game, potResults = []) {
         recorder.startTime ||
         new Date().toISOString(),
       currency: "USD",
-      buyin_amount: 0, // No buy-in tracking for v1
+      buyin_amount: toDollars(recorder.tournament.buyIn),
       fee_amount: 0,
       initial_stack: toDollars(recorder.tournament.initialStack),
       type: "SnG",

@@ -2,6 +2,7 @@ import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
 import * as User from "./user.js";
 import * as Stakes from "./poker/stakes.js";
+import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as logger from "./logger.js";
 import * as Store from "./store.js";
@@ -127,6 +128,24 @@ function parseBlinds(data) {
     };
   }
   return { ante: 0, small: Stakes.DEFAULT.small, big: Stakes.DEFAULT.big };
+}
+
+/**
+ * Parses buy-in from request data
+ * @param {unknown} data
+ * @returns {number}
+ */
+function parseBuyIn(data) {
+  if (
+    data &&
+    typeof data === "object" &&
+    "buyIn" in data &&
+    typeof data.buyIn === "number" &&
+    Tournament.isValidBuyin(data.buyIn)
+  ) {
+    return data.buyIn;
+  }
+  return Tournament.DEFAULT_BUYIN.amount;
 }
 
 /**
@@ -259,11 +278,13 @@ export function createRoutes(users, games, broadcast) {
         const seats = parseSeats(data, isTournament ? 6 : 9);
 
         if (isTournament) {
-          const game = PokerGame.createTournament({ seats });
+          const buyIn = parseBuyIn(data);
+          const game = PokerGame.createTournament({ seats, buyIn });
           games.set(game.id, game);
           logger.info("tournament created", {
             gameId: game.id,
             seats,
+            buyIn,
             initialStack: game.tournament?.initialStack,
           });
           respondWithJson(res, { id: game.id, type: "tournament" });

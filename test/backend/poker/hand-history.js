@@ -1,9 +1,11 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import * as HandHistory from "../../../src/backend/poker/hand-history/index.js";
+import { toDollars } from "../../../src/backend/poker/hand-history/io.js";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
+import * as Tournament from "../../../src/shared/tournament.js";
 import { drainGenerator } from "./test-helpers.js";
 
 describe("hand-history", () => {
@@ -199,6 +201,68 @@ describe("hand-history", () => {
         riverRound.actions,
         [],
         "River round should have no actions",
+      );
+    });
+  });
+
+  describe("tournament hand history buy-in", () => {
+    let tournamentGame;
+
+    beforeEach(() => {
+      tournamentGame = Game.createTournament({ buyIn: 1000 });
+      tournamentGame.seats[0] = Seat.occupied(
+        { id: "p1", name: "Alice" },
+        Tournament.INITIAL_STACK,
+      );
+      tournamentGame.seats[1] = Seat.occupied(
+        { id: "p2", name: "Bob" },
+        Tournament.INITIAL_STACK,
+      );
+      tournamentGame.tournament.startTime = "2024-01-01T10:00:00.000Z";
+      tournamentGame.button = 0;
+    });
+
+    afterEach(() => {
+      HandHistory.clearRecorder(tournamentGame.id);
+    });
+
+    it("should record buyin_amount in OHH tournament_info", async () => {
+      tournamentGame.handNumber++;
+      HandHistory.startHand(tournamentGame);
+      Actions.startHand(tournamentGame);
+      drainGenerator(Actions.blinds(tournamentGame));
+      drainGenerator(Actions.dealPreflop(tournamentGame));
+
+      HandHistory.recordBlind(tournamentGame.id, "p2", "sb", 2500);
+      HandHistory.recordBlind(tournamentGame.id, "p1", "bb", 5000);
+
+      // Player 2 folds
+      tournamentGame.seats[1].folded = true;
+      HandHistory.recordAction(tournamentGame.id, "p2", "fold");
+
+      const potResults = [
+        {
+          potAmount: 7500,
+          winners: [0],
+          winningHand: null,
+          winningCards: null,
+          awards: [{ seat: 0, amount: 7500 }],
+        },
+      ];
+
+      await HandHistory.finalizeHand(tournamentGame, potResults);
+
+      const hand = await HandHistory.getHand(
+        tournamentGame.id,
+        tournamentGame.handNumber,
+      );
+
+      assert.ok(hand.tournament, "should be marked as tournament hand");
+      assert.ok(hand.tournament_info, "should have tournament_info");
+      assert.equal(
+        hand.tournament_info.buyin_amount,
+        toDollars(1000),
+        "buyin_amount should match tournament buy-in",
       );
     });
   });

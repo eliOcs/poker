@@ -156,6 +156,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {boolean} onBreak - Whether currently on break
  * @property {boolean} pendingBreak - Whether break will start after current hand
  * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ * @property {Cents} buyIn - Buy-in amount in cents
  */
 
 /**
@@ -520,6 +521,7 @@ export default function playerView(game, player) {
         onBreak: game.tournament.onBreak,
         pendingBreak: game.tournament.pendingBreak,
         winner: game.tournament.winner,
+        buyIn: game.tournament.buyIn,
       }
     : null;
 

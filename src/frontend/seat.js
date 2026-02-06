@@ -376,6 +376,7 @@ class Seat extends LitElement {
       isButton: { type: Boolean },
       showSitAction: { type: Boolean },
       clockTicks: { type: Number },
+      buyIn: { type: Number },
     };
   }
 
@@ -383,6 +384,7 @@ class Seat extends LitElement {
     super();
     this.showSitAction = true;
     this.clockTicks = 0;
+    this.buyIn = 0;
   }
 
   /**
@@ -465,9 +467,9 @@ class Seat extends LitElement {
 
   _renderEmptySeat() {
     const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
-    return sitAction && this.showSitAction
-      ? html`<phg-button @click=${this.handleSit}>Sit</phg-button>`
-      : "";
+    if (!sitAction || !this.showSitAction) return "";
+    const label = this.buyIn ? `Sit ${formatCurrency(this.buyIn)}` : "Sit";
+    return html`<phg-button @click=${this.handleSit}>${label}</phg-button>`;
   }
 
   _renderStatusOrAction() {

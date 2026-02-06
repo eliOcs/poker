@@ -5,6 +5,7 @@ import {
   PRESETS as STAKES_PRESETS,
   DEFAULT as DEFAULT_STAKES,
 } from "/src/shared/stakes.js";
+import { BUYIN_PRESETS, DEFAULT_BUYIN } from "/src/shared/tournament.js";
 
 const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
@@ -146,6 +147,7 @@ class Home extends LitElement {
       creating: { type: Boolean },
       selectedGameType: { type: String },
       selectedStakes: { type: Object },
+      selectedBuyIn: { type: Object },
       selectedTableSize: { type: Number },
     };
   }
@@ -155,6 +157,7 @@ class Home extends LitElement {
     this.creating = false;
     this.selectedGameType = "cash";
     this.selectedStakes = DEFAULT_STAKES;
+    this.selectedBuyIn = DEFAULT_BUYIN;
     this.selectedTableSize = DEFAULT_TABLE_SIZE_CASH;
   }
 
@@ -173,6 +176,11 @@ class Home extends LitElement {
     this.selectedStakes = STAKES_PRESETS[index];
   }
 
+  handleBuyInChange(e) {
+    const index = parseInt(e.target.value, 10);
+    this.selectedBuyIn = BUYIN_PRESETS[index];
+  }
+
   handleTableSizeChange(e) {
     this.selectedTableSize = parseInt(e.target.value, 10);
   }
@@ -185,6 +193,7 @@ class Home extends LitElement {
           ? {
               type: "tournament",
               seats: this.selectedTableSize,
+              buyIn: this.selectedBuyIn.amount,
             }
           : {
               type: "cash",
@@ -263,7 +272,23 @@ class Home extends LitElement {
               </select>
             </div>
           `
-        : ""}
+        : html`
+            <div class="stakes-selector">
+              <span class="stakes-label">Buy-In</span>
+              <select @change=${this.handleBuyInChange}>
+                ${BUYIN_PRESETS.map(
+                  (preset, i) => html`
+                    <option
+                      value="${i}"
+                      ?selected=${preset.amount === this.selectedBuyIn.amount}
+                    >
+                      ${preset.label}
+                    </option>
+                  `,
+                )}
+              </select>
+            </div>
+          `}
       <div class="stakes-selector">
         <span class="stakes-label">Table Size</span>
         <select @change=${this.handleTableSizeChange}>

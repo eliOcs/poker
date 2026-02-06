@@ -177,6 +177,20 @@ export function createMockGameWithBuyIn() {
   });
 }
 
+export function createMockTournamentGameState(overrides = {}) {
+  return createMockGameState({
+    tournament: {
+      level: 1,
+      timeToNextLevel: 900,
+      onBreak: false,
+      pendingBreak: false,
+      winner: null,
+      buyIn: 500,
+    },
+    ...overrides,
+  });
+}
+
 export function createMockGameWithWinner(winnerMessage) {
   return createMockGameState({
     hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },

@@ -5,6 +5,7 @@ import {
   createMockGameWithPlayers,
   createMockGameAtFlop,
   createMockGameWithBuyIn,
+  createMockTournamentGameState,
   mockOpponentSeat,
   mockEmptySeat,
   mockOccupiedSeat,
@@ -598,6 +599,32 @@ describe("phg-action-panel", () => {
 
       // betAmount should be preserved since we're still in betting context
       expect(actionPanel.betAmount).to.equal(30000);
+    });
+  });
+
+  describe("sit button in waiting panel", () => {
+    it('shows "Sit" without buy-in for cash games', async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const sitButton = findButtonByText(actionPanel.shadowRoot, "Sit");
+      expect(sitButton).to.exist;
+      expect(sitButton.textContent.trim()).to.equal("Sit");
+    });
+
+    it('shows "Sit $5" with buy-in for tournaments', async () => {
+      element.game = createMockTournamentGameState();
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const sitButton = findButtonByText(actionPanel.shadowRoot, "Sit");
+      expect(sitButton).to.exist;
+      expect(sitButton.textContent.trim()).to.equal("Sit $5");
     });
   });
 });

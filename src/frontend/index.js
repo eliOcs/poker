@@ -498,6 +498,7 @@ class Game extends LitElement {
                     .seatNumber=${i}
                     .isButton=${this.game.button === i}
                     .showSitAction=${!isSeated}
+                    .buyIn=${this.game.tournament?.buyIn ?? 0}
                     .clockTicks=${this.game.hand?.actingSeat === i
                       ? this.game.hand?.clockTicks
                       : 0}
@@ -513,6 +514,7 @@ class Game extends LitElement {
           .bigBlind=${this.game.blinds?.big || 1}
           .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
           .canSit=${canSit}
+          .buyIn=${this.game.tournament?.buyIn ?? 0}
           .bustedPosition=${bustedPosition}
           .isWinner=${isWinner}
           @game-action=${this.handleGameAction}

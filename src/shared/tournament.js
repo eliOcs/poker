@@ -55,3 +55,73 @@ export function getBlindsForLevel(level) {
 export function getMaxLevel() {
   return BLIND_LEVELS.length;
 }
+
+/**
+ * @typedef {object} BuyInPreset
+ * @property {string} label - Display label (e.g., "$5")
+ * @property {Cents} amount - Buy-in amount in cents
+ */
+
+/** @type {BuyInPreset[]} */
+export const BUYIN_PRESETS = [
+  { label: "$2", amount: 200 },
+  { label: "$5", amount: 500 },
+  { label: "$10", amount: 1000 },
+  { label: "$20", amount: 2000 },
+  { label: "$50", amount: 5000 },
+  { label: "$100", amount: 10000 },
+  { label: "$200", amount: 20000 },
+  { label: "$500", amount: 50000 },
+  { label: "$1000", amount: 100000 },
+  { label: "$2000", amount: 200000 },
+];
+
+/** @type {BuyInPreset} */
+export const DEFAULT_BUYIN = BUYIN_PRESETS[1]; // $5
+
+/**
+ * Validates that a buy-in amount matches a preset
+ * @param {number} amount - Amount in cents
+ * @returns {boolean}
+ */
+export function isValidBuyin(amount) {
+  return BUYIN_PRESETS.some((p) => p.amount === amount);
+}
+
+/**
+ * @typedef {object} Prize
+ * @property {number} position - Finishing position (1-based)
+ * @property {Cents} amount - Prize amount in cents
+ */
+
+/**
+ * Calculates prize distribution based on player count and buy-in
+ * @param {number} playerCount - Number of players
+ * @param {Cents} buyinAmount - Buy-in amount per player in cents
+ * @returns {Prize[]}
+ */
+export function calculatePrizes(playerCount, buyinAmount) {
+  const pool = playerCount * buyinAmount;
+
+  if (playerCount <= 1) {
+    return [];
+  }
+
+  if (playerCount <= 4) {
+    return [{ position: 1, amount: pool }];
+  }
+
+  if (playerCount <= 7) {
+    return [
+      { position: 1, amount: Math.round(pool * 0.8) },
+      { position: 2, amount: Math.round(pool * 0.2) },
+    ];
+  }
+
+  // 8-9 players
+  return [
+    { position: 1, amount: Math.round(pool * 0.7) },
+    { position: 2, amount: Math.round(pool * 0.2) },
+    { position: 3, amount: Math.round(pool * 0.1) },
+  ];
+}

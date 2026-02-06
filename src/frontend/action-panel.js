@@ -26,6 +26,7 @@ class ActionPanel extends LitElement {
       bustedPosition: { type: Number },
       isWinner: { type: Boolean },
       canSit: { type: Boolean },
+      buyIn: { type: Number },
     };
   }
 
@@ -41,6 +42,7 @@ class ActionPanel extends LitElement {
     this.bustedPosition = null;
     this.isWinner = false;
     this.canSit = false;
+    this.buyIn = 0;
     this._lastActionType = null;
   }
 
@@ -109,13 +111,6 @@ class ActionPanel extends LitElement {
       <div class="waiting-panel">
         <span class="waiting">Waiting for players...</span>
         <div class="share-buttons">
-          ${this.canSit
-            ? html`<phg-button
-                variant="primary"
-                @click=${() => this.sendAction({ action: "sit" })}
-                >Sit</phg-button
-              >`
-            : ""}
           <phg-button
             variant="${this.copied ? "success" : "action"}"
             @click=${this.copyGameLink}
@@ -125,6 +120,15 @@ class ActionPanel extends LitElement {
           ${this.canShare()
             ? html`<phg-button variant="action" @click=${this.shareGameLink}
                 >Share</phg-button
+              >`
+            : ""}
+          ${this.canSit
+            ? html`<phg-button
+                variant="primary"
+                @click=${() => this.sendAction({ action: "sit" })}
+                >${this.buyIn
+                  ? `Sit ${formatCurrency(this.buyIn)}`
+                  : "Sit"}</phg-button
               >`
             : ""}
         </div>

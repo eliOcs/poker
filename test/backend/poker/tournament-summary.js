@@ -6,12 +6,13 @@ import * as Actions from "../../../src/backend/poker/actions.js";
 import * as TournamentSummary from "../../../src/backend/poker/tournament-summary.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Tournament from "../../../src/shared/tournament.js";
+import { toDollars } from "../../../src/backend/poker/hand-history/io.js";
 
 describe("tournament-summary", () => {
   let game;
 
   beforeEach(() => {
-    game = Game.createTournament();
+    game = Game.createTournament({ buyIn: 500 });
     // Add players
     game.seats[0] = Seat.occupied(
       { id: "player1", name: "Alice" },
@@ -184,6 +185,10 @@ describe("tournament-summary", () => {
       assert.equal(data.ots.type, "STT");
       assert.deepEqual(data.ots.flags, ["SNG"]);
 
+      // Verify buy-in and prize pool
+      assert.equal(data.ots.buyin_amount, toDollars(500));
+      assert.equal(data.ots.prize_pool, toDollars(500 * 3));
+
       // Verify finishes
       const finishes = data.ots.tournament_finishes_and_winnings;
       assert.equal(finishes.length, 3);
@@ -191,10 +196,13 @@ describe("tournament-summary", () => {
       // Should be sorted by position
       assert.equal(finishes[0].finish_position, 1);
       assert.equal(finishes[0].player_name, "Alice"); // Winner
+      assert.equal(finishes[0].prize, toDollars(500 * 3)); // 2-4 players: winner takes all
       assert.equal(finishes[1].finish_position, 2);
       assert.equal(finishes[1].player_name, "Bob");
+      assert.equal(finishes[1].prize, 0);
       assert.equal(finishes[2].finish_position, 3);
       assert.equal(finishes[2].player_name, "Charlie");
+      assert.equal(finishes[2].prize, 0);
     });
   });
 
@@ -320,5 +328,72 @@ describe("tournament-summary", () => {
       // After autoStartNextHand, winner should be set
       assert.equal(game.tournament.winner, 0, "should detect seat 0 as winner");
     });
+  });
+});
+
+describe("calculatePrizes", () => {
+  it("should return empty array for 1 or fewer players", () => {
+    assert.deepEqual(Tournament.calculatePrizes(1, 500), []);
+    assert.deepEqual(Tournament.calculatePrizes(0, 500), []);
+  });
+
+  it("should give winner-takes-all for 2-4 players", () => {
+    const prizes2 = Tournament.calculatePrizes(2, 500);
+    assert.equal(prizes2.length, 1);
+    assert.equal(prizes2[0].position, 1);
+    assert.equal(prizes2[0].amount, 1000);
+
+    const prizes3 = Tournament.calculatePrizes(3, 1000);
+    assert.equal(prizes3.length, 1);
+    assert.equal(prizes3[0].position, 1);
+    assert.equal(prizes3[0].amount, 3000);
+
+    const prizes4 = Tournament.calculatePrizes(4, 500);
+    assert.equal(prizes4.length, 1);
+    assert.equal(prizes4[0].position, 1);
+    assert.equal(prizes4[0].amount, 2000);
+  });
+
+  it("should split 80/20 for 5-7 players", () => {
+    const prizes5 = Tournament.calculatePrizes(5, 500);
+    assert.equal(prizes5.length, 2);
+    assert.equal(prizes5[0].position, 1);
+    assert.equal(prizes5[0].amount, 2000); // 80% of 2500
+    assert.equal(prizes5[1].position, 2);
+    assert.equal(prizes5[1].amount, 500); // 20% of 2500
+
+    const prizes6 = Tournament.calculatePrizes(6, 1000);
+    assert.equal(prizes6.length, 2);
+    assert.equal(prizes6[0].position, 1);
+    assert.equal(prizes6[0].amount, 4800); // 80% of 6000
+    assert.equal(prizes6[1].position, 2);
+    assert.equal(prizes6[1].amount, 1200); // 20% of 6000
+
+    const prizes7 = Tournament.calculatePrizes(7, 500);
+    assert.equal(prizes7.length, 2);
+    assert.equal(prizes7[0].position, 1);
+    assert.equal(prizes7[0].amount, 2800); // 80% of 3500
+    assert.equal(prizes7[1].position, 2);
+    assert.equal(prizes7[1].amount, 700); // 20% of 3500
+  });
+
+  it("should split 70/20/10 for 8-9 players", () => {
+    const prizes8 = Tournament.calculatePrizes(8, 500);
+    assert.equal(prizes8.length, 3);
+    assert.equal(prizes8[0].position, 1);
+    assert.equal(prizes8[0].amount, 2800); // 70% of 4000
+    assert.equal(prizes8[1].position, 2);
+    assert.equal(prizes8[1].amount, 800); // 20% of 4000
+    assert.equal(prizes8[2].position, 3);
+    assert.equal(prizes8[2].amount, 400); // 10% of 4000
+
+    const prizes9 = Tournament.calculatePrizes(9, 1000);
+    assert.equal(prizes9.length, 3);
+    assert.equal(prizes9[0].position, 1);
+    assert.equal(prizes9[0].amount, 6300); // 70% of 9000
+    assert.equal(prizes9[1].position, 2);
+    assert.equal(prizes9[1].amount, 1800); // 20% of 9000
+    assert.equal(prizes9[2].position, 3);
+    assert.equal(prizes9[2].amount, 900); // 10% of 9000
   });
 });

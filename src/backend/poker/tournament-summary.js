@@ -135,16 +135,17 @@ export function recordElimination(game, seat, position) {
 /**
  * Builds finish entries for eliminated players
  * @param {TournamentRecorder} recorder
+ * @param {Map<number, number>} prizeByPosition - Map of position -> prize in dollars
  * @returns {OTSFinish[]}
  */
-function buildEliminatedFinishes(recorder) {
+function buildEliminatedFinishes(recorder, prizeByPosition) {
   return recorder.eliminations.map((elimination) => {
     const player = recorder.players.find((p) => p.id === elimination.playerId);
     return {
       player_name: player?.name || elimination.playerId,
       finish_position: elimination.position,
       still_playing: false,
-      prize: 0,
+      prize: prizeByPosition.get(elimination.position) ?? 0,
     };
   });
 }
@@ -152,9 +153,10 @@ function buildEliminatedFinishes(recorder) {
 /**
  * Builds finish entry for the winner
  * @param {Game} game
+ * @param {Map<number, number>} prizeByPosition - Map of position -> prize in dollars
  * @returns {OTSFinish|null}
  */
-function buildWinnerFinish(game) {
+function buildWinnerFinish(game, prizeByPosition) {
   const winnerSeatIndex = game.tournament?.winner;
   if (winnerSeatIndex === null || winnerSeatIndex === undefined) {
     return null;
@@ -164,7 +166,7 @@ function buildWinnerFinish(game) {
     player_name: winnerSeat.player?.name || winnerSeat.player?.id || "Unknown",
     finish_position: 1,
     still_playing: false,
-    prize: 0,
+    prize: prizeByPosition.get(1) ?? 0,
   };
 }
 
@@ -176,9 +178,19 @@ function buildWinnerFinish(game) {
  */
 function buildOTSSummary(recorder, game) {
   const endTime = new Date().toISOString();
+  const buyIn = game.tournament?.buyIn ?? 0;
+  const playerCount = recorder.players.length;
+  const prizePool = buyIn * playerCount;
 
-  const finishes = buildEliminatedFinishes(recorder);
-  const winnerFinish = buildWinnerFinish(game);
+  const prizes = Tournament.calculatePrizes(playerCount, buyIn);
+  /** @type {Map<number, number>} */
+  const prizeByPosition = new Map();
+  for (const prize of prizes) {
+    prizeByPosition.set(prize.position, toDollars(prize.amount));
+  }
+
+  const finishes = buildEliminatedFinishes(recorder, prizeByPosition);
+  const winnerFinish = buildWinnerFinish(game, prizeByPosition);
   if (winnerFinish) {
     finishes.push(winnerFinish);
   }
@@ -192,7 +204,7 @@ function buildOTSSummary(recorder, game) {
     start_date_utc: recorder.startTime || endTime,
     end_date_utc: endTime,
     currency: "USD",
-    buyin_amount: 0,
+    buyin_amount: toDollars(buyIn),
     fee_amount: 0,
     initial_stack: toDollars(Tournament.INITIAL_STACK),
     type: "STT",
@@ -201,8 +213,8 @@ function buildOTSSummary(recorder, game) {
       type: "normal",
       round_time: Tournament.LEVEL_DURATION_TICKS,
     },
-    prize_pool: 0,
-    player_count: recorder.players.length,
+    prize_pool: toDollars(prizePool),
+    player_count: playerCount,
     tournament_finishes_and_winnings: finishes,
   };
 }
