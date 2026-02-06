@@ -197,7 +197,7 @@ export function createRoutes(users, games, broadcast) {
       path: "/",
       handler: ({ req, res }) => {
         getOrCreateUser(req, res, users);
-        respondWithFile("src/frontend/index.html", res);
+        respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
@@ -285,7 +285,7 @@ export function createRoutes(users, games, broadcast) {
       path: /^\/games\/([a-z0-9]+)$/,
       handler: ({ req, res }) => {
         getOrCreateUser(req, res, users);
-        respondWithFile("src/frontend/index.html", res);
+        respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
@@ -293,7 +293,7 @@ export function createRoutes(users, games, broadcast) {
       path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
       handler: ({ req, res }) => {
         getOrCreateUser(req, res, users);
-        respondWithFile("src/frontend/index.html", res);
+        respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
@@ -373,7 +373,7 @@ export async function handleRequest(req, res, routes) {
   // Static file fallback
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {
-    respondWithFile(filePath, res);
+    respondWithFile(req, res, filePath);
     return;
   }
 

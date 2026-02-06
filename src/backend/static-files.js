@@ -68,26 +68,40 @@ export function getFilePath(url) {
 
 /**
  * Responds with a file, optionally applying text replacements
- * @param {string} filePath
+ * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
+ * @param {string} filePath
  * @param {Object} [options]
  * @param {Record<string, string>} [options.replacements]
  * @param {boolean} [options.noCache]
  */
-export function respondWithFile(filePath, res, options = {}) {
+export async function respondWithFile(req, res, filePath, options = {}) {
   const { replacements, noCache } = options;
   const contentType = mime.contentType(path.extname(filePath));
   const headers = {
     "content-type": contentType || "application/octet-stream",
   };
+
+  const fh = await fs.promises.open(filePath, "r");
+
   if (noCache) {
     headers["cache-control"] = "no-store, no-cache, must-revalidate";
     headers["pragma"] = "no-cache";
     headers["expires"] = "0";
+  } else {
+    const stat = await fh.stat();
+    const etag = `"${stat.mtimeMs.toString(36)}"`;
+    headers["etag"] = etag;
+    if (req.headers["if-none-match"] === etag) {
+      await fh.close();
+      res.writeHead(304);
+      res.end();
+      return;
+    }
   }
-  res.writeHead(200, headers);
 
-  const fileStream = fs.createReadStream(filePath);
+  res.writeHead(200, headers);
+  const fileStream = fh.createReadStream();
 
   if (replacements) {
     const transform = new stream.Transform({

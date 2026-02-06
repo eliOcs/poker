@@ -71,7 +71,7 @@ async function handleRequest(req, res) {
   // Static file fallback
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {
-    respondWithFile(filePath, res);
+    respondWithFile(req, res, filePath);
     return;
   }
 
