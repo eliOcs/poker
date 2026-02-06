@@ -441,11 +441,6 @@ export function sitIn(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function leave(game, { seat }) {
-  // Cannot leave during a tournament
-  if (game.tournament?.active) {
-    throw new Error("cannot leave during a tournament");
-  }
-
   const seatObj = game.seats[seat];
 
   if (seatObj.empty) {
@@ -455,7 +450,11 @@ export function leave(game, { seat }) {
     throw new Error("must be sitting out to leave");
   }
 
-  // Make the seat empty (chips are cashed out)
+  // In an active tournament, only allow leaving before the first hand
+  if (game.tournament?.active && game.handNumber > 0) {
+    throw new Error("cannot leave during a tournament");
+  }
+
   game.seats[seat] = Seat.empty();
 }
 

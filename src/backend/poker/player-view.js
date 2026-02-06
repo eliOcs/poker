@@ -292,7 +292,7 @@ function getSittingOutActions(seat, game, isTournament) {
   // Always allow sitting in - if player can't afford the big blind, they go all-in
   const cost = seat.missedBigBlind ? Math.min(game.blinds.big, seat.stack) : 0;
   actions.push({ action: "sitIn", cost });
-  if (!isTournament) {
+  if (!isTournament || game.handNumber === 0) {
     actions.push({ action: "leave" });
   }
   return actions;

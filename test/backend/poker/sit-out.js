@@ -251,4 +251,35 @@ describe("sit out", () => {
       assert.equal(game.seats[0].player, player1);
     });
   });
+
+  describe("leave action in tournaments", () => {
+    let tournamentGame;
+
+    beforeEach(() => {
+      tournamentGame = Game.createTournament();
+      tournamentGame.seats[0] = Seat.occupied({ id: "player1" }, 1000);
+      tournamentGame.seats[2] = Seat.occupied({ id: "player2" }, 1000);
+      tournamentGame.seats[4] = Seat.occupied({ id: "player3" }, 1000);
+      tournamentGame.hand.phase = "waiting";
+    });
+
+    it("should allow leaving before tournament starts", () => {
+      assert.equal(tournamentGame.handNumber, 0);
+
+      tournamentGame.seats[0].sittingOut = true;
+      Actions.leave(tournamentGame, { seat: 0 });
+
+      assert.equal(tournamentGame.seats[0].empty, true);
+    });
+
+    it("should throw when leaving during an active tournament", () => {
+      tournamentGame.handNumber = 5;
+      tournamentGame.seats[0].sittingOut = true;
+
+      assert.throws(
+        () => Actions.leave(tournamentGame, { seat: 0 }),
+        /cannot leave during a tournament/,
+      );
+    });
+  });
 });
