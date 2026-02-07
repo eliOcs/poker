@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import stream from "stream";
+import zlib from "zlib";
 
 /**
  * Recursively collects all .js files from a directory
@@ -31,6 +32,8 @@ const mimeTypes = {
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".webp": "image/webp",
 };
 
 /** @type {Record<string, string>} */
@@ -39,6 +42,12 @@ for (const file of fs.readdirSync("src/frontend")) {
   const ext = path.extname(file);
   if (ext in mimeTypes) {
     staticFiles["/" + file] = "src/frontend/" + file;
+  }
+}
+for (const file of fs.readdirSync("src/frontend/fonts")) {
+  const ext = path.extname(file);
+  if (ext in mimeTypes) {
+    staticFiles["/fonts/" + file] = "src/frontend/fonts/" + file;
   }
 }
 
@@ -73,18 +82,12 @@ export function getFilePath(url) {
   return staticFiles[url] ?? sharedFiles[url] ?? nodeModulesFiles[url];
 }
 
-/**
- * Responds with a file, optionally applying text replacements
- * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res
- * @param {string} filePath
- * @param {Object} [options]
- * @param {Record<string, string>} [options.replacements]
- * @param {boolean} [options.noCache]
- */
+const compressibleTypes = new Set([".html", ".js", ".css", ".json", ".woff2"]);
+
 export async function respondWithFile(req, res, filePath, options = {}) {
   const { replacements, noCache } = options;
-  const contentType = mimeTypes[path.extname(filePath)];
+  const ext = path.extname(filePath);
+  const contentType = mimeTypes[ext];
   const headers = {
     "content-type": contentType || "application/octet-stream",
   };
@@ -99,6 +102,7 @@ export async function respondWithFile(req, res, filePath, options = {}) {
     const stat = await fh.stat();
     const etag = `"${stat.mtimeMs.toString(36)}"`;
     headers["etag"] = etag;
+    headers["cache-control"] = "public, max-age=86400";
     if (req.headers["if-none-match"] === etag) {
       await fh.close();
       res.writeHead(304);
@@ -107,21 +111,35 @@ export async function respondWithFile(req, res, filePath, options = {}) {
     }
   }
 
+  const acceptEncoding = req.headers["accept-encoding"] || "";
+  const useGzip = compressibleTypes.has(ext) && acceptEncoding.includes("gzip");
+
+  if (useGzip) {
+    headers["content-encoding"] = "gzip";
+    headers["vary"] = "Accept-Encoding";
+  }
+
   res.writeHead(200, headers);
-  const fileStream = fh.createReadStream();
+  /** @type {import('stream').Readable} */
+  let pipeline = fh.createReadStream();
 
   if (replacements) {
-    const transform = new stream.Transform({
-      transform(chunk, encoding, callback) {
-        let content = String(chunk);
-        for (const [key, value] of Object.entries(replacements)) {
-          content = content.replace(new RegExp(key, "g"), value);
-        }
-        callback(null, content);
-      },
-    });
-    fileStream.pipe(transform).pipe(res);
-  } else {
-    fileStream.pipe(res);
+    pipeline = pipeline.pipe(
+      new stream.Transform({
+        transform(chunk, encoding, callback) {
+          let content = String(chunk);
+          for (const [key, value] of Object.entries(replacements)) {
+            content = content.replace(new RegExp(key, "g"), value);
+          }
+          callback(null, content);
+        },
+      }),
+    );
   }
+
+  if (useGzip) {
+    pipeline = pipeline.pipe(zlib.createGzip());
+  }
+
+  pipeline.pipe(res);
 }

@@ -230,7 +230,7 @@ class Home extends LitElement {
     const isTournament = this.selectedGameType === "tournament";
 
     return html`
-      <img src="logo.png" alt="Pluton Poker" class="logo" />
+      <img src="logo.webp" alt="Pluton Poker" class="logo" />
       <p>Create a new game and invite your friends to play</p>
       <div class="game-type-selector">
         <span class="stakes-label">Game Type</span>
