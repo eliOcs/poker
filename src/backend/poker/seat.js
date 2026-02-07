@@ -114,7 +114,9 @@ export function isActive(seat) {
  */
 export function canAct(seat) {
   if (seat.empty) return false;
-  return isActive(seat) && !seat.allIn;
+  if (seat.folded || seat.allIn) return false;
+  if (seat.sittingOut && seat.bet === 0) return false;
+  return true;
 }
 
 /**

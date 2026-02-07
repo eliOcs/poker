@@ -3,7 +3,14 @@ import assert from "assert";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
-import { sit, buyIn, blinds } from "../../../src/backend/poker/actions.js";
+import * as HandHistory from "../../../src/backend/poker/hand-history/index.js";
+import {
+  sit,
+  buyIn,
+  blinds,
+  call,
+  fold,
+} from "../../../src/backend/poker/actions.js";
 import { drainGenerator } from "./test-helpers.js";
 
 /** Helper to create a test player */
@@ -72,15 +79,15 @@ describe("tournament blinds", function () {
     );
   });
 
-  it("should auto-fold sitting out players after posting blind", function () {
+  it("should not auto-fold sitting out players immediately after posting blind", function () {
     game.seats[1].sittingOut = true;
 
     drainGenerator(blinds(game));
 
     assert.equal(
       game.seats[1].folded,
-      true,
-      "Sitting out player should be auto-folded after posting blind",
+      false,
+      "Sitting out player should be auto-folded only when action reaches them",
     );
   });
 
@@ -101,11 +108,7 @@ describe("tournament blinds", function () {
       stackBefore - game.blinds.big,
       "Stack should be reduced by big blind",
     );
-    assert.equal(
-      game.seats[2].folded,
-      true,
-      "Sitting out player should be auto-folded after posting blind",
-    );
+    assert.equal(game.seats[2].folded, false);
   });
 
   it("should not skip sitting out player for blind position", function () {
@@ -145,15 +148,17 @@ describe("tournament blinds", function () {
     assert.equal(game.seats[4].bet, game.blinds.big, "Next player posts BB");
   });
 
-  it("should use heads-up rules when only 2 active players", function () {
-    // Sit out seats 1 and 2, leaving only 0 and 4 active
+  it("should use heads-up rules when only 2 blind-eligible players remain", function () {
+    // Sit out seats 1 and 2 and set their stacks to 0, leaving only 0 and 4
+    // as blind-eligible players.
     game.seats[1].sittingOut = true;
+    game.seats[1].stack = 0;
     game.seats[2].sittingOut = true;
+    game.seats[2].stack = 0;
 
     drainGenerator(blinds(game));
 
     // Heads-up: button (seat 0) posts SB, seat 4 posts BB
-    // Sitting out players don't post blinds in heads-up
     assert.equal(
       game.seats[0].bet,
       game.blinds.small,
@@ -174,5 +179,60 @@ describe("tournament blinds", function () {
       0,
       "Sitting out player skipped in heads-up",
     );
+  });
+
+  it("should still charge blinds to sitting out players with chips when only 2 players are active", function () {
+    // Active players: 0 and 2
+    // Sitting out with chips: 1 and 4
+    game.seats[1].sittingOut = true;
+    game.seats[4].sittingOut = true;
+    game.button = 0;
+
+    const stackBefore = game.seats[1].stack;
+
+    drainGenerator(blinds(game));
+
+    assert.equal(
+      game.seats[1].bet,
+      game.blinds.small,
+      "Sitting out player with chips should still post SB in tournaments",
+    );
+    assert.equal(
+      game.seats[1].stack,
+      stackBefore - game.blinds.small,
+      "Sitting out player stack should be reduced by SB",
+    );
+    assert.equal(
+      game.seats[2].bet,
+      game.blinds.big,
+      "Next blind-eligible player should post BB",
+    );
+  });
+
+  it("should auto-fold sitting out blind posters when action reaches them", function () {
+    game.seats[1].sittingOut = true;
+    game.button = 0; // SB: seat 1 (sitting out), BB: seat 2
+
+    Game.startHand(game);
+    const recorder = HandHistory.getRecorder(game.id);
+
+    assert.equal(game.seats[1].cards.length, 2, "Blind poster should be dealt");
+    assert.ok(
+      recorder.players.some((p) => p.id === game.seats[1].player.id),
+      "Blind poster should be included in hand history players list",
+    );
+    assert.equal(
+      game.seats[1].folded,
+      false,
+      "Should not fold before action reaches seat",
+    );
+
+    // Preflop acts: seat 4 then seat 0 then seat 1 (sitting out SB)
+    call(game, { seat: 4 });
+    Game.processGameFlow(game);
+    fold(game, { seat: 0 });
+    Game.processGameFlow(game);
+
+    assert.equal(game.seats[1].folded, true, "Should auto-fold on action turn");
   });
 });

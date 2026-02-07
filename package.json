@@ -17,7 +17,7 @@
     "duplicates": "jscpd src test --min-tokens 100",
     "format": "prettier --write .",
     "lint": "eslint --fix . && npm run lint:css",
-    "lint:css": "stylelint 'src/frontend/**/*.js'",
+    "lint:css": "stylelint --fix 'src/frontend/**/*.js'",
     "start": "node --env-file=.env --watch src/backend",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "node --test 'test/backend/**/*.js'",

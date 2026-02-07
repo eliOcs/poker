@@ -162,7 +162,7 @@ export function startHand(game) {
   recorder.players = [];
   for (let i = 0; i < game.seats.length; i++) {
     const seat = game.seats[i];
-    if (!seat.empty && !seat.sittingOut) {
+    if (!seat.empty && (!seat.sittingOut || seat.bet > 0)) {
       recorder.players.push({
         id: seat.player.id,
         seat: i + 1, // OHH uses 1-indexed seats

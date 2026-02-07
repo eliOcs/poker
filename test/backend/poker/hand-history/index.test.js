@@ -88,6 +88,21 @@ describe("hand-history", function () {
       assert.strictEqual(recorder.players[1].id, players[1].id);
       assert.strictEqual(recorder.players[2].id, players[2].id);
     });
+
+    it("includes sitting out players who already posted a blind", function () {
+      const { game, players } = createGameWithPlayers();
+      game.seats[1].sittingOut = true;
+      game.seats[1].stack -= 25;
+      game.seats[1].bet = 25; // Simulate posted blind before history start
+
+      game.handNumber++;
+      HandHistory.startHand(game);
+      const recorder = HandHistory.getRecorder(game.id);
+
+      assert.strictEqual(recorder.players.length, 3);
+      assert.strictEqual(recorder.players[1].id, players[1].id);
+      assert.strictEqual(recorder.players[1].starting_stack, 1000);
+    });
   });
 
   describe("recordAction", function () {

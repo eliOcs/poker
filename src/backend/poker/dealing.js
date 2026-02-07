@@ -46,10 +46,6 @@ export function* blinds(game) {
   const sbAmount = Math.min(game.blinds.small, sbPlayer.stack);
   sbPlayer.bet = sbAmount;
   sbPlayer.stack -= sbAmount;
-  // In tournaments, sitting out players auto-fold after posting
-  if (sbPlayer.sittingOut) {
-    sbPlayer.folded = true;
-  }
   yield;
 
   // Post big blind
@@ -57,10 +53,6 @@ export function* blinds(game) {
   const bbAmount = Math.min(game.blinds.big, bbPlayer.stack);
   bbPlayer.bet = bbAmount;
   bbPlayer.stack -= bbAmount;
-  // In tournaments, sitting out players auto-fold after posting
-  if (bbPlayer.sittingOut) {
-    bbPlayer.folded = true;
-  }
   yield;
 }
 
@@ -72,14 +64,14 @@ export function* blinds(game) {
 export function* dealPreflop(game) {
   for (const seat of createSeatIterator(
     game,
-    (seat) => !seat.empty && !seat.sittingOut,
+    (seat) => !seat.empty && (!seat.sittingOut || seat.bet > 0),
   )) {
     seat.cards = [Deck.deal(game.deck)];
     yield;
   }
   for (const seat of createSeatIterator(
     game,
-    (seat) => !seat.empty && !seat.sittingOut,
+    (seat) => !seat.empty && (!seat.sittingOut || seat.bet > 0),
   )) {
     seat.cards.push(Deck.deal(game.deck));
     yield;

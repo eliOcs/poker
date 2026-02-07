@@ -164,8 +164,7 @@ export const historyStyles = css`
   @media (width >= 800px) {
     .timeline {
       max-height: 220px;
-      overflow-x: hidden;
-      overflow-y: auto;
+      overflow: hidden auto;
     }
 
     .timeline-content {

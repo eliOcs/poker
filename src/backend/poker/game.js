@@ -291,7 +291,6 @@ export function startHand(game) {
   game.winnerMessage = null;
   game.handNumber++;
   Actions.startHand(game);
-  HandHistory.startHand(game);
 
   // Mark tournament start time on first hand
   if (game.tournament?.active && !game.tournament.startTime) {
@@ -311,6 +310,7 @@ export function startHand(game) {
   const sbSeat = Betting.getSmallBlindSeat(game);
   const bbSeat = Betting.getBigBlindSeat(game);
   runAll(Actions.blinds(game));
+  HandHistory.startHand(game);
 
   const sbPlayer = /** @type {import('./seat.js').OccupiedSeat} */ (
     game.seats[sbSeat]
@@ -324,12 +324,17 @@ export function startHand(game) {
   runAll(Actions.dealPreflop(game));
 
   for (const seat of game.seats) {
-    if (!seat.empty && !seat.sittingOut && seat.cards.length > 0) {
+    if (
+      !seat.empty &&
+      (!seat.sittingOut || seat.bet > 0) &&
+      seat.cards.length > 0
+    ) {
       HandHistory.recordDealtCards(game.id, seat.player.id, seat.cards);
     }
   }
 
   Betting.startBettingRound(game, "preflop");
+  autoFoldSittingOutActingPlayers(game);
   game.hand.currentBet = game.blinds.big; // Blinds already posted
   resetActingTicks(game);
 }
@@ -388,6 +393,32 @@ export function performAutoAction(game, seatIndex, onBroadcast) {
 
   // Process game flow after the auto-action
   processGameFlow(game, onBroadcast);
+}
+
+/**
+ * Auto-folds sitting out players once action reaches them.
+ * This applies to players who posted a blind while sitting out.
+ *
+ * @param {Game} game
+ * @returns {boolean} True if at least one seat was auto-folded
+ */
+function autoFoldSittingOutActingPlayers(game) {
+  let foldedAny = false;
+
+  while (game.hand.actingSeat !== -1) {
+    const actingSeat = game.hand.actingSeat;
+    const seat = game.seats[actingSeat];
+
+    if (seat.empty || !seat.sittingOut || seat.folded) {
+      break;
+    }
+
+    Actions.fold(game, { seat: actingSeat });
+    HandHistory.recordAction(game.id, seat.player.id, "fold");
+    foldedAny = true;
+  }
+
+  return foldedAny;
 }
 
 /**
@@ -550,6 +581,10 @@ export function processGameFlow(game, onBroadcast) {
     return;
   }
 
+  if (autoFoldSittingOutActingPlayers(game)) {
+    resetActingTicks(game);
+  }
+
   // Check if only one player remains (everyone else folded)
   if (Betting.countActivePlayers(game) <= 1) {
     handleFoldWin(game, onBroadcast);
@@ -584,6 +619,11 @@ export function processGameFlow(game, onBroadcast) {
     runAll(handler.deal(game));
     HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
     Betting.startBettingRound(game, handler.next);
+
+    if (autoFoldSittingOutActingPlayers(game)) {
+      resetActingTicks(game);
+      processGameFlow(game, onBroadcast);
+    }
   }
 }
 

@@ -36,16 +36,26 @@ function getBlindPredicate(game) {
 }
 
 /**
+ * Counts players eligible to post blinds based on game type.
+ * In tournaments this includes sitting out players with chips.
+ * @param {Game} game
+ * @returns {number}
+ */
+function countBlindEligiblePlayers(game) {
+  const predicate = getBlindPredicate(game);
+  return game.seats.filter(predicate).length;
+}
+
+/**
  * Gets the index of the small blind seat
  * @param {Game} game
  * @returns {number}
  */
 export function getSmallBlindSeat(game) {
-  // Always count active players for heads-up detection (not sitting out ones)
-  const activePlayers = game.seats.filter(Seat.isActive).length;
+  const blindEligiblePlayers = countBlindEligiblePlayers(game);
 
-  // Heads-up: button is small blind (must be active player)
-  if (activePlayers === 2) {
+  // Heads-up: button is small blind.
+  if (blindEligiblePlayers === 2) {
     return findIndex(game.seats, Seat.isActive, game.button);
   }
 
@@ -61,10 +71,9 @@ export function getSmallBlindSeat(game) {
  */
 export function getBigBlindSeat(game) {
   const smallBlind = getSmallBlindSeat(game);
-  // In heads-up, BB must be an active player (not sitting out)
-  const activePlayers = game.seats.filter(Seat.isActive).length;
+  const blindEligiblePlayers = countBlindEligiblePlayers(game);
   const predicate =
-    activePlayers === 2 ? Seat.isActive : getBlindPredicate(game);
+    blindEligiblePlayers === 2 ? Seat.isActive : getBlindPredicate(game);
   return findIndex(game.seats, predicate, nextIndex(game.seats, smallBlind));
 }
 
