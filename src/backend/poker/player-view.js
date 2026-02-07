@@ -463,6 +463,16 @@ function canCallClock(game, playerSeatIndex) {
 }
 
 /**
+ * Whether registration is open for new players to sit down
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function isRegistrationOpen(game) {
+  if (game.tournament?.active && game.tournament.level > 1) return false;
+  return true;
+}
+
+/**
  * Gets available actions for a seat
  * @param {Game} game
  * @param {number} seatIndex
@@ -472,9 +482,12 @@ function canCallClock(game, playerSeatIndex) {
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const seat = game.seats[seatIndex];
 
-  // Empty seat - can sit only if not already seated
+  // Empty seat - can sit only if not already seated and registration is open
   if (seat.empty) {
-    return playerSeatIndex === -1 ? [{ action: "sit", seat: seatIndex }] : [];
+    if (playerSeatIndex === -1 && isRegistrationOpen(game)) {
+      return [{ action: "sit", seat: seatIndex }];
+    }
+    return [];
   }
 
   // Not the player's seat - no actions

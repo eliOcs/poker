@@ -35,4 +35,18 @@ describe("sit", function () {
   });
 
   it("player occupies seat before next hand starts");
+
+  it("allows sitting in tournament during level 1", function () {
+    const g = Game.createTournament();
+    const p = Player.fromUser(User.create());
+    sit(g, { seat: 0, player: p });
+    assert.deepEqual(g.seats[0].player, p);
+  });
+
+  it("rejects sitting in tournament after level 1", function () {
+    const g = Game.createTournament();
+    g.tournament.level = 2;
+    const p = Player.fromUser(User.create());
+    assert.throws(() => sit(g, { seat: 0, player: p }), /registration closed/);
+  });
 });

@@ -60,6 +60,9 @@ export function start(game) {
  * @param {{ seat: number, player: Player }} options
  */
 export function sit(game, { seat: requestedSeat, player }) {
+  if (game.tournament?.active && game.tournament.level > 1) {
+    throw new Error("registration closed");
+  }
   const seat = requestedSeat ?? game.seats.findIndex((s) => s.empty);
   if (seat === -1) throw new Error("no empty seats");
   if (game.seats[seat].empty) {
