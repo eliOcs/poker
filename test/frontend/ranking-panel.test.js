@@ -150,7 +150,7 @@ describe("phg-ranking-panel", () => {
   describe("tournament mode", () => {
     const tournament = { level: 1, timeToNextLevel: 300 };
 
-    it("shows Stack column header instead of Net and BB/100", async () => {
+    it("shows Stack and Net column headers instead of Net and BB/100", async () => {
       const el = await fixture(html`
         <phg-ranking-panel
           .rankings=${mockRankings}
@@ -159,11 +159,12 @@ describe("phg-ranking-panel", () => {
       `);
 
       const headers = el.shadowRoot.querySelectorAll("th");
-      expect(headers.length).to.equal(3);
+      expect(headers.length).to.equal(4);
       expect(headers[2].textContent.trim()).to.equal("Stack");
+      expect(headers[3].textContent.trim()).to.equal("Net");
     });
 
-    it("shows stack values instead of net winnings", async () => {
+    it("shows stack and net winnings values", async () => {
       const el = await fixture(html`
         <phg-ranking-panel
           .rankings=${mockRankings}
@@ -173,8 +174,9 @@ describe("phg-ranking-panel", () => {
 
       const firstRow = el.shadowRoot.querySelector("tbody tr");
       const cells = firstRow.querySelectorAll("td");
-      expect(cells.length).to.equal(3);
+      expect(cells.length).to.equal(4);
       expect(cells[2].textContent).to.include("$12");
+      expect(cells[3].classList.contains("positive")).to.be.true;
     });
   });
 });

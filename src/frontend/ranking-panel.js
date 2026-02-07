@@ -119,7 +119,8 @@ class RankingPanel extends LitElement {
             <th class="rank-col">#</th>
             <th>Player</th>
             ${isTournament
-              ? html`<th>Stack</th>`
+              ? html`<th>Stack</th>
+                  <th>Net</th>`
               : html`
                   <th>
                     Net
@@ -141,7 +142,10 @@ class RankingPanel extends LitElement {
                   ${r.playerName || `Seat ${r.seatIndex + 1}`}
                 </td>
                 ${isTournament
-                  ? html`<td>${formatCurrency(r.stack)}</td>`
+                  ? html`<td>${formatCurrency(r.stack)}</td>
+                      <td class="${this.getValueClass(r.netWinnings)}">
+                        ${this.formatNet(r.netWinnings)}
+                      </td>`
                   : html`
                       <td class="${this.getValueClass(r.netWinnings)}">
                         ${this.formatNet(r.netWinnings)}

@@ -227,4 +227,60 @@ describe("ranking", () => {
       assert.equal(rankings[1].playerId, "p1");
     });
   });
+
+  describe("tournament netWinnings", () => {
+    it("should compute net winnings for 6 players with $10 buy-in (80/20 split)", () => {
+      game.tournament = { active: true, buyIn: 1000 };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 6000);
+      game.seats[1] = Seat.occupied({ id: "p2", name: "Bob" }, 5000);
+      game.seats[2] = Seat.occupied({ id: "p3", name: "Carol" }, 4000);
+      game.seats[3] = Seat.occupied({ id: "p4", name: "Dave" }, 3000);
+      game.seats[4] = Seat.occupied({ id: "p5", name: "Eve" }, 2000);
+      game.seats[5] = Seat.occupied({ id: "p6", name: "Frank" }, 1000);
+
+      const rankings = Ranking.computeRankings(game);
+
+      // Pool = 6 * 1000 = 6000
+      // 1st: 80% of 6000 = 4800, net = 4800 - 1000 = 3800
+      // 2nd: 20% of 6000 = 1200, net = 1200 - 1000 = 200
+      // 3rd-6th: 0 - 1000 = -1000
+      assert.equal(rankings[0].netWinnings, 3800);
+      assert.equal(rankings[1].netWinnings, 200);
+      assert.equal(rankings[2].netWinnings, -1000);
+      assert.equal(rankings[3].netWinnings, -1000);
+      assert.equal(rankings[4].netWinnings, -1000);
+      assert.equal(rankings[5].netWinnings, -1000);
+    });
+
+    it("should compute net winnings for 3 players with $5 buy-in (winner-takes-all)", () => {
+      game.tournament = { active: true, buyIn: 500 };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 3000);
+      game.seats[1] = Seat.occupied({ id: "p2", name: "Bob" }, 2000);
+      game.seats[2] = Seat.occupied({ id: "p3", name: "Carol" }, 1000);
+
+      const rankings = Ranking.computeRankings(game);
+
+      // Pool = 3 * 500 = 1500 (winner-takes-all for <= 4 players)
+      // 1st: 1500, net = 1500 - 500 = 1000
+      // 2nd-3rd: 0 - 500 = -500
+      assert.equal(rankings[0].netWinnings, 1000);
+      assert.equal(rankings[1].netWinnings, -500);
+      assert.equal(rankings[2].netWinnings, -500);
+    });
+
+    it("should place busted player last with net = -buyIn", () => {
+      game.tournament = { active: true, buyIn: 1000 };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 5000);
+      game.seats[1] = Seat.occupied({ id: "p2", name: "Bob" }, 3000);
+      game.seats[2] = Seat.occupied({ id: "p3", name: "Carol" }, 2000);
+      game.seats[3] = Seat.occupied({ id: "p4", name: "Dave" }, 0);
+
+      const rankings = Ranking.computeRankings(game);
+
+      // Dave has 0 chips, should be last
+      assert.equal(rankings[3].playerId, "p4");
+      assert.equal(rankings[3].stack, 0);
+      assert.equal(rankings[3].netWinnings, -1000);
+    });
+  });
 });

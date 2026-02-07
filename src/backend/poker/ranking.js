@@ -1,3 +1,5 @@
+import { calculatePrizes } from "../../shared/tournament.js";
+
 /**
  * @typedef {import('./types.js').Cents} Cents
  * @typedef {import('./game.js').Game} Game
@@ -56,6 +58,14 @@ export function computeRankings(game) {
   // Cash games: sort by net winnings (highest first)
   if (game.tournament?.active) {
     rankings.sort((a, b) => b.stack - a.stack);
+
+    const prizes = calculatePrizes(rankings.length, game.tournament.buyIn);
+    const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
+
+    for (let i = 0; i < rankings.length; i++) {
+      const prize = prizeByPosition.get(i + 1) ?? 0;
+      rankings[i].netWinnings = prize - game.tournament.buyIn;
+    }
   } else {
     rankings.sort((a, b) => b.netWinnings - a.netWinnings);
   }
