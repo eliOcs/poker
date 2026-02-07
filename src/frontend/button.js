@@ -126,23 +126,9 @@ class Button extends LitElement {
     };
   }
 
-  constructor() {
-    super();
-    this._lastClickTime = 0;
-  }
-
-  handleClick(e) {
-    const now = Date.now();
-    if (now - this._lastClickTime < 100) {
-      e.stopPropagation();
-      return;
-    }
-    this._lastClickTime = now;
-  }
-
   render() {
     return html`
-      <button ?disabled=${this.disabled} @click=${this.handleClick}>
+      <button ?disabled=${this.disabled}>
         <slot></slot>
       </button>
     `;

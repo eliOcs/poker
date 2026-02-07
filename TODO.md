@@ -18,7 +18,12 @@
 - Allow different currencys USD, EUR and BTC
 - Avatar creator: wii style but pixel art
 - Chat: to talk to players but also announcements: shows who won the hand, blind announcments
-- Emotes
+
+# Emotes:
+
+While waiting for your turn I would like to show an "Emote" button, once clicked fills the action panel with the following emojis buttons: 🤣, 😍, 😘, 😏, 🤑, 😎, 🫠, 🤨, 🙄, 🤯, 🥶, 🥱, 🥺, 😭, 😡, 💩.
+Once the user clicks an emoji it will come out from the top of their seat container with an animation and hide back again. Once the user clicks an emoji the emoji picker "closes" and the action panel goes back to the normal state. If while they are picking an emoji it is their turn the emoji panel closes and the turn actions: "Fold", "Call", "Bet" show.
+
 - More betting buttons: pot bet, etc
 - add chips when betting UI
 - Tournaments: multi table tournaments, tournament lobby then multiple games/tables generated, players moved when tables get too small

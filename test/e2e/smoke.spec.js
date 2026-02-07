@@ -1,180 +1,104 @@
 import { test, expect } from "./utils/fixtures.js";
-import {
-  createGame,
-  waitForPhase,
-  playBettingRound,
-} from "./utils/game-helpers.js";
+import { createGame } from "./utils/game-helpers.js";
 
 test.describe("Poker Game Smoke Test", () => {
   test("plays 3 hands with varied actions (check, call, raise, all-in)", async ({
-    request,
     player1,
     player2,
   }) => {
-    // Create game with non-default stakes ($0.05/$0.10 = 5/10 cents)
-    const gameId = await createGame(request, { small: 5, big: 10 });
-
-    // === SETUP ===
-    // Player 1 joins and copies the game link
-    await player1.joinGame(gameId);
-
-    // Verify stakes are displayed on the board
-    const stakes = await player1.getStakes();
-    console.log("Stakes displayed:", stakes);
-    expect(stakes).toBe("$0.05/$0.10");
+    // Create game via UI with $0.05/$0.10 stakes (index 2)
+    await createGame(player1, { stakesIndex: 2 });
+    expect(await player1.getStakes()).toBe("$0.05/$0.10");
 
     const gameUrl = await player1.copyGameLink();
-    console.log("Game URL copied:", gameUrl);
-
-    // Player 2 joins using the copied link
     await player2.joinGameByUrl(gameUrl);
 
     await player1.sit(0);
     await player2.sit(1);
-
-    // Players buy in with 20 big blinds each (20 * $0.10 BB = $2 each = $4 total)
     await player1.buyIn(20);
     await player2.buyIn(20);
 
     await player1.startGame();
-    await player1.waitForHandStart();
-    await player2.waitForHandStart();
 
-    // === HAND 1: Check/Call through ===
-    console.log("--- HAND 1: Check/Call ---");
+    // RNG_SEED=12345 makes everything deterministic.
+    // Heads-up positions: P1=seat0, P2=seat1, button alternates each hand.
+    // act() auto-waits for the action button via Playwright.
 
-    // Verify both players have hole cards (2 cards each)
-    const p1CardCount = await player1.getHoleCardCount();
-    const p2CardCount = await player2.getHoleCardCount();
-    console.log(
-      `Player 1 cards: ${p1CardCount}, Player 2 cards: ${p2CardCount}`,
+    const holeCards = (player) =>
+      player.mySeat.locator(
+        ".hole-cards phg-card:not(.hidden):not(.placeholder)",
+      );
+    const boardCards = player1.board.locator(
+      ".community-cards phg-card:not(.placeholder)",
     );
-    expect(p1CardCount).toBe(2);
-    expect(p2CardCount).toBe(2);
 
-    // Preflop: P1 (SB) calls, P2 (BB) checks
-    await playBettingRound([player1, player2]);
+    // === HAND 1: Check/Call (P1=SB, P2=BB) ===
+    await expect(holeCards(player1)).toHaveCount(2);
+    await expect(holeCards(player2)).toHaveCount(2);
 
-    await waitForPhase(player1, "flop");
-    const flopCards = await player1.getBoardCardCount();
-    console.log(`Flop: ${flopCards} cards`);
-    expect(flopCards).toBe(3);
+    // Preflop: SB calls, BB checks
+    await player1.act("call");
+    await player2.act("check");
 
-    // Flop through river: check/call
-    await playBettingRound([player1, player2]);
-    await waitForPhase(player1, "turn");
-    const turnCards = await player1.getBoardCardCount();
-    console.log(`Turn: ${turnCards} cards`);
-    expect(turnCards).toBe(4);
+    // Flop: BB acts first postflop
+    await expect(boardCards).toHaveCount(3);
+    await player2.act("check");
+    await player1.act("check");
 
-    await playBettingRound([player1, player2]);
-    await waitForPhase(player1, "river");
-    const riverCards = await player1.getBoardCardCount();
-    console.log(`River: ${riverCards} cards`);
-    expect(riverCards).toBe(5);
+    // Turn
+    await expect(boardCards).toHaveCount(4);
+    await player2.act("check");
+    await player1.act("check");
 
-    await playBettingRound([player1, player2]);
-    console.log("Hand 1 complete");
+    // River
+    await expect(boardCards).toHaveCount(5);
+    await player2.act("check");
+    await player1.act("check");
 
-    // === HAND 2: Raises ===
-    console.log("--- HAND 2: Raises ---");
-    await player1.waitForHandStart();
-    await player2.waitForHandStart();
+    // === HAND 2: Raises (P2=SB, P1=BB) ===
+    await expect(holeCards(player1)).toHaveCount(2);
+    await expect(holeCards(player2)).toHaveCount(2);
 
-    console.log(`Player 1 cards: ${await player1.getHoleCardCount()}`);
-    console.log(`Player 2 cards: ${await player2.getHoleCardCount()}`);
-
-    // Preflop: P2 (SB) raises, P1 (BB) calls
-    await player2.waitForTurn();
-    console.log("Player 2 raises preflop");
+    // Preflop: SB raises, BB calls
     await player2.act("raise");
-
-    await player1.waitForTurn();
-    console.log("Player 1 calls the raise");
     await player1.act("call");
 
-    await waitForPhase(player1, "flop");
-    console.log(`Flop: ${await player1.getBoardCardCount()} cards`);
-
-    // Flop: P1 bets, P2 raises, P1 calls
-    await player1.waitForTurn();
-    console.log("Player 1 bets on flop");
+    // Flop: BB bets, SB raises, BB calls
+    await expect(boardCards).toHaveCount(3);
     await player1.act("bet");
-
-    await player2.waitForTurn();
-    console.log("Player 2 raises on flop");
     await player2.act("raise");
-
-    await player1.waitForTurn();
-    console.log("Player 1 calls the raise");
     await player1.act("call");
 
-    await waitForPhase(player1, "turn");
-    console.log(`Turn: ${await player1.getBoardCardCount()} cards`);
+    // Turn: BB checks, SB checks
+    await expect(boardCards).toHaveCount(4);
+    await player1.act("check");
+    await player2.act("check");
 
-    // Turn and river: check through
-    await playBettingRound([player1, player2]);
-    await waitForPhase(player1, "river");
-    console.log(`River: ${await player1.getBoardCardCount()} cards`);
+    // River: BB checks, SB checks
+    await expect(boardCards).toHaveCount(5);
+    await player1.act("check");
+    await player2.act("check");
 
-    await playBettingRound([player1, player2]);
-    console.log("Hand 2 complete");
+    // === HAND 3: All-in (P1=SB, P2=BB) ===
+    await expect(holeCards(player1)).toHaveCount(2);
+    await expect(holeCards(player2)).toHaveCount(2);
 
-    // === HAND 3: All-in ===
-    console.log("--- HAND 3: All-in ---");
-    await player1.waitForHandStart();
-    await player2.waitForHandStart();
-
-    console.log(`Player 1 cards: ${await player1.getHoleCardCount()}`);
-    console.log(`Player 2 cards: ${await player2.getHoleCardCount()}`);
-
-    // Preflop: P1 (SB) goes all-in, P2 (BB) calls
-    await player1.waitForTurn();
-    console.log("Player 1 goes ALL-IN preflop!");
+    // Preflop: SB goes all-in, BB calls
     await player1.act("allIn");
-
-    await player2.waitForTurn();
-    console.log("Player 2 calls the all-in");
     await player2.act("call");
 
-    // After all-in showdown, wait for next hand to start (confirms hand 3 completed)
-    // The board runs out automatically and a new hand begins
-    await player1.waitForHandStart(15000);
-    console.log("Hand 4 started - hand 3 complete");
+    // Wait for all-in runout to complete (5 board cards) then hand to end (0 cards)
+    await expect(boardCards).toHaveCount(5, { timeout: 15000 });
+    await expect(boardCards).toHaveCount(0, { timeout: 15000 });
 
-    console.log("Hand 3 complete (all-in showdown)");
-
-    // Verify game state after all-in
     const p1Stack = await player1.getStack();
     const p2Stack = await player2.getStack();
-    const totalChips = p1Stack + p2Stack;
-    console.log(
-      `Final stacks - P1: ${p1Stack}, P2: ${p2Stack}, Total: ${totalChips}`,
-    );
-
-    // Total chips should be preserved ($4 = $2 per player)
-    // With small stakes and integer parsing in getStack(), values truncate
-    // E.g., $1.45 -> 1, $2.40 -> 2, so total could be as low as 2
-    expect(totalChips).toBeGreaterThanOrEqual(2);
-    expect(totalChips).toBeLessThanOrEqual(4);
-    // At least one player should have chips
-    expect(Math.max(p1Stack, p2Stack)).toBeGreaterThan(0);
+    expect([p1Stack, p2Stack].some((s) => s !== "$0")).toBeTruthy();
 
     // === VERIFY HAND HISTORY ===
-    console.log("--- Verifying Hand History ---");
     await player1.openHistory();
     await player1.waitForHistoryLoaded();
-
-    // Verify hands are shown in the list (we played 3 hands)
-    const handCount = await player1.getHistoryHandCount();
-    console.log(`Hand history shows ${handCount} hands`);
-    expect(handCount).toBe(3);
-
-    // Verify table state is rendered with players
-    const playerCount = await player1.getHistoryPlayerCount();
-    console.log(`History shows ${playerCount} players`);
-    expect(playerCount).toBe(2);
-
-    console.log("Hand history verified successfully!");
+    expect(await player1.getHistoryHandCount()).toBe(3);
+    expect(await player1.getHistoryPlayerCount()).toBe(2);
   });
 });

@@ -44,6 +44,7 @@ class ActionPanel extends LitElement {
     this.canSit = false;
     this.buyIn = 0;
     this._lastActionType = null;
+    this._lastActionTime = 0;
   }
 
   get chipDenomination() {
@@ -52,6 +53,9 @@ class ActionPanel extends LitElement {
 
   updated(changedProperties) {
     if (changedProperties.has("actions")) {
+      // Reset throttle when actions change (new turn/round from server)
+      this._lastActionTime = 0;
+
       // Detect action type to reset betAmount when context changes
       const actionTypes = this.actions?.map((a) => a.action) || [];
       const currentType = actionTypes.includes("buyIn")
@@ -97,6 +101,9 @@ class ActionPanel extends LitElement {
   }
 
   sendAction(action) {
+    const now = Date.now();
+    if (now - this._lastActionTime < 100) return;
+    this._lastActionTime = now;
     this.dispatchEvent(
       new CustomEvent("game-action", {
         detail: action,

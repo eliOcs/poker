@@ -300,10 +300,6 @@ export class PokerPlayer {
     const handler = handlers[action];
     if (!handler) throw new Error(`Unknown action: ${action}`);
     await handler();
-    // Brief wait for the click handler to dispatch the WebSocket message.
-    // There is no observable UI state change between click and server processing.
-    // eslint-disable-next-line playwright/no-wait-for-timeout
-    await this.page.waitForTimeout(50);
   }
 
   /**
@@ -350,14 +346,12 @@ export class PokerPlayer {
   }
 
   /**
-   * Get player's current stack from UI
-   * @returns {Promise<number>}
+   * Get player's current stack display text from UI
+   * @returns {Promise<string>} e.g. "$5,000", "$2.90", "$0"
    */
   async getStack() {
     const stackText = await this.mySeat.locator(".stack").textContent();
-    // Parse "$5,000" or "$1000" -> 5000 or 1000
-    const match = stackText?.match(/\$([\d,]+)/);
-    return match ? parseInt(match[1].replace(/,/g, ""), 10) : 0;
+    return stackText?.trim() ?? "";
   }
 
   /**
@@ -368,7 +362,7 @@ export class PokerPlayer {
   async waitForPhase(phase, timeout = 15000) {
     await this.board
       .locator(".phase")
-      .filter({ hasText: phase })
+      .filter({ hasText: new RegExp(`^${phase}$`, "i") })
       .waitFor({ timeout });
   }
 
@@ -507,7 +501,7 @@ export class PokerPlayer {
    */
   async isEliminated() {
     const stack = await this.getStack();
-    return stack === 0;
+    return stack === "$0";
   }
 
   /**

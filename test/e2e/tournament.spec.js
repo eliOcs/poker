@@ -233,7 +233,6 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
 
 test.describe("Tournament E2E", () => {
   test("6 players play at least 50 hands until one wins", async ({
-    request,
     player1,
     player2,
     player3,
@@ -241,14 +240,13 @@ test.describe("Tournament E2E", () => {
     player5,
     player6,
   }) => {
-    // Create tournament game
-    const gameId = await createGame(request, { type: "tournament" });
-    console.log("Tournament created:", gameId);
+    // Create tournament game via UI
+    await createGame(player1, { type: "tournament" });
+    console.log("Tournament created");
 
     const players = [player1, player2, player3, player4, player5, player6];
 
-    // All players join the game
-    await player1.joinGame(gameId);
+    // Other players join via copied link
     const gameUrl = await player1.copyGameLink();
 
     await Promise.all(players.slice(1).map((p) => p.joinGameByUrl(gameUrl)));
@@ -259,10 +257,10 @@ test.describe("Tournament E2E", () => {
     }
     console.log("All players seated");
 
-    // Verify starting stack (5000 chips)
+    // Verify starting stack ($5,000)
     const p1Stack = await player1.getStack();
-    console.log(`Starting stack: $${p1Stack}`);
-    expect(p1Stack).toBe(5000);
+    console.log(`Starting stack: ${p1Stack}`);
+    expect(p1Stack).toBe("$5,000");
 
     // Verify initial tournament state
     const initialLevel = await player1.getTournamentLevel();
@@ -287,6 +285,7 @@ test.describe("Tournament E2E", () => {
     };
     const newActions = [];
     const activePlayers = new Set([0, 1, 2, 3, 4, 5]);
+    const actionsFileExists = fs.existsSync(ACTIONS_FILE);
 
     const winnerName = await runTournamentLoop(
       players,
@@ -301,7 +300,9 @@ test.describe("Tournament E2E", () => {
       console.log(
         `Tournament Winner: ${winnerName} (after ${state.handCount} hands)`,
       );
-      saveActionsFile(newActions, ACTIONS_FILE);
+      if (!actionsFileExists) {
+        saveActionsFile(newActions, ACTIONS_FILE);
+      }
     }
     expect(winnerName).toBeTruthy();
   });
