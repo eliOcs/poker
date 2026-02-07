@@ -164,6 +164,7 @@ export const historyStyles = css`
   @media (width >= 800px) {
     .timeline {
       max-height: 220px;
+      overflow-x: hidden;
       overflow-y: auto;
     }
 
@@ -174,7 +175,7 @@ export const historyStyles = css`
 
     .street {
       flex: 1;
-      min-width: 200px;
+      overflow: hidden;
     }
   }
 
@@ -189,7 +190,7 @@ export const historyStyles = css`
 
   .street-header {
     font-size: var(--font-md);
-    color: var(--color-fg-light);
+    color: var(--color-fg-muted);
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-sm);
     border-bottom: 2px solid var(--color-bg-light);
