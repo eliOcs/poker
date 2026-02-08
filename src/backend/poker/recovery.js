@@ -167,7 +167,9 @@ function buildEndingStacks(startingStacks, contributions, winnings) {
   const endingStacks = new Map();
   for (const [playerId, startingStack] of startingStacks) {
     const endingStack =
-      startingStack - (contributions.get(playerId) || 0) + (winnings.get(playerId) || 0);
+      startingStack -
+      (contributions.get(playerId) || 0) +
+      (winnings.get(playerId) || 0);
     endingStacks.set(playerId, Math.max(0, endingStack));
   }
   return endingStacks;
@@ -556,11 +558,8 @@ export function rebuildGameFromHistory(gameId, hands, summary = null) {
   const playersInLastHand = new Set(
     (lastHand.players || []).map((player) => player.id),
   );
-  const { game, isTournament, blinds, tournamentInitialStack } = createGameShell(
-    gameId,
-    lastHand,
-    summary,
-  );
+  const { game, isTournament, blinds, tournamentInitialStack } =
+    createGameShell(gameId, lastHand, summary);
 
   applyRecoveredSeats(
     game,

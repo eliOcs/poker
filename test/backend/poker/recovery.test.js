@@ -54,8 +54,18 @@ describe("game recovery", () => {
             id: 0,
             street: "Preflop",
             actions: [
-              { action_number: 1, player_id: "p1", action: "Post SB", amount: 1 },
-              { action_number: 2, player_id: "p2", action: "Post BB", amount: 2 },
+              {
+                action_number: 1,
+                player_id: "p1",
+                action: "Post SB",
+                amount: 1,
+              },
+              {
+                action_number: 2,
+                player_id: "p2",
+                action: "Post BB",
+                amount: 2,
+              },
               { action_number: 3, player_id: "p1", action: "Call", amount: 2 },
               { action_number: 4, player_id: "p2", action: "Check" },
             ],
@@ -65,7 +75,9 @@ describe("game recovery", () => {
           {
             number: 0,
             amount: 4,
-            player_wins: [{ player_id: "p2", win_amount: 4, contributed_rake: 0 }],
+            player_wins: [
+              { player_id: "p2", win_amount: 4, contributed_rake: 0 },
+            ],
           },
         ],
       },
@@ -85,8 +97,18 @@ describe("game recovery", () => {
             id: 0,
             street: "Preflop",
             actions: [
-              { action_number: 1, player_id: "p2", action: "Post SB", amount: 1 },
-              { action_number: 2, player_id: "p1", action: "Post BB", amount: 2 },
+              {
+                action_number: 1,
+                player_id: "p2",
+                action: "Post SB",
+                amount: 1,
+              },
+              {
+                action_number: 2,
+                player_id: "p1",
+                action: "Post BB",
+                amount: 2,
+              },
               { action_number: 3, player_id: "p2", action: "Fold" },
             ],
           },
@@ -95,7 +117,9 @@ describe("game recovery", () => {
           {
             number: 0,
             amount: 3,
-            player_wins: [{ player_id: "p1", win_amount: 3, contributed_rake: 0 }],
+            player_wins: [
+              { player_id: "p1", win_amount: 3, contributed_rake: 0 },
+            ],
           },
         ],
       },
@@ -114,8 +138,14 @@ describe("game recovery", () => {
     assert.equal(game.seats[0].empty, false);
     assert.equal(game.seats[1].empty, false);
 
-    const seat1 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[0]);
-    const seat2 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[1]);
+    const seat1 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[0]
+      );
+    const seat2 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[1]
+      );
 
     assert.equal(seat1.stack, 9900);
     assert.equal(seat2.stack, 10100);
@@ -157,8 +187,14 @@ describe("game recovery", () => {
     assert.equal(game.blinds.big, 100);
     assert.equal(game.seats[0].empty, false);
     assert.equal(game.seats[1].empty, false);
-    const seat1 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[0]);
-    const seat2 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[1]);
+    const seat1 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[0]
+      );
+    const seat2 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[1]
+      );
     assert.equal(seat1.disconnected, true);
     assert.equal(seat2.disconnected, true);
   });
@@ -194,9 +230,24 @@ describe("game recovery", () => {
             id: 0,
             street: "Preflop",
             actions: [
-              { action_number: 1, player_id: "p1", action: "Post SB", amount: 50 },
-              { action_number: 2, player_id: "p2", action: "Post BB", amount: 100 },
-              { action_number: 3, player_id: "p1", action: "Raise", amount: 200 },
+              {
+                action_number: 1,
+                player_id: "p1",
+                action: "Post SB",
+                amount: 50,
+              },
+              {
+                action_number: 2,
+                player_id: "p2",
+                action: "Post BB",
+                amount: 100,
+              },
+              {
+                action_number: 3,
+                player_id: "p1",
+                action: "Raise",
+                amount: 200,
+              },
               { action_number: 4, player_id: "p2", action: "Fold" },
             ],
           },
@@ -205,7 +256,9 @@ describe("game recovery", () => {
           {
             number: 0,
             amount: 300,
-            player_wins: [{ player_id: "p1", win_amount: 300, contributed_rake: 0 }],
+            player_wins: [
+              { player_id: "p1", win_amount: 300, contributed_rake: 0 },
+            ],
           },
         ],
       },
@@ -242,8 +295,14 @@ describe("game recovery", () => {
     assert.equal(game.tournament.winner, 0);
     assert.equal(game.button, 1);
 
-    const seat1 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[0]);
-    const seat2 = /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (game.seats[1]);
+    const seat1 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[0]
+      );
+    const seat2 =
+      /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
+        game.seats[1]
+      );
     assert.equal(seat1.stack, 510000);
     assert.equal(seat2.stack, 490000);
     assert.equal(seat1.disconnected, true);
