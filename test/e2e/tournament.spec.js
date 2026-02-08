@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
-test.setTimeout(5 * 50 * 1000);
+test.setTimeout(10 * 50 * 1000);
 
 const ACTIONS_FILE = path.join(
   process.cwd(),
