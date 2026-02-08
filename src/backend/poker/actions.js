@@ -398,8 +398,8 @@ export function sitOut(game, { seat }) {
   if (seatObj.empty) {
     throw new Error("seat is empty");
   }
-  if (game.hand?.phase !== "waiting") {
-    throw new Error("can only sit out between hands");
+  if (game.hand?.phase !== "waiting" && !seatObj.folded) {
+    throw new Error("can't sit out while still playing a hand");
   }
   if (seatObj.sittingOut) {
     throw new Error("already sitting out");

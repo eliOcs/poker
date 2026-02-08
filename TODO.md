@@ -11,7 +11,6 @@
 - history in a new tab (in desktop)
 - history tab guest players should be able to see cards if shown
 - when sit out shows waiting for your turn
-- if folded you can't sitout
 - Sit out toggle
 - show the level structure and other tournament details (next break)
 - Allow different currencys USD, EUR and BTC

@@ -23,12 +23,19 @@ describe("sit out", () => {
       assert.throws(() => Actions.sitOut(game, { seat: 1 }), /seat is empty/);
     });
 
-    it("should throw if hand is in progress", () => {
+    it("should throw if hand is in progress and not folded", () => {
       game.hand.phase = "preflop";
       assert.throws(
         () => Actions.sitOut(game, { seat: 0 }),
-        /only sit out between hands/,
+        /can't sit out while still playing a hand/,
       );
+    });
+
+    it("should allow sit out when folded during active hand", () => {
+      game.hand.phase = "preflop";
+      game.seats[0].folded = true;
+      Actions.sitOut(game, { seat: 0 });
+      assert.equal(game.seats[0].sittingOut, true);
     });
 
     it("should throw if already sitting out", () => {

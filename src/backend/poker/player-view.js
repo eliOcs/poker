@@ -491,6 +491,13 @@ function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
   return [];
 }
 
+function addFoldedActions(seat, actions) {
+  if (seat.folded && !seat.sittingOut) {
+    actions.push({ action: "sitOut" });
+  }
+  return actions;
+}
+
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const seat = game.seats[seatIndex];
 
@@ -519,7 +526,7 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   }
 
   if (game.hand?.actingSeat !== seatIndex) {
-    return actions;
+    return addFoldedActions(seat, actions);
   }
 
   return actions.concat(getBettingActions(seat, game, seatIndex));

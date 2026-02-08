@@ -241,7 +241,6 @@ class ActionPanel extends LitElement {
   _renderStartSitOut(actionMap) {
     return html`
       <div class="action-row">
-        ${actionMap.emote ? this._renderEmoteButton() : ""}
         ${actionMap.sitOut
           ? html`<phg-button
               variant="muted"
@@ -251,6 +250,7 @@ class ActionPanel extends LitElement {
               >Sit Out</phg-button
             >`
           : ""}
+        ${actionMap.emote ? this._renderEmoteButton() : ""}
         ${actionMap.start
           ? html`<phg-button
               variant="primary"
