@@ -4,6 +4,7 @@ import { getFilePath, respondWithFile } from "./static-files.js";
 import playerView from "./poker/player-view.js";
 import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
+import { recoverGameFromHistory } from "./poker/recovery.js";
 import * as logger from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
@@ -109,13 +110,32 @@ server.on("request", (req, res) => {
   });
 });
 
-server.on("upgrade", function upgrade(request, socket, head) {
+server.on("upgrade", async function upgrade(request, socket, head) {
   const cookies = parseCookies(request.headers.cookie ?? "");
   const user = users[cookies.phg];
 
   const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
   const gameId = gameMatch?.[1];
-  const game = gameId ? games.get(gameId) : undefined;
+  let game = gameId ? games.get(gameId) : undefined;
+
+  if (user && gameId && !game) {
+    game = await recoverGameFromHistory(gameId).catch((err) => {
+      logger.error("game recovery failed", {
+        gameId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return null;
+    });
+
+    if (game) {
+      games.set(gameId, game);
+      logger.info("game recovered from hand history", {
+        gameId,
+        handNumber: game.handNumber,
+        tournament: !!game.tournament,
+      });
+    }
+  }
 
   if (user && game && gameId) {
     wss.handleUpgrade(request, socket, head, (ws) =>
@@ -224,6 +244,9 @@ wss.on(
 
     // Send initial game state
     ws.send(JSON.stringify(playerView(game, player), null, 2));
+
+    // Recovered tournaments need ticking resumed after reconnect.
+    PokerGame.ensureGameTick(game, broadcastGameState);
   },
 );
 
