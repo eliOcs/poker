@@ -136,6 +136,7 @@ export const actionPanelStyles = css`
     flex-direction: column;
     gap: var(--space-md);
     width: 100%;
+    flex: 1;
   }
 
   .slider-row {
@@ -182,33 +183,30 @@ export const actionPanelStyles = css`
     cursor: pointer;
   }
 
-  .action-row,
-  .simple-actions {
+  .action-row {
     display: grid;
     grid-auto-columns: 1fr;
     grid-auto-flow: column;
     gap: var(--space-md);
     width: 100%;
+    flex: 1;
     align-items: stretch;
   }
 
-  .share-buttons,
-  .waiting-actions {
+  .share-buttons {
     display: flex;
     gap: var(--space-md);
     justify-content: center;
     width: 100%;
   }
 
-  .action-row phg-button,
-  .simple-actions phg-button {
+  .action-row phg-button {
     display: block;
     width: 100%;
     height: 100%;
   }
 
-  .action-row .amount,
-  .simple-actions .amount {
+  .action-row .amount {
     font-size: var(--font-md);
   }
 
@@ -240,5 +238,152 @@ export const actionPanelStyles = css`
     flex-direction: column;
     align-items: center;
     gap: var(--space-lg);
+  }
+`;
+
+export const seatBetStyles = css`
+  .bet-indicator {
+    position: absolute;
+    color: var(--color-primary);
+    font-size: var(--font-md);
+    white-space: nowrap;
+    z-index: 1;
+  }
+
+  /* Seat 0: bottom right */
+  :host([data-seat="0"]) .bet-indicator {
+    bottom: -3em;
+    right: 0;
+  }
+
+  /* Seat 1: bottom center */
+  :host([data-seat="1"]) .bet-indicator {
+    bottom: -3em;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Seat 2: bottom left */
+  :host([data-seat="2"]) .bet-indicator {
+    bottom: -3em;
+    left: 0;
+  }
+
+  /* Seat 3: left center */
+  :host([data-seat="3"]) .bet-indicator {
+    top: 50%;
+    right: calc(100% + 1em);
+    transform: translateY(-50%);
+  }
+
+  /* Seat 4: top left */
+  :host([data-seat="4"]) .bet-indicator {
+    top: -3em;
+    left: -4em;
+  }
+
+  /* Seat 5: top center */
+  :host([data-seat="5"]) .bet-indicator {
+    top: -6em;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Seat 6: top center */
+  :host([data-seat="6"]) .bet-indicator {
+    top: -5em;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Seat 7: top right */
+  :host([data-seat="7"]) .bet-indicator {
+    top: -3em;
+    right: -4em;
+  }
+
+  /* Seat 8: right center */
+  :host([data-seat="8"]) .bet-indicator {
+    top: 50%;
+    left: calc(100% + 1em);
+    transform: translateY(-50%);
+  }
+
+  /* === HEADS UP BET POSITIONING === */
+  :host([data-table-size="2"][data-seat="0"]) .bet-indicator {
+    inset: -7em auto auto 50%;
+    transform: translateX(-50%);
+  }
+
+  :host([data-table-size="2"][data-seat="1"]) .bet-indicator {
+    inset: auto auto -3em 50%;
+    transform: translateX(-50%);
+  }
+
+  /* === 6-MAX BET POSITIONING === */
+
+  /* Left side seats - bet to the right */
+  :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
+  :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
+    inset: 50% auto auto calc(100% + 1em);
+    transform: translateY(-50%);
+  }
+
+  /* Right side seats - bet to the left */
+  :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
+  :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
+    inset: 50% calc(100% + 1em) auto auto;
+    transform: translateY(-50%);
+  }
+
+  :host([data-table-size="6"][data-seat="4"]) .bet-indicator {
+    inset: -6em auto auto 50%;
+    transform: translateX(-50%);
+  }
+
+  /* === MOBILE BET POSITIONING === */
+  @media (width < 800px) {
+    :host([data-seat="1"]) .bet-indicator {
+      bottom: -2em;
+      top: auto;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    :host([data-seat="0"]) .bet-indicator,
+    :host([data-seat="7"]) .bet-indicator,
+    :host([data-seat="8"]) .bet-indicator {
+      inset: auto 0 -2em auto;
+      transform: none;
+    }
+
+    :host([data-seat="2"]) .bet-indicator,
+    :host([data-seat="3"]) .bet-indicator,
+    :host([data-seat="4"]) .bet-indicator {
+      inset: auto auto -2em 0;
+      transform: none;
+    }
+
+    :host([data-seat="6"]) .bet-indicator {
+      inset: -4em 0 auto auto;
+      transform: none;
+    }
+
+    :host([data-seat="5"]) .bet-indicator {
+      inset: -4em auto auto 0;
+      transform: none;
+    }
+
+    /* 6-MAX mobile overrides */
+    :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
+    :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
+      inset: auto 0 -2em auto;
+      transform: none;
+    }
+    :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
+    :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
+      inset: auto auto -2em 0;
+      transform: none;
+    }
   }
 `;

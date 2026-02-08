@@ -28,6 +28,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             stack: 0,
             cards: ["Qs", "8s"],
             handRank: "Straight",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", { allIn: true, stack: 0, cards: ["??", "??"] }),
           ...emptySeats(7),
@@ -81,6 +82,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             stack: 4700,
             cards: ["Qs", "Jd"], // Cards visible at reduced opacity
             handRank: "Pair of Jacks",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             isActing: true,
@@ -119,6 +121,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             cards: ["As", "Ks"],
             lastAction: "Call $100",
             handRank: "A High",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             isActing: true,
@@ -142,7 +145,11 @@ export const SPECIAL_GAME_TEST_CASES = {
             sittingOut: true,
             stack: 5000,
             cards: [],
-            actions: [{ action: "sitIn", cost: 50 }, { action: "leave" }],
+            actions: [
+              { action: "emote" },
+              { action: "sitIn", cost: 50 },
+              { action: "leave" },
+            ],
           }),
           createPlayer("Alice", {
             stack: 2975,
@@ -203,6 +210,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             cards: ["9h", "9d"],
             lastAction: "Call $50",
             handRank: "Pair of Nines",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             stack: 2975,

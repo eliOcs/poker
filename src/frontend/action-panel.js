@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { html, css, LitElement } from "lit";
 import {
   designTokens,
   baseStyles,
@@ -11,7 +11,32 @@ import "./currency-slider.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, actionPanelStyles];
+    return [
+      designTokens,
+      baseStyles,
+      actionPanelStyles,
+      css`
+        .emote-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: var(--space-sm);
+          width: 100%;
+        }
+
+        .emote-grid button {
+          font-size: var(--font-xl);
+          padding: var(--space-sm);
+          background: none;
+          border: 2px solid transparent;
+          cursor: pointer;
+          line-height: 1;
+        }
+
+        .emote-grid button:hover {
+          border-color: var(--color-primary);
+        }
+      `,
+    ];
   }
 
   static get properties() {
@@ -45,6 +70,7 @@ class ActionPanel extends LitElement {
     this.buyIn = 0;
     this._lastActionType = null;
     this._lastActionTime = 0;
+    this._showEmotePicker = false;
   }
 
   get chipDenomination() {
@@ -55,7 +81,6 @@ class ActionPanel extends LitElement {
     if (changedProperties.has("actions")) {
       // Reset throttle when actions change (new turn/round from server)
       this._lastActionTime = 0;
-
       // Detect action type to reset betAmount when context changes
       const actionTypes = this.actions?.map((a) => a.action) || [];
       const currentType = actionTypes.includes("buyIn")
@@ -190,10 +215,11 @@ class ActionPanel extends LitElement {
 
   _renderSitInLeave(actionMap) {
     return html`
-      <div class="waiting-actions">
+      <div class="action-row">
         ${actionMap.leave
           ? html`<phg-button
               variant="muted"
+              full-width
               @click=${() =>
                 this.sendAction({ action: "leave", seat: this.seatIndex })}
               >Leave Table</phg-button
@@ -202,6 +228,7 @@ class ActionPanel extends LitElement {
         ${actionMap.sitIn
           ? html`<phg-button
               variant="success"
+              full-width
               @click=${() =>
                 this.sendAction({ action: "sitIn", seat: this.seatIndex })}
               >Sit In</phg-button
@@ -213,10 +240,12 @@ class ActionPanel extends LitElement {
 
   _renderStartSitOut(actionMap) {
     return html`
-      <div class="waiting-actions">
+      <div class="action-row">
+        ${actionMap.emote ? this._renderEmoteButton() : ""}
         ${actionMap.sitOut
           ? html`<phg-button
               variant="muted"
+              full-width
               @click=${() =>
                 this.sendAction({ action: "sitOut", seat: this.seatIndex })}
               >Sit Out</phg-button
@@ -225,6 +254,7 @@ class ActionPanel extends LitElement {
         ${actionMap.start
           ? html`<phg-button
               variant="primary"
+              full-width
               @click=${() => this.sendAction({ action: "start" })}
               >Start Game</phg-button
             >`
@@ -351,22 +381,18 @@ class ActionPanel extends LitElement {
         >`,
       );
     return buttons.length > 0
-      ? html`<div class="simple-actions">${buttons}</div>`
+      ? html`<div class="action-row">${buttons}</div>`
       : null;
   }
 
-  _renderCallClock() {
-    return html`
-      <div class="simple-actions">
-        <phg-button
-          variant="warning"
-          full-width
-          @click=${() =>
-            this.sendAction({ action: "callClock", seat: this.seatIndex })}
-          >Call Clock</phg-button
-        >
-      </div>
-    `;
+  _renderCallClockButton() {
+    return html`<phg-button
+      variant="warning"
+      full-width
+      @click=${() =>
+        this.sendAction({ action: "callClock", seat: this.seatIndex })}
+      >Call Clock</phg-button
+    >`;
   }
 
   _buildActionMap() {
@@ -399,7 +425,69 @@ class ActionPanel extends LitElement {
     return null;
   }
 
+  _renderEmoteButton() {
+    if (this._showEmotePicker) {
+      const emojis = [
+        "🤣",
+        "😍",
+        "😘",
+        "😏",
+        "🤑",
+        "😎",
+        "🫠",
+        "🤨",
+        "🙄",
+        "🤯",
+        "🥶",
+        "🥱",
+        "🥺",
+        "😭",
+        "😡",
+        "💩",
+      ];
+      return html`
+        <div class="emote-grid">
+          ${emojis.map(
+            (emoji) =>
+              html`<button
+                @click=${() => {
+                  this.sendAction({ action: "emote", emoji });
+                  this._showEmotePicker = false;
+                  this.requestUpdate();
+                }}
+              >
+                ${emoji}
+              </button>`,
+          )}
+        </div>
+      `;
+    }
+    return html`<phg-button
+      variant="secondary"
+      full-width
+      @click=${() => {
+        this._showEmotePicker = true;
+        this.requestUpdate();
+      }}
+      >Emote</phg-button
+    >`;
+  }
+
+  _renderWaitingActions(actionMap) {
+    const simple = this._renderSimpleActions(actionMap);
+    if (simple) return simple;
+
+    const buttons = [];
+    if (actionMap.emote) buttons.push(this._renderEmoteButton());
+    if (actionMap.callClock) buttons.push(this._renderCallClockButton());
+    return buttons.length > 0
+      ? html`<div class="action-row">${buttons}</div>`
+      : null;
+  }
+
   _renderForActionMap(actionMap) {
+    if (this._showEmotePicker && actionMap.emote)
+      return this._renderEmoteButton();
     if (actionMap.buyIn) return this._renderBuyIn(actionMap.buyIn);
     if (actionMap.sitIn || actionMap.leave)
       return this._renderSitInLeave(actionMap);
@@ -407,10 +495,7 @@ class ActionPanel extends LitElement {
       return this._renderStartSitOut(actionMap);
     const betAction = actionMap.bet || actionMap.raise;
     if (betAction) return this._renderBettingSlider(actionMap, betAction);
-    return (
-      this._renderSimpleActions(actionMap) ||
-      (actionMap.callClock ? this._renderCallClock() : null)
-    );
+    return this._renderWaitingActions(actionMap);
   }
 
   render() {

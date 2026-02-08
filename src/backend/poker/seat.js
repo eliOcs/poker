@@ -35,6 +35,7 @@
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
+ * @property {string|null} [emote] - Transient emote emoji (set and cleared during broadcast)
  */
 
 /**

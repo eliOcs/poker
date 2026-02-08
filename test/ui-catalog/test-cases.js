@@ -52,7 +52,7 @@ const GAME_TEST_CASES = {
           createPlayer("You", {
             isCurrentPlayer: true,
             stack: 5000,
-            actions: [{ action: "sitOut" }],
+            actions: [{ action: "emote" }, { action: "sitOut" }],
           }),
           ...emptyTableSeats().slice(1),
         ],
@@ -66,7 +66,11 @@ const GAME_TEST_CASES = {
           createPlayer("You", {
             isCurrentPlayer: true,
             stack: 5000,
-            actions: [{ action: "start" }, { action: "sitOut" }],
+            actions: [
+              { action: "emote" },
+              { action: "start" },
+              { action: "sitOut" },
+            ],
           }),
           ...emptySeats(2),
           createPlayer("Alice", { stack: 3000 }),
@@ -139,6 +143,7 @@ const GAME_TEST_CASES = {
             cards: ["Qh", "Jh"],
             lastAction: "Call $50",
             handRank: "Q High",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             stack: 2975,
@@ -226,6 +231,7 @@ const GAME_TEST_CASES = {
             stack: 4700,
             cards: ["As", "Qs"],
             handRank: "Pair of Aces",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             isActing: true,
@@ -290,6 +296,7 @@ const GAME_TEST_CASES = {
             handResult: 4800,
             handRank: "Royal Flush",
             winningCards,
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             stack: 200,
@@ -321,6 +328,7 @@ const GAME_TEST_CASES = {
             cards: ["Ks", "Kc"],
             handResult: -2000,
             handRank: "Full House, Kings over Aces",
+            actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {
             stack: 7000,

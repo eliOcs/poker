@@ -98,7 +98,12 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave} PlayerAction
+ * @typedef {object} ActionEmote
+ * @property {'emote'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote} PlayerAction
  */
 
 /**
@@ -479,15 +484,18 @@ function isRegistrationOpen(game) {
  * @param {number} playerSeatIndex
  * @returns {PlayerAction[]}
  */
+function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
+  if (playerSeatIndex === -1 && isRegistrationOpen(game)) {
+    return [{ action: "sit", seat: seatIndex }];
+  }
+  return [];
+}
+
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const seat = game.seats[seatIndex];
 
-  // Empty seat - can sit only if not already seated and registration is open
   if (seat.empty) {
-    if (playerSeatIndex === -1 && isRegistrationOpen(game)) {
-      return [{ action: "sit", seat: seatIndex }];
-    }
-    return [];
+    return getEmptySeatActions(game, seatIndex, playerSeatIndex);
   }
 
   // Not the player's seat - no actions
@@ -500,6 +508,10 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
 
   if (canCallClock(game, playerSeatIndex)) {
     actions.push({ action: "callClock" });
+  }
+
+  if (game.hand?.actingSeat !== seatIndex) {
+    actions.push({ action: "emote" });
   }
 
   if (game.hand?.phase === "waiting") {
@@ -593,6 +605,7 @@ export default function playerView(game, player) {
         handRank,
         winningCards: seat.winningCards,
         bustedPosition: seat.bustedPosition,
+        emote: seat.emote || null,
       };
     }),
   };

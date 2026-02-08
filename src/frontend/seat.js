@@ -1,5 +1,10 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import {
+  designTokens,
+  baseStyles,
+  formatCurrency,
+  seatBetStyles,
+} from "./styles.js";
 import "./card.js";
 import "./button.js";
 
@@ -221,151 +226,37 @@ class Seat extends LitElement {
           color: var(--color-error);
         }
 
-        .bet-indicator {
+        .emote-bubble {
           position: absolute;
-          color: var(--color-primary);
-          font-size: var(--font-md);
-          white-space: nowrap;
-          z-index: 1;
-        }
-
-        /* Seat 0: bottom right */
-        :host([data-seat="0"]) .bet-indicator {
-          bottom: -3em;
-          right: 0;
-        }
-
-        /* Seat 1: bottom center */
-        :host([data-seat="1"]) .bet-indicator {
-          bottom: -3em;
+          top: -1.5em;
           left: 50%;
           transform: translateX(-50%);
+          font-size: 3rem;
+          z-index: 2;
+          pointer-events: none;
+          animation: emote-float 3s ease-out forwards;
         }
 
-        /* Seat 2: bottom left */
-        :host([data-seat="2"]) .bet-indicator {
-          bottom: -3em;
-          left: 0;
-        }
-
-        /* Seat 3: left center */
-        :host([data-seat="3"]) .bet-indicator {
-          top: 50%;
-          right: calc(100% + 1em);
-          transform: translateY(-50%);
-        }
-
-        /* Seat 4: top left */
-        :host([data-seat="4"]) .bet-indicator {
-          top: -3em;
-          left: -4em;
-        }
-
-        /* Seat 5: top center */
-        :host([data-seat="5"]) .bet-indicator {
-          top: -6em;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        /* Seat 6: top center */
-        :host([data-seat="6"]) .bet-indicator {
-          top: -5em;
-          left: 50%;
-          transform: translateX(-50%);
-        }
-
-        /* Seat 7: top right */
-        :host([data-seat="7"]) .bet-indicator {
-          top: -3em;
-          right: -4em;
-        }
-
-        /* Seat 8: right center */
-        :host([data-seat="8"]) .bet-indicator {
-          top: 50%;
-          left: calc(100% + 1em);
-          transform: translateY(-50%);
-        }
-
-        /* === HEADS UP BET POSITIONING === */
-        :host([data-table-size="2"][data-seat="0"]) .bet-indicator {
-          inset: -7em auto auto 50%;
-          transform: translateX(-50%);
-        }
-
-        :host([data-table-size="2"][data-seat="1"]) .bet-indicator {
-          inset: auto auto -3em 50%;
-          transform: translateX(-50%);
-        }
-
-        /* === 6-MAX BET POSITIONING === */
-
-        /* Left side seats - bet to the right */
-        :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
-        :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
-          inset: 50% auto auto calc(100% + 1em);
-          transform: translateY(-50%);
-        }
-
-        /* Right side seats - bet to the left */
-        :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
-        :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
-          inset: 50% calc(100% + 1em) auto auto;
-          transform: translateY(-50%);
-        }
-
-        :host([data-table-size="6"][data-seat="4"]) .bet-indicator {
-          inset: -6em auto auto 50%;
-          transform: translateX(-50%);
-        }
-
-        /* === MOBILE BET POSITIONING === */
-        @media (width < 800px) {
-          :host([data-seat="1"]) .bet-indicator {
-            bottom: -2em;
-            top: auto;
-            left: 50%;
-            transform: translateX(-50%);
+        @keyframes emote-float {
+          0% {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.5);
           }
-
-          :host([data-seat="0"]) .bet-indicator,
-          :host([data-seat="7"]) .bet-indicator,
-          :host([data-seat="8"]) .bet-indicator {
-            inset: auto 0 -2em auto;
-            transform: none;
+          10% {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
           }
-
-          :host([data-seat="2"]) .bet-indicator,
-          :host([data-seat="3"]) .bet-indicator,
-          :host([data-seat="4"]) .bet-indicator {
-            inset: auto auto -2em 0;
-            transform: none;
+          70% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
           }
-
-          :host([data-seat="6"]) .bet-indicator {
-            inset: -4em 0 auto auto;
-            transform: none;
-          }
-
-          :host([data-seat="5"]) .bet-indicator {
-            inset: -4em auto auto 0;
-            transform: none;
-          }
-
-          /* 6-MAX mobile overrides */
-          :host([data-table-size="6"][data-seat="0"]) .bet-indicator,
-          :host([data-table-size="6"][data-seat="5"]) .bet-indicator {
-            inset: auto 0 -2em auto;
-            transform: none;
-          }
-          :host([data-table-size="6"][data-seat="2"]) .bet-indicator,
-          :host([data-table-size="6"][data-seat="3"]) .bet-indicator {
-            inset: auto auto -2em 0;
-            transform: none;
+          100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-1.5em) scale(1);
           }
         }
       `,
+      seatBetStyles,
     ];
   }
 
@@ -385,6 +276,8 @@ class Seat extends LitElement {
     this.showSitAction = true;
     this.clockTicks = 0;
     this.buyIn = 0;
+    this._activeEmote = null;
+    this._emoteTimer = null;
   }
 
   /**
@@ -417,6 +310,22 @@ class Seat extends LitElement {
         cls,
         cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
+    }
+
+    // Trigger emote animation when emote arrives
+    if (this.seat?.emote) {
+      clearTimeout(this._emoteTimer);
+      // Clear first to force Lit to recreate the element and restart the animation
+      this._activeEmote = null;
+      this.requestUpdate();
+      requestAnimationFrame(() => {
+        this._activeEmote = this.seat?.emote;
+        this.requestUpdate();
+        this._emoteTimer = setTimeout(() => {
+          this._activeEmote = null;
+          this.requestUpdate();
+        }, 3000);
+      });
     }
   }
 
@@ -547,6 +456,9 @@ class Seat extends LitElement {
     if (!this.seat || this.seat.empty) return this._renderEmptySeat();
 
     return html`
+      ${this._activeEmote
+        ? html`<div class="emote-bubble">${this._activeEmote}</div>`
+        : ""}
       ${this._renderDealerButton()}
       <div class="player-info">
         <span class="player-name"

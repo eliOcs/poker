@@ -246,6 +246,18 @@ wss.on(
         ...args,
       });
 
+      // Handle emote action separately — no game logic, just broadcast
+      if (action === "emote") {
+        const player = Player.fromUser(user);
+        const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+        if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
+          game.seats[seatIndex].emote = args.emoji;
+          broadcastGameState(gameId);
+          game.seats[seatIndex].emote = null;
+        }
+        return;
+      }
+
       try {
         const player = Player.fromUser(user);
         processPokerAction(game, player, action, args, broadcastGameState);
