@@ -5,6 +5,10 @@ import playerView from "./poker/player-view.js";
 import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
 import { recoverGameFromHistory } from "./poker/recovery.js";
+import {
+  createInactiveGameEvictor,
+  getGameEvictionIntervalMs,
+} from "./game-eviction.js";
 import * as logger from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
@@ -37,6 +41,43 @@ function broadcastGameState(gameId) {
 }
 
 const routes = createRoutes(users, games, broadcastGameState);
+
+/**
+ * @param {UserType|undefined} user
+ * @param {string|undefined} gameId
+ * @returns {Promise<Game|null>}
+ */
+async function resolveGameForUpgrade(user, gameId) {
+  if (!user || !gameId) {
+    return null;
+  }
+
+  const existingGame = games.get(gameId);
+  if (existingGame) {
+    return existingGame;
+  }
+
+  const recoveredGame = await recoverGameFromHistory(gameId).catch((err) => {
+    logger.error("game recovery failed", {
+      gameId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  });
+
+  if (!recoveredGame) {
+    return null;
+  }
+
+  games.set(gameId, recoveredGame);
+  logger.info("game recovered from hand history", {
+    gameId,
+    handNumber: recoveredGame.handNumber,
+    tournament: !!recoveredGame.tournament,
+  });
+
+  return recoveredGame;
+}
 
 /**
  * @param {import('http').IncomingMessage} req
@@ -116,26 +157,7 @@ server.on("upgrade", async function upgrade(request, socket, head) {
 
   const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
   const gameId = gameMatch?.[1];
-  let game = gameId ? games.get(gameId) : undefined;
-
-  if (user && gameId && !game) {
-    game = await recoverGameFromHistory(gameId).catch((err) => {
-      logger.error("game recovery failed", {
-        gameId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return null;
-    });
-
-    if (game) {
-      games.set(gameId, game);
-      logger.info("game recovered from hand history", {
-        gameId,
-        handNumber: game.handNumber,
-        tournament: !!game.tournament,
-      });
-    }
-  }
+  const game = await resolveGameForUpgrade(user, gameId);
 
   if (user && game && gameId) {
     wss.handleUpgrade(request, socket, head, (ws) =>
@@ -252,11 +274,25 @@ wss.on(
 
 Store.initialize();
 
+const evictInactiveGames = createInactiveGameEvictor();
+const evictionTimer = setInterval(() => {
+  evictInactiveGames({
+    games,
+    clientConnections,
+    logInfo: logger.info,
+  });
+}, getGameEvictionIntervalMs());
+
+if (typeof evictionTimer.unref === "function") {
+  evictionTimer.unref();
+}
+
 /** @param {string} signal */
 function gracefulShutdown(signal) {
   logger.info("shutdown initiated", { signal });
 
   server.close(() => logger.info("http server closed"));
+  clearInterval(evictionTimer);
 
   for (const [ws] of clientConnections) {
     ws.close(1001, "Server shutting down");
