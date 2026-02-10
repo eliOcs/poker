@@ -196,6 +196,45 @@ describe("betting actions", () => {
     });
   });
 
+  describe("show cards", () => {
+    it("should allow showing one card after folding", () => {
+      game.hand.actingSeat = 2;
+      game.seats[2].cards = ["As", "Kh"];
+      Actions.fold(game, { seat: 2 });
+
+      const shown = Actions.showCard1(game, { seat: 2 });
+
+      assert.deepEqual(shown, ["As"]);
+      assert.equal(game.seats[2].shownCards[0], true);
+      assert.equal(game.seats[2].shownCards[1], false);
+      assert.equal(game.seats[2].cardsRevealed, false);
+    });
+
+    it("should allow showing both cards after hand ends", () => {
+      game.hand.phase = "waiting";
+      game.seats[2].cards = ["As", "Kh"];
+
+      const shown = Actions.showBothCards(game, { seat: 2 });
+
+      assert.deepEqual(shown, ["As", "Kh"]);
+      assert.equal(game.seats[2].shownCards[0], true);
+      assert.equal(game.seats[2].shownCards[1], true);
+      assert.equal(game.seats[2].cardsRevealed, true);
+    });
+
+    it("should reject showing cards while still active in hand", () => {
+      game.hand.phase = "flop";
+      game.hand.actingSeat = 4;
+      game.seats[2].folded = false;
+      game.seats[2].cards = ["As", "Kh"];
+
+      assert.throws(
+        () => Actions.showCard1(game, { seat: 2 }),
+        /after folding or hand ends/,
+      );
+    });
+  });
+
   describe("allIn", () => {
     it("should commit entire stack", () => {
       game.hand.actingSeat = 2;

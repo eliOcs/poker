@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
 import { rm, readFile } from "node:fs/promises";
@@ -188,6 +189,46 @@ describe("hand-history-view", function () {
 
       const filtered = HandHistory.filterHandForPlayer(hand, "player1");
       assert.deepStrictEqual(filtered.rounds[0].actions[1].cards, ["Qc", "Jc"]);
+    });
+
+    it("shows only the specific opponent card that was revealed", function () {
+      const hand = createTestHand({
+        rounds: [
+          {
+            id: 0,
+            street: "Preflop",
+            actions: [
+              {
+                action_number: 1,
+                player_id: "player1",
+                action: "Dealt Cards",
+                cards: ["Ah", "Kh"],
+              },
+              {
+                action_number: 2,
+                player_id: "player2",
+                action: "Dealt Cards",
+                cards: ["Qc", "Jc"],
+              },
+            ],
+          },
+          {
+            id: 1,
+            street: "Showdown",
+            actions: [
+              {
+                action_number: 3,
+                player_id: "player2",
+                action: "Shows Cards",
+                cards: ["Qc"],
+              },
+            ],
+          },
+        ],
+      });
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1");
+      assert.deepStrictEqual(filtered.rounds[0].actions[1].cards, ["Qc", "??"]);
     });
   });
 

@@ -118,6 +118,31 @@ function convertActionAmount(action) {
 }
 
 /**
+ * Collects shown cards per player from showdown actions
+ * @param {OHHHand} hand
+ * @returns {Map<string, Set<string>>}
+ */
+function collectShownCardsByPlayer(hand) {
+  /** @type {Map<string, Set<string>>} */
+  const shownCardsByPlayer = new Map();
+  for (const round of hand.rounds) {
+    for (const action of round.actions) {
+      if (action.action !== "Shows Cards" || !action.cards?.length) continue;
+      if (!shownCardsByPlayer.has(action.player_id)) {
+        shownCardsByPlayer.set(action.player_id, new Set());
+      }
+      const shownSet = /** @type {Set<string>} */ (
+        shownCardsByPlayer.get(action.player_id)
+      );
+      for (const card of action.cards) {
+        shownSet.add(card);
+      }
+    }
+  }
+  return shownCardsByPlayer;
+}
+
+/**
  * Filters a hand for a specific player's view
  * - Hides opponent hole cards unless shown at showdown
  * - Converts all amounts from dollars (OHH format) to Cents (app format)
@@ -126,15 +151,7 @@ function convertActionAmount(action) {
  * @returns {FilteredHand}
  */
 export function filterHandForPlayer(hand, playerId) {
-  // Find which players showed their cards at showdown
-  const shownPlayerIds = new Set();
-  for (const round of hand.rounds) {
-    for (const action of round.actions) {
-      if (action.action === "Shows Cards") {
-        shownPlayerIds.add(action.player_id);
-      }
-    }
-  }
+  const shownCardsByPlayer = collectShownCardsByPlayer(hand);
 
   // Clone and filter rounds, converting amounts to cents
   const filteredRounds = hand.rounds.map((round) => ({
@@ -143,17 +160,24 @@ export function filterHandForPlayer(hand, playerId) {
       // Filter "Dealt Cards" actions
       if (action.action === "Dealt Cards") {
         const isOwnCards = action.player_id === playerId;
-        const wasShown = shownPlayerIds.has(action.player_id);
+        const shownCards = shownCardsByPlayer.get(action.player_id);
 
-        if (isOwnCards || wasShown) {
+        if (isOwnCards) {
           return convertActionAmount(action);
-        } else {
-          // Hide cards
-          return convertActionAmount({
-            ...action,
-            cards: ["??", "??"],
-          });
         }
+
+        if (shownCards) {
+          const visibleCards = action.cards?.map((card) =>
+            shownCards.has(card) ? card : "??",
+          ) || ["??", "??"];
+          return convertActionAmount({ ...action, cards: visibleCards });
+        }
+
+        // Hide cards
+        return convertActionAmount({
+          ...action,
+          cards: ["??", "??"],
+        });
       }
       return convertActionAmount(action);
     }),
@@ -293,9 +317,14 @@ function findPlayerCards(hand, playerId, actionType) {
 function getWinnerHoleCards(hand, winnerId) {
   if (!winnerId) return [];
 
-  // First check showdown for shown cards
-  const shownCards = findPlayerCards(hand, winnerId, "Shows Cards");
-  if (shownCards) return shownCards;
+  const shownCardsByPlayer = collectShownCardsByPlayer(hand);
+  const shownCards = shownCardsByPlayer.get(winnerId);
+  if (shownCards) {
+    const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
+    if (dealtCards) {
+      return dealtCards.map((card) => (shownCards.has(card) ? card : "??"));
+    }
+  }
 
   // Fall back to dealt cards (visible if it was a fold win)
   const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");

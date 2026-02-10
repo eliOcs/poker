@@ -23,6 +23,7 @@ class Button extends LitElement {
           align-items: center;
           justify-content: center;
           padding: var(--space-md) var(--space-lg);
+          min-height: 44px;
           font-family: inherit;
           font-size: var(--font-md);
           cursor: pointer;
@@ -84,10 +85,12 @@ class Button extends LitElement {
         /* Sizes */
         :host([size="compact"]) button {
           padding: var(--space-md) var(--space-md);
+          min-height: 38px;
         }
 
         :host([size="large"]) button {
           padding: calc(var(--space-lg) * 1.25) calc(var(--space-lg) * 2.5);
+          min-height: 56px;
           font-size: var(--font-lg);
           border-width: var(--space-sm);
           box-shadow:

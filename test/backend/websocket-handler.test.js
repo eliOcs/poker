@@ -3,9 +3,11 @@ import assert from "node:assert";
 import {
   classifyAllInAction,
   getSeatStateBefore,
+  processPokerAction,
 } from "../../src/backend/websocket-handler.js";
 import * as PokerActions from "../../src/backend/poker/actions.js";
 import * as Seat from "../../src/backend/poker/seat.js";
+import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
 import { createTestGame } from "./poker/test-helpers.js";
 
 describe("websocket-handler", () => {
@@ -163,6 +165,90 @@ describe("websocket-handler", () => {
         2000,
         "captured currentBetBefore should not change",
       );
+    });
+  });
+
+  describe("show card actions", () => {
+    it("records shown cards in hand history", () => {
+      const game = createTestGame({ seats: 2 });
+      const player = { id: "p1", name: "Alice" };
+      const opponent = { id: "p2", name: "Bob" };
+      game.seats[0] = {
+        ...Seat.occupied(player, 1000),
+        cards: ["As", "Kh"],
+        folded: true,
+      };
+      game.seats[1] = Seat.occupied(opponent, 1000);
+      game.hand = {
+        phase: "flop",
+        pot: 0,
+        currentBet: 0,
+        lastRaiser: -1,
+        actingSeat: 1,
+        lastRaiseSize: 0,
+      };
+      game.handNumber = 1;
+
+      HandHistory.clearRecorder(game.id);
+      HandHistory.startHand(game);
+
+      processPokerAction(game, player, "showCard1", { seat: 0 }, () => {});
+
+      const recorder = HandHistory.getRecorder(game.id);
+      const showAction = recorder.actions.find(
+        (a) => a.action === "Shows Cards",
+      );
+      assert.ok(showAction);
+      assert.deepStrictEqual(showAction.cards, ["As"]);
+
+      HandHistory.clearRecorder(game.id);
+    });
+  });
+
+  describe("countdown cancellation with pending history", () => {
+    it("finalizes pending hand history when sitOut cancels countdown", async () => {
+      const game = createTestGame({ seats: 2 });
+      const player = { id: "p1", name: "Alice" };
+      const opponent = { id: "p2", name: "Bob" };
+      game.seats[0] = {
+        ...Seat.occupied(player, 1000),
+        folded: true,
+      };
+      game.seats[1] = Seat.occupied(opponent, 1000);
+      game.hand = {
+        phase: "flop",
+        pot: 0,
+        currentBet: 0,
+        lastRaiser: -1,
+        actingSeat: 1,
+        lastRaiseSize: 0,
+      };
+      game.handNumber = 1;
+      game.countdown = 3;
+
+      HandHistory.clearCache();
+      HandHistory.clearRecorder(game.id);
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, "p1", "sb", 25);
+      game.pendingHandHistory = [
+        {
+          potAmount: 25,
+          winners: [0],
+          winningHand: null,
+          winningCards: null,
+          awards: [{ seat: 0, amount: 25 }],
+        },
+      ];
+
+      processPokerAction(game, player, "sitOut", { seat: 0 }, () => {});
+
+      assert.strictEqual(game.countdown, null);
+      assert.strictEqual(game.pendingHandHistory, null);
+      assert.strictEqual(HandHistory.getCacheSize(), 1);
+
+      const hand = await HandHistory.getHand(game.id, 1);
+      assert.ok(hand);
+      HandHistory.clearRecorder(game.id);
     });
   });
 });

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, it } from "node:test";
 import * as assert from "assert";
 import * as Game from "../../../src/backend/poker/game.js";
@@ -144,6 +145,25 @@ describe("Player View", function () {
       // Winner's cards should be hidden from opponent (won by fold)
       assert.equal(view.seats[0].cards[0], "??");
       assert.equal(view.seats[0].cards[1], "??");
+    });
+
+    it("shows only voluntarily revealed opponent card after fold", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = { phase: "flop", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[1].cards = ["Qd", "Jc"];
+      g.seats[1].folded = true;
+      g.seats[1].shownCards = [true, false];
+
+      const view = playerView(g, p1);
+
+      assert.equal(view.seats[1].cards[0], "Qd");
+      assert.equal(view.seats[1].cards[1], "??");
     });
 
     it("shows all cards during showdown phase", function () {
@@ -530,6 +550,60 @@ describe("Player View", function () {
         !callClockAction,
         "callClock should NOT appear when no one is acting",
       );
+    });
+  });
+
+  describe("show card actions", function () {
+    it("shows 3 reveal actions immediately after folding", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = {
+        phase: "flop",
+        pot: 0,
+        currentBet: 0,
+        actingSeat: 1,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
+      };
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[0].folded = true;
+
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+
+      assert.ok(p1Actions.some((a) => a.action === "showCard1"));
+      assert.ok(p1Actions.some((a) => a.action === "showCard2"));
+      assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
+    });
+
+    it("shows reveal actions in waiting phase for non-folded players", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = {
+        phase: "waiting",
+        pot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
+      };
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[0].folded = false;
+
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+
+      assert.ok(p1Actions.some((a) => a.action === "showCard1"));
+      assert.ok(p1Actions.some((a) => a.action === "showCard2"));
+      assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
     });
   });
 

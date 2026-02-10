@@ -18,6 +18,8 @@ export const BETTING_ACTIONS = [
   "allIn",
 ];
 
+export const SHOW_CARD_ACTIONS = ["showCard1", "showCard2", "showBothCards"];
+
 /**
  * Classifies an all-in action as call, bet, or raise based on game context
  * @param {number} betBefore - Player's bet before the action
@@ -101,6 +103,10 @@ function handleSitOutOrLeave(game) {
   if (game.countdown !== null && PokerActions.countPlayersWithChips(game) < 2) {
     game.countdown = null;
     PokerGame.stopGameTick(game);
+    if (game.pendingHandHistory) {
+      HandHistory.finalizeHand(game, game.pendingHandHistory);
+      game.pendingHandHistory = null;
+    }
   }
 }
 
@@ -175,7 +181,7 @@ export function processPokerAction(
   const { seatIndex, seatBefore, betBefore, currentBetBefore } =
     getSeatStateBefore(game, player);
 
-  PokerActions[action](game, { player, ...args });
+  const actionResult = PokerActions[action](game, { player, ...args });
 
   if (BETTING_ACTIONS.includes(action) && seatBefore) {
     const seatAfter = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
@@ -187,6 +193,15 @@ export function processPokerAction(
       betBefore,
       currentBetBefore,
     );
+  }
+
+  if (
+    SHOW_CARD_ACTIONS.includes(action) &&
+    seatBefore &&
+    Array.isArray(actionResult) &&
+    actionResult.length > 0
+  ) {
+    HandHistory.recordShowdown(game.id, player.id, actionResult, true);
   }
 
   handlePostAction(action, game, broadcastGameState);

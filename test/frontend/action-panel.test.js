@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { fixture, expect, html } from "@open-wc/testing";
 import {
   MockWebSocket,
@@ -213,6 +214,41 @@ describe("phg-action-panel", () => {
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
     });
+
+    it("renders show-card buttons with card components", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            actions: [
+              { action: "showCard1", cards: ["As"] },
+              { action: "showCard2", cards: ["Kh"] },
+              { action: "showBothCards", cards: ["As", "Kh"] },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const showButtons = [
+        ...actionPanel.shadowRoot.querySelectorAll("phg-button"),
+      ].filter((btn) => btn.textContent.includes("Show"));
+      expect(showButtons.length).to.equal(3);
+
+      const cards = actionPanel.shadowRoot.querySelectorAll(
+        ".show-cards phg-card",
+      );
+      expect(cards.length).to.equal(4);
+    });
   });
 
   describe("user interactions", () => {
@@ -294,6 +330,45 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("fold");
+      expect(sentMessage.seat).to.be.a("number");
+    });
+
+    it("calls send() with seat when Show card button is clicked", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            actions: [
+              { action: "showCard1", cards: ["As"] },
+              { action: "showCard2", cards: ["Kh"] },
+              { action: "showBothCards", cards: ["As", "Kh"] },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
+      const showButton = [
+        ...actionPanel.shadowRoot.querySelectorAll("phg-button"),
+      ].find((btn) => btn.textContent.includes("Show"));
+      showButton.click();
+
+      expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("showCard1");
       expect(sentMessage.seat).to.be.a("number");
     });
 

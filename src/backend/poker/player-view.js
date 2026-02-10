@@ -72,6 +72,24 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
+ * @typedef {object} ActionShowCard1
+ * @property {'showCard1'} action
+ * @property {Card[]} cards
+ */
+
+/**
+ * @typedef {object} ActionShowCard2
+ * @property {'showCard2'} action
+ * @property {Card[]} cards
+ */
+
+/**
+ * @typedef {object} ActionShowBothCards
+ * @property {'showBothCards'} action
+ * @property {Card[]} cards
+ */
+
+/**
  * @typedef {object} ActionStart
  * @property {'start'} action
  */
@@ -103,7 +121,7 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote} PlayerAction
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote} PlayerAction
  */
 
 /**
@@ -192,14 +210,14 @@ function findPlayerSeat(game, playerId) {
 }
 
 /**
- * Determines if cards should be shown for a seat
+ * Determines if all cards should be shown for a seat
  * @param {SeatType} seat - The seat to check
  * @param {number} seatIndex - Index of this seat
  * @param {number} playerSeatIndex - Index of the viewing player's seat
  * @param {Game} game - Game state
  * @returns {boolean}
  */
-function shouldShowCards(seat, seatIndex, playerSeatIndex, game) {
+function shouldRevealAllCards(seat, seatIndex, playerSeatIndex, game) {
   if (seat.empty || !seat.cards || seat.cards.length === 0) {
     return false;
   }
@@ -228,21 +246,88 @@ function hiddenCard() {
 /**
  * Determines which cards to send to the client for a seat
  * @param {import('./seat.js').OccupiedSeat} seat - The occupied seat
- * @param {boolean} showCards - Whether cards should be revealed
+ * @param {boolean} revealAllCards - Whether all cards should be revealed
  * @param {boolean} isOwnSeat - Whether this is the viewing player's seat
- * @returns {Card[]|HiddenCard[]}
+ * @returns {(Card|HiddenCard)[]}
  */
-function getCardsForView(seat, showCards, isOwnSeat) {
-  // Show actual cards if visible (own cards, showdown, revealed)
-  if (showCards) {
+function getCardsForView(seat, revealAllCards, isOwnSeat) {
+  // Show actual cards if fully visible (own cards, showdown, fully revealed)
+  if (revealAllCards || isOwnSeat) {
     return seat.cards;
   }
+
+  const shownCards = seat.shownCards || [false, false];
+  if (shownCards[0] || shownCards[1]) {
+    return seat.cards.map((card, index) =>
+      shownCards[index] ? card : hiddenCard(),
+    );
+  }
+
   // Don't render cards for folded opponents
   if (seat.folded && !isOwnSeat) {
     return [];
   }
   // Show face-down cards for active opponents
   return seat.cards?.map(() => hiddenCard()) || [];
+}
+
+/**
+ * Gets available show-card actions after folding or when hand ended
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @returns {PlayerAction[]}
+ */
+function getShowCardsActions(seat, game) {
+  if (!canShowCards(seat, game.hand?.phase)) {
+    return [];
+  }
+
+  const shownCards = getShownCards(seat);
+  if (shownCards[0] && shownCards[1]) {
+    return [];
+  }
+
+  return buildShowCardActions(seat.cards, shownCards);
+}
+
+/**
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {string|undefined} phase
+ * @returns {boolean}
+ */
+function canShowCards(seat, phase) {
+  if (!seat.cards || seat.cards.length < 2) {
+    return false;
+  }
+  return seat.folded || phase === "waiting";
+}
+
+/**
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @returns {[boolean, boolean]}
+ */
+function getShownCards(seat) {
+  return seat.shownCards || [false, false];
+}
+
+/**
+ * @param {Card[]} cards
+ * @param {[boolean, boolean]} shownCards
+ * @returns {PlayerAction[]}
+ */
+function buildShowCardActions(cards, shownCards) {
+  /** @type {PlayerAction[]} */
+  const actions = [];
+  if (!shownCards[0]) {
+    actions.push({ action: "showCard1", cards: [cards[0]] });
+  }
+  if (!shownCards[1]) {
+    actions.push({ action: "showCard2", cards: [cards[1]] });
+  }
+  if (!shownCards[0] && !shownCards[1]) {
+    actions.push({ action: "showBothCards", cards: cards.slice(0, 2) });
+  }
+  return actions;
 }
 
 /**
@@ -312,14 +397,18 @@ function getSittingOutActions(seat, game, isTournament) {
  */
 function getWaitingPhaseActions(seat, game) {
   const isTournament = game.tournament?.active === true;
+  const showActions = getShowCardsActions(seat, game);
 
   if (seat.sittingOut) {
-    return getSittingOutActions(seat, game, isTournament);
+    return getSittingOutActions(seat, game, isTournament).concat(showActions);
   }
 
   if (seat.stack === 0) {
-    if (isTournament) return [];
-    return [{ action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big }];
+    if (isTournament) return showActions;
+    return [
+      { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
+      ...showActions,
+    ];
   }
 
   /** @type {PlayerAction[]} */
@@ -333,7 +422,7 @@ function getWaitingPhaseActions(seat, game) {
     actions.push({ action: "start" });
   }
   actions.push({ action: "sitOut" });
-  return actions;
+  return actions.concat(showActions);
 }
 
 /**
@@ -491,11 +580,11 @@ function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
   return [];
 }
 
-function addFoldedActions(seat, actions) {
+function addFoldedActions(game, seat, actions) {
   if (seat.folded && !seat.sittingOut) {
     actions.push({ action: "sitOut" });
   }
-  return actions;
+  return actions.concat(getShowCardsActions(seat, game));
 }
 
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
@@ -526,7 +615,7 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   }
 
   if (game.hand?.actingSeat !== seatIndex) {
-    return addFoldedActions(seat, actions);
+    return addFoldedActions(game, seat, actions);
   }
 
   return actions.concat(getBettingActions(seat, game, seatIndex));
@@ -585,12 +674,17 @@ export default function playerView(game, player) {
         };
       }
 
-      const showCards = shouldShowCards(seat, index, playerSeatIndex, game);
+      const revealAllCards = shouldRevealAllCards(
+        seat,
+        index,
+        playerSeatIndex,
+        game,
+      );
       const isOwnSeat = index === playerSeatIndex;
 
       // Calculate hand rank only for visible cards of non-folded players
       const handRank =
-        showCards && !seat.folded
+        revealAllCards && !seat.folded
           ? calculateHandRank(seat.cards, game.board?.cards || [])
           : null;
 
@@ -603,7 +697,7 @@ export default function playerView(game, player) {
         allIn: seat.allIn,
         sittingOut: seat.sittingOut,
         disconnected: seat.disconnected,
-        cards: getCardsForView(seat, showCards, isOwnSeat),
+        cards: getCardsForView(seat, revealAllCards, isOwnSeat),
         actions: getAvailableActions(game, index, playerSeatIndex),
         isCurrentPlayer: index === playerSeatIndex,
         isActing: index === game.hand?.actingSeat,

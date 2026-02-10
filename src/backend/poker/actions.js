@@ -254,6 +254,113 @@ export function fold(game, { seat }) {
 }
 
 /**
+ * Reveals selected hole cards for a seat and returns only newly revealed cards
+ * @param {Game} game
+ * @param {number} seat
+ * @param {number[]} cardIndexes
+ * @returns {import('./deck.js').Card[]}
+ */
+function revealHoleCards(game, seat, cardIndexes) {
+  const seatObj = game.seats[seat];
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+
+  assertCanRevealHoleCards(seatObj, game.hand?.phase);
+  const validIndexes = getValidRevealIndexes(cardIndexes);
+  const newlyShown = revealSelectedHoleCards(seatObj, validIndexes);
+
+  if (newlyShown.length === 0) {
+    throw new Error("selected cards already shown");
+  }
+
+  if (seatObj.shownCards[0] && seatObj.shownCards[1]) {
+    seatObj.cardsRevealed = true;
+  }
+
+  return newlyShown;
+}
+
+/**
+ * @param {OccupiedSeat} seatObj
+ * @param {string|undefined} phase
+ */
+function assertCanRevealHoleCards(seatObj, phase) {
+  if (!seatObj.folded && phase !== "waiting") {
+    throw new Error("can only show cards after folding or hand ends");
+  }
+
+  if (!seatObj.cards || seatObj.cards.length < 2) {
+    throw new Error("no hole cards to show");
+  }
+}
+
+/**
+ * @param {number[]} cardIndexes
+ * @returns {number[]}
+ */
+function getValidRevealIndexes(cardIndexes) {
+  const uniqueIndexes = [...new Set(cardIndexes)];
+  const validIndexes = uniqueIndexes.filter((i) => i === 0 || i === 1);
+  if (validIndexes.length === 0) {
+    throw new Error("no valid card selected");
+  }
+  return validIndexes;
+}
+
+/**
+ * @param {OccupiedSeat} seatObj
+ * @param {number[]} indexes
+ * @returns {import('./deck.js').Card[]}
+ */
+function revealSelectedHoleCards(seatObj, indexes) {
+  /** @type {import('./deck.js').Card[]} */
+  const newlyShown = [];
+  const shownCards = seatObj.shownCards || [false, false];
+  seatObj.shownCards = shownCards;
+
+  for (const i of indexes) {
+    const card = seatObj.cards[i];
+    if (card && !shownCards[i]) {
+      shownCards[i] = true;
+      newlyShown.push(card);
+    }
+  }
+
+  return newlyShown;
+}
+
+/**
+ * Player shows hole card #1
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ * @returns {import('./deck.js').Card[]}
+ */
+export function showCard1(game, { seat }) {
+  return revealHoleCards(game, seat, [0]);
+}
+
+/**
+ * Player shows hole card #2
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ * @returns {import('./deck.js').Card[]}
+ */
+export function showCard2(game, { seat }) {
+  return revealHoleCards(game, seat, [1]);
+}
+
+/**
+ * Player shows both hole cards
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ * @returns {import('./deck.js').Card[]}
+ */
+export function showBothCards(game, { seat }) {
+  return revealHoleCards(game, seat, [0, 1]);
+}
+
+/**
  * Player goes all-in
  * @param {Game} game
  * @param {{ seat: number }} options

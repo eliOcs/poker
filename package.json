@@ -19,6 +19,7 @@
     "lint": "eslint --fix . && npm run lint:css",
     "lint:css": "stylelint --fix 'src/frontend/**/*.js'",
     "start": "node --env-file=.env --watch src/backend",
+    "start:ui-catalog": "node --watch test/ui-catalog/server.js",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "node --test 'test/backend/**/*.js'",
     "test:e2e": "playwright test",

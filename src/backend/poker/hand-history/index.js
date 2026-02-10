@@ -419,10 +419,8 @@ export async function finalizeHand(game, potResults = []) {
   const cacheKey = `${game.id}-${game.handNumber}`;
   addToCache(cacheKey, hand);
 
-  // Write to file
-  await writeHandToFile(game.id, hand);
-
-  // Reset for next hand (keep tournament info)
+  // Reset recorder immediately so a quickly starting next hand cannot be wiped
+  // by this hand's asynchronous file write completion.
   recorder.actions = [];
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
@@ -430,6 +428,9 @@ export async function finalizeHand(game, potResults = []) {
   recorder.players = [];
   recorder.boardByStreet = new Map();
   // Note: tournament info is kept but will be refreshed on next startHand
+
+  // Write to file
+  await writeHandToFile(game.id, hand);
 }
 
 /**

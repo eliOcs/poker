@@ -90,6 +90,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
  * @property {TournamentState|null} tournament - Tournament state (null for cash games)
  * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
+ * @property {import('./showdown.js').PotResult[]|null} pendingHandHistory - Pot results to finalize after reveal window
  */
 
 /**
@@ -159,6 +160,7 @@ export function create({
     clockTicks: 0,
     tournament: null,
     runout: null,
+    pendingHandHistory: null,
   };
 }
 
@@ -283,6 +285,8 @@ export function ensureGameTick(game, onBroadcast) {
  * @param {Game} game
  */
 export function startHand(game) {
+  finalizePendingHandHistory(game);
+
   // Check if we still have enough players (someone might have sat out)
   if (Actions.countPlayersWithChips(game) < 2) {
     return;
@@ -340,6 +344,16 @@ export function startHand(game) {
 }
 
 /**
+ * Finalizes any pending hand history for the previous hand
+ * @param {Game} game
+ */
+function finalizePendingHandHistory(game) {
+  if (!game.pendingHandHistory) return;
+  HandHistory.finalizeHand(game, game.pendingHandHistory);
+  game.pendingHandHistory = null;
+}
+
+/**
  * @param {Game} game
  * @param {(gameId: string) => void} [onBroadcast] - Callback to broadcast game state
  */
@@ -354,6 +368,7 @@ export function autoStartNextHand(game, onBroadcast) {
     game.tournament.winner === null &&
     playersWithChips === 1
   ) {
+    finalizePendingHandHistory(game);
     const winnerIndex = game.seats.findIndex(
       (s) => !s.empty && s.stack > 0 && !s.sittingOut,
     );
@@ -367,6 +382,8 @@ export function autoStartNextHand(game, onBroadcast) {
     if (onBroadcast) {
       startGameTick(game, onBroadcast);
     }
+  } else {
+    finalizePendingHandHistory(game);
   }
 }
 
@@ -479,7 +496,7 @@ function handleFoldWin(game, onBroadcast) {
       amount: result.amount,
     };
 
-    HandHistory.finalizeHand(game, [
+    game.pendingHandHistory = [
       {
         potAmount: result.amount,
         winners: [result.winner],
@@ -487,7 +504,7 @@ function handleFoldWin(game, onBroadcast) {
         winningCards: null,
         awards: [{ seat: result.winner, amount: result.amount }],
       },
-    ]);
+    ];
 
     logHandEnded(game, winnerName, "fold", result.amount);
   }
@@ -544,7 +561,7 @@ function handleShowdown(game, onBroadcast) {
     );
   }
 
-  HandHistory.finalizeHand(game, potResults);
+  game.pendingHandHistory = potResults;
   Actions.endHand(game);
   autoStartNextHand(game, onBroadcast);
 }

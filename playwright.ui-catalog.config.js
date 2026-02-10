@@ -37,7 +37,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: "node test/ui-catalog/server.js",
+    command: "npm run start:ui-catalog",
     url: `http://localhost:${UI_CATALOG_PORT}`,
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",

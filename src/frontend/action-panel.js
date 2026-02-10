@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { html, css, LitElement } from "lit";
 import {
   designTokens,
@@ -8,6 +9,7 @@ import {
 import { getChipDenomination } from "/src/shared/stakes.js";
 import "./button.js";
 import "./currency-slider.js";
+import "./card.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
@@ -34,6 +36,34 @@ class ActionPanel extends LitElement {
 
         .emote-grid button:hover {
           border-color: var(--color-primary);
+        }
+
+        .show-action {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1px;
+          line-height: 1;
+        }
+
+        .show-cards {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 1px;
+          margin-top: -1px;
+        }
+
+        .show-cards phg-card {
+          transform: scale(0.6);
+          transform-origin: center;
+          margin: -12px -9px;
+        }
+
+        @media (width < 800px) {
+          .show-cards phg-card {
+            transform: scale(0.45);
+          }
         }
       `,
     ];
@@ -239,6 +269,7 @@ class ActionPanel extends LitElement {
   }
 
   _renderStartSitOut(actionMap) {
+    const showButtons = this._renderShowButtons(actionMap);
     return html`
       <div class="action-row">
         ${actionMap.sitOut
@@ -260,6 +291,7 @@ class ActionPanel extends LitElement {
             >`
           : ""}
       </div>
+      ${showButtons}
     `;
   }
 
@@ -475,14 +507,53 @@ class ActionPanel extends LitElement {
 
   _renderWaitingActions(actionMap) {
     const simple = this._renderSimpleActions(actionMap);
-    if (simple) return simple;
+    const showButtons = this._renderShowButtons(actionMap);
+    if (simple) {
+      return html`${simple}${showButtons}`;
+    }
 
     const buttons = [];
     if (actionMap.emote) buttons.push(this._renderEmoteButton());
     if (actionMap.callClock) buttons.push(this._renderCallClockButton());
-    return buttons.length > 0
-      ? html`<div class="action-row">${buttons}</div>`
-      : null;
+    if (buttons.length > 0) {
+      return html`<div class="action-row">${buttons}</div>
+        ${showButtons}`;
+    }
+    return showButtons;
+  }
+
+  _renderShowButtons(actionMap) {
+    const showActions = [
+      { key: "showCard1", cards: actionMap.showCard1?.cards },
+      { key: "showCard2", cards: actionMap.showCard2?.cards },
+      { key: "showBothCards", cards: actionMap.showBothCards?.cards },
+    ].filter((entry) => entry.cards?.length);
+
+    if (showActions.length === 0) return null;
+
+    return html`
+      <div class="action-row">
+        ${showActions.map(
+          (entry) => html`
+            <phg-button
+              variant="action"
+              full-width
+              @click=${() =>
+                this.sendAction({ action: entry.key, seat: this.seatIndex })}
+            >
+              <span class="show-action">
+                <span>Show</span>
+                <span class="show-cards">
+                  ${entry.cards.map(
+                    (card) => html`<phg-card .card=${card}></phg-card>`,
+                  )}
+                </span>
+              </span>
+            </phg-button>
+          `,
+        )}
+      </div>
+    `;
   }
 
   _renderForActionMap(actionMap) {

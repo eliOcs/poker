@@ -34,6 +34,7 @@
  * @property {Cents|null} handResult - Result of the hand (positive for win, negative for loss)
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
+ * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
  * @property {string|null} [emote] - Transient emote emoji (set and cleared during broadcast)
  */
@@ -75,6 +76,7 @@ export function occupied(player, stack = 0) {
     handResult: null,
     winningCards: null,
     cardsRevealed: false,
+    shownCards: [false, false],
     bustedPosition: null,
   };
 }
@@ -93,6 +95,7 @@ export function resetForNewHand(seat) {
   seat.handResult = null;
   seat.winningCards = null;
   seat.cardsRevealed = false;
+  seat.shownCards = [false, false];
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;
