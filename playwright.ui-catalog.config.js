@@ -1,12 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const UI_CATALOG_PORT = 8445;
+const UI_CATALOG_WORKERS = Number(process.env.UI_CATALOG_WORKERS || 4);
 
 export default defineConfig({
   testDir: "./test/ui-catalog",
   testMatch: "*.test.js",
   timeout: 30000,
   retries: 0,
+  workers: UI_CATALOG_WORKERS,
   reporter: "list",
 
   // Screenshot comparison settings

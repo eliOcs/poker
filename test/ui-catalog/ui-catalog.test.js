@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 
+test.describe.configure({ mode: "parallel" });
+
 // Test case IDs (keep in sync with test-cases.js)
 const TEST_CASES = [
   // Landing page
