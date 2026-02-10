@@ -20,15 +20,16 @@
 - add chips when betting UI
 - show past games on home page, hands played and net win/loss
 
+## Hand Rank modal [WIP]
 
 - Allow clicking your hand rank to understand your odds to improve your hand with the current available information
-AcKs - Ace High
-Pair of Kings
-Pair of Aces
-Full House
-Straight
+  AcKs - Ace High
+  Pair of Kings
+  Pair of Aces
+  Full House
+  Straight
 
-## Sign up
+## Sign up [WIP]
 
 - Current users are only stored with a browser cookie
 - I would like to help users understand the benefits of sign up:
