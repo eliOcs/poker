@@ -5,8 +5,8 @@
 - Larger suit icon
 - Bounties
 - Announcements chat
-- icons bigger and even buttons if space is avaiable
-- action panel fixed
+- top right icons bigger and even buttons if space is avaiable
+- action panel fixed in size
 - Ready button and then start
 - history in a new tab (in desktop)
 - history tab guest players should be able to see cards if shown
@@ -18,7 +18,29 @@
 - Chat: to talk to players but also announcements: shows who won the hand, blind announcments
 - More betting buttons: pot bet, etc
 - add chips when betting UI
-- Tournaments: multi table tournaments, tournament lobby then multiple games/tables generated, players moved when tables get too small
+- show past games on home page, hands played and net win/loss
+
+
+- Allow clicking your hand rank to understand your odds to improve your hand with the current available information
+AcKs - Ace High
+Pair of Kings
+Pair of Aces
+Full House
+Straight
+
+## Sign up
+
+- Current users are only stored with a browser cookie
+- I would like to help users understand the benefits of sign up:
+  - restore your settings in different devices
+
+## Tournaments
+
+- multi table tournaments
+- tournament lobby
+- then multiple games/tables generated
+- players moved when tables get too small
+
 - Poker club: invite members, members notified of events.
 - Seasons: allow grouping games into a seasson to get aggregate results
 - Inspiration Chess.com - "Learn poker"
