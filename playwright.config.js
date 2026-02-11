@@ -19,7 +19,7 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: devices["Desktop Chrome"],
     },
   ],
 
@@ -33,7 +33,7 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       DOMAIN: "localhost",
       RNG_SEED: process.env.RNG_SEED || "12345",
-      TIMER_SPEED: process.env.TIMER_SPEED || "20", // 20x faster for e2e tests
+      TIMER_SPEED: process.env.TIMER_SPEED || "10", // 10x faster for e2e tests
     },
   },
 });

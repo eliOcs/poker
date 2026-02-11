@@ -194,7 +194,9 @@ server.on("request", (req, res) => {
           ...(err.headers || {}),
         });
         res.end(
-          JSON.stringify(err.body || { error: err.message, status: err.status }),
+          JSON.stringify(
+            err.body || { error: err.message, status: err.status },
+          ),
         );
       }
       return;
