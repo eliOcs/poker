@@ -14,6 +14,7 @@ proxy:
   ssl: true
   host: plutonpoker.com
   app_port: 3000
+  forward_headers: true
 
 # AWS ECR Registry
 registry:

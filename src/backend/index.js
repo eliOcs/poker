@@ -13,6 +13,7 @@ import * as logger from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
+import { createRateLimiter, getClientIp } from "./rate-limit.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -41,6 +42,23 @@ function broadcastGameState(gameId) {
 }
 
 const routes = createRoutes(users, games, broadcastGameState);
+const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const actionRateLimiter = createRateLimiter({
+  blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
+});
+
+/**
+ * @param {import('http').IncomingMessage} req
+ * @returns {string}
+ */
+function getRequestRateLimitKey(req) {
+  const cookies = parseCookies(req.headers.cookie ?? "");
+  const playerId = cookies.phg;
+  if (playerId && users[playerId]) {
+    return `player:${playerId}`;
+  }
+  return `ip:${getClientIp(req)}`;
+}
 
 /**
  * @param {UserType|undefined} user
@@ -121,6 +139,30 @@ async function handleRequest(req, res) {
   res.end();
 }
 
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
+ * @returns {boolean}
+ */
+function rejectRateLimitedHttpRequest(req, res) {
+  const key = getRequestRateLimitKey(req);
+  const rateLimit = actionRateLimiter.check(key, { source: "http" });
+  if (rateLimit.allowed) {
+    return false;
+  }
+
+  const retryAfterSeconds = Math.max(
+    1,
+    Math.ceil(rateLimit.retryAfterMs / 1000),
+  );
+  res.writeHead(429, {
+    "content-type": "application/json",
+    "retry-after": String(retryAfterSeconds),
+  });
+  res.end(JSON.stringify({ error: "Too many requests", status: 429 }));
+  return true;
+}
+
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
@@ -138,6 +180,10 @@ server.on("request", (req, res) => {
     }
   });
 
+  if (rejectRateLimitedHttpRequest(req, res)) {
+    return;
+  }
+
   handleRequest(req, res).catch((err) => {
     logger.error("request error", {
       method,
@@ -152,6 +198,21 @@ server.on("request", (req, res) => {
 });
 
 server.on("upgrade", async function upgrade(request, socket, head) {
+  const rateLimitKey = getRequestRateLimitKey(request);
+  const upgradeRateLimit = actionRateLimiter.check(rateLimitKey, {
+    source: "ws-upgrade",
+  });
+  if (!upgradeRateLimit.allowed) {
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil(upgradeRateLimit.retryAfterMs / 1000),
+    );
+    socket.end(
+      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${retryAfterSeconds}\r\nConnection: close\r\n\r\n`,
+    );
+    return;
+  }
+
   const cookies = parseCookies(request.headers.cookie ?? "");
   const user = users[cookies.phg];
 
@@ -181,6 +242,7 @@ const clientConnections = new Map();
 wss.on(
   "connection",
   async function connection(ws, request, user, game, gameId) {
+    const playerRateLimitKey = `player:${user.id}`;
     clientConnections.set(ws, { user, gameId });
     logger.info("ws connected", { gameId, playerId: user.id });
 
@@ -237,7 +299,36 @@ wss.on(
     });
 
     ws.on("message", function (rawMessage) {
-      const { action, ...args } = JSON.parse(rawMessage);
+      const actionRateLimit = actionRateLimiter.check(playerRateLimitKey, {
+        source: "ws-action",
+      });
+      if (!actionRateLimit.allowed) {
+        ws.send(
+          JSON.stringify(
+            { error: { message: "Too many requests", status: 429 } },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      /** @type {{ action: string } & Record<string, unknown>} */
+      let messageData;
+      try {
+        messageData = JSON.parse(String(rawMessage));
+      } catch {
+        ws.send(
+          JSON.stringify(
+            { error: { message: "Invalid JSON payload", status: 400 } },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
+
+      const { action, ...args } = messageData;
 
       logger.info("ws message", {
         gameId,

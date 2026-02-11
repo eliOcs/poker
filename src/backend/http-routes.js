@@ -6,6 +6,7 @@ import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as logger from "./logger.js";
 import * as Store from "./store.js";
+import { createRateLimiter, getClientIp } from "./rate-limit.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -13,6 +14,13 @@ import * as Store from "./store.js";
  * @typedef {import('http').IncomingMessage} Request
  * @typedef {import('http').ServerResponse} Response
  */
+
+const USER_CREATION_LIMIT_MAX_ACTIONS = 10;
+const USER_CREATION_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const userCreationRateLimiter = createRateLimiter({
+  maxActions: USER_CREATION_LIMIT_MAX_ACTIONS,
+  blockDurationMs: USER_CREATION_BLOCK_DURATION_MS,
+});
 
 /**
  * Parses the request body as JSON
@@ -58,7 +66,7 @@ export function parseCookies(rawCookies) {
  * @param {Request} req
  * @param {Response} res
  * @param {Record<string, UserType>} users
- * @returns {UserType}
+ * @returns {UserType|null}
  */
 export function getOrCreateUser(req, res, users) {
   const cookies = parseCookies(req.headers.cookie ?? "");
@@ -73,6 +81,26 @@ export function getOrCreateUser(req, res, users) {
       user = loadedUser;
       users[user.id] = user;
     } else {
+      const clientIp = getClientIp(req);
+      const creationRateLimit = userCreationRateLimiter.check(
+        `ip:${clientIp}`,
+        {
+          source: "user-create",
+        },
+      );
+      if (!creationRateLimit.allowed) {
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.ceil(creationRateLimit.retryAfterMs / 1000),
+        );
+        res.writeHead(429, {
+          "content-type": "application/json",
+          "retry-after": String(retryAfterSeconds),
+        });
+        res.end(JSON.stringify({ error: "Too many requests", status: 429 }));
+        return null;
+      }
+
       // New user - create and persist
       user = User.create();
       users[user.id] = user;
@@ -215,7 +243,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: "/",
       handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+        if (!getOrCreateUser(req, res, users)) return;
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -224,6 +252,7 @@ export function createRoutes(users, games, broadcast) {
       path: "/api/users/me",
       handler: ({ req, res }) => {
         const user = getOrCreateUser(req, res, users);
+        if (!user) return;
         respondWithJson(res, {
           id: user.id,
           name: user.name,
@@ -236,6 +265,7 @@ export function createRoutes(users, games, broadcast) {
       path: "/api/users/me",
       handler: async ({ req, res }) => {
         const user = getOrCreateUser(req, res, users);
+        if (!user) return;
         const data = await parseBody(req);
 
         if (data && typeof data === "object") {
@@ -266,7 +296,7 @@ export function createRoutes(users, games, broadcast) {
       method: "POST",
       path: "/games",
       handler: async ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+        if (!getOrCreateUser(req, res, users)) return;
 
         const data = await parseBody(req);
 
@@ -305,7 +335,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: /^\/games\/([a-z0-9]+)$/,
       handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+        if (!getOrCreateUser(req, res, users)) return;
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -313,7 +343,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
       handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+        if (!getOrCreateUser(req, res, users)) return;
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -323,6 +353,7 @@ export function createRoutes(users, games, broadcast) {
       handler: async ({ req, res, match }) => {
         const gameId = /** @type {RegExpMatchArray} */ (match)[1];
         const user = getOrCreateUser(req, res, users);
+        if (!user) return;
 
         const hands = await HandHistory.getAllHands(gameId);
         const summaries = hands.map((hand) =>
@@ -340,6 +371,7 @@ export function createRoutes(users, games, broadcast) {
         const gameId = m[1];
         const handNumber = parseInt(m[2], 10);
         const user = getOrCreateUser(req, res, users);
+        if (!user) return;
 
         const hand = await HandHistory.getHand(gameId, handNumber);
         if (!hand) {
