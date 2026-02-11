@@ -123,7 +123,10 @@ function isIpv6ExactOr128(ip, cidr) {
  * @param {string[]} trustedCidrs
  * @returns {boolean}
  */
-export function isTrustedProxyIp(remoteIp, trustedCidrs = getTrustedProxyCidrs()) {
+export function isTrustedProxyIp(
+  remoteIp,
+  trustedCidrs = getTrustedProxyCidrs(),
+) {
   if (!remoteIp) return false;
 
   const ip = normalizeIp(remoteIp);
@@ -154,18 +157,35 @@ export function isTrustedProxyIp(remoteIp, trustedCidrs = getTrustedProxyCidrs()
  */
 export function getClientIp(req) {
   const remoteIp = normalizeIp(req.socket.remoteAddress || "");
+  const trustedCidrs = getTrustedProxyCidrs();
+  if (!isTrustedProxyIp(remoteIp, trustedCidrs)) {
+    return remoteIp;
+  }
 
   const forwardedFor = req.headers["x-forwarded-for"];
-  const forwarded =
+  const forwardedChain =
     typeof forwardedFor === "string"
-      ? forwardedFor
+      ? forwardedFor.split(",")
       : Array.isArray(forwardedFor)
-        ? forwardedFor[0]
-        : null;
+        ? forwardedFor.flatMap((value) => value.split(","))
+        : [];
 
-  const forwardedIp = normalizeIp(forwarded?.split(",")[0]?.trim() || "");
-  if (forwardedIp && isTrustedProxyIp(remoteIp)) {
-    return forwardedIp;
+  /** @type {string[]} */
+  const forwardedIps = [];
+  for (const token of forwardedChain) {
+    const ip = normalizeIp(token);
+    if (net.isIP(ip)) {
+      forwardedIps.push(ip);
+    }
+  }
+
+  // RFC-style trust walk: start from the closest peer and skip trusted hops.
+  const fullChain = [...forwardedIps, remoteIp];
+  for (let index = fullChain.length - 1; index >= 0; index -= 1) {
+    const ip = fullChain[index];
+    if (!isTrustedProxyIp(ip, trustedCidrs)) {
+      return ip;
+    }
   }
 
   return remoteIp;

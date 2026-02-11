@@ -157,10 +157,37 @@ describe("rate-limit", () => {
   });
 
   describe("getClientIp", () => {
-    it("uses x-forwarded-for only when the peer is trusted", () => {
+    it("uses x-forwarded-for when the peer is trusted", () => {
       process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,172.16.0.0/12";
       const req = {
-        headers: { "x-forwarded-for": "203.0.113.10, 70.41.3.18" },
+        headers: { "x-forwarded-for": "203.0.113.10" },
+        socket: { remoteAddress: "::ffff:127.0.0.1" },
+      };
+      assert.strictEqual(getClientIp(req), "203.0.113.10");
+    });
+
+    it("uses the first untrusted hop from the right to prevent spoofing", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,172.16.0.0/12";
+      const req = {
+        headers: { "x-forwarded-for": "198.51.100.123, 203.0.113.10" },
+        socket: { remoteAddress: "::ffff:127.0.0.1" },
+      };
+      assert.strictEqual(getClientIp(req), "203.0.113.10");
+    });
+
+    it("skips trusted proxy hops in the forwarded chain", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "172.16.0.0/12";
+      const req = {
+        headers: { "x-forwarded-for": "198.51.100.123, 172.18.0.4" },
+        socket: { remoteAddress: "::ffff:172.18.0.5" },
+      };
+      assert.strictEqual(getClientIp(req), "198.51.100.123");
+    });
+
+    it("ignores invalid forwarded entries", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32";
+      const req = {
+        headers: { "x-forwarded-for": "unknown, 203.0.113.10" },
         socket: { remoteAddress: "::ffff:127.0.0.1" },
       };
       assert.strictEqual(getClientIp(req), "203.0.113.10");
