@@ -14,6 +14,7 @@ import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
 import { createRateLimiter, getClientIp } from "./rate-limit.js";
+import { HttpError } from "./http-error.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -102,6 +103,8 @@ async function resolveGameForUpgrade(user, gameId) {
  * @param {import('http').ServerResponse} res
  */
 async function handleRequest(req, res) {
+  throwIfRateLimitedHttpRequest(req);
+
   const url = req.url ?? "";
   const method = req.method ?? "GET";
 
@@ -141,26 +144,22 @@ async function handleRequest(req, res) {
 
 /**
  * @param {import('http').IncomingMessage} req
- * @param {import('http').ServerResponse} res
- * @returns {boolean}
  */
-function rejectRateLimitedHttpRequest(req, res) {
+function throwIfRateLimitedHttpRequest(req) {
   const key = getRequestRateLimitKey(req);
   const rateLimit = actionRateLimiter.check(key, { source: "http" });
-  if (rateLimit.allowed) {
-    return false;
-  }
+  if (rateLimit.allowed) return;
 
   const retryAfterSeconds = Math.max(
     1,
     Math.ceil(rateLimit.retryAfterMs / 1000),
   );
-  res.writeHead(429, {
-    "content-type": "application/json",
-    "retry-after": String(retryAfterSeconds),
+  throw new HttpError(429, "Too many requests", {
+    body: { error: "Too many requests", status: 429 },
+    headers: {
+      "retry-after": String(retryAfterSeconds),
+    },
   });
-  res.end(JSON.stringify({ error: "Too many requests", status: 429 }));
-  return true;
 }
 
 server.on("request", (req, res) => {
@@ -180,11 +179,27 @@ server.on("request", (req, res) => {
     }
   });
 
-  if (rejectRateLimitedHttpRequest(req, res)) {
-    return;
-  }
-
   handleRequest(req, res).catch((err) => {
+    if (err instanceof HttpError) {
+      logger.warn("request rejected", {
+        method,
+        path: url,
+        status: err.status,
+        error: err.message,
+      });
+
+      if (!res.headersSent) {
+        res.writeHead(err.status, {
+          "content-type": "application/json",
+          ...(err.headers || {}),
+        });
+        res.end(
+          JSON.stringify(err.body || { error: err.message, status: err.status }),
+        );
+      }
+      return;
+    }
+
     logger.error("request error", {
       method,
       path: url,

@@ -7,6 +7,7 @@ import * as HandHistory from "./poker/hand-history/index.js";
 import * as logger from "./logger.js";
 import * as Store from "./store.js";
 import { createRateLimiter, getClientIp } from "./rate-limit.js";
+import { HttpError } from "./http-error.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -40,8 +41,12 @@ export function parseBody(req) {
       }
       try {
         resolve(JSON.parse(body));
-      } catch (err) {
-        reject(err);
+      } catch {
+        reject(
+          new HttpError(400, "Invalid JSON payload", {
+            body: { error: "Invalid JSON payload", status: 400 },
+          }),
+        );
       }
     });
     req.on("error", reject);
@@ -66,7 +71,7 @@ export function parseCookies(rawCookies) {
  * @param {Request} req
  * @param {Response} res
  * @param {Record<string, UserType>} users
- * @returns {UserType|null}
+ * @returns {UserType}
  */
 export function getOrCreateUser(req, res, users) {
   const cookies = parseCookies(req.headers.cookie ?? "");
@@ -93,12 +98,12 @@ export function getOrCreateUser(req, res, users) {
           1,
           Math.ceil(creationRateLimit.retryAfterMs / 1000),
         );
-        res.writeHead(429, {
-          "content-type": "application/json",
-          "retry-after": String(retryAfterSeconds),
+        throw new HttpError(429, "Too many requests", {
+          body: { error: "Too many requests", status: 429 },
+          headers: {
+            "retry-after": String(retryAfterSeconds),
+          },
         });
-        res.end(JSON.stringify({ error: "Too many requests", status: 429 }));
-        return null;
       }
 
       // New user - create and persist
@@ -243,7 +248,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: "/",
       handler: ({ req, res }) => {
-        if (!getOrCreateUser(req, res, users)) return;
+        getOrCreateUser(req, res, users);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -252,7 +257,6 @@ export function createRoutes(users, games, broadcast) {
       path: "/api/users/me",
       handler: ({ req, res }) => {
         const user = getOrCreateUser(req, res, users);
-        if (!user) return;
         respondWithJson(res, {
           id: user.id,
           name: user.name,
@@ -265,7 +269,6 @@ export function createRoutes(users, games, broadcast) {
       path: "/api/users/me",
       handler: async ({ req, res }) => {
         const user = getOrCreateUser(req, res, users);
-        if (!user) return;
         const data = await parseBody(req);
 
         if (data && typeof data === "object") {
@@ -296,7 +299,7 @@ export function createRoutes(users, games, broadcast) {
       method: "POST",
       path: "/games",
       handler: async ({ req, res }) => {
-        if (!getOrCreateUser(req, res, users)) return;
+        getOrCreateUser(req, res, users);
 
         const data = await parseBody(req);
 
@@ -335,7 +338,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: /^\/games\/([a-z0-9]+)$/,
       handler: ({ req, res }) => {
-        if (!getOrCreateUser(req, res, users)) return;
+        getOrCreateUser(req, res, users);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -343,7 +346,7 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
       handler: ({ req, res }) => {
-        if (!getOrCreateUser(req, res, users)) return;
+        getOrCreateUser(req, res, users);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
@@ -353,7 +356,6 @@ export function createRoutes(users, games, broadcast) {
       handler: async ({ req, res, match }) => {
         const gameId = /** @type {RegExpMatchArray} */ (match)[1];
         const user = getOrCreateUser(req, res, users);
-        if (!user) return;
 
         const hands = await HandHistory.getAllHands(gameId);
         const summaries = hands.map((hand) =>
@@ -371,13 +373,12 @@ export function createRoutes(users, games, broadcast) {
         const gameId = m[1];
         const handNumber = parseInt(m[2], 10);
         const user = getOrCreateUser(req, res, users);
-        if (!user) return;
 
         const hand = await HandHistory.getHand(gameId, handNumber);
         if (!hand) {
-          res.writeHead(404, { "content-type": "application/json" });
-          res.end(JSON.stringify({ error: "Hand not found" }));
-          return;
+          throw new HttpError(404, "Hand not found", {
+            body: { error: "Hand not found", status: 404 },
+          });
         }
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
