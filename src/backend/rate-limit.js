@@ -2,6 +2,7 @@
  * @typedef {import('http').IncomingMessage} Request
  */
 
+import net from "node:net";
 import * as logger from "./logger.js";
 
 export const DEFAULT_RATE_LIMIT_MAX_ACTIONS = 100;
@@ -9,6 +10,7 @@ export const DEFAULT_RATE_LIMIT_WINDOW_MS = 60 * 1000;
 export const DEFAULT_CLEANUP_INTERVAL = 200;
 export const DEFAULT_MONITOR_EVERY = 1_000;
 export const DEFAULT_BLOCK_DURATION_MS = 0;
+export const DEFAULT_TRUSTED_PROXY_CIDRS = "";
 
 /**
  * @param {string|undefined} value
@@ -40,10 +42,119 @@ export function getRateLimitWindowMs(
 }
 
 /**
+ * @param {string} ip
+ * @returns {string}
+ */
+function normalizeIp(ip) {
+  const trimmed = ip.trim();
+  return trimmed.startsWith("::ffff:") ? trimmed.slice(7) : trimmed;
+}
+
+/**
+ * @returns {string[]}
+ */
+export function getTrustedProxyCidrs() {
+  return (process.env.TRUSTED_PROXY_CIDRS || DEFAULT_TRUSTED_PROXY_CIDRS)
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+/**
+ * @param {string} ip
+ * @returns {number|null}
+ */
+function ipv4ToInt(ip) {
+  const parts = ip.split(".");
+  if (parts.length !== 4) return null;
+
+  /** @type {number[]} */
+  const octets = [];
+  for (const part of parts) {
+    const value = Number(part);
+    if (!Number.isInteger(value) || value < 0 || value > 255) return null;
+    octets.push(value);
+  }
+
+  return (
+    ((octets[0] << 24) >>> 0) +
+    ((octets[1] << 16) >>> 0) +
+    ((octets[2] << 8) >>> 0) +
+    octets[3]
+  );
+}
+
+/**
+ * @param {string} ip
+ * @param {string} cidr
+ * @returns {boolean}
+ */
+function isIpv4InCidr(ip, cidr) {
+  const [network, rawPrefix = "32"] = cidr.split("/");
+  const prefix = Number(rawPrefix);
+  if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
+
+  const ipInt = ipv4ToInt(ip);
+  const networkInt = ipv4ToInt(network);
+  if (ipInt === null || networkInt === null) return false;
+
+  if (prefix === 0) return true;
+  const mask = (0xffffffff << (32 - prefix)) >>> 0;
+  return (ipInt & mask) === (networkInt & mask);
+}
+
+/**
+ * @param {string} ip
+ * @param {string} cidr
+ * @returns {boolean}
+ */
+function isIpv6ExactOr128(ip, cidr) {
+  const [network, rawPrefix] = cidr.split("/");
+  if (!rawPrefix) {
+    return ip === network;
+  }
+
+  const prefix = Number(rawPrefix);
+  return prefix === 128 && ip === network;
+}
+
+/**
+ * @param {string} remoteIp
+ * @param {string[]} trustedCidrs
+ * @returns {boolean}
+ */
+export function isTrustedProxyIp(remoteIp, trustedCidrs = getTrustedProxyCidrs()) {
+  if (!remoteIp) return false;
+
+  const ip = normalizeIp(remoteIp);
+  const ipType = net.isIP(ip);
+  if (!ipType) return false;
+
+  for (const cidr of trustedCidrs) {
+    const normalizedCidr = normalizeIp(cidr);
+    const cidrNetwork = normalizedCidr.split("/")[0];
+    const cidrType = net.isIP(cidrNetwork);
+    if (cidrType !== ipType) continue;
+
+    if (ipType === 4 && isIpv4InCidr(ip, normalizedCidr)) {
+      return true;
+    }
+
+    if (ipType === 6 && isIpv6ExactOr128(ip, normalizedCidr)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * @param {Request} req
  * @returns {string}
  */
 export function getClientIp(req) {
+  const remoteIp = normalizeIp(req.socket.remoteAddress || "");
+
   const forwardedFor = req.headers["x-forwarded-for"];
   const forwarded =
     typeof forwardedFor === "string"
@@ -52,8 +163,12 @@ export function getClientIp(req) {
         ? forwardedFor[0]
         : null;
 
-  const ip = forwarded?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
-  return ip.startsWith("::ffff:") ? ip.slice(7) : ip;
+  const forwardedIp = normalizeIp(forwarded?.split(",")[0]?.trim() || "");
+  if (forwardedIp && isTrustedProxyIp(remoteIp)) {
+    return forwardedIp;
+  }
+
+  return remoteIp;
 }
 
 /**

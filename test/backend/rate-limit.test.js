@@ -5,15 +5,23 @@ import {
   getClientIp,
   getRateLimitWindowMs,
   DEFAULT_RATE_LIMIT_WINDOW_MS,
+  isTrustedProxyIp,
 } from "../../src/backend/rate-limit.js";
 
 const originalTimerSpeed = process.env.TIMER_SPEED;
+const originalTrustedProxyCidrs = process.env.TRUSTED_PROXY_CIDRS;
 
 afterEach(() => {
   if (originalTimerSpeed === undefined) {
     delete process.env.TIMER_SPEED;
   } else {
     process.env.TIMER_SPEED = originalTimerSpeed;
+  }
+
+  if (originalTrustedProxyCidrs === undefined) {
+    delete process.env.TRUSTED_PROXY_CIDRS;
+  } else {
+    process.env.TRUSTED_PROXY_CIDRS = originalTrustedProxyCidrs;
   }
 });
 
@@ -149,7 +157,8 @@ describe("rate-limit", () => {
   });
 
   describe("getClientIp", () => {
-    it("prefers x-forwarded-for and strips ipv6-mapped ipv4 prefix", () => {
+    it("uses x-forwarded-for only when the peer is trusted", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32,::1/128,172.16.0.0/12";
       const req = {
         headers: { "x-forwarded-for": "203.0.113.10, 70.41.3.18" },
         socket: { remoteAddress: "::ffff:127.0.0.1" },
@@ -157,12 +166,40 @@ describe("rate-limit", () => {
       assert.strictEqual(getClientIp(req), "203.0.113.10");
     });
 
+    it("ignores x-forwarded-for when peer is untrusted", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32";
+      const req = {
+        headers: { "x-forwarded-for": "203.0.113.10, 70.41.3.18" },
+        socket: { remoteAddress: "::ffff:198.51.100.25" },
+      };
+      assert.strictEqual(getClientIp(req), "198.51.100.25");
+    });
+
     it("falls back to socket remote address", () => {
+      process.env.TRUSTED_PROXY_CIDRS = "127.0.0.1/32";
       const req = {
         headers: {},
         socket: { remoteAddress: "::ffff:127.0.0.1" },
       };
       assert.strictEqual(getClientIp(req), "127.0.0.1");
+    });
+  });
+
+  describe("isTrustedProxyIp", () => {
+    it("supports ipv4 cidr ranges", () => {
+      assert.strictEqual(
+        isTrustedProxyIp("172.18.0.4", ["172.16.0.0/12"]),
+        true,
+      );
+      assert.strictEqual(
+        isTrustedProxyIp("198.51.100.4", ["172.16.0.0/12"]),
+        false,
+      );
+    });
+
+    it("supports exact ipv6 matches", () => {
+      assert.strictEqual(isTrustedProxyIp("::1", ["::1/128"]), true);
+      assert.strictEqual(isTrustedProxyIp("::1", ["fe80::1/128"]), false);
     });
   });
 });
