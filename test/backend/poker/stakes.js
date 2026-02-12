@@ -5,7 +5,10 @@ import {
   DEFAULT,
   isValidPreset,
 } from "../../../src/backend/poker/stakes.js";
-import { getChipDenomination } from "../../../src/shared/stakes.js";
+import {
+  getChipDenomination,
+  decomposeChips,
+} from "../../../src/shared/stakes.js";
 
 describe("stakes", () => {
   describe("PRESETS", () => {
@@ -104,6 +107,60 @@ describe("stakes", () => {
       assert.strictEqual(getChipDenomination(10, 25), 5);
       // $3/$6 - GCD is 300, chips: 100 divides both
       assert.strictEqual(getChipDenomination(300, 600), 100);
+    });
+  });
+
+  describe("decomposeChips", () => {
+    it("returns empty array for zero", () => {
+      assert.deepStrictEqual(decomposeChips(0), []);
+    });
+
+    it("decomposes a single denomination exactly", () => {
+      assert.deepStrictEqual(decomposeChips(100), [{ denom: 100, count: 1 }]);
+    });
+
+    it("decomposes into multiple chips of same denomination", () => {
+      assert.deepStrictEqual(decomposeChips(300), [{ denom: 100, count: 3 }]);
+    });
+
+    it("decomposes into mixed denominations", () => {
+      // $210 = 21000 cents = 2×$100 + 1×$10
+      assert.deepStrictEqual(decomposeChips(21000), [
+        { denom: 10000, count: 2 },
+        { denom: 1000, count: 1 },
+      ]);
+    });
+
+    it("handles small amounts with 1-cent chips", () => {
+      assert.deepStrictEqual(decomposeChips(3), [
+        { denom: 1, count: 3 },
+      ]);
+    });
+
+    it("uses greedy decomposition from largest to smallest", () => {
+      // $0.50 = 50 cents = 1×50
+      assert.deepStrictEqual(decomposeChips(50), [{ denom: 50, count: 1 }]);
+      // $0.76 = 76 cents = 1×50 + 1×25 + 1×1
+      assert.deepStrictEqual(decomposeChips(76), [
+        { denom: 50, count: 1 },
+        { denom: 25, count: 1 },
+        { denom: 1, count: 1 },
+      ]);
+    });
+
+    it("decomposes a typical big blind ($0.50)", () => {
+      assert.deepStrictEqual(decomposeChips(50), [{ denom: 50, count: 1 }]);
+    });
+
+    it("decomposes a large all-in amount", () => {
+      // $537.25 = 53725 cents = 5×$100 + 1×$25 + 1×$10 + 1×$5 + 2×$1 + 1×$0.25
+      assert.deepStrictEqual(decomposeChips(53725), [
+        { denom: 10000, count: 5 },
+        { denom: 2500, count: 1 },
+        { denom: 1000, count: 1 },
+        { denom: 100, count: 2 },
+        { denom: 25, count: 1 },
+      ]);
     });
   });
 });

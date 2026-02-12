@@ -7,6 +7,7 @@ import {
 } from "./styles.js";
 import "./card.js";
 import "./button.js";
+import "./chips.js";
 
 class Seat extends LitElement {
   static get styles() {
@@ -448,7 +449,10 @@ class Seat extends LitElement {
 
   _renderBetIndicator() {
     return this.seat.bet > 0
-      ? html`<div class="bet-indicator">${formatCurrency(this.seat.bet)}</div>`
+      ? html`<div class="bet-indicator">
+          <phg-chips .amount=${this.seat.bet}></phg-chips>
+          ${formatCurrency(this.seat.bet)}
+        </div>`
       : "";
   }
 

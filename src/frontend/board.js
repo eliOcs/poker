@@ -1,6 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
+import "./chips.js";
 
 class Board extends LitElement {
   static get styles() {
@@ -38,6 +39,9 @@ class Board extends LitElement {
         }
 
         .pot {
+          display: flex;
+          align-items: center;
+          gap: var(--space-md);
           font-size: var(--font-md);
           color: var(--color-primary);
         }
@@ -202,7 +206,10 @@ class Board extends LitElement {
         <div class="phase">${phase}</div>
         ${this.renderCommunityCards(cards)}
         ${this.hand
-          ? html`<div class="pot">Pot: ${formatCurrency(this.hand.pot)}</div>`
+          ? html`<div class="pot">
+              <phg-chips .amount=${this.hand.pot}></phg-chips>
+              Pot: ${formatCurrency(this.hand.pot)}
+            </div>`
           : ""}
       </div>
     `;

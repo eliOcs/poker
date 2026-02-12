@@ -56,3 +56,23 @@ export const PRESETS = [
  * @type {Stakes}
  */
 export const DEFAULT = PRESETS[1];
+
+/**
+ * Decompose an amount in cents into chip denominations using a greedy algorithm.
+ * Iterates from largest to smallest denomination.
+ * @param {number} amount - Amount in cents
+ * @returns {Array<{denom: number, count: number}>} - Chips from largest to smallest
+ */
+export function decomposeChips(amount) {
+  const chips = [];
+  let remaining = amount;
+  for (let i = CHIP_DENOMINATIONS.length - 1; i >= 0 && remaining > 0; i--) {
+    const denom = CHIP_DENOMINATIONS[i];
+    const count = Math.floor(remaining / denom);
+    if (count > 0) {
+      chips.push({ denom, count });
+      remaining -= denom * count;
+    }
+  }
+  return chips;
+}

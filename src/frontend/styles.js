@@ -244,6 +244,9 @@ export const actionPanelStyles = css`
 export const seatBetStyles = css`
   .bet-indicator {
     position: absolute;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
     color: var(--color-primary);
     font-size: var(--font-md);
     white-space: nowrap;
