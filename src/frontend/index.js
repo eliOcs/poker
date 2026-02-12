@@ -9,6 +9,10 @@ import "./action-panel.js";
 import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
+import {
+  snapshotBetPositions,
+  animateBetCollection,
+} from "./bet-collection.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
@@ -95,9 +99,8 @@ class Game extends LitElement {
           color: var(--color-bg-disabled);
         }
 
-        #settings-btn {
+        .toolbar-btn {
           position: absolute;
-          right: 0.5%;
           top: 0.5%;
           background: none;
           border: none;
@@ -106,9 +109,11 @@ class Game extends LitElement {
           padding: 5px;
           color: var(--color-fg-medium);
         }
-
-        #settings-btn:hover {
+        .toolbar-btn:hover {
           color: var(--color-fg-white);
+        }
+        #settings-btn {
+          right: 0.5%;
         }
 
         .settings-content input {
@@ -164,35 +169,16 @@ class Game extends LitElement {
         }
 
         #ranking-btn {
-          position: absolute;
           right: 40px;
-          top: 0.5%;
-          background: none;
-          border: none;
-          font-size: var(--font-lg);
-          cursor: pointer;
-          padding: 5px;
           color: var(--color-primary);
         }
-
-        #ranking-btn:hover {
-          color: var(--color-fg-white);
-        }
-
         #history-btn {
-          position: absolute;
           right: 75px;
-          top: 0.5%;
-          background: none;
-          border: none;
-          font-size: var(--font-lg);
-          cursor: pointer;
-          padding: 5px;
-          color: var(--color-fg-medium);
         }
-
-        #history-btn:hover {
-          color: var(--color-fg-white);
+        .collecting-chip {
+          position: absolute;
+          z-index: 10;
+          pointer-events: none;
         }
       `,
     ];
@@ -342,28 +328,45 @@ class Game extends LitElement {
     if (!prev.clockTicks && curr.clockTicks) Audio.playClockSound();
   }
 
-  updated(changedProperties) {
-    if (changedProperties.has("user") && this.user) {
-      this._initializeVolumeFromSettings();
-    }
-    if (changedProperties.has("game") && this.game) {
-      const { seatIndex } = this.getMySeatInfo();
-      const prev = changedProperties.get("game")?.hand ?? {};
-      const curr = this.game.hand ?? {};
-      if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
-        this._checkTurnSounds(prev, curr);
+  willUpdate(changedProperties) {
+    if (!changedProperties.has("game") || !this.game) return;
+    if (this.game.hand?.collectingBets) {
+      const bets = this.game.seats
+        .map((s, i) => ({ index: i, bet: s.empty ? 0 : s.bet || 0 }))
+        .filter((b) => b.bet > 0);
+      if (bets.length > 0) {
+        this._pendingCollection = snapshotBetPositions(this.shadowRoot, bets);
       }
     }
   }
 
-  getWinningCards() {
-    // Collect winning cards from all winners (for highlighting on the board)
-    for (const seat of this.game.seats) {
-      if (!seat.empty && seat.winningCards) {
-        return seat.winningCards;
-      }
+  _flushPendingCollection() {
+    const sources = this._pendingCollection;
+    if (!sources) return;
+    this._pendingCollection = null;
+    const container = this.shadowRoot.querySelector("#container");
+    if (container) animateBetCollection(container, sources);
+  }
+
+  updated(changedProperties) {
+    if (changedProperties.has("user") && this.user) {
+      this._initializeVolumeFromSettings();
     }
-    return null;
+    if (!changedProperties.has("game") || !this.game) return;
+    const { seatIndex } = this.getMySeatInfo();
+    const prev = changedProperties.get("game")?.hand ?? {};
+    const curr = this.game.hand ?? {};
+    if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
+      this._checkTurnSounds(prev, curr);
+    }
+    this._flushPendingCollection();
+  }
+
+  getWinningCards() {
+    return (
+      this.game.seats.find((s) => !s.empty && s.winningCards)?.winningCards ??
+      null
+    );
   }
 
   _formatTime(seconds) {
@@ -499,6 +502,7 @@ class Game extends LitElement {
                     .isButton=${this.game.button === i}
                     .showSitAction=${!isSeated}
                     .buyIn=${this.game.tournament?.buyIn ?? 0}
+                    .hideBet=${!!this.game.hand?.collectingBets}
                     .clockTicks=${this.game.hand?.actingSeat === i
                       ? this.game.hand?.clockTicks
                       : 0}
@@ -521,16 +525,27 @@ class Game extends LitElement {
         ></phg-action-panel>
         ${this._renderInfoBar()}
         <button
+          class="toolbar-btn"
           id="history-btn"
           @click=${this.openHistory}
           title="Hand History"
         >
           🔁
         </button>
-        <button id="ranking-btn" @click=${this.openRanking} title="Rankings">
+        <button
+          class="toolbar-btn"
+          id="ranking-btn"
+          @click=${this.openRanking}
+          title="Rankings"
+        >
           🏆
         </button>
-        <button id="settings-btn" @click=${this.openSettings} title="Settings">
+        <button
+          class="toolbar-btn"
+          id="settings-btn"
+          @click=${this.openSettings}
+          title="Settings"
+        >
           ⚙
         </button>
         ${this._renderRankingModal()} ${this._renderSettingsModal()}

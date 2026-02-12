@@ -91,6 +91,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {TournamentState|null} tournament - Tournament state (null for cash games)
  * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
  * @property {import('./showdown.js').PotResult[]|null} pendingHandHistory - Pot results to finalize after reveal window
+ * @property {{ active: boolean, delayTicks: number }|null} collectingBets - Bet collection animation state
  */
 
 /**
@@ -161,6 +162,7 @@ export function create({
     tournament: null,
     runout: null,
     pendingHandHistory: null,
+    collectingBets: null,
   };
 }
 
@@ -252,6 +254,11 @@ export function startGameTick(game, onBroadcast) {
     // Handle auto-action (disconnect or clock expiry)
     if (result.autoActionSeat !== null) {
       performAutoAction(game, result.autoActionSeat, onBroadcast);
+    }
+
+    // Handle bet collection completion
+    if (result.collectBets) {
+      finishCollectBets(game, onBroadcast);
     }
 
     // Handle runout street dealing
@@ -612,6 +619,25 @@ export function processGameFlow(game, onBroadcast) {
   if (game.hand.actingSeat !== -1) {
     return;
   }
+
+  // Defer bet collection: pending flag is NOT broadcast to clients yet.
+  // The next tick will set active: true (broadcast with bets still visible),
+  // and the tick after that will finish collection.
+  game.collectingBets = { active: false, delayTicks: 1 };
+  if (onBroadcast) {
+    ensureGameTick(game, onBroadcast);
+  }
+}
+
+/**
+ * Finishes bet collection after the animation tick has elapsed.
+ * Calls collectBets(), clears the flag, and continues the game flow.
+ * @param {Game} game
+ * @param {(gameId: string) => void} [onBroadcast]
+ */
+export function finishCollectBets(game, onBroadcast) {
+  const phase = game.hand.phase;
+  game.collectingBets = null;
 
   Betting.collectBets(game);
 

@@ -29,6 +29,7 @@ export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
  * @property {boolean} tournamentEnded - Whether tournament has a winner
  * @property {boolean} dealNextStreet - Whether to deal next street in runout
+ * @property {boolean} collectBets - Whether to finish bet collection
  */
 
 /**
@@ -96,6 +97,7 @@ function createTickResult() {
     tournamentBreakEnded: false,
     tournamentEnded: false,
     dealNextStreet: false,
+    collectBets: false,
   };
 }
 
@@ -153,6 +155,29 @@ function handleActingTick(game, result) {
 }
 
 /**
+ * Handles bet collection tick (animation delay before clearing bets)
+ * @param {Game} game
+ * @param {TickResult} result
+ */
+function handleCollectBetsTick(game, result) {
+  if (!game.collectingBets) return;
+
+  if (!game.collectingBets.active) {
+    // First tick: activate flag so clients see it (bets still on seats)
+    game.collectingBets.active = true;
+    result.shouldBroadcast = true;
+    return;
+  }
+
+  game.collectingBets.delayTicks -= 1;
+  result.shouldBroadcast = true;
+
+  if (game.collectingBets.delayTicks <= 0) {
+    result.collectBets = true;
+  }
+}
+
+/**
  * Handles runout tick (all-in scenario street dealing)
  * @param {Game} game
  * @param {TickResult} result
@@ -181,6 +206,7 @@ export function tick(game) {
   }
 
   handleCountdown(game, result);
+  handleCollectBetsTick(game, result);
   handleActingTick(game, result);
   handleRunoutTick(game, result);
 
@@ -198,7 +224,14 @@ export function shouldTickBeRunning(game) {
     game.hand?.actingSeat !== -1 && game.hand?.actingSeat !== undefined;
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
-  return hasCountdown || hasActingPlayer || isTournamentTicking || isRunningOut;
+  const isCollectingBets = game.collectingBets !== null;
+  return (
+    hasCountdown ||
+    hasActingPlayer ||
+    isTournamentTicking ||
+    isRunningOut ||
+    isCollectingBets
+  );
 }
 
 /**

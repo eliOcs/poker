@@ -163,6 +163,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} actingSeat
  * @property {number} actingTicks - Ticks the current player has been acting
  * @property {number} clockTicks - Ticks since clock was called (0 if not called)
+ * @property {boolean} collectingBets - Whether bets are being collected (animation cue)
  */
 
 /**
@@ -655,11 +656,15 @@ export default function playerView(game, player) {
     hand: game.hand
       ? {
           phase: game.hand.phase,
-          pot: game.hand.pot,
+          pot: game.collectingBets?.active
+            ? game.hand.pot +
+              game.seats.reduce((sum, s) => sum + (s.empty ? 0 : s.bet), 0)
+            : game.hand.pot,
           currentBet: game.hand.currentBet,
           actingSeat: game.hand.actingSeat,
           actingTicks: game.actingTicks,
           clockTicks: game.clockTicks,
+          collectingBets: !!game.collectingBets?.active,
         }
       : null,
     countdown: game.countdown,

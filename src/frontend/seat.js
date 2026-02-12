@@ -269,6 +269,7 @@ class Seat extends LitElement {
       showSitAction: { type: Boolean },
       clockTicks: { type: Number },
       buyIn: { type: Number },
+      hideBet: { type: Boolean },
     };
   }
 
@@ -277,6 +278,7 @@ class Seat extends LitElement {
     this.showSitAction = true;
     this.clockTicks = 0;
     this.buyIn = 0;
+    this.hideBet = false;
     this._activeEmote = null;
     this._emoteTimer = null;
   }
@@ -448,7 +450,7 @@ class Seat extends LitElement {
   }
 
   _renderBetIndicator() {
-    return this.seat.bet > 0
+    return this.seat.bet > 0 && !this.hideBet
       ? html`<div class="bet-indicator">
           <phg-chips .amount=${this.seat.bet}></phg-chips>
           ${formatCurrency(this.seat.bet)}
