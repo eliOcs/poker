@@ -132,9 +132,7 @@ describe("stakes", () => {
     });
 
     it("handles small amounts with 1-cent chips", () => {
-      assert.deepStrictEqual(decomposeChips(3), [
-        { denom: 1, count: 3 },
-      ]);
+      assert.deepStrictEqual(decomposeChips(3), [{ denom: 1, count: 3 }]);
     });
 
     it("uses greedy decomposition from largest to smallest", () => {

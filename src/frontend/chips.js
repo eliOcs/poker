@@ -42,7 +42,7 @@ class Chips extends LitElement {
           border: 1px solid color-mix(in srgb, var(--c), black 80%);
           background: linear-gradient(
             to right,
-            color-mix(in srgb, var(--c), white 80%) 0px 2px,
+            color-mix(in srgb, var(--c), white 80%) 0 2px,
             var(--c) 2px 6px,
             color-mix(in srgb, var(--c), white 80%) 6px 9px,
             var(--c) 9px 13px,

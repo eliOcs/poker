@@ -28,7 +28,12 @@ src/
 │   ├── websocket-handler.js # WebSocket message handling
 │   ├── static-files.js  # Static file serving
 │   ├── logger.js        # Logging utilities
-│   ├── player-store.js  # Player session management
+│   ├── store.js         # Player session management
+│   ├── user.js          # User identity and creation
+│   ├── id.js            # ID generation utilities
+│   ├── http-error.js    # Structured HTTP error class
+│   ├── rate-limit.js    # Rate limiting
+│   ├── game-eviction.js # Player eviction/timeout logic
 │   └── poker/           # Game logic (pure functions)
 │       ├── game.js          # Game state initialization
 │       ├── game-tick.js     # Game tick orchestration
@@ -36,7 +41,7 @@ src/
 │       ├── betting.js       # Betting logic and turn management
 │       ├── dealing.js       # Card dealing logic
 │       ├── hand-rankings.js # Hand evaluation & comparison
-│       ├── hand-history/    # OHH format hand history
+│       ├── hand-history/    # Hand history (OHH spec: https://hh-specs.handhistory.org/)
 │       │   ├── index.js     # History generation
 │       │   ├── io.js        # File I/O operations
 │       │   └── view.js      # History view formatting
@@ -44,13 +49,19 @@ src/
 │       ├── player-view.js   # Server-side view filtering
 │       ├── pots.js          # Pot calculation and side pots
 │       ├── ranking.js       # Hand ranking utilities
+│       ├── recovery.js      # Game state recovery from hand history
 │       ├── seat.js          # Seat representation
 │       ├── showdown.js      # Showdown logic
 │       ├── stakes.js        # Blind/ante configuration
+│       ├── tournament-summary.js # Tournament summary (OTS spec: https://ts-specs.handhistory.org/)
+│       ├── tournament-tick.js    # Tournament blind level progression
 │       ├── deck.js          # Card deck management
 │       ├── rng.js           # Random number generation
 │       ├── types.js         # TypeScript type definitions
 │       └── circular-array.js
+├── shared/              # Code shared between frontend and backend
+│   ├── stakes.js        # Chip denominations and stake presets
+│   └── tournament.js    # Tournament configuration constants
 └── frontend/            # Browser UI (Lit web components)
     ├── index.html       # Entry point with importmap
     ├── manifest.json    # PWA manifest
@@ -60,8 +71,12 @@ src/
     ├── history-styles.js # History page styles
     ├── home.js          # Landing page
     ├── action-panel.js  # Betting action buttons
+    ├── audio.js         # Sound effects
     ├── board.js         # Community cards
     ├── card.js          # Card component
+    ├── chips.js         # Chip stack visual component
+    ├── currency-slider.js # Currency amount slider
+    ├── game-layout.js   # Game table layout
     ├── seat.js          # Player seat component
     ├── button.js        # Generic button component
     ├── modal.js         # Modal dialog
@@ -114,9 +129,9 @@ Each player receives a filtered view of the game state:
 ```javascript
 {
   running: boolean,
-  button: number,          // Dealer position (0-5)
+  button: number,          // Dealer position
   blinds: { ante, small, big },
-  seats: Seat[],           // 6 seats
+  seats: Seat[],           // Configurable: 2 (heads-up), 6 (6-max), 9 (full ring)
   deck: Card[],
   board: { cards: Card[] }
 }
@@ -181,8 +196,9 @@ npm run test:ui-catalog         # Run visual regression tests
 npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
 npm run coverage                # Run tests with coverage reporting
 npm run duplicates              # Check for code duplication (jscpd)
-npm run lint                    # ESLint + Stylelint
-npm run format                  # Prettier
+npm run lint                    # ESLint + Stylelint (check only)
+npm run format                  # Prettier (check only)
+npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
 ```
@@ -208,6 +224,12 @@ PORT=3000
 - No semicolons (Prettier default)
 - Single quotes for strings
 - 2-space indentation
+
+### Currency
+
+- All monetary values are stored as **integers in cents** to avoid floating-point precision issues
+- The `Cents` type alias (`@typedef {number} Cents` in `types.js`) is used throughout to make this explicit
+- Conversion to display format (e.g., `"$1.50"`) happens only at the UI layer via `formatCurrency()`
 
 ### Naming
 
@@ -297,7 +319,6 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 **Runtime** (keep minimal):
 
 - `ws` - WebSocket server
-- `mime-types` - MIME type detection for static files
 - `lit` - Web components
 
 **Dev**:
