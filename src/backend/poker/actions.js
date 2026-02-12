@@ -54,6 +54,11 @@ export function start(game) {
   game.countdown = 5;
 }
 
+/** @param {Game} game */
+function isHandInProgress(game) {
+  return game.hand?.phase != null && game.hand.phase !== "waiting";
+}
+
 /**
  * Sits a player at a seat
  * @param {Game} game
@@ -65,23 +70,21 @@ export function sit(game, { seat: requestedSeat, player }) {
   }
   const seat = requestedSeat ?? game.seats.findIndex((s) => s.empty);
   if (seat === -1) throw new Error("no empty seats");
-  if (game.seats[seat].empty) {
-    const playerSeat = game.seats.findIndex(
-      (s) => !s.empty && s.player === player,
-    );
-    if (playerSeat !== -1) {
-      game.seats[playerSeat] = Seat.empty();
-    }
-    game.seats[seat] = Seat.occupied(player);
+  if (!game.seats[seat].empty) throw new Error("seat is already occupied");
 
-    // For tournaments, automatically give starting stack
-    if (game.tournament?.active) {
-      const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-      seatObj.stack = game.tournament.initialStack;
-      seatObj.totalBuyIn = game.tournament.initialStack;
-    }
-  } else {
-    throw new Error("seat is already occupied");
+  const playerSeat = game.seats.findIndex(
+    (s) => !s.empty && s.player === player,
+  );
+  if (playerSeat !== -1) {
+    game.seats[playerSeat] = Seat.empty();
+  }
+  game.seats[seat] = Seat.occupied(player, 0, isHandInProgress(game));
+
+  // For tournaments, automatically give starting stack
+  if (game.tournament?.active) {
+    const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+    seatObj.stack = game.tournament.initialStack;
+    seatObj.totalBuyIn = game.tournament.initialStack;
   }
 }
 

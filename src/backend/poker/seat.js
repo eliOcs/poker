@@ -55,9 +55,10 @@ export function empty() {
  * Creates an occupied seat with a player
  * @param {Player} player - Player object with id
  * @param {Cents} [stack] - Initial chip stack
+ * @param {boolean} [sittingOut] - Whether player starts sitting out
  * @returns {OccupiedSeat}
  */
-export function occupied(player, stack = 0) {
+export function occupied(player, stack = 0, sittingOut = false) {
   return {
     empty: false,
     player,
@@ -69,7 +70,7 @@ export function occupied(player, stack = 0) {
     cards: [],
     folded: false,
     allIn: false,
-    sittingOut: false,
+    sittingOut,
     missedBigBlind: false,
     disconnected: false,
     lastAction: null,

@@ -3,7 +3,7 @@ import assert from "node:assert";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
-import { createGameWithPlayers } from "./test-helpers.js";
+import { createGameWithPlayers, setupFlop } from "./test-helpers.js";
 
 describe("betting", () => {
   let game;
@@ -573,6 +573,36 @@ describe("betting", () => {
         Actions.check(game, { seat: 0 });
         assert.equal(game.hand.actingSeat, -1);
       });
+    });
+  });
+
+  describe("player joining mid-hand", () => {
+    it("should mark player as sitting out when joining mid-hand", () => {
+      const game = createGameWithPlayers();
+      setupFlop(game);
+
+      // New player sits at seat 1 mid-hand
+      Actions.sit(game, { seat: 1, player: { id: "latecomer" } });
+
+      assert.equal(game.seats[1].sittingOut, true);
+    });
+
+    it("should skip a player who sat down mid-hand", () => {
+      const game = createGameWithPlayers();
+      setupFlop(game);
+
+      // Seat 2 is acting on the flop
+      game.hand.actingSeat = 2;
+      game.hand.lastRaiser = -1;
+
+      // New player sits at seat 3 mid-hand
+      Actions.sit(game, { seat: 3, player: { id: "latecomer" } });
+
+      // Advance past seat 2's action
+      Betting.advanceAction(game);
+
+      // Should skip seat 3 (sitting out) and go to seat 4
+      assert.equal(game.hand.actingSeat, 4);
     });
   });
 });

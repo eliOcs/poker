@@ -283,6 +283,10 @@ function getShowCardsActions(seat, game) {
     return [];
   }
 
+  if (seat.cardsRevealed) {
+    return [];
+  }
+
   const shownCards = getShownCards(seat);
   if (shownCards[0] && shownCards[1]) {
     return [];

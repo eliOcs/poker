@@ -196,6 +196,32 @@ describe("Player View", function () {
       assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
     });
 
+    it("does not show reveal actions when cards were already revealed at showdown", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand = {
+        phase: "waiting",
+        pot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+        lastRaiser: -1,
+        lastRaiseSize: 0,
+      };
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[0].cardsRevealed = true;
+
+      const view = playerView(g, p1);
+      const p1Actions = view.seats[0].actions;
+
+      assert.ok(!p1Actions.some((a) => a.action === "showCard1"));
+      assert.ok(!p1Actions.some((a) => a.action === "showCard2"));
+      assert.ok(!p1Actions.some((a) => a.action === "showBothCards"));
+    });
+
     it("shows reveal actions in waiting phase for non-folded players", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
