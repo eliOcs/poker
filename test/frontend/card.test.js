@@ -27,7 +27,7 @@ describe("phg-card", () => {
     expect(cardElements.length).to.be.greaterThan(0);
 
     const cardTexts = Array.from(cardElements).map((c) => {
-      const card = c.shadowRoot.querySelector(".card");
+      const card = c.shadowRoot.querySelector(".card.front");
       return card ? card.textContent.trim() : "";
     });
     expect(cardTexts.some((t) => t.includes("♥"))).to.be.true;
@@ -44,7 +44,7 @@ describe("phg-card", () => {
       await seat.updateComplete;
       const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
       for (const cardEl of cardElements) {
-        const hiddenCard = cardEl.shadowRoot.querySelector(".card.hidden");
+        const hiddenCard = cardEl.shadowRoot.querySelector(".card.back");
         if (hiddenCard) foundHidden = true;
       }
     }
@@ -98,7 +98,7 @@ describe("phg-card", () => {
     const cardElements = board.shadowRoot.querySelectorAll("phg-card");
 
     const cardTexts = Array.from(cardElements).map((c) => {
-      const card = c.shadowRoot.querySelector(".card");
+      const card = c.shadowRoot.querySelector(".card.front");
       return card ? card.textContent.trim() : "";
     });
     expect(cardTexts.some((t) => t.includes("A"))).to.be.true;

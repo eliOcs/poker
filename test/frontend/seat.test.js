@@ -130,8 +130,9 @@ describe("phg-seat", () => {
         const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
         let visibleCount = 0;
         for (const cardEl of cardElements) {
-          const visibleCard =
-            cardEl.shadowRoot.querySelector(".card:not(.hidden)");
+          const visibleCard = cardEl.shadowRoot.querySelector(
+            ".card-wrapper.flipped",
+          );
           if (visibleCard) visibleCount++;
         }
         expect(visibleCount).to.equal(2);
@@ -155,7 +156,9 @@ describe("phg-seat", () => {
         const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
         let hiddenCount = 0;
         for (const cardEl of cardElements) {
-          const hiddenCard = cardEl.shadowRoot.querySelector(".card.hidden");
+          const hiddenCard = cardEl.shadowRoot.querySelector(
+            ".card-wrapper:not(.flipped)",
+          );
           if (hiddenCard) hiddenCount++;
         }
         expect(hiddenCount).to.equal(2);

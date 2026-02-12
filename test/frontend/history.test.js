@@ -539,7 +539,9 @@ describe("phg-history", () => {
       let foundVisibleCard = false;
       for (const card of cards) {
         await card.updateComplete;
-        const visibleCard = card.shadowRoot.querySelector(".card:not(.hidden)");
+        const visibleCard = card.shadowRoot.querySelector(
+          ".card-wrapper.flipped",
+        );
         if (visibleCard) foundVisibleCard = true;
       }
       expect(foundVisibleCard).to.be.true;
@@ -572,7 +574,9 @@ describe("phg-history", () => {
         const cards = seat.shadowRoot.querySelectorAll("phg-card");
         for (const card of cards) {
           await card.updateComplete;
-          const hiddenCard = card.shadowRoot.querySelector(".card.hidden");
+          const hiddenCard = card.shadowRoot.querySelector(
+            ".card-wrapper:not(.flipped)",
+          );
           if (hiddenCard) foundHidden = true;
         }
       }

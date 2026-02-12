@@ -258,6 +258,7 @@ PORT=3000
 **UI Catalog** (`test/ui-catalog/`):
 
 - Visual regression testing with Playwright screenshots
+- Snapshots are stored in Git LFS
 - Run `npm run test:ui-catalog:update` to regenerate snapshots after UI changes
 
 ## Deployment
