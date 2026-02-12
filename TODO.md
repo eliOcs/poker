@@ -51,6 +51,7 @@
 
 # Not right now
 
+- once we start chargin set license to: https://osaasy.dev/
 - sb/bb indicators (more position information)
 - Store hand history as gzip
 - gzip dynamic backend responses
