@@ -121,7 +121,12 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote} PlayerAction
+ * @typedef {object} ActionShare
+ * @property {'share'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote|ActionShare} PlayerAction
  */
 
 /**
@@ -391,6 +396,7 @@ function getSittingOutActions(seat, game, isTournament) {
   if (!isTournament || game.handNumber === 0) {
     actions.push({ action: "leave" });
   }
+  if (game.handNumber === 0) actions.push({ action: "share" });
   return actions;
 }
 
@@ -427,6 +433,7 @@ function getWaitingPhaseActions(seat, game) {
     actions.push({ action: "start" });
   }
   actions.push({ action: "sitOut" });
+  if (game.handNumber === 0) actions.push({ action: "share" });
   return actions.concat(showActions);
 }
 

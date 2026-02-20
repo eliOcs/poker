@@ -243,6 +243,24 @@ class ActionPanel extends LitElement {
     `;
   }
 
+  _renderShareButtons() {
+    return html`
+      <div class="share-buttons">
+        <phg-button
+          variant="${this.copied ? "success" : "action"}"
+          @click=${this.copyGameLink}
+        >
+          ${this.copied ? "Copied!" : "Copy Link"}
+        </phg-button>
+        ${this.canShare()
+          ? html`<phg-button variant="action" @click=${this.shareGameLink}
+              >Share</phg-button
+            >`
+          : ""}
+      </div>
+    `;
+  }
+
   _renderSitInLeave(actionMap) {
     return html`
       <div class="action-row">
@@ -265,6 +283,7 @@ class ActionPanel extends LitElement {
             >`
           : ""}
       </div>
+      ${actionMap.share ? this._renderShareButtons() : ""}
     `;
   }
 
@@ -291,7 +310,7 @@ class ActionPanel extends LitElement {
             >`
           : ""}
       </div>
-      ${showButtons}
+      ${actionMap.share ? this._renderShareButtons() : ""}${showButtons}
     `;
   }
 
