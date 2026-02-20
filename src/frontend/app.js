@@ -95,6 +95,11 @@ class App extends LitElement {
     window.addEventListener("popstate", () => {
       this.path = window.location.pathname;
     });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        this._reconnectIfNeeded();
+      }
+    });
     this.addEventListener("navigate", (e) => {
       history.pushState({}, "", e.detail.path);
       this.path = e.detail.path;
@@ -155,6 +160,7 @@ class App extends LitElement {
     this._activeGameId = gameId;
     this.game = null;
     this.gameConnectionStatus = "connecting";
+    this._intentionalClose = false;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     this._socket = new WebSocket(
@@ -179,15 +185,33 @@ class App extends LitElement {
     };
 
     this._socket.onclose = (event) => {
+      this._socket = null;
       this.gameConnectionStatus = "disconnected";
-      // Code 1006 = abnormal closure (connection rejected)
+      // Code 1006 = abnormal closure (connection rejected before game loaded)
       if (!this.game && event.code === 1006) {
         this.handleGameNotFound();
+        return;
+      }
+      // Reconnect automatically unless we closed intentionally
+      if (!this._intentionalClose && this._activeGameId) {
+        setTimeout(() => this._reconnectIfNeeded(), 1000);
       }
     };
   }
 
+  _reconnectIfNeeded() {
+    if (
+      this._activeGameId &&
+      (!this._socket || this._socket.readyState === WebSocket.CLOSED)
+    ) {
+      const gameId = this._activeGameId;
+      this._activeGameId = null; // allow connectToGame to proceed
+      this.connectToGame(gameId);
+    }
+  }
+
   disconnectFromGame() {
+    this._intentionalClose = true;
     if (this._socket) {
       this._socket.close();
       this._socket = null;
