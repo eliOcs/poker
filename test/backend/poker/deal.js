@@ -8,6 +8,8 @@ import {
   dealFlop,
   dealPreflop,
   sit,
+  sitOut,
+  sitIn,
 } from "../../../src/backend/poker/actions.js";
 import { isValidCard } from "../../../src/backend/poker/deck.js";
 
@@ -91,6 +93,45 @@ describe("deal", function () {
         game.seats[2].cards?.length,
         2,
         "player who bought in should be dealt cards",
+      );
+    });
+  });
+
+  describe("player sits out and back in with chips", function () {
+    it("should not be dealt cards while sitting out", function () {
+      const game = Game.create();
+      sit(game, { seat: 0, player: createPlayer() });
+      buyIn(game, { seat: 0, amount: 100 });
+      sit(game, { seat: 1, player: createPlayer() });
+      buyIn(game, { seat: 1, amount: 100 });
+      sitOut(game, { seat: 0 });
+
+      const gen = dealPreflop(game);
+      while (!gen.next().done);
+
+      assert.equal(
+        game.seats[0].cards?.length ?? 0,
+        0,
+        "sitting out player should not be dealt cards",
+      );
+    });
+
+    it("should be dealt cards after sitting back in", function () {
+      const game = Game.create();
+      sit(game, { seat: 0, player: createPlayer() });
+      buyIn(game, { seat: 0, amount: 100 });
+      sit(game, { seat: 1, player: createPlayer() });
+      buyIn(game, { seat: 1, amount: 100 });
+      sitOut(game, { seat: 0 });
+      sitIn(game, { seat: 0 });
+
+      const gen = dealPreflop(game);
+      while (!gen.next().done);
+
+      assert.equal(
+        game.seats[0].cards?.length,
+        2,
+        "player who sat back in should be dealt cards",
       );
     });
   });
