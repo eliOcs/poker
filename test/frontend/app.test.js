@@ -1,6 +1,7 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import {
   OriginalFetch,
+  MockWebSocket,
   createMockHandList,
   mockOhhHand,
   mockOhhHandView,
@@ -42,6 +43,76 @@ describe("phg-app", () => {
   afterEach(() => {
     // Always restore original fetch after each test
     globalThis.fetch = OriginalFetch;
+  });
+
+  describe("WebSocket reconnection", () => {
+    let element;
+
+    beforeEach(async () => {
+      MockWebSocket.instances = [];
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/))
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        return { ok: false };
+      };
+      element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/games/testgame";
+      await element.updateComplete;
+    });
+
+    afterEach(async () => {
+      // Navigate away so the re-render from cleanup doesn't trigger a reconnect
+      element.path = "/";
+      await element.updateComplete;
+    });
+
+    it("reconnects after an unexpected close", async () => {
+      const first = MockWebSocket.instances.at(-1);
+      first.simulateClose(1001);
+
+      await waitUntil(() => MockWebSocket.instances.length >= 2, {
+        timeout: 3000,
+      });
+
+      expect(MockWebSocket.instances.length).to.equal(2);
+      expect(MockWebSocket.instances[1].url).to.include("testgame");
+    });
+
+    it("reconnects when page becomes visible with a closed socket", async () => {
+      const first = MockWebSocket.instances.at(-1);
+      first.simulateClose(1001);
+
+      // Simulate returning to the tab immediately (before the 1s timer)
+      MockWebSocket.instances = [first];
+      Object.defineProperty(document, "visibilityState", {
+        value: "visible",
+        configurable: true,
+      });
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      await waitUntil(() => MockWebSocket.instances.length >= 2, {
+        timeout: 3000,
+      });
+
+      expect(MockWebSocket.instances.length).to.be.at.least(2);
+      expect(MockWebSocket.instances.at(-1).url).to.include("testgame");
+    });
+
+    it("does not reconnect after navigating away", async () => {
+      // Simulate an unexpected close that would normally schedule a reconnect
+      const ws = MockWebSocket.instances.at(-1);
+      ws.simulateClose(1001);
+
+      // Navigate away before the 1s timer fires — this is an intentional disconnect
+      element.path = "/";
+      await element.updateComplete;
+
+      const countAfterNav = MockWebSocket.instances.length;
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // The reconnect timer fired but _activeGameId is null, so no new connection
+      expect(MockWebSocket.instances.length).to.equal(countAfterNav);
+    });
   });
 
   describe("history data fetching", () => {

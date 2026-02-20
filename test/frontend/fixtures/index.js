@@ -269,6 +269,8 @@ export function createMockGameWithRankings() {
  * Mock WebSocket class for testing
  */
 export class MockWebSocket {
+  static instances = [];
+
   constructor(url) {
     this.url = url;
     this.readyState = 1; // WebSocket.OPEN
@@ -277,6 +279,7 @@ export class MockWebSocket {
     this.onopen = null;
     this.onclose = null;
     this.onerror = null;
+    MockWebSocket.instances.push(this);
   }
 
   send(data) {
@@ -291,6 +294,14 @@ export class MockWebSocket {
   simulateMessage(data) {
     if (this.onmessage) {
       this.onmessage({ data: JSON.stringify(data) });
+    }
+  }
+
+  // Helper to simulate an unexpected close (e.g. network drop, mobile suspend)
+  simulateClose(code = 1006) {
+    this.readyState = 3; // WebSocket.CLOSED
+    if (this.onclose) {
+      this.onclose({ code });
     }
   }
 
