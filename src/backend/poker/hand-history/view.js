@@ -85,6 +85,7 @@ import { toCents } from "./io.js";
  * @property {Cents|null} [handResult]
  * @property {Cents} [netResult] - Net gain/loss for this hand (winnings - contributions)
  * @property {Cents} [endingStack] - Stack after the hand completed
+ * @property {boolean} [isWinner] - True if the player received any pot winnings
  * @property {string|null} [handRank]
  * @property {string[]|null} [winningCards]
  * @property {boolean} [isCurrentPlayer]
@@ -100,7 +101,7 @@ import { toCents } from "./io.js";
  * @property {HistoryViewSeat[]} seats
  * @property {{ cards: string[], phase: string }} board
  * @property {Cents} pot
- * @property {{ playerName: string, handRank: string|null, amount: Cents }|null} winnerMessage
+ * @property {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null} winnerMessage
  * @property {string[]|null} winningCards
  * @property {number} button
  */
@@ -494,6 +495,7 @@ function buildOccupiedSeat(
     handResult: winAmount > 0 ? winAmount : null,
     netResult,
     endingStack,
+    isWinner,
     handRank: isWinner ? winningHand : null,
     winningCards: isWinner ? winningCards : null,
     isCurrentPlayer,
@@ -531,20 +533,40 @@ function calculateTotalPot(hand) {
 }
 
 /**
+ * @param {HandPlayer[]} players
+ * @param {string} winnerId
+ * @returns {string}
+ */
+function getWinnerDisplayName(players, winnerId) {
+  const winner = players.find((p) => p.id === winnerId);
+  return winner?.name || `Seat ${winner?.seat || "??"}`;
+}
+
+/**
  * Builds winner message from main pot
  * @param {HandPot|undefined} mainPot - Pot data with amounts in Cents
  * @param {HandPlayer[]} players - Player data with amounts in Cents
- * @returns {{ playerName: string, handRank: string|null, amount: Cents }|null}
+ * @returns {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null}
  */
 function buildViewWinnerMessage(mainPot, players) {
   if (!mainPot?.player_wins?.length) return null;
 
-  const winnerId = mainPot.player_wins[0].player_id;
-  const winner = players.find((p) => p.id === winnerId);
+  const handRank = mainPot.winning_hand || null;
+  const isSplit = mainPot.player_wins.length > 1;
+
+  if (isSplit) {
+    return { playerName: null, handRank, amount: mainPot.amount, isSplit };
+  }
+
+  const playerName = getWinnerDisplayName(
+    players,
+    mainPot.player_wins[0].player_id,
+  );
   return {
-    playerName: winner?.name || `Seat ${winner?.seat || "??"}`,
-    handRank: mainPot.winning_hand || null,
+    playerName,
+    handRank,
     amount: mainPot.player_wins[0].win_amount,
+    isSplit,
   };
 }
 

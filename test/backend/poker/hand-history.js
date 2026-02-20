@@ -89,6 +89,7 @@ describe("hand-history", () => {
       HandHistory.recordStreet(game.id, "river", [game.board.cards[4]]);
 
       // Record showdown
+      HandHistory.recordStreet(game.id, "showdown");
       HandHistory.recordShowdown(game.id, "player2", game.seats[1].cards, true);
       HandHistory.recordShowdown(game.id, "player3", game.seats[2].cards, true);
 
@@ -163,6 +164,7 @@ describe("hand-history", () => {
       HandHistory.recordStreet(game.id, "river", [game.board.cards[4]]);
 
       // Showdown
+      HandHistory.recordStreet(game.id, "showdown");
       HandHistory.recordShowdown(game.id, "player2", game.seats[1].cards, true);
       HandHistory.recordShowdown(game.id, "player3", game.seats[2].cards, true);
 

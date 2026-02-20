@@ -410,6 +410,86 @@ describe("hand-history-view", function () {
       assert.strictEqual(view.seats[1].handRank, null);
     });
 
+    it("returns isSplit=true and no playerName for split pots", function () {
+      // Regression test: split pots used to show only the first winner's name
+      // (e.g. "Angel wins!") instead of indicating a split.
+      const hand = createTestHand({
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 500 },
+          { id: "player3", seat: 3, name: "Carol", starting_stack: 500 },
+        ],
+        rounds: [{ id: 0, street: "Preflop", actions: [] }],
+        pots: [
+          {
+            number: 0,
+            amount: 300,
+            winning_hand: "Straight, Q high",
+            winning_cards: ["9s", "Ts", "Qc", "Jh", "8c"],
+            player_wins: [
+              { player_id: "player1", win_amount: 100, contributed_rake: 0 },
+              { player_id: "player2", win_amount: 100, contributed_rake: 0 },
+              { player_id: "player3", win_amount: 100, contributed_rake: 0 },
+            ],
+          },
+        ],
+      });
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1");
+      const view = HandHistory.getHandView(filtered, "player1");
+
+      assert.strictEqual(view.winnerMessage.isSplit, true);
+      assert.strictEqual(view.winnerMessage.playerName, null);
+      assert.strictEqual(view.winnerMessage.handRank, "Straight, Q high");
+      assert.strictEqual(view.winnerMessage.amount, 30000); // 300 cents total pot
+
+      // All three split-pot winners must be flagged isWinner=true so the seat
+      // highlights them regardless of their individual net result.
+      assert.strictEqual(
+        view.seats[0].isWinner,
+        true,
+        "player1 should be winner",
+      );
+      assert.strictEqual(
+        view.seats[1].isWinner,
+        true,
+        "player2 should be winner",
+      );
+      assert.strictEqual(
+        view.seats[2].isWinner,
+        true,
+        "player3 should be winner",
+      );
+    });
+
+    it("returns isSplit=false with playerName for single winner", function () {
+      const hand = createTestHand({
+        players: [
+          { id: "player1", seat: 1, name: "Alice", starting_stack: 1000 },
+          { id: "player2", seat: 2, name: "Bob", starting_stack: 500 },
+        ],
+        rounds: [{ id: 0, street: "Preflop", actions: [] }],
+        pots: [
+          {
+            number: 0,
+            amount: 200,
+            winning_hand: "Pair, Aces",
+            winning_cards: ["Ah", "Ad", "Kh", "Qc", "Jd"],
+            player_wins: [
+              { player_id: "player1", win_amount: 200, contributed_rake: 0 },
+            ],
+          },
+        ],
+      });
+
+      const filtered = HandHistory.filterHandForPlayer(hand, "player1");
+      const view = HandHistory.getHandView(filtered, "player1");
+
+      assert.strictEqual(view.winnerMessage.isSplit, false);
+      assert.strictEqual(view.winnerMessage.playerName, "Alice");
+      assert.strictEqual(view.winnerMessage.amount, 20000); // 200 cents
+    });
+
     it("calculates netResult and endingStack from contributions and winnings", function () {
       const hand = createTestHand({
         rounds: [

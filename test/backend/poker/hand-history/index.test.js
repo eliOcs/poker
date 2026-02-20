@@ -254,6 +254,7 @@ describe("hand-history", function () {
       HandHistory.recordAction(game.id, players[0].id, "call", 100);
 
       // Showdown
+      HandHistory.recordStreet(game.id, "showdown");
       HandHistory.recordShowdown(game.id, players[0].id, ["Ah", "Kh"], true);
       HandHistory.recordShowdown(game.id, players[1].id, ["Qc", "Jc"], true);
 
@@ -294,6 +295,81 @@ describe("hand-history", function () {
       assert.strictEqual(showdownActions.length, 2);
       assert.strictEqual(showdownActions[0].action, "Shows Cards");
       assert.strictEqual(showdownActions[1].action, "Shows Cards");
+
+      delete process.env.DATA_DIR;
+    });
+
+    it("does not create duplicate rounds when a player voluntarily shows cards mid-hand", async function () {
+      // Regression test: a folded player showing cards during the flop used to
+      // insert a spurious 'Showdown' round, causing buildRounds to create a
+      // duplicate 'Flop' round with the same board cards (8 cards on board).
+      const { game, players } = createGameWithPlayers();
+
+      process.env.DATA_DIR = TEST_DATA_DIR;
+
+      game.handNumber++;
+      HandHistory.startHand(game);
+
+      // Preflop: player1 folds, player2 and player3 continue
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
+      HandHistory.recordDealtCards(game.id, players[0].id, ["Ah", "Kh"]);
+      HandHistory.recordDealtCards(game.id, players[1].id, ["Qc", "Jc"]);
+      HandHistory.recordDealtCards(game.id, players[2].id, ["Ts", "9s"]);
+      HandHistory.recordAction(game.id, players[0].id, "fold");
+      HandHistory.recordAction(game.id, players[2].id, "call", 50);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+
+      // Flop: player1 (folded) voluntarily shows a card mid-flop
+      HandHistory.recordStreet(game.id, "flop", ["Th", "Qh", "Jd"]);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+      // player1 shows a card - this must NOT insert a Showdown round
+      HandHistory.recordShowdown(game.id, players[0].id, ["Ah"], true);
+      HandHistory.recordAction(game.id, players[2].id, "check");
+
+      // Turn and river
+      HandHistory.recordStreet(game.id, "turn", ["8c"]);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+      HandHistory.recordAction(game.id, players[2].id, "check");
+      HandHistory.recordStreet(game.id, "river", ["7h"]);
+      HandHistory.recordAction(game.id, players[1].id, "check");
+      HandHistory.recordAction(game.id, players[2].id, "check");
+
+      HandHistory.recordStreet(game.id, "showdown");
+      HandHistory.recordShowdown(game.id, players[1].id, ["Qc", "Jc"], true);
+      HandHistory.recordShowdown(game.id, players[2].id, ["Ts", "9s"], true);
+
+      await HandHistory.finalizeHand(game, [
+        {
+          potAmount: 100,
+          winners: [2],
+          winningHand: { name: "straight", of: "Q" },
+          winningCards: ["Ts", "9s", "Th", "Qh", "Jd"],
+          awards: [{ seat: 2, amount: 100 }],
+        },
+      ]);
+
+      const hand = await HandHistory.getHand(game.id, 1);
+
+      // Should have exactly 5 rounds: Preflop, Flop, Turn, River, Showdown
+      assert.strictEqual(hand.rounds.length, 5, "should have exactly 5 rounds");
+      assert.strictEqual(hand.rounds[0].street, "Preflop");
+      assert.strictEqual(hand.rounds[1].street, "Flop");
+      assert.strictEqual(hand.rounds[2].street, "Turn");
+      assert.strictEqual(hand.rounds[3].street, "River");
+      assert.strictEqual(hand.rounds[4].street, "Showdown");
+
+      // Board should have exactly 5 cards (no duplicate flop)
+      let totalBoardCards = 0;
+      for (const round of hand.rounds) {
+        if (round.cards) totalBoardCards += round.cards.length;
+      }
+      assert.strictEqual(totalBoardCards, 5, "board must have exactly 5 cards");
+
+      // The voluntary show should appear in the Flop round, not a Showdown round
+      const flopActions = hand.rounds[1].actions;
+      const showAction = flopActions.find((a) => a.action === "Shows Cards");
+      assert.ok(showAction, "voluntary show should appear in the Flop round");
 
       delete process.env.DATA_DIR;
     });

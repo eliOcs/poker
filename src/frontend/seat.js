@@ -302,7 +302,7 @@ class Seat extends LitElement {
     ["busted", (s) => s?.bustedPosition != null],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
-    ["winner", (s) => (s?.netResult ?? s?.handResult) > 0],
+    ["winner", (s) => s?.isWinner || (s?.netResult ?? s?.handResult) > 0],
   ];
 
   updated(changedProperties) {

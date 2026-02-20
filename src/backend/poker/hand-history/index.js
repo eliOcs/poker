@@ -248,7 +248,7 @@ export function recordAction(
 
 /**
  * @param {string} gameId
- * @param {string} street - flop, turn, river
+ * @param {string} street - flop, turn, river, showdown
  * @param {Card[]} [boardCards]
  */
 export function recordStreet(gameId, street, boardCards) {
@@ -257,6 +257,7 @@ export function recordStreet(gameId, street, boardCards) {
     flop: "Flop",
     turn: "Turn",
     river: "River",
+    showdown: "Showdown",
   };
   recorder.currentStreet = streetMap[street] || street;
 
@@ -279,7 +280,7 @@ export function recordShowdown(gameId, playerId, cards, shows) {
     player_id: playerId,
     action: shows ? "Shows Cards" : "Mucks Cards",
     cards: shows ? cards : undefined,
-    street: "Showdown",
+    street: recorder.currentStreet,
   });
 }
 

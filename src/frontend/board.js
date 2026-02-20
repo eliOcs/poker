@@ -159,15 +159,14 @@ class Board extends LitElement {
   }
 
   renderWinnerMessage() {
+    const { playerName, handRank, amount, isSplit } = this.winnerMessage;
     return html`
       <div class="winner-message">
-        <div class="winner-name">${this.winnerMessage.playerName} wins!</div>
-        ${this.winnerMessage.handRank
-          ? html`<div class="winner-hand">${this.winnerMessage.handRank}</div>`
-          : ""}
-        <div class="winner-amount">
-          +${formatCurrency(this.winnerMessage.amount)}
+        <div class="winner-name">
+          ${isSplit ? "Split pot!" : `${playerName} wins!`}
         </div>
+        ${handRank ? html`<div class="winner-hand">${handRank}</div>` : ""}
+        <div class="winner-amount">+${formatCurrency(amount)}</div>
       </div>
     `;
   }

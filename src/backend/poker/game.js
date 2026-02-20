@@ -46,9 +46,10 @@ import * as Tournament from "../../shared/tournament.js";
 
 /**
  * @typedef {object} WinnerMessage
- * @property {string} playerName - Winner's player name/ID
+ * @property {string|null} playerName - Winner's player name/ID (null for split pots)
  * @property {string|null} handRank - Winning hand description (null if won by fold)
  * @property {Cents} amount - Amount won
+ * @property {boolean} isSplit - True when multiple players split the pot
  */
 
 /**
@@ -449,13 +450,14 @@ function autoFoldSittingOutActingPlayers(game) {
  * Gets winner info from pot results
  * @param {Game} game
  * @param {import('./showdown.js').PotResult[]} potResults
- * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank: string|null } | null}
+ * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank: string|null, isSplit: boolean } | null}
  */
 function getWinnerInfo(game, potResults) {
   if (potResults.length === 0 || potResults[0].winners.length === 0) {
     return null;
   }
   const mainPot = potResults[0];
+  const isSplit = mainPot.winners.length > 1;
   const seatIndex = mainPot.winners[0];
   const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
     game.seats[seatIndex]
@@ -464,7 +466,7 @@ function getWinnerInfo(game, potResults) {
   const handRank = mainPot.winningHand
     ? HandRankings.formatHand(mainPot.winningHand)
     : null;
-  return { winnerSeat, seatIndex, amount, handRank };
+  return { winnerSeat, seatIndex, amount, handRank, isSplit };
 }
 
 /**
@@ -501,6 +503,7 @@ function handleFoldWin(game, onBroadcast) {
       playerName: winnerName,
       handRank: null,
       amount: result.amount,
+      isSplit: false,
     };
 
     game.pendingHandHistory = [
@@ -549,6 +552,7 @@ function handleShowdown(game, onBroadcast) {
   }
   const potResults = result.value || [];
 
+  HandHistory.recordStreet(game.id, "showdown");
   recordShowdownCards(game);
 
   const winnerInfo = getWinnerInfo(game, potResults);
@@ -556,9 +560,10 @@ function handleShowdown(game, onBroadcast) {
     const winnerName =
       winnerInfo.winnerSeat.player?.name || `Seat ${winnerInfo.seatIndex + 1}`;
     game.winnerMessage = {
-      playerName: winnerName,
+      playerName: winnerInfo.isSplit ? null : winnerName,
       handRank: winnerInfo.handRank,
       amount: winnerInfo.amount,
+      isSplit: winnerInfo.isSplit,
     };
     logHandEnded(
       game,

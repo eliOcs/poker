@@ -173,9 +173,10 @@ import { HIDDEN, getRank } from "./deck.js";
 
 /**
  * @typedef {object} WinnerMessage
- * @property {string} playerName - Winner's player name/ID
+ * @property {string|null} playerName - Winner's player name/ID (null for split pots)
  * @property {string|null} handRank - Winning hand description (null if won by fold)
  * @property {Cents} amount - Amount won
+ * @property {boolean} isSplit - True when multiple players split the pot
  */
 
 /**
