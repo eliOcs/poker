@@ -54,11 +54,6 @@ export function start(game) {
   game.countdown = 5;
 }
 
-/** @param {Game} game */
-function isHandInProgress(game) {
-  return game.hand?.phase != null && game.hand.phase !== "waiting";
-}
-
 /**
  * Sits a player at a seat
  * @param {Game} game
@@ -78,13 +73,15 @@ export function sit(game, { seat: requestedSeat, player }) {
   if (playerSeat !== -1) {
     game.seats[playerSeat] = Seat.empty();
   }
-  game.seats[seat] = Seat.occupied(player, 0, isHandInProgress(game));
+  // Cash game players start sitting out until they buy in.
+  // Tournament players get their stack immediately and are ready to play.
+  game.seats[seat] = Seat.occupied(player, 0, true);
 
-  // For tournaments, automatically give starting stack
   if (game.tournament?.active) {
     const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
     seatObj.stack = game.tournament.initialStack;
     seatObj.totalBuyIn = game.tournament.initialStack;
+    seatObj.sittingOut = false;
   }
 }
 
@@ -104,6 +101,7 @@ export function buyIn(game, { seat, amount }) {
     const chipAmount = game.blinds.big * amount;
     seatObj.stack += chipAmount;
     seatObj.totalBuyIn += chipAmount;
+    seatObj.sittingOut = false;
   } else {
     throw new Error("seat is empty");
   }

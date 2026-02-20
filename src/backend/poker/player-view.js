@@ -385,9 +385,17 @@ function calculateHandRank(holeCards, boardCards) {
  * @param {import('./seat.js').OccupiedSeat} seat
  * @param {Game} game
  * @param {boolean} isTournament
+ * @param {PlayerAction[]} showActions
  * @returns {PlayerAction[]}
  */
-function getSittingOutActions(seat, game, isTournament) {
+function getSittingOutActions(seat, game, isTournament, showActions) {
+  // Cash game player who sat but hasn't bought in yet
+  if (!isTournament && seat.stack === 0) {
+    return [
+      { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
+      ...showActions,
+    ];
+  }
   /** @type {PlayerAction[]} */
   const actions = [];
   // Always allow sitting in - if player can't afford the big blind, they go all-in
@@ -397,7 +405,7 @@ function getSittingOutActions(seat, game, isTournament) {
     actions.push({ action: "leave" });
   }
   if (game.handNumber === 0) actions.push({ action: "share" });
-  return actions;
+  return actions.concat(showActions);
 }
 
 /**
@@ -411,7 +419,7 @@ function getWaitingPhaseActions(seat, game) {
   const showActions = getShowCardsActions(seat, game);
 
   if (seat.sittingOut) {
-    return getSittingOutActions(seat, game, isTournament).concat(showActions);
+    return getSittingOutActions(seat, game, isTournament, showActions);
   }
 
   if (seat.stack === 0) {

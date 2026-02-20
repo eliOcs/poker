@@ -4,6 +4,7 @@ import * as Game from "../../../src/backend/poker/game.js";
 import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import {
+  buyIn,
   dealFlop,
   dealPreflop,
   sit,
@@ -27,7 +28,9 @@ describe("deal", function () {
     before(function () {
       g = Game.create();
       sit(g, { seat: 0, player: createPlayer() });
+      buyIn(g, { seat: 0, amount: 100 });
       sit(g, { seat: 1, player: createPlayer() });
+      buyIn(g, { seat: 1, amount: 100 });
       dp = dealPreflop(g);
     });
 
@@ -49,6 +52,46 @@ describe("deal", function () {
       dp.next();
       assert.equal(g.seats[0].cards.length, 2);
       assertCard(g.seats[0].cards[1]);
+    });
+  });
+
+  describe("player joins with $0 stack in cash game", function () {
+    it("should not be dealt cards if they have not bought in", function () {
+      const game = Game.create();
+      sit(game, { seat: 0, player: createPlayer() });
+      buyIn(game, { seat: 0, amount: 100 });
+      sit(game, { seat: 1, player: createPlayer() });
+      buyIn(game, { seat: 1, amount: 100 });
+      // Third player joins but does not buy in
+      sit(game, { seat: 2, player: createPlayer() });
+
+      const gen = dealPreflop(game);
+      while (!gen.next().done);
+
+      assert.equal(
+        game.seats[2].cards?.length ?? 0,
+        0,
+        "player with $0 stack should not be dealt cards",
+      );
+    });
+
+    it("should be dealt cards after buying in", function () {
+      const game = Game.create();
+      sit(game, { seat: 0, player: createPlayer() });
+      buyIn(game, { seat: 0, amount: 100 });
+      sit(game, { seat: 1, player: createPlayer() });
+      buyIn(game, { seat: 1, amount: 100 });
+      sit(game, { seat: 2, player: createPlayer() });
+      buyIn(game, { seat: 2, amount: 100 });
+
+      const gen = dealPreflop(game);
+      while (!gen.next().done);
+
+      assert.equal(
+        game.seats[2].cards?.length,
+        2,
+        "player who bought in should be dealt cards",
+      );
     });
   });
 
