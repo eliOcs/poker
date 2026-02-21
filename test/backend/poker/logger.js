@@ -246,4 +246,90 @@ describe("logger", function () {
       assert.strictEqual(consoleLog.mock.calls.length, 2);
     });
   });
+
+  describe("createLog and emitLog", function () {
+    it("creates a plain object with level, message, timestamp, and context", async function () {
+      const { createLog } = await import(
+        `../../../src/backend/logger.js?t=${Date.now()}-13`
+      );
+
+      const log = createLog("test_log");
+
+      assert.strictEqual(log.level, "info");
+      assert.strictEqual(log.message, "test_log");
+      assert.strictEqual(typeof log.timestamp, "number");
+      assert.deepStrictEqual(log.context, {});
+    });
+
+    it("accumulates context via Object.assign", async function () {
+      process.env.LOG_LEVEL = "info";
+      process.env.LOG_FORMAT = "json";
+
+      const { createLog, emitLog } = await import(
+        `../../../src/backend/logger.js?t=${Date.now()}-14`
+      );
+
+      const log = createLog("test_log");
+      Object.assign(log.context, { foo: "bar" });
+      Object.assign(log.context, { count: 42 });
+      emitLog(log);
+
+      const output = consoleLog.mock.calls[0].arguments[0];
+      const parsed = JSON.parse(output);
+
+      assert.strictEqual(parsed.message, "test_log");
+      assert.strictEqual(parsed.foo, "bar");
+      assert.strictEqual(parsed.count, 42);
+    });
+
+    it("later assigns override earlier context", async function () {
+      process.env.LOG_LEVEL = "info";
+      process.env.LOG_FORMAT = "json";
+
+      const { createLog, emitLog } = await import(
+        `../../../src/backend/logger.js?t=${Date.now()}-15`
+      );
+
+      const log = createLog("test_log");
+      log.context.status = "pending";
+      log.context.status = "done";
+      emitLog(log);
+
+      const parsed = JSON.parse(consoleLog.mock.calls[0].arguments[0]);
+      assert.strictEqual(parsed.status, "done");
+    });
+
+    it("includes durationMs on emit", async function () {
+      process.env.LOG_LEVEL = "info";
+      process.env.LOG_FORMAT = "json";
+
+      const { createLog, emitLog } = await import(
+        `../../../src/backend/logger.js?t=${Date.now()}-16`
+      );
+
+      const log = createLog("test_log");
+      emitLog(log);
+
+      const parsed = JSON.parse(consoleLog.mock.calls[0].arguments[0]);
+      assert.strictEqual(typeof parsed.durationMs, "number");
+      assert.ok(parsed.durationMs >= 0);
+    });
+
+    it("emitLog produces exactly one log line", async function () {
+      process.env.LOG_LEVEL = "info";
+      process.env.LOG_FORMAT = "json";
+
+      const { createLog, emitLog } = await import(
+        `../../../src/backend/logger.js?t=${Date.now()}-17`
+      );
+
+      const log = createLog("test_log");
+      log.context.a = 1;
+      log.context.b = 2;
+
+      assert.strictEqual(consoleLog.mock.calls.length, 0);
+      emitLog(log);
+      assert.strictEqual(consoleLog.mock.calls.length, 1);
+    });
+  });
 });

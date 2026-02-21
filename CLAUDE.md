@@ -198,6 +198,41 @@ Poker logic in `src/backend/poker/` is pure and testable:
 - Takes game state, returns/mutates state
 - Easily unit tested
 
+## Logging
+
+### Canonical Log Lines
+
+Instead of scattering multiple log calls per request/action, we use **canonical logs** — one structured log line emitted at the end of each lifecycle, containing all accumulated context. This makes it trivial to filter by `gameId`, `playerId`, `handNumber`, or any other dimension.
+
+A `Log` is a **plain data object** (no methods — consistent with our "separate data from behavior" philosophy):
+
+```javascript
+// Create: returns { level, message, timestamp, context }
+const log = createLog("http_request");
+
+// Accumulate context throughout the lifecycle
+Object.assign(log.context, { method, path, gameId });
+log.context.status = 200;
+
+// Emit once at the end (adds durationMs automatically)
+emitLog(log);
+```
+
+### Where Canonical Logs Are Used
+
+| Message          | Scope                       | Created                | Emitted          |
+| ---------------- | --------------------------- | ---------------------- | ---------------- |
+| `http_request`   | One per HTTP request        | `server.on("request")` | `finally` block  |
+| `ws_action`      | One per WebSocket message   | `ws.on("message")`     | `finally` block  |
+| `hand`           | One per poker hand          | `startHand()`          | `logHandEnded()` |
+| `eviction_sweep` | One per eviction timer tick | `evictInactiveGames()` | After sweep loop |
+
+Route handlers enrich the HTTP log via `log.context` on the `RouteContext`. Hand logs live on `game.handLog` and span multiple WS messages/ticks.
+
+### Standalone Lifecycle Logs
+
+One-shot logs that don't benefit from accumulation stay as regular `logger.info()` / `logger.warn()` calls: WebSocket connect/disconnect, shutdown, DB init, recovery warnings, rate limit stats.
+
 ## Development
 
 ### Commands

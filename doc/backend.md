@@ -138,6 +138,21 @@ Poker logic in `src/backend/poker/` is pure and testable:
 - Takes game state, returns/mutates state
 - Easily unit tested
 
+## Logging
+
+Uses canonical log lines — one structured log per lifecycle, emitted at the end with all accumulated context.
+
+A `Log` is a plain data object `{ level, message, timestamp, context }` created via `createLog()`. Context is accumulated throughout the lifecycle and the log is emitted once via `emitLog()`, which adds `durationMs` automatically.
+
+| Message          | Scope                       | Created                | Emitted          |
+| ---------------- | --------------------------- | ---------------------- | ---------------- |
+| `http_request`   | One per HTTP request        | `server.on("request")` | `finally` block  |
+| `ws_action`      | One per WebSocket message   | `ws.on("message")`     | `finally` block  |
+| `hand`           | One per poker hand          | `startHand()`          | `logHandEnded()` |
+| `eviction_sweep` | One per eviction timer tick | `evictInactiveGames()` | After sweep loop |
+
+One-shot logs that don't benefit from accumulation use `logger.info()` / `logger.warn()` directly: WebSocket connect/disconnect, shutdown, DB init, recovery warnings, rate limit stats.
+
 ## Hand History
 
 Hand histories and tournament summaries are stored using open standard formats:

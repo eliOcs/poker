@@ -9,19 +9,37 @@ function createClientConnections() {
   return new Map();
 }
 
+/**
+ * Creates mock createLog/emitLog pair that records emitted logs.
+ * @param {Array<{message: string, context: Record<string, unknown>}>} [emitted]
+ */
+function mockLogFns(emitted = []) {
+  return {
+    createLog(message) {
+      return { level: "info", message, timestamp: Date.now(), context: {} };
+    },
+    emitLog(log) {
+      emitted.push({
+        message: log.message,
+        context: { ...log.context },
+      });
+    },
+  };
+}
+
 describe("game-eviction", () => {
   it("evicts a game after one hour with no movement and no clients", () => {
     const evictInactiveGames = createInactiveGameEvictor(60 * 60 * 1000);
     const game = { handNumber: 3, tickTimer: null };
     const games = new Map([["g1", game]]);
     const clientConnections = createClientConnections();
-    const logs = [];
+    const emitted = [];
 
     assert.equal(
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: (message, context) => logs.push({ message, context }),
+        ...mockLogFns(emitted),
         now: 0,
       }),
       0,
@@ -32,7 +50,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: (message, context) => logs.push({ message, context }),
+        ...mockLogFns(emitted),
         now: 3_599_999,
       }),
       0,
@@ -43,14 +61,16 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: (message, context) => logs.push({ message, context }),
+        ...mockLogFns(emitted),
         now: 3_600_001,
       }),
       1,
     );
     assert.equal(games.size, 0);
-    assert.equal(logs.length, 1);
-    assert.equal(logs[0].message, "inactive game evicted");
+    assert.equal(emitted.length, 3);
+    assert.equal(emitted[2].message, "eviction_sweep");
+    assert.equal(emitted[2].context.evictedCount, 1);
+    assert.deepStrictEqual(emitted[2].context.evictedGameIds, ["g1"]);
   });
 
   it("resets inactivity timer when hand number changes", () => {
@@ -62,7 +82,7 @@ describe("game-eviction", () => {
     evictInactiveGames({
       games,
       clientConnections,
-      logInfo: () => {},
+      ...mockLogFns(),
       now: 0,
     });
 
@@ -71,7 +91,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 3_500_000,
       }),
       0,
@@ -81,7 +101,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 7_000_000,
       }),
       0,
@@ -92,7 +112,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 7_100_001,
       }),
       1,
@@ -112,7 +132,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 0,
       }),
       0,
@@ -122,7 +142,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 10 * 60 * 60 * 1000,
       }),
       0,
@@ -135,7 +155,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 10 * 60 * 60 * 1000 + 1_000,
       }),
       0,
@@ -145,7 +165,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 10 * 60 * 60 * 1000 + 3_600_001,
       }),
       1,
@@ -162,7 +182,7 @@ describe("game-eviction", () => {
     evictInactiveGames({
       games,
       clientConnections,
-      logInfo: () => {},
+      ...mockLogFns(),
       now: 0,
     });
 
@@ -170,7 +190,7 @@ describe("game-eviction", () => {
       evictInactiveGames({
         games,
         clientConnections,
-        logInfo: () => {},
+        ...mockLogFns(),
         now: 3_600_001,
       }),
       1,

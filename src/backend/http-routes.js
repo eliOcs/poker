@@ -4,7 +4,6 @@ import * as User from "./user.js";
 import * as Stakes from "./poker/stakes.js";
 import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
-import * as logger from "./logger.js";
 import * as Store from "./store.js";
 import { createRateLimiter, getClientIp } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
@@ -218,6 +217,7 @@ function syncUserToGames(user, games, broadcast) {
  * @property {Record<string, UserType>} users
  * @property {Map<string, Game>} games
  * @property {(gameId: string) => void} broadcast
+ * @property {import('./logger.js').Log|null} log
  */
 
 /**
@@ -298,7 +298,7 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "POST",
       path: "/games",
-      handler: async ({ req, res }) => {
+      handler: async ({ req, res, log }) => {
         getOrCreateUser(req, res, users);
 
         const data = await parseBody(req);
@@ -314,22 +314,26 @@ export function createRoutes(users, games, broadcast) {
           const buyIn = parseBuyIn(data);
           const game = PokerGame.createTournament({ seats, buyIn });
           games.set(game.id, game);
-          logger.info("tournament created", {
-            gameId: game.id,
-            seats,
-            buyIn,
-            initialStack: game.tournament?.initialStack,
-          });
+          if (log)
+            Object.assign(log.context, {
+              gameType: "tournament",
+              gameId: game.id,
+              seats,
+              buyIn,
+              initialStack: game.tournament?.initialStack,
+            });
           respondWithJson(res, { id: game.id, type: "tournament" });
         } else {
           const blinds = parseBlinds(data);
           const game = PokerGame.create({ blinds, seats });
           games.set(game.id, game);
-          logger.info("game created", {
-            gameId: game.id,
-            blinds: `${blinds.small}/${blinds.big}`,
-            seats,
-          });
+          if (log)
+            Object.assign(log.context, {
+              gameType: "cash",
+              gameId: game.id,
+              blinds: `${blinds.small}/${blinds.big}`,
+              seats,
+            });
           respondWithJson(res, { id: game.id, type: "cash" });
         }
       },
@@ -420,6 +424,7 @@ export async function handleRequest(req, res, routes) {
       users: {},
       games: new Map(),
       broadcast: () => {},
+      log: null,
     });
     return;
   }

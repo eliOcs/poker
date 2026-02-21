@@ -18,30 +18,44 @@ const defaultFormat = process.env.NODE_ENV === "production" ? "json" : "text";
 const format = process.env.LOG_FORMAT?.toLowerCase() || defaultFormat;
 
 /**
- * Formats a log entry as text
- * @param {string} level
- * @param {string} message
- * @param {Record<string, unknown>} context
- * @returns {string}
+ * @typedef {object} Log
+ * @property {string} level - Log level
+ * @property {string} message - Log message
+ * @property {number} timestamp - Epoch ms when log was created
+ * @property {Record<string, unknown>} context - Accumulated context
  */
-function formatText(level, message, context) {
-  const timestamp = new Date().toISOString();
-  const contextStr = Object.entries(context)
-    .map(([k, v]) => `${k}=${v}`)
-    .join(" ");
-  return `[${timestamp}] ${level.toUpperCase()} ${message}${contextStr ? " " + contextStr : ""}`;
+
+/**
+ * Creates a log. A plain data object that accumulates context.
+ * For one-shot logs, pass directly to info/warn/error/debug.
+ * For deferred canonical logs, accumulate context and call emitLog().
+ * @param {string} message
+ * @returns {Log}
+ */
+export function createLog(message) {
+  return { level: "info", message, timestamp: Date.now(), context: {} };
 }
 
 /**
- * Formats a log entry as JSON
- * @param {string} level
- * @param {string} message
- * @param {Record<string, unknown>} context
+ * Formats a Log as text
+ * @param {Log} log
  * @returns {string}
  */
-function formatJson(level, message, context) {
+function formatText({ timestamp, level, message, context }) {
+  const contextStr = Object.entries(context)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(" ");
+  return `[${new Date(timestamp).toISOString()}] ${level.toUpperCase()} ${message}${contextStr ? " " + contextStr : ""}`;
+}
+
+/**
+ * Formats a Log as JSON
+ * @param {Log} log
+ * @returns {string}
+ */
+function formatJson({ timestamp, level, message, context }) {
   return JSON.stringify({
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(timestamp).toISOString(),
     level,
     message,
     ...context,
@@ -49,22 +63,17 @@ function formatJson(level, message, context) {
 }
 
 /**
- * Core log function
- * @param {string} level
- * @param {string} message
- * @param {Record<string, unknown>} context
+ * Core log function — formats a Log and writes it
+ * @param {Log} log
  */
-function log(level, message, context = {}) {
-  if (LOG_LEVELS[level] < currentLevel) return;
+function emit(log) {
+  if (LOG_LEVELS[log.level] < currentLevel) return;
 
-  const output =
-    format === "json"
-      ? formatJson(level, message, context)
-      : formatText(level, message, context);
+  const output = format === "json" ? formatJson(log) : formatText(log);
 
-  if (level === "error") {
+  if (log.level === "error") {
     console.error(output);
-  } else if (level === "warn") {
+  } else if (log.level === "warn") {
     console.warn(output);
   } else {
     console.log(output);
@@ -76,8 +85,8 @@ function log(level, message, context = {}) {
  * @param {string} message
  * @param {Record<string, unknown>} [context]
  */
-export function debug(message, context) {
-  log("debug", message, context);
+export function debug(message, context = {}) {
+  emit({ level: "debug", message, timestamp: Date.now(), context });
 }
 
 /**
@@ -85,8 +94,8 @@ export function debug(message, context) {
  * @param {string} message
  * @param {Record<string, unknown>} [context]
  */
-export function info(message, context) {
-  log("info", message, context);
+export function info(message, context = {}) {
+  emit({ level: "info", message, timestamp: Date.now(), context });
 }
 
 /**
@@ -94,8 +103,8 @@ export function info(message, context) {
  * @param {string} message
  * @param {Record<string, unknown>} [context]
  */
-export function warn(message, context) {
-  log("warn", message, context);
+export function warn(message, context = {}) {
+  emit({ level: "warn", message, timestamp: Date.now(), context });
 }
 
 /**
@@ -103,8 +112,8 @@ export function warn(message, context) {
  * @param {string} message
  * @param {Record<string, unknown>} [context]
  */
-export function error(message, context) {
-  log("error", message, context);
+export function error(message, context = {}) {
+  emit({ level: "error", message, timestamp: Date.now(), context });
 }
 
 /**
@@ -119,6 +128,16 @@ export function child(baseContext) {
     warn: (message, context) => warn(message, { ...baseContext, ...context }),
     error: (message, context) => error(message, { ...baseContext, ...context }),
   };
+}
+
+/**
+ * Emits a deferred log as a single structured log line.
+ * Adds durationMs computed from the log's timestamp.
+ * @param {Log} log
+ */
+export function emitLog(log) {
+  log.context.durationMs = Date.now() - log.timestamp;
+  emit(log);
 }
 
 // Export for testing

@@ -8,7 +8,7 @@ import * as HandHistory from "./hand-history/index.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
-import * as logger from "../logger.js";
+import { createLog, emitLog } from "../logger.js";
 import * as Tournament from "../../shared/tournament.js";
 
 /**
@@ -93,6 +93,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
  * @property {import('./showdown.js').PotResult[]|null} pendingHandHistory - Pot results to finalize after reveal window
  * @property {{ active: boolean, delayTicks: number }|null} collectingBets - Bet collection animation state
+ * @property {import('../logger.js').Log|null} handLog - Wide event for the current hand
  */
 
 /**
@@ -164,6 +165,7 @@ export function create({
     runout: null,
     pendingHandHistory: null,
     collectingBets: null,
+    handLog: null,
   };
 }
 
@@ -290,6 +292,38 @@ export function ensureGameTick(game, onBroadcast) {
 }
 
 /**
+ * Creates and attaches a hand wide event to the game
+ * @param {Game} game
+ * @param {number} playerCount
+ */
+function startHandEvent(game, playerCount) {
+  game.handLog = createLog("hand");
+  Object.assign(game.handLog.context, {
+    gameId: game.id,
+    handNumber: game.handNumber,
+    playerCount,
+    isTournament: !!game.tournament?.active,
+    ...(game.tournament ? { tournamentLevel: game.tournament.level } : {}),
+  });
+}
+
+/**
+ * Records dealt cards for all active players
+ * @param {Game} game
+ */
+function recordDealtCards(game) {
+  for (const seat of game.seats) {
+    if (
+      !seat.empty &&
+      (!seat.sittingOut || seat.bet > 0) &&
+      seat.cards.length > 0
+    ) {
+      HandHistory.recordDealtCards(game.id, seat.player.id, seat.cards);
+    }
+  }
+}
+
+/**
  * @param {Game} game
  */
 export function startHand(game) {
@@ -313,11 +347,7 @@ export function startHand(game) {
   const playerCount = game.seats.filter(
     (s) => !s.empty && !s.sittingOut,
   ).length;
-  logger.info("hand started", {
-    gameId: game.id,
-    handNumber: game.handNumber,
-    playerCount,
-  });
+  startHandEvent(game, playerCount);
 
   const sbSeat = Betting.getSmallBlindSeat(game);
   const bbSeat = Betting.getBigBlindSeat(game);
@@ -334,16 +364,7 @@ export function startHand(game) {
   HandHistory.recordBlind(game.id, bbPlayer.player.id, "bb", bbPlayer.bet);
 
   runAll(Actions.dealPreflop(game));
-
-  for (const seat of game.seats) {
-    if (
-      !seat.empty &&
-      (!seat.sittingOut || seat.bet > 0) &&
-      seat.cards.length > 0
-    ) {
-      HandHistory.recordDealtCards(game.id, seat.player.id, seat.cards);
-    }
-  }
+  recordDealtCards(game);
 
   Betting.startBettingRound(game, "preflop");
   autoFoldSittingOutActingPlayers(game);
@@ -470,20 +491,22 @@ function getWinnerInfo(game, potResults) {
 }
 
 /**
- * Logs hand ended event
+ * Emits the hand wide event with winner details
  * @param {Game} game
  * @param {string} winnerName
  * @param {string} wonBy
  * @param {number} amount
  */
 function logHandEnded(game, winnerName, wonBy, amount) {
-  logger.info("hand ended", {
-    gameId: game.id,
-    handNumber: game.handNumber,
-    winner: winnerName,
-    wonBy,
-    amount,
-  });
+  if (game.handLog) {
+    Object.assign(game.handLog.context, {
+      winner: winnerName,
+      wonBy,
+      amount,
+    });
+    emitLog(game.handLog);
+    game.handLog = null;
+  }
 }
 
 /**

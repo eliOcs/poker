@@ -10,6 +10,7 @@ import {
   getGameEvictionIntervalMs,
 } from "./game-eviction.js";
 import * as logger from "./logger.js";
+import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
@@ -101,8 +102,9 @@ async function resolveGameForUpgrade(user, gameId) {
 /**
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
+ * @param {import('./logger.js').Log|null} log
  */
-async function handleRequest(req, res) {
+async function handleRequest(req, res, log) {
   throwIfRateLimitedHttpRequest(req);
 
   const url = req.url ?? "";
@@ -127,6 +129,7 @@ async function handleRequest(req, res) {
       users,
       games,
       broadcast: broadcastGameState,
+      log,
     });
     return;
   }
@@ -165,53 +168,43 @@ function throwIfRateLimitedHttpRequest(req) {
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
-  const startTime = Date.now();
+  const isHealthCheck = url === "/up";
+  const log = isHealthCheck ? null : createLog("http_request");
 
-  res.on("finish", () => {
-    // Skip health check to reduce noise
-    if (url !== "/up") {
-      logger.info("http request", {
-        method,
-        path: url,
-        status: res.statusCode,
-        duration: Date.now() - startTime,
-      });
-    }
-  });
+  if (log) Object.assign(log.context, { method, path: url });
 
-  handleRequest(req, res).catch((err) => {
-    if (err instanceof HttpError) {
-      logger.warn("request rejected", {
-        method,
-        path: url,
-        status: err.status,
-        error: err.message,
-      });
+  handleRequest(req, res, log)
+    .catch((err) => {
+      if (err instanceof HttpError) {
+        if (log) log.context.error = err.message;
 
-      if (!res.headersSent) {
-        res.writeHead(err.status, {
-          "content-type": "application/json",
-          ...(err.headers || {}),
-        });
-        res.end(
-          JSON.stringify(
-            err.body || { error: err.message, status: err.status },
-          ),
-        );
+        if (!res.headersSent) {
+          res.writeHead(err.status, {
+            "content-type": "application/json",
+            ...(err.headers || {}),
+          });
+          res.end(
+            JSON.stringify(
+              err.body || { error: err.message, status: err.status },
+            ),
+          );
+        }
+        return;
       }
-      return;
-    }
 
-    logger.error("request error", {
-      method,
-      path: url,
-      error: err instanceof Error ? err.message : String(err),
+      if (log)
+        log.context.error = err instanceof Error ? err.message : String(err);
+      if (!res.headersSent) {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "Internal server error" }));
+      }
+    })
+    .finally(() => {
+      if (log) {
+        log.context.status = res.statusCode;
+        emitLog(log);
+      }
     });
-    if (!res.headersSent) {
-      res.writeHead(500, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "Internal server error" }));
-    }
-  });
 });
 
 server.on("upgrade", async function upgrade(request, socket, head) {
@@ -346,8 +339,8 @@ wss.on(
       }
 
       const { action, ...args } = messageData;
-
-      logger.info("ws message", {
+      const log = createLog("ws_action");
+      Object.assign(log.context, {
         gameId,
         playerId: user.id,
         action,
@@ -363,6 +356,7 @@ wss.on(
           broadcastGameState(gameId);
           game.seats[seatIndex].emote = null;
         }
+        emitLog(log);
         return;
       }
 
@@ -371,13 +365,10 @@ wss.on(
         processPokerAction(game, player, action, args, broadcastGameState);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        logger.error("action error", {
-          gameId,
-          playerId: user.id,
-          action,
-          error: message,
-        });
+        log.context.error = message;
         ws.send(JSON.stringify({ error: { message } }, null, 2));
+      } finally {
+        emitLog(log);
       }
 
       broadcastGameState(gameId);
@@ -399,7 +390,8 @@ const evictionTimer = setInterval(() => {
   evictInactiveGames({
     games,
     clientConnections,
-    logInfo: logger.info,
+    createLog,
+    emitLog,
   });
 }, getGameEvictionIntervalMs());
 

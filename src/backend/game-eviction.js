@@ -65,7 +65,8 @@ export function hasConnectedClientsForGame(clientConnections, gameId) {
  * @returns {(options: {
  *   games: Map<string, Game>,
  *   clientConnections: Map<import('ws').WebSocket, { user: UserType, gameId: string }>,
- *   logInfo: (message: string, context?: Record<string, unknown>) => void,
+ *   createLog: (message: string) => import('./logger.js').Log,
+ *   emitLog: (log: import('./logger.js').Log) => void,
  *   now?: number,
  *   inactivityMs?: number
  * }) => number}
@@ -99,11 +100,15 @@ export function createInactiveGameEvictor(
   return function evictInactiveGames({
     games,
     clientConnections,
-    logInfo,
+    createLog,
+    emitLog,
     now = Date.now(),
     inactivityMs = defaultInactivityMs,
   }) {
+    const log = createLog("eviction_sweep");
     let evictedCount = 0;
+    /** @type {string[]} */
+    const evictedGameIds = [];
 
     for (const [gameId, game] of games) {
       if (hasConnectedClientsForGame(clientConnections, gameId)) {
@@ -134,11 +139,18 @@ export function createInactiveGameEvictor(
       games.delete(gameId);
       trackedByGameId.delete(gameId);
       evictedCount += 1;
-
-      logInfo("inactive game evicted", { gameId, idleMs, inactivityMs });
+      evictedGameIds.push(gameId);
     }
 
     cleanupDeletedGames(games);
+
+    Object.assign(log.context, {
+      gamesChecked: games.size + evictedCount,
+      evictedCount,
+      evictedGameIds,
+    });
+    emitLog(log);
+
     return evictedCount;
   };
 }
