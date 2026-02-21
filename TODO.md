@@ -2,7 +2,6 @@
 
 - on your turn player card border animated
 - Dealer button out of player card
-- Scroll on mobile
 - Sit out require confirmation
 - Emote panel close if click outside
 - When a player shows cards they should be raised not to be hidden by the player container

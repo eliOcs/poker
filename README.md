@@ -138,7 +138,3 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `@playwright/test` — E2E and visual regression testing
 - `jscpd` — Code duplication detection
 - `madge` — Dependency graph generation (via npx)
-
-## License
-
-MIT
