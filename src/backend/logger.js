@@ -117,20 +117,6 @@ export function error(message, context = {}) {
 }
 
 /**
- * Creates a child logger with preset context
- * @param {Record<string, unknown>} baseContext
- * @returns {{ debug: typeof debug, info: typeof info, warn: typeof warn, error: typeof error }}
- */
-export function child(baseContext) {
-  return {
-    debug: (message, context) => debug(message, { ...baseContext, ...context }),
-    info: (message, context) => info(message, { ...baseContext, ...context }),
-    warn: (message, context) => warn(message, { ...baseContext, ...context }),
-    error: (message, context) => error(message, { ...baseContext, ...context }),
-  };
-}
-
-/**
  * Emits a deferred log as a single structured log line.
  * Adds durationMs computed from the log's timestamp.
  * @param {Log} log

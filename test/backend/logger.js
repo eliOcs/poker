@@ -35,7 +35,7 @@ describe("logger", function () {
 
       // Re-import to pick up new env
       const { debug, info } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-1`
+        `../../src/backend/logger.js?t=${Date.now()}-1`
       );
 
       debug("debug message");
@@ -53,7 +53,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-2`
+        `../../src/backend/logger.js?t=${Date.now()}-2`
       );
 
       debug("debug message");
@@ -70,7 +70,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info, warn } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-3`
+        `../../src/backend/logger.js?t=${Date.now()}-3`
       );
 
       debug("debug message");
@@ -88,7 +88,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info, warn, error } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-4`
+        `../../src/backend/logger.js?t=${Date.now()}-4`
       );
 
       debug("debug message");
@@ -109,7 +109,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { info } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-5`
+        `../../src/backend/logger.js?t=${Date.now()}-5`
       );
 
       info("test message", { foo: "bar", count: 42 });
@@ -126,7 +126,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { info } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-6`
+        `../../src/backend/logger.js?t=${Date.now()}-6`
       );
 
       info("test message", { foo: "bar", count: 42 });
@@ -142,74 +142,13 @@ describe("logger", function () {
     });
   });
 
-  describe("child logger", function () {
-    it("includes base context in all log calls", async function () {
-      process.env.LOG_LEVEL = "info";
-      process.env.LOG_FORMAT = "json";
-
-      const { child } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-7`
-      );
-
-      const gameLogger = child({ gameId: "abc123", handNumber: 5 });
-
-      gameLogger.info("player action", { action: "bet" });
-
-      const output = consoleLog.mock.calls[0].arguments[0];
-      const parsed = JSON.parse(output);
-
-      assert.strictEqual(parsed.gameId, "abc123");
-      assert.strictEqual(parsed.handNumber, 5);
-      assert.strictEqual(parsed.action, "bet");
-      assert.strictEqual(parsed.message, "player action");
-    });
-
-    it("allows call-time context to override base context", async function () {
-      process.env.LOG_LEVEL = "info";
-      process.env.LOG_FORMAT = "json";
-
-      const { child } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-8`
-      );
-
-      const gameLogger = child({ gameId: "abc123", value: "original" });
-
-      gameLogger.info("test", { value: "overridden" });
-
-      const output = consoleLog.mock.calls[0].arguments[0];
-      const parsed = JSON.parse(output);
-
-      assert.strictEqual(parsed.value, "overridden");
-    });
-
-    it("child logger respects log levels", async function () {
-      process.env.LOG_LEVEL = "warn";
-      process.env.LOG_FORMAT = "text";
-
-      const { child } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-9`
-      );
-
-      const gameLogger = child({ gameId: "abc123" });
-
-      gameLogger.debug("debug");
-      gameLogger.info("info");
-      gameLogger.warn("warn");
-      gameLogger.error("error");
-
-      assert.strictEqual(consoleLog.mock.calls.length, 0);
-      assert.strictEqual(consoleWarn.mock.calls.length, 1);
-      assert.strictEqual(consoleError.mock.calls.length, 1);
-    });
-  });
-
   describe("console method routing", function () {
     it("routes error level to console.error", async function () {
       process.env.LOG_LEVEL = "debug";
       process.env.LOG_FORMAT = "text";
 
       const { error } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-10`
+        `../../src/backend/logger.js?t=${Date.now()}-10`
       );
 
       error("error message");
@@ -223,7 +162,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { warn } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-11`
+        `../../src/backend/logger.js?t=${Date.now()}-11`
       );
 
       warn("warn message");
@@ -237,7 +176,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "text";
 
       const { debug, info } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-12`
+        `../../src/backend/logger.js?t=${Date.now()}-12`
       );
 
       debug("debug message");
@@ -250,7 +189,7 @@ describe("logger", function () {
   describe("createLog and emitLog", function () {
     it("creates a plain object with level, message, timestamp, and context", async function () {
       const { createLog } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-13`
+        `../../src/backend/logger.js?t=${Date.now()}-13`
       );
 
       const log = createLog("test_log");
@@ -266,7 +205,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-14`
+        `../../src/backend/logger.js?t=${Date.now()}-14`
       );
 
       const log = createLog("test_log");
@@ -287,7 +226,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-15`
+        `../../src/backend/logger.js?t=${Date.now()}-15`
       );
 
       const log = createLog("test_log");
@@ -304,7 +243,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-16`
+        `../../src/backend/logger.js?t=${Date.now()}-16`
       );
 
       const log = createLog("test_log");
@@ -320,7 +259,7 @@ describe("logger", function () {
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
-        `../../../src/backend/logger.js?t=${Date.now()}-17`
+        `../../src/backend/logger.js?t=${Date.now()}-17`
       );
 
       const log = createLog("test_log");
