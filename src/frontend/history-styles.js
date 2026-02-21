@@ -306,6 +306,10 @@ export const historyStyles = css`
     font-size: var(--font-md);
     color: var(--color-fg-light);
     border-bottom: 3px solid var(--color-bg-light);
+    position: sticky;
+    top: 0;
+    background-color: var(--color-bg-dark);
+    z-index: 1;
   }
 
   .sidebar-header span {
