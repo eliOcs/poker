@@ -97,9 +97,8 @@ test("release-notes", async ({ page }) => {
   // Wait for the container to be visible
   await page.locator(".container").waitFor();
 
-  // Take full page screenshot
+  // Take viewport screenshot (not full page)
   await expect(page).toHaveScreenshot("release-notes.png", {
-    fullPage: true,
     maxDiffPixelRatio: 0.01,
   });
 });
