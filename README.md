@@ -52,6 +52,7 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 - [Backend](doc/backend.md) — Communication model, game state, patterns, currency convention
 - [Frontend](doc/frontend.md) — Components, development workflow, UI catalog
+- [Infrastructure](doc/infrastructure.md) — Server setup, deployment, storage, secrets
 - [CLAUDE.md](CLAUDE.md) — Full project context for AI assistants and contributors
 
 ## Development

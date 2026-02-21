@@ -7,9 +7,13 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 ### Philosophy
 
 - **Pragmatic over perfect** - Simple solutions that work, no over-engineering
-- **Modern runtime only** - Targets latest Node.js (20+) and modern browsers (no polyfills)
+- **Modern runtime only** - Targets latest Node.js (24+) and modern browsers (no polyfills)
 - **Minimal dependencies** - Use native APIs when possible (e.g., `node:test`, `crypto`)
 - **Backend authority** - All game logic runs server-side; frontend is a thin rendering layer
+- **Simple code** - Separate data from behavior: plain objects over classes, pure functions over methods. Favor composition over complex conditionals. Centralize state mutations. Model with data first, not framework syntax.
+- **Validate at boundaries, trust internally** - Runtime validation at system edges (HTTP requests, file I/O, database, WebSocket messages) where data enters or exits. Internally, rely on static analysis (ESLint, Stylelint, Prettier, TypeScript via JSDoc in plain JavaScript) — once boundaries are verified, no need to re-validate inside the system.
+- **Test behaviors, not implementation** - Tests should verify what code does, not how it's structured. Mock at system edges (APIs, I/O), not internal layers. If refactoring internals breaks tests, the tests are wrong. Optimize for deployment confidence, not coverage metrics.
+- **Single instance, vertical scaling** - One server, one process, no clustering or horizontal scaling. SQLite for persistence, files stored directly on the instance disk. Scale the machine up, not out. Complexity costs more than hardware.
 
 ### Tech Stack
 
@@ -64,7 +68,9 @@ src/
 │   └── tournament.js    # Tournament configuration constants
 └── frontend/            # Browser UI (Lit web components)
     ├── index.html       # Entry point with importmap
+    ├── base.css         # Shared base styles (font, body reset)
     ├── manifest.json    # PWA manifest
+    ├── release-notes.html # Release notes page
     ├── app.js           # Main app router
     ├── index.js         # Game table component
     ├── history.js       # Hand history viewer
@@ -72,6 +78,7 @@ src/
     ├── home.js          # Landing page
     ├── action-panel.js  # Betting action buttons
     ├── audio.js         # Sound effects
+    ├── bet-collection.js # Bet collection animation
     ├── board.js         # Community cards
     ├── card.js          # Card component
     ├── chips.js         # Chip stack visual component
@@ -85,13 +92,22 @@ src/
     └── styles.js        # Design tokens and base styles
 
 test/
-├── backend/poker/       # Backend unit tests (mirrors src/backend/poker)
+├── backend/             # Backend unit tests (mirrors src/backend)
+│   └── poker/           # Poker game logic tests
 ├── frontend/            # Frontend component tests (web-test-runner)
 │   └── fixtures/        # Test fixtures for components
 ├── e2e/                 # End-to-end tests (Playwright)
 │   └── utils/           # Test utilities and helpers
 └── ui-catalog/          # Visual regression tests (Playwright screenshots)
+    ├── index.html       # Catalog listing page (static)
+    ├── test.html        # Test case renderer (mimics production app)
+    ├── server.js        # Dev server for UI catalog
     └── test-cases/      # Modular test case definitions
+
+doc/
+├── deps-backend.svg     # Backend dependency graph (generated via npm run deps)
+├── deps-frontend.svg    # Frontend dependency graph (generated via npm run deps)
+└── lit.md               # Lit framework reference
 ```
 
 ## Communication Model
@@ -201,7 +217,12 @@ npm run format                  # Prettier (check only)
 npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
+npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 ```
+
+### Git Hooks
+
+A shared pre-commit hook runs `npm run validate` before each commit. It is configured automatically via the `prepare` script when running `npm install` (sets `core.hooksPath` to `.githooks/`).
 
 ### Environment (.env)
 
@@ -221,9 +242,14 @@ PORT=3000
 ### Code Style
 
 - ES modules (`import`/`export`)
-- No semicolons (Prettier default)
-- Single quotes for strings
-- 2-space indentation
+- Prettier defaults
+
+### Hand History
+
+Hand histories and tournament summaries are stored using open standard formats:
+
+- **[Open Hand History (OHH)](https://hh-specs.handhistory.org/)** — Used for individual hand records (`src/backend/poker/hand-history/`)
+- **[Open Tournament Summary (OTS)](https://ts-specs.handhistory.org/)** — Used for tournament summaries (`src/backend/poker/tournament-summary.js`)
 
 ### Currency
 
@@ -328,5 +354,5 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `typescript` - Type checking (no compilation)
 - `@open-wc/testing`, `web-test-runner` - Frontend testing
 - `@playwright/test` - E2E and visual regression testing
-- `sinon` - Test mocks
 - `jscpd` - Code duplication detection
+- `madge` - Dependency graph generation (via npx)

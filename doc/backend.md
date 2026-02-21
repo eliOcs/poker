@@ -138,6 +138,13 @@ Poker logic in `src/backend/poker/` is pure and testable:
 - Takes game state, returns/mutates state
 - Easily unit tested
 
+## Hand History
+
+Hand histories and tournament summaries are stored using open standard formats:
+
+- **[Open Hand History (OHH)](https://hh-specs.handhistory.org/)** — Used for individual hand records (`src/backend/poker/hand-history/`)
+- **[Open Tournament Summary (OTS)](https://ts-specs.handhistory.org/)** — Used for tournament summaries (`src/backend/poker/tournament-summary.js`)
+
 ## Currency Convention
 
 - All monetary values are stored as **integers in cents** to avoid floating-point precision issues
