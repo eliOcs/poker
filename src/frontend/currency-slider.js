@@ -30,8 +30,9 @@ class CurrencySlider extends LitElement {
           border: 2px solid var(--color-bg-dark);
           background: var(--color-bg-disabled);
           color: var(--color-fg-white);
-          line-height: 2;
           appearance: textfield;
+          align-self: stretch;
+          box-sizing: border-box;
         }
 
         input[type="number"]::-webkit-inner-spin-button,
@@ -51,8 +52,8 @@ class CurrencySlider extends LitElement {
 
         input[type="range"]::-webkit-slider-thumb {
           appearance: none;
-          width: var(--space-lg);
-          height: var(--space-lg);
+          width: 24px;
+          height: 24px;
           background: var(--color-primary);
           border: 2px solid var(--color-bg-dark);
           cursor: pointer;

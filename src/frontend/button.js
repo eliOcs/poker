@@ -84,7 +84,7 @@ class Button extends LitElement {
 
         /* Sizes */
         :host([size="compact"]) button {
-          padding: var(--space-md) var(--space-md);
+          padding: var(--space-md) var(--space-lg);
           min-height: 38px;
         }
 
