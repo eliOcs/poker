@@ -94,6 +94,12 @@ class Card extends LitElement {
             );
         }
 
+        .card.static {
+          position: static;
+          width: 42px;
+          height: 56px;
+        }
+
         .card.front {
           transform: rotateY(180deg);
         }
@@ -150,7 +156,8 @@ class Card extends LitElement {
             font-size: 18px;
           }
 
-          .card.placeholder {
+          .card.placeholder,
+          .card.static {
             width: 63px;
             height: 83px;
           }
@@ -171,6 +178,7 @@ class Card extends LitElement {
     return {
       card: { type: Object },
       winning: { type: Boolean },
+      noAnimation: { type: Boolean },
       _flipping: { state: true },
       _dealing: { state: true },
     };
@@ -184,7 +192,7 @@ class Card extends LitElement {
   }
 
   willUpdate(changed) {
-    if (changed.has("card")) {
+    if (changed.has("card") && !this.noAnimation) {
       const prev = this._prevCard;
       this._prevCard = this.card;
       if (prev === "??" && this.card && this.card !== "??") {
@@ -227,6 +235,23 @@ class Card extends LitElement {
     }
 
     const isHidden = this.card === "??";
+
+    if (this.noAnimation) {
+      if (isHidden) {
+        return html`<span class="card back"></span>`;
+      }
+      const rank = this.card.slice(0, -1);
+      const suit = this.card.slice(-1);
+      const isRed = suit === "h" || suit === "d";
+      const classes = `card static ${isRed ? "red" : "black"}${this.winning ? " winning" : ""}`;
+      return html`
+        <span class="${classes}">
+          <span class="rank">${RANK_DISPLAY[rank]}</span>
+          <span class="suit">${SUIT_SYMBOLS[suit]}</span>
+        </span>
+      `;
+    }
+
     const isFlipped = !isHidden;
     const wrapperClasses = `card-wrapper${isFlipped ? " flipped" : ""}${this._flipping ? " flipping" : ""}${this._dealing ? " dealing" : ""}`;
 

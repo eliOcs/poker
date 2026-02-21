@@ -270,6 +270,7 @@ class Seat extends LitElement {
       clockTicks: { type: Number },
       buyIn: { type: Number },
       hideBet: { type: Boolean },
+      noAnimation: { type: Boolean },
     };
   }
 
@@ -479,6 +480,7 @@ class Seat extends LitElement {
             html`<phg-card
               .card=${card}
               ?winning=${this.seat.winningCards?.includes(card)}
+              ?noAnimation=${this.noAnimation}
             ></phg-card>`,
         )}
       </div>

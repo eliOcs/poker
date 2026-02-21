@@ -115,6 +115,7 @@ class Board extends LitElement {
       countdown: { type: Number },
       winnerMessage: { type: Object },
       winningCards: { type: Array },
+      noAnimation: { type: Boolean },
       tournament: { type: Object },
       seats: { type: Array },
     };
@@ -152,6 +153,7 @@ class Board extends LitElement {
             html`<phg-card
               .card=${card}
               ?winning=${this.isWinningCard(card)}
+              ?noAnimation=${this.noAnimation}
             ></phg-card>`,
         )}
       </div>

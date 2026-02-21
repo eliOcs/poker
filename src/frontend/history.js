@@ -151,7 +151,7 @@ class History extends LitElement {
     const cards = summary.was_dealt
       ? summary.hole_cards
       : summary.winner_hole_cards || [];
-    return cards.map((card) => html`<phg-card .card=${card}></phg-card>`);
+    return cards.map((card) => html`<phg-card .card=${card} noAnimation></phg-card>`);
   }
 
   renderHandSummaryResult(summary) {
@@ -229,6 +229,7 @@ class History extends LitElement {
           .hand=${hand}
           .winnerMessage=${this.view.winnerMessage}
           .winningCards=${this.view.winningCards}
+          noAnimation
         ></phg-board>
         <div id="seats" data-table-size="${tableSize}">
           ${this.view.seats.map((seat, index) => {
@@ -243,6 +244,7 @@ class History extends LitElement {
                 .seatNumber=${index}
                 .isButton=${isButton}
                 .showSitAction=${false}
+                noAnimation
               ></phg-seat>
             `;
           })}
@@ -269,7 +271,7 @@ class History extends LitElement {
                   ? html`
                       <div class="street-cards">
                         ${round.cards.map(
-                          (card) => html`<phg-card .card=${card}></phg-card>`,
+                          (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
                         )}
                       </div>
                     `
@@ -290,7 +292,7 @@ class History extends LitElement {
                             ? html`<span class="action-cards"
                                 >${action.cards.map(
                                   (card) =>
-                                    html`<phg-card .card=${card}></phg-card>`,
+                                    html`<phg-card .card=${card} noAnimation></phg-card>`,
                                 )}</span
                               >`
                             : ""}
@@ -338,7 +340,7 @@ class History extends LitElement {
       ${winningCards?.length
         ? html`<div class="showdown-cards">
             ${winningCards.map(
-              (card) => html`<phg-card .card=${card}></phg-card>`,
+              (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
             )}
           </div>`
         : ""}
@@ -398,7 +400,7 @@ class History extends LitElement {
                 <span class="hand-number">#${item.hand_number}</span>
                 <div class="hand-cards">
                   ${cards.map(
-                    (card) => html`<phg-card .card=${card}></phg-card>`,
+                    (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
                   )}
                 </div>
                 ${this.renderHandListResult(item)}
