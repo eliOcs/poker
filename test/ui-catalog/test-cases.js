@@ -434,7 +434,7 @@ const CATEGORIES = {
   Showdown: ["game-showdown-you-win", "game-showdown-you-lose"],
   "Special States": SPECIAL_GAME_IDS,
   "Table Sizes": TABLE_SIZE_IDS,
-  Errors: ["game-not-found", "game-error"],
+  Errors: ["game-error"],
   Modals: [...RANKING_MODAL_IDS, "game-settings-modal"],
   [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,
 };
