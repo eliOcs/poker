@@ -11,7 +11,7 @@ import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/history.js";
 import "/src/frontend/toast.js";
-import { HISTORY_TEST_CASES, HISTORY_CATEGORY } from "./test-cases-history.js";
+import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import {
   emptySeat,
   emptySeats,
@@ -23,14 +23,9 @@ import {
 } from "./test-cases/game-helpers.js";
 import {
   SPECIAL_GAME_TEST_CASES,
-  SPECIAL_GAME_IDS,
   RANKING_MODAL_TEST_CASES,
-  RANKING_MODAL_IDS,
 } from "./test-cases/game-special.js";
-import {
-  TABLE_SIZE_TEST_CASES,
-  TABLE_SIZE_IDS,
-} from "./test-cases/table-sizes.js";
+import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
 
 // === GAME TEST CASES ===
 
@@ -417,28 +412,6 @@ const TEST_CASES = {
 // Export test case IDs for Playwright
 export const TEST_CASE_IDS = Object.keys(TEST_CASES);
 
-// Category definitions for navigation
-const CATEGORIES = {
-  Landing: ["landing-page"],
-  Lobby: [
-    "game-empty-table",
-    "game-waiting-for-players",
-    "game-ready-to-start",
-    "game-countdown",
-    "game-buy-in",
-  ],
-  Preflop: ["game-preflop-your-turn", "game-preflop-waiting"],
-  Flop: ["game-flop-check-or-bet", "game-flop-facing-bet"],
-  Turn: ["game-turn"],
-  River: ["game-river-all-in-decision"],
-  Showdown: ["game-showdown-you-win", "game-showdown-you-lose"],
-  "Special States": SPECIAL_GAME_IDS,
-  "Table Sizes": TABLE_SIZE_IDS,
-  Errors: ["game-error"],
-  Modals: [...RANKING_MODAL_IDS, "game-settings-modal"],
-  [HISTORY_CATEGORY.name]: HISTORY_CATEGORY.ids,
-};
-
 // Parse query params and render
 function init() {
   const params = new URLSearchParams(window.location.search);
@@ -446,22 +419,7 @@ function init() {
   const root = document.getElementById("root");
 
   if (!testId) {
-    root.innerHTML = `
-      <div style="font-family: monospace; padding: 20px; max-width: 800px; margin: 0 auto;">
-        <h2>UI Catalog - Full Game States</h2>
-        <p>Click to view each game state:</p>
-        ${Object.entries(CATEGORIES)
-          .map(
-            ([category, ids]) => `
-          <h3>${category}</h3>
-          <ul>
-            ${ids.map((id) => `<li><a href="?test=${id}">${id}</a></li>`).join("")}
-          </ul>
-        `,
-          )
-          .join("")}
-      </div>
-    `;
+    root.innerHTML = `<div style="color: #c0c0d0; padding: 20px; font-family: monospace;">No test case specified. <a href="/" style="color: #36c;">View catalog</a></div>`;
     return;
   }
 

@@ -3,22 +3,259 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UI Catalog</title>
-    <link rel="stylesheet" href="/base.css" />
-    <script type="importmap">
-      {
-        "imports": {
-          "lit": "/node_modules/lit/index.js",
-          "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js",
-          "lit-html": "/node_modules/lit-html/lit-html.js",
-          "lit-element/lit-element.js": "/node_modules/lit-element/lit-element.js",
-          "lit-html/is-server.js": "/node_modules/lit-html/is-server.js"
+    <title>UI Catalog - Pluton Poker</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Press Start 2P", monospace;
+        background-color: #1a1a2e;
+        color: #c0c0d0;
+        margin: 0;
+        padding: 2em;
+        line-height: 1.8;
+        font-size: 10px;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        color: #88a;
+        font-size: 14px;
+        margin-bottom: 1.5em;
+        text-align: center;
+      }
+
+      h2 {
+        color: #f4a020;
+        font-size: 11px;
+        margin-top: 2.5em;
+        margin-bottom: 1em;
+        border-bottom: 2px solid #2d2d44;
+        padding-bottom: 0.5em;
+      }
+
+      ul {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+      }
+
+      li {
+        margin: 0.5em 0;
+      }
+
+      a {
+        color: #c0c0d0;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: #f4a020;
+      }
+
+      @media (min-width: 600px) {
+        body {
+          font-size: 12px;
+          padding: 3em;
+        }
+
+        h1 {
+          font-size: 16px;
+        }
+
+        h2 {
+          font-size: 12px;
         }
       }
-    </script>
-    <script type="module" src="/test-cases.js"></script>
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div class="container">
+      <h1>UI Catalog</h1>
+
+      <h2>Landing</h2>
+      <ul>
+        <li><a href="/test.html?test=landing-page">landing-page</a></li>
+      </ul>
+
+      <h2>Lobby</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-empty-table">game-empty-table</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-waiting-for-players"
+            >game-waiting-for-players</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-ready-to-start">game-ready-to-start</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-countdown">game-countdown</a>
+        </li>
+        <li><a href="/test.html?test=game-buy-in">game-buy-in</a></li>
+      </ul>
+
+      <h2>Preflop</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-preflop-your-turn"
+            >game-preflop-your-turn</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-preflop-waiting"
+            >game-preflop-waiting</a
+          >
+        </li>
+      </ul>
+
+      <h2>Flop</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-flop-check-or-bet"
+            >game-flop-check-or-bet</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-flop-facing-bet"
+            >game-flop-facing-bet</a
+          >
+        </li>
+      </ul>
+
+      <h2>Turn</h2>
+      <ul>
+        <li><a href="/test.html?test=game-turn">game-turn</a></li>
+      </ul>
+
+      <h2>River</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-river-all-in-decision"
+            >game-river-all-in-decision</a
+          >
+        </li>
+      </ul>
+
+      <h2>Showdown</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-showdown-you-win"
+            >game-showdown-you-win</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-showdown-you-lose"
+            >game-showdown-you-lose</a
+          >
+        </li>
+      </ul>
+
+      <h2>Special States</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-all-in-situation"
+            >game-all-in-situation</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-with-folded-players"
+            >game-with-folded-players</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-player-folded">game-player-folded</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-show-card-actions"
+            >game-show-card-actions</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-clock-called">game-clock-called</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-sitting-out">game-sitting-out</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-disconnected-player"
+            >game-disconnected-player</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-full-table">game-full-table</a>
+        </li>
+      </ul>
+
+      <h2>Table Sizes</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=table-heads-up">table-heads-up</a>
+        </li>
+        <li><a href="/test.html?test=table-6max">table-6max</a></li>
+        <li>
+          <a href="/test.html?test=table-full-ring">table-full-ring</a>
+        </li>
+      </ul>
+
+      <h2>Errors</h2>
+      <ul>
+        <li><a href="/test.html?test=game-error">game-error</a></li>
+      </ul>
+
+      <h2>Modals</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=game-rankings-modal">game-rankings-modal</a>
+        </li>
+        <li>
+          <a href="/test.html?test=game-rankings-modal-tournament"
+            >game-rankings-modal-tournament</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=game-settings-modal">game-settings-modal</a>
+        </li>
+      </ul>
+
+      <h2>Hand History</h2>
+      <ul>
+        <li>
+          <a href="/test.html?test=history-loading">history-loading</a>
+        </li>
+        <li><a href="/test.html?test=history-empty">history-empty</a></li>
+        <li>
+          <a href="/test.html?test=history-preflop-fold"
+            >history-preflop-fold</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=history-showdown-win"
+            >history-showdown-win</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=history-showdown-lose"
+            >history-showdown-lose</a
+          >
+        </li>
+        <li>
+          <a href="/test.html?test=history-multiple-hands"
+            >history-multiple-hands</a
+          >
+        </li>
+      </ul>
+    </div>
   </body>
 </html>

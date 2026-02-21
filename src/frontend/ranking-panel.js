@@ -22,6 +22,14 @@ class RankingPanel extends LitElement {
           text-align: left;
         }
 
+        @media (width < 800px) {
+          th,
+          td {
+            padding: var(--space-sm) var(--space-md);
+            font-size: var(--font-sm);
+          }
+        }
+
         th {
           color: var(--color-fg-muted);
           font-size: var(--font-md);
@@ -42,10 +50,16 @@ class RankingPanel extends LitElement {
 
         .player-name {
           color: var(--color-fg-white);
-          max-width: 120px;
+          max-width: 200px;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        @media (width < 800px) {
+          .player-name {
+            max-width: 120px;
+          }
         }
 
         .positive {

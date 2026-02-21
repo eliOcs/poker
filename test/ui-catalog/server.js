@@ -20,6 +20,7 @@ const nodeModulesFiles = buildNodeModulesMap();
 // Route mapping
 const routes = {
   "/": "test/ui-catalog/index.html",
+  "/test.html": "test/ui-catalog/test.html",
   "/test-cases.js": "test/ui-catalog/test-cases.js",
   "/test-cases-history.js": "test/ui-catalog/test-cases-history.js",
   "/test-cases/history-extended.js":

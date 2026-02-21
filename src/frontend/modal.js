@@ -32,7 +32,7 @@ class Modal extends LitElement {
           z-index: 200;
           box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
           min-width: 280px;
-          max-width: 90vw;
+          max-width: min(600px, 90vw);
           max-height: 90vh;
           overflow: auto;
         }

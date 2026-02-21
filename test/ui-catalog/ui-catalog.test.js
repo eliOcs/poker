@@ -74,7 +74,7 @@ function getComponentSelector(testCase) {
 for (const testCase of TEST_CASES) {
   // eslint-disable-next-line playwright/valid-title
   test(testCase, async ({ page }) => {
-    await page.goto(`/?test=${testCase}`);
+    await page.goto(`/test.html?test=${testCase}`);
 
     const selector = getComponentSelector(testCase);
     const component = page.locator(selector);
