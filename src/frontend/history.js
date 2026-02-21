@@ -151,7 +151,9 @@ class History extends LitElement {
     const cards = summary.was_dealt
       ? summary.hole_cards
       : summary.winner_hole_cards || [];
-    return cards.map((card) => html`<phg-card .card=${card} noAnimation></phg-card>`);
+    return cards.map(
+      (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+    );
   }
 
   renderHandSummaryResult(summary) {
@@ -271,7 +273,11 @@ class History extends LitElement {
                   ? html`
                       <div class="street-cards">
                         ${round.cards.map(
-                          (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+                          (card) =>
+                            html`<phg-card
+                              .card=${card}
+                              noAnimation
+                            ></phg-card>`,
                         )}
                       </div>
                     `
@@ -292,7 +298,10 @@ class History extends LitElement {
                             ? html`<span class="action-cards"
                                 >${action.cards.map(
                                   (card) =>
-                                    html`<phg-card .card=${card} noAnimation></phg-card>`,
+                                    html`<phg-card
+                                      .card=${card}
+                                      noAnimation
+                                    ></phg-card>`,
                                 )}</span
                               >`
                             : ""}
@@ -400,7 +409,8 @@ class History extends LitElement {
                 <span class="hand-number">#${item.hand_number}</span>
                 <div class="hand-cards">
                   ${cards.map(
-                    (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+                    (card) =>
+                      html`<phg-card .card=${card} noAnimation></phg-card>`,
                   )}
                 </div>
                 ${this.renderHandListResult(item)}
