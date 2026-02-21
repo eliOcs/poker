@@ -535,13 +535,11 @@ describe("phg-history", () => {
       const cards = element.shadowRoot.querySelectorAll("phg-card");
       expect(cards.length).to.be.greaterThan(0);
 
-      // Check that cards are rendered (not hidden)
+      // Check that cards are rendered (not hidden) — history uses noAnimation (static cards)
       let foundVisibleCard = false;
       for (const card of cards) {
         await card.updateComplete;
-        const visibleCard = card.shadowRoot.querySelector(
-          ".card-wrapper.flipped",
-        );
+        const visibleCard = card.shadowRoot.querySelector(".card.static");
         if (visibleCard) foundVisibleCard = true;
       }
       expect(foundVisibleCard).to.be.true;
@@ -566,7 +564,7 @@ describe("phg-history", () => {
       element.view = createMockView(handWithHiddenCards, "player1");
       await element.updateComplete;
 
-      // The player cards display should show hidden cards for player2
+      // The player cards display should show hidden cards for player2 — history uses noAnimation
       const seats = element.shadowRoot.querySelectorAll("phg-seat");
       let foundHidden = false;
       for (const seat of seats) {
@@ -574,9 +572,7 @@ describe("phg-history", () => {
         const cards = seat.shadowRoot.querySelectorAll("phg-card");
         for (const card of cards) {
           await card.updateComplete;
-          const hiddenCard = card.shadowRoot.querySelector(
-            ".card-wrapper:not(.flipped)",
-          );
+          const hiddenCard = card.shadowRoot.querySelector(".card.back");
           if (hiddenCard) foundHidden = true;
         }
       }
