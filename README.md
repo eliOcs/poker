@@ -31,19 +31,70 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 4. **Open in browser**
    Navigate to http://localhost:3000
 
+## Architecture
+
+### Philosophy
+
+- **Pragmatic over perfect** — Simple solutions that work, no over-engineering
+- **Modern runtime only** — Targets latest Node.js (24+) and modern browsers (no polyfills)
+- **Minimal dependencies** — Use native APIs when possible (e.g., `node:test`, `crypto`)
+- **Backend authority** — All game logic runs server-side; frontend is a thin rendering layer
+- **Validate at boundaries, trust internally** — Runtime validation at system edges; static analysis internally
+
+### Tech Stack
+
+- **Backend**: Node.js with native ES modules, HTTP, WebSocket (`ws`)
+- **Frontend**: Lit web components installed via npm (no build step, served via importmap)
+- **Protocol**: WebSocket for real-time bidirectional communication
+- **Testing**: Node.js test runner, web-test-runner, Playwright
+
+### Detailed Documentation
+
+- [Backend](doc/backend.md) — Communication model, game state, patterns, currency convention
+- [Frontend](doc/frontend.md) — Components, development workflow, UI catalog
+- [CLAUDE.md](CLAUDE.md) — Full project context for AI assistants and contributors
+
 ## Development
 
+### Commands
+
 ```bash
-npm start       # Start dev server with file watching
-npm test        # Run unit tests
-npm run lint    # Run ESLint
-npm run format  # Run Prettier
-npm run test:e2e # Run Playwright e2e tests
+npm start                       # Run dev server with file watching
+npm test                        # Run all tests (backend + frontend)
+npm run test:backend            # Run backend unit tests (node:test)
+npm run test:frontend           # Run frontend component tests (web-test-runner)
+npm run test:e2e                # Run end-to-end tests (Playwright)
+npm run test:ui-catalog         # Run visual regression tests
+npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
+npm run coverage                # Run tests with coverage reporting
+npm run duplicates              # Check for code duplication (jscpd)
+npm run lint                    # ESLint + Stylelint (check only)
+npm run format                  # Prettier (check only)
+npm run fix                     # Auto-fix format + lint issues
+npm run typecheck               # TypeScript type checking
+npm run validate                # Run all checks (format, lint, typecheck, test)
+npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
+```
+
+### Git Hooks
+
+A shared pre-commit hook runs `npm run validate` before each commit. It is configured automatically via the `prepare` script when running `npm install` (sets `core.hooksPath` to `.githooks/`).
+
+### Environment (.env)
+
+```
+DOMAIN=localhost
+PORT=3000
 ```
 
 ## Deployment
 
-Deployment uses [Kamal](https://kamal-deploy.org/) with AWS ECR and ARM64 instances.
+Deployment uses [Kamal](https://kamal-deploy.org/) for zero-downtime deploys:
+
+- **Registry**: AWS ECR (eu-central-1)
+- **Server**: ARM64 (Graviton) instance
+- **SSL**: Let's Encrypt via Kamal proxy
+- **Domain**: plutonpoker.com
 
 ### Prerequisites
 
@@ -51,28 +102,41 @@ Deployment uses [Kamal](https://kamal-deploy.org/) with AWS ECR and ARM64 instan
 - AWS CLI configured with ECR access
 - SSH key for the deployment server (`~/.ssh/poker_ed25519`)
 
-### Deploy
+### Commands
 
 ```bash
-kamal deploy    # Build, push, and deploy
+kamal deploy                   # Full deploy (build, push, deploy)
+kamal redeploy                 # Deploy without rebuilding
+kamal rollback                 # Rollback to previous version
+kamal app logs                 # View application logs
+kamal app exec -i 'sh'         # Shell into container
 ```
 
-### Other Commands
+### Secrets
+
+The `.kamal/secrets` file generates the ECR password:
 
 ```bash
-kamal app logs  # View application logs
-kamal app exec -i 'sh'  # Shell into container
-kamal rollback  # Rollback to previous version
+KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1 --profile personal)
 ```
 
-## Architecture
+ECR tokens expire after 12 hours. If deploy fails with auth errors, the token has expired.
 
-- **Backend**: Node.js with native ES modules, HTTP, WebSocket
-- **Frontend**: Lit web components (loaded from CDN, no build step)
-- **Protocol**: WebSocket for real-time bidirectional communication
-- **Testing**: Node.js built-in test runner + Playwright for e2e
+## Dependencies
 
-See [CLAUDE.md](./CLAUDE.md) for detailed architecture documentation.
+**Runtime** (keep minimal):
+
+- `ws` — WebSocket server
+- `lit` — Web components
+
+**Dev**:
+
+- `eslint`, `prettier`, `stylelint` — Code quality
+- `typescript` — Type checking (no compilation)
+- `@open-wc/testing`, `web-test-runner` — Frontend testing
+- `@playwright/test` — E2E and visual regression testing
+- `jscpd` — Code duplication detection
+- `madge` — Dependency graph generation (via npx)
 
 ## License
 
