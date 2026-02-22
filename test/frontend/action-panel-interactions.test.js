@@ -22,6 +22,16 @@ function findButtonByText(root, text) {
   return null;
 }
 
+function findButtonByExactText(root, text) {
+  const buttons = root.querySelectorAll("phg-button");
+  for (const btn of buttons) {
+    if (btn.textContent.trim() === text) {
+      return btn;
+    }
+  }
+  return null;
+}
+
 describe("phg-action-panel", () => {
   let element;
 
@@ -233,6 +243,120 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       expect(actionPanel.betAmount).to.equal(375000);
+    });
+  });
+
+  describe("bet presets", () => {
+    it("clicking Min sets betAmount to min", async () => {
+      element.game = createMockGameAtFlop(); // bet min: 5000
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByText(actionPanel.shadowRoot, "Min").click();
+      await actionPanel.updateComplete;
+
+      expect(actionPanel.betAmount).to.equal(5000);
+    });
+
+    it("clicking ½ Pot sets betAmount to half the pot", async () => {
+      element.game = createMockGameAtFlop(); // pot: 20000
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByText(actionPanel.shadowRoot, "½ Pot").click();
+      await actionPanel.updateComplete;
+
+      expect(actionPanel.betAmount).to.equal(10000);
+    });
+
+    it("clicking Pot sets betAmount to the full pot", async () => {
+      element.game = createMockGameAtFlop(); // pot: 20000
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByExactText(actionPanel.shadowRoot, "Pot").click();
+      await actionPanel.updateComplete;
+
+      expect(actionPanel.betAmount).to.equal(20000);
+    });
+
+    it("clicking Max sets betAmount to max", async () => {
+      element.game = createMockGameAtFlop(); // bet max: 100000
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByText(actionPanel.shadowRoot, "Max").click();
+      await actionPanel.updateComplete;
+
+      expect(actionPanel.betAmount).to.equal(100000);
+    });
+
+    it("clicking 2.5 BB sets betAmount to 2.5 * bigBlind when pot is 0", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            actions: [
+              { action: "raise", min: 10000, max: 100000 },
+              { action: "fold" },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByText(actionPanel.shadowRoot, "2.5 BB").click();
+      await actionPanel.updateComplete;
+
+      // bigBlind: 5000, 2.5 * 5000 = 12500
+      expect(actionPanel.betAmount).to.equal(12500);
+    });
+
+    it("clicking 3 BB sets betAmount to 3 * bigBlind when pot is 0", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            actions: [
+              { action: "raise", min: 10000, max: 100000 },
+              { action: "fold" },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      findButtonByText(actionPanel.shadowRoot, "3 BB").click();
+      await actionPanel.updateComplete;
+
+      // bigBlind: 5000, 3 * 5000 = 15000
+      expect(actionPanel.betAmount).to.equal(15000);
     });
   });
 

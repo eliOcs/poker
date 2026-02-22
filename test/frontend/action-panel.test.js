@@ -21,6 +21,16 @@ function findButtonByText(root, text) {
   return null;
 }
 
+function findButtonByExactText(root, text) {
+  const buttons = root.querySelectorAll("phg-button");
+  for (const btn of buttons) {
+    if (btn.textContent.trim() === text) {
+      return btn;
+    }
+  }
+  return null;
+}
+
 // Helper to get currency slider's internal range input
 async function getCurrencySliderRange(actionPanel) {
   const currencySlider = actionPanel.shadowRoot.querySelector(
@@ -210,6 +220,83 @@ describe("phg-action-panel", () => {
       const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
+    });
+
+    it("renders bet preset buttons with pot-based labels when pot > 0", async () => {
+      element.game = createMockGameAtFlop(); // pot: 20000
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      expect(findButtonByText(actionPanel.shadowRoot, "Min")).to.exist;
+      expect(findButtonByText(actionPanel.shadowRoot, "½ Pot")).to.exist;
+      expect(findButtonByExactText(actionPanel.shadowRoot, "Pot")).to.exist;
+      expect(findButtonByText(actionPanel.shadowRoot, "Max")).to.exist;
+    });
+
+    it("renders BB-based preset labels when pot is 0", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            actions: [
+              { action: "raise", min: 10000, max: 100000 },
+              { action: "fold" },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      expect(findButtonByText(actionPanel.shadowRoot, "Min")).to.exist;
+      expect(findButtonByText(actionPanel.shadowRoot, "2.5 BB")).to.exist;
+      expect(findButtonByText(actionPanel.shadowRoot, "3 BB")).to.exist;
+      expect(findButtonByText(actionPanel.shadowRoot, "Max")).to.exist;
+    });
+
+    it("disables ½ Pot and Pot presets when they exceed the player stack", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "flop", pot: 300000, currentBet: 0, actingSeat: 0 },
+        board: { cards: ["Ah", "Kd", "Qc"] },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            bet: 0,
+            actions: [
+              { action: "check" },
+              { action: "bet", min: 5000, max: 100000 },
+            ],
+          },
+          { ...mockOpponentSeat, bet: 0 },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      expect(findButtonByText(actionPanel.shadowRoot, "½ Pot").disabled).to.be
+        .true;
+      expect(findButtonByExactText(actionPanel.shadowRoot, "Pot").disabled).to
+        .be.true;
+      expect(findButtonByText(actionPanel.shadowRoot, "Min").disabled).to.not.be
+        .true;
+      expect(findButtonByText(actionPanel.shadowRoot, "Max").disabled).to.not.be
+        .true;
     });
 
     it("renders show-card buttons with card components", async () => {

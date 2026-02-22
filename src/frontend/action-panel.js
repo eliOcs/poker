@@ -38,6 +38,13 @@ class ActionPanel extends LitElement {
           border-color: var(--color-primary);
         }
 
+        .bet-presets {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: var(--space-sm);
+          width: 100%;
+        }
+
         .show-action {
           display: flex;
           flex-direction: column;
@@ -82,6 +89,7 @@ class ActionPanel extends LitElement {
       isWinner: { type: Boolean },
       canSit: { type: Boolean },
       buyIn: { type: Number },
+      pot: { type: Number },
     };
   }
 
@@ -98,6 +106,7 @@ class ActionPanel extends LitElement {
     this.isWinner = false;
     this.canSit = false;
     this.buyIn = 0;
+    this.pot = 0;
     this._lastActionType = null;
     this._lastActionTime = 0;
     this._showEmotePicker = false;
@@ -314,6 +323,40 @@ class ActionPanel extends LitElement {
     `;
   }
 
+  _renderBetPresets(min, max) {
+    const presets =
+      this.pot === 0
+        ? [
+            { label: "Min", raw: min },
+            { label: "2.5 BB", raw: Math.round(2.5 * this.bigBlind) },
+            { label: "3 BB", raw: 3 * this.bigBlind },
+            { label: "Max", raw: max },
+          ]
+        : [
+            { label: "Min", raw: min },
+            { label: "½ Pot", raw: Math.round(this.pot / 2) },
+            { label: "Pot", raw: this.pot },
+            { label: "Max", raw: max },
+          ];
+    return html`
+      <div class="bet-presets">
+        ${presets.map(
+          ({ label, raw }) => html`
+            <phg-button
+              variant="muted"
+              full-width
+              ?disabled=${raw > max}
+              @click=${() =>
+                (this.betAmount = Math.max(min, Math.min(max, raw)))}
+            >
+              ${label}
+            </phg-button>
+          `,
+        )}
+      </div>
+    `;
+  }
+
   _renderBettingSlider(actionMap, betAction) {
     const isBet = actionMap.bet != null;
     const min = betAction.min;
@@ -324,6 +367,7 @@ class ActionPanel extends LitElement {
 
     return html`
       <div class="betting-panel">
+        ${this._renderBetPresets(min, max)}
         <phg-currency-slider
           .value=${currentValue}
           .min=${min}

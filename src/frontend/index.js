@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
@@ -470,6 +471,22 @@ class Game extends LitElement {
     `;
   }
 
+  _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
+    return html`<phg-action-panel
+      .actions=${actions}
+      .seatIndex=${seatIndex}
+      .smallBlind=${this.game.blinds?.small || 1}
+      .bigBlind=${this.game.blinds?.big || 1}
+      .pot=${this.game.hand?.pot ?? 0}
+      .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
+      .canSit=${canSit}
+      .buyIn=${this.game.tournament?.buyIn ?? 0}
+      .bustedPosition=${bustedPosition}
+      .isWinner=${isWinner}
+      @game-action=${this.handleGameAction}
+    ></phg-action-panel>`;
+  }
+
   render() {
     if (!this.game) return html`<p>Loading ...</p>`;
 
@@ -511,18 +528,13 @@ class Game extends LitElement {
             )}
           </div>
         </div>
-        <phg-action-panel
-          .actions=${actions}
-          .seatIndex=${seatIndex}
-          .smallBlind=${this.game.blinds?.small || 1}
-          .bigBlind=${this.game.blinds?.big || 1}
-          .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
-          .canSit=${canSit}
-          .buyIn=${this.game.tournament?.buyIn ?? 0}
-          .bustedPosition=${bustedPosition}
-          .isWinner=${isWinner}
-          @game-action=${this.handleGameAction}
-        ></phg-action-panel>
+        ${this._renderActionPanel(
+          actions,
+          seatIndex,
+          canSit,
+          bustedPosition,
+          isWinner,
+        )}
         ${this._renderInfoBar()}
         <button
           class="toolbar-btn"

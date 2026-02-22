@@ -119,15 +119,13 @@ export const actionPanelStyles = css`
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
     gap: var(--space-md);
     padding: var(--space-md);
-    border: var(--space-sm) solid var(--color-fg-muted);
-    background-color: var(--color-bg-light);
-    box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+    border: none;
+    background-color: transparent;
+    box-shadow: none;
     box-sizing: border-box;
-    width: min(560px, calc(100vw - 24px));
-    min-height: 100px;
+    width: min(560px, calc(100vw - 2 * var(--space-md)));
   }
 
   /* Betting panel styles */
@@ -136,7 +134,6 @@ export const actionPanelStyles = css`
     flex-direction: column;
     gap: var(--space-md);
     width: 100%;
-    flex: 1;
   }
 
   .slider-row {
@@ -189,8 +186,6 @@ export const actionPanelStyles = css`
     grid-auto-flow: column;
     gap: var(--space-md);
     width: 100%;
-    flex: 1;
-    align-items: stretch;
   }
 
   .share-buttons {
@@ -203,7 +198,6 @@ export const actionPanelStyles = css`
   .action-row phg-button {
     display: block;
     width: 100%;
-    height: 100%;
   }
 
   .action-row .amount {
