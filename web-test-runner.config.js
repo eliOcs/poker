@@ -1,5 +1,3 @@
-const jsonReporters = process.env.COVERAGE_JSON === "true";
-
 export default {
   files: "test/frontend/**/*.test.js",
   nodeResolve: {
@@ -17,6 +15,6 @@ export default {
   coverageConfig: {
     report: true,
     reportDir: "coverage/frontend",
-    reporters: jsonReporters ? ["json", "json-summary"] : ["lcov", "text"],
+    reporters: ["text", "html", "json-summary"],
   },
 };

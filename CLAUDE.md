@@ -245,7 +245,8 @@ npm run test:frontend           # Run frontend component tests (web-test-runner)
 npm run test:e2e                # Run end-to-end tests (Playwright)
 npm run test:ui-catalog         # Run visual regression tests
 npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
-npm run coverage                # Run tests with coverage reporting
+npm run test:coverage           # Run unit tests with coverage reporting
+npm run test:e2e:coverage       # Run e2e tests with coverage reporting
 npm run duplicates              # Check for code duplication (jscpd)
 npm run lint                    # ESLint + Stylelint (check only)
 npm run format                  # Prettier (check only)

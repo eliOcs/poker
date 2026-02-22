@@ -29,11 +29,15 @@ export default defineConfig({
     reuseExistingServer: false, // Always start fresh server for tests
     stdout: "pipe",
     stderr: "pipe",
+    gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
     env: {
       PORT: String(E2E_PORT),
       DOMAIN: "localhost",
       RNG_SEED: process.env.RNG_SEED || "12345",
       TIMER_SPEED: process.env.TIMER_SPEED || "10", // 10x faster for e2e tests
+      ...(process.env.E2E_COVERAGE === "1" && {
+        NODE_V8_COVERAGE: "coverage/e2e/tmp",
+      }),
     },
   },
 });

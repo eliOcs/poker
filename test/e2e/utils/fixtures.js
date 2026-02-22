@@ -1,6 +1,7 @@
 import { test as base } from "@playwright/test";
 import { PokerPlayer } from "./poker-player.js";
 import { attachDebugListeners } from "./page-debug.js";
+import { startCoverage, stopCoverage } from "./coverage.js";
 
 // Set DEBUG_E2E=1 to enable console/error logging
 const DEBUG = process.env.DEBUG_E2E === "1";
@@ -15,6 +16,7 @@ function createPlayerFixture(name) {
       permissions: ["clipboard-read", "clipboard-write"],
     });
     const page = await context.newPage();
+    await startCoverage(page);
 
     if (DEBUG) {
       attachDebugListeners(page, { prefix: name });
@@ -22,6 +24,7 @@ function createPlayerFixture(name) {
 
     const player = new PokerPlayer(context, page, name);
     await use(player);
+    await stopCoverage(page);
     await context.close();
   };
 }
