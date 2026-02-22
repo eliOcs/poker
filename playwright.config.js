@@ -12,6 +12,7 @@ export default defineConfig({
 
   use: {
     baseURL: `http://localhost:${E2E_PORT}`,
+    actionTimeout: 5000,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },

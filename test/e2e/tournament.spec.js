@@ -20,6 +20,25 @@ const WEIGHTED_ACTIONS = [
 ];
 
 const PASSIVE_FALLBACKS = ["check", "fold"];
+const STALL_TIMEOUT_MS = 90_000;
+const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
+
+/**
+ * @param {unknown} err
+ * @returns {string}
+ */
+function formatError(err) {
+  return err instanceof Error ? err.message : String(err);
+}
+
+/**
+ * @param {{lastProgressAt: number, lastProgressReason: string}} state
+ * @param {string} reason
+ */
+function markProgress(state, reason) {
+  state.lastProgressAt = Date.now();
+  state.lastProgressReason = reason;
+}
 
 /**
  * Check all active players for a tournament winner
@@ -52,18 +71,22 @@ async function checkForWinner(players, activePlayers) {
  * Remove players whose seat has the "busted" CSS class
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
+ * @returns {Promise<number>} Number of players removed
  */
 async function removeBustedPlayers(players, activePlayers) {
+  let removed = 0;
   for (const idx of activePlayers) {
     try {
       if (await players[idx].isEliminated()) {
         console.log(`Seat ${idx + 1} eliminated`);
         activePlayers.delete(idx);
+        removed++;
       }
     } catch {
       // Transient error — keep player in active set
     }
   }
+  return removed;
 }
 
 /**
@@ -122,18 +145,26 @@ function selectRandomAction(availableActions) {
  */
 async function tryTakeAction(players, activePlayers) {
   for (const seatIdx of activePlayers) {
+    let attemptedAction = null;
     try {
       const player = players[seatIdx];
       if (await player.isMyTurn().catch(() => false)) {
         const availableActions = await getAvailableActions(player);
         if (availableActions.length > 0) {
           const action = selectRandomAction(availableActions);
+          attemptedAction = action;
           await player.act(action);
           return { seatIdx, action };
         }
+        console.log(
+          `Seat ${seatIdx + 1} appears to be acting but has no legal action buttons`,
+        );
       }
-    } catch {
-      // Transient error — don't remove player from active set
+    } catch (err) {
+      console.log(
+        `Seat ${seatIdx + 1} action attempt failed` +
+          `${attemptedAction ? ` (${attemptedAction})` : ""}: ${formatError(err)}`,
+      );
     }
   }
   return null;
@@ -143,22 +174,23 @@ async function tryTakeAction(players, activePlayers) {
  * Wait for any active player to get their turn
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
+ * @returns {Promise<boolean>} Whether any actionable turn appeared
  */
 async function waitForAnyTurn(players, activePlayers) {
-  await Promise.any(
+  return await Promise.any(
     [...activePlayers].map((idx) =>
-      players[idx].actionPanel
-        .getByRole("button", { name: /(Check|Call|Fold)/ })
-        .first()
-        .waitFor({ timeout: 2000 }),
+      players[idx].waitForTurn(WAIT_FOR_TURN_TIMEOUT_MS),
     ),
-  ).catch(() => {});
+  )
+    .then(() => true)
+    .catch(() => false);
 }
 
 /**
  * Check for level changes and log them
  * @param {import('./utils/poker-player.js').PokerPlayer} player
  * @param {{maxLevelSeen: number}} state
+ * @returns {Promise<boolean>} Whether level changed
  */
 async function checkLevelChange(player, state) {
   const currentLevel = await player.getTournamentLevel().catch(() => null);
@@ -168,13 +200,16 @@ async function checkLevelChange(player, state) {
     console.log(
       `Level change: now level ${currentLevel}, blinds $${blinds?.small}/$${blinds?.big}`,
     );
+    return true;
   }
+  return false;
 }
 
 /**
  * Track hand transitions via phase changes
  * @param {string} currentPhase
  * @param {{handCount: number, lastActionWasNonPreflop: boolean}} state
+ * @returns {boolean} Whether a new hand was detected
  */
 function trackHandTransition(currentPhase, state) {
   if (currentPhase && currentPhase !== "preflop") {
@@ -186,7 +221,84 @@ function trackHandTransition(currentPhase, state) {
     if (state.handCount % 10 === 0) {
       console.log(`Completed ${state.handCount} hands...`);
     }
+    return true;
   }
+  return false;
+}
+
+/**
+ * Builds a compact debug snapshot for stall diagnosis
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @param {{handCount: number, maxLevelSeen: number}} state
+ * @returns {Promise<string>}
+ */
+async function collectStallSnapshot(players, activePlayers, state) {
+  const lines = [
+    `Stall snapshot: handCount=${state.handCount} maxLevelSeen=${state.maxLevelSeen} activePlayers=${[
+      ...activePlayers,
+    ]
+      .map((idx) => idx + 1)
+      .join(",")}`,
+  ];
+
+  for (const idx of activePlayers) {
+    const player = players[idx];
+    try {
+      const [
+        phase,
+        level,
+        onBreak,
+        isMyTurn,
+        availableActions,
+        seatClass,
+        buttonTexts,
+      ] = await Promise.all([
+        player.getPhase().catch(() => "<error>"),
+        player.getTournamentLevel().catch(() => null),
+        player.isOnBreak().catch(() => false),
+        player.isMyTurn().catch(() => false),
+        getAvailableActions(player).catch(() => []),
+        player.mySeat
+          .evaluate((el) => el.className)
+          .catch(() => "<unavailable>"),
+        player.actionPanel
+          .getByRole("button")
+          .allTextContents()
+          .catch(() => []),
+      ]);
+
+      const compactButtons = buttonTexts
+        .map((text) => text.replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .slice(0, 8)
+        .join(" | ");
+
+      lines.push(
+        `Seat ${idx + 1}: phase=${phase} level=${level ?? "?"} onBreak=${onBreak} isMyTurn=${isMyTurn} class="${seatClass}" actions=[${availableActions.join(",")}] buttons=[${compactButtons}]`,
+      );
+    } catch (err) {
+      lines.push(`Seat ${idx + 1}: snapshot failed (${formatError(err)})`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Throws with a detailed snapshot if loop progress has stalled
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @param {{handCount: number, maxLevelSeen: number, lastProgressAt: number, lastProgressReason: string}} state
+ */
+async function assertNotStalled(players, activePlayers, state) {
+  const stalledForMs = Date.now() - state.lastProgressAt;
+  if (stalledForMs <= STALL_TIMEOUT_MS) return;
+
+  const snapshot = await collectStallSnapshot(players, activePlayers, state);
+  throw new Error(
+    `Tournament loop stalled for ${stalledForMs}ms (lastProgress=${state.lastProgressReason})\n${snapshot}`,
+  );
 }
 
 /**
@@ -206,7 +318,7 @@ function saveActionsFile(actions, filePath) {
  * Run the tournament game loop until a winner is found
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
- * @param {{handCount: number, maxLevelSeen: number, lastActionWasNonPreflop: boolean}} state
+ * @param {{handCount: number, maxLevelSeen: number, lastActionWasNonPreflop: boolean, lastProgressAt: number, lastProgressReason: string}} state
  * @param {Array} newActions
  * @returns {Promise<string|null>} Winner name or null
  */
@@ -214,28 +326,40 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
   const maxActions = 8000;
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
+    await assertNotStalled(players, activePlayers, state);
+
     const winnerName = await checkForWinner(players, activePlayers);
     if (winnerName) return winnerName;
 
-    await removeBustedPlayers(players, activePlayers);
+    const removedPlayers = await removeBustedPlayers(players, activePlayers);
+    if (removedPlayers > 0) {
+      markProgress(state, `removed-${removedPlayers}-busted`);
+    }
     if (activePlayers.size <= 1) return null;
 
     const activePlayer = await findActivePlayer(players, activePlayers);
     if (!activePlayer) continue;
 
-    await checkLevelChange(activePlayer, state);
+    const levelChanged = await checkLevelChange(activePlayer, state);
+    if (levelChanged) {
+      markProgress(state, `level-${state.maxLevelSeen}`);
+    }
 
     const onBreak = await activePlayer.isOnBreak().catch(() => false);
     if (onBreak) {
       console.log("Tournament on break - waiting...");
+      markProgress(state, "on-break");
       await activePlayer.board
         .locator(".break-overlay")
         .waitFor({ state: "hidden", timeout: 30000 });
+      markProgress(state, "break-ended");
       continue;
     }
 
     const currentPhase = await activePlayer.getPhase().catch(() => "");
-    trackHandTransition(currentPhase, state);
+    if (trackHandTransition(currentPhase, state)) {
+      markProgress(state, `hand-${state.handCount}`);
+    }
 
     const result = await tryTakeAction(players, activePlayers);
     if (result) {
@@ -244,6 +368,10 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
         action: result.action,
         hand: state.handCount,
       });
+      markProgress(
+        state,
+        `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
+      );
     } else {
       await waitForAnyTurn(players, activePlayers);
     }
@@ -303,6 +431,8 @@ test.describe("Tournament E2E", () => {
       handCount: 1,
       maxLevelSeen: 1,
       lastActionWasNonPreflop: false,
+      lastProgressAt: Date.now(),
+      lastProgressReason: "tournament-started",
     };
     const newActions = [];
     const activePlayers = new Set([0, 1, 2, 3, 4, 5]);

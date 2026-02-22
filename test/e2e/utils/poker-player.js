@@ -2,6 +2,10 @@
  * Represents a player in the e2e test
  * All interactions use visible UI elements only - no component internal access
  */
+
+const TURN_ACTION_BUTTON_NAME = /^(Check|Fold|Call\s+\$|Bet|Raise to|All-In)/;
+const ACTION_CLICK_TIMEOUT_MS = 5000;
+
 export class PokerPlayer {
   /** @type {import('@playwright/test').BrowserContext} */
   context;
@@ -139,7 +143,7 @@ export class PokerPlayer {
    */
   async isMyTurn() {
     return await this.actionPanel
-      .getByRole("button", { name: /(Check|Call|Fold)/ })
+      .getByRole("button", { name: TURN_ACTION_BUTTON_NAME })
       .first()
       .isVisible()
       .catch(() => false);
@@ -150,9 +154,9 @@ export class PokerPlayer {
    * @param {number} [timeout=15000]
    */
   async waitForTurn(timeout = 15000) {
-    // Wait for any action button to appear
+    // Wait for actual betting buttons only; excludes "Call Clock".
     await this.actionPanel
-      .getByRole("button", { name: /(Check|Call|Fold)/ })
+      .getByRole("button", { name: TURN_ACTION_BUTTON_NAME })
       .first()
       .waitFor({ timeout });
   }
@@ -165,7 +169,7 @@ export class PokerPlayer {
   async hasAction(actionName) {
     if (actionName === "call") {
       return await this.actionPanel
-        .getByRole("button", { name: /^Call/ })
+        .getByRole("button", { name: /^Call\s+\$/ })
         .isVisible()
         .catch(() => false);
     }
@@ -273,28 +277,36 @@ export class PokerPlayer {
     const handlers = {
       allIn: async () => {
         await this._clickToAllIn();
-        await this.actionPanel.getByRole("button", { name: "All-In" }).click();
+        await this.actionPanel
+          .getByRole("button", { name: "All-In" })
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
       call: async () => {
         await this.actionPanel
           .getByRole("button", { name: /^Call \$/ })
-          .click();
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
       check: async () => {
-        await this.actionPanel.getByRole("button", { name: "Check" }).click();
+        await this.actionPanel
+          .getByRole("button", { name: "Check" })
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
       fold: async () => {
-        await this.actionPanel.getByRole("button", { name: "Fold" }).click();
+        await this.actionPanel
+          .getByRole("button", { name: "Fold" })
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
       bet: async () => {
         await this._moveSliderToMin();
-        await this.actionPanel.getByRole("button", { name: /^Bet/ }).click();
+        await this.actionPanel
+          .getByRole("button", { name: /^Bet/ })
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
       raise: async () => {
         await this._moveSliderToMin();
         await this.actionPanel
           .getByRole("button", { name: /^Raise to/ })
-          .click();
+          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
       },
     };
     const handler = handlers[action];
