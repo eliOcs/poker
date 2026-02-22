@@ -496,12 +496,13 @@ export class PokerPlayer {
   }
 
   /**
-   * Check if player is eliminated (has zero stack and not waiting for a hand)
+   * Check if player is eliminated from the tournament (seat has "busted" class)
    * @returns {Promise<boolean>}
    */
   async isEliminated() {
-    const stack = await this.getStack();
-    return stack === "$0";
+    return await this.mySeat
+      .evaluate((el) => el.classList.contains("busted"))
+      .catch(() => false);
   }
 
   /**

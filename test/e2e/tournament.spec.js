@@ -49,6 +49,24 @@ async function checkForWinner(players, activePlayers) {
 }
 
 /**
+ * Remove players whose seat has the "busted" CSS class
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ */
+async function removeBustedPlayers(players, activePlayers) {
+  for (const idx of activePlayers) {
+    try {
+      if (await players[idx].isEliminated()) {
+        console.log(`Seat ${idx + 1} eliminated`);
+        activePlayers.delete(idx);
+      }
+    } catch {
+      // Transient error — keep player in active set
+    }
+  }
+}
+
+/**
  * Find the first active player whose page is still usable
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
@@ -60,7 +78,7 @@ async function findActivePlayer(players, activePlayers) {
       await players[idx].page.evaluate(() => true);
       return players[idx];
     } catch {
-      activePlayers.delete(idx);
+      // Transient error — keep player in active set
     }
   }
   return null;
@@ -115,7 +133,7 @@ async function tryTakeAction(players, activePlayers) {
         }
       }
     } catch {
-      activePlayers.delete(seatIdx);
+      // Transient error — don't remove player from active set
     }
   }
   return null;
@@ -199,8 +217,11 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
     const winnerName = await checkForWinner(players, activePlayers);
     if (winnerName) return winnerName;
 
+    await removeBustedPlayers(players, activePlayers);
+    if (activePlayers.size <= 1) return null;
+
     const activePlayer = await findActivePlayer(players, activePlayers);
-    if (!activePlayer) return null;
+    if (!activePlayer) continue;
 
     await checkLevelChange(activePlayer, state);
 
