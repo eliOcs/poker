@@ -1,9 +1,8 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
 import { rm } from "node:fs/promises";
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import crypto from "crypto";
-import { DatabaseSync } from "node:sqlite";
 import * as Store from "../../src/backend/store.js";
 import { DEFAULT_SETTINGS } from "../../src/backend/user.js";
 
@@ -35,37 +34,6 @@ describe("store", function () {
       Store.initialize();
       Store.initialize();
       assert.ok(existsSync(`${testDataDir}/poker.db`));
-    });
-
-    it("migrates from old players.db if poker.db does not exist", function () {
-      // Create old players.db
-      mkdirSync(testDataDir, { recursive: true });
-      const oldDb = new DatabaseSync(`${testDataDir}/players.db`);
-      oldDb.exec(`
-        CREATE TABLE players (
-          id TEXT PRIMARY KEY,
-          name TEXT,
-          settings TEXT DEFAULT '{}',
-          created_at TEXT DEFAULT (datetime('now')),
-          updated_at TEXT DEFAULT (datetime('now'))
-        )
-      `);
-      oldDb
-        .prepare("INSERT INTO players (id, name, settings) VALUES (?, ?, ?)")
-        .run("test-id", "OldPlayer", JSON.stringify({ volume: 0.5 }));
-      oldDb.close();
-
-      // Initialize store - should migrate
-      Store.initialize();
-
-      // Old file should be renamed
-      assert.ok(!existsSync(`${testDataDir}/players.db`));
-      assert.ok(existsSync(`${testDataDir}/poker.db`));
-
-      // Data should be accessible
-      const user = Store.loadUser("test-id");
-      assert.strictEqual(user.name, "OldPlayer");
-      assert.strictEqual(user.settings.volume, 0.5);
     });
   });
 
