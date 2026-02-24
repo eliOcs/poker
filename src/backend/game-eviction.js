@@ -4,7 +4,7 @@
  */
 
 export const DEFAULT_GAME_INACTIVITY_MS = 60 * 60 * 1000; // 1 hour
-export const DEFAULT_EVICTION_INTERVAL_MS = 60 * 1000; // 1 minute
+export const DEFAULT_EVICTION_INTERVAL_MS = 60 * 60 * 1000; // 60 minutes
 
 /**
  * @param {string|undefined} value
