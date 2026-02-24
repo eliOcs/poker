@@ -158,4 +158,23 @@ export const gameStyles = css`
     z-index: 10;
     pointer-events: none;
   }
+
+  .emote-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .emote-grid button {
+    font-size: 2rem;
+    padding: var(--space-md);
+    background: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .emote-grid button:hover {
+    border-color: var(--color-fg-muted);
+  }
 `;

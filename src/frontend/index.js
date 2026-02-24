@@ -17,6 +17,25 @@ import {
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
+const EMOJIS = [
+  "🤣",
+  "😍",
+  "😘",
+  "😏",
+  "🤑",
+  "😎",
+  "🫠",
+  "🤨",
+  "🙄",
+  "🤯",
+  "🥶",
+  "🥱",
+  "🥺",
+  "😭",
+  "😡",
+  "💩",
+];
+
 class Game extends LitElement {
   static get styles() {
     return [designTokens, baseStyles, seatPositions, gameStyles];
@@ -29,6 +48,7 @@ class Game extends LitElement {
       user: { type: Object },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
+      showEmotePicker: { type: Boolean },
       volume: { type: Number },
     };
   }
@@ -42,6 +62,7 @@ class Game extends LitElement {
     this.user = null;
     this.showSettings = false;
     this.showRanking = false;
+    this.showEmotePicker = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
     this._settingsInitialized = false;
     Audio.setVolume(this.volume);
@@ -106,6 +127,19 @@ class Game extends LitElement {
 
   closeRanking() {
     this.showRanking = false;
+  }
+
+  openEmotePicker() {
+    this.showEmotePicker = true;
+  }
+
+  closeEmotePicker() {
+    this.showEmotePicker = false;
+  }
+
+  sendEmote(emoji) {
+    this.send({ action: "emote", emoji });
+    this.showEmotePicker = false;
   }
 
   openHistory() {
@@ -308,6 +342,20 @@ class Game extends LitElement {
     `;
   }
 
+  _renderEmoteModal() {
+    if (!this.showEmotePicker) return "";
+    return html`<phg-modal title="Emote" @close=${this.closeEmotePicker}>
+      <div class="emote-grid">
+        ${EMOJIS.map(
+          (emoji) =>
+            html`<button @click=${() => this.sendEmote(emoji)}>
+              ${emoji}
+            </button>`,
+        )}
+      </div>
+    </phg-modal>`;
+  }
+
   _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
     return html`<phg-action-panel
       .actions=${actions}
@@ -321,6 +369,7 @@ class Game extends LitElement {
       .bustedPosition=${bustedPosition}
       .isWinner=${isWinner}
       @game-action=${this.handleGameAction}
+      @open-emote-picker=${this.openEmotePicker}
     ></phg-action-panel>`;
   }
 
@@ -398,6 +447,7 @@ class Game extends LitElement {
           ⚙
         </button>
         ${this._renderRankingModal()} ${this._renderSettingsModal()}
+        ${this._renderEmoteModal()}
       </div>
     `;
   }

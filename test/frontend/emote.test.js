@@ -63,7 +63,7 @@ describe("emote picker", () => {
     expect(emoteButton).to.exist;
   });
 
-  it("shows emoji grid when Emote button is clicked", async () => {
+  it("shows emoji modal when Emote button is clicked", async () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
@@ -72,9 +72,11 @@ describe("emote picker", () => {
 
     const emoteButton = findButtonByText(actionPanel.shadowRoot, "Emote");
     emoteButton.click();
-    await actionPanel.updateComplete;
+    await element.updateComplete;
 
-    const grid = actionPanel.shadowRoot.querySelector(".emote-grid");
+    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    expect(modal).to.exist;
+    const grid = modal.querySelector(".emote-grid");
     expect(grid).to.exist;
     const emojiButtons = grid.querySelectorAll("button");
     expect(emojiButtons.length).to.equal(16);
@@ -90,15 +92,15 @@ describe("emote picker", () => {
     // Open picker
     const emoteButton = findButtonByText(actionPanel.shadowRoot, "Emote");
     emoteButton.click();
-    await actionPanel.updateComplete;
+    await element.updateComplete;
 
     let sentMessage = null;
     element.addEventListener("game-action", (e) => {
       sentMessage = e.detail;
     });
 
-    const emojiButtons =
-      actionPanel.shadowRoot.querySelectorAll(".emote-grid button");
+    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    const emojiButtons = modal.querySelectorAll(".emote-grid button");
     emojiButtons[0].click();
 
     expect(sentMessage).to.exist;
@@ -106,7 +108,7 @@ describe("emote picker", () => {
     expect(sentMessage.emoji).to.be.a("string");
   });
 
-  it("closes emoji grid after emoji is clicked", async () => {
+  it("closes modal after emoji is clicked", async () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
@@ -115,34 +117,17 @@ describe("emote picker", () => {
 
     // Open picker
     findButtonByText(actionPanel.shadowRoot, "Emote").click();
-    await actionPanel.updateComplete;
+    await element.updateComplete;
 
     // Click an emoji
-    actionPanel.shadowRoot.querySelectorAll(".emote-grid button")[0].click();
-    await actionPanel.updateComplete;
-
-    const grid = actionPanel.shadowRoot.querySelector(".emote-grid");
-    expect(grid).to.not.exist;
-  });
-
-  it("keeps emote picker open when actions update with emote still available", async () => {
-    element.game = createEmoteGame();
+    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    modal.querySelectorAll(".emote-grid button")[0].click();
     await element.updateComplete;
 
-    const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-    await actionPanel.updateComplete;
-
-    // Open picker
-    findButtonByText(actionPanel.shadowRoot, "Emote").click();
-    await actionPanel.updateComplete;
-
-    // Simulate server broadcasting updated state (still not our turn)
-    element.game = createEmoteGame();
-    await element.updateComplete;
-    await actionPanel.updateComplete;
-
-    const grid = actionPanel.shadowRoot.querySelector(".emote-grid");
-    expect(grid).to.exist;
+    const closedModal = element.shadowRoot.querySelector(
+      "phg-modal[title='Emote']",
+    );
+    expect(closedModal).to.not.exist;
   });
 });
 

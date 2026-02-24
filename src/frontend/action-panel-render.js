@@ -1,25 +1,6 @@
 import { html } from "lit";
 import { formatCurrency } from "./styles.js";
 
-const EMOJIS = [
-  "🤣",
-  "😍",
-  "😘",
-  "😏",
-  "🤑",
-  "😎",
-  "🫠",
-  "🤨",
-  "🙄",
-  "🤯",
-  "🥶",
-  "🥱",
-  "🥺",
-  "😭",
-  "😡",
-  "💩",
-];
-
 function formatPosition(position) {
   const suffixes = ["th", "st", "nd", "rd"];
   const v = position % 100;
@@ -357,32 +338,16 @@ function renderShowButtons(panel, actionMap) {
 }
 
 function renderEmoteButton(panel) {
-  if (panel._showEmotePicker) {
-    return html`
-      <div class="emote-grid">
-        ${EMOJIS.map(
-          (emoji) =>
-            html`<button
-              @click=${() => {
-                panel.sendAction({ action: "emote", emoji });
-                panel._showEmotePicker = false;
-                panel.requestUpdate();
-              }}
-            >
-              ${emoji}
-            </button>`,
-        )}
-      </div>
-    `;
-  }
-
   return html`<phg-button
     variant="secondary"
     full-width
-    @click=${() => {
-      panel._showEmotePicker = true;
-      panel.requestUpdate();
-    }}
+    @click=${() =>
+      panel.dispatchEvent(
+        new CustomEvent("open-emote-picker", {
+          bubbles: true,
+          composed: true,
+        }),
+      )}
     >Emote</phg-button
   >`;
 }
@@ -429,8 +394,6 @@ function renderStartSitOut(panel, actionMap) {
 }
 
 function renderForActionMap(panel, actionMap) {
-  if (panel._showEmotePicker && actionMap.emote)
-    return renderEmoteButton(panel);
   if (actionMap.buyIn) return renderBuyIn(panel, actionMap.buyIn);
   if (actionMap.sitIn || actionMap.leave)
     return renderSitInLeave(panel, actionMap);

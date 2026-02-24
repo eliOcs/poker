@@ -315,6 +315,19 @@ export class PokerPlayer {
   }
 
   /**
+   * Send an emote via the emote picker modal
+   * @param {string} emoji - The emoji to send
+   */
+  async emote(emoji) {
+    await this.actionPanel.getByRole("button", { name: "Emote" }).click();
+    await this.game
+      .locator("phg-modal[title='Emote'] .emote-grid button", {
+        hasText: emoji,
+      })
+      .click();
+  }
+
+  /**
    * Get current phase from the board UI
    * @returns {Promise<string>}
    */

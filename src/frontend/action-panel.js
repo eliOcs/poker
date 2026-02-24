@@ -50,7 +50,6 @@ class ActionPanel extends LitElement {
     this.pot = 0;
     this._lastActionType = null;
     this._lastActionTime = 0;
-    this._showEmotePicker = false;
   }
 
   get chipDenomination() {

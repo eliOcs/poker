@@ -37,6 +37,12 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(holeCards(player2)).toHaveCount(2);
 
     // Preflop: SB calls, BB checks
+    // While waiting, P2 sends an emote (not their turn yet)
+    await player2.emote("😎");
+    const emoteBubble = player2.mySeat.locator(".emote-bubble");
+    await expect(emoteBubble).toBeVisible();
+    await expect(emoteBubble).toHaveText("😎");
+
     await player1.act("call");
     await player2.act("check");
 
