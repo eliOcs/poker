@@ -421,33 +421,34 @@ class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${this._renderInfoBar()}
-        <button
-          class="toolbar-btn"
-          id="history-btn"
-          @click=${this.openHistory}
-          title="Hand History"
-        >
-          🔁
-        </button>
-        <button
-          class="toolbar-btn"
-          id="ranking-btn"
-          @click=${this.openRanking}
-          title="Rankings"
-        >
-          🏆
-        </button>
-        <button
-          class="toolbar-btn"
-          id="settings-btn"
-          @click=${this.openSettings}
-          title="Settings"
-        >
-          ⚙
-        </button>
-        ${this._renderRankingModal()} ${this._renderSettingsModal()}
-        ${this._renderEmoteModal()}
+        <div id="toolbar">
+          <button
+            class="toolbar-btn"
+            id="settings-btn"
+            @click=${this.openSettings}
+            title="Settings"
+          >
+            ⚙
+          </button>
+          <button
+            class="toolbar-btn"
+            id="ranking-btn"
+            @click=${this.openRanking}
+            title="Rankings"
+          >
+            🏆
+          </button>
+          <button
+            class="toolbar-btn"
+            id="history-btn"
+            @click=${this.openHistory}
+            title="Hand History"
+          >
+            🔁
+          </button>
+        </div>
+        ${this._renderInfoBar()} ${this._renderRankingModal()}
+        ${this._renderSettingsModal()} ${this._renderEmoteModal()}
       </div>
     `;
   }

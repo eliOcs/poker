@@ -67,9 +67,18 @@ export const gameStyles = css`
     transform: translate(-50%, 0);
   }
 
-  #info-bar {
+  #toolbar {
     position: absolute;
     left: 0.5%;
+    top: 0.5%;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  #info-bar {
+    position: absolute;
+    right: 0.5%;
     top: 0.5%;
     display: flex;
     align-items: center;
@@ -85,8 +94,6 @@ export const gameStyles = css`
   }
 
   .toolbar-btn {
-    position: absolute;
-    top: 0.5%;
     background: none;
     border: none;
     font-size: var(--font-lg);
@@ -96,9 +103,6 @@ export const gameStyles = css`
   }
   .toolbar-btn:hover {
     color: var(--color-fg-white);
-  }
-  #settings-btn {
-    right: 0.5%;
   }
 
   .settings-content input {
@@ -154,11 +158,7 @@ export const gameStyles = css`
   }
 
   #ranking-btn {
-    right: 40px;
     color: var(--color-primary);
-  }
-  #history-btn {
-    right: 75px;
   }
   .collecting-chip {
     position: absolute;
