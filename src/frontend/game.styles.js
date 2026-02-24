@@ -25,6 +25,13 @@ export const gameStyles = css`
     inset: 0 0 120px;
   }
 
+  @media (width >= 800px) and (height >= 840px) {
+    #container {
+      max-height: 700px;
+      margin: auto 0;
+    }
+  }
+
   phg-board {
     position: absolute;
     transform: translate(-50%, -50%);
