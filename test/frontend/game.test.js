@@ -112,7 +112,7 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = element.shadowRoot.querySelector("#settings-btn");
+      const settingsBtn = element.shadowRoot.querySelector(".drawer-btn");
       expect(settingsBtn).to.exist;
     });
 
@@ -120,7 +120,7 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = element.shadowRoot.querySelector("#settings-btn");
+      const settingsBtn = element.shadowRoot.querySelector(".drawer-btn");
       settingsBtn.click();
       await element.updateComplete;
 

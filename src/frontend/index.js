@@ -14,6 +14,7 @@ import {
   snapshotBetPositions,
   animateBetCollection,
 } from "./bet-collection.js";
+import { renderDrawer } from "./drawer.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
@@ -50,6 +51,8 @@ class Game extends LitElement {
       showRanking: { type: Boolean },
       showEmotePicker: { type: Boolean },
       volume: { type: Number },
+      _drawerOpen: { type: Boolean, state: true },
+      _copied: { type: Boolean, state: true },
     };
   }
 
@@ -64,8 +67,52 @@ class Game extends LitElement {
     this.showRanking = false;
     this.showEmotePicker = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
+    this._drawerOpen = false;
+    this._copied = false;
     this._settingsInitialized = false;
+    this._onMediaChange = (e) => {
+      this._drawerOpen = e.matches;
+    };
     Audio.setVolume(this.volume);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._mql = window.matchMedia("(min-width: 800px)");
+    this._mql.addEventListener("change", this._onMediaChange);
+    this._drawerOpen = this._mql.matches;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._mql?.removeEventListener("change", this._onMediaChange);
+  }
+
+  toggleDrawer() {
+    this._drawerOpen = !this._drawerOpen;
+  }
+
+  async copyGameLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this._copied = true;
+      setTimeout(() => {
+        this._copied = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }
+
+  async shareGameLink() {
+    try {
+      await navigator.share({
+        title: "Join my poker game",
+        url: window.location.href,
+      });
+    } catch (err) {
+      console.error("Failed to share:", err);
+    }
   }
 
   _initializeVolumeFromSettings() {
@@ -382,6 +429,7 @@ class Game extends LitElement {
     const canSit = !isSeated && this.game.seats.some((s) => s.empty);
 
     return html`
+      ${renderDrawer(this)}
       <div id="wrapper">
         <div id="container">
           <phg-board
@@ -421,32 +469,6 @@ class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        <div id="toolbar">
-          <button
-            class="toolbar-btn"
-            id="settings-btn"
-            @click=${this.openSettings}
-            title="Settings"
-          >
-            ⚙
-          </button>
-          <button
-            class="toolbar-btn"
-            id="ranking-btn"
-            @click=${this.openRanking}
-            title="Rankings"
-          >
-            🏆
-          </button>
-          <button
-            class="toolbar-btn"
-            id="history-btn"
-            @click=${this.openHistory}
-            title="Hand History"
-          >
-            🔁
-          </button>
-        </div>
         ${this._renderInfoBar()} ${this._renderRankingModal()}
         ${this._renderSettingsModal()} ${this._renderEmoteModal()}
       </div>

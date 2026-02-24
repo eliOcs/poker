@@ -16,50 +16,19 @@ function buildActionMap(actions) {
   return actionMap;
 }
 
-function renderShareButtons(panel) {
-  return html`
-    <div class="share-buttons">
-      <phg-button
-        variant="${panel.copied ? "success" : "action"}"
-        @click=${panel.copyGameLink}
-      >
-        ${panel.copied ? "Copied!" : "Copy Link"}
-      </phg-button>
-      ${panel.canShare()
-        ? html`<phg-button variant="action" @click=${panel.shareGameLink}
-            >Share</phg-button
-          >`
-        : ""}
-    </div>
-  `;
-}
-
 function renderWaitingForPlayers(panel) {
   return html`
     <div class="waiting-panel">
       <span class="waiting">Waiting for players...</span>
-      <div class="share-buttons">
-        <phg-button
-          variant="${panel.copied ? "success" : "action"}"
-          @click=${panel.copyGameLink}
-        >
-          ${panel.copied ? "Copied!" : "Copy Link"}
-        </phg-button>
-        ${panel.canShare()
-          ? html`<phg-button variant="action" @click=${panel.shareGameLink}
-              >Share</phg-button
-            >`
-          : ""}
-        ${panel.canSit
-          ? html`<phg-button
-              variant="primary"
-              @click=${() => panel.sendAction({ action: "sit" })}
-              >${panel.buyIn
-                ? `Sit ${formatCurrency(panel.buyIn)}`
-                : "Sit"}</phg-button
-            >`
-          : ""}
-      </div>
+      ${panel.canSit
+        ? html`<phg-button
+            variant="primary"
+            @click=${() => panel.sendAction({ action: "sit" })}
+            >${panel.buyIn
+              ? `Sit ${formatCurrency(panel.buyIn)}`
+              : "Sit"}</phg-button
+          >`
+        : ""}
     </div>
   `;
 }
@@ -129,7 +98,6 @@ function renderSitInLeave(panel, actionMap) {
           >`
         : ""}
     </div>
-    ${actionMap.share ? renderShareButtons(panel) : ""}
   `;
 }
 
@@ -389,7 +357,7 @@ function renderStartSitOut(panel, actionMap) {
           >`
         : ""}
     </div>
-    ${actionMap.share ? renderShareButtons(panel) : ""}${showButtons}
+    ${showButtons}
   `;
 }
 

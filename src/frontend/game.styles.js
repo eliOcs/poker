@@ -9,6 +9,12 @@ export const gameStyles = css`
     color: var(--color-fg-medium);
   }
 
+  @media (width >= 800px) {
+    :host {
+      display: flex;
+    }
+  }
+
   :host * {
     box-sizing: inherit;
   }
@@ -18,6 +24,13 @@ export const gameStyles = css`
     height: 100%;
     max-width: 1400px;
     margin: 0 auto;
+  }
+
+  @media (width >= 800px) {
+    #wrapper {
+      flex: 1;
+      min-width: 0;
+    }
   }
 
   #container {
@@ -67,19 +80,113 @@ export const gameStyles = css`
     transform: translate(-50%, 0);
   }
 
-  #toolbar {
+  #drawer {
     position: absolute;
-    left: 0.5%;
-    top: 0.5%;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+  }
+
+  @media (width >= 800px) {
+    #drawer {
+      position: relative;
+      z-index: auto;
+    }
+  }
+
+  #drawer-panel {
+    width: clamp(140px, 12vw, 200px);
+    height: 100%;
+    background: var(--color-bg-dark);
+    border-right: 2px solid var(--color-bg-light);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  #drawer.open #drawer-panel {
+    transform: translateX(0);
+  }
+
+  #drawer-toggle {
+    position: absolute;
+    top: var(--space-md);
+    left: 0;
+    background: var(--color-bg-dark);
+    border: 2px solid var(--color-bg-light);
+    border-left: none;
+    color: var(--color-fg-medium);
+    cursor: pointer;
+    padding: var(--space-md);
     display: flex;
     align-items: center;
+    justify-content: center;
+    border-radius: 0 4px 4px 0;
+    transition: left 0.2s ease;
+  }
+
+  #drawer.open #drawer-toggle {
+    left: clamp(140px, 12vw, 200px);
+    border-left: none;
+  }
+
+  @media (width >= 800px) {
+    #drawer-toggle {
+      display: none;
+    }
+  }
+
+  #drawer-toggle:hover {
+    color: var(--color-fg-white);
+  }
+
+  #drawer-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: currentcolor;
+  }
+
+  #drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    padding-top: var(--space-lg);
     gap: var(--space-sm);
+  }
+
+  .drawer-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: none;
+    border: none;
+    color: var(--color-fg-medium);
+    font-family: inherit;
+    font-size: var(--font-sm);
+    cursor: pointer;
+    padding: var(--space-md);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .drawer-btn:hover {
+    color: var(--color-fg-white);
+    background: var(--color-bg-light);
+  }
+
+  .drawer-btn svg {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    fill: currentcolor;
   }
 
   #info-bar {
     position: absolute;
-    right: 0.5%;
-    top: 0.5%;
+    right: var(--space-md);
+    top: var(--space-md);
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -91,18 +198,6 @@ export const gameStyles = css`
     content: "|";
     margin-right: var(--space-sm);
     color: var(--color-bg-disabled);
-  }
-
-  .toolbar-btn {
-    background: none;
-    border: none;
-    font-size: var(--font-lg);
-    cursor: pointer;
-    padding: 5px;
-    color: var(--color-fg-medium);
-  }
-  .toolbar-btn:hover {
-    color: var(--color-fg-white);
   }
 
   .settings-content input {
@@ -157,9 +252,6 @@ export const gameStyles = css`
     border-color: var(--color-primary);
   }
 
-  #ranking-btn {
-    color: var(--color-primary);
-  }
   .collecting-chip {
     position: absolute;
     z-index: 10;

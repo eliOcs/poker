@@ -25,7 +25,6 @@ class ActionPanel extends LitElement {
       smallBlind: { type: Number },
       bigBlind: { type: Number },
       seatedCount: { type: Number },
-      copied: { type: Boolean },
       bustedPosition: { type: Number },
       isWinner: { type: Boolean },
       canSit: { type: Boolean },
@@ -42,7 +41,6 @@ class ActionPanel extends LitElement {
     this.smallBlind = 1;
     this.bigBlind = 1;
     this.seatedCount = 0;
-    this.copied = false;
     this.bustedPosition = null;
     this.isWinner = false;
     this.canSit = false;
@@ -73,35 +71,6 @@ class ActionPanel extends LitElement {
       }
       this._lastActionType = currentType;
     }
-  }
-
-  async copyGameLink() {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      this.copied = true;
-      setTimeout(() => {
-        this.copied = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  }
-
-  async shareGameLink() {
-    const url = window.location.href;
-    try {
-      await navigator.share({
-        title: "Join my poker game",
-        url: url,
-      });
-    } catch (err) {
-      console.error("Failed to share:", err);
-    }
-  }
-
-  canShare() {
-    return typeof navigator.share === "function";
   }
 
   sendAction(action) {
