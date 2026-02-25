@@ -35,7 +35,7 @@ export const gameStyles = css`
 
   #container {
     position: absolute;
-    inset: 0 0 120px;
+    inset: 0 0 160px;
   }
 
   @media (width >= 800px) and (height >= 840px) {
