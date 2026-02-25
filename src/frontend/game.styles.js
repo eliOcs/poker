@@ -186,7 +186,7 @@ export const gameStyles = css`
   #info-bar {
     position: absolute;
     right: var(--space-md);
-    top: var(--space-md);
+    top: var(--space-lg);
     display: flex;
     align-items: center;
     gap: var(--space-sm);
