@@ -155,6 +155,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {string|null} handRank
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  * @property {number|null} bustedPosition - Tournament finishing position (null if not busted)
+ * @property {import('./pre-action.js').PreAction|null} [preAction] - Pre-selected action (own seat only)
  */
 
 /**
@@ -736,6 +737,7 @@ export default function playerView(game, player) {
         handRank,
         winningCards: seat.winningCards,
         bustedPosition: seat.bustedPosition,
+        ...(isOwnSeat ? { preAction: seat.preAction || null } : {}),
         emote: seat.emote || null,
       };
     }),

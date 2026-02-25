@@ -35,4 +35,17 @@ export const actionPanelExtraStyles = css`
       transform: scale(0.45);
     }
   }
+
+  .pre-action-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .pre-action-check {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
 `;

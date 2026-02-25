@@ -244,6 +244,47 @@ server.on("upgrade", async function upgrade(request, socket, head) {
   }
 });
 
+/**
+ * Handles preAction/clearPreAction messages
+ * @param {Game} game
+ * @param {UserType} user
+ * @param {string} action
+ * @param {Record<string, unknown>} args
+ * @param {(gameId: string) => void} broadcastGameState
+ * @param {string} gameId
+ * @returns {string|null} Error message or null on success
+ */
+function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
+  const player = Player.fromUser(user);
+  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+  if (seatIndex === -1 || game.seats[seatIndex].empty) return null;
+
+  const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+    game.seats[seatIndex]
+  );
+
+  if (action === "clearPreAction") {
+    seat.preAction = null;
+    broadcastGameState(gameId);
+    return null;
+  }
+
+  if (game.hand?.actingSeat === seatIndex) {
+    return "cannot set pre-action on your turn";
+  }
+
+  const preType = /** @type {'checkFold'|'callAmount'} */ (args.type);
+  seat.preAction =
+    preType === "checkFold"
+      ? { type: /** @type {const} */ ("checkFold"), amount: null }
+      : {
+          type: /** @type {const} */ ("callAmount"),
+          amount: /** @type {number} */ (args.amount ?? 0),
+        };
+  broadcastGameState(gameId);
+  return null;
+}
+
 const wss = new WebSocketServer({ noServer: true });
 
 /** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
@@ -356,6 +397,21 @@ wss.on(
           broadcastGameState(gameId);
           game.seats[seatIndex].emote = null;
         }
+        emitLog(log);
+        return;
+      }
+
+      // Handle pre-action toggle — set or clear pre-selected action
+      if (["preAction", "clearPreAction"].includes(action)) {
+        const error = handlePreAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameState,
+          gameId,
+        );
+        if (error) ws.send(JSON.stringify({ error: { message: error } }));
         emitLog(log);
         return;
       }

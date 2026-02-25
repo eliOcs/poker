@@ -30,6 +30,12 @@ class ActionPanel extends LitElement {
       canSit: { type: Boolean },
       buyIn: { type: Number },
       pot: { type: Number },
+      preAction: { type: Object },
+      currentBet: { type: Number },
+      myBet: { type: Number },
+      myStack: { type: Number },
+      isActing: { type: Boolean },
+      inHand: { type: Boolean },
     };
   }
 
@@ -46,6 +52,12 @@ class ActionPanel extends LitElement {
     this.canSit = false;
     this.buyIn = 0;
     this.pot = 0;
+    this.preAction = null;
+    this.currentBet = 0;
+    this.myBet = 0;
+    this.myStack = 0;
+    this.isActing = false;
+    this.inHand = false;
     this._lastActionType = null;
     this._lastActionTime = 0;
   }

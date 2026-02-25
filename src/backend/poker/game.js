@@ -6,6 +6,8 @@ import * as Showdown from "./showdown.js";
 import * as Actions from "./actions.js";
 import * as HandHistory from "./hand-history/index.js";
 import * as TournamentSummary from "./tournament-summary.js";
+import * as PreAction from "./pre-action.js";
+import { recordBettingAction } from "./hand-history/record.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import { createLog, emitLog } from "../logger.js";
@@ -370,6 +372,7 @@ export function startHand(game) {
   autoFoldSittingOutActingPlayers(game);
   game.hand.currentBet = game.blinds.big; // Blinds already posted
   resetActingTicks(game);
+  executePreActions(game);
 }
 
 /**
@@ -465,6 +468,45 @@ function autoFoldSittingOutActingPlayers(game) {
   }
 
   return foldedAny;
+}
+
+/**
+ * Executes pre-actions for acting players in a loop.
+ * When the acting player has a valid pre-action, it is executed immediately
+ * and the next player is checked. Stops when no pre-action is set or invalid.
+ * @param {Game} game
+ */
+function executePreActions(game) {
+  while (game.hand.actingSeat !== -1) {
+    const seatIndex = game.hand.actingSeat;
+    const seat = game.seats[seatIndex];
+
+    if (seat.empty || !seat.preAction) break;
+
+    const preAction = seat.preAction;
+    const betBefore = seat.bet;
+    const currentBetBefore = game.hand.currentBet;
+    const resolved = PreAction.resolvePreAction(preAction, game, seatIndex);
+    PreAction.clearPreAction(seat);
+
+    if (!resolved) break;
+
+    Actions[resolved.action](game, resolved.args);
+
+    const seatAfter = /** @type {import('./seat.js').OccupiedSeat} */ (
+      game.seats[seatIndex]
+    );
+    recordBettingAction(
+      game,
+      seatAfter.player.id,
+      resolved.action,
+      seatAfter,
+      betBefore,
+      currentBetBefore,
+    );
+
+    resetActingTicks(game);
+  }
 }
 
 /**
@@ -636,6 +678,7 @@ export function processGameFlow(game, onBroadcast) {
   if (autoFoldSittingOutActingPlayers(game)) {
     resetActingTicks(game);
   }
+  executePreActions(game);
 
   // Check if only one player remains (everyone else folded)
   if (Betting.countActivePlayers(game) <= 1) {
@@ -693,8 +736,9 @@ export function finishCollectBets(game, onBroadcast) {
 
     if (autoFoldSittingOutActingPlayers(game)) {
       resetActingTicks(game);
-      processGameFlow(game, onBroadcast);
     }
+    executePreActions(game);
+    processGameFlow(game, onBroadcast);
   }
 }
 

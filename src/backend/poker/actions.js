@@ -1,6 +1,7 @@
 import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
+import { invalidateCallPreActions } from "./pre-action.js";
 import { isClockCallable } from "./game-tick.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
@@ -162,6 +163,7 @@ export function bet(game, { seat, amount }) {
     seatObj.lastAction = "bet";
   }
 
+  invalidateCallPreActions(game);
   Betting.advanceAction(game);
 }
 
@@ -233,6 +235,7 @@ export function raise(game, { seat, amount }) {
     seatObj.lastAction = "raise";
   }
 
+  invalidateCallPreActions(game);
   Betting.advanceAction(game);
 }
 
@@ -393,6 +396,7 @@ export function allIn(game, { seat }) {
     }
 
     game.hand.currentBet = newBet;
+    invalidateCallPreActions(game);
   }
 
   Betting.advanceAction(game);

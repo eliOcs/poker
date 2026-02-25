@@ -326,17 +326,119 @@ function renderEmoteButton(panel) {
   >`;
 }
 
+function preActionToggle(panel, isActive, setAction) {
+  return () =>
+    panel.sendAction(isActive ? { action: "clearPreAction" } : setAction);
+}
+
+const uncheckedSvg = html`<svg
+  class="pre-action-check"
+  viewBox="0 0 24 24"
+  fill="none"
+>
+  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
+  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
+  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
+</svg>`;
+
+const checkedSvg = html`<svg
+  class="pre-action-check"
+  viewBox="0 0 24 24"
+  fill="none"
+>
+  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
+  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
+  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="7" y="12" width="2" height="2" fill="currentColor" />
+  <rect x="9" y="14" width="2" height="2" fill="currentColor" />
+  <rect x="11" y="12" width="2" height="2" fill="currentColor" />
+  <rect x="13" y="10" width="2" height="2" fill="currentColor" />
+  <rect x="15" y="8" width="2" height="2" fill="currentColor" />
+</svg>`;
+
+function renderPreActionNoBet(panel) {
+  const isActive = panel.preAction?.type === "checkFold";
+  return html`
+    <div class="action-row">
+      <phg-button
+        variant="success"
+        full-width
+        @click=${preActionToggle(panel, isActive, {
+          action: "preAction",
+          type: "checkFold",
+        })}
+        ><span class="pre-action-label"
+          >${isActive ? checkedSvg : uncheckedSvg} Check / Fold</span
+        ></phg-button
+      >
+    </div>
+  `;
+}
+
+function renderPreActionWithBet(panel) {
+  const toCall = panel.currentBet - panel.myBet;
+  const callAmount = Math.min(toCall, panel.myStack);
+  const isFoldActive = panel.preAction?.type === "checkFold";
+  const isCallActive =
+    panel.preAction?.type === "callAmount" &&
+    panel.preAction?.amount === callAmount;
+
+  return html`
+    <div class="action-row">
+      <phg-button
+        variant="danger"
+        full-width
+        @click=${preActionToggle(panel, isFoldActive, {
+          action: "preAction",
+          type: "checkFold",
+        })}
+        ><span class="pre-action-label"
+          >${isFoldActive ? checkedSvg : uncheckedSvg} Fold</span
+        ></phg-button
+      >
+      <phg-button
+        variant="success"
+        full-width
+        @click=${preActionToggle(panel, isCallActive, {
+          action: "preAction",
+          type: "callAmount",
+          amount: callAmount,
+        })}
+        ><span class="pre-action-label"
+          >${isCallActive ? checkedSvg : uncheckedSvg}
+          <span class="stacked"
+            ><span>Call</span
+            ><span class="amount">${formatCurrency(callAmount)}</span></span
+          ></span
+        ></phg-button
+      >
+    </div>
+  `;
+}
+
+function renderPreActionButtons(panel) {
+  if (panel.isActing || !panel.inHand) return null;
+  const toCall = panel.currentBet - panel.myBet;
+  return toCall === 0
+    ? renderPreActionNoBet(panel)
+    : renderPreActionWithBet(panel);
+}
+
 function renderWaitingActions(panel, actionMap) {
   const simple = renderSimpleActions(panel, actionMap);
   const showButtons = renderShowButtons(panel, actionMap);
   if (simple) return html`${simple}${showButtons}`;
 
+  const preActions = renderPreActionButtons(panel);
   const buttons = [];
   if (actionMap.emote) buttons.push(renderEmoteButton(panel));
   if (actionMap.callClock) buttons.push(renderCallClockButton(panel));
-  if (buttons.length > 0)
-    return html`<div class="action-row">${buttons}</div>
-      ${showButtons}`;
+  if (preActions || buttons.length > 0)
+    return html`${preActions}
+    ${buttons.length > 0 ? html`<div class="action-row">${buttons}</div>` : ""}
+    ${showButtons}`;
   return showButtons;
 }
 

@@ -403,7 +403,29 @@ class Game extends LitElement {
     </phg-modal>`;
   }
 
+  _isInHand(seatIndex) {
+    if (seatIndex === -1) return false;
+    const seat = this.game.seats[seatIndex];
+    if (!seat || seat.empty) return false;
+    if (seat.folded || seat.allIn || seat.sittingOut) return false;
+    return ["preflop", "flop", "turn", "river"].includes(this.game.hand?.phase);
+  }
+
+  _getPreActionProps(seatIndex) {
+    const seat = seatIndex !== -1 ? this.game.seats[seatIndex] : {};
+    const hand = this.game.hand || {};
+    return {
+      preAction: seat.preAction || null,
+      currentBet: hand.currentBet || 0,
+      myBet: seat.bet || 0,
+      myStack: seat.stack || 0,
+      isActing: hand.actingSeat === seatIndex,
+      inHand: this._isInHand(seatIndex),
+    };
+  }
+
   _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
+    const pre = this._getPreActionProps(seatIndex);
     return html`<phg-action-panel
       .actions=${actions}
       .seatIndex=${seatIndex}
@@ -415,6 +437,12 @@ class Game extends LitElement {
       .buyIn=${this.game.tournament?.buyIn ?? 0}
       .bustedPosition=${bustedPosition}
       .isWinner=${isWinner}
+      .preAction=${pre.preAction}
+      .currentBet=${pre.currentBet}
+      .myBet=${pre.myBet}
+      .myStack=${pre.myStack}
+      .isActing=${pre.isActing}
+      .inHand=${pre.inHand}
       @game-action=${this.handleGameAction}
       @open-emote-picker=${this.openEmotePicker}
     ></phg-action-panel>`;

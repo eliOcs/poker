@@ -36,6 +36,7 @@
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
+ * @property {import('./pre-action.js').PreAction|null} preAction - Pre-selected action for when turn arrives
  * @property {string|null} [emote] - Transient emote emoji (set and cleared during broadcast)
  */
 
@@ -79,6 +80,7 @@ export function occupied(player, stack = 0, sittingOut = false) {
     cardsRevealed: false,
     shownCards: [false, false],
     bustedPosition: null,
+    preAction: null,
   };
 }
 
@@ -97,6 +99,7 @@ export function resetForNewHand(seat) {
   seat.winningCards = null;
   seat.cardsRevealed = false;
   seat.shownCards = [false, false];
+  seat.preAction = null;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;
