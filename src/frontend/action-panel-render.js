@@ -365,6 +365,7 @@ function renderPreActionNoBet(panel) {
       <phg-button
         variant="success"
         full-width
+        pre-action
         @click=${preActionToggle(panel, isActive, {
           action: "preAction",
           type: "checkFold",
@@ -390,6 +391,7 @@ function renderPreActionWithBet(panel) {
       <phg-button
         variant="danger"
         full-width
+        pre-action
         @click=${preActionToggle(panel, isFoldActive, {
           action: "preAction",
           type: "checkFold",
@@ -401,6 +403,7 @@ function renderPreActionWithBet(panel) {
       <phg-button
         variant="success"
         full-width
+        pre-action
         @click=${preActionToggle(panel, isCallActive, {
           action: "preAction",
           type: "callAmount",

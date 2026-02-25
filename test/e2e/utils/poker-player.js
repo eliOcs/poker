@@ -79,8 +79,8 @@ export class PokerPlayer {
    * @returns {Promise<string>} The copied URL
    */
   async copyGameLink() {
-    await this.actionPanel.getByRole("button", { name: "Copy Link" }).click();
-    await this.actionPanel.getByRole("button", { name: "Copied!" }).waitFor();
+    await this.game.getByRole("button", { name: "Copy Link" }).click();
+    await this.game.getByRole("button", { name: "Copied!" }).waitFor();
     const url = await this.page.evaluate(() => navigator.clipboard.readText());
     return url;
   }
@@ -138,12 +138,20 @@ export class PokerPlayer {
   }
 
   /**
+   * Get locator for real action buttons (excludes pre-action toggles)
+   */
+  get turnButtons() {
+    return this.actionPanel
+      .locator("phg-button:not([pre-action])")
+      .getByRole("button", { name: TURN_ACTION_BUTTON_NAME });
+  }
+
+  /**
    * Check if it's this player's turn by looking for action buttons
    * @returns {Promise<boolean>}
    */
   async isMyTurn() {
-    return await this.actionPanel
-      .getByRole("button", { name: TURN_ACTION_BUTTON_NAME })
+    return await this.turnButtons
       .first()
       .isVisible()
       .catch(() => false);
@@ -154,11 +162,8 @@ export class PokerPlayer {
    * @param {number} [timeout=15000]
    */
   async waitForTurn(timeout = 15000) {
-    // Wait for actual betting buttons only; excludes "Call Clock".
-    await this.actionPanel
-      .getByRole("button", { name: TURN_ACTION_BUTTON_NAME })
-      .first()
-      .waitFor({ timeout });
+    // Wait for actual betting buttons only; excludes pre-action toggles and "Call Clock".
+    await this.turnButtons.first().waitFor({ timeout });
   }
 
   /**
@@ -465,7 +470,7 @@ export class PokerPlayer {
    * Click the history button to navigate to history page
    */
   async openHistory() {
-    await this.game.locator("#history-btn").click();
+    await this.game.getByRole("button", { name: "History" }).click();
     // Wait for URL to change to history page
     await this.page.waitForURL(/\/history\//, { timeout: 10000 });
     // Wait for history component to load
