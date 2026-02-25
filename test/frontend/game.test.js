@@ -50,7 +50,7 @@ describe("phg-game", () => {
       const board = element.shadowRoot.querySelector("phg-board");
       await board.updateComplete;
       let pot = board.shadowRoot.querySelector(".pot");
-      expect(pot.textContent).to.include("0");
+      expect(pot).to.be.null;
 
       element.game = createMockGameAtFlop();
       await element.updateComplete;
