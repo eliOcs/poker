@@ -26,6 +26,7 @@ import {
   RANKING_MODAL_TEST_CASES,
 } from "./test-cases/game-special.js";
 import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
+import { ACTION_PANEL_TEST_CASES } from "./test-cases/action-panel.js";
 
 // === GAME TEST CASES ===
 
@@ -406,6 +407,7 @@ const TEST_CASES = {
   ...SPECIAL_GAME_TEST_CASES,
   ...RANKING_MODAL_TEST_CASES,
   ...TABLE_SIZE_TEST_CASES,
+  ...ACTION_PANEL_TEST_CASES,
   ...HISTORY_TEST_CASES,
 };
 
