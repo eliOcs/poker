@@ -95,6 +95,23 @@ export const gameStyles = css`
     }
   }
 
+  #drawer-backdrop {
+    display: none;
+  }
+
+  #drawer.open #drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+  }
+
+  @media (width >= 800px) {
+    #drawer-backdrop {
+      display: none !important;
+    }
+  }
+
   #drawer-panel {
     width: clamp(140px, 12vw, 200px);
     height: 100%;

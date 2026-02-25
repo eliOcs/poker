@@ -102,6 +102,7 @@ const canShare = typeof navigator.share === "function";
 export function renderDrawer(game) {
   return html`
     <div id="drawer" class=${game._drawerOpen ? "open" : ""}>
+      <div id="drawer-backdrop" @click=${game.toggleDrawer}></div>
       <button id="drawer-toggle" @click=${game.toggleDrawer}>
         ${game._drawerOpen ? iconClose : iconHamburger}
       </button>
