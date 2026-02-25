@@ -33,7 +33,9 @@ class CurrencySlider extends LitElement {
           appearance: textfield;
           align-self: stretch;
           box-sizing: border-box;
-          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+          box-shadow:
+            inset 2px 2px 0 rgba(0, 0, 0, 0.3),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.1);
         }
 
         input[type="number"]::-webkit-inner-spin-button,
