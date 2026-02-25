@@ -75,10 +75,21 @@ export class PokerPlayer {
   }
 
   /**
+   * Open the navigation drawer if it's not already open
+   */
+  async openDrawer() {
+    const nav = this.game.locator("#drawer-nav");
+    if (await nav.isVisible()) return;
+    await this.game.locator("#drawer-toggle").click();
+    await nav.waitFor();
+  }
+
+  /**
    * Copy the game link using the Copy Link button
    * @returns {Promise<string>} The copied URL
    */
   async copyGameLink() {
+    await this.openDrawer();
     await this.game.getByRole("button", { name: "Copy Link" }).click();
     await this.game.getByRole("button", { name: "Copied!" }).waitFor();
     const url = await this.page.evaluate(() => navigator.clipboard.readText());
@@ -470,6 +481,7 @@ export class PokerPlayer {
    * Click the history button to navigate to history page
    */
   async openHistory() {
+    await this.openDrawer();
     await this.game.getByRole("button", { name: "History" }).click();
     // Wait for URL to change to history page
     await this.page.waitForURL(/\/history\//, { timeout: 10000 });

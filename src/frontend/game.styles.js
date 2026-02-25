@@ -86,6 +86,7 @@ export const gameStyles = css`
     top: 0;
     bottom: 0;
     z-index: 50;
+    pointer-events: none;
   }
 
   @media (width >= 800px) {
@@ -104,6 +105,7 @@ export const gameStyles = css`
     position: fixed;
     inset: 0;
     z-index: -1;
+    pointer-events: auto;
   }
 
   @media (width >= 800px) {
@@ -121,6 +123,7 @@ export const gameStyles = css`
     flex-direction: column;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
+    pointer-events: auto;
   }
 
   #drawer.open #drawer-panel {
@@ -142,6 +145,7 @@ export const gameStyles = css`
     justify-content: center;
     border-radius: 0 4px 4px 0;
     transition: left 0.2s ease;
+    pointer-events: auto;
   }
 
   #drawer.open #drawer-toggle {
