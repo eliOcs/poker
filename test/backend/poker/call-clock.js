@@ -183,12 +183,12 @@ describe("call the clock", () => {
   });
 
   describe("tick constants", () => {
-    it("CLOCK_WAIT_TICKS should be 60 ticks", () => {
-      assert.strictEqual(CLOCK_WAIT_TICKS, 60);
+    it("CLOCK_WAIT_TICKS should be 15 ticks", () => {
+      assert.strictEqual(CLOCK_WAIT_TICKS, 15);
     });
 
-    it("CLOCK_DURATION_TICKS should be 30 ticks", () => {
-      assert.strictEqual(CLOCK_DURATION_TICKS, 30);
+    it("CLOCK_DURATION_TICKS should be 60 ticks", () => {
+      assert.strictEqual(CLOCK_DURATION_TICKS, 60);
     });
   });
 

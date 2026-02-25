@@ -73,7 +73,7 @@ describe("Player View", function () {
       );
     });
 
-    it("should NOT appear before 60 ticks have passed", function () {
+    it("should NOT appear before 15 ticks have passed", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
       const p2 = createPlayer();
@@ -91,7 +91,7 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 30; // Only 30 ticks
+      g.actingTicks = 10; // Only 10 ticks
       g.clockTicks = 0;
 
       // Player 1 (seat 0) is waiting - should NOT see callClock yet
@@ -101,7 +101,7 @@ describe("Player View", function () {
 
       assert.ok(
         !callClockAction,
-        "callClock should NOT appear before 60 ticks",
+        "callClock should NOT appear before 15 ticks",
       );
     });
 

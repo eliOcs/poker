@@ -167,8 +167,8 @@ export const ACTION_PANEL_TEST_CASES = {
       }),
     ),
 
-  // Only fold + call (no raise) — simple action buttons
-  "action-fold-or-call": () =>
+  // Only fold + call (no raise) — call is all-in, simple action buttons
+  "action-fold-or-all-in": () =>
     gameView(
       createGame({
         button: 1,
@@ -180,7 +180,10 @@ export const ACTION_PANEL_TEST_CASES = {
             isActing: true,
             stack: 200,
             cards: ["9h", "9d"],
-            actions: [{ action: "fold" }, { action: "call", amount: 200 }],
+            actions: [
+              { action: "fold" },
+              { action: "call", amount: 200, allIn: true },
+            ],
             handRank: "Pair of Nines",
           }),
           createPlayer("Alice", {

@@ -157,12 +157,15 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
       : null}
     ${actionMap.call
       ? html`<phg-button
-          variant="success"
+          variant="${actionMap.call.allIn ? "primary" : "success"}"
           full-width
           @click=${() =>
-            panel.sendAction({ action: "call", seat: panel.seatIndex })}
+            panel.sendAction({
+              action: actionMap.call.allIn ? "allIn" : "call",
+              seat: panel.seatIndex,
+            })}
           ><span class="stacked"
-            ><span>Call</span
+            ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
             ><span class="amount"
               >${formatCurrency(actionMap.call.amount)}</span
             ></span
@@ -243,12 +246,15 @@ function renderSimpleActions(panel, actionMap) {
   if (actionMap.call) {
     buttons.push(
       html`<phg-button
-        variant="success"
+        variant="${actionMap.call.allIn ? "primary" : "success"}"
         full-width
         @click=${() =>
-          panel.sendAction({ action: "call", seat: panel.seatIndex })}
+          panel.sendAction({
+            action: actionMap.call.allIn ? "allIn" : "call",
+            seat: panel.seatIndex,
+          })}
         ><span class="stacked"
-          ><span>Call</span
+          ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
           ><span class="amount"
             >${formatCurrency(actionMap.call.amount)}</span
           ></span

@@ -48,7 +48,7 @@ const TEST_CASES = [
   "action-raise",
   "action-raise-preflop",
   "action-all-in",
-  "action-fold-or-call",
+  "action-fold-or-all-in",
   "action-emote-and-clock",
   "action-show-cards",
   "action-tournament-winner",

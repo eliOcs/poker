@@ -44,6 +44,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @typedef {object} ActionCall
  * @property {'call'} action
  * @property {Cents} amount
+ * @property {boolean} allIn
  */
 
 /**
@@ -477,7 +478,11 @@ function addBasicActions(actions, toCall, playerStack) {
     actions.push({ action: "check" });
   }
   if (toCall > 0 && playerStack > 0) {
-    actions.push({ action: "call", amount: Math.min(toCall, playerStack) });
+    actions.push({
+      action: "call",
+      amount: Math.min(toCall, playerStack),
+      allIn: playerStack <= toCall,
+    });
   }
   if (toCall > 0) {
     actions.push({ action: "fold" });
