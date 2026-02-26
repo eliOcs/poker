@@ -317,6 +317,20 @@ export class PokerPlayer {
   }
 
   /**
+   * Select a bet preset then click the bet/raise button
+   * @param {'bet' | 'raise'} action
+   * @param {string} preset - Preset label (e.g. "Min", "½ Pot", "Pot", "3 BB", "Max")
+   */
+  async actWithPreset(action, preset) {
+    await this.actionPanel
+      .locator(".bet-presets")
+      .getByRole("button", { name: preset, exact: true })
+      .click();
+    const name = action === "bet" ? /^Bet/ : /^Raise to/;
+    await this.actionPanel.getByRole("button", { name }).click();
+  }
+
+  /**
    * Send an emote via the emote picker modal
    * @param {string} emoji - The emoji to send
    */
