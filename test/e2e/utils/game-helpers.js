@@ -22,6 +22,6 @@ export async function createGame(player, options = {}) {
   await page.waitForURL(/\/games\/[a-z0-9]+$/);
 
   // Wait for game UI to load
-  await player.game.waitFor({ timeout: 10000 });
-  await player.board.waitFor({ timeout: 10000 });
+  await player.game.waitFor();
+  await player.board.waitFor();
 }

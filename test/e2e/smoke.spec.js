@@ -94,17 +94,74 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.act("call");
 
     // Wait for all-in runout to complete (5 board cards) then hand to end (0 cards)
-    await expect(boardCards).toHaveCount(5, { timeout: 15000 });
-    await expect(boardCards).toHaveCount(0, { timeout: 15000 });
+    await expect(boardCards).toHaveCount(5);
+    await expect(boardCards).toHaveCount(0);
 
     const p1Stack = await player1.getStack();
     const p2Stack = await player2.getStack();
     expect([p1Stack, p2Stack].some((s) => s !== "$0")).toBeTruthy();
 
-    // === VERIFY HAND HISTORY ===
+    // === VERIFY HAND HISTORY (Player 1 - desktop) ===
     await player1.openHistory();
     await player1.waitForHistoryLoaded();
     expect(await player1.getHistoryHandCount()).toBe(3);
     expect(await player1.getHistoryPlayerCount()).toBe(2);
+
+    // Desktop: sidebar is visible, nav bar is hidden
+    const history1 = player1.history;
+    const activeItem = () => history1.locator(".hand-item.active");
+    await expect(activeItem()).toHaveCount(1);
+    await expect(activeItem().locator(".hand-number")).toHaveText("#3");
+
+    // Click hand #1 in sidebar
+    await history1.locator(".hand-item", { hasText: "#1" }).click();
+    await expect(activeItem().locator(".hand-number")).toHaveText("#1");
+
+    // Navigate forward with arrow keys
+    await player1.page.keyboard.press("ArrowRight");
+    await expect(activeItem().locator(".hand-number")).toHaveText("#2");
+
+    await player1.page.keyboard.press("ArrowRight");
+    await expect(activeItem().locator(".hand-number")).toHaveText("#3");
+
+    // ArrowRight at last hand stays on #3
+    await player1.page.keyboard.press("ArrowRight");
+    await expect(activeItem().locator(".hand-number")).toHaveText("#3");
+
+    // Navigate back with ArrowLeft
+    await player1.page.keyboard.press("ArrowLeft");
+    await expect(activeItem().locator(".hand-number")).toHaveText("#2");
+
+    // === VERIFY HAND HISTORY (Player 2 - mobile viewport) ===
+    // Use URL navigation since drawer History button may be outside mobile viewport
+    const gameId = player2.page.url().match(/\/games\/([a-z0-9]+)/)[1];
+    await player2.goToHistory(gameId);
+    // On mobile, sidebar is hidden — use nav-bar to verify history loaded
+    const history2 = player2.history;
+    const navNumber = history2.locator(".nav-number");
+    const prevBtn = history2.locator('.nav-btn[title="Previous hand"]');
+    const nextBtn = history2.locator('.nav-btn[title="Next hand"]');
+    await expect(navNumber).toHaveText("#3");
+
+    // Next button disabled at last hand
+    await expect(nextBtn).toBeDisabled();
+
+    // Navigate to previous hand (#2)
+    await prevBtn.click();
+    await expect(navNumber).toHaveText("#2");
+
+    // Navigate to previous hand (#1)
+    await prevBtn.click();
+    await expect(navNumber).toHaveText("#1");
+
+    // Previous button disabled at first hand
+    await expect(prevBtn).toBeDisabled();
+
+    // Navigate forward
+    await nextBtn.click();
+    await expect(navNumber).toHaveText("#2");
+
+    await nextBtn.click();
+    await expect(navNumber).toHaveText("#3");
   });
 });

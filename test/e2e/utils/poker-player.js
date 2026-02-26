@@ -4,7 +4,6 @@
  */
 
 const TURN_ACTION_BUTTON_NAME = /^(Check|Fold|Call\s+\$|Bet|Raise to|All-In)/;
-const ACTION_CLICK_TIMEOUT_MS = 5000;
 
 export class PokerPlayer {
   /** @type {import('@playwright/test').BrowserContext} */
@@ -60,8 +59,8 @@ export class PokerPlayer {
   async joinGame(gameId) {
     await this.page.goto(`/games/${gameId}`);
     // Wait for the game element to be visible, then board inside it
-    await this.game.waitFor({ timeout: 10000 });
-    await this.board.waitFor({ timeout: 10000 });
+    await this.game.waitFor();
+    await this.board.waitFor();
   }
 
   /**
@@ -70,8 +69,8 @@ export class PokerPlayer {
    */
   async joinGameByUrl(url) {
     await this.page.goto(url);
-    await this.game.waitFor({ timeout: 10000 });
-    await this.board.waitFor({ timeout: 10000 });
+    await this.game.waitFor();
+    await this.board.waitFor();
   }
 
   /**
@@ -132,20 +131,16 @@ export class PokerPlayer {
 
   /**
    * Wait for countdown to start (countdown element visible)
-   * @param {number} [timeout=5000]
    */
-  async waitForCountdownStart(timeout = 5000) {
-    await this.board.locator(".countdown").waitFor({ timeout });
+  async waitForCountdownStart() {
+    await this.board.locator(".countdown").waitFor();
   }
 
   /**
    * Wait for hand to start by checking for preflop phase
    */
   async waitForHandStart() {
-    await this.board
-      .locator(".phase")
-      .filter({ hasText: "preflop" })
-      .waitFor({ timeout: 15000 });
+    await this.board.locator(".phase").filter({ hasText: "preflop" }).waitFor();
   }
 
   /**
@@ -170,11 +165,10 @@ export class PokerPlayer {
 
   /**
    * Wait for it to be this player's turn
-   * @param {number} [timeout=15000]
    */
-  async waitForTurn(timeout = 15000) {
+  async waitForTurn() {
     // Wait for actual betting buttons only; excludes pre-action toggles and "Call Clock".
-    await this.turnButtons.first().waitFor({ timeout });
+    await this.turnButtons.first().waitFor();
   }
 
   /**
@@ -293,36 +287,28 @@ export class PokerPlayer {
     const handlers = {
       allIn: async () => {
         await this._clickToAllIn();
-        await this.actionPanel
-          .getByRole("button", { name: "All-In" })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+        await this.actionPanel.getByRole("button", { name: "All-In" }).click();
       },
       call: async () => {
         await this.actionPanel
           .getByRole("button", { name: /^Call \$/ })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+          .click();
       },
       check: async () => {
-        await this.actionPanel
-          .getByRole("button", { name: "Check" })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+        await this.actionPanel.getByRole("button", { name: "Check" }).click();
       },
       fold: async () => {
-        await this.actionPanel
-          .getByRole("button", { name: "Fold" })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+        await this.actionPanel.getByRole("button", { name: "Fold" }).click();
       },
       bet: async () => {
         await this._moveSliderToMin();
-        await this.actionPanel
-          .getByRole("button", { name: /^Bet/ })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+        await this.actionPanel.getByRole("button", { name: /^Bet/ }).click();
       },
       raise: async () => {
         await this._moveSliderToMin();
         await this.actionPanel
           .getByRole("button", { name: /^Raise to/ })
-          .click({ timeout: ACTION_CLICK_TIMEOUT_MS });
+          .click();
       },
     };
     const handler = handlers[action];
@@ -398,25 +384,23 @@ export class PokerPlayer {
   /**
    * Wait for the phase to change to a specific value
    * @param {string} phase
-   * @param {number} [timeout=15000]
    */
-  async waitForPhase(phase, timeout = 15000) {
+  async waitForPhase(phase) {
     await this.board
       .locator(".phase")
       .filter({ hasText: new RegExp(`^${phase}$`, "i") })
-      .waitFor({ timeout });
+      .waitFor();
   }
 
   /**
    * Wait for the hand to end (waiting phase or winner message)
-   * @param {number} [timeout=15000]
    */
-  async waitForHandEnd(timeout = 15000) {
+  async waitForHandEnd() {
     // Wait for either "Waiting" phase or winner message to appear
     await this.board
       .locator(".phase:has-text('Waiting'), .winner-message")
       .first()
-      .waitFor({ timeout });
+      .waitFor();
   }
 
   /**
@@ -471,10 +455,8 @@ export class PokerPlayer {
   /**
    * Wait for countdown to be cancelled (countdown element hidden)
    */
-  async waitForCountdownCancelled(timeout = 10000) {
-    await this.board
-      .locator(".countdown")
-      .waitFor({ state: "hidden", timeout });
+  async waitForCountdownCancelled() {
+    await this.board.locator(".countdown").waitFor({ state: "hidden" });
   }
 
   /**
@@ -484,9 +466,9 @@ export class PokerPlayer {
     await this.openDrawer();
     await this.game.getByRole("button", { name: "History" }).click();
     // Wait for URL to change to history page
-    await this.page.waitForURL(/\/history\//, { timeout: 10000 });
+    await this.page.waitForURL(/\/history\//);
     // Wait for history component to load
-    await this.page.locator("phg-history").waitFor({ timeout: 10000 });
+    await this.page.locator("phg-history").waitFor();
   }
 
   /**
@@ -496,7 +478,7 @@ export class PokerPlayer {
   async goToHistory(gameId) {
     await this.page.goto(`/history/${gameId}`);
     // Wait for history component to load
-    await this.page.locator("phg-history").waitFor({ timeout: 10000 });
+    await this.page.locator("phg-history").waitFor();
   }
 
   /**
@@ -531,10 +513,9 @@ export class PokerPlayer {
 
   /**
    * Wait for tournament winner overlay to appear
-   * @param {number} [timeout=60000]
    */
-  async waitForTournamentWinner(timeout = 60000) {
-    await this.board.locator(".tournament-winner-overlay").waitFor({ timeout });
+  async waitForTournamentWinner() {
+    await this.board.locator(".tournament-winner-overlay").waitFor();
   }
 
   /**
@@ -595,10 +576,9 @@ export class PokerPlayer {
 
   /**
    * Wait for tournament break to start
-   * @param {number} [timeout=120000]
    */
-  async waitForBreak(timeout = 120000) {
-    await this.board.locator(".break-overlay").waitFor({ timeout });
+  async waitForBreak() {
+    await this.board.locator(".break-overlay").waitFor();
   }
 
   /**
@@ -617,12 +597,11 @@ export class PokerPlayer {
 
   /**
    * Wait for history to finish loading (loading state is false)
-   * @param {number} [timeout=10000]
    */
-  async waitForHistoryLoaded(timeout = 10000) {
+  async waitForHistoryLoaded() {
     // Wait for the hand list sidebar and table state to be visible
-    await this.history.locator(".hand-list").waitFor({ timeout });
-    await this.history.locator(".table-state").waitFor({ timeout });
+    await this.history.locator(".hand-list").waitFor();
+    await this.history.locator(".table-state").waitFor();
   }
 
   /**
