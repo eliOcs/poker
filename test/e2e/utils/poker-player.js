@@ -331,6 +331,20 @@ export class PokerPlayer {
   }
 
   /**
+   * Type a dollar amount into the number input then click the bet/raise button
+   * @param {'bet' | 'raise'} action
+   * @param {number} dollars - Amount in dollars (e.g. 1.50)
+   */
+  async actWithAmount(action, dollars) {
+    const input = this.actionPanel.locator(
+      'phg-currency-slider input[type="number"]',
+    );
+    await input.fill(String(dollars));
+    const name = action === "bet" ? /^Bet/ : /^Raise to/;
+    await this.actionPanel.getByRole("button", { name }).click();
+  }
+
+  /**
    * Send an emote via the emote picker modal
    * @param {string} emoji - The emoji to send
    */

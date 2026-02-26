@@ -69,10 +69,10 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.actWithPreset("raise", "3 BB");
     await player1.act("call");
 
-    // Flop: BB bets using "Pot" preset, SB raises, BB calls
+    // Flop: BB bets using "Pot" preset, SB raises by typing amount, BB calls
     await expect(boardCards).toHaveCount(3);
     await player1.actWithPreset("bet", "Pot");
-    await player2.act("raise");
+    await player2.actWithAmount("raise", 1.2);
     await player1.act("call");
 
     // Turn: BB checks, SB checks
