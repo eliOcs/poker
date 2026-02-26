@@ -97,7 +97,41 @@ const iconShare = html`<svg viewBox="0 0 24 24">
   <path d="M21 3h-8v2h8V3z" />
 </svg>`;
 
+const iconSitOut = html`<svg viewBox="0 0 24 24">
+  <rect x="8" y="11" width="12" height="2" />
+  <rect x="16" y="9" width="2" height="2" />
+  <rect x="14" y="7" width="2" height="10" />
+  <rect x="16" y="13" width="2" height="2" />
+  <rect x="4" y="2" width="16" height="2" />
+  <rect x="4" y="20" width="16" height="2" />
+  <rect x="4" y="4" width="2" height="16" />
+  <rect x="18" y="4" width="2" height="3" />
+  <rect x="18" y="17" width="2" height="3" />
+</svg>`;
+
 const canShare = typeof navigator.share === "function";
+
+function renderSitOutButton(game) {
+  const state = game._getSitOutState();
+  if (state === "active") {
+    return html`<button class="drawer-btn" @click=${game.toggleSitOut}>
+      ${iconSitOut} Sit Out
+    </button>`;
+  }
+  if (state === "pendingSitOut") {
+    return html`<button class="drawer-btn active" @click=${game.toggleSitOut}>
+      ${iconSitOut} Sitting Out
+    </button>`;
+  }
+  if (state === "sittingOut") {
+    const canLeave = !game.game?.tournament || game.game?.handNumber === 0;
+    if (!canLeave) return "";
+    return html`<button class="drawer-btn" @click=${game.leaveTable}>
+      ${iconSitOut} Leave
+    </button>`;
+  }
+  return "";
+}
 
 export function renderDrawer(game) {
   return html`
@@ -117,6 +151,7 @@ export function renderDrawer(game) {
           <button class="drawer-btn" @click=${game.openHistory}>
             ${iconHistory} History
           </button>
+          ${renderSitOutButton(game)}
           <button class="drawer-btn" @click=${game.copyGameLink}>
             ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
           </button>

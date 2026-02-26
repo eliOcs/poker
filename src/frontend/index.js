@@ -189,6 +189,44 @@ class Game extends LitElement {
     this.showEmotePicker = false;
   }
 
+  _getSitOutState() {
+    if (!this.game) return null;
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return null;
+    const seat = this.game.seats[seatIndex];
+    if (seat.sittingOut) return "sittingOut";
+    if (seat.pendingSitOut) return "pendingSitOut";
+    return "active";
+  }
+
+  leaveTable() {
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return;
+    this.send({ action: "leave", seat: seatIndex });
+  }
+
+  toggleSitOut() {
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return;
+    const seat = this.game.seats[seatIndex];
+
+    if (seat.pendingSitOut) {
+      this.send({ action: "cancelSitOut", seat: seatIndex });
+    } else {
+      this.send({ action: "sitOut", seat: seatIndex });
+      const phase = this.game.hand?.phase;
+      if (phase && phase !== "waiting" && !seat.folded) {
+        this.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: { message: "You will sit out after this hand" },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }
+    }
+  }
+
   openHistory() {
     this.dispatchEvent(
       new CustomEvent("navigate", {

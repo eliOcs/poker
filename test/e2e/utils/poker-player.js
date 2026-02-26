@@ -432,15 +432,13 @@ export class PokerPlayer {
   }
 
   /**
-   * Click the Sit Out button
+   * Click the Sit Out button in the drawer
    */
   async sitOut() {
-    await this.actionPanel.getByRole("button", { name: "Sit Out" }).click();
-    // Wait for SITTING OUT label to appear in our seat
-    await this.mySeat
-      .locator(".status-label")
-      .filter({ hasText: "SITTING OUT" })
-      .waitFor();
+    await this.openDrawer();
+    await this.game.getByRole("button", { name: "Sit Out" }).click();
+    // Wait for Sit In button to confirm sit-out took effect
+    await this.actionPanel.getByRole("button", { name: /^Sit In/ }).waitFor();
   }
 
   /**
@@ -448,21 +446,19 @@ export class PokerPlayer {
    */
   async sitIn() {
     await this.actionPanel.getByRole("button", { name: /^Sit In/ }).click();
-    // Wait for SITTING OUT label to disappear
-    await this.mySeat
-      .locator(".status-label")
-      .filter({ hasText: "SITTING OUT" })
+    // Wait for Sit In button to disappear
+    await this.actionPanel
+      .getByRole("button", { name: /^Sit In/ })
       .waitFor({ state: "hidden" });
   }
 
   /**
-   * Check if player is sitting out by looking for the status label
+   * Check if player is sitting out by looking for the Sit In button
    * @returns {Promise<boolean>}
    */
   async isSittingOut() {
-    return await this.mySeat
-      .locator(".status-label")
-      .filter({ hasText: "SITTING OUT" })
+    return await this.actionPanel
+      .getByRole("button", { name: /^Sit In/ })
       .isVisible()
       .catch(() => false);
   }

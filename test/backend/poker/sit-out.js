@@ -23,11 +23,19 @@ describe("sit out", () => {
       assert.throws(() => Actions.sitOut(game, { seat: 1 }), /seat is empty/);
     });
 
-    it("should throw if hand is in progress and not folded", () => {
+    it("should set pendingSitOut when hand is in progress and not folded", () => {
       game.hand.phase = "preflop";
+      Actions.sitOut(game, { seat: 0 });
+      assert.equal(game.seats[0].pendingSitOut, true);
+      assert.equal(game.seats[0].sittingOut, false);
+    });
+
+    it("should throw if already pending sit out", () => {
+      game.hand.phase = "preflop";
+      game.seats[0].pendingSitOut = true;
       assert.throws(
         () => Actions.sitOut(game, { seat: 0 }),
-        /can't sit out while still playing a hand/,
+        /already pending sit out/,
       );
     });
 
@@ -44,6 +52,43 @@ describe("sit out", () => {
         () => Actions.sitOut(game, { seat: 0 }),
         /already sitting out/,
       );
+    });
+  });
+
+  describe("cancelSitOut action", () => {
+    it("should clear pendingSitOut", () => {
+      game.seats[0].pendingSitOut = true;
+      Actions.cancelSitOut(game, { seat: 0 });
+      assert.equal(game.seats[0].pendingSitOut, false);
+    });
+
+    it("should throw if seat is empty", () => {
+      assert.throws(
+        () => Actions.cancelSitOut(game, { seat: 1 }),
+        /seat is empty/,
+      );
+    });
+
+    it("should throw if no pending sit out", () => {
+      assert.throws(
+        () => Actions.cancelSitOut(game, { seat: 0 }),
+        /no pending sit out to cancel/,
+      );
+    });
+  });
+
+  describe("endHand applies pending sit-outs", () => {
+    it("should convert pendingSitOut to sittingOut at end of hand", () => {
+      game.seats[0].pendingSitOut = true;
+      Actions.endHand(game);
+      assert.equal(game.seats[0].sittingOut, true);
+      assert.equal(game.seats[0].pendingSitOut, false);
+    });
+
+    it("should not affect seats without pendingSitOut", () => {
+      Actions.endHand(game);
+      assert.equal(game.seats[0].sittingOut, false);
+      assert.equal(game.seats[0].pendingSitOut, false);
     });
   });
 

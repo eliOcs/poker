@@ -66,6 +66,7 @@ function handleBettingAction(game, broadcastGameState) {
 export const POST_ACTION_HANDLERS = {
   start: handleStartAction,
   sitOut: handleSitOutOrLeave,
+  cancelSitOut: handleSitOutOrLeave,
   leave: handleSitOutOrLeave,
   callClock: (game) => startClockTicks(game),
 };

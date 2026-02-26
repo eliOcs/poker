@@ -61,6 +61,14 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.act("check");
     await player1.act("check");
 
+    // === SIT OUT / SIT IN (between hands) ===
+    // Sitting out cancels the auto-start countdown (only 1 active player)
+    await player1.sitOut();
+    expect(await player1.isSittingOut()).toBeTruthy();
+    await player1.sitIn();
+    expect(await player1.isSittingOut()).toBeFalsy();
+    await player1.startGame();
+
     // === HAND 2: Raises (P2=SB, P1=BB) ===
     await expect(holeCards(player1)).toHaveCount(2);
     await expect(holeCards(player2)).toHaveCount(2);

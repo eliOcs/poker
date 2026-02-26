@@ -28,6 +28,7 @@
  * @property {boolean} folded - Has folded this hand
  * @property {boolean} allIn - Is all-in
  * @property {boolean} sittingOut - Is sitting out (not participating)
+ * @property {boolean} pendingSitOut - Will sit out after current hand ends
  * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
  * @property {boolean} disconnected - Whether player's WebSocket is disconnected
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
@@ -72,6 +73,7 @@ export function occupied(player, stack = 0, sittingOut = false) {
     folded: false,
     allIn: false,
     sittingOut,
+    pendingSitOut: false,
     missedBigBlind: false,
     disconnected: false,
     lastAction: null,

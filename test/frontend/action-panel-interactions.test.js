@@ -361,33 +361,6 @@ describe("phg-action-panel", () => {
   });
 
   describe("sit out actions", () => {
-    it("renders Sit Out button when sitOut action available", async () => {
-      element.game = createMockGameState({
-        seats: [
-          {
-            ...mockOccupiedSeat,
-            sittingOut: false,
-            actions: [{ action: "start" }, { action: "sitOut" }],
-          },
-          { ...mockOpponentSeat, stack: 1000 },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
-        ],
-      });
-      await element.updateComplete;
-
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      await actionPanel.updateComplete;
-
-      const sitOutButton = actionPanel.shadowRoot.querySelector(
-        'phg-button[variant="muted"]',
-      );
-      expect(sitOutButton).to.exist;
-      expect(sitOutButton.textContent.trim()).to.equal("Sit Out");
-    });
-
     it("renders Sit In button when sitIn action available", async () => {
       element.game = createMockGameState({
         seats: [
@@ -409,41 +382,6 @@ describe("phg-action-panel", () => {
       );
       expect(sitInButton).to.exist;
       expect(sitInButton.textContent).to.include("Sit In");
-    });
-
-    it("calls send() with seat when Sit Out clicked", async () => {
-      element.game = createMockGameState({
-        seats: [
-          {
-            ...mockOccupiedSeat,
-            sittingOut: false,
-            actions: [{ action: "sitOut" }],
-          },
-          { ...mockOpponentSeat, stack: 1000 },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
-        ],
-      });
-      await element.updateComplete;
-
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
-      await actionPanel.updateComplete;
-
-      let sentMessage = null;
-      element.addEventListener("game-action", (e) => {
-        sentMessage = e.detail;
-      });
-
-      const sitOutButton = actionPanel.shadowRoot.querySelector(
-        'phg-button[variant="muted"]',
-      );
-      sitOutButton.click();
-
-      expect(sentMessage).to.exist;
-      expect(sentMessage.action).to.equal("sitOut");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
     it("calls send() with seat when Sit In clicked", async () => {

@@ -445,19 +445,10 @@ function renderWaitingActions(panel, actionMap) {
   return showButtons;
 }
 
-function renderStartSitOut(panel, actionMap) {
+function renderStart(panel, actionMap) {
   const showButtons = renderShowButtons(panel, actionMap);
   return html`
     <div class="action-row">
-      ${actionMap.sitOut
-        ? html`<phg-button
-            variant="muted"
-            full-width
-            @click=${() =>
-              panel.sendAction({ action: "sitOut", seat: panel.seatIndex })}
-            >Sit Out</phg-button
-          >`
-        : ""}
       ${actionMap.emote ? renderEmoteButton(panel) : ""}
       ${actionMap.start
         ? html`<phg-button
@@ -476,8 +467,7 @@ function renderForActionMap(panel, actionMap) {
   if (actionMap.buyIn) return renderBuyIn(panel, actionMap.buyIn);
   if (actionMap.sitIn || actionMap.leave)
     return renderSitInLeave(panel, actionMap);
-  if (actionMap.start || actionMap.sitOut)
-    return renderStartSitOut(panel, actionMap);
+  if (actionMap.start) return renderStart(panel, actionMap);
   const betAction = actionMap.bet || actionMap.raise;
   if (betAction) return renderBettingSlider(panel, actionMap, betAction);
   return renderWaitingActions(panel, actionMap);

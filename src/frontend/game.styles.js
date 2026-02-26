@@ -197,6 +197,10 @@ export const gameStyles = css`
     background: var(--color-bg-light);
   }
 
+  .drawer-btn.active {
+    color: var(--color-primary);
+  }
+
   .drawer-btn svg {
     width: 20px;
     height: 20px;
