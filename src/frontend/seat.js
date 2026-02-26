@@ -427,7 +427,7 @@ class Seat extends LitElement {
   }
 
   _areCardsRevealed() {
-    return this.seat.cards?.length > 0 && this.seat.cards[0] !== "??";
+    return this.seat.cards?.some((card) => card !== "??") ?? false;
   }
 
   _renderClock() {
