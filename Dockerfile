@@ -4,7 +4,7 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 -G nodejs
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 # Create data directory for hand history
 RUN mkdir -p /app/data && chown nodejs:nodejs /app/data
