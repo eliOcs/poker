@@ -28,6 +28,7 @@
  * @property {boolean} folded - Has folded this hand
  * @property {boolean} allIn - Is all-in
  * @property {boolean} sittingOut - Is sitting out (not participating)
+ * @property {boolean} pendingSitOut - Will sit out after current hand ends
  * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
  * @property {boolean} disconnected - Whether player's WebSocket is disconnected
  * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
@@ -36,6 +37,7 @@
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
+ * @property {import('./pre-action.js').PreAction|null} preAction - Pre-selected action for when turn arrives
  * @property {string|null} [emote] - Transient emote emoji (set and cleared during broadcast)
  */
 
@@ -71,6 +73,7 @@ export function occupied(player, stack = 0, sittingOut = false) {
     folded: false,
     allIn: false,
     sittingOut,
+    pendingSitOut: false,
     missedBigBlind: false,
     disconnected: false,
     lastAction: null,
@@ -79,6 +82,7 @@ export function occupied(player, stack = 0, sittingOut = false) {
     cardsRevealed: false,
     shownCards: [false, false],
     bustedPosition: null,
+    preAction: null,
   };
 }
 
@@ -97,6 +101,7 @@ export function resetForNewHand(seat) {
   seat.winningCards = null;
   seat.cardsRevealed = false;
   seat.shownCards = [false, false];
+  seat.preAction = null;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;

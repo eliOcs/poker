@@ -27,7 +27,7 @@ export default defineConfig({
   webServer: {
     command: "node --env-file=.env src/backend",
     url: `http://localhost:${E2E_PORT}`,
-    reuseExistingServer: false, // Always start fresh server for tests
+    reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",
     gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },

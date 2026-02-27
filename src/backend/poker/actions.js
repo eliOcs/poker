@@ -1,6 +1,7 @@
 import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
+import { invalidateCallPreActions } from "./pre-action.js";
 import { isClockCallable } from "./game-tick.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
@@ -162,6 +163,7 @@ export function bet(game, { seat, amount }) {
     seatObj.lastAction = "bet";
   }
 
+  invalidateCallPreActions(game);
   Betting.advanceAction(game);
 }
 
@@ -233,6 +235,7 @@ export function raise(game, { seat, amount }) {
     seatObj.lastAction = "raise";
   }
 
+  invalidateCallPreActions(game);
   Betting.advanceAction(game);
 }
 
@@ -393,6 +396,7 @@ export function allIn(game, { seat }) {
     }
 
     game.hand.currentBet = newBet;
+    invalidateCallPreActions(game);
   }
 
   Betting.advanceAction(game);
@@ -466,6 +470,9 @@ export function endHand(game) {
     }
   }
 
+  // Convert pending sit-outs into actual sit-outs
+  applyPendingSitOuts(game);
+
   // Move button to next occupied seat
   moveButton(game);
 
@@ -493,6 +500,19 @@ export function moveButton(game) {
   game.button = next;
 }
 
+/**
+ * Converts pending sit-outs into actual sit-outs at end of hand
+ * @param {Game} game
+ */
+function applyPendingSitOuts(game) {
+  for (const seat of game.seats) {
+    if (!seat.empty && seat.pendingSitOut) {
+      seat.sittingOut = true;
+      seat.pendingSitOut = false;
+    }
+  }
+}
+
 // --- Sit Out Actions ---
 
 /**
@@ -506,14 +526,36 @@ export function sitOut(game, { seat }) {
   if (seatObj.empty) {
     throw new Error("seat is empty");
   }
-  if (game.hand?.phase !== "waiting" && !seatObj.folded) {
-    throw new Error("can't sit out while still playing a hand");
-  }
   if (seatObj.sittingOut) {
     throw new Error("already sitting out");
   }
+  if (seatObj.pendingSitOut) {
+    throw new Error("already pending sit out");
+  }
 
-  seatObj.sittingOut = true;
+  if (game.hand?.phase === "waiting" || seatObj.folded) {
+    seatObj.sittingOut = true;
+  } else {
+    seatObj.pendingSitOut = true;
+  }
+}
+
+/**
+ * Cancels a pending sit-out request
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function cancelSitOut(game, { seat }) {
+  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+
+  if (seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+  if (!seatObj.pendingSitOut) {
+    throw new Error("no pending sit out to cancel");
+  }
+
+  seatObj.pendingSitOut = false;
 }
 
 /**

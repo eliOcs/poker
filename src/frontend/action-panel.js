@@ -25,12 +25,17 @@ class ActionPanel extends LitElement {
       smallBlind: { type: Number },
       bigBlind: { type: Number },
       seatedCount: { type: Number },
-      copied: { type: Boolean },
       bustedPosition: { type: Number },
       isWinner: { type: Boolean },
       canSit: { type: Boolean },
       buyIn: { type: Number },
       pot: { type: Number },
+      preAction: { type: Object },
+      currentBet: { type: Number },
+      myBet: { type: Number },
+      myStack: { type: Number },
+      isActing: { type: Boolean },
+      inHand: { type: Boolean },
     };
   }
 
@@ -42,15 +47,19 @@ class ActionPanel extends LitElement {
     this.smallBlind = 1;
     this.bigBlind = 1;
     this.seatedCount = 0;
-    this.copied = false;
     this.bustedPosition = null;
     this.isWinner = false;
     this.canSit = false;
     this.buyIn = 0;
     this.pot = 0;
+    this.preAction = null;
+    this.currentBet = 0;
+    this.myBet = 0;
+    this.myStack = 0;
+    this.isActing = false;
+    this.inHand = false;
     this._lastActionType = null;
     this._lastActionTime = 0;
-    this._showEmotePicker = false;
   }
 
   get chipDenomination() {
@@ -74,35 +83,6 @@ class ActionPanel extends LitElement {
       }
       this._lastActionType = currentType;
     }
-  }
-
-  async copyGameLink() {
-    const url = window.location.href;
-    try {
-      await navigator.clipboard.writeText(url);
-      this.copied = true;
-      setTimeout(() => {
-        this.copied = false;
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy:", err);
-    }
-  }
-
-  async shareGameLink() {
-    const url = window.location.href;
-    try {
-      await navigator.share({
-        title: "Join my poker game",
-        url: url,
-      });
-    } catch (err) {
-      console.error("Failed to share:", err);
-    }
-  }
-
-  canShare() {
-    return typeof navigator.share === "function";
   }
 
   sendAction(action) {

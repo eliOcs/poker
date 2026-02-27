@@ -42,6 +42,22 @@ const TEST_CASES = [
   "game-disconnected-player",
   "game-full-table",
 
+  // Action panel states
+  "action-sit-in",
+  "action-bet",
+  "action-raise",
+  "action-raise-preflop",
+  "action-all-in",
+  "action-fold-or-all-in",
+  "action-emote-and-clock",
+  "action-show-cards",
+  "action-pre-check-fold",
+  "action-pre-check-fold-active",
+  "action-pre-fold-and-call",
+  "action-pre-call-active",
+  "action-tournament-winner",
+  "action-tournament-busted",
+
   // Table sizes
   "table-heads-up",
   "table-6max",

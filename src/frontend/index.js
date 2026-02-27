@@ -14,8 +14,28 @@ import {
   snapshotBetPositions,
   animateBetCollection,
 } from "./bet-collection.js";
+import { renderDrawer } from "./drawer.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
+
+const EMOJIS = [
+  "🤣",
+  "😍",
+  "😘",
+  "😏",
+  "🤑",
+  "😎",
+  "🫠",
+  "🤨",
+  "🙄",
+  "🤯",
+  "🥶",
+  "🥱",
+  "🥺",
+  "😭",
+  "😡",
+  "💩",
+];
 
 class Game extends LitElement {
   static get styles() {
@@ -29,7 +49,10 @@ class Game extends LitElement {
       user: { type: Object },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
+      showEmotePicker: { type: Boolean },
       volume: { type: Number },
+      _drawerOpen: { type: Boolean, state: true },
+      _copied: { type: Boolean, state: true },
     };
   }
 
@@ -42,9 +65,54 @@ class Game extends LitElement {
     this.user = null;
     this.showSettings = false;
     this.showRanking = false;
+    this.showEmotePicker = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
+    this._drawerOpen = false;
+    this._copied = false;
     this._settingsInitialized = false;
+    this._onMediaChange = (e) => {
+      this._drawerOpen = e.matches;
+    };
     Audio.setVolume(this.volume);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._mql = window.matchMedia("(min-width: 800px)");
+    this._mql.addEventListener("change", this._onMediaChange);
+    this._drawerOpen = this._mql.matches;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._mql?.removeEventListener("change", this._onMediaChange);
+  }
+
+  toggleDrawer() {
+    this._drawerOpen = !this._drawerOpen;
+  }
+
+  async copyGameLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this._copied = true;
+      setTimeout(() => {
+        this._copied = false;
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  }
+
+  async shareGameLink() {
+    try {
+      await navigator.share({
+        title: "Join my poker game",
+        url: window.location.href,
+      });
+    } catch (err) {
+      console.error("Failed to share:", err);
+    }
   }
 
   _initializeVolumeFromSettings() {
@@ -106,6 +174,57 @@ class Game extends LitElement {
 
   closeRanking() {
     this.showRanking = false;
+  }
+
+  openEmotePicker() {
+    this.showEmotePicker = true;
+  }
+
+  closeEmotePicker() {
+    this.showEmotePicker = false;
+  }
+
+  sendEmote(emoji) {
+    this.send({ action: "emote", emoji });
+    this.showEmotePicker = false;
+  }
+
+  _getSitOutState() {
+    if (!this.game) return null;
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return null;
+    const seat = this.game.seats[seatIndex];
+    if (seat.sittingOut) return "sittingOut";
+    if (seat.pendingSitOut) return "pendingSitOut";
+    return "active";
+  }
+
+  leaveTable() {
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return;
+    this.send({ action: "leave", seat: seatIndex });
+  }
+
+  toggleSitOut() {
+    const { seatIndex } = this.getMySeatInfo();
+    if (seatIndex === -1) return;
+    const seat = this.game.seats[seatIndex];
+
+    if (seat.pendingSitOut) {
+      this.send({ action: "cancelSitOut", seat: seatIndex });
+    } else {
+      this.send({ action: "sitOut", seat: seatIndex });
+      const phase = this.game.hand?.phase;
+      if (phase && phase !== "waiting" && !seat.folded) {
+        this.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: { message: "You will sit out after this hand" },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }
+    }
   }
 
   openHistory() {
@@ -308,7 +427,43 @@ class Game extends LitElement {
     `;
   }
 
+  _renderEmoteModal() {
+    if (!this.showEmotePicker) return "";
+    return html`<phg-modal title="Emote" @close=${this.closeEmotePicker}>
+      <div class="emote-grid">
+        ${EMOJIS.map(
+          (emoji) =>
+            html`<button @click=${() => this.sendEmote(emoji)}>
+              ${emoji}
+            </button>`,
+        )}
+      </div>
+    </phg-modal>`;
+  }
+
+  _isInHand(seatIndex) {
+    if (seatIndex === -1) return false;
+    const seat = this.game.seats[seatIndex];
+    if (!seat || seat.empty) return false;
+    if (seat.folded || seat.allIn || seat.sittingOut) return false;
+    return ["preflop", "flop", "turn", "river"].includes(this.game.hand?.phase);
+  }
+
+  _getPreActionProps(seatIndex) {
+    const seat = seatIndex !== -1 ? this.game.seats[seatIndex] : {};
+    const hand = this.game.hand || {};
+    return {
+      preAction: seat.preAction || null,
+      currentBet: hand.currentBet || 0,
+      myBet: seat.bet || 0,
+      myStack: seat.stack || 0,
+      isActing: hand.actingSeat === seatIndex,
+      inHand: this._isInHand(seatIndex),
+    };
+  }
+
   _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
+    const pre = this._getPreActionProps(seatIndex);
     return html`<phg-action-panel
       .actions=${actions}
       .seatIndex=${seatIndex}
@@ -320,7 +475,14 @@ class Game extends LitElement {
       .buyIn=${this.game.tournament?.buyIn ?? 0}
       .bustedPosition=${bustedPosition}
       .isWinner=${isWinner}
+      .preAction=${pre.preAction}
+      .currentBet=${pre.currentBet}
+      .myBet=${pre.myBet}
+      .myStack=${pre.myStack}
+      .isActing=${pre.isActing}
+      .inHand=${pre.inHand}
       @game-action=${this.handleGameAction}
+      @open-emote-picker=${this.openEmotePicker}
     ></phg-action-panel>`;
   }
 
@@ -333,6 +495,7 @@ class Game extends LitElement {
     const canSit = !isSeated && this.game.seats.some((s) => s.empty);
 
     return html`
+      ${renderDrawer(this)}
       <div id="wrapper">
         <div id="container">
           <phg-board
@@ -372,32 +535,8 @@ class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${this._renderInfoBar()}
-        <button
-          class="toolbar-btn"
-          id="history-btn"
-          @click=${this.openHistory}
-          title="Hand History"
-        >
-          🔁
-        </button>
-        <button
-          class="toolbar-btn"
-          id="ranking-btn"
-          @click=${this.openRanking}
-          title="Rankings"
-        >
-          🏆
-        </button>
-        <button
-          class="toolbar-btn"
-          id="settings-btn"
-          @click=${this.openSettings}
-          title="Settings"
-        >
-          ⚙
-        </button>
-        ${this._renderRankingModal()} ${this._renderSettingsModal()}
+        ${this._renderInfoBar()} ${this._renderRankingModal()}
+        ${this._renderSettingsModal()} ${this._renderEmoteModal()}
       </div>
     `;
   }

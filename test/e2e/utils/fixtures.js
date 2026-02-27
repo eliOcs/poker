@@ -1,4 +1,4 @@
-import { test as base } from "@playwright/test";
+import { test as base, devices } from "@playwright/test";
 import { PokerPlayer } from "./poker-player.js";
 import { attachDebugListeners } from "./page-debug.js";
 import { startCoverage, stopCoverage } from "./coverage.js";
@@ -9,11 +9,13 @@ const DEBUG = process.env.DEBUG_E2E === "1";
 /**
  * Creates a player fixture with optional debug logging
  * @param {string} name - Player display name
+ * @param {object} [contextOptions] - Extra browser context options (e.g. viewport, isMobile)
  */
-function createPlayerFixture(name) {
+function createPlayerFixture(name, contextOptions = {}) {
   return async ({ browser }, use) => {
     const context = await browser.newContext({
       permissions: ["clipboard-read", "clipboard-write"],
+      ...contextOptions,
     });
     const page = await context.newPage();
     await startCoverage(page);
@@ -38,8 +40,8 @@ function createPlayerFixture(name) {
 export const test = base.extend({
   /** @type {PokerPlayer} */
   player1: createPlayerFixture("Player 1"),
-  /** @type {PokerPlayer} */
-  player2: createPlayerFixture("Player 2"),
+  /** @type {PokerPlayer} Player 2 uses a mobile viewport */
+  player2: createPlayerFixture("Player 2", devices["Pixel 5"]),
   /** @type {PokerPlayer} */
   player3: createPlayerFixture("Player 3"),
   /** @type {PokerPlayer} */

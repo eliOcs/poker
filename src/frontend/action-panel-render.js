@@ -1,25 +1,6 @@
 import { html } from "lit";
 import { formatCurrency } from "./styles.js";
 
-const EMOJIS = [
-  "🤣",
-  "😍",
-  "😘",
-  "😏",
-  "🤑",
-  "😎",
-  "🫠",
-  "🤨",
-  "🙄",
-  "🤯",
-  "🥶",
-  "🥱",
-  "🥺",
-  "😭",
-  "😡",
-  "💩",
-];
-
 function formatPosition(position) {
   const suffixes = ["th", "st", "nd", "rd"];
   const v = position % 100;
@@ -35,50 +16,19 @@ function buildActionMap(actions) {
   return actionMap;
 }
 
-function renderShareButtons(panel) {
-  return html`
-    <div class="share-buttons">
-      <phg-button
-        variant="${panel.copied ? "success" : "action"}"
-        @click=${panel.copyGameLink}
-      >
-        ${panel.copied ? "Copied!" : "Copy Link"}
-      </phg-button>
-      ${panel.canShare()
-        ? html`<phg-button variant="action" @click=${panel.shareGameLink}
-            >Share</phg-button
-          >`
-        : ""}
-    </div>
-  `;
-}
-
 function renderWaitingForPlayers(panel) {
   return html`
     <div class="waiting-panel">
       <span class="waiting">Waiting for players...</span>
-      <div class="share-buttons">
-        <phg-button
-          variant="${panel.copied ? "success" : "action"}"
-          @click=${panel.copyGameLink}
-        >
-          ${panel.copied ? "Copied!" : "Copy Link"}
-        </phg-button>
-        ${panel.canShare()
-          ? html`<phg-button variant="action" @click=${panel.shareGameLink}
-              >Share</phg-button
-            >`
-          : ""}
-        ${panel.canSit
-          ? html`<phg-button
-              variant="primary"
-              @click=${() => panel.sendAction({ action: "sit" })}
-              >${panel.buyIn
-                ? `Sit ${formatCurrency(panel.buyIn)}`
-                : "Sit"}</phg-button
-            >`
-          : ""}
-      </div>
+      ${panel.canSit
+        ? html`<phg-button
+            variant="primary"
+            @click=${() => panel.sendAction({ action: "sit" })}
+            >${panel.buyIn
+              ? `Sit ${formatCurrency(panel.buyIn)}`
+              : "Sit"}</phg-button
+          >`
+        : ""}
     </div>
   `;
 }
@@ -148,7 +98,6 @@ function renderSitInLeave(panel, actionMap) {
           >`
         : ""}
     </div>
-    ${actionMap.share ? renderShareButtons(panel) : ""}
   `;
 }
 
@@ -208,12 +157,15 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
       : null}
     ${actionMap.call
       ? html`<phg-button
-          variant="success"
+          variant="${actionMap.call.allIn ? "primary" : "success"}"
           full-width
           @click=${() =>
-            panel.sendAction({ action: "call", seat: panel.seatIndex })}
+            panel.sendAction({
+              action: actionMap.call.allIn ? "allIn" : "call",
+              seat: panel.seatIndex,
+            })}
           ><span class="stacked"
-            ><span>Call</span
+            ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
             ><span class="amount"
               >${formatCurrency(actionMap.call.amount)}</span
             ></span
@@ -294,12 +246,15 @@ function renderSimpleActions(panel, actionMap) {
   if (actionMap.call) {
     buttons.push(
       html`<phg-button
-        variant="success"
+        variant="${actionMap.call.allIn ? "primary" : "success"}"
         full-width
         @click=${() =>
-          panel.sendAction({ action: "call", seat: panel.seatIndex })}
+          panel.sendAction({
+            action: actionMap.call.allIn ? "allIn" : "call",
+            seat: panel.seatIndex,
+          })}
         ><span class="stacked"
-          ><span>Call</span
+          ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
           ><span class="amount"
             >${formatCurrency(actionMap.call.amount)}</span
           ></span
@@ -357,34 +312,121 @@ function renderShowButtons(panel, actionMap) {
 }
 
 function renderEmoteButton(panel) {
-  if (panel._showEmotePicker) {
-    return html`
-      <div class="emote-grid">
-        ${EMOJIS.map(
-          (emoji) =>
-            html`<button
-              @click=${() => {
-                panel.sendAction({ action: "emote", emoji });
-                panel._showEmotePicker = false;
-                panel.requestUpdate();
-              }}
-            >
-              ${emoji}
-            </button>`,
-        )}
-      </div>
-    `;
-  }
-
   return html`<phg-button
     variant="secondary"
     full-width
-    @click=${() => {
-      panel._showEmotePicker = true;
-      panel.requestUpdate();
-    }}
+    @click=${() =>
+      panel.dispatchEvent(
+        new CustomEvent("open-emote-picker", {
+          bubbles: true,
+          composed: true,
+        }),
+      )}
     >Emote</phg-button
   >`;
+}
+
+function preActionToggle(panel, isActive, setAction) {
+  return () =>
+    panel.sendAction(isActive ? { action: "clearPreAction" } : setAction);
+}
+
+const uncheckedSvg = html`<svg
+  class="pre-action-check"
+  viewBox="0 0 24 24"
+  fill="none"
+>
+  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
+  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
+  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
+</svg>`;
+
+const checkedSvg = html`<svg
+  class="pre-action-check"
+  viewBox="0 0 24 24"
+  fill="none"
+>
+  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
+  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
+  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
+  <rect x="7" y="12" width="2" height="2" fill="currentColor" />
+  <rect x="9" y="14" width="2" height="2" fill="currentColor" />
+  <rect x="11" y="12" width="2" height="2" fill="currentColor" />
+  <rect x="13" y="10" width="2" height="2" fill="currentColor" />
+  <rect x="15" y="8" width="2" height="2" fill="currentColor" />
+</svg>`;
+
+function renderPreActionNoBet(panel) {
+  const isActive = panel.preAction?.type === "checkFold";
+  return html`
+    <div class="action-row">
+      <phg-button
+        variant="success"
+        full-width
+        pre-action
+        @click=${preActionToggle(panel, isActive, {
+          action: "preAction",
+          type: "checkFold",
+        })}
+        ><span class="pre-action-label"
+          >${isActive ? checkedSvg : uncheckedSvg} Check / Fold</span
+        ></phg-button
+      >
+    </div>
+  `;
+}
+
+function renderPreActionWithBet(panel) {
+  const toCall = panel.currentBet - panel.myBet;
+  const callAmount = Math.min(toCall, panel.myStack);
+  const isFoldActive = panel.preAction?.type === "checkFold";
+  const isCallActive =
+    panel.preAction?.type === "callAmount" &&
+    panel.preAction?.amount === callAmount;
+
+  return html`
+    <div class="action-row">
+      <phg-button
+        variant="danger"
+        full-width
+        pre-action
+        @click=${preActionToggle(panel, isFoldActive, {
+          action: "preAction",
+          type: "checkFold",
+        })}
+        ><span class="pre-action-label"
+          >${isFoldActive ? checkedSvg : uncheckedSvg} Fold</span
+        ></phg-button
+      >
+      <phg-button
+        variant="success"
+        full-width
+        pre-action
+        @click=${preActionToggle(panel, isCallActive, {
+          action: "preAction",
+          type: "callAmount",
+          amount: callAmount,
+        })}
+        ><span class="pre-action-label"
+          >${isCallActive ? checkedSvg : uncheckedSvg}
+          <span class="stacked"
+            ><span>Call</span
+            ><span class="amount">${formatCurrency(callAmount)}</span></span
+          ></span
+        ></phg-button
+      >
+    </div>
+  `;
+}
+
+function renderPreActionButtons(panel) {
+  if (panel.isActing || !panel.inHand) return null;
+  const toCall = panel.currentBet - panel.myBet;
+  return toCall === 0
+    ? renderPreActionNoBet(panel)
+    : renderPreActionWithBet(panel);
 }
 
 function renderWaitingActions(panel, actionMap) {
@@ -392,28 +434,21 @@ function renderWaitingActions(panel, actionMap) {
   const showButtons = renderShowButtons(panel, actionMap);
   if (simple) return html`${simple}${showButtons}`;
 
+  const preActions = renderPreActionButtons(panel);
   const buttons = [];
   if (actionMap.emote) buttons.push(renderEmoteButton(panel));
   if (actionMap.callClock) buttons.push(renderCallClockButton(panel));
-  if (buttons.length > 0)
-    return html`<div class="action-row">${buttons}</div>
-      ${showButtons}`;
+  if (preActions || buttons.length > 0)
+    return html`${preActions}
+    ${buttons.length > 0 ? html`<div class="action-row">${buttons}</div>` : ""}
+    ${showButtons}`;
   return showButtons;
 }
 
-function renderStartSitOut(panel, actionMap) {
+function renderStart(panel, actionMap) {
   const showButtons = renderShowButtons(panel, actionMap);
   return html`
     <div class="action-row">
-      ${actionMap.sitOut
-        ? html`<phg-button
-            variant="muted"
-            full-width
-            @click=${() =>
-              panel.sendAction({ action: "sitOut", seat: panel.seatIndex })}
-            >Sit Out</phg-button
-          >`
-        : ""}
       ${actionMap.emote ? renderEmoteButton(panel) : ""}
       ${actionMap.start
         ? html`<phg-button
@@ -424,18 +459,15 @@ function renderStartSitOut(panel, actionMap) {
           >`
         : ""}
     </div>
-    ${actionMap.share ? renderShareButtons(panel) : ""}${showButtons}
+    ${showButtons}
   `;
 }
 
 function renderForActionMap(panel, actionMap) {
-  if (panel._showEmotePicker && actionMap.emote)
-    return renderEmoteButton(panel);
   if (actionMap.buyIn) return renderBuyIn(panel, actionMap.buyIn);
   if (actionMap.sitIn || actionMap.leave)
     return renderSitInLeave(panel, actionMap);
-  if (actionMap.start || actionMap.sitOut)
-    return renderStartSitOut(panel, actionMap);
+  if (actionMap.start) return renderStart(panel, actionMap);
   const betAction = actionMap.bet || actionMap.raise;
   if (betAction) return renderBettingSlider(panel, actionMap, betAction);
   return renderWaitingActions(panel, actionMap);

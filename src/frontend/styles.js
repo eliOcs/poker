@@ -188,13 +188,6 @@ export const actionPanelStyles = css`
     width: 100%;
   }
 
-  .share-buttons {
-    display: flex;
-    gap: var(--space-md);
-    justify-content: center;
-    width: 100%;
-  }
-
   .action-row phg-button {
     display: block;
     width: 100%;

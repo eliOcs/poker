@@ -15,8 +15,8 @@ import * as TournamentTick from "./tournament-tick.js";
 
 // Tick thresholds (in number of ticks, typically 1 tick = 1 second)
 export const DISCONNECT_TICKS = 5; // Auto-fold after 5 ticks when disconnected
-export const CLOCK_WAIT_TICKS = 60; // "Call Clock" available after 60 ticks
-export const CLOCK_DURATION_TICKS = 30; // Clock expires after 30 ticks
+export const CLOCK_WAIT_TICKS = 15; // "Call Clock" available after 15 ticks
+export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
 
 /**
  * @typedef {Object} TickResult

@@ -351,7 +351,7 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
       markProgress(state, "on-break");
       await activePlayer.board
         .locator(".break-overlay")
-        .waitFor({ state: "hidden", timeout: 30000 });
+        .waitFor({ state: "hidden" });
       markProgress(state, "break-ended");
       continue;
     }

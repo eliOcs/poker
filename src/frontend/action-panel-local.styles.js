@@ -1,26 +1,6 @@
 import { css } from "lit";
 
 export const actionPanelExtraStyles = css`
-  .emote-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-sm);
-    width: 100%;
-  }
-
-  .emote-grid button {
-    font-size: var(--font-xl);
-    padding: var(--space-sm);
-    background: none;
-    border: 2px solid transparent;
-    cursor: pointer;
-    line-height: 1;
-  }
-
-  .emote-grid button:hover {
-    border-color: var(--color-primary);
-  }
-
   .bet-presets {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -54,5 +34,18 @@ export const actionPanelExtraStyles = css`
     .show-cards phg-card {
       transform: scale(0.45);
     }
+  }
+
+  .pre-action-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  .pre-action-check {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
 `;

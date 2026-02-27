@@ -9,6 +9,12 @@ export const gameStyles = css`
     color: var(--color-fg-medium);
   }
 
+  @media (width >= 800px) {
+    :host {
+      display: flex;
+    }
+  }
+
   :host * {
     box-sizing: inherit;
   }
@@ -20,9 +26,23 @@ export const gameStyles = css`
     margin: 0 auto;
   }
 
+  @media (width >= 800px) {
+    #wrapper {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
   #container {
     position: absolute;
-    inset: 0 0 120px;
+    inset: 0 0 160px;
+  }
+
+  @media (width >= 800px) and (height >= 840px) {
+    #container {
+      max-height: 700px;
+      margin: auto 0;
+    }
   }
 
   phg-board {
@@ -60,10 +80,138 @@ export const gameStyles = css`
     transform: translate(-50%, 0);
   }
 
+  #drawer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  @media (width >= 800px) {
+    #drawer {
+      position: relative;
+      z-index: auto;
+    }
+  }
+
+  #drawer-backdrop {
+    display: none;
+  }
+
+  #drawer.open #drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: auto;
+  }
+
+  @media (width >= 800px) {
+    #drawer-backdrop {
+      display: none !important;
+    }
+  }
+
+  #drawer-panel {
+    width: clamp(140px, 12vw, 200px);
+    height: 100%;
+    background: var(--color-bg-dark);
+    border-right: 2px solid var(--color-bg-light);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    pointer-events: auto;
+  }
+
+  #drawer.open #drawer-panel {
+    transform: translateX(0);
+  }
+
+  #drawer-toggle {
+    position: absolute;
+    top: var(--space-md);
+    left: 0;
+    background: var(--color-bg-dark);
+    border: 2px solid var(--color-bg-light);
+    border-left: none;
+    color: var(--color-fg-medium);
+    cursor: pointer;
+    padding: var(--space-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 4px 4px 0;
+    transition: left 0.2s ease;
+    pointer-events: auto;
+  }
+
+  #drawer.open #drawer-toggle {
+    left: clamp(140px, 12vw, 200px);
+    border-left: none;
+  }
+
+  @media (width >= 800px) {
+    #drawer-toggle {
+      display: none;
+    }
+  }
+
+  #drawer-toggle:hover {
+    color: var(--color-fg-white);
+  }
+
+  #drawer-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: currentcolor;
+  }
+
+  #drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    padding-top: var(--space-lg);
+    gap: var(--space-sm);
+  }
+
+  .drawer-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background: none;
+    border: none;
+    color: var(--color-fg-medium);
+    font-family: inherit;
+    font-size: var(--font-sm);
+    cursor: pointer;
+    padding: var(--space-md);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .drawer-btn:hover {
+    color: var(--color-fg-white);
+    background: var(--color-bg-light);
+  }
+
+  .drawer-btn.active {
+    color: var(--color-primary);
+  }
+
+  .drawer-btn svg {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    fill: currentcolor;
+  }
+
   #info-bar {
     position: absolute;
-    left: 0.5%;
-    top: 0.5%;
+    right: var(--space-md);
+    top: var(--space-lg);
     display: flex;
     align-items: center;
     gap: var(--space-sm);
@@ -75,23 +223,6 @@ export const gameStyles = css`
     content: "|";
     margin-right: var(--space-sm);
     color: var(--color-bg-disabled);
-  }
-
-  .toolbar-btn {
-    position: absolute;
-    top: 0.5%;
-    background: none;
-    border: none;
-    font-size: var(--font-lg);
-    cursor: pointer;
-    padding: 5px;
-    color: var(--color-fg-medium);
-  }
-  .toolbar-btn:hover {
-    color: var(--color-fg-white);
-  }
-  #settings-btn {
-    right: 0.5%;
   }
 
   .settings-content input {
@@ -146,16 +277,28 @@ export const gameStyles = css`
     border-color: var(--color-primary);
   }
 
-  #ranking-btn {
-    right: 40px;
-    color: var(--color-primary);
-  }
-  #history-btn {
-    right: 75px;
-  }
   .collecting-chip {
     position: absolute;
     z-index: 10;
     pointer-events: none;
+  }
+
+  .emote-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .emote-grid button {
+    font-size: 2rem;
+    padding: var(--space-md);
+    background: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .emote-grid button:hover {
+    border-color: var(--color-fg-muted);
   }
 `;

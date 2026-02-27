@@ -33,6 +33,9 @@ class CurrencySlider extends LitElement {
           appearance: textfield;
           align-self: stretch;
           box-sizing: border-box;
+          box-shadow:
+            inset 2px 2px 0 rgba(0, 0, 0, 0.3),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.1);
         }
 
         input[type="number"]::-webkit-inner-spin-button,
@@ -48,6 +51,9 @@ class CurrencySlider extends LitElement {
           background: var(--color-bg-disabled);
           border: 2px solid var(--color-bg-dark);
           min-width: 80px;
+          box-shadow:
+            inset 2px 2px 0 rgba(0, 0, 0, 0.3),
+            inset -2px -2px 0 rgba(255, 255, 255, 0.1);
         }
 
         input[type="range"]::-webkit-slider-thumb {
@@ -57,6 +63,9 @@ class CurrencySlider extends LitElement {
           background: var(--color-primary);
           border: 2px solid var(--color-bg-dark);
           cursor: pointer;
+          box-shadow:
+            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
+            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
         }
       `,
     ];

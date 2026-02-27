@@ -206,7 +206,7 @@ class Board extends LitElement {
       <div class="board-info">
         <div class="phase">${phase}</div>
         ${this.renderCommunityCards(cards)}
-        ${this.hand
+        ${this.hand && this.hand.phase !== "waiting"
           ? html`<div class="pot">
               <phg-chips .amount=${this.hand.pot}></phg-chips>
               Pot: ${formatCurrency(this.hand.pot)}

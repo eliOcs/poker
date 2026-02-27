@@ -285,8 +285,8 @@ describe("game-tick", () => {
   describe("tick constants", () => {
     it("should have correct default values", () => {
       assert.strictEqual(DISCONNECT_TICKS, 5);
-      assert.strictEqual(CLOCK_WAIT_TICKS, 60);
-      assert.strictEqual(CLOCK_DURATION_TICKS, 30);
+      assert.strictEqual(CLOCK_WAIT_TICKS, 15);
+      assert.strictEqual(CLOCK_DURATION_TICKS, 60);
     });
   });
 

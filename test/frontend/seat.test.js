@@ -8,6 +8,7 @@ import {
   mockFoldedSeat,
   mockAllInSeat,
   mockEmptySeat,
+  mockOpponentSeat,
   mockOccupiedSeatWithName,
 } from "./setup.js";
 
@@ -164,6 +165,63 @@ describe("phg-seat", () => {
         expect(hiddenCount).to.equal(2);
       }
     }
+  });
+
+  it("does not raise cards for opponent with hidden cards", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockOccupiedSeat,
+        { ...mockOpponentSeat, cards: ["??", "??"] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[1].updateComplete;
+    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    expect(holeCards.classList.contains("revealed")).to.be.false;
+  });
+
+  it("raises cards when opponent shows first card only", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockOccupiedSeat,
+        { ...mockOpponentSeat, cards: ["As", "??"] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[1].updateComplete;
+    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    expect(holeCards.classList.contains("revealed")).to.be.true;
+  });
+
+  it("raises cards when opponent shows second card only", async () => {
+    element.game = createMockGameState({
+      seats: [
+        mockOccupiedSeat,
+        { ...mockOpponentSeat, cards: ["??", "Kh"] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[1].updateComplete;
+    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    expect(holeCards.classList.contains("revealed")).to.be.true;
   });
 
   it("applies .folded class when seat.folded is true", async () => {

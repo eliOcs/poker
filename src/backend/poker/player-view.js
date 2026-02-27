@@ -44,6 +44,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @typedef {object} ActionCall
  * @property {'call'} action
  * @property {Cents} amount
+ * @property {boolean} allIn
  */
 
 /**
@@ -154,6 +155,9 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {string|null} handRank
  * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
  * @property {number|null} bustedPosition - Tournament finishing position (null if not busted)
+ * @property {import('./pre-action.js').PreAction|null} [preAction] - Pre-selected action (own seat only)
+ * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
+ * @property {string|null} [emote] - Transient emote emoji
  */
 
 /**
@@ -441,7 +445,6 @@ function getWaitingPhaseActions(seat, game) {
   if (canStart) {
     actions.push({ action: "start" });
   }
-  actions.push({ action: "sitOut" });
   if (game.handNumber === 0) actions.push({ action: "share" });
   return actions.concat(showActions);
 }
@@ -477,7 +480,11 @@ function addBasicActions(actions, toCall, playerStack) {
     actions.push({ action: "check" });
   }
   if (toCall > 0 && playerStack > 0) {
-    actions.push({ action: "call", amount: Math.min(toCall, playerStack) });
+    actions.push({
+      action: "call",
+      amount: Math.min(toCall, playerStack),
+      allIn: playerStack <= toCall,
+    });
   }
   if (toCall > 0) {
     actions.push({ action: "fold" });
@@ -602,9 +609,6 @@ function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
 }
 
 function addFoldedActions(game, seat, actions) {
-  if (seat.folded && !seat.sittingOut) {
-    actions.push({ action: "sitOut" });
-  }
   return actions.concat(getShowCardsActions(seat, game));
 }
 
@@ -640,6 +644,57 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   }
 
   return actions.concat(getBettingActions(seat, game, seatIndex));
+}
+
+/**
+ * Creates a view for an occupied seat
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {number} index
+ * @param {number} playerSeatIndex
+ * @param {Game} game
+ * @returns {ViewSeatOccupied}
+ */
+function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
+  const revealAllCards = shouldRevealAllCards(
+    seat,
+    index,
+    playerSeatIndex,
+    game,
+  );
+  const isOwnSeat = index === playerSeatIndex;
+
+  // Calculate hand rank only for visible cards of non-folded players
+  const handRank =
+    revealAllCards && !seat.folded
+      ? calculateHandRank(seat.cards, game.board?.cards || [])
+      : null;
+
+  return {
+    empty: false,
+    player: seat.player,
+    stack: seat.stack,
+    bet: seat.bet,
+    folded: seat.folded,
+    allIn: seat.allIn,
+    sittingOut: seat.sittingOut,
+    disconnected: seat.disconnected,
+    cards: getCardsForView(seat, revealAllCards, isOwnSeat),
+    actions: getAvailableActions(game, index, playerSeatIndex),
+    isCurrentPlayer: index === playerSeatIndex,
+    isActing: index === game.hand?.actingSeat,
+    lastAction: seat.lastAction,
+    handResult: seat.handResult,
+    handRank,
+    winningCards: seat.winningCards,
+    bustedPosition: seat.bustedPosition,
+    ...(isOwnSeat
+      ? {
+          preAction: seat.preAction || null,
+          pendingSitOut: seat.pendingSitOut || false,
+        }
+      : {}),
+    emote: seat.emote || null,
+  };
 }
 
 /**
@@ -698,41 +753,7 @@ export default function playerView(game, player) {
           actions: getAvailableActions(game, index, playerSeatIndex),
         };
       }
-
-      const revealAllCards = shouldRevealAllCards(
-        seat,
-        index,
-        playerSeatIndex,
-        game,
-      );
-      const isOwnSeat = index === playerSeatIndex;
-
-      // Calculate hand rank only for visible cards of non-folded players
-      const handRank =
-        revealAllCards && !seat.folded
-          ? calculateHandRank(seat.cards, game.board?.cards || [])
-          : null;
-
-      return {
-        empty: false,
-        player: seat.player,
-        stack: seat.stack,
-        bet: seat.bet,
-        folded: seat.folded,
-        allIn: seat.allIn,
-        sittingOut: seat.sittingOut,
-        disconnected: seat.disconnected,
-        cards: getCardsForView(seat, revealAllCards, isOwnSeat),
-        actions: getAvailableActions(game, index, playerSeatIndex),
-        isCurrentPlayer: index === playerSeatIndex,
-        isActing: index === game.hand?.actingSeat,
-        lastAction: seat.lastAction,
-        handResult: seat.handResult,
-        handRank,
-        winningCards: seat.winningCards,
-        bustedPosition: seat.bustedPosition,
-        emote: seat.emote || null,
-      };
+      return createOccupiedSeatView(seat, index, playerSeatIndex, game);
     }),
   };
 }
