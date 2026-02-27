@@ -98,6 +98,7 @@ class Board extends LitElement {
           color: var(--color-primary);
           text-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
           margin-bottom: var(--space-md);
+          text-align: center;
         }
 
         .tournament-winner-name {

@@ -219,6 +219,16 @@ export const gameStyles = css`
     color: var(--color-fg-medium);
   }
 
+  .info-cell {
+    white-space: nowrap;
+  }
+
+  @media (width < 800px) {
+    .info-size {
+      display: none;
+    }
+  }
+
   .info-cell + .info-cell::before {
     content: "|";
     margin-right: var(--space-sm);
