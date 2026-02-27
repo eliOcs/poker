@@ -36,6 +36,26 @@ resource "aws_ecr_repository" "poker" {
   }
 }
 
+# ECR Lifecycle Policy — keep only the latest 10 images
+resource "aws_ecr_lifecycle_policy" "poker" {
+  repository = aws_ecr_repository.poker.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Keep only the latest 10 images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "imageCountMoreThan"
+        countNumber = 10
+      }
+      action = {
+        type = "expire"
+      }
+    }]
+  })
+}
+
 # Security Group
 resource "aws_security_group" "poker" {
   name        = "poker-sg"
