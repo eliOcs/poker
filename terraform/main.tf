@@ -108,31 +108,11 @@ resource "aws_key_pair" "poker" {
   public_key = file(var.ssh_public_key_path)
 }
 
-# Get latest Ubuntu 24.04 ARM64 AMI
-data "aws_ami" "ubuntu_arm" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["arm64"]
-  }
-}
-
 # EC2 Instance (Graviton t4g.small)
+# AMI: Ubuntu 24.04 ARM64 (eu-central-1)
 resource "aws_instance" "poker" {
-  ami                    = data.aws_ami.ubuntu_arm.id
-  instance_type          = "t4g.small"
+  ami                    = "ami-0df5c15a5f998e2ab"
+  instance_type          = "t4g.micro"
   key_name               = aws_key_pair.poker.key_name
   vpc_security_group_ids = [aws_security_group.poker.id]
   subnet_id              = data.aws_subnets.default.ids[0]
