@@ -1,29 +1,28 @@
 # To do
 
+- keyboard short cuts for buttons on desktop: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/kbd, inspiration fizzy
 - on your turn player card border animated
 - Dealer button out of player card
-- Sit out require confirmation
-- Emote panel close if click outside
-- When a player shows cards they should be raised not to be hidden by the player container
 - Vibrate API if availble to announce turn
 - Ready button to skip the break
 - Larger suit icon
 - Bounties
 - Announcements chat
-- top right icons bigger and even buttons if space is avaiable
-- action panel fixed in size
 - Ready button and then start
 - history in a new tab (in desktop)
 - history tab guest players should be able to see cards if shown
 - when sit out shows waiting for your turn
-- Sit out toggle
 - show the level structure and other tournament details (next break)
 - Allow different currencys USD, EUR and BTC
 - Avatar creator: wii style but pixel art
-- Chat: to talk to players but also announcements: shows who won the hand, blind announcments
-- More betting buttons: pot bet, etc
-- add chips when betting UI
 - show past games on home page, hands played and net win/loss
+- In cash games add option to refill/top up
+- Poker club: invite members, members notified of events.
+- Seasons: allow grouping games into a seasson to get aggregate results
+- Inspiration Chess.com - "Learn poker"
+- Inspiration Chess.com - "Hand review"
+- Inspiration Chess.com - "Play coach"
+- Inspiration Chess.com - "Ranked Poker"
 
 ## Hand Rank modal [WIP]
 
@@ -46,13 +45,6 @@
 - tournament lobby
 - then multiple games/tables generated
 - players moved when tables get too small
-
-- Poker club: invite members, members notified of events.
-- Seasons: allow grouping games into a seasson to get aggregate results
-- Inspiration Chess.com - "Learn poker"
-- Inspiration Chess.com - "Hand review"
-- Inspiration Chess.com - "Play coach"
-- Inspiration Chess.com - "Ranked Poker"
 
 # Not right now
 
