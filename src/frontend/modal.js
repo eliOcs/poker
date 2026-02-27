@@ -83,6 +83,9 @@ class Modal extends LitElement {
     super.connectedCallback();
     this.boundHandleKeydown = this.handleKeydown.bind(this);
     window.addEventListener("keydown", this.boundHandleKeydown);
+    this.updateComplete.then(() => {
+      this.querySelector("[autofocus]")?.focus();
+    });
   }
 
   disconnectedCallback() {

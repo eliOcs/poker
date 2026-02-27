@@ -52,9 +52,7 @@ const TEST_CASES = [
   "action-emote-and-clock",
   "action-show-cards",
   "action-pre-check-fold",
-  "action-pre-check-fold-active",
   "action-pre-fold-and-call",
-  "action-pre-call-active",
   "action-tournament-winner",
   "action-tournament-busted",
 

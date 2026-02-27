@@ -43,6 +43,12 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(emoteBubble).toBeVisible();
     await expect(emoteBubble).toHaveText("😎");
 
+    // P2 also sends a chat message
+    await player2.chat("nice hand");
+    const chatBubble = player2.mySeat.locator(".chat-bubble");
+    await expect(chatBubble).toBeVisible();
+    await expect(chatBubble).toHaveText("nice hand");
+
     await player1.act("call");
     await player2.act("check");
 

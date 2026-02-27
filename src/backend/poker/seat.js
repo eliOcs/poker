@@ -39,6 +39,7 @@
  * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
  * @property {import('./pre-action.js').PreAction|null} preAction - Pre-selected action for when turn arrives
  * @property {string|null} [emote] - Transient emote emoji (set and cleared during broadcast)
+ * @property {string|null} [chat] - Transient chat message (set and cleared during broadcast)
  */
 
 /**

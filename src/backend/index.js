@@ -245,6 +245,40 @@ server.on("upgrade", async function upgrade(request, socket, head) {
 });
 
 /**
+ * Handles social actions (emote/chat) — set on seat, broadcast, then clear
+ * @param {Game} game
+ * @param {UserType} user
+ * @param {'emote'|'chat'} action
+ * @param {Record<string, unknown>} args
+ * @param {(gameId: string) => void} broadcastGameState
+ * @param {string} gameId
+ */
+function handleSocialAction(
+  game,
+  user,
+  action,
+  args,
+  broadcastGameState,
+  gameId,
+) {
+  const player = Player.fromUser(user);
+  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+  if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
+    const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+      game.seats[seatIndex]
+    );
+    if (action === "emote") {
+      seat.emote = /** @type {string} */ (args.emoji);
+    } else {
+      seat.chat = String(args.message || "");
+    }
+    broadcastGameState(gameId);
+    seat.emote = null;
+    seat.chat = null;
+  }
+}
+
+/**
  * Handles preAction/clearPreAction messages
  * @param {Game} game
  * @param {UserType} user
@@ -388,15 +422,16 @@ wss.on(
         ...args,
       });
 
-      // Handle emote action separately — no game logic, just broadcast
-      if (action === "emote") {
-        const player = Player.fromUser(user);
-        const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-        if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-          game.seats[seatIndex].emote = args.emoji;
-          broadcastGameState(gameId);
-          game.seats[seatIndex].emote = null;
-        }
+      // Handle social actions (emote/chat) — no game logic, just broadcast
+      if (action === "emote" || action === "chat") {
+        handleSocialAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameState,
+          gameId,
+        );
         emitLog(log);
         return;
       }

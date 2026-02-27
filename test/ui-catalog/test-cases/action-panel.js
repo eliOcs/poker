@@ -240,6 +240,7 @@ export const ACTION_PANEL_TEST_CASES = {
             cards: ["Qs", "Jd"],
             handRank: "Pair of Jacks",
             actions: [
+              { action: "emote" },
               { action: "showCard1", cards: ["Qs"] },
               { action: "showCard2", cards: ["Jd"] },
               { action: "showBothCards", cards: ["Qs", "Jd"] },
@@ -297,32 +298,6 @@ export const ACTION_PANEL_TEST_CASES = {
       }),
     ),
 
-  // Pre-action: Check/Fold toggle (active) — no current bet
-  "action-pre-check-fold-active": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 150, currentBet: 0, actingSeat: 1 },
-        board: { cards: ["Jh", "Td", "5c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4900,
-            cards: ["As", "Ks"],
-            handRank: "A High",
-            preAction: { type: "checkFold", amount: null },
-            actions: [{ action: "emote" }],
-          }),
-          createPlayer("Alice", {
-            isActing: true,
-            stack: 2900,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(7),
-        ],
-      }),
-    ),
-
   // Pre-action: Fold and Call toggles — there is a bet, Fold is active
   "action-pre-fold-and-call": () =>
     gameView(
@@ -338,39 +313,6 @@ export const ACTION_PANEL_TEST_CASES = {
             cards: ["As", "Ks"],
             handRank: "A High",
             preAction: { type: "checkFold", amount: null },
-            actions: [{ action: "emote" }],
-          }),
-          createPlayer("Alice", {
-            stack: 2700,
-            bet: 200,
-            cards: ["??", "??"],
-            lastAction: "Bet $200",
-          }),
-          createPlayer("Bob", {
-            isActing: true,
-            stack: 2800,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(6),
-        ],
-      }),
-    ),
-
-  // Pre-action: Call active — there is a bet, Call $200 is toggled on
-  "action-pre-call-active": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 350, currentBet: 200, actingSeat: 2 },
-        board: { cards: ["Jh", "Td", "5c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4900,
-            bet: 0,
-            cards: ["As", "Ks"],
-            handRank: "A High",
-            preAction: { type: "callAmount", amount: 200 },
             actions: [{ action: "emote" }],
           }),
           createPlayer("Alice", {

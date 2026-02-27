@@ -35,7 +35,13 @@ export const gameStyles = css`
 
   #container {
     position: absolute;
-    inset: 0 0 160px;
+    inset: 0 var(--space-sm) 160px;
+  }
+
+  @media (width >= 800px) {
+    #container {
+      inset: 0 0 160px;
+    }
   }
 
   @media (width >= 800px) and (height >= 840px) {
@@ -291,6 +297,27 @@ export const gameStyles = css`
     position: absolute;
     z-index: 10;
     pointer-events: none;
+  }
+
+  .chat-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .chat-input-container textarea {
+    width: 100%;
+    min-height: 2.8em;
+    padding: var(--space-md);
+    font-family: inherit;
+    font-size: var(--font-md);
+    line-height: 2;
+    background: var(--color-bg-medium);
+    color: var(--color-fg-white);
+    border: 2px solid var(--color-fg-muted);
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
   }
 
   .emote-grid {

@@ -127,7 +127,12 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote|ActionShare} PlayerAction
+ * @typedef {object} ActionChat
+ * @property {'chat'} action
+ */
+
+/**
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote|ActionShare|ActionChat} PlayerAction
  */
 
 /**
@@ -158,6 +163,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {import('./pre-action.js').PreAction|null} [preAction] - Pre-selected action (own seat only)
  * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
  * @property {string|null} [emote] - Transient emote emoji
+ * @property {string|null} [chat] - Transient chat message
  */
 
 /**
@@ -633,6 +639,7 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
 
   if (game.hand?.actingSeat !== seatIndex) {
     actions.push({ action: "emote" });
+    actions.push({ action: "chat" });
   }
 
   if (game.hand?.phase === "waiting") {
@@ -694,6 +701,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
         }
       : {}),
     emote: seat.emote || null,
+    chat: seat.chat,
   };
 }
 

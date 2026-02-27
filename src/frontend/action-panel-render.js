@@ -326,6 +326,21 @@ function renderEmoteButton(panel) {
   >`;
 }
 
+function renderChatButton(panel) {
+  return html`<phg-button
+    variant="secondary"
+    full-width
+    @click=${() =>
+      panel.dispatchEvent(
+        new CustomEvent("open-chat", {
+          bubbles: true,
+          composed: true,
+        }),
+      )}
+    >Chat</phg-button
+  >`;
+}
+
 function preActionToggle(panel, isActive, setAction) {
   return () =>
     panel.sendAction(isActive ? { action: "clearPreAction" } : setAction);
@@ -358,7 +373,7 @@ const checkedSvg = html`<svg
   <rect x="15" y="8" width="2" height="2" fill="currentColor" />
 </svg>`;
 
-function renderPreActionNoBet(panel) {
+function renderPreActionNoBet(panel, callClock) {
   const isActive = panel.preAction?.type === "checkFold";
   return html`
     <div class="action-row">
@@ -374,11 +389,12 @@ function renderPreActionNoBet(panel) {
           >${isActive ? checkedSvg : uncheckedSvg} Check / Fold</span
         ></phg-button
       >
+      ${callClock}
     </div>
   `;
 }
 
-function renderPreActionWithBet(panel) {
+function renderPreActionWithBet(panel, callClock) {
   const toCall = panel.currentBet - panel.myBet;
   const callAmount = Math.min(toCall, panel.myStack);
   const isFoldActive = panel.preAction?.type === "checkFold";
@@ -417,32 +433,33 @@ function renderPreActionWithBet(panel) {
           ></span
         ></phg-button
       >
+      ${callClock}
     </div>
   `;
 }
 
-function renderPreActionButtons(panel) {
+function renderPreActionButtons(panel, callClock) {
   if (panel.isActing || !panel.inHand) return null;
   const toCall = panel.currentBet - panel.myBet;
   return toCall === 0
-    ? renderPreActionNoBet(panel)
-    : renderPreActionWithBet(panel);
+    ? renderPreActionNoBet(panel, callClock)
+    : renderPreActionWithBet(panel, callClock);
 }
 
 function renderWaitingActions(panel, actionMap) {
   const simple = renderSimpleActions(panel, actionMap);
   const showButtons = renderShowButtons(panel, actionMap);
-  if (simple) return html`${simple}${showButtons}`;
+  const socialRow = actionMap.emote
+    ? html`<div class="action-row">
+        ${renderEmoteButton(panel)}${renderChatButton(panel)}
+      </div>`
+    : "";
+  if (simple) return html`${simple}${showButtons}${socialRow}`;
 
-  const preActions = renderPreActionButtons(panel);
-  const buttons = [];
-  if (actionMap.emote) buttons.push(renderEmoteButton(panel));
-  if (actionMap.callClock) buttons.push(renderCallClockButton(panel));
-  if (preActions || buttons.length > 0)
-    return html`${preActions}
-    ${buttons.length > 0 ? html`<div class="action-row">${buttons}</div>` : ""}
-    ${showButtons}`;
-  return showButtons;
+  const callClock = actionMap.callClock ? renderCallClockButton(panel) : "";
+  const preActions = renderPreActionButtons(panel, callClock);
+  if (preActions) return html`${preActions}${showButtons}${socialRow}`;
+  return html`${showButtons}${socialRow}`;
 }
 
 function renderStart(panel, actionMap) {
@@ -450,6 +467,7 @@ function renderStart(panel, actionMap) {
   return html`
     <div class="action-row">
       ${actionMap.emote ? renderEmoteButton(panel) : ""}
+      ${actionMap.chat ? renderChatButton(panel) : ""}
       ${actionMap.start
         ? html`<phg-button
             variant="primary"

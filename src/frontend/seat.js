@@ -256,6 +256,62 @@ class Seat extends LitElement {
             transform: translateX(-50%) translateY(-1.5em) scale(1);
           }
         }
+
+        .chat-bubble {
+          position: absolute;
+          bottom: calc(100% + 0.6em);
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: var(--font-sm);
+          z-index: 2;
+          pointer-events: none;
+          animation: chat-float 3s ease-out forwards;
+          background: #f0f0f0;
+          color: #0f0f1a;
+          padding: 6px 8px;
+          width: 14ch;
+          overflow-wrap: break-word;
+          border-radius: 0.4em;
+          border: 3px solid var(--color-bg-dark);
+          box-shadow:
+            3px 3px 0 var(--color-bg-dark),
+            inset -2px -2px 0 rgba(0, 0, 0, 0.1),
+            inset 2px 2px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .chat-bubble::after {
+          content: "";
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border: 0.563em solid transparent;
+          border-top-color: #f0f0f0;
+          border-bottom: 0;
+          margin-left: -0.563em;
+          margin-bottom: -0.563em;
+          filter: drop-shadow(2px 2px 0 var(--color-bg-dark));
+        }
+
+        @keyframes chat-float {
+          0% {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.5);
+          }
+          10% {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+          }
+          70% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0) scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-1em) scale(1);
+          }
+        }
       `,
       seatBetStyles,
     ];
@@ -282,6 +338,8 @@ class Seat extends LitElement {
     this.hideBet = false;
     this._activeEmote = null;
     this._emoteTimer = null;
+    this._activeChat = null;
+    this._chatTimer = null;
   }
 
   /**
@@ -327,6 +385,21 @@ class Seat extends LitElement {
         this.requestUpdate();
         this._emoteTimer = setTimeout(() => {
           this._activeEmote = null;
+          this.requestUpdate();
+        }, 3000);
+      });
+    }
+
+    // Trigger chat bubble when chat arrives
+    if (this.seat?.chat) {
+      clearTimeout(this._chatTimer);
+      this._activeChat = null;
+      this.requestUpdate();
+      requestAnimationFrame(() => {
+        this._activeChat = this.seat?.chat;
+        this.requestUpdate();
+        this._chatTimer = setTimeout(() => {
+          this._activeChat = null;
           this.requestUpdate();
         }, 3000);
       });
@@ -465,6 +538,9 @@ class Seat extends LitElement {
     return html`
       ${this._activeEmote
         ? html`<div class="emote-bubble">${this._activeEmote}</div>`
+        : ""}
+      ${this._activeChat
+        ? html`<div class="chat-bubble">${this._activeChat}</div>`
         : ""}
       ${this._renderDealerButton()}
       <div class="player-info">

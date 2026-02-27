@@ -15,27 +15,14 @@ import {
   animateBetCollection,
 } from "./bet-collection.js";
 import { renderDrawer } from "./drawer.js";
+import {
+  renderRankingModal,
+  renderSettingsModal,
+  renderEmoteModal,
+  renderChatModal,
+} from "./game-modals.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
-
-const EMOJIS = [
-  "🤣",
-  "😍",
-  "😘",
-  "😏",
-  "🤑",
-  "😎",
-  "🫠",
-  "🤨",
-  "🙄",
-  "🤯",
-  "🥶",
-  "🥱",
-  "🥺",
-  "😭",
-  "😡",
-  "💩",
-];
 
 class Game extends LitElement {
   static get styles() {
@@ -50,13 +37,12 @@ class Game extends LitElement {
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
       showEmotePicker: { type: Boolean },
+      showChat: { type: Boolean },
       volume: { type: Number },
       _drawerOpen: { type: Boolean, state: true },
       _copied: { type: Boolean, state: true },
     };
   }
-
-  static volumeSteps = [0, 0.25, 0.75, 1];
 
   constructor() {
     super();
@@ -66,6 +52,7 @@ class Game extends LitElement {
     this.showSettings = false;
     this.showRanking = false;
     this.showEmotePicker = false;
+    this.showChat = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
     this._drawerOpen = false;
     this._copied = false;
@@ -187,6 +174,21 @@ class Game extends LitElement {
   sendEmote(emoji) {
     this.send({ action: "emote", emoji });
     this.showEmotePicker = false;
+  }
+
+  openChat() {
+    this.showChat = true;
+  }
+
+  closeChat() {
+    this.showChat = false;
+  }
+
+  sendChat(message) {
+    const trimmed = message.trim();
+    if (!trimmed) return;
+    this.send({ action: "chat", message: trimmed });
+    this.showChat = false;
   }
 
   _getSitOutState() {
@@ -370,77 +372,6 @@ class Game extends LitElement {
     return html`<div id="info-bar">${cells}</div>`;
   }
 
-  _renderRankingModal() {
-    if (!this.showRanking) return "";
-    return html`<phg-modal title="Table Ranking" @close=${this.closeRanking}
-      ><phg-ranking-panel
-        .rankings=${this.game?.rankings || []}
-        .tournament=${this.game?.tournament}
-      ></phg-ranking-panel
-    ></phg-modal>`;
-  }
-
-  _renderVolumeSlider() {
-    const labels = ["Off", "25%", "75%", "100%"];
-    return html`
-      <label>Sound Volume</label>
-      <div class="volume-slider">
-        ${Game.volumeSteps.map(
-          (v, i) => html`
-            <button
-              class=${this.volume === v ? "active" : ""}
-              @click=${() => this.setVolume(v)}
-            >
-              ${labels[i]}
-            </button>
-          `,
-        )}
-      </div>
-    `;
-  }
-
-  _renderSettingsModal() {
-    if (!this.showSettings) return "";
-    return html`
-      <phg-modal title="Settings" @close=${this.closeSettings}>
-        <div class="settings-content">
-          <label>Name</label>
-          <input
-            id="name-input"
-            type="text"
-            placeholder="Enter your name"
-            maxlength="20"
-            .value=${this.getCurrentPlayerName()}
-            @keydown=${(e) => e.key === "Enter" && this.saveSettings()}
-          />
-          ${this._renderVolumeSlider()}
-          <div class="buttons">
-            <phg-button variant="secondary" @click=${this.closeSettings}
-              >Cancel</phg-button
-            >
-            <phg-button variant="success" @click=${this.saveSettings}
-              >Save</phg-button
-            >
-          </div>
-        </div>
-      </phg-modal>
-    `;
-  }
-
-  _renderEmoteModal() {
-    if (!this.showEmotePicker) return "";
-    return html`<phg-modal title="Emote" @close=${this.closeEmotePicker}>
-      <div class="emote-grid">
-        ${EMOJIS.map(
-          (emoji) =>
-            html`<button @click=${() => this.sendEmote(emoji)}>
-              ${emoji}
-            </button>`,
-        )}
-      </div>
-    </phg-modal>`;
-  }
-
   _isInHand(seatIndex) {
     if (seatIndex === -1) return false;
     const seat = this.game.seats[seatIndex];
@@ -483,6 +414,7 @@ class Game extends LitElement {
       .inHand=${pre.inHand}
       @game-action=${this.handleGameAction}
       @open-emote-picker=${this.openEmotePicker}
+      @open-chat=${this.openChat}
     ></phg-action-panel>`;
   }
 
@@ -535,8 +467,9 @@ class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${this._renderInfoBar()} ${this._renderRankingModal()}
-        ${this._renderSettingsModal()} ${this._renderEmoteModal()}
+        ${this._renderInfoBar()} ${renderRankingModal(this)}
+        ${renderSettingsModal(this)} ${renderEmoteModal(this)}
+        ${renderChatModal(this)}
       </div>
     `;
   }

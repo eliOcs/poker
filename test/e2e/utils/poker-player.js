@@ -358,6 +358,17 @@ export class PokerPlayer {
   }
 
   /**
+   * Send a chat message via the chat modal
+   * @param {string} message - The message to send
+   */
+  async chat(message) {
+    await this.actionPanel.getByRole("button", { name: "Chat" }).click();
+    const modal = this.game.locator("phg-modal[title='Chat']");
+    await modal.locator("textarea").fill(message);
+    await modal.getByRole("button", { name: "Send" }).click();
+  }
+
+  /**
    * Get current phase from the board UI
    * @returns {Promise<string>}
    */
