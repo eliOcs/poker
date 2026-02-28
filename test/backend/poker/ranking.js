@@ -282,5 +282,52 @@ describe("ranking", () => {
       assert.equal(rankings[3].stack, 0);
       assert.equal(rankings[3].netWinnings, -1000);
     });
+
+    it("should order busted players by bustedPosition, not seat order", () => {
+      game.tournament = { active: true, buyIn: 500 };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Mosk" }, 10000);
+      game.seats[1] = Seat.occupied({ id: "p2", name: "Elio" }, 0);
+      game.seats[3] = Seat.occupied({ id: "p3", name: "Sb" }, 0);
+      game.seats[5] = Seat.occupied({ id: "p4", name: "Canas" }, 0);
+
+      game.seats[1].bustedPosition = 3;
+      game.seats[3].bustedPosition = 4;
+      game.seats[5].bustedPosition = 2;
+
+      const rankings = Ranking.computeRankings(game);
+
+      assert.equal(rankings[0].playerId, "p1");
+      assert.equal(rankings[1].playerId, "p4");
+      assert.equal(rankings[2].playerId, "p2");
+      assert.equal(rankings[3].playerId, "p3");
+    });
+
+    it("should award 2nd-place payout to player with bustedPosition = 2", () => {
+      game.tournament = { active: true, buyIn: 1000 };
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Mosk" }, 10000);
+      game.seats[1] = Seat.occupied({ id: "p2", name: "Elio" }, 0);
+      game.seats[2] = Seat.occupied({ id: "p3", name: "Sb" }, 0);
+      game.seats[3] = Seat.occupied({ id: "p4", name: "P4" }, 0);
+      game.seats[4] = Seat.occupied({ id: "p5", name: "P5" }, 0);
+      game.seats[5] = Seat.occupied({ id: "p6", name: "Canas" }, 0);
+
+      game.seats[1].bustedPosition = 4;
+      game.seats[2].bustedPosition = 6;
+      game.seats[3].bustedPosition = 5;
+      game.seats[4].bustedPosition = 3;
+      game.seats[5].bustedPosition = 2;
+
+      const rankings = Ranking.computeRankings(game);
+
+      // 6 players => 80/20 payout: 1st=+3800 net, 2nd=+200 net, others=-1000 net
+      assert.equal(rankings[0].playerId, "p1");
+      assert.equal(rankings[0].netWinnings, 3800);
+      assert.equal(rankings[1].playerId, "p6");
+      assert.equal(rankings[1].netWinnings, 200);
+      assert.equal(rankings[2].netWinnings, -1000);
+      assert.equal(rankings[3].netWinnings, -1000);
+      assert.equal(rankings[4].netWinnings, -1000);
+      assert.equal(rankings[5].netWinnings, -1000);
+    });
   });
 });

@@ -12,11 +12,45 @@ import { calculatePrizes } from "../../shared/tournament.js";
  * @property {string} playerId - Player ID
  * @property {string|undefined} playerName - Player display name
  * @property {Cents} stack - Current stack
+ * @property {number|null} bustedPosition - Tournament finishing position (null if still alive)
  * @property {Cents} totalBuyIn - Total buy-ins
  * @property {Cents} netWinnings - Current stack minus total buy-ins
  * @property {number} handsPlayed - Number of hands played
  * @property {number|null} winRate - BB/100 win rate (null if < 10 hands)
  */
+
+/**
+ * Tournament ranking comparator.
+ * Non-busted players rank ahead of busted players.
+ * Busted players are ordered by bustedPosition (2nd before 3rd, etc).
+ * @param {PlayerRanking} a
+ * @param {PlayerRanking} b
+ * @returns {number}
+ */
+function compareTournamentRankings(a, b) {
+  const aBusted = a.bustedPosition != null;
+  const bBusted = b.bustedPosition != null;
+  const aPosition = a.bustedPosition;
+  const bPosition = b.bustedPosition;
+
+  if (
+    aBusted &&
+    bBusted &&
+    aPosition != null &&
+    bPosition != null &&
+    aPosition !== bPosition
+  ) {
+    return aPosition - bPosition;
+  } else if (aBusted !== bBusted) {
+    return aBusted ? 1 : -1;
+  }
+
+  if (a.stack !== b.stack) {
+    return b.stack - a.stack;
+  }
+
+  return a.seatIndex - b.seatIndex;
+}
 
 /**
  * Computes player rankings for the game
@@ -47,6 +81,7 @@ export function computeRankings(game) {
       playerId: occupiedSeat.player.id,
       playerName: occupiedSeat.player.name,
       stack: occupiedSeat.stack,
+      bustedPosition: occupiedSeat.bustedPosition,
       totalBuyIn: occupiedSeat.totalBuyIn,
       netWinnings,
       handsPlayed: occupiedSeat.handsPlayed,
@@ -54,10 +89,10 @@ export function computeRankings(game) {
     });
   }
 
-  // Tournaments: sort by stack (chip leader first)
+  // Tournaments: sort by alive stack, then busted finish position
   // Cash games: sort by net winnings (highest first)
   if (game.tournament?.active) {
-    rankings.sort((a, b) => b.stack - a.stack);
+    rankings.sort(compareTournamentRankings);
 
     const prizes = calculatePrizes(rankings.length, game.tournament.buyIn);
     const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
