@@ -66,10 +66,7 @@ function renderBuyIn(panel, action) {
               amount: bbCount,
             })}
         >
-          <span class="stacked"
-            ><span>Buy In</span
-            ><span class="amount">${formatCurrency(stack)}</span></span
-          >
+          <span class="stacked">Buy In ${formatCurrency(stack)}</span>
         </phg-button>
       </div>
     </div>
@@ -165,10 +162,8 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
               seat: panel.seatIndex,
             })}
           ><span class="stacked"
-            ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
-            ><span class="amount"
-              >${formatCurrency(actionMap.call.amount)}</span
-            ></span
+            >${actionMap.call.allIn ? "All-In" : "Call"}
+            ${formatCurrency(actionMap.call.amount)}</span
           ></phg-button
         >`
       : null}
@@ -187,8 +182,8 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
         )}
     >
       <span class="stacked"
-        ><span>${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}</span
-        ><span class="amount">${formatCurrency(currentValue)}</span></span
+        >${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}
+        ${formatCurrency(currentValue)}</span
       >
     </phg-button>
   `;
@@ -254,10 +249,8 @@ function renderSimpleActions(panel, actionMap) {
             seat: panel.seatIndex,
           })}
         ><span class="stacked"
-          ><span>${actionMap.call.allIn ? "All-In" : "Call"}</span
-          ><span class="amount"
-            >${formatCurrency(actionMap.call.amount)}</span
-          ></span
+          >${actionMap.call.allIn ? "All-In" : "Call"}
+          ${formatCurrency(actionMap.call.amount)}</span
         ></phg-button
       >`,
     );
@@ -346,32 +339,15 @@ function preActionToggle(panel, isActive, setAction) {
     panel.sendAction(isActive ? { action: "clearPreAction" } : setAction);
 }
 
-const uncheckedSvg = html`<svg
-  class="pre-action-check"
-  viewBox="0 0 24 24"
-  fill="none"
->
-  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
-  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
-  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
-  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
-</svg>`;
-
-const checkedSvg = html`<svg
-  class="pre-action-check"
-  viewBox="0 0 24 24"
-  fill="none"
->
-  <rect x="4" y="2" width="16" height="2" fill="currentColor" />
-  <rect x="4" y="20" width="16" height="2" fill="currentColor" />
-  <rect x="2" y="4" width="2" height="16" fill="currentColor" />
-  <rect x="20" y="4" width="2" height="16" fill="currentColor" />
-  <rect x="7" y="12" width="2" height="2" fill="currentColor" />
-  <rect x="9" y="14" width="2" height="2" fill="currentColor" />
-  <rect x="11" y="12" width="2" height="2" fill="currentColor" />
-  <rect x="13" y="10" width="2" height="2" fill="currentColor" />
-  <rect x="15" y="8" width="2" height="2" fill="currentColor" />
-</svg>`;
+function preActionCheckbox(isChecked) {
+  return html`<input
+    class="pre-action-checkbox"
+    type="checkbox"
+    .checked=${isChecked}
+    disabled
+    aria-hidden="true"
+  />`;
+}
 
 function renderPreActionNoBet(panel, callClock) {
   const isActive = panel.preAction?.type === "checkFold";
@@ -386,7 +362,7 @@ function renderPreActionNoBet(panel, callClock) {
           type: "checkFold",
         })}
         ><span class="pre-action-label"
-          >${isActive ? checkedSvg : uncheckedSvg} Check / Fold</span
+          >${preActionCheckbox(isActive)} Check / Fold</span
         ></phg-button
       >
       ${callClock}
@@ -413,7 +389,7 @@ function renderPreActionWithBet(panel, callClock) {
           type: "checkFold",
         })}
         ><span class="pre-action-label"
-          >${isFoldActive ? checkedSvg : uncheckedSvg} Fold</span
+          >${preActionCheckbox(isFoldActive)} Fold</span
         ></phg-button
       >
       <phg-button
@@ -426,11 +402,8 @@ function renderPreActionWithBet(panel, callClock) {
           amount: callAmount,
         })}
         ><span class="pre-action-label"
-          >${isCallActive ? checkedSvg : uncheckedSvg}
-          <span class="stacked"
-            ><span>Call</span
-            ><span class="amount">${formatCurrency(callAmount)}</span></span
-          ></span
+          >${preActionCheckbox(isCallActive)}
+          <span class="stacked">Call ${formatCurrency(callAmount)}</span></span
         ></phg-button
       >
       ${callClock}

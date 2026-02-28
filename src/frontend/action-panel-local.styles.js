@@ -40,12 +40,39 @@ export const actionPanelExtraStyles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
   }
 
-  .pre-action-check {
+  .pre-action-checkbox {
+    appearance: none;
     width: 14px;
     height: 14px;
+    margin: 0;
     flex-shrink: 0;
+    color: var(--color-fg-white);
+    border: 2px solid currentcolor;
+    border-radius: 2px;
+    background: transparent;
+    display: grid;
+    place-content: center;
+    pointer-events: none;
+  }
+
+  .pre-action-checkbox::before {
+    content: "";
+    width: 4px;
+    height: 8px;
+    border-right: 3px solid currentcolor;
+    border-bottom: 3px solid currentcolor;
+    transform: rotate(45deg) scale(0);
+    transform-origin: center;
+  }
+
+  .pre-action-checkbox:checked::before {
+    transform: rotate(45deg) scale(1);
+  }
+
+  .pre-action-checkbox:disabled {
+    opacity: 1;
   }
 `;

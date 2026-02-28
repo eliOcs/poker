@@ -193,15 +193,12 @@ export const actionPanelStyles = css`
     width: 100%;
   }
 
-  .action-row .amount {
-    font-size: var(--font-md);
-  }
-
   .stacked {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
+    display: block;
+    max-width: 100%;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.4;
   }
 
   .waiting {
