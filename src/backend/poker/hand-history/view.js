@@ -246,6 +246,52 @@ function getBoardCards(hand) {
   return boardCards;
 }
 
+const contributionActions = new Set([
+  "Post SB",
+  "Post BB",
+  "Post Ante",
+  "Bet",
+  "Raise",
+  "Call",
+]);
+
+/**
+ * Builds contributions map from cumulative per-round action amounts.
+ * OHH actions store a player's total committed amount for the round, so we
+ * sum only the per-action delta within each round.
+ * @param {HandRound[]} rounds
+ * @param {(amount: number) => Cents} normalizeAmount
+ * @returns {Map<string, Cents>}
+ */
+function buildContributionsByPlayer(rounds, normalizeAmount) {
+  /** @type {Map<string, Cents>} */
+  const contributions = new Map();
+
+  for (const round of rounds) {
+    /** @type {Map<string, Cents>} */
+    const roundTotals = new Map();
+
+    for (const action of round.actions) {
+      if (
+        !contributionActions.has(action.action) ||
+        action.amount === undefined
+      ) {
+        continue;
+      }
+
+      const actionAmount = normalizeAmount(action.amount);
+      const previousTotal = roundTotals.get(action.player_id) || 0;
+      const delta = Math.max(0, actionAmount - previousTotal);
+      roundTotals.set(action.player_id, Math.max(previousTotal, actionAmount));
+
+      const current = contributions.get(action.player_id) || 0;
+      contributions.set(action.player_id, current + delta);
+    }
+  }
+
+  return contributions;
+}
+
 /**
  * Calculates a player's net result (winnings - contributions)
  * @param {OHHHand} hand
@@ -253,27 +299,10 @@ function getBoardCards(hand) {
  * @returns {Cents}
  */
 function calculateNetResult(hand, playerId) {
-  const contributionActions = new Set([
-    "Post SB",
-    "Post BB",
-    "Post Ante",
-    "Bet",
-    "Raise",
-    "Call",
-  ]);
-
-  let contributions = 0;
-  for (const round of hand.rounds) {
-    for (const action of round.actions) {
-      if (
-        action.player_id === playerId &&
-        contributionActions.has(action.action) &&
-        action.amount
-      ) {
-        contributions += toCents(action.amount);
-      }
-    }
-  }
+  const contributions =
+    buildContributionsByPlayer(hand.rounds, (amount) => toCents(amount)).get(
+      playerId,
+    ) || 0;
 
   let winnings = 0;
   for (const pot of hand.pots) {
@@ -434,26 +463,7 @@ function buildWinAmountsMap(hand) {
  * @returns {Map<string, Cents>}
  */
 function buildContributionsMap(hand) {
-  const contributionActions = new Set([
-    "Post SB",
-    "Post BB",
-    "Post Ante",
-    "Bet",
-    "Raise",
-    "Call",
-  ]);
-
-  /** @type {Map<string, Cents>} */
-  const contributions = new Map();
-  for (const round of hand.rounds) {
-    for (const action of round.actions) {
-      if (contributionActions.has(action.action) && action.amount) {
-        const current = contributions.get(action.player_id) || 0;
-        contributions.set(action.player_id, current + action.amount);
-      }
-    }
-  }
-  return contributions;
+  return buildContributionsByPlayer(hand.rounds, (amount) => amount);
 }
 
 /**

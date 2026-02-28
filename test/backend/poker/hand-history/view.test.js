@@ -519,7 +519,7 @@ describe("hand-history-view", function () {
                 action_number: 4,
                 player_id: "player2",
                 action: "Call",
-                amount: 100,
+                amount: 150,
               },
             ],
           },
@@ -539,9 +539,9 @@ describe("hand-history-view", function () {
       const filtered = HandHistory.filterHandForPlayer(hand, "player1");
       const view = HandHistory.getHandView(filtered, "player1");
 
-      // Player 1: contributed $175, won $300 → net +$125 (12500 cents)
-      assert.strictEqual(view.seats[0].netResult, 12500);
-      assert.strictEqual(view.seats[0].endingStack, 112500);
+      // Player 1: contributed $150, won $300 → net +$150 (15000 cents)
+      assert.strictEqual(view.seats[0].netResult, 15000);
+      assert.strictEqual(view.seats[0].endingStack, 115000);
 
       // Player 2: contributed $150, won $0 → net -$150 (-15000 cents)
       assert.strictEqual(view.seats[1].netResult, -15000);
