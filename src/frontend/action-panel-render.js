@@ -378,7 +378,7 @@ function renderPreActionNoBet(panel, callClock) {
   return html`
     <div class="action-row">
       <phg-button
-        variant="success"
+        variant="danger"
         full-width
         pre-action
         @click=${preActionToggle(panel, isActive, {
