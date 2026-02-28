@@ -91,7 +91,6 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {NodeJS.Timeout|null} tickTimer - Unified game tick timer (1 second interval)
  * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
  * @property {number} actingTicks - Ticks the current player has been acting (for call clock availability)
- * @property {number} disconnectedActingTicks - Ticks a disconnected player has been acting (for auto-fold)
  * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
  * @property {TournamentState|null} tournament - Tournament state (null for cash games)
  * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
@@ -163,7 +162,6 @@ export function create({
     tickTimer: null,
     winnerMessage: null,
     actingTicks: 0,
-    disconnectedActingTicks: 0,
     clockTicks: 0,
     tournament: null,
     runout: null,

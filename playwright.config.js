@@ -5,9 +5,9 @@ const E2E_PORT = 8444;
 
 export default defineConfig({
   testDir: "./test/e2e",
-  timeout: 30000,
+  timeout: 60000,
   retries: 0,
-  workers: 1, // Serial execution for poker games
+  workers: 1,
   reporter: "list",
 
   use: {

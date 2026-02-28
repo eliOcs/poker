@@ -616,6 +616,16 @@ function addFoldedActions(game, seat, actions) {
   return actions.concat(getShowCardsActions(seat, game));
 }
 
+function getNotActingActions(game, seat, actions) {
+  if (seat.sittingOut) {
+    const cost = seat.missedBigBlind
+      ? Math.min(game.blinds.big, seat.stack)
+      : 0;
+    actions.push({ action: "sitIn", cost });
+  }
+  return addFoldedActions(game, seat, actions);
+}
+
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const seat = game.seats[seatIndex];
 
@@ -645,7 +655,7 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   }
 
   if (game.hand?.actingSeat !== seatIndex) {
-    return addFoldedActions(game, seat, actions);
+    return getNotActingActions(game, seat, actions);
   }
 
   return actions.concat(getBettingActions(seat, game, seatIndex));

@@ -14,7 +14,6 @@ import * as TournamentTick from "./tournament-tick.js";
  */
 
 // Tick thresholds (in number of ticks, typically 1 tick = 1 second)
-export const DISCONNECT_TICKS = 5; // Auto-fold after 5 ticks when disconnected
 export const CLOCK_WAIT_TICKS = 15; // "Call Clock" available after 15 ticks
 export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
 
@@ -23,7 +22,7 @@ export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
  * @property {boolean} shouldBroadcast - Whether to broadcast state to clients
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number|null} autoActionSeat - Seat index to auto-action (check/fold), or null
- * @property {'disconnect'|'clock'|null} autoActionReason - Why auto-action triggered
+ * @property {'clock'|null} autoActionReason - Why auto-action triggered
  * @property {boolean} tournamentLevelChanged - Whether tournament blind level changed
  * @property {boolean} tournamentBreakStarted - Whether tournament break started
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
@@ -46,23 +45,6 @@ function handleCountdown(game, result) {
   if (game.countdown <= 0) {
     game.countdown = null;
     result.startHand = true;
-  }
-}
-
-/**
- * Handles disconnect auto-action check
- * @param {Game} game
- * @param {number} actingSeat
- * @param {TickResult} result
- */
-function handleDisconnectAutoAction(game, actingSeat, result) {
-  const seat = game.seats[actingSeat];
-  if (seat.empty || !seat.disconnected) return;
-
-  game.disconnectedActingTicks += 1;
-  if (game.disconnectedActingTicks >= DISCONNECT_TICKS) {
-    result.autoActionSeat = actingSeat;
-    result.autoActionReason = "disconnect";
   }
 }
 
@@ -146,7 +128,6 @@ function handleActingTick(game, result) {
 
   if (isActing) {
     game.actingTicks += 1;
-    handleDisconnectAutoAction(game, actingSeat, result);
     handleClockExpiry(game, actingSeat, result);
     result.shouldBroadcast = true;
   }
@@ -245,7 +226,6 @@ export function shouldTickBeRunning(game) {
  */
 export function resetActingTicks(game) {
   game.actingTicks = 0;
-  game.disconnectedActingTicks = 0;
   game.clockTicks = 0;
 }
 

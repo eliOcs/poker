@@ -369,6 +369,15 @@ export class PokerPlayer {
   }
 
   /**
+   * Click the "Call the clock" button
+   */
+  async callClock() {
+    await this.actionPanel
+      .getByRole("button", { name: "Call the clock" })
+      .click();
+  }
+
+  /**
    * Get current phase from the board UI
    * @returns {Promise<string>}
    */

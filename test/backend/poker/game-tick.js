@@ -8,7 +8,6 @@ import {
   resetActingTicks,
   startClockTicks,
   isClockCallable,
-  DISCONNECT_TICKS,
   CLOCK_WAIT_TICKS,
   CLOCK_DURATION_TICKS,
 } from "../../../src/backend/poker/game-tick.js";
@@ -74,53 +73,6 @@ describe("game-tick", () => {
 
         tick(game);
         assert.strictEqual(game.actingTicks, 0);
-      });
-    });
-
-    describe("disconnect timeout", () => {
-      beforeEach(() => {
-        Betting.startBettingRound(game, "flop");
-      });
-
-      it("should trigger auto-action when disconnected player reaches timeout", () => {
-        const actingSeat = game.hand.actingSeat;
-        game.seats[actingSeat].disconnected = true;
-        game.disconnectedActingTicks = DISCONNECT_TICKS - 1;
-
-        const result = tick(game);
-
-        assert.strictEqual(result.autoActionSeat, actingSeat);
-        assert.strictEqual(result.autoActionReason, "disconnect");
-      });
-
-      it("should not trigger auto-action if disconnect timeout not reached", () => {
-        const actingSeat = game.hand.actingSeat;
-        game.seats[actingSeat].disconnected = true;
-        game.disconnectedActingTicks = DISCONNECT_TICKS - 2;
-
-        const result = tick(game);
-
-        assert.strictEqual(result.autoActionSeat, null);
-      });
-
-      it("should not trigger auto-action if player is connected", () => {
-        game.disconnectedActingTicks = 0;
-
-        const result = tick(game);
-
-        assert.strictEqual(result.autoActionSeat, null);
-      });
-
-      it("should increment disconnectedActingTicks when player is disconnected", () => {
-        const actingSeat = game.hand.actingSeat;
-        game.seats[actingSeat].disconnected = true;
-        game.disconnectedActingTicks = 0;
-
-        tick(game);
-        assert.strictEqual(game.disconnectedActingTicks, 1);
-
-        tick(game);
-        assert.strictEqual(game.disconnectedActingTicks, 2);
       });
     });
 
@@ -238,13 +190,11 @@ describe("game-tick", () => {
   describe("resetActingTicks", () => {
     it("should reset all tick counters", () => {
       game.actingTicks = 10;
-      game.disconnectedActingTicks = 5;
       game.clockTicks = 15;
 
       resetActingTicks(game);
 
       assert.strictEqual(game.actingTicks, 0);
-      assert.strictEqual(game.disconnectedActingTicks, 0);
       assert.strictEqual(game.clockTicks, 0);
     });
   });
@@ -284,7 +234,6 @@ describe("game-tick", () => {
 
   describe("tick constants", () => {
     it("should have correct default values", () => {
-      assert.strictEqual(DISCONNECT_TICKS, 5);
       assert.strictEqual(CLOCK_WAIT_TICKS, 15);
       assert.strictEqual(CLOCK_DURATION_TICKS, 60);
     });
@@ -294,11 +243,6 @@ describe("game-tick", () => {
     it("should initialize actingTicks as 0", () => {
       const newGame = Game.create();
       assert.strictEqual(newGame.actingTicks, 0);
-    });
-
-    it("should initialize disconnectedActingTicks as 0", () => {
-      const newGame = Game.create();
-      assert.strictEqual(newGame.disconnectedActingTicks, 0);
     });
 
     it("should initialize clockTicks as 0", () => {

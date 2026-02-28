@@ -417,11 +417,6 @@ wss.on(
       );
       seat.disconnected = false;
 
-      // Reset disconnect tick counter if this was the disconnected acting player
-      if (seatIndex === game.hand?.actingSeat) {
-        game.disconnectedActingTicks = 0;
-      }
-
       // Notify other players that this player reconnected
       broadcastGameState(gameId);
     }

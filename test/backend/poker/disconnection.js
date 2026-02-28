@@ -1,6 +1,5 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
-import * as Betting from "../../../src/backend/poker/betting.js";
 import playerView from "../../../src/backend/poker/player-view.js";
 import { createHeadsUpGame } from "./test-helpers.js";
 
@@ -27,10 +26,6 @@ describe("disconnection handling", () => {
   describe("game tick timer properties", () => {
     it("should initialize tickTimer as null", () => {
       assert.equal(game.tickTimer, null);
-    });
-
-    it("should initialize disconnectedActingTicks as 0", () => {
-      assert.equal(game.disconnectedActingTicks, 0);
     });
   });
 
@@ -62,31 +57,6 @@ describe("disconnection handling", () => {
       game.seats[0].disconnected = false;
       view = playerView(game, { id: "player2" });
       assert.equal(view.seats[0].disconnected, false);
-    });
-  });
-
-  describe("auto-action decision logic", () => {
-    beforeEach(() => {
-      // Start a betting round
-      Betting.startBettingRound(game, "flop");
-    });
-
-    it("can check when bet equals currentBet", () => {
-      // No one has bet yet, so currentBet is 0
-      assert.equal(game.hand.currentBet, 0);
-      assert.equal(game.seats[0].bet, 0);
-      // When bet === currentBet, player can check
-      const canCheck = game.seats[0].bet === game.hand.currentBet;
-      assert.equal(canCheck, true);
-    });
-
-    it("must fold when bet is less than currentBet", () => {
-      // Simulate a bet was made
-      game.hand.currentBet = 100;
-      assert.equal(game.seats[0].bet, 0);
-      // When bet < currentBet, player must fold
-      const mustFold = game.seats[0].bet < game.hand.currentBet;
-      assert.equal(mustFold, true);
     });
   });
 

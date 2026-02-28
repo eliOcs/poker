@@ -106,12 +106,33 @@ describe("sit out", () => {
       assert.throws(() => Actions.sitIn(game, { seat: 1 }), /seat is empty/);
     });
 
-    it("should throw if hand is in progress", () => {
+    it("should allow sit in during a hand", () => {
       game.hand.phase = "preflop";
-      assert.throws(
-        () => Actions.sitIn(game, { seat: 0 }),
-        /only sit in between hands/,
-      );
+      Actions.sitIn(game, { seat: 0 });
+      assert.equal(game.seats[0].sittingOut, false);
+    });
+
+    it("should mark as folded when sitting in during active hand", () => {
+      game.hand.phase = "preflop";
+      Actions.sitIn(game, { seat: 0 });
+      assert.equal(game.seats[0].folded, true);
+    });
+
+    it("should not mark as folded when sitting in during waiting phase", () => {
+      Actions.sitIn(game, { seat: 0 });
+      assert.equal(game.seats[0].folded, false);
+    });
+
+    it("should defer missed blind posting during a hand", () => {
+      game.hand.phase = "flop";
+      game.seats[0].missedBigBlind = true;
+      const stackBefore = game.seats[0].stack;
+
+      Actions.sitIn(game, { seat: 0 });
+
+      assert.equal(game.seats[0].sittingOut, false);
+      assert.equal(game.seats[0].stack, stackBefore);
+      assert.equal(game.seats[0].missedBigBlind, true);
     });
 
     it("should throw if not sitting out", () => {

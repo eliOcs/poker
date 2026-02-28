@@ -569,15 +569,13 @@ export function sitIn(game, { seat }) {
   if (seatObj.empty) {
     throw new Error("seat is empty");
   }
-  if (game.hand?.phase !== "waiting") {
-    throw new Error("can only sit in between hands");
-  }
   if (!seatObj.sittingOut) {
     throw new Error("not sitting out");
   }
 
   // Must post big blind to return if missed (or go all-in if short stacked)
-  if (seatObj.missedBigBlind) {
+  // Only post between hands — during a hand, defer to next hand start
+  if (seatObj.missedBigBlind && game.hand?.phase === "waiting") {
     const postAmount = Math.min(game.blinds.big, seatObj.stack);
     seatObj.stack -= postAmount;
     // The posted blind goes to the pot when the next hand starts
@@ -586,6 +584,14 @@ export function sitIn(game, { seat }) {
   }
 
   seatObj.sittingOut = false;
+
+  // If sitting in during an active hand, mark as folded so the player
+  // isn't included in the current hand's betting rounds (they have no cards).
+  // They'll be properly dealt into the next hand after resetForNewHand.
+  const phase = game.hand?.phase;
+  if (phase && phase !== "waiting") {
+    seatObj.folded = true;
+  }
 }
 
 /**

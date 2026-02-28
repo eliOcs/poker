@@ -175,11 +175,6 @@ describe("call the clock", () => {
       const newGame = Game.create();
       assert.strictEqual(newGame.tickTimer, null);
     });
-
-    it("should initialize disconnectedActingTicks as 0", () => {
-      const newGame = Game.create();
-      assert.strictEqual(newGame.disconnectedActingTicks, 0);
-    });
   });
 
   describe("tick constants", () => {
