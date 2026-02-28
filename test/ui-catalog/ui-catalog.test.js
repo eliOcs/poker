@@ -70,7 +70,6 @@ const TEST_CASES = [
   "game-settings-modal",
 
   // Hand history states
-  "history-loading",
   "history-empty",
   "history-preflop-fold",
   "history-showdown-win",

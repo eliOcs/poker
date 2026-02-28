@@ -68,7 +68,6 @@ export function historyView(props) {
         .gameId=${props.gameId || "test123"}
         .handNumber=${props.handNumber}
         .playerId=${props.playerId}
-        .loading=${props.loading || false}
         .handList=${props.handList || []}
         .hand=${props.hand}
         .view=${props.view}
@@ -80,19 +79,9 @@ export function historyView(props) {
 // === HISTORY TEST CASES ===
 
 const BASE_HISTORY_TEST_CASES = {
-  "history-loading": () => html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-history .gameId=${"test123"} .loading=${true}></phg-history>
-    </div>
-  `,
-
   "history-empty": () => html`
     <div style="height: 100vh; width: 100%;">
-      <phg-history
-        .gameId=${"test123"}
-        .loading=${false}
-        .handList=${[]}
-      ></phg-history>
+      <phg-history .gameId=${"test123"} .handList=${[]}></phg-history>
     </div>
   `,
 
@@ -350,7 +339,6 @@ export const HISTORY_TEST_CASES = {
 export const HISTORY_CATEGORY = {
   name: "Hand History",
   ids: [
-    "history-loading",
     "history-empty",
     "history-preflop-fold",
     "history-showdown-win",

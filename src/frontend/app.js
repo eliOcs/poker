@@ -63,13 +63,6 @@ class App extends LitElement {
     return this._historyListTask.value?.hands ?? [];
   }
 
-  get historyLoading() {
-    return (
-      this._historyListTask.status === TaskStatus.PENDING ||
-      this._historyHandTask.status === TaskStatus.PENDING
-    );
-  }
-
   _historyListTask = new Task(this, {
     task: async ([gameId], { signal }) => {
       if (!gameId) return null;
@@ -284,9 +277,6 @@ class App extends LitElement {
   _renderHistoryView(historyMatch) {
     const listData = this._historyListTask.value;
     const handData = this._historyHandTask.value;
-    const isLoading =
-      this._historyListTask.status === TaskStatus.PENDING ||
-      this._historyHandTask.status === TaskStatus.PENDING;
 
     return html`${this.renderToast()}<phg-history
         .gameId=${historyMatch[1]}
@@ -294,7 +284,6 @@ class App extends LitElement {
         .hand=${handData?.hand}
         .view=${handData?.view}
         .handList=${listData?.hands}
-        .loading=${isLoading}
         .playerId=${listData?.playerId}
       ></phg-history>`;
   }

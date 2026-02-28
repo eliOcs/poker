@@ -402,8 +402,7 @@ export const historyStyles = css`
     color: var(--color-primary);
   }
 
-  /* Loading and error states */
-  .loading,
+  /* Error and empty states */
   .error,
   .empty {
     display: flex;

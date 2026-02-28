@@ -19,7 +19,6 @@ class History extends LitElement {
       hand: { type: Object },
       view: { type: Object },
       handList: { type: Array },
-      loading: { type: Boolean },
       error: { type: String },
       playerId: { type: String },
     };
@@ -32,7 +31,6 @@ class History extends LitElement {
     this.hand = null;
     this.view = null;
     this.handList = null;
-    this.loading = true;
     this.error = null;
     this.playerId = null;
     this.touchStartX = null;
@@ -423,11 +421,6 @@ class History extends LitElement {
   }
 
   render() {
-    // loading: null = initial/fetching, true = explicitly loading, false = done
-    if (this.loading === null || this.loading === true) {
-      return html`<div class="loading">Loading hand history...</div>`;
-    }
-
     if (this.error) {
       return html`
         <div class="error">
@@ -446,7 +439,12 @@ class History extends LitElement {
       `;
     }
 
-    if (!this.handList || this.handList.length === 0) {
+    // History data has not arrived yet.
+    if (!this.handList) {
+      return html``;
+    }
+
+    if (this.handList.length === 0) {
       return html`
         <div class="empty">
           No hands recorded yet
@@ -462,6 +460,11 @@ class History extends LitElement {
           </a>
         </div>
       `;
+    }
+
+    // Waiting for selected hand details; avoid replacing UI with a loading screen.
+    if (!this.hand || !this.view) {
+      return html``;
     }
 
     return html`

@@ -6,7 +6,7 @@
  *
  * Examples:
  *   node test/ui-catalog/debug-ui-catalog.mjs landing-page
- *   node test/ui-catalog/debug-ui-catalog.mjs history-loading
+ *   node test/ui-catalog/debug-ui-catalog.mjs history-empty
  */
 
 import { debugPage } from "../e2e/utils/page-debug.js";

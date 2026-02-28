@@ -11,23 +11,16 @@ import {
 describe("phg-history", () => {
   let element;
 
-  describe("loading state", () => {
-    it("shows loading message initially", async () => {
-      // Mock fetch to return a pending promise so loading state persists
-      const originalFetch = globalThis.fetch;
-      globalThis.fetch = () => new Promise(() => {}); // Never resolves
+  describe("initial state", () => {
+    it("renders no loading overlay while waiting for data", async () => {
+      element = await fixture(
+        html`<phg-history .gameId=${"test123"}></phg-history>`,
+      );
 
-      try {
-        element = await fixture(
-          html`<phg-history .gameId=${"test123"}></phg-history>`,
-        );
-
-        const loading = element.shadowRoot.querySelector(".loading");
-        expect(loading).to.exist;
-        expect(loading.textContent).to.include("Loading");
-      } finally {
-        globalThis.fetch = originalFetch;
-      }
+      const loading = element.shadowRoot.querySelector(".loading");
+      const empty = element.shadowRoot.querySelector(".empty");
+      expect(loading).to.not.exist;
+      expect(empty).to.not.exist;
     });
   });
 
@@ -38,7 +31,6 @@ describe("phg-history", () => {
       );
 
       // Simulate loaded state with empty hand list
-      element.loading = false;
       element.handList = [];
       await element.updateComplete;
 
@@ -51,8 +43,6 @@ describe("phg-history", () => {
       element = await fixture(
         html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = [];
       await element.updateComplete;
 
@@ -66,8 +56,6 @@ describe("phg-history", () => {
       element = await fixture(
         html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
-
-      element.loading = false;
       element.error = "Failed to load hand history";
       await element.updateComplete;
 
@@ -88,7 +76,6 @@ describe("phg-history", () => {
       );
 
       // Simulate loaded state with hand data
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
       element.view = mockOhhHandView;
@@ -169,8 +156,6 @@ describe("phg-history", () => {
           .playerId=${"player1"}
         ></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
       element.view = mockOhhHandView;
@@ -297,8 +282,6 @@ describe("phg-history", () => {
           .playerId=${"player1"}
         ></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
       element.view = mockOhhHandView;
@@ -358,8 +341,6 @@ describe("phg-history", () => {
           .playerId=${"player1"}
         ></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
       element.view = mockOhhHandView;
@@ -461,8 +442,6 @@ describe("phg-history", () => {
           .playerId=${"player1"}
         ></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHand;
       element.view = mockOhhHandView;
@@ -522,8 +501,6 @@ describe("phg-history", () => {
           .playerId=${"player1"}
         ></phg-history>`,
       );
-
-      element.loading = false;
       element.handList = createMockHandList();
       element.hand = mockOhhHandWithShowdown;
       element.view = mockOhhHandWithShowdownView;
