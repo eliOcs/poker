@@ -6,7 +6,7 @@ const UI_CATALOG_WORKERS = Number(process.env.UI_CATALOG_WORKERS || 4);
 export default defineConfig({
   testDir: "./test/ui-catalog",
   testMatch: "*.test.js",
-  timeout: 30000,
+  timeout: 5000,
   retries: 0,
   workers: UI_CATALOG_WORKERS,
   reporter: "list",

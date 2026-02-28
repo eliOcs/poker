@@ -2,11 +2,8 @@
 
 - graph of the evolution
 - background on pot numbers
-- Call the clock with icon
 - allow sit in in the middle of the hand
 - muck button, show at the end of the hand
-- Volver al home page
-- Check box bigger in button
 - keyboard short cuts for buttons on desktop: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/kbd, inspiration fizzy
 - on your turn player card border animated
 - Dealer button out of player card
@@ -17,13 +14,14 @@
 - Announcements chat
 - Ready button and then start
 - history in a new tab (in desktop)
-- history tab guest players should be able to see cards if shown
 - when sit out shows waiting for your turn
 - show the level structure and other tournament details (next break)
 - Allow different currencys USD, EUR and BTC
 - Avatar creator: wii style but pixel art
 - show past games on home page, hands played and net win/loss
 - In cash games add option to refill/top up
+- Rebuy option for sit n gos (1 rebuy)
+- Bounty option in sit n gos (+10% buyin)
 - Poker club: invite members, members notified of events.
 - Seasons: allow grouping games into a seasson to get aggregate results
 - Inspiration Chess.com - "Learn poker"
