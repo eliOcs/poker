@@ -231,7 +231,7 @@ class Card extends LitElement {
 
   _renderStatic() {
     if (this.card === "??") {
-      return html`<span class="card back"></span>`;
+      return html`<span class="card back static"></span>`;
     }
     const rank = this.card.slice(0, -1);
     const suit = this.card.slice(-1);
