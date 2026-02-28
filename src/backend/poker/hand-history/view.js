@@ -1,4 +1,5 @@
 import { toCents } from "./io.js";
+import HandRankings from "../hand-rankings.js";
 
 /**
  * @typedef {import('../types.js').Cents} Cents
@@ -467,6 +468,69 @@ function buildContributionsMap(hand) {
 }
 
 /**
+ * @param {string} card
+ * @returns {card is Card}
+ */
+function isKnownCard(card) {
+  return /^[2-9TJQKA][cdhs]$/.test(card);
+}
+
+/**
+ * @param {string} winnerId
+ * @param {Map<string, string[]>} playerCards
+ * @param {string[]} boardCards
+ * @param {string[]|null} sharedWinningCards
+ * @returns {string[]|null}
+ */
+function getSplitWinnerCards(
+  winnerId,
+  playerCards,
+  boardCards,
+  sharedWinningCards,
+) {
+  const holeCards = (playerCards.get(winnerId) || []).filter(isKnownCard);
+  if (holeCards.length !== 2) return sharedWinningCards;
+  const knownBoardCards = boardCards.filter(isKnownCard);
+  const best = HandRankings.bestCombination([...holeCards, ...knownBoardCards]);
+  return best?.cards || sharedWinningCards;
+}
+
+/**
+ * Builds winner-specific winning cards so split-pot winners can each
+ * highlight their own contributing hole cards.
+ * @param {HandPot|undefined} mainPot
+ * @param {Map<string, string[]>} playerCards
+ * @param {string[]} boardCards
+ * @returns {Map<string, string[]|null>}
+ */
+function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
+  /** @type {Map<string, string[]|null>} */
+  const winnerCards = new Map();
+  const wins = mainPot?.player_wins || [];
+  if (wins.length === 0) return winnerCards;
+
+  const sharedWinningCards = mainPot?.winning_cards || null;
+  if (wins.length === 1) {
+    winnerCards.set(wins[0].player_id, sharedWinningCards);
+    return winnerCards;
+  }
+
+  for (const win of wins) {
+    winnerCards.set(
+      win.player_id,
+      getSplitWinnerCards(
+        win.player_id,
+        playerCards,
+        boardCards,
+        sharedWinningCards,
+      ),
+    );
+  }
+
+  return winnerCards;
+}
+
+/**
  * Builds an occupied seat view
  * Expects player data with starting_stack already converted to cents
  * @param {{ id: string, seat: number, name: string|null, starting_stack: Cents }} player
@@ -474,7 +538,7 @@ function buildContributionsMap(hand) {
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
  * @param {string|null} winningHand
- * @param {string[]|null} winningCards
+ * @param {Map<string, string[]|null>} winnerWinningCards
  * @param {string} playerId
  * @returns {HistoryViewSeat}
  */
@@ -484,7 +548,7 @@ function buildOccupiedSeat(
   winAmounts,
   contributions,
   winningHand,
-  winningCards,
+  winnerWinningCards,
   playerId,
 ) {
   const isCurrentPlayer = player.id === playerId;
@@ -507,7 +571,7 @@ function buildOccupiedSeat(
     endingStack,
     isWinner,
     handRank: isWinner ? winningHand : null,
-    winningCards: isWinner ? winningCards : null,
+    winningCards: isWinner ? (winnerWinningCards.get(player.id) ?? null) : null,
     isCurrentPlayer,
     folded: false,
     allIn: false,
@@ -593,6 +657,12 @@ export function getHandView(hand, playerId) {
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
   const winningCards = mainPot?.winning_cards || null;
+  const { boardCards, lastStreet } = extractBoardInfo(hand);
+  const winnerWinningCards = buildWinnerWinningCardsMap(
+    mainPot,
+    playerCards,
+    boardCards,
+  );
 
   const seats = [];
   for (let i = 0; i < hand.table_size; i++) {
@@ -607,14 +677,12 @@ export function getHandView(hand, playerId) {
           winAmounts,
           contributions,
           winningHand,
-          winningCards,
+          winnerWinningCards,
           playerId,
         ),
       );
     }
   }
-
-  const { boardCards, lastStreet } = extractBoardInfo(hand);
 
   return {
     seats,

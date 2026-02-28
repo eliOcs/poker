@@ -177,9 +177,10 @@ function collectRemainingBets(game) {
 /**
  * Processes pot results and builds winnings/cards maps
  * @param {PotResult[]} results
+ * @param {Map<number, import('./deck.js').Card[]>} handsBySeat
  * @returns {{ winnings: Map<number, number>, winningCardsMap: Map<number, import('./deck.js').Card[]> }}
  */
-function processResults(results) {
+function processResults(results, handsBySeat) {
   const winnings = new Map();
   const winningCardsMap = new Map();
 
@@ -187,9 +188,12 @@ function processResults(results) {
     for (const award of result.awards) {
       winnings.set(award.seat, (winnings.get(award.seat) || 0) + award.amount);
     }
-    if (result.winningCards) {
-      for (const winner of result.winners) {
-        if (!winningCardsMap.has(winner)) {
+    for (const winner of result.winners) {
+      if (!winningCardsMap.has(winner)) {
+        const winnerCards = handsBySeat.get(winner);
+        if (winnerCards) {
+          winningCardsMap.set(winner, winnerCards);
+        } else if (result.winningCards) {
           winningCardsMap.set(winner, result.winningCards);
         }
       }
@@ -243,7 +247,10 @@ export function* showdown(game) {
     yield result;
   }
 
-  const { winnings, winningCardsMap } = processResults(results);
+  const handsBySeat = new Map(
+    getActiveHands(game).map((hand) => [hand.seat, hand.cards]),
+  );
+  const { winnings, winningCardsMap } = processResults(results, handsBySeat);
   setFinalHandResults(game, winnings, winningCardsMap);
 
   return results;
