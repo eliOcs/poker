@@ -1,9 +1,7 @@
-import { html } from "lit";
-import { ifDefined } from "lit/directives/if-defined.js";
+import { svg } from "lit";
 
-export function renderClockIcon(slot) {
-  return html`<svg
-    slot=${ifDefined(slot)}
+export const ICONS = {
+  clock: svg`<svg
     width="1em"
     height="1em"
     viewBox="0 0 24 24"
@@ -27,5 +25,5 @@ export function renderClockIcon(slot) {
     <rect x="20" y="4" width="2" height="2" fill="currentColor" />
     <rect x="11" y="9" width="2" height="4" fill="currentColor" />
     <rect x="13" y="13" width="2" height="2" fill="currentColor" />
-  </svg>`;
-}
+  </svg>`,
+};

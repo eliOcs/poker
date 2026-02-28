@@ -372,7 +372,16 @@ describe("phg-action-panel", () => {
         "Call the clock",
       );
       expect(callClockButton).to.exist;
-      expect(callClockButton.querySelector('svg[slot="icon"]')).to.exist;
+      expect(callClockButton.getAttribute("icon")).to.equal("clock");
+      const callClockIcon =
+        callClockButton.shadowRoot.querySelector(".icon svg");
+      expect(callClockIcon).to.exist;
+      expect(callClockIcon.childElementCount).to.equal(16);
+      expect(
+        [...callClockIcon.children].every(
+          (child) => child.tagName.toLowerCase() === "rect",
+        ),
+      ).to.equal(true);
       const callClockRow = callClockButton.closest(".action-row");
       expect(callClockRow).to.exist;
       expect(callClockRow).to.not.equal(socialRow);

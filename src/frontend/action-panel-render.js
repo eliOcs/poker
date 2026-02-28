@@ -1,5 +1,4 @@
 import { html } from "lit";
-import { renderClockIcon } from "./clock-icon.js";
 import { formatCurrency } from "./styles.js";
 
 function formatPosition(position) {
@@ -264,10 +263,12 @@ function renderSimpleActions(panel, actionMap) {
 function renderCallClockButton(panel) {
   return html`<phg-button
     variant="warning"
+    icon="clock"
     full-width
+    style="--button-icon-size: 24px; --button-content-gap: var(--space-md);"
     @click=${() =>
       panel.sendAction({ action: "callClock", seat: panel.seatIndex })}
-    >${renderClockIcon("icon")}Call the clock</phg-button
+    >Call the clock</phg-button
   >`;
 }
 

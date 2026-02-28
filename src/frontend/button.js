@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles } from "./styles.js";
+import { ICONS as buttonIcons } from "./icons.js";
 
 class Button extends LitElement {
   static get styles() {
@@ -39,8 +40,12 @@ class Button extends LitElement {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: var(--space-sm);
+          gap: var(--button-content-gap, var(--space-sm));
           max-width: 100%;
+        }
+
+        .content.no-icon {
+          gap: 0;
         }
 
         .icon {
@@ -52,9 +57,10 @@ class Button extends LitElement {
         }
 
         .icon svg {
-          width: 16px;
-          height: 16px;
+          width: var(--button-icon-size, 1em);
+          height: var(--button-icon-size, 1em);
           image-rendering: pixelated;
+          display: block;
         }
 
         .label {
@@ -153,26 +159,17 @@ class Button extends LitElement {
       size: { type: String, reflect: true },
       fullWidth: { type: Boolean, attribute: "full-width", reflect: true },
       disabled: { type: Boolean, reflect: true },
-      _hasIcon: { state: true },
+      icon: { type: String, reflect: true },
     };
   }
 
-  constructor() {
-    super();
-    this._hasIcon = false;
-  }
-
-  _handleIconSlotChange(event) {
-    this._hasIcon = event.target.assignedElements({ flatten: true }).length > 0;
-  }
-
   render() {
+    const iconTemplate = this.icon ? buttonIcons[this.icon] : null;
+    const hasIcon = Boolean(iconTemplate);
     return html`
       <button ?disabled=${this.disabled}>
-        <span class="content">
-          <span class="icon" ?hidden=${!this._hasIcon}>
-            <slot name="icon" @slotchange=${this._handleIconSlotChange}></slot>
-          </span>
+        <span class="content ${hasIcon ? "with-icon" : "no-icon"}">
+          ${hasIcon ? html`<span class="icon">${iconTemplate}</span>` : null}
           <span class="label"><slot></slot></span>
         </span>
       </button>

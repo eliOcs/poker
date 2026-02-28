@@ -5,7 +5,7 @@ import {
   formatCurrency,
   seatBetStyles,
 } from "./styles.js";
-import { renderClockIcon } from "./clock-icon.js";
+import { ICONS } from "./icons.js";
 import {
   formatPosition,
   formatHandResult,
@@ -227,6 +227,17 @@ class Seat extends LitElement {
           gap: var(--space-sm);
           font-size: var(--font-md);
           color: var(--color-warning);
+        }
+
+        .clock-countdown-icon {
+          display: inline-flex;
+          line-height: 0;
+        }
+
+        .clock-countdown-icon svg {
+          width: 1.2em;
+          height: 1.2em;
+          display: block;
         }
 
         .clock-countdown.urgent {
@@ -483,11 +494,10 @@ class Seat extends LitElement {
       ? html`<div
           class="clock-countdown ${this._clockRemaining <= 10 ? "urgent" : ""}"
         >
-          <span
-            aria-hidden="true"
-            style="display:inline-flex;line-height:0;font-size:1.2em"
-            >${renderClockIcon()}</span
-          ><span>${this._clockRemaining}s</span>
+          <span class="clock-countdown-icon" aria-hidden="true"
+            >${ICONS.clock}</span
+          >
+          <span>${this._clockRemaining}s</span>
         </div>`
       : "";
   }
