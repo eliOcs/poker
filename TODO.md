@@ -1,5 +1,16 @@
 # To do
 
+- graph of the evolution
+- ranking in tournament order isn't correct
+- background on pot numbers
+- Call the clock with icon
+- allow sit in in the middle of the hand
+- black dot on history when cards not shown https://plutonpoker.com/history/mm5cupumf535/48
+- muck button, show at the end of the hand
+- https://plutonpoker.com/history/mm5cupumf535/4 santi debería tener 0 en stack
+- https://plutonpoker.com/history/mm5cupumf535/5 en amarillo también la j de cañas
+- Volver al home page
+- Check box bigger in button
 - keyboard short cuts for buttons on desktop: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/kbd, inspiration fizzy
 - on your turn player card border animated
 - Dealer button out of player card
@@ -48,6 +59,7 @@
 
 # Not right now
 
+- Posicion en la mesa fija
 - once we start chargin set license to: https://osaasy.dev/
 - sb/bb indicators (more position information)
 - Store hand history as gzip
