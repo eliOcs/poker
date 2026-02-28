@@ -342,9 +342,12 @@ class Seat extends LitElement {
     this._chatTimer = null;
   }
 
-  /**
-   * Returns the clock remaining time in seconds, or null if clock not called
-   */
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    clearTimeout(this._emoteTimer);
+    clearTimeout(this._chatTimer);
+  }
+
   get _clockRemaining() {
     if (this.clockTicks > 0) {
       return Math.max(0, 30 - this.clockTicks);
@@ -373,37 +376,32 @@ class Seat extends LitElement {
         cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
     }
+  }
 
-    // Trigger emote animation when emote arrives
-    if (this.seat?.emote) {
-      clearTimeout(this._emoteTimer);
-      // Clear first to force Lit to recreate the element and restart the animation
-      this._activeEmote = null;
+  _showBubble(value, kind) {
+    const timerKey = kind === "emote" ? "_emoteTimer" : "_chatTimer";
+    const stateKey = kind === "emote" ? "_activeEmote" : "_activeChat";
+    const text = String(value || "").trim();
+    if (!text) return;
+    clearTimeout(this[timerKey]);
+    this[stateKey] = null;
+    this.requestUpdate();
+    requestAnimationFrame(() => {
+      this[stateKey] = text;
       this.requestUpdate();
-      requestAnimationFrame(() => {
-        this._activeEmote = this.seat?.emote;
+      this[timerKey] = setTimeout(() => {
+        this[stateKey] = null;
         this.requestUpdate();
-        this._emoteTimer = setTimeout(() => {
-          this._activeEmote = null;
-          this.requestUpdate();
-        }, 3000);
-      });
-    }
+      }, 3000);
+    });
+  }
 
-    // Trigger chat bubble when chat arrives
-    if (this.seat?.chat) {
-      clearTimeout(this._chatTimer);
-      this._activeChat = null;
-      this.requestUpdate();
-      requestAnimationFrame(() => {
-        this._activeChat = this.seat?.chat;
-        this.requestUpdate();
-        this._chatTimer = setTimeout(() => {
-          this._activeChat = null;
-          this.requestUpdate();
-        }, 3000);
-      });
-    }
+  showEmote(emoji) {
+    this._showBubble(emoji, "emote");
+  }
+
+  showChat(message) {
+    this._showBubble(message, "chat");
   }
 
   handleSit() {
@@ -459,7 +457,6 @@ class Seat extends LitElement {
   }
 
   _renderStatusOrAction() {
-    // Always show busted position, even during showdown
     if (this.seat.bustedPosition != null) {
       return html`<div class="status-label">
         ${this._formatPosition(this.seat.bustedPosition)}
@@ -474,11 +471,9 @@ class Seat extends LitElement {
   }
 
   _renderStackOrResult() {
-    // Don't show stack for busted players (it's always $0)
     if (this.seat.bustedPosition != null) {
       return "";
     }
-    // History view: show net result and ending stack
     if (this.seat.netResult !== undefined) {
       return html`
         <div class="hand-result ${this._getResultClass(this.seat.netResult)}">
@@ -489,7 +484,6 @@ class Seat extends LitElement {
         </div>
       `;
     }
-    // Live view: show hand result (win amount) or current stack
     return this.seat.handResult != null
       ? html`<div
           class="hand-result ${this._getResultClass(this.seat.handResult)}"

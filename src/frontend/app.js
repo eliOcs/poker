@@ -28,6 +28,8 @@ class App extends LitElement {
       user: { type: Object },
       // Game state (managed here, passed to phg-game)
       game: { type: Object },
+      // Latest social websocket message for live game view
+      socialAction: { type: Object },
       gameConnectionStatus: { type: String },
       // History route params (triggers tasks)
       _historyGameId: { state: true },
@@ -43,6 +45,7 @@ class App extends LitElement {
     this.user = null;
     // Game state
     this.game = null;
+    this.socialAction = null;
     this.gameConnectionStatus = "disconnected";
     this._activeGameId = null;
     this._socket = null;
@@ -159,6 +162,7 @@ class App extends LitElement {
 
     this._activeGameId = gameId;
     this.game = null;
+    this.socialAction = null;
     this.gameConnectionStatus = "connecting";
     this._intentionalClose = false;
 
@@ -173,7 +177,10 @@ class App extends LitElement {
 
     this._socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.error) {
+      if (data.type === "social") {
+        if (!this.path.match(/^\/games\/[a-z0-9]+$/)) return;
+        this.socialAction = data;
+      } else if (data.error) {
         this.toast = { message: data.error.message, variant: "error" };
       } else {
         this.game = data;
@@ -218,6 +225,7 @@ class App extends LitElement {
     }
     this._activeGameId = null;
     this.game = null;
+    this.socialAction = null;
     this.gameConnectionStatus = "disconnected";
   }
 
@@ -268,6 +276,7 @@ class App extends LitElement {
     return html`${this.renderToast()}<phg-game
         .gameId=${gameMatch[1]}
         .game=${this.game}
+        .socialAction=${this.socialAction}
         .user=${this.user}
       ></phg-game>`;
   }
@@ -297,6 +306,9 @@ class App extends LitElement {
 
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
+      if (!this.path.match(/^\/games\/[a-z0-9]+$/)) {
+        this.socialAction = null;
+      }
       const historyMatch = this.path.match(
         /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
       );

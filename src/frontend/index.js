@@ -33,6 +33,7 @@ class Game extends LitElement {
     return {
       gameId: { type: String, attribute: "game-id" },
       game: { type: Object },
+      socialAction: { type: Object },
       user: { type: Object },
       showSettings: { type: Boolean },
       showRanking: { type: Boolean },
@@ -48,6 +49,7 @@ class Game extends LitElement {
     super();
     this.gameId = null;
     this.game = null;
+    this.socialAction = null;
     this.user = null;
     this.showSettings = false;
     this.showRanking = false;
@@ -307,10 +309,38 @@ class Game extends LitElement {
     if (container) animateBetCollection(container, sources);
   }
 
-  updated(changedProperties) {
+  _applySocialAction(socialAction) {
+    if (!socialAction || !this.game) return;
+    const seatIndex = Number.parseInt(String(socialAction.seat), 10);
+    if (!Number.isInteger(seatIndex)) return;
+
+    const seatEl = this.shadowRoot?.querySelector(
+      `phg-seat[data-seat="${seatIndex}"]`,
+    );
+    if (!seatEl) return;
+
+    if (socialAction.action === "emote") {
+      seatEl.showEmote?.(socialAction.emoji);
+      return;
+    }
+    if (socialAction.action === "chat") {
+      seatEl.showChat?.(socialAction.message);
+    }
+  }
+
+  _handleVolumeUpdate(changedProperties) {
     if (changedProperties.has("user") && this.user) {
       this._initializeVolumeFromSettings();
     }
+  }
+
+  _handleSocialActionUpdate(changedProperties) {
+    if (changedProperties.has("socialAction") && this.socialAction) {
+      this._applySocialAction(this.socialAction);
+    }
+  }
+
+  _handleGameUpdate(changedProperties) {
     if (!changedProperties.has("game") || !this.game) return;
     const { seatIndex } = this.getMySeatInfo();
     const prev = changedProperties.get("game")?.hand ?? {};
@@ -319,6 +349,12 @@ class Game extends LitElement {
       this._checkTurnSounds(prev, curr);
     }
     this._flushPendingCollection();
+  }
+
+  updated(changedProperties) {
+    this._handleVolumeUpdate(changedProperties);
+    this._handleSocialActionUpdate(changedProperties);
+    this._handleGameUpdate(changedProperties);
   }
 
   getWinningCards() {

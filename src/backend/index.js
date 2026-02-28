@@ -30,17 +30,37 @@ const users = {};
 /** @type {Map<string, Game>} */
 const games = new Map();
 
+/**
+ * @param {string} gameId
+ * @param {(ws: import('ws').WebSocket, conn: { user: UserType, gameId: string }) => void} callback
+ */
+function forEachGameClient(gameId, callback) {
+  for (const [ws, conn] of clientConnections) {
+    if (conn.gameId === gameId && ws.readyState === 1) {
+      callback(ws, conn);
+    }
+  }
+}
+
 /** @param {string} gameId */
 function broadcastGameState(gameId) {
   const game = games.get(gameId);
   if (!game) return;
 
-  for (const [ws, conn] of clientConnections) {
-    if (conn.gameId === gameId && ws.readyState === 1) {
-      const player = Player.fromUser(conn.user);
-      ws.send(JSON.stringify(playerView(game, player), null, 2));
-    }
-  }
+  forEachGameClient(gameId, (ws, conn) => {
+    const player = Player.fromUser(conn.user);
+    ws.send(JSON.stringify(playerView(game, player), null, 2));
+  });
+}
+
+/**
+ * Broadcast a social action message (chat/emote) without mutating game state.
+ * @param {string} gameId
+ * @param {{action: 'chat', seat: number, message: string} | {action: 'emote', seat: number, emoji: string}} socialAction
+ */
+function broadcastSocialAction(gameId, socialAction) {
+  const payload = JSON.stringify({ type: "social", ...socialAction }, null, 2);
+  forEachGameClient(gameId, (ws) => ws.send(payload));
 }
 
 const routes = createRoutes(users, games, broadcastGameState);
@@ -245,12 +265,12 @@ server.on("upgrade", async function upgrade(request, socket, head) {
 });
 
 /**
- * Handles social actions (emote/chat) — set on seat, broadcast, then clear
+ * Handles social actions (emote/chat) by broadcasting a dedicated social event.
  * @param {Game} game
  * @param {UserType} user
  * @param {'emote'|'chat'} action
  * @param {Record<string, unknown>} args
- * @param {(gameId: string) => void} broadcastGameState
+ * @param {(gameId: string, socialAction: {action: 'chat', seat: number, message: string} | {action: 'emote', seat: number, emoji: string}) => void} broadcastSocialAction
  * @param {string} gameId
  */
 function handleSocialAction(
@@ -258,23 +278,31 @@ function handleSocialAction(
   user,
   action,
   args,
-  broadcastGameState,
+  broadcastSocialAction,
   gameId,
 ) {
   const player = Player.fromUser(user);
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
   if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-    const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-      game.seats[seatIndex]
-    );
     if (action === "emote") {
-      seat.emote = /** @type {string} */ (args.emoji);
+      const emoji = String(args.emoji || "").trim();
+      if (!emoji) return;
+      broadcastSocialAction(gameId, {
+        action: "emote",
+        seat: seatIndex,
+        emoji,
+      });
     } else {
-      seat.chat = String(args.message || "");
+      const message = String(args.message || "")
+        .trim()
+        .slice(0, 100);
+      if (!message) return;
+      broadcastSocialAction(gameId, {
+        action: "chat",
+        seat: seatIndex,
+        message,
+      });
     }
-    broadcastGameState(gameId);
-    seat.emote = null;
-    seat.chat = null;
   }
 }
 
@@ -429,7 +457,7 @@ wss.on(
           user,
           action,
           args,
-          broadcastGameState,
+          broadcastSocialAction,
           gameId,
         );
         emitLog(log);

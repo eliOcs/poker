@@ -162,8 +162,6 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number|null} bustedPosition - Tournament finishing position (null if not busted)
  * @property {import('./pre-action.js').PreAction|null} [preAction] - Pre-selected action (own seat only)
  * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
- * @property {string|null} [emote] - Transient emote emoji
- * @property {string|null} [chat] - Transient chat message
  */
 
 /**
@@ -700,8 +698,6 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
           pendingSitOut: seat.pendingSitOut || false,
         }
       : {}),
-    emote: seat.emote,
-    chat: seat.chat,
   };
 }
 
