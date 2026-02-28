@@ -108,6 +108,19 @@ describe("phg-game", () => {
   });
 
   describe("settings", () => {
+    it("shows homepage logo link as the first drawer item", async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const drawerNav = element.shadowRoot.querySelector("#drawer-nav");
+      const firstItem = drawerNav.firstElementChild;
+      expect(firstItem).to.exist;
+      expect(firstItem.matches(".drawer-home-link")).to.be.true;
+      expect(firstItem.getAttribute("href")).to.equal("/");
+      expect(firstItem.getAttribute("target")).to.equal("_blank");
+      expect(firstItem.getAttribute("rel")).to.equal("noopener noreferrer");
+    });
+
     it("shows settings button", async () => {
       element.game = createMockGameState();
       await element.updateComplete;

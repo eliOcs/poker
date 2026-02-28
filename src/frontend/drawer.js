@@ -142,6 +142,15 @@ export function renderDrawer(game) {
       </button>
       <div id="drawer-panel">
         <nav id="drawer-nav">
+          <a
+            class="drawer-home-link"
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open Pluton Poker homepage in a new tab"
+          >
+            <img class="drawer-home-logo" src="/logo.webp" alt="Pluton Poker" />
+          </a>
           <button class="drawer-btn" @click=${game.openSettings}>
             ${iconSettings} Settings
           </button>

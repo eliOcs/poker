@@ -183,6 +183,27 @@ export const gameStyles = css`
     gap: var(--space-sm);
   }
 
+  .drawer-home-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+    margin-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-bg-light);
+    text-decoration: none;
+  }
+
+  .drawer-home-link:hover {
+    background: var(--color-bg-light);
+  }
+
+  .drawer-home-logo {
+    width: 100%;
+    max-width: 140px;
+    height: auto;
+    image-rendering: pixelated;
+  }
+
   .drawer-btn {
     display: flex;
     align-items: center;
