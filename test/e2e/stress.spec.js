@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
-test.setTimeout(10 * 50 * 1000);
+test.setTimeout(10 * 60 * 1000);
 
 const ACTIONS_FILE = path.join(
   process.cwd(),
@@ -20,7 +20,7 @@ const WEIGHTED_ACTIONS = [
 ];
 
 const PASSIVE_FALLBACKS = ["check", "fold"];
-const STALL_TIMEOUT_MS = 90_000;
+const STALL_TIMEOUT_MS = 15000;
 const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
 
 /**

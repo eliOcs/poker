@@ -6,7 +6,7 @@ tags
 coverage
 
 # Hand history data (runtime)
-data/
+/data/
 debug/
 
 # Environment and secrets
