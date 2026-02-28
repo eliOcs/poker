@@ -317,5 +317,76 @@ describe("phg-app", () => {
       ).length;
       expect(listFetches).to.equal(1);
     });
+
+    it("refetches history list on handRecorded websocket event without changing selected hand", async () => {
+      history.replaceState({}, "", "/");
+
+      let handsToReturn = createMockHandList();
+      const fetchedUrls = [];
+
+      globalThis.fetch = async (url) => {
+        fetchedUrls.push(url);
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => ({ id: "user1", name: "Test" }),
+          };
+        }
+        if (url.match(/\/api\/history\/[^/]+$/)) {
+          return {
+            ok: true,
+            json: async () => ({ hands: handsToReturn, playerId: "player1" }),
+          };
+        }
+        if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
+          return {
+            ok: true,
+            json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
+
+      element.path = "/history/testgame123/2";
+      await element.updateComplete;
+
+      await waitUntil(
+        () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/2")),
+        { timeout: 2000 },
+      );
+
+      const initialListFetches = fetchedUrls.filter(
+        (u) => u === "/api/history/testgame123",
+      ).length;
+
+      handsToReturn = [
+        ...handsToReturn,
+        {
+          ...handsToReturn[handsToReturn.length - 1],
+          game_number: "testgame123-4",
+          hand_number: 4,
+        },
+      ];
+
+      const ws = MockWebSocket.instances.at(-1);
+      ws.simulateMessage({
+        type: "history",
+        event: "handRecorded",
+        handNumber: 4,
+      });
+
+      await waitUntil(
+        () =>
+          fetchedUrls.filter((u) => u === "/api/history/testgame123").length >
+          initialListFetches,
+        { timeout: 2000 },
+      );
+
+      expect(element.path).to.equal("/history/testgame123/2");
+      expect(element.historyHandList.map((h) => h.hand_number)).to.include(4);
+    });
   });
 });

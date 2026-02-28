@@ -240,11 +240,26 @@ describe("websocket-handler", () => {
         },
       ];
 
-      processPokerAction(game, player, "sitOut", { seat: 0 }, () => {});
+      let historyEvent = null;
+      const historyEventPromise = new Promise((resolve) => {
+        processPokerAction(
+          game,
+          player,
+          "sitOut",
+          { seat: 0 },
+          () => {},
+          (gameId, handNumber) => {
+            historyEvent = { gameId, handNumber };
+            resolve();
+          },
+        );
+      });
+      await historyEventPromise;
 
       assert.strictEqual(game.countdown, null);
       assert.strictEqual(game.pendingHandHistory, null);
       assert.strictEqual(HandHistory.getCacheSize(), 1);
+      assert.deepStrictEqual(historyEvent, { gameId: game.id, handNumber: 1 });
 
       const hand = await HandHistory.getHand(game.id, 1);
       assert.ok(hand);

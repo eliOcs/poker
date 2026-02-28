@@ -34,6 +34,7 @@ class App extends LitElement {
       // History route params (triggers tasks)
       _historyGameId: { state: true },
       _historyHandNumber: { state: true },
+      _historyListRefreshNonce: { state: true },
     };
   }
 
@@ -52,6 +53,7 @@ class App extends LitElement {
     // History route params
     this._historyGameId = null;
     this._historyHandNumber = null;
+    this._historyListRefreshNonce = 0;
   }
 
   // --- History Tasks ---
@@ -70,7 +72,7 @@ class App extends LitElement {
       if (!res.ok) throw new Error("Failed to load hand history");
       return res.json();
     },
-    args: () => [this._historyGameId],
+    args: () => [this._historyGameId, this._historyListRefreshNonce],
   });
 
   _historyHandTask = new Task(this, {
@@ -173,6 +175,12 @@ class App extends LitElement {
       if (data.type === "social") {
         if (!this.path.match(/^\/games\/[a-z0-9]+$/)) return;
         this.socialAction = data;
+      } else if (
+        data.type === "history" &&
+        data.event === "handRecorded" &&
+        this._isOnHistoryRouteForGame(this._activeGameId)
+      ) {
+        this._historyListRefreshNonce += 1;
       } else if (data.error) {
         this.toast = { message: data.error.message, variant: "error" };
       } else {
@@ -255,6 +263,12 @@ class App extends LitElement {
     if (handNumber === this._historyHandNumber) return;
     history.pushState({}, "", `/history/${this._historyGameId}/${handNumber}`);
     this.path = `/history/${this._historyGameId}/${handNumber}`;
+  }
+
+  _isOnHistoryRouteForGame(gameId) {
+    if (!gameId) return false;
+    const historyMatch = this.path.match(/^\/history\/([a-z0-9]+)(?:\/\d+)?$/);
+    return historyMatch?.[1] === gameId;
   }
 
   _manageConnection(gameId) {

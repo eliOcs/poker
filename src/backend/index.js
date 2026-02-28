@@ -42,14 +42,28 @@ function forEachGameClient(gameId, callback) {
   }
 }
 
+/**
+ * Broadcasts payloads to all connected clients for a game.
+ * @param {string} gameId
+ * @param {(conn: { user: UserType, gameId: string }) => string|null} buildPayload
+ */
+function broadcastToGameClients(gameId, buildPayload) {
+  forEachGameClient(gameId, (ws, conn) => {
+    const payload = buildPayload(conn);
+    if (payload !== null) {
+      ws.send(payload);
+    }
+  });
+}
+
 /** @param {string} gameId */
 function broadcastGameState(gameId) {
   const game = games.get(gameId);
   if (!game) return;
 
-  forEachGameClient(gameId, (ws, conn) => {
+  broadcastToGameClients(gameId, (conn) => {
     const player = Player.fromUser(conn.user);
-    ws.send(JSON.stringify(playerView(game, player), null, 2));
+    return JSON.stringify(playerView(game, player), null, 2);
   });
 }
 
@@ -60,7 +74,25 @@ function broadcastGameState(gameId) {
  */
 function broadcastSocialAction(gameId, socialAction) {
   const payload = JSON.stringify({ type: "social", ...socialAction }, null, 2);
-  forEachGameClient(gameId, (ws) => ws.send(payload));
+  broadcastToGameClients(gameId, () => payload);
+}
+
+/**
+ * Broadcasts a history update event when a hand is persisted.
+ * @param {string} gameId
+ * @param {number} handNumber
+ */
+function broadcastHistoryUpdate(gameId, handNumber) {
+  const payload = JSON.stringify(
+    {
+      type: "history",
+      event: "handRecorded",
+      handNumber,
+    },
+    null,
+    2,
+  );
+  broadcastToGameClients(gameId, () => payload);
 }
 
 const routes = createRoutes(users, games, broadcastGameState);
@@ -407,7 +439,11 @@ wss.on(
       );
 
       closedSeat.disconnected = true;
-      PokerGame.ensureGameTick(closedGame, broadcastGameState);
+      PokerGame.ensureGameTick(
+        closedGame,
+        broadcastGameState,
+        broadcastHistoryUpdate,
+      );
       broadcastGameState(closedGameId);
     });
 
@@ -481,7 +517,14 @@ wss.on(
 
       try {
         const player = Player.fromUser(user);
-        processPokerAction(game, player, action, args, broadcastGameState);
+        processPokerAction(
+          game,
+          player,
+          action,
+          args,
+          broadcastGameState,
+          broadcastHistoryUpdate,
+        );
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         log.context.error = message;
@@ -491,14 +534,18 @@ wss.on(
       }
 
       broadcastGameState(gameId);
-      PokerGame.ensureGameTick(game, broadcastGameState);
+      PokerGame.ensureGameTick(
+        game,
+        broadcastGameState,
+        broadcastHistoryUpdate,
+      );
     });
 
     // Send initial game state
     ws.send(JSON.stringify(playerView(game, player), null, 2));
 
     // Recovered tournaments need ticking resumed after reconnect.
-    PokerGame.ensureGameTick(game, broadcastGameState);
+    PokerGame.ensureGameTick(game, broadcastGameState, broadcastHistoryUpdate);
   },
 );
 
