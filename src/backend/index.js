@@ -20,6 +20,7 @@ import { HttpError } from "./http-error.js";
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
  */
 
 const server = http.createServer();
@@ -93,6 +94,20 @@ function broadcastHistoryUpdate(gameId, handNumber) {
     2,
   );
   broadcastToGameClients(gameId, () => payload);
+}
+
+/**
+ * Dispatches a typed game broadcast message.
+ * @param {BroadcastMessage} message
+ */
+function broadcastGameMessage(message) {
+  if (message.type === "gameState") {
+    broadcastGameState(message.gameId);
+    return;
+  }
+  if (message.type === "history" && message.event === "handRecorded") {
+    broadcastHistoryUpdate(message.gameId, message.handNumber);
+  }
 }
 
 const routes = createRoutes(users, games, broadcastGameState);
@@ -439,11 +454,7 @@ wss.on(
       );
 
       closedSeat.disconnected = true;
-      PokerGame.ensureGameTick(
-        closedGame,
-        broadcastGameState,
-        broadcastHistoryUpdate,
-      );
+      PokerGame.ensureGameTick(closedGame, broadcastGameMessage);
       broadcastGameState(closedGameId);
     });
 
@@ -517,14 +528,7 @@ wss.on(
 
       try {
         const player = Player.fromUser(user);
-        processPokerAction(
-          game,
-          player,
-          action,
-          args,
-          broadcastGameState,
-          broadcastHistoryUpdate,
-        );
+        processPokerAction(game, player, action, args, broadcastGameMessage);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         log.context.error = message;
@@ -533,19 +537,15 @@ wss.on(
         emitLog(log);
       }
 
-      broadcastGameState(gameId);
-      PokerGame.ensureGameTick(
-        game,
-        broadcastGameState,
-        broadcastHistoryUpdate,
-      );
+      broadcastGameMessage({ type: "gameState", gameId });
+      PokerGame.ensureGameTick(game, broadcastGameMessage);
     });
 
     // Send initial game state
     ws.send(JSON.stringify(playerView(game, player), null, 2));
 
     // Recovered tournaments need ticking resumed after reconnect.
-    PokerGame.ensureGameTick(game, broadcastGameState, broadcastHistoryUpdate);
+    PokerGame.ensureGameTick(game, broadcastGameMessage);
   },
 );
 

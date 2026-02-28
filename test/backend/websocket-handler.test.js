@@ -242,17 +242,15 @@ describe("websocket-handler", () => {
 
       let historyEvent = null;
       const historyEventPromise = new Promise((resolve) => {
-        processPokerAction(
-          game,
-          player,
-          "sitOut",
-          { seat: 0 },
-          () => {},
-          (gameId, handNumber) => {
-            historyEvent = { gameId, handNumber };
+        processPokerAction(game, player, "sitOut", { seat: 0 }, (message) => {
+          if (message.type === "history" && message.event === "handRecorded") {
+            historyEvent = {
+              gameId: message.gameId,
+              handNumber: message.handNumber,
+            };
             resolve();
-          },
-        );
+          }
+        });
       });
       await historyEventPromise;
 
