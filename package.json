@@ -33,6 +33,7 @@
     "typecheck": "tsc",
     "validate": "npm run format && npm run lint && npm run typecheck && npm run duplicates && npm run test && npm run test:ui-catalog",
     "fix": "npm run format:fix && npm run lint:fix",
+    "debug:prod:game": "bash scripts/download-prod-game-debug.sh",
     "prepare": "git config core.hooksPath .githooks",
     "deps": "npx madge --image doc/deps-backend.svg src/backend/index.js && npx madge --image doc/deps-frontend.svg src/frontend/app.js"
   },
