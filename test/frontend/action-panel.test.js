@@ -333,5 +333,92 @@ describe("phg-action-panel", () => {
       );
       expect(cards.length).to.equal(4);
     });
+
+    it("keeps Call the clock in a game-action row separate from social actions", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "flop", pot: 10000, currentBet: 5000, actingSeat: 1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            isActing: false,
+            bet: 5000,
+            actions: [
+              { action: "callClock" },
+              { action: "emote" },
+              { action: "chat" },
+            ],
+          },
+          { ...mockOpponentSeat, isActing: true, bet: 5000 },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const socialRow =
+        actionPanel.shadowRoot.querySelector(".social-action-row");
+      expect(socialRow).to.exist;
+      expect(socialRow.textContent).to.include("Emote");
+      expect(socialRow.textContent).to.include("Chat");
+      expect(socialRow.textContent).to.not.include("Call the clock");
+
+      const callClockButton = findButtonByText(
+        actionPanel.shadowRoot,
+        "Call the clock",
+      );
+      expect(callClockButton).to.exist;
+      expect(callClockButton.querySelector('svg[slot="icon"]')).to.exist;
+      const callClockRow = callClockButton.closest(".action-row");
+      expect(callClockRow).to.exist;
+      expect(callClockRow).to.not.equal(socialRow);
+      expect(callClockRow.classList.contains("game-action-row")).to.equal(true);
+    });
+
+    it("keeps Start Game in a game-action row separate from social actions", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            isActing: false,
+            actions: [
+              { action: "start" },
+              { action: "emote" },
+              { action: "chat" },
+            ],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const startButton = findButtonByText(
+        actionPanel.shadowRoot,
+        "Start Game",
+      );
+      expect(startButton).to.exist;
+      const startRow = startButton.closest(".action-row");
+      expect(startRow).to.exist;
+
+      const socialRow =
+        actionPanel.shadowRoot.querySelector(".social-action-row");
+      expect(socialRow).to.exist;
+      expect(startRow).to.not.equal(socialRow);
+      expect(socialRow.textContent).to.include("Emote");
+      expect(socialRow.textContent).to.include("Chat");
+      expect(startRow.classList.contains("game-action-row")).to.equal(true);
+    });
   });
 });

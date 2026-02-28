@@ -19,7 +19,6 @@ class Button extends LitElement {
 
         button {
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: var(--space-md) var(--space-lg);
@@ -34,6 +33,34 @@ class Button extends LitElement {
             3px 3px 0 var(--color-bg-dark),
             inset -2px -2px 0 rgba(0, 0, 0, 0.2),
             inset 2px 2px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .content {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-sm);
+          max-width: 100%;
+        }
+
+        .icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+          flex-shrink: 0;
+        }
+
+        .icon svg {
+          width: 16px;
+          height: 16px;
+          image-rendering: pixelated;
+        }
+
+        .label {
+          display: block;
+          max-width: 100%;
+          text-align: center;
         }
 
         :host([full-width]) button {
@@ -126,13 +153,28 @@ class Button extends LitElement {
       size: { type: String, reflect: true },
       fullWidth: { type: Boolean, attribute: "full-width", reflect: true },
       disabled: { type: Boolean, reflect: true },
+      _hasIcon: { state: true },
     };
+  }
+
+  constructor() {
+    super();
+    this._hasIcon = false;
+  }
+
+  _handleIconSlotChange(event) {
+    this._hasIcon = event.target.assignedElements({ flatten: true }).length > 0;
   }
 
   render() {
     return html`
       <button ?disabled=${this.disabled}>
-        <slot></slot>
+        <span class="content">
+          <span class="icon" ?hidden=${!this._hasIcon}>
+            <slot name="icon" @slotchange=${this._handleIconSlotChange}></slot>
+          </span>
+          <span class="label"><slot></slot></span>
+        </span>
       </button>
     `;
   }

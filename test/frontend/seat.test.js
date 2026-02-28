@@ -118,6 +118,34 @@ describe("phg-seat", () => {
     expect(dealerButton.textContent.trim()).to.equal("D");
   });
 
+  it("renders pixel clock icon with remaining seconds when clock is active", async () => {
+    element.game = createMockGameState({
+      hand: {
+        phase: "preflop",
+        pot: 7500,
+        currentBet: 5000,
+        actingSeat: 0,
+        clockTicks: 15,
+      },
+      seats: [
+        { ...mockOccupiedSeat, isActing: true },
+        { ...mockOpponentSeat, isActing: false },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+        { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await seats[0].updateComplete;
+    const clock = seats[0].shadowRoot.querySelector(".clock-countdown");
+    expect(clock).to.exist;
+    expect(clock.textContent).to.include("15s");
+    expect(clock.querySelector("svg")).to.exist;
+  });
+
   it("renders hole cards for current player", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;

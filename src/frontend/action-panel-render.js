@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { renderClockIcon } from "./clock-icon.js";
 import { formatCurrency } from "./styles.js";
 
 function formatPosition(position) {
@@ -256,7 +257,7 @@ function renderSimpleActions(panel, actionMap) {
     );
   }
   return buttons.length > 0
-    ? html`<div class="action-row">${buttons}</div>`
+    ? html`<div class="action-row game-action-row">${buttons}</div>`
     : null;
 }
 
@@ -266,7 +267,7 @@ function renderCallClockButton(panel) {
     full-width
     @click=${() =>
       panel.sendAction({ action: "callClock", seat: panel.seatIndex })}
-    >Call Clock</phg-button
+    >${renderClockIcon("icon")}Call the clock</phg-button
   >`;
 }
 
@@ -280,7 +281,7 @@ function renderShowButtons(panel, actionMap) {
   if (showActions.length === 0) return null;
 
   return html`
-    <div class="action-row">
+    <div class="action-row game-action-row">
       ${showActions.map(
         (entry) => html`
           <phg-button
@@ -334,6 +335,15 @@ function renderChatButton(panel) {
   >`;
 }
 
+function renderSocialRow(panel, actionMap) {
+  const socialButtons = [];
+  if (actionMap.emote) socialButtons.push(renderEmoteButton(panel));
+  if (actionMap.chat) socialButtons.push(renderChatButton(panel));
+  return socialButtons.length > 0
+    ? html`<div class="action-row social-action-row">${socialButtons}</div>`
+    : null;
+}
+
 function preActionToggle(panel, isActive, setAction) {
   return () =>
     panel.sendAction(isActive ? { action: "clearPreAction" } : setAction);
@@ -352,7 +362,7 @@ function preActionCheckbox(isChecked) {
 function renderPreActionNoBet(panel, callClock) {
   const isActive = panel.preAction?.type === "checkFold";
   return html`
-    <div class="action-row">
+    <div class="action-row game-action-row">
       <phg-button
         variant="danger"
         full-width
@@ -379,7 +389,7 @@ function renderPreActionWithBet(panel, callClock) {
     panel.preAction?.amount === callAmount;
 
   return html`
-    <div class="action-row">
+    <div class="action-row game-action-row">
       <phg-button
         variant="danger"
         full-width
@@ -422,35 +432,33 @@ function renderPreActionButtons(panel, callClock) {
 function renderWaitingActions(panel, actionMap) {
   const simple = renderSimpleActions(panel, actionMap);
   const showButtons = renderShowButtons(panel, actionMap);
-  const socialRow = actionMap.emote
-    ? html`<div class="action-row">
-        ${renderEmoteButton(panel)}${renderChatButton(panel)}
-      </div>`
-    : "";
+  const socialRow = renderSocialRow(panel, actionMap);
   if (simple) return html`${simple}${showButtons}${socialRow}`;
 
   const callClock = actionMap.callClock ? renderCallClockButton(panel) : "";
   const preActions = renderPreActionButtons(panel, callClock);
-  if (preActions) return html`${preActions}${showButtons}${socialRow}`;
-  return html`${showButtons}${socialRow}`;
+  const callClockOnlyRow =
+    !preActions && actionMap.callClock
+      ? html`<div class="action-row game-action-row">
+          ${renderCallClockButton(panel)}
+        </div>`
+      : null;
+  return html`${preActions}${callClockOnlyRow}${showButtons}${socialRow}`;
 }
 
 function renderStart(panel, actionMap) {
   const showButtons = renderShowButtons(panel, actionMap);
+  const socialRow = renderSocialRow(panel, actionMap);
   return html`
-    <div class="action-row">
-      ${actionMap.emote ? renderEmoteButton(panel) : ""}
-      ${actionMap.chat ? renderChatButton(panel) : ""}
-      ${actionMap.start
-        ? html`<phg-button
-            variant="primary"
-            full-width
-            @click=${() => panel.sendAction({ action: "start" })}
-            >Start Game</phg-button
-          >`
-        : ""}
+    <div class="action-row game-action-row">
+      <phg-button
+        variant="primary"
+        full-width
+        @click=${() => panel.sendAction({ action: "start" })}
+        >Start Game</phg-button
+      >
     </div>
-    ${showButtons}
+    ${showButtons}${socialRow}
   `;
 }
 

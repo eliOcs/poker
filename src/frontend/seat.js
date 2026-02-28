@@ -5,6 +5,12 @@ import {
   formatCurrency,
   seatBetStyles,
 } from "./styles.js";
+import { renderClockIcon } from "./clock-icon.js";
+import {
+  formatPosition,
+  formatHandResult,
+  getResultClass,
+} from "./seat-utils.js";
 import "./card.js";
 import "./button.js";
 import "./chips.js";
@@ -421,32 +427,13 @@ class Seat extends LitElement {
     const s = this.seat;
     if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
     if (s.bustedPosition != null) {
-      return { label: this._formatPosition(s.bustedPosition), isStatus: true };
+      return { label: formatPosition(s.bustedPosition), isStatus: true };
     }
     if (s.sittingOut) return { label: "SITTING OUT", isStatus: true };
     if (s.folded) return { label: "FOLDED", isStatus: true };
     if (s.allIn) return { label: "ALL-IN", isStatus: true };
     if (s.lastAction) return { label: s.lastAction, isStatus: false };
     return null;
-  }
-
-  _formatPosition(position) {
-    const suffixes = ["th", "st", "nd", "rd"];
-    const v = position % 100;
-    const suffix = suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0];
-    return `${position}${suffix}`;
-  }
-
-  _formatHandResult(result) {
-    if (result > 0) return `+${formatCurrency(result)}`;
-    if (result < 0) return `-${formatCurrency(Math.abs(result))}`;
-    return formatCurrency(0);
-  }
-
-  _getResultClass(result) {
-    if (result > 0) return "won";
-    if (result < 0) return "lost";
-    return "";
   }
 
   _renderEmptySeat() {
@@ -459,7 +446,7 @@ class Seat extends LitElement {
   _renderStatusOrAction() {
     if (this.seat.bustedPosition != null) {
       return html`<div class="status-label">
-        ${this._formatPosition(this.seat.bustedPosition)}
+        ${formatPosition(this.seat.bustedPosition)}
       </div>`;
     }
     if (this.seat.handResult != null) return "";
@@ -476,8 +463,8 @@ class Seat extends LitElement {
     }
     if (this.seat.netResult !== undefined) {
       return html`
-        <div class="hand-result ${this._getResultClass(this.seat.netResult)}">
-          ${this._formatHandResult(this.seat.netResult)}
+        <div class="hand-result ${getResultClass(this.seat.netResult)}">
+          ${formatHandResult(this.seat.netResult)}
         </div>
         <div class="stack ending-stack">
           ${formatCurrency(this.seat.endingStack)}
@@ -485,16 +472,10 @@ class Seat extends LitElement {
       `;
     }
     return this.seat.handResult != null
-      ? html`<div
-          class="hand-result ${this._getResultClass(this.seat.handResult)}"
-        >
-          ${this._formatHandResult(this.seat.handResult)}
+      ? html`<div class="hand-result ${getResultClass(this.seat.handResult)}">
+          ${formatHandResult(this.seat.handResult)}
         </div>`
       : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`;
-  }
-
-  _areCardsRevealed() {
-    return this.seat.cards?.some((card) => card !== "??") ?? false;
   }
 
   _renderClock() {
@@ -502,7 +483,11 @@ class Seat extends LitElement {
       ? html`<div
           class="clock-countdown ${this._clockRemaining <= 10 ? "urgent" : ""}"
         >
-          <span>⏱</span><span>${this._clockRemaining}s</span>
+          <span
+            aria-hidden="true"
+            style="display:inline-flex;line-height:0;font-size:1.2em"
+            >${renderClockIcon()}</span
+          ><span>${this._clockRemaining}s</span>
         </div>`
       : "";
   }
@@ -510,7 +495,6 @@ class Seat extends LitElement {
   _renderDealerButton() {
     return this.isButton ? html`<span class="dealer-button">D</span>` : "";
   }
-
   _renderHandRank() {
     return this.seat.handRank && !this.seat.lastAction
       ? html`<div class="hand-rank">${this.seat.handRank}</div>`
@@ -544,7 +528,11 @@ class Seat extends LitElement {
       </div>
       ${this._renderStackOrResult()} ${this._renderClock()}
       ${this._renderStatusOrAction()} ${this._renderHandRank()}
-      <div class="hole-cards ${this._areCardsRevealed() ? "revealed" : ""}">
+      <div
+        class="hole-cards ${this.seat.cards?.some((card) => card !== "??")
+          ? "revealed"
+          : ""}"
+      >
         ${this.seat.cards?.map(
           (card) =>
             html`<phg-card
