@@ -16,7 +16,7 @@ import * as Tournament from "../../shared/tournament.js";
 /**
  * @typedef {object} TournamentPlayer
  * @property {string} id - Player ID
- * @property {string|null} name - Player display name
+ * @property {string|undefined} name - Player display name
  * @property {number} seatIndex - Seat index (0-based)
  */
 

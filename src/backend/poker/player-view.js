@@ -696,11 +696,11 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     bustedPosition: seat.bustedPosition,
     ...(isOwnSeat
       ? {
-          preAction: seat.preAction || null,
+          preAction: seat.preAction,
           pendingSitOut: seat.pendingSitOut || false,
         }
       : {}),
-    emote: seat.emote || null,
+    emote: seat.emote,
     chat: seat.chat,
   };
 }

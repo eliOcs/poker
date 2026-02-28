@@ -56,7 +56,10 @@ const cache = new Map();
  */
 function normalizeFromFile(hand) {
   const pots = hand.pots.map((pot) => {
-    return { ...pot, winning_cards: pot.winning_cards ?? undefined };
+    return {
+      ...pot,
+      winning_cards: pot.winning_cards === null ? undefined : pot.winning_cards,
+    };
   });
   return { ...hand, pots };
 }
@@ -69,7 +72,7 @@ function normalizeFromFile(hand) {
 function denormalizeForFile(hand) {
   const pots = hand.pots.map((pot) => ({
     ...pot,
-    winning_cards: pot.winning_cards ?? null,
+    winning_cards: pot.winning_cards === undefined ? null : pot.winning_cards,
   }));
   return { ...hand, pots };
 }
@@ -157,14 +160,14 @@ export function hasInCache(cacheKey) {
  * Gets a hand from cache or file
  * @param {string} gameId
  * @param {number} handNumber
- * @returns {Promise<OHHHand|null>}
+ * @returns {Promise<OHHHand|undefined>}
  */
 export async function getHand(gameId, handNumber) {
   const cacheKey = `${gameId}-${handNumber}`;
 
   // Check cache first
   if (hasInCache(cacheKey)) {
-    return getFromCache(cacheKey) || null;
+    return getFromCache(cacheKey);
   }
 
   // Read from file
@@ -176,7 +179,7 @@ export async function getHand(gameId, handNumber) {
     addToCache(cacheKey, hand);
   }
 
-  return hand || null;
+  return hand;
 }
 
 /**

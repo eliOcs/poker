@@ -264,7 +264,7 @@ class Game extends LitElement {
       return {
         seatIndex: -1,
         actions: [],
-        bustedPosition: null,
+        bustedPosition: undefined,
         isWinner: false,
       };
     }
@@ -273,7 +273,7 @@ class Game extends LitElement {
     return {
       seatIndex,
       actions: seat.actions || [],
-      bustedPosition: seat.bustedPosition || null,
+      bustedPosition: seat.bustedPosition,
       isWinner,
     };
   }
@@ -322,10 +322,8 @@ class Game extends LitElement {
   }
 
   getWinningCards() {
-    return (
-      this.game.seats.find((s) => !s.empty && s.winningCards)?.winningCards ??
-      null
-    );
+    return this.game.seats.find((s) => !s.empty && s.winningCards)
+      ?.winningCards;
   }
 
   _formatTime(seconds) {
@@ -384,7 +382,7 @@ class Game extends LitElement {
     const seat = seatIndex !== -1 ? this.game.seats[seatIndex] : {};
     const hand = this.game.hand || {};
     return {
-      preAction: seat.preAction || null,
+      preAction: seat.preAction,
       currentBet: hand.currentBet || 0,
       myBet: seat.bet || 0,
       myStack: seat.stack || 0,

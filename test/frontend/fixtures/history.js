@@ -362,7 +362,7 @@ export function createMockView(hand, playerId) {
   const winAmounts = buildMockWinAmountsMap(hand);
   const contributions = buildMockContributionsMap(hand);
   const mainPot = hand.pots[0];
-  const winningHand = mainPot?.winning_hand || null;
+  const winningHand = mainPot?.winning_hand;
   const winningCards = mainPot?.winning_cards;
 
   const seats = [];

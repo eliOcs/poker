@@ -77,14 +77,14 @@ describe("store", function () {
       assert.strictEqual(Store.loadUser(null), null);
     });
 
-    it("handles null name", function () {
+    it("normalizes null name from DB to undefined", function () {
       Store.initialize();
 
       const user = { id: "abc123", name: null, settings: { volume: 0.75 } };
       Store.saveUser(user);
 
       const loaded = Store.loadUser("abc123");
-      assert.strictEqual(loaded.name, null);
+      assert.strictEqual(loaded.name, undefined);
     });
 
     it("persists user settings", function () {

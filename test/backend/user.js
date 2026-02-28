@@ -13,10 +13,10 @@ describe("user", function () {
       assert.notEqual(u1.id, u2.id);
     });
 
-    it("creates a user with name set to null", function () {
+    it("creates a user with name set to undefined", function () {
       const u = User.create();
 
-      assert.strictEqual(u.name, null);
+      assert.strictEqual(u.name, undefined);
     });
 
     it("user object has id, name, and settings properties", function () {

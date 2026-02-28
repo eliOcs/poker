@@ -10,7 +10,7 @@ import { calculatePrizes } from "../../shared/tournament.js";
  * @typedef {object} PlayerRanking
  * @property {number} seatIndex - Seat index
  * @property {string} playerId - Player ID
- * @property {string|null} playerName - Player display name
+ * @property {string|undefined} playerName - Player display name
  * @property {Cents} stack - Current stack
  * @property {Cents} totalBuyIn - Total buy-ins
  * @property {Cents} netWinnings - Current stack minus total buy-ins

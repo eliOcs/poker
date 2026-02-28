@@ -399,7 +399,7 @@ export function createRateLimiter({
           retryAfterMs,
           maxActions,
           windowMs,
-          blockedUntil: tracked.blockedUntil || undefined,
+          blockedUntil: tracked.blockedUntil,
         });
         cleanup(now);
         maybeLogStats(now);

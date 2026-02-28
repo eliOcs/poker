@@ -32,16 +32,16 @@ describe("player", function () {
       assert.ok(!("settings" in player));
     });
 
-    it("handles null name", function () {
+    it("handles undefined name", function () {
       const user = {
         id: "user-789",
-        name: null,
+        name: undefined,
         settings: { volume: 0.75 },
       };
 
       const player = Player.fromUser(user);
 
-      assert.strictEqual(player.name, null);
+      assert.strictEqual(player.name, undefined);
     });
   });
 });

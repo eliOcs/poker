@@ -166,7 +166,7 @@ export function startHand(game) {
       recorder.players.push({
         id: seat.player.id,
         seat: i + 1, // OHH uses 1-indexed seats
-        name: seat.player.name,
+        name: seat.player.name ?? null,
         starting_stack: seat.stack + seat.bet, // Include any posted blinds
       });
     }
@@ -363,7 +363,7 @@ export async function finalizeHand(game, potResults = []) {
     winning_hand: pot.winningHand
       ? HandRankings.formatHand(pot.winningHand)
       : null,
-    winning_cards: pot.winningCards || undefined,
+    winning_cards: pot.winningCards ? pot.winningCards : undefined,
     player_wins: pot.awards.map((award) => {
       const seat = /** @type {OccupiedSeat} */ (game.seats[award.seat]);
       return {

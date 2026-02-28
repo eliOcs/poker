@@ -273,8 +273,10 @@ export function createRoutes(users, games, broadcast) {
 
         if (data && typeof data === "object") {
           if ("name" in data) {
-            const name = /** @type {string|null} */ (data.name);
-            user.name = name?.trim().substring(0, 20) || null;
+            user.name = /** @type {string|null|undefined} */ (data.name)
+              ?.trim()
+              .substring(0, 20);
+            if (user.name === "") user.name = undefined;
           }
           if (
             "settings" in data &&

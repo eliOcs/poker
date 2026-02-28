@@ -79,6 +79,7 @@ export function saveUser(user) {
   if (!db) throw new Error("Store not initialized");
 
   const settingsJson = JSON.stringify(user.settings || {});
+  const nameForDb = user.name === undefined ? null : user.name;
   const stmt = db.prepare(`
     INSERT INTO users (id, name, settings, updated_at)
     VALUES (?, ?, ?, datetime('now'))
@@ -87,7 +88,7 @@ export function saveUser(user) {
       settings = excluded.settings,
       updated_at = datetime('now')
   `);
-  stmt.run(user.id, user.name, settingsJson);
+  stmt.run(user.id, nameForDb, settingsJson);
 }
 
 /**
@@ -109,7 +110,7 @@ export function loadUser(id) {
 
   return {
     id: /** @type {Id} */ (row.id),
-    name: /** @type {string|null} */ (row.name),
+    name: row.name === null ? undefined : /** @type {string} */ (row.name),
     settings: { ...DEFAULT_SETTINGS, ...savedSettings },
   };
 }

@@ -7,7 +7,7 @@
 /**
  * @typedef {object} Player
  * @property {Id} id - Player unique identifier
- * @property {string|null} name - Player display name
+ * @property {string|undefined} name - Player display name
  */
 
 /**

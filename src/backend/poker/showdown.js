@@ -219,7 +219,8 @@ function setFinalHandResults(game, winnings, winningCardsMap) {
         seat.handResult = won - seat.totalInvested;
       }
       seat.lastAction = null;
-      seat.winningCards = winningCardsMap.get(i) || null;
+      const winningCards = winningCardsMap.get(i);
+      seat.winningCards = winningCards === undefined ? null : winningCards;
     }
   }
 }

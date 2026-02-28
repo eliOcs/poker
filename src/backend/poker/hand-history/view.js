@@ -539,7 +539,7 @@ function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
  * @param {Map<string, string[]>} playerCards
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
- * @param {string|null} winningHand
+ * @param {string|null|undefined} winningHand
  * @param {Map<string, string[]>} winnerWinningCards
  * @param {string} playerId
  * @returns {HistoryViewSeat}
@@ -627,7 +627,7 @@ function getWinnerDisplayName(players, winnerId) {
 function buildViewWinnerMessage(mainPot, players) {
   if (!mainPot?.player_wins?.length) return null;
 
-  const handRank = mainPot.winning_hand || null;
+  const handRank = mainPot.winning_hand;
   const isSplit = mainPot.player_wins.length > 1;
 
   if (isSplit) {
@@ -657,7 +657,7 @@ export function getHandView(hand, playerId) {
   const winAmounts = buildWinAmountsMap(hand);
   const contributions = buildContributionsMap(hand);
   const mainPot = hand.pots[0];
-  const winningHand = mainPot?.winning_hand || null;
+  const winningHand = mainPot?.winning_hand;
   const winningCards = mainPot?.winning_cards;
   const { boardCards, lastStreet } = extractBoardInfo(hand);
   const winnerWinningCards = buildWinnerWinningCardsMap(

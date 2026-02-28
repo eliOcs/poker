@@ -29,7 +29,7 @@ import * as logger from "../logger.js";
 /**
  * @typedef {object} RecoveredSeatState
  * @property {string} playerId
- * @property {string|null} name
+ * @property {string|undefined} name
  * @property {number} stack
  * @property {number} totalBuyIn
  * @property {number} handsPlayed
@@ -263,7 +263,7 @@ function upsertRecoveredSeat(tracker, player, endingStacks) {
 
   tracker.seatsByIndex.set(seatIndex, {
     playerId,
-    name: player.name ?? null,
+    name: player.name === null ? undefined : player.name,
     stack: endingStacks.get(playerId) ?? startingStack,
     totalBuyIn: tracker.initialStackByPlayer.get(playerId) || startingStack,
     handsPlayed: tracker.handsPlayedByPlayer.get(playerId) || 0,
@@ -532,7 +532,7 @@ async function readTournamentSummary(gameId) {
   try {
     const content = await readFile(filePath, "utf8");
     const parsed = JSON.parse(content);
-    return parsed?.ots || null;
+    return parsed?.ots ? parsed.ots : null;
   } catch (err) {
     logger.warn("invalid tournament summary ignored during recovery", {
       gameId,
