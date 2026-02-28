@@ -71,7 +71,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {number} ante_amount
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
  * @property {OHHRound[]} rounds
- * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards: string[]|null, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
+ * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards?: string[], player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
  * @property {boolean} [tournament] - True if this is a tournament hand
  * @property {OHHTournamentInfo} [tournament_info] - Tournament metadata (only for tournaments)
  */
@@ -363,7 +363,7 @@ export async function finalizeHand(game, potResults = []) {
     winning_hand: pot.winningHand
       ? HandRankings.formatHand(pot.winningHand)
       : null,
-    winning_cards: pot.winningCards || null,
+    winning_cards: pot.winningCards || undefined,
     player_wins: pot.awards.map((award) => {
       const seat = /** @type {OccupiedSeat} */ (game.seats[award.seat]);
       return {

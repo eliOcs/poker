@@ -8,6 +8,27 @@ import { existsSync } from "node:fs";
  */
 
 /**
+ * OHH file representation where `winning_cards` can be explicitly null.
+ * @typedef {object} OHHHandFile
+ * @property {string} spec_version
+ * @property {string} site_name
+ * @property {string} game_number
+ * @property {string} start_date_utc
+ * @property {string} game_type
+ * @property {{ bet_type: string }} bet_limit
+ * @property {number} table_size
+ * @property {number} dealer_seat
+ * @property {number} small_blind_amount
+ * @property {number} big_blind_amount
+ * @property {number} ante_amount
+ * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
+ * @property {Array<{ id: number, street: string, cards?: string[], actions: Array<object> }>} rounds
+ * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards: string[]|null, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
+ * @property {boolean} [tournament]
+ * @property {object} [tournament_info]
+ */
+
+/**
  * @param {Cents} cents
  * @returns {number}
  */
@@ -27,6 +48,31 @@ export function toCents(dollars) {
 const CACHE_LIMIT = 1000;
 /** @type {Map<string, OHHHand>} */
 const cache = new Map();
+
+/**
+ * Converts file-level nullable fields to app-level undefined fields.
+ * @param {OHHHandFile} hand
+ * @returns {OHHHand}
+ */
+function normalizeFromFile(hand) {
+  const pots = hand.pots.map((pot) => {
+    return { ...pot, winning_cards: pot.winning_cards ?? undefined };
+  });
+  return { ...hand, pots };
+}
+
+/**
+ * Converts app-level undefined fields to file-level null fields.
+ * @param {OHHHand} hand
+ * @returns {OHHHandFile}
+ */
+function denormalizeForFile(hand) {
+  const pots = hand.pots.map((pot) => ({
+    ...pot,
+    winning_cards: pot.winning_cards ?? null,
+  }));
+  return { ...hand, pots };
+}
 
 /**
  * Gets the data directory path
@@ -50,7 +96,7 @@ export async function writeHandToFile(gameId, hand) {
   }
 
   const filePath = `${dataDir}/${gameId}.ohh`;
-  const content = JSON.stringify({ ohh: hand }) + "\n\n";
+  const content = JSON.stringify({ ohh: denormalizeForFile(hand) }) + "\n\n";
 
   await appendFile(filePath, content, "utf8");
 }
@@ -71,7 +117,7 @@ export async function readHandsFromFile(gameId) {
   const content = await readFile(filePath, "utf8");
   const lines = content.split("\n\n").filter(Boolean);
 
-  return lines.map((line) => JSON.parse(line).ohh);
+  return lines.map((line) => normalizeFromFile(JSON.parse(line).ohh));
 }
 
 /**
@@ -80,7 +126,7 @@ export async function readHandsFromFile(gameId) {
  * @param {OHHHand} hand
  */
 export function addToCache(cacheKey, hand) {
-  cache.set(cacheKey, hand);
+  cache.set(cacheKey, normalizeFromFile(denormalizeForFile(hand)));
 
   // Evict oldest if over limit
   if (cache.size > CACHE_LIMIT) {

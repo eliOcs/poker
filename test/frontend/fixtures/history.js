@@ -269,7 +269,7 @@ function buildMockContributionsMap(hand) {
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
  * @param {string|null} winningHand
- * @param {string[]|null} winningCards
+ * @param {string[]|undefined} winningCards
  * @param {string} playerId
  * @param {number} seatIndex
  */
@@ -301,7 +301,7 @@ function buildMockOccupiedSeat(
     netResult,
     endingStack,
     handRank: isWinner ? winningHand : null,
-    winningCards: isWinner ? winningCards : null,
+    winningCards: isWinner ? winningCards : undefined,
     isCurrentPlayer,
     folded: false,
     allIn: false,
@@ -363,7 +363,7 @@ export function createMockView(hand, playerId) {
   const contributions = buildMockContributionsMap(hand);
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
-  const winningCards = mainPot?.winning_cards || null;
+  const winningCards = mainPot?.winning_cards;
 
   const seats = [];
   for (let i = 0; i < hand.table_size; i++) {

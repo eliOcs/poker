@@ -38,7 +38,7 @@ import HandRankings from "../hand-rankings.js";
  * @property {number} number
  * @property {Cents} amount
  * @property {string|null} winning_hand
- * @property {string[]|null} winning_cards
+ * @property {string[]|undefined} [winning_cards]
  * @property {Array<{ player_id: string, win_amount: Cents, contributed_rake: number }>} player_wins
  */
 
@@ -88,7 +88,7 @@ import HandRankings from "../hand-rankings.js";
  * @property {Cents} [endingStack] - Stack after the hand completed
  * @property {boolean} [isWinner] - True if the player received any pot winnings
  * @property {string|null} [handRank]
- * @property {string[]|null} [winningCards]
+ * @property {string[]} [winningCards]
  * @property {boolean} [isCurrentPlayer]
  * @property {boolean} [folded]
  * @property {boolean} [allIn]
@@ -103,7 +103,7 @@ import HandRankings from "../hand-rankings.js";
  * @property {{ cards: string[], phase: string }} board
  * @property {Cents} pot
  * @property {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null} winnerMessage
- * @property {string[]|null} winningCards
+ * @property {string[]|undefined} winningCards
  * @property {number} button
  */
 
@@ -479,8 +479,8 @@ function isKnownCard(card) {
  * @param {string} winnerId
  * @param {Map<string, string[]>} playerCards
  * @param {string[]} boardCards
- * @param {string[]|null} sharedWinningCards
- * @returns {string[]|null}
+ * @param {string[]|undefined} sharedWinningCards
+ * @returns {string[]|undefined}
  */
 function getSplitWinnerCards(
   winnerId,
@@ -501,30 +501,32 @@ function getSplitWinnerCards(
  * @param {HandPot|undefined} mainPot
  * @param {Map<string, string[]>} playerCards
  * @param {string[]} boardCards
- * @returns {Map<string, string[]|null>}
+ * @returns {Map<string, string[]>}
  */
 function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
-  /** @type {Map<string, string[]|null>} */
+  /** @type {Map<string, string[]>} */
   const winnerCards = new Map();
   const wins = mainPot?.player_wins || [];
   if (wins.length === 0) return winnerCards;
 
-  const sharedWinningCards = mainPot?.winning_cards || null;
+  const sharedWinningCards = mainPot?.winning_cards;
   if (wins.length === 1) {
-    winnerCards.set(wins[0].player_id, sharedWinningCards);
+    if (sharedWinningCards) {
+      winnerCards.set(wins[0].player_id, sharedWinningCards);
+    }
     return winnerCards;
   }
 
   for (const win of wins) {
-    winnerCards.set(
+    const cards = getSplitWinnerCards(
       win.player_id,
-      getSplitWinnerCards(
-        win.player_id,
-        playerCards,
-        boardCards,
-        sharedWinningCards,
-      ),
+      playerCards,
+      boardCards,
+      sharedWinningCards,
     );
+    if (cards) {
+      winnerCards.set(win.player_id, cards);
+    }
   }
 
   return winnerCards;
@@ -538,7 +540,7 @@ function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
  * @param {string|null} winningHand
- * @param {Map<string, string[]|null>} winnerWinningCards
+ * @param {Map<string, string[]>} winnerWinningCards
  * @param {string} playerId
  * @returns {HistoryViewSeat}
  */
@@ -571,7 +573,7 @@ function buildOccupiedSeat(
     endingStack,
     isWinner,
     handRank: isWinner ? winningHand : null,
-    winningCards: isWinner ? (winnerWinningCards.get(player.id) ?? null) : null,
+    winningCards: isWinner ? winnerWinningCards.get(player.id) : undefined,
     isCurrentPlayer,
     folded: false,
     allIn: false,
@@ -656,7 +658,7 @@ export function getHandView(hand, playerId) {
   const contributions = buildContributionsMap(hand);
   const mainPot = hand.pots[0];
   const winningHand = mainPot?.winning_hand || null;
-  const winningCards = mainPot?.winning_cards || null;
+  const winningCards = mainPot?.winning_cards;
   const { boardCards, lastStreet } = extractBoardInfo(hand);
   const winnerWinningCards = buildWinnerWinningCardsMap(
     mainPot,

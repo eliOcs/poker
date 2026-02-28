@@ -370,7 +370,7 @@ class App extends LitElement {
     const historyMatch = this.path.match(
       /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
     );
-    const gameId = gameMatch?.[1] || historyMatch?.[1] || null;
+    const gameId = gameMatch?.[1] || historyMatch?.[1];
 
     this._manageConnection(gameId);
 
