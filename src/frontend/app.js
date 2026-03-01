@@ -172,20 +172,31 @@ class App extends LitElement {
 
     this._socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      if (data.error) {
+        this.toast = { message: data.error.message, variant: "error" };
+        return;
+      }
+
       if (data.type === "social") {
         if (!this.path.match(/^\/games\/[a-z0-9]+$/)) return;
         this.socialAction = data;
-      } else if (
-        data.type === "history" &&
-        data.event === "handRecorded" &&
-        this._isOnHistoryRouteForGame(this._activeGameId)
-      ) {
-        this._historyListRefreshNonce += 1;
-      } else if (data.error) {
-        this.toast = { message: data.error.message, variant: "error" };
-      } else {
-        this.game = data;
+        return;
       }
+
+      if (data.type === "history") {
+        if (
+          data.event === "handRecorded" &&
+          this._isOnHistoryRouteForGame(this._activeGameId)
+        ) {
+          this._historyListRefreshNonce += 1;
+        }
+        return;
+      }
+
+      // Ignore any typed envelope that is not a direct player-view payload.
+      if (data.type) return;
+
+      this.game = data;
     };
 
     this._socket.onerror = () => {

@@ -23,22 +23,68 @@ export function attachDebugListeners(page, options = {}) {
   } = options;
 
   const tag = prefix ? `[${prefix}] ` : "";
+  const formatLocation = (location) => {
+    if (!location?.url) return "";
+    return ` (${location.url}:${location.lineNumber}:${location.columnNumber})`;
+  };
+
+  const logStack = (label, stack) => {
+    if (!stack) return;
+    const normalized = String(stack).trim();
+    if (!normalized) return;
+    console.log(`${tag}${label} STACK:\n${normalized}`);
+  };
+
+  const readErrorStack = async (arg) => {
+    try {
+      return await arg.evaluate((value) => {
+        if (value instanceof Error) return value.stack || value.message || null;
+        if (
+          value &&
+          typeof value === "object" &&
+          typeof value.stack === "string"
+        ) {
+          return value.stack;
+        }
+        return null;
+      });
+    } catch {
+      return null;
+    }
+  };
 
   // Console messages from the page
-  page.on("console", (msg) => {
+  page.on("console", async (msg) => {
     const type = msg.type();
     const text = msg.text();
+    const location = formatLocation(msg.location());
     // Skip verbose messages unless they're errors/warnings
     if (type === "error" || type === "warning") {
-      console.log(`${tag}CONSOLE ${type.toUpperCase()}: ${text}`);
+      console.log(`${tag}CONSOLE ${type.toUpperCase()}: ${text}${location}`);
+      if (type === "error") {
+        const args = msg.args();
+        let stackCount = 0;
+        for (const arg of args) {
+          const stack = await readErrorStack(arg);
+          if (stack) {
+            stackCount += 1;
+            const label =
+              stackCount === 1
+                ? "CONSOLE ERROR"
+                : `CONSOLE ERROR [${stackCount}]`;
+            logStack(label, stack);
+          }
+        }
+      }
     } else if (!logErrorsOnly) {
-      console.log(`${tag}CONSOLE ${type}: ${text}`);
+      console.log(`${tag}CONSOLE ${type}: ${text}${location}`);
     }
   });
 
   // JavaScript errors on the page
   page.on("pageerror", (err) => {
     console.log(`${tag}PAGE ERROR: ${err.message}`);
+    logStack("PAGE ERROR", err.stack);
   });
 
   // Failed network requests

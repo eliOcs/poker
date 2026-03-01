@@ -21,6 +21,7 @@ import { HttpError } from "./http-error.js";
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
+ * @typedef {{ user: UserType, gameId: string }} ClientConn
  */
 
 const server = http.createServer();
@@ -30,6 +31,15 @@ const users = {};
 
 /** @type {Map<string, Game>} */
 const games = new Map();
+/**
+ * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
+ * @typedef {{
+ *   gameId: string,
+ *   msgType: "gameState"|"history"|"social",
+ *   context?: Record<string, unknown>,
+ *   buildPayload: (conn: ClientConn) => string|null
+ * }} BroadcastDispatch
+ */
 
 /**
  * @param {string} gameId
@@ -47,70 +57,133 @@ function forEachGameClient(gameId, callback) {
  * Broadcasts payloads to all connected clients for a game.
  * @param {string} gameId
  * @param {(conn: { user: UserType, gameId: string }) => string|null} buildPayload
+ * @returns {{ recipients: number, maxPayloadBytes: number }}
  */
 function broadcastToGameClients(gameId, buildPayload) {
+  let recipients = 0;
+  let maxPayloadBytes = 0;
   forEachGameClient(gameId, (ws, conn) => {
     const payload = buildPayload(conn);
     if (payload !== null) {
       ws.send(payload);
+      recipients += 1;
+      const payloadBytes = Buffer.byteLength(payload);
+      maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
     }
+  });
+  return { recipients, maxPayloadBytes };
+}
+
+/**
+ * @param {string} gameId
+ * @param {'gameState'|'history'|'social'} msgType
+ * @param {BroadcastStats} stats
+ * @param {Record<string, unknown>} [context]
+ */
+function logBroadcast(gameId, msgType, stats, context = {}) {
+  logger.info("ws_broadcast", {
+    gameId,
+    msgType,
+    recipients: stats.recipients,
+    maxPayloadBytes: stats.maxPayloadBytes,
+    ...context,
   });
 }
 
-/** @param {string} gameId */
-function broadcastGameState(gameId) {
-  const game = games.get(gameId);
-  if (!game) return;
+/**
+ * @param {{ type: "gameState", gameId: string }} message
+ * @returns {BroadcastDispatch}
+ */
+function broadcastGameState(message) {
+  const game = games.get(message.gameId);
+  if (!game) {
+    throw new Error(
+      `Cannot broadcast gameState: game ${message.gameId} not found`,
+    );
+  }
 
-  broadcastToGameClients(gameId, (conn) => {
-    const player = Player.fromUser(conn.user);
-    return JSON.stringify(playerView(game, player), null, 2);
-  });
+  return {
+    gameId: message.gameId,
+    msgType: "gameState",
+    context: { handNumber: game.handNumber },
+    buildPayload: (conn) => {
+      const player = Player.fromUser(conn.user);
+      return JSON.stringify(playerView(game, player), null, 2);
+    },
+  };
 }
 
 /**
  * Broadcast a social action message (chat/emote) without mutating game state.
- * @param {string} gameId
- * @param {{action: 'chat', seat: number, message: string} | {action: 'emote', seat: number, emoji: string}} socialAction
+ * @param {{ type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }} message
+ * @returns {BroadcastDispatch}
  */
-function broadcastSocialAction(gameId, socialAction) {
-  const payload = JSON.stringify({ type: "social", ...socialAction }, null, 2);
-  broadcastToGameClients(gameId, () => payload);
+function broadcastSocialAction(message) {
+  const { gameId, ...socialAction } = message;
+  const handNumber = games.get(gameId)?.handNumber ?? null;
+  const payload = JSON.stringify(socialAction, null, 2);
+  return {
+    gameId,
+    msgType: "social",
+    context: {
+      handNumber,
+      action: socialAction.action,
+      seat: socialAction.seat,
+    },
+    buildPayload: () => payload,
+  };
 }
 
 /**
  * Broadcasts a history update event when a hand is persisted.
- * @param {string} gameId
- * @param {number} handNumber
+ * @param {{ type: "history", gameId: string, event: "handRecorded", handNumber: number }} message
+ * @returns {BroadcastDispatch}
  */
-function broadcastHistoryUpdate(gameId, handNumber) {
-  const payload = JSON.stringify(
-    {
-      type: "history",
-      event: "handRecorded",
-      handNumber,
+function broadcastHistoryUpdate(message) {
+  const { gameId, ...historyEvent } = message;
+  const payload = JSON.stringify(historyEvent, null, 2);
+  return {
+    gameId,
+    msgType: "history",
+    context: {
+      event: message.event,
+      handNumber: message.handNumber,
     },
-    null,
-    2,
-  );
-  broadcastToGameClients(gameId, () => payload);
+    buildPayload: () => payload,
+  };
 }
+
+/** @type {{
+ *   gameState: (message: { type: "gameState", gameId: string }) => BroadcastDispatch,
+ *   social: (message: { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }) => BroadcastDispatch,
+ *   history: (message: { type: "history", gameId: string, event: "handRecorded", handNumber: number }) => BroadcastDispatch,
+ * }} */
+const BROADCAST_HANDLERS = {
+  gameState: broadcastGameState,
+  social: broadcastSocialAction,
+  history: broadcastHistoryUpdate,
+};
 
 /**
  * Dispatches a typed game broadcast message.
  * @param {BroadcastMessage} message
  */
 function broadcastGameMessage(message) {
-  if (message.type === "gameState") {
-    broadcastGameState(message.gameId);
-    return;
-  }
-  if (message.type === "history" && message.event === "handRecorded") {
-    broadcastHistoryUpdate(message.gameId, message.handNumber);
-  }
+  const handler =
+    /** @type {(message: BroadcastMessage) => BroadcastDispatch} */ (
+      BROADCAST_HANDLERS[message.type]
+    );
+  const dispatch = handler(message);
+  const stats = broadcastToGameClients(dispatch.gameId, dispatch.buildPayload);
+  logBroadcast(dispatch.gameId, dispatch.msgType, stats, dispatch.context);
 }
 
-const routes = createRoutes(users, games, broadcastGameState);
+/** @param {string} gameId */
+function broadcastGameStateMessage(gameId) {
+  broadcastGameMessage({ type: "gameState", gameId });
+}
+
+const routes = createRoutes(users, games, broadcastGameStateMessage);
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const actionRateLimiter = createRateLimiter({
   blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
@@ -195,7 +268,7 @@ async function handleRequest(req, res, log) {
       match,
       users,
       games,
-      broadcast: broadcastGameState,
+      broadcast: broadcastGameStateMessage,
       log,
     });
     return;
@@ -317,7 +390,7 @@ server.on("upgrade", async function upgrade(request, socket, head) {
  * @param {UserType} user
  * @param {'emote'|'chat'} action
  * @param {Record<string, unknown>} args
- * @param {(gameId: string, socialAction: {action: 'chat', seat: number, message: string} | {action: 'emote', seat: number, emoji: string}) => void} broadcastSocialAction
+ * @param {(message: BroadcastMessage) => void} broadcastGameMessage
  * @param {string} gameId
  */
 function handleSocialAction(
@@ -325,7 +398,7 @@ function handleSocialAction(
   user,
   action,
   args,
-  broadcastSocialAction,
+  broadcastGameMessage,
   gameId,
 ) {
   const player = Player.fromUser(user);
@@ -334,7 +407,9 @@ function handleSocialAction(
     if (action === "emote") {
       const emoji = String(args.emoji || "").trim();
       if (!emoji) return;
-      broadcastSocialAction(gameId, {
+      broadcastGameMessage({
+        type: "social",
+        gameId,
         action: "emote",
         seat: seatIndex,
         emoji,
@@ -344,7 +419,9 @@ function handleSocialAction(
         .trim()
         .slice(0, 100);
       if (!message) return;
-      broadcastSocialAction(gameId, {
+      broadcastGameMessage({
+        type: "social",
+        gameId,
         action: "chat",
         seat: seatIndex,
         message,
@@ -418,7 +495,7 @@ wss.on(
       seat.disconnected = false;
 
       // Notify other players that this player reconnected
-      broadcastGameState(gameId);
+      broadcastGameStateMessage(gameId);
     }
 
     ws.on("close", () => {
@@ -450,7 +527,7 @@ wss.on(
 
       closedSeat.disconnected = true;
       PokerGame.ensureGameTick(closedGame, broadcastGameMessage);
-      broadcastGameState(closedGameId);
+      broadcastGameStateMessage(closedGameId);
     });
 
     ws.on("message", function (rawMessage) {
@@ -499,7 +576,7 @@ wss.on(
           user,
           action,
           args,
-          broadcastSocialAction,
+          broadcastGameMessage,
           gameId,
         );
         emitLog(log);
@@ -513,7 +590,7 @@ wss.on(
           user,
           action,
           args,
-          broadcastGameState,
+          broadcastGameStateMessage,
           gameId,
         );
         if (error) ws.send(JSON.stringify({ error: { message: error } }));

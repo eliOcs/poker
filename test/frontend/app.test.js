@@ -2,6 +2,7 @@ import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import {
   OriginalFetch,
   MockWebSocket,
+  createMockGameState,
   createMockHandList,
   mockOhhHand,
   mockOhhHandView,
@@ -112,6 +113,38 @@ describe("phg-app", () => {
 
       // The reconnect timer fired but _activeGameId is null, so no new connection
       expect(MockWebSocket.instances.length).to.equal(countAfterNav);
+    });
+  });
+
+  describe("WebSocket message routing", () => {
+    it("does not overwrite game state with history events on game route", async () => {
+      MockWebSocket.instances = [];
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/))
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/games/testgame";
+      await element.updateComplete;
+
+      const ws = MockWebSocket.instances.at(-1);
+      const initialGame = createMockGameState();
+      ws.simulateMessage(initialGame);
+      await element.updateComplete;
+
+      expect(element.game).to.deep.equal(initialGame);
+
+      ws.simulateMessage({
+        type: "history",
+        event: "handRecorded",
+        handNumber: 1,
+      });
+      await element.updateComplete;
+
+      expect(element.game).to.deep.equal(initialGame);
+      expect(element.game?.type).to.equal(undefined);
     });
   });
 

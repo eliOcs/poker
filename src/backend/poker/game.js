@@ -18,7 +18,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').Seat} Seat
  * @typedef {import('./seat.js').Player} PlayerType
- * @typedef {{ type: "gameState", gameId: string } | { type: "history", gameId: string, event: "handRecorded", handNumber: number }} BroadcastMessage
+ * @typedef {{ type: "gameState", gameId: string } | { type: "history", gameId: string, event: "handRecorded", handNumber: number } | { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }} BroadcastMessage
  * @typedef {(message: BroadcastMessage) => void} BroadcastHandler
  */
 
