@@ -7,7 +7,7 @@ image: poker
 # Deploy to these servers
 servers:
   web:
-    - 63.182.34.164
+    - 18.199.55.128
 
 # Enable SSL via Let's Encrypt
 proxy:

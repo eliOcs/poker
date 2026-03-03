@@ -14,16 +14,41 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-# Use default VPC for simplicity
-data "aws_vpc" "default" {
-  default = true
+# Adopt default VPC with dual-stack (IPv6 is free)
+resource "aws_default_vpc" "default" {
+  assign_generated_ipv6_cidr_block = true
 }
 
-data "aws_subnets" "default" {
+# Adopt default subnet with IPv6 CIDR
+resource "aws_default_subnet" "default" {
+  availability_zone = "${var.aws_region}a"
+
+  assign_ipv6_address_on_creation = true
+  ipv6_cidr_block                 = cidrsubnet(aws_default_vpc.default.ipv6_cidr_block, 8, 0)
+}
+
+# Internet gateway (default VPC already has one)
+data "aws_internet_gateway" "default" {
   filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+    name   = "attachment.vpc-id"
+    values = [aws_default_vpc.default.id]
   }
+}
+
+# Main route table
+data "aws_route_table" "main" {
+  vpc_id = aws_default_vpc.default.id
+  filter {
+    name   = "association.main"
+    values = ["true"]
+  }
+}
+
+# IPv6 route via internet gateway
+resource "aws_route" "ipv6_default" {
+  route_table_id              = data.aws_route_table.main.id
+  destination_ipv6_cidr_block = "::/0"
+  gateway_id                  = data.aws_internet_gateway.default.id
 }
 
 # ECR Repository
@@ -60,41 +85,45 @@ resource "aws_ecr_lifecycle_policy" "poker" {
 resource "aws_security_group" "poker" {
   name        = "poker-sg"
   description = "Poker app security group"
-  vpc_id      = data.aws_vpc.default.id
+  vpc_id      = aws_default_vpc.default.id
 
   # SSH
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "SSH access"
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+    description      = "SSH access"
   }
 
   # HTTP (for Let's Encrypt ACME challenge)
   ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP access"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+    description      = "HTTP access"
   }
 
   # HTTPS
   ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS access"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+    description      = "HTTPS access"
   }
 
   # Outbound (allow all)
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   tags = {
@@ -108,14 +137,31 @@ resource "aws_key_pair" "poker" {
   public_key = file(var.ssh_public_key_path)
 }
 
-# EC2 Instance (Graviton t4g.small)
-# AMI: Ubuntu 24.04 ARM64 (eu-central-1)
+# EC2 Instance (Graviton t4g.micro)
+# AMI: Ubuntu 24.04 ARM64 (eu-central-1, 2026-02-18)
 resource "aws_instance" "poker" {
-  ami                    = "ami-0df5c15a5f998e2ab"
+  ami                    = "ami-052b310a8f0d76968"
   instance_type          = "t4g.micro"
   key_name               = aws_key_pair.poker.key_name
   vpc_security_group_ids = [aws_security_group.poker.id]
-  subnet_id              = data.aws_subnets.default.ids[0]
+  subnet_id              = aws_default_subnet.default.id
+  ipv6_address_count     = 1
+
+  user_data = <<-EOF
+    #!/bin/bash
+    DEVICE=/dev/$(lsblk -dno NAME,TYPE | awk '$2 == "disk" {print $1}' | grep -v nvme0n1)
+    MOUNT=/opt/poker/data
+    # Only format if not already formatted
+    if ! blkid "$DEVICE"; then
+      mkfs.ext4 "$DEVICE"
+    fi
+    mkdir -p "$MOUNT"
+    chown 1001:1001 "$MOUNT"
+    if ! grep -q "$MOUNT" /etc/fstab; then
+      echo "$DEVICE $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
+    fi
+    mount -a
+  EOF
 
   root_block_device {
     volume_size           = 20
@@ -129,6 +175,24 @@ resource "aws_instance" "poker" {
   }
 }
 
+# Persistent data volume (survives instance replacement)
+resource "aws_ebs_volume" "data" {
+  availability_zone = aws_default_subnet.default.availability_zone
+  size              = 5
+  type              = "gp3"
+  encrypted         = true
+
+  tags = {
+    Name = "poker-data"
+  }
+}
+
+resource "aws_volume_attachment" "data" {
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.data.id
+  instance_id = aws_instance.poker.id
+}
+
 # Elastic IP
 resource "aws_eip" "poker" {
   instance = aws_instance.poker.id
@@ -139,13 +203,22 @@ resource "aws_eip" "poker" {
   }
 }
 
-# Route53 A Record (apex domain)
+# Route53 A Record (apex domain, IPv4)
 resource "aws_route53_record" "poker" {
   zone_id = var.route53_zone_id
   name    = var.domain
   type    = "A"
   ttl     = 300
   records = [aws_eip.poker.public_ip]
+}
+
+# Route53 AAAA Record (apex domain, IPv6)
+resource "aws_route53_record" "poker_ipv6" {
+  zone_id = var.route53_zone_id
+  name    = var.domain
+  type    = "AAAA"
+  ttl     = 300
+  records = [aws_instance.poker.ipv6_addresses[0]]
 }
 
 # GitHub OIDC Provider for GitHub Actions
