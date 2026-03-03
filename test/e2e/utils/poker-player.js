@@ -533,26 +533,50 @@ export class PokerPlayer {
   }
 
   /**
-   * Check if tournament winner overlay is displayed
-   * @returns {Promise<boolean>}
+   * Read the tournament winner directly from the component data
+   * @returns {Promise<string|null>} Winner name or null
    */
-  async hasTournamentWinner() {
-    return await this.board
-      .locator(".tournament-winner-overlay")
-      .isVisible()
-      .catch(() => false);
+  async getTournamentWinner() {
+    return await this.game
+      .evaluate((el) => {
+        const g = el.game;
+        if (!g?.tournament) return null;
+        const winner = g.tournament.winner;
+        if (winner === null || winner === undefined) return null;
+        const seat = g.seats?.[winner];
+        return seat && !seat.empty
+          ? seat.player?.name || `Seat ${winner + 1}`
+          : `Seat ${winner + 1}`;
+      })
+      .catch(() => null);
   }
 
   /**
-   * Get the tournament winner name from the overlay
-   * @returns {Promise<string|null>}
+   * Read game snapshot for stress test: winner, hand number, and bust status
+   * in a single evaluate call to minimize cross-browser round-trips
+   * @returns {Promise<{tournamentWinner: string|null, handNumber: number|null, bustedPosition: number|null}|null>}
    */
-  async getTournamentWinnerName() {
-    const winnerEl = this.board.locator(".tournament-winner-name");
-    if (await winnerEl.isVisible().catch(() => false)) {
-      return await winnerEl.textContent();
-    }
-    return null;
+  async getGameSnapshot() {
+    return await this.game
+      // eslint-disable-next-line complexity
+      .evaluate((el) => {
+        const g = el.game;
+        if (!g) return null;
+        const t = g.tournament;
+        const w = t ? t.winner : null;
+        const winnerSeat = w != null && g.seats ? g.seats[w] : null;
+        const winnerName = winnerSeat
+          ? winnerSeat.player?.name || `Seat ${w + 1}`
+          : null;
+        const seats = g.seats || [];
+        const mySeat = seats.find((s) => s && s.isCurrentPlayer);
+        return {
+          tournamentWinner: winnerName,
+          handNumber: g.handNumber ?? null,
+          bustedPosition: mySeat ? mySeat.bustedPosition : null,
+        };
+      })
+      .catch(() => null);
   }
 
   /**
@@ -637,6 +661,16 @@ export class PokerPlayer {
       return match ? parseInt(match[1], 10) : null;
     }
     return null;
+  }
+
+  /**
+   * Read the hand number directly from the component data
+   * @returns {Promise<number|null>}
+   */
+  async getServerHandNumber() {
+    return await this.game
+      .evaluate((el) => el.game?.handNumber ?? null)
+      .catch(() => null);
   }
 
   /**
