@@ -228,6 +228,17 @@ export const gameStyles = css`
     color: var(--color-primary);
   }
 
+  .drawer-btn:disabled {
+    color: var(--color-fg-muted);
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .drawer-btn:disabled:hover {
+    color: var(--color-fg-muted);
+    background: none;
+  }
+
   .drawer-btn svg {
     width: 20px;
     height: 20px;

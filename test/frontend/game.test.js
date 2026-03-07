@@ -141,6 +141,39 @@ describe("phg-game", () => {
       expect(modal).to.exist;
     });
 
+    it("disables rankings and history before the first hand", async () => {
+      element.game = createMockGameState({ handNumber: 0 });
+      await element.updateComplete;
+
+      const buttons = Array.from(
+        element.shadowRoot.querySelectorAll(".drawer-btn"),
+      );
+      const rankingsBtn = buttons.find((button) =>
+        button.textContent.includes("Rankings"),
+      );
+      const historyBtn = buttons.find((button) =>
+        button.textContent.includes("History"),
+      );
+
+      expect(rankingsBtn).to.exist;
+      expect(historyBtn).to.exist;
+      expect(rankingsBtn.disabled).to.equal(true);
+      expect(historyBtn.disabled).to.equal(true);
+
+      let navigated = false;
+      element.addEventListener("navigate", () => {
+        navigated = true;
+      });
+
+      rankingsBtn.click();
+      historyBtn.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("phg-modal");
+      expect(modal).to.not.exist;
+      expect(navigated).to.equal(false);
+    });
+
     it("settings modal contains name input", async () => {
       element.game = createMockGameState();
       element.showSettings = true;

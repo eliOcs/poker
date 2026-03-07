@@ -134,6 +134,8 @@ function renderSitOutButton(game) {
 }
 
 export function renderDrawer(game) {
+  const hasRecordedHands = game.hasRecordedHands();
+
   return html`
     <div id="drawer" class=${game._drawerOpen ? "open" : ""}>
       <div id="drawer-backdrop" @click=${game.toggleDrawer}></div>
@@ -154,10 +156,18 @@ export function renderDrawer(game) {
           <button class="drawer-btn" @click=${game.openSettings}>
             ${iconSettings} Settings
           </button>
-          <button class="drawer-btn" @click=${game.openRanking}>
+          <button
+            class="drawer-btn"
+            ?disabled=${!hasRecordedHands}
+            @click=${game.openRanking}
+          >
             ${iconRankings} Rankings
           </button>
-          <button class="drawer-btn" @click=${game.openHistory}>
+          <button
+            class="drawer-btn"
+            ?disabled=${!hasRecordedHands}
+            @click=${game.openHistory}
+          >
             ${iconHistory} History
           </button>
           ${renderSitOutButton(game)}

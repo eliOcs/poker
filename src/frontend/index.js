@@ -159,6 +159,7 @@ class Game extends LitElement {
   }
 
   openRanking() {
+    if (!this.hasRecordedHands()) return;
     this.showRanking = true;
   }
 
@@ -233,6 +234,7 @@ class Game extends LitElement {
   }
 
   openHistory() {
+    if (!this.hasRecordedHands()) return;
     this.dispatchEvent(
       new CustomEvent("navigate", {
         detail: { path: `/history/${this.gameId}` },
@@ -255,6 +257,10 @@ class Game extends LitElement {
       }),
     );
     this.showSettings = false;
+  }
+
+  hasRecordedHands() {
+    return (this.game?.handNumber || 0) > 0;
   }
 
   getCurrentPlayerName() {
