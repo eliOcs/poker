@@ -1,5 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { ICONS } from "./icons.js";
+import "./navigation-drawer.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -8,13 +10,31 @@ class PlayerProfile extends LitElement {
       baseStyles,
       css`
         :host {
-          min-height: 100%;
-          display: grid;
-          place-items: center;
-          padding: clamp(12px, 3vw, 32px);
+          min-height: 100vh;
+          display: block;
           box-sizing: border-box;
           background: var(--color-bg-medium);
           color: var(--color-fg-medium);
+        }
+
+        :host * {
+          box-sizing: inherit;
+        }
+
+        .layout {
+          min-height: 100vh;
+          display: flex;
+          background: var(--color-bg-dark);
+        }
+
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding: clamp(12px, 3vw, 32px);
+          background: var(--color-bg-medium);
         }
 
         .panel {
@@ -88,6 +108,32 @@ class PlayerProfile extends LitElement {
 
         .status.offline {
           color: var(--color-primary);
+        }
+
+        .drawer-item {
+          display: flex;
+          align-items: center;
+          gap: var(--space-md);
+          width: 100%;
+          padding: var(--space-md);
+          border: 0;
+          background: none;
+          color: var(--color-fg-medium);
+          font: inherit;
+          font-size: var(--font-sm);
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .drawer-item:hover {
+          color: var(--color-fg-white);
+          background: var(--color-bg-light);
+        }
+
+        .drawer-item svg {
+          width: 20px;
+          height: 20px;
+          fill: currentcolor;
         }
 
         .summary {
@@ -209,10 +255,6 @@ class PlayerProfile extends LitElement {
         }
 
         @media (width < 800px) {
-          :host {
-            place-items: start center;
-          }
-
           .header {
             grid-template-columns: 1fr;
             display: grid;
@@ -224,14 +266,14 @@ class PlayerProfile extends LitElement {
         }
 
         @media (width < 520px) {
-          :host {
-            padding: var(--space-md);
-          }
-
           .panel {
             gap: 12px;
             padding: var(--space-md);
             width: 100%;
+          }
+
+          .main {
+            padding: 56px var(--space-md) var(--space-md);
           }
 
           .status {
@@ -264,12 +306,29 @@ class PlayerProfile extends LitElement {
   static get properties() {
     return {
       profile: { type: Object },
+      drawerOpen: { type: Boolean, state: true },
     };
   }
 
   constructor() {
     super();
     this.profile = null;
+    this.drawerOpen = false;
+    this._onMediaChange = (event) => {
+      this.drawerOpen = event.matches;
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._mql = window.matchMedia("(min-width: 800px)");
+    this._mql.addEventListener("change", this._onMediaChange);
+    this.drawerOpen = this._mql.matches;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._mql?.removeEventListener("change", this._onMediaChange);
   }
 
   navigateToGame(game) {
@@ -282,6 +341,22 @@ class PlayerProfile extends LitElement {
     );
   }
 
+  openSettings() {
+    if (!this._mql?.matches) {
+      this.drawerOpen = false;
+    }
+    this.dispatchEvent(
+      new CustomEvent("open-settings", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  toggleDrawer() {
+    this.drawerOpen = !this.drawerOpen;
+  }
+
   render() {
     if (!this.profile) {
       return html`<div class="panel">
@@ -290,51 +365,77 @@ class PlayerProfile extends LitElement {
     }
 
     return html`
-      <div class="content">
-        <section class="panel">
-          <div class="eyebrow">Player Profile</div>
-          <div class="header">
-            <div class="identity">
-              <h1>${this.profile.name}</h1>
-              <div class="player-id">Player ID: ${this.profile.id}</div>
-              <div class="meta">
-                Joined ${formatDate(this.profile.joinedAt)}
+      <div class="layout">
+        ${this.renderDrawer()}
+        <div class="main">
+          <div class="content">
+            <section class="panel">
+              <div class="eyebrow">Player Profile</div>
+              <div class="header">
+                <div class="identity">
+                  <h1>${this.profile.name}</h1>
+                  <div class="player-id">Player ID: ${this.profile.id}</div>
+                  <div class="meta">
+                    Joined ${formatDate(this.profile.joinedAt)}
+                  </div>
+                </div>
+                <div class=${`status ${this.profile.online ? "" : "offline"}`}>
+                  ${this.profile.online
+                    ? "Online"
+                    : `Last seen ${formatRelativeDate(this.profile.lastSeenAt)}`}
+                </div>
               </div>
-            </div>
-            <div class=${`status ${this.profile.online ? "" : "offline"}`}>
-              ${this.profile.online
-                ? "Online"
-                : `Last seen ${formatRelativeDate(this.profile.lastSeenAt)}`}
-            </div>
-          </div>
-          <div class="summary">
-            <article class="stat">
-              <div class="label">Total Net Winnings</div>
-              <div
-                class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
-              >
-                ${formatSignedCurrency(this.profile.totalNetWinnings)}
+              <div class="summary">
+                <article class="stat">
+                  <div class="label">Total Net Winnings</div>
+                  <div
+                    class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
+                  >
+                    ${formatSignedCurrency(this.profile.totalNetWinnings)}
+                  </div>
+                </article>
+                <article class="stat">
+                  <div class="label">Total Hands</div>
+                  <div class="value">
+                    ${formatNumber(this.profile.totalHands)}
+                  </div>
+                </article>
+                <article class="stat">
+                  <div class="label">Games Played</div>
+                  <div class="value">
+                    ${formatNumber(this.profile.recentGames?.length || 0)}
+                  </div>
+                </article>
               </div>
-            </article>
-            <article class="stat">
-              <div class="label">Total Hands</div>
-              <div class="value">${formatNumber(this.profile.totalHands)}</div>
-            </article>
-            <article class="stat">
-              <div class="label">Games Played</div>
-              <div class="value">
-                ${formatNumber(this.profile.recentGames?.length || 0)}
+            </section>
+            <section class="section">
+              <div class="panel">
+                <h2>Recent Games</h2>
+                ${this.renderRecentGames()}
               </div>
-            </article>
+            </section>
           </div>
-        </section>
-        <section class="section">
-          <div class="panel">
-            <h2>Recent Games</h2>
-            ${this.renderRecentGames()}
-          </div>
-        </section>
+        </div>
       </div>
+    `;
+  }
+
+  renderDrawer() {
+    return html`
+      <phg-navigation-drawer
+        ?open=${this.drawerOpen}
+        @drawer-toggle=${this.toggleDrawer}
+      >
+        <button
+          class="drawer-item"
+          @click=${() => {
+            this.openSettings();
+          }}
+        >
+          ${ICONS.settings}
+          <span>Settings</span>
+        </button>
+      </phg-navigation-drawer>
     `;
   }
 

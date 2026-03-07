@@ -1,47 +1,6 @@
 import { html } from "lit";
-
-const iconHamburger = html`<svg viewBox="0 0 16 16">
-  <path d="M1 2h14v2H1zm0 5h14v2H1zm0 5h14v2H1z" />
-</svg>`;
-
-const iconClose = html`<svg viewBox="0 0 16 16">
-  <path d="M11 3h2v2h-2zM9 5h2v2H9zM7 7h2v2H7zM9 9h2v2H9zm2 2h2v2h-2z" />
-</svg>`;
-
-const iconSettings = html`<svg viewBox="0 0 24 24">
-  <rect x="9" width="6" height="2" />
-  <rect x="9" y="22" width="6" height="2" />
-  <rect y="9" width="2" height="6" />
-  <rect x="22" y="9" width="2" height="6" />
-  <rect x="9" y="2" width="2" height="4" />
-  <rect x="13" y="2" width="2" height="4" />
-  <rect x="9" y="18" width="2" height="4" />
-  <rect x="13" y="18" width="2" height="4" />
-  <rect y="9" width="4" height="2" />
-  <rect y="13" width="4" height="2" />
-  <rect x="20" y="9" width="4" height="2" />
-  <rect x="20" y="13" width="4" height="2" />
-  <rect x="7" y="4" width="2" height="2" />
-  <rect x="15" y="4" width="2" height="2" />
-  <rect x="7" y="18" width="2" height="2" />
-  <rect x="15" y="18" width="2" height="2" />
-  <rect x="2" y="2" width="5" height="2" />
-  <rect x="17" y="2" width="5" height="2" />
-  <rect x="2" y="20" width="5" height="2" />
-  <rect x="17" y="20" width="5" height="2" />
-  <rect x="2" y="2" width="2" height="5" />
-  <rect x="20" y="2" width="2" height="5" />
-  <rect x="2" y="17" width="2" height="5" />
-  <rect x="20" y="17" width="2" height="5" />
-  <rect x="4" y="7" width="2" height="2" />
-  <rect x="18" y="7" width="2" height="2" />
-  <rect x="4" y="15" width="2" height="2" />
-  <rect x="18" y="15" width="2" height="2" />
-  <rect x="10" y="8" width="4" height="2" />
-  <rect x="10" y="14" width="4" height="2" />
-  <rect x="8" y="10" width="2" height="4" />
-  <rect x="14" y="10" width="2" height="4" />
-</svg>`;
+import { ICONS } from "./icons.js";
+import "./navigation-drawer.js";
 
 const iconRankings = html`<svg viewBox="0 0 24 24">
   <rect x="6" y="3" width="12" height="2" />
@@ -137,50 +96,36 @@ export function renderDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
 
   return html`
-    <div id="drawer" class=${game._drawerOpen ? "open" : ""}>
-      <div id="drawer-backdrop" @click=${game.toggleDrawer}></div>
-      <button id="drawer-toggle" @click=${game.toggleDrawer}>
-        ${game._drawerOpen ? iconClose : iconHamburger}
+    <phg-navigation-drawer
+      ?open=${game._drawerOpen}
+      @drawer-toggle=${game.toggleDrawer}
+    >
+      <button class="drawer-btn" @click=${game.openSettings}>
+        ${ICONS.settings} Settings
       </button>
-      <div id="drawer-panel">
-        <nav id="drawer-nav">
-          <a
-            class="drawer-home-link"
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open Pluton Poker homepage in a new tab"
-          >
-            <img class="drawer-home-logo" src="/logo.webp" alt="Pluton Poker" />
-          </a>
-          <button class="drawer-btn" @click=${game.openSettings}>
-            ${iconSettings} Settings
-          </button>
-          <button
-            class="drawer-btn"
-            ?disabled=${!hasRecordedHands}
-            @click=${game.openRanking}
-          >
-            ${iconRankings} Rankings
-          </button>
-          <button
-            class="drawer-btn"
-            ?disabled=${!hasRecordedHands}
-            @click=${game.openHistory}
-          >
-            ${iconHistory} History
-          </button>
-          ${renderSitOutButton(game)}
-          <button class="drawer-btn" @click=${game.copyGameLink}>
-            ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
-          </button>
-          ${canShare
-            ? html`<button class="drawer-btn" @click=${game.shareGameLink}>
-                ${iconShare} Share
-              </button>`
-            : ""}
-        </nav>
-      </div>
-    </div>
+      <button
+        class="drawer-btn"
+        ?disabled=${!hasRecordedHands}
+        @click=${game.openRanking}
+      >
+        ${iconRankings} Rankings
+      </button>
+      <button
+        class="drawer-btn"
+        ?disabled=${!hasRecordedHands}
+        @click=${game.openHistory}
+      >
+        ${iconHistory} History
+      </button>
+      ${renderSitOutButton(game)}
+      <button class="drawer-btn" @click=${game.copyGameLink}>
+        ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
+      </button>
+      ${canShare
+        ? html`<button class="drawer-btn" @click=${game.shareGameLink}>
+            ${iconShare} Share
+          </button>`
+        : ""}
+    </phg-navigation-drawer>
   `;
 }

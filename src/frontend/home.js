@@ -43,7 +43,7 @@ class Home extends LitElement {
         p {
           font-size: var(--font-md);
           line-height: 2;
-          color: var(--color-fg-muted);
+          color: var(--color-fg-medium);
           margin-bottom: 2em;
           text-align: center;
           padding: 0 1em;

@@ -6,6 +6,11 @@ import "./index.js";
 import "./history.js";
 import "./player-profile.js";
 import "./toast.js";
+import "./modal.js";
+import "./button.js";
+
+const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
+const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
 
 class App extends LitElement {
   static get styles() {
@@ -16,6 +21,58 @@ class App extends LitElement {
         :host {
           display: block;
           height: 100%;
+        }
+
+        .settings-content input {
+          width: 100%;
+          padding: var(--space-md);
+          font-family: inherit;
+          font-size: var(--font-md);
+          border: 3px solid var(--color-bg-dark);
+          background: var(--color-bg-medium);
+          color: var(--color-fg-white);
+          margin-bottom: var(--space-lg);
+          box-sizing: border-box;
+        }
+
+        .settings-content .buttons {
+          display: flex;
+          gap: var(--space-md);
+          justify-content: flex-end;
+        }
+
+        .settings-content label {
+          display: block;
+          margin-bottom: var(--space-sm);
+          color: var(--color-fg-medium);
+          font-size: var(--font-sm);
+        }
+
+        .volume-slider {
+          display: flex;
+          gap: var(--space-sm);
+          margin-bottom: var(--space-lg);
+        }
+
+        .volume-slider button {
+          flex: 1;
+          padding: var(--space-md);
+          font-family: inherit;
+          font-size: var(--font-md);
+          border: 3px solid var(--color-bg-dark);
+          background: var(--color-bg-medium);
+          color: var(--color-fg-medium);
+          cursor: pointer;
+        }
+
+        .volume-slider button:hover {
+          background: var(--color-bg-dark);
+        }
+
+        .volume-slider button.active {
+          background: var(--color-primary);
+          color: var(--color-fg-white);
+          border-color: var(--color-primary);
         }
       `,
     ];
@@ -37,6 +94,8 @@ class App extends LitElement {
       _historyHandNumber: { state: true },
       _historyListRefreshNonce: { state: true },
       _playerProfileId: { state: true },
+      _showProfileSettings: { state: true },
+      _settingsVolume: { state: true },
     };
   }
 
@@ -57,6 +116,8 @@ class App extends LitElement {
     this._historyHandNumber = null;
     this._historyListRefreshNonce = 0;
     this._playerProfileId = null;
+    this._showProfileSettings = false;
+    this._settingsVolume = 0.75;
   }
 
   // --- History Tasks ---
@@ -130,6 +191,9 @@ class App extends LitElement {
     this.addEventListener("update-user", (e) => {
       this._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
     });
+    this.addEventListener("open-settings", () => {
+      this.openProfileSettings();
+    });
   }
 
   async _fetchUser() {
@@ -137,6 +201,7 @@ class App extends LitElement {
       const res = await fetch("/api/users/me");
       if (res.ok) {
         this.user = await res.json();
+        this._settingsVolume = this.user?.settings?.volume ?? 0.75;
       }
     } catch {
       // Ignore fetch errors - user will be created on next request
@@ -152,6 +217,7 @@ class App extends LitElement {
       });
       if (res.ok) {
         this.user = await res.json();
+        this._settingsVolume = this.user?.settings?.volume ?? 0.75;
       }
     } catch {
       // Ignore update errors
@@ -276,6 +342,27 @@ class App extends LitElement {
     this.toast = null;
   }
 
+  openProfileSettings() {
+    this._settingsVolume = this.user?.settings?.volume ?? 0.75;
+    this._showProfileSettings = true;
+  }
+
+  closeProfileSettings() {
+    this._showProfileSettings = false;
+  }
+
+  async saveProfileSettings() {
+    const input = /** @type {HTMLInputElement|null} */ (
+      this.shadowRoot?.querySelector("#profile-settings-name-input")
+    );
+    const name = input?.value.trim() || "";
+    await this._updateUser({
+      name,
+      settings: { volume: this._settingsVolume },
+    });
+    this._showProfileSettings = false;
+  }
+
   renderToast() {
     if (!this.toast) return "";
     return html`
@@ -335,6 +422,48 @@ class App extends LitElement {
     return html`${this.renderToast()}<phg-player-profile
         .profile=${this._playerProfileTask.value}
       ></phg-player-profile>`;
+  }
+
+  _renderProfileSettingsModal() {
+    if (!this._showProfileSettings) return "";
+
+    return html`<phg-modal title="Settings" @close=${this.closeProfileSettings}>
+      <div class="settings-content">
+        <label>Name</label>
+        <input
+          id="profile-settings-name-input"
+          type="text"
+          placeholder="Enter your name"
+          maxlength="20"
+          autofocus
+          .value=${this.user?.name || ""}
+          @keydown=${(e) => e.key === "Enter" && this.saveProfileSettings()}
+        />
+        <label>Sound Volume</label>
+        <div class="volume-slider">
+          ${SETTINGS_VOLUME_STEPS.map(
+            (value, index) => html`
+              <button
+                class=${this._settingsVolume === value ? "active" : ""}
+                @click=${() => {
+                  this._settingsVolume = value;
+                }}
+              >
+                ${SETTINGS_VOLUME_LABELS[index]}
+              </button>
+            `,
+          )}
+        </div>
+        <div class="buttons">
+          <phg-button variant="secondary" @click=${this.closeProfileSettings}
+            >Cancel</phg-button
+          >
+          <phg-button variant="success" @click=${this.saveProfileSettings}
+            >Save</phg-button
+          >
+        </div>
+      </div>
+    </phg-modal>`;
   }
 
   _clearHistoryState() {
@@ -442,7 +571,10 @@ class App extends LitElement {
 
     if (gameMatch) return this._renderGameView(gameMatch);
     if (historyMatch) return this._renderHistoryView(historyMatch);
-    if (playerMatch) return this._renderPlayerProfileView();
+    if (playerMatch) {
+      return html`${this._renderPlayerProfileView()}
+      ${this._renderProfileSettingsModal()}`;
+    }
     return html`${this.renderToast()}<phg-home></phg-home>`;
   }
 }

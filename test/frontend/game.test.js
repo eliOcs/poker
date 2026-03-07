@@ -112,10 +112,11 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const drawerNav = element.shadowRoot.querySelector("#drawer-nav");
+      const drawer = element.shadowRoot.querySelector("phg-navigation-drawer");
+      const drawerNav = drawer.shadowRoot.querySelector("nav");
       const firstItem = drawerNav.firstElementChild;
       expect(firstItem).to.exist;
-      expect(firstItem.matches(".drawer-home-link")).to.be.true;
+      expect(firstItem.matches(".home-link")).to.be.true;
       expect(firstItem.getAttribute("href")).to.equal("/");
       expect(firstItem.getAttribute("target")).to.equal("_blank");
       expect(firstItem.getAttribute("rel")).to.equal("noopener noreferrer");
