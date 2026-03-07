@@ -4,6 +4,7 @@ import { designTokens, baseStyles } from "./styles.js";
 import "./home.js";
 import "./index.js";
 import "./history.js";
+import "./player-profile.js";
 import "./toast.js";
 
 class App extends LitElement {
@@ -35,6 +36,7 @@ class App extends LitElement {
       _historyGameId: { state: true },
       _historyHandNumber: { state: true },
       _historyListRefreshNonce: { state: true },
+      _playerProfileId: { state: true },
     };
   }
 
@@ -54,6 +56,7 @@ class App extends LitElement {
     this._historyGameId = null;
     this._historyHandNumber = null;
     this._historyListRefreshNonce = 0;
+    this._playerProfileId = null;
   }
 
   // --- History Tasks ---
@@ -85,6 +88,16 @@ class App extends LitElement {
       return res.json();
     },
     args: () => [this._historyGameId, this._historyHandNumber],
+  });
+
+  _playerProfileTask = new Task(this, {
+    task: async ([playerId], { signal }) => {
+      if (!playerId) return null;
+      const res = await fetch(`/api/players/${playerId}`, { signal });
+      if (!res.ok) throw new Error("Player not found");
+      return res.json();
+    },
+    args: () => [this._playerProfileId],
   });
 
   connectedCallback() {
@@ -318,6 +331,12 @@ class App extends LitElement {
       ></phg-history>`;
   }
 
+  _renderPlayerProfileView() {
+    return html`${this.renderToast()}<phg-player-profile
+        .profile=${this._playerProfileTask.value}
+      ></phg-player-profile>`;
+  }
+
   _clearHistoryState() {
     this._historyGameId = null;
     this._historyHandNumber = null;
@@ -351,6 +370,9 @@ class App extends LitElement {
         // Clear history state when navigating away from history
         this._clearHistoryState();
       }
+
+      const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
+      this._playerProfileId = playerMatch?.[1] || null;
     }
   }
 
@@ -396,6 +418,16 @@ class App extends LitElement {
       history.replaceState({}, "", `/games/${this._historyGameId}`);
       this.path = `/games/${this._historyGameId}`;
     }
+
+    if (this._playerProfileTask.status === TaskStatus.ERROR) {
+      const error = /** @type {Error} */ (this._playerProfileTask.error);
+      this.toast = {
+        message: error.message,
+        variant: "error",
+      };
+      history.replaceState({}, "", "/");
+      this.path = "/";
+    }
   }
 
   render() {
@@ -403,12 +435,14 @@ class App extends LitElement {
     const historyMatch = this.path.match(
       /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
     );
+    const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
     const gameId = gameMatch?.[1] || historyMatch?.[1];
 
     this._manageConnection(gameId);
 
     if (gameMatch) return this._renderGameView(gameMatch);
     if (historyMatch) return this._renderHistoryView(historyMatch);
+    if (playerMatch) return this._renderPlayerProfileView();
     return html`${this.renderToast()}<phg-home></phg-home>`;
   }
 }

@@ -1,5 +1,6 @@
 import * as PokerActions from "./poker/actions.js";
 import * as HandHistory from "./poker/hand-history/index.js";
+import * as Store from "./store.js";
 import {
   classifyAllInAction,
   recordBettingAction,
@@ -49,14 +50,20 @@ function handleSitOutOrLeave(game, broadcast) {
     PokerGame.stopGameTick(game);
     if (game.pendingHandHistory) {
       const finalizedHandNumber = game.handNumber;
-      HandHistory.finalizeHand(game, game.pendingHandHistory).then(() =>
+      HandHistory.finalizeHand(game, game.pendingHandHistory).then((hand) => {
+        Store.recordPlayerGames(
+          hand.players.map((player) => ({
+            playerId: player.id,
+            gameId: game.id,
+          })),
+        );
         broadcast({
           type: "history",
           gameId: game.id,
           event: "handRecorded",
           handNumber: finalizedHandNumber,
-        }),
-      );
+        });
+      });
       game.pendingHandHistory = null;
     }
   }

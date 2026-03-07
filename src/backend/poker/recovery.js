@@ -2,7 +2,11 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import * as Game from "./game.js";
 import * as Seat from "./seat.js";
-import { getDataDir, toCents } from "./hand-history/io.js";
+import {
+  getDataDir,
+  readTournamentSummary,
+  toCents,
+} from "./hand-history/io.js";
 import * as Tournament from "../../shared/tournament.js";
 import * as logger from "../logger.js";
 
@@ -523,27 +527,6 @@ async function readHandsFromFile(gameId) {
     (a, b) => parseHandNumber(a.game_number) - parseHandNumber(b.game_number),
   );
   return hands;
-}
-
-/**
- * @param {string} gameId
- * @returns {Promise<OTSSummary|null>}
- */
-async function readTournamentSummary(gameId) {
-  const filePath = `${getDataDir()}/${gameId}.ots`;
-  if (!existsSync(filePath)) return null;
-
-  try {
-    const content = await readFile(filePath, "utf8");
-    const parsed = JSON.parse(content);
-    return parsed?.ots ? parsed.ots : null;
-  } catch (err) {
-    logger.warn("invalid tournament summary ignored during recovery", {
-      gameId,
-      error: err.message,
-    });
-    return null;
-  }
 }
 
 /**

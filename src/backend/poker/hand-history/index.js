@@ -354,13 +354,10 @@ function buildRounds(recorder) {
  * Finalizes and saves the current hand
  * @param {Game} game
  * @param {PotResult[]} [potResults]
+ * @returns {Promise<OHHHand>}
  */
 export async function finalizeHand(game, potResults = []) {
   const recorder = getRecorder(game.id);
-
-  if (recorder.actions.length === 0) {
-    return; // No actions recorded, skip
-  }
 
   const pots = potResults.map((pot, index) => ({
     number: index,
@@ -437,6 +434,7 @@ export async function finalizeHand(game, potResults = []) {
 
   // Write to file
   await writeHandToFile(game.id, hand);
+  return hand;
 }
 
 /**

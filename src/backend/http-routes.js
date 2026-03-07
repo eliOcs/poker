@@ -5,6 +5,7 @@ import * as Stakes from "./poker/stakes.js";
 import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as Store from "./store.js";
+import { getPlayerProfile } from "./player-profile.js";
 import {
   createRateLimiter,
   getClientIp,
@@ -381,6 +382,14 @@ export function createRoutes(users, games, broadcast) {
     },
     {
       method: "GET",
+      path: /^\/players\/([a-z0-9]+)$/,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match, log }) => {
         const gameId = /** @type {string} */ (
@@ -418,6 +427,25 @@ export function createRoutes(users, games, broadcast) {
         res.end(
           JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
         );
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/api\/players\/([a-z0-9]+)$/,
+      handler: async ({ req, res, match, log }) => {
+        getOrCreateUser(req, res, users, log);
+        const playerId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        const profile = await getPlayerProfile(games, playerId);
+
+        if (!profile) {
+          throw new HttpError(404, "Player not found", {
+            body: { error: "Player not found", status: 404 },
+          });
+        }
+
+        respondWithJson(res, profile);
       },
     },
   ];

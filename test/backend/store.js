@@ -1,8 +1,9 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
-import { rm } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { rm, writeFile } from "node:fs/promises";
+import { existsSync, mkdirSync } from "node:fs";
 import crypto from "crypto";
+import { DatabaseSync } from "node:sqlite";
 import * as Store from "../../src/backend/store.js";
 import { DEFAULT_SETTINGS } from "../../src/backend/user.js";
 
@@ -35,6 +36,84 @@ describe("store", function () {
       Store.initialize();
       assert.ok(existsSync(`${testDataDir}/poker.db`));
     });
+
+    it("migrates legacy users to always have joined and last seen dates", function () {
+      mkdirSync(testDataDir, { recursive: true });
+      const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
+      legacyDb.exec(`
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          created_at TEXT,
+          updated_at TEXT
+        );
+      `);
+      legacyDb
+        .prepare(
+          "INSERT INTO users (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        )
+        .run("legacy-user", "Legacy", "", null);
+      legacyDb.close();
+
+      Store.initialize();
+
+      const profile = Store.loadUserProfile("legacy-user");
+      assert.ok(profile);
+      assert.match(profile.createdAt, /^\d{4}-\d{2}-\d{2} /);
+      assert.match(profile.updatedAt, /^\d{4}-\d{2}-\d{2} /);
+    });
+
+    it("backfills player_games from existing hand histories when migration has not run yet", async function () {
+      mkdirSync(testDataDir, { recursive: true });
+      const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
+      legacyDb.exec(`
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          created_at TEXT,
+          updated_at TEXT
+        );
+      `);
+      legacyDb.exec(`
+        CREATE TABLE player_games (
+          player_id TEXT NOT NULL,
+          game_id TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          PRIMARY KEY (player_id, game_id)
+        );
+      `);
+      legacyDb.close();
+
+      await writeFile(
+        `${testDataDir}/gameabc.ohh`,
+        `${JSON.stringify({
+          ohh: {
+            spec_version: "1.4.6",
+            site_name: "Pluton Poker",
+            game_number: "gameabc-1",
+            start_date_utc: "2026-03-07T12:00:00.000Z",
+            game_type: "Hold'em",
+            bet_limit: { bet_type: "NL" },
+            table_size: 6,
+            dealer_seat: 1,
+            small_blind_amount: 0.25,
+            big_blind_amount: 0.5,
+            ante_amount: 0,
+            players: [
+              { id: "p1", seat: 1, name: "Alice", starting_stack: 10 },
+              { id: "p2", seat: 2, name: "Bob", starting_stack: 10 },
+            ],
+            rounds: [],
+            pots: [],
+          },
+        })}\n\n`,
+      );
+
+      Store.initialize();
+
+      assert.deepStrictEqual(Store.listPlayerGameIds("p1"), ["gameabc"]);
+      assert.deepStrictEqual(Store.listPlayerGameIds("p2"), ["gameabc"]);
+    });
   });
 
   describe("saveUser and loadUser", function () {
@@ -48,6 +127,21 @@ describe("store", function () {
       assert.strictEqual(loaded.id, "abc123");
       assert.strictEqual(loaded.name, "Alice");
       assert.strictEqual(loaded.settings.volume, 0.5);
+    });
+
+    it("loads user profile with non-empty joined and last seen dates", function () {
+      Store.initialize();
+
+      Store.saveUser({
+        id: "abc123",
+        name: "Alice",
+        settings: { volume: 0.5 },
+      });
+
+      const loaded = Store.loadUserProfile("abc123");
+      assert.ok(loaded);
+      assert.match(loaded.createdAt, /^\d{4}-\d{2}-\d{2} /);
+      assert.match(loaded.updatedAt, /^\d{4}-\d{2}-\d{2} /);
     });
 
     it("updates existing user", function () {
@@ -148,6 +242,27 @@ describe("store", function () {
 
       Store.saveUser({ id: "user2", name: "Two", settings: { volume: 0.75 } });
       assert.strictEqual(Store.count(), 2);
+    });
+  });
+
+  describe("player game index", function () {
+    it("records and lists unique game ids for a player", function () {
+      Store.initialize();
+
+      Store.recordPlayerGames([
+        { playerId: "u1", gameId: "g1" },
+        { playerId: "u1", gameId: "g2" },
+        { playerId: "u1", gameId: "g1" },
+        { playerId: "u2", gameId: "g3" },
+      ]);
+
+      assert.deepStrictEqual(Store.listPlayerGameIds("u1"), ["g1", "g2"]);
+      assert.deepStrictEqual(Store.listPlayerGameIds("u2"), ["g3"]);
+    });
+
+    it("returns empty list for unknown player", function () {
+      Store.initialize();
+      assert.deepStrictEqual(Store.listPlayerGameIds("missing"), []);
     });
   });
 

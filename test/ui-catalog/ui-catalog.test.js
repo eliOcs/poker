@@ -6,6 +6,7 @@ test.describe.configure({ mode: "parallel" });
 const TEST_CASES = [
   // Landing page
   "landing-page",
+  "player-profile-summary",
 
   // Lobby states
   "game-empty-table",
@@ -80,6 +81,7 @@ const TEST_CASES = [
 function getComponentSelector(testCase) {
   if (testCase === "landing-page") return "phg-home";
   if (testCase.startsWith("history-")) return "phg-history";
+  if (testCase.startsWith("player-profile-")) return "phg-player-profile";
   // game-*, table-* all use phg-game
   return "phg-game";
 }

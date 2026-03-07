@@ -224,3 +224,24 @@ export async function writeTournamentSummary(gameId, summary) {
 
   await writeFile(filePath, content, "utf8");
 }
+
+/**
+ * Reads a tournament summary from the .ots file
+ * @param {string} gameId
+ * @returns {Promise<OTSSummary|null>}
+ */
+export async function readTournamentSummary(gameId) {
+  const filePath = `${getDataDir()}/${gameId}.ots`;
+
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  try {
+    const content = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(content);
+    return parsed?.ots ? parsed.ots : null;
+  } catch {
+    return null;
+  }
+}

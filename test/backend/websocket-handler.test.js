@@ -1,4 +1,4 @@
-import { describe, it, beforeEach } from "node:test";
+import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import {
   classifyAllInAction,
@@ -8,9 +8,19 @@ import {
 import * as PokerActions from "../../src/backend/poker/actions.js";
 import * as Seat from "../../src/backend/poker/seat.js";
 import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
+import * as Store from "../../src/backend/store.js";
 import { createTestGame } from "./poker/test-helpers.js";
 
 describe("websocket-handler", () => {
+  beforeEach(() => {
+    Store._reset();
+    Store.initialize(":memory:");
+  });
+
+  afterEach(() => {
+    Store.close();
+  });
+
   describe("classifyAllInAction", () => {
     it("should return bet when currentBet is 0", () => {
       // Going all-in when no one has bet

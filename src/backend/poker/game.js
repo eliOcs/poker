@@ -11,6 +11,7 @@ import { recordBettingAction } from "./hand-history/record.js";
 import HandRankings from "./hand-rankings.js";
 import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
 import { createLog, emitLog } from "../logger.js";
+import * as Store from "../store.js";
 import * as Tournament from "../../shared/tournament.js";
 
 /**
@@ -25,14 +26,12 @@ import * as Tournament from "../../shared/tournament.js";
 /**
  * @typedef {'waiting'|'preflop'|'flop'|'turn'|'river'|'showdown'} Phase
  */
-
 /**
  * @typedef {object} Blinds
  * @property {Cents} ante - Ante amount
  * @property {Cents} small - Small blind amount
  * @property {Cents} big - Big blind amount
  */
-
 /**
  * @typedef {object} Board
  * @property {Card[]} cards - Community cards
@@ -399,14 +398,17 @@ export function startHand(game, onBroadcast) {
 function finalizePendingHandHistory(game, onBroadcast) {
   if (!game.pendingHandHistory) return;
   const finalizedHandNumber = game.handNumber;
-  HandHistory.finalizeHand(game, game.pendingHandHistory).then(() =>
+  HandHistory.finalizeHand(game, game.pendingHandHistory).then((hand) => {
+    Store.recordPlayerGames(
+      hand.players.map((player) => ({ playerId: player.id, gameId: game.id })),
+    );
     onBroadcast?.({
       type: "history",
       gameId: game.id,
       event: "handRecorded",
       handNumber: finalizedHandNumber,
-    }),
-  );
+    });
+  });
   game.pendingHandHistory = null;
 }
 

@@ -10,6 +10,7 @@ import { html, render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/history.js";
+import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import {
@@ -35,6 +36,22 @@ const GAME_TEST_CASES = {
   "landing-page": () => html`
     <div style="height: 100vh; width: 100%;">
       <phg-home></phg-home>
+    </div>
+  `,
+
+  "player-profile-summary": () => html`
+    <div style="min-height: 100vh; width: 100%;">
+      <phg-player-profile
+        .profile=${{
+          id: "lz1abc12x9k2",
+          name: "Cañas y tapas",
+          online: false,
+          lastSeenAt: "2026-03-05T18:42:00.000Z",
+          joinedAt: "2025-11-14T20:15:00.000Z",
+          totalNetWinnings: 184250,
+          totalHands: 1328,
+        }}
+      ></phg-player-profile>
     </div>
   `,
 

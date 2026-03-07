@@ -1,20 +1,40 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
+import { setTimeout as delay } from "node:timers/promises";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as HandHistory from "../../../src/backend/poker/hand-history/index.js";
+import * as Store from "../../../src/backend/store.js";
 import { createHeadsUpGame } from "./test-helpers.js";
+
+async function waitForHandHistoryFlush() {
+  for (let i = 0; i < 200; i += 1) {
+    if (
+      HandHistory.getCacheSize() === 1 &&
+      Store.listPlayerGameIds("player1").length === 1 &&
+      Store.listPlayerGameIds("player2").length === 1
+    ) {
+      return;
+    }
+    await delay(0);
+  }
+
+  throw new Error("hand history did not flush in time");
+}
 
 describe("game history timing", () => {
   /** @type {import('../../../src/backend/poker/game.js').Game} */
   let game;
 
   beforeEach(() => {
+    Store._reset();
+    Store.initialize(":memory:");
     game = createHeadsUpGame();
     HandHistory.clearCache();
     HandHistory.clearRecorder(game.id);
   });
 
   afterEach(() => {
+    Store.close();
     HandHistory.clearRecorder(game.id);
   });
 
@@ -56,10 +76,13 @@ describe("game history timing", () => {
     ];
 
     Game.startHand(game);
+    await waitForHandHistoryFlush();
 
     assert.strictEqual(game.pendingHandHistory, null);
     assert.strictEqual(game.handNumber, 2);
     assert.strictEqual(HandHistory.getCacheSize(), 1);
+    assert.deepStrictEqual(Store.listPlayerGameIds("player1"), [game.id]);
+    assert.deepStrictEqual(Store.listPlayerGameIds("player2"), [game.id]);
 
     const savedHand = await HandHistory.getHand(game.id, 1);
     assert.ok(savedHand);
