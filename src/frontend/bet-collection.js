@@ -41,7 +41,9 @@ export function snapshotBetPositions(shadowRoot, bets) {
  */
 export function animateBetCollection(container, sources) {
   for (const src of sources) {
-    const chip = document.createElement("phg-chips");
+    const chip = /** @type {HTMLElement & { amount: number }} */ (
+      document.createElement("phg-chips")
+    );
     chip.amount = src.amount;
     chip.classList.add("collecting-chip");
     chip.style.left = `${src.left}px`;

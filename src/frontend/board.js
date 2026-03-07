@@ -122,6 +122,18 @@ class Board extends LitElement {
     };
   }
 
+  constructor() {
+    super();
+    this.board = null;
+    this.hand = null;
+    this.countdown = null;
+    this.winnerMessage = null;
+    this.winningCards = null;
+    this.noAnimation = false;
+    this.tournament = null;
+    this.seats = null;
+  }
+
   getTournamentWinnerName() {
     if (this.tournament?.winner === null || !this.seats) return null;
     const winnerSeat = this.seats[this.tournament.winner];

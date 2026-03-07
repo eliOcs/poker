@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { html, css, LitElement } from "lit";
 import {
   designTokens,
@@ -14,6 +15,7 @@ import {
 import "./card.js";
 import "./button.js";
 import "./chips.js";
+/** @typedef {(seat: any) => boolean} SeatClassCondition */
 
 class Seat extends LitElement {
   static get styles() {
@@ -349,6 +351,10 @@ class Seat extends LitElement {
 
   constructor() {
     super();
+    this.seat = null;
+    this.seatNumber = 0;
+    this.isButton = false;
+    this.noAnimation = false;
     this.showSitAction = true;
     this.clockTicks = 0;
     this.buyIn = 0;
@@ -372,6 +378,7 @@ class Seat extends LitElement {
     return null;
   }
 
+  /** @type {[string, SeatClassCondition][]} */
   static _seatClassStates = [
     ["empty", (s) => !s || s.empty],
     ["acting", (s) => s?.isActing],
@@ -416,7 +423,6 @@ class Seat extends LitElement {
   showEmote(emoji) {
     this._showBubble(emoji, "emote");
   }
-
   showChat(message) {
     this._showBubble(message, "chat");
   }

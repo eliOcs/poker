@@ -4,8 +4,8 @@ import "./button.js";
 import {
   PRESETS as STAKES_PRESETS,
   DEFAULT as DEFAULT_STAKES,
-} from "/src/shared/stakes.js";
-import { BUYIN_PRESETS, DEFAULT_BUYIN } from "/src/shared/tournament.js";
+} from "../shared/stakes.js";
+import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
 
 const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
@@ -162,7 +162,8 @@ class Home extends LitElement {
   }
 
   handleGameTypeChange(e) {
-    this.selectedGameType = e.target.value;
+    const target = /** @type {HTMLInputElement} */ (e.target);
+    this.selectedGameType = target.value;
     // Update default table size based on game type
     if (this.selectedGameType === "tournament") {
       this.selectedTableSize = DEFAULT_TABLE_SIZE_TOURNAMENT;
@@ -172,17 +173,20 @@ class Home extends LitElement {
   }
 
   handleStakesChange(e) {
-    const index = parseInt(e.target.value, 10);
-    this.selectedStakes = STAKES_PRESETS[index];
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    const index = parseInt(target.value, 10);
+    this.selectedStakes = STAKES_PRESETS[index] ?? this.selectedStakes;
   }
 
   handleBuyInChange(e) {
-    const index = parseInt(e.target.value, 10);
-    this.selectedBuyIn = BUYIN_PRESETS[index];
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    const index = parseInt(target.value, 10);
+    this.selectedBuyIn = BUYIN_PRESETS[index] ?? this.selectedBuyIn;
   }
 
   handleTableSizeChange(e) {
-    this.selectedTableSize = parseInt(e.target.value, 10);
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    this.selectedTableSize = parseInt(target.value, 10);
   }
 
   async createGame() {

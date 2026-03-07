@@ -23,6 +23,7 @@ import {
 } from "./game-modals.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
+/** @typedef {HTMLElement & { showEmote: (emoji: string) => void, showChat: (message: string) => void }} SeatElement */
 
 class Game extends LitElement {
   static get styles() {
@@ -242,8 +243,10 @@ class Game extends LitElement {
   }
 
   saveSettings() {
-    const input = this.shadowRoot.querySelector("#name-input");
-    const name = input?.value?.trim() || "";
+    const input = /** @type {HTMLInputElement|null} */ (
+      this.shadowRoot?.querySelector("#name-input")
+    );
+    const name = input?.value.trim() || "";
     this.dispatchEvent(
       new CustomEvent("update-user", {
         detail: { name },
@@ -305,7 +308,9 @@ class Game extends LitElement {
     const sources = this._pendingCollection;
     if (!sources) return;
     this._pendingCollection = null;
-    const container = this.shadowRoot.querySelector("#container");
+    const container = /** @type {HTMLElement|null} */ (
+      this.shadowRoot?.querySelector("#container")
+    );
     if (container) animateBetCollection(container, sources);
   }
 
@@ -314,17 +319,17 @@ class Game extends LitElement {
     const seatIndex = Number.parseInt(String(socialAction.seat), 10);
     if (!Number.isInteger(seatIndex)) return;
 
-    const seatEl = this.shadowRoot?.querySelector(
-      `phg-seat[data-seat="${seatIndex}"]`,
+    const seatEl = /** @type {SeatElement|null} */ (
+      this.shadowRoot?.querySelector(`phg-seat[data-seat="${seatIndex}"]`)
     );
     if (!seatEl) return;
 
     if (socialAction.action === "emote") {
-      seatEl.showEmote?.(socialAction.emoji);
+      seatEl.showEmote(socialAction.emoji);
       return;
     }
     if (socialAction.action === "chat") {
-      seatEl.showChat?.(socialAction.message);
+      seatEl.showChat(socialAction.message);
     }
   }
 

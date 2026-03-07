@@ -186,6 +186,9 @@ class Card extends LitElement {
 
   constructor() {
     super();
+    this.card = null;
+    this.winning = false;
+    this.noAnimation = false;
     this._prevCard = undefined;
     this._flipping = false;
     this._dealing = false;
@@ -205,7 +208,9 @@ class Card extends LitElement {
 
   updated() {
     if (this._flipping) {
-      const front = this.shadowRoot.querySelector(".card.front");
+      const front = /** @type {HTMLElement|null} */ (
+        this.shadowRoot?.querySelector(".card.front")
+      );
       if (front) {
         const handler = () => {
           front.removeEventListener("transitionend", handler);
@@ -216,8 +221,8 @@ class Card extends LitElement {
     }
     if (this._dealing) {
       const isFlipped = this.card && this.card !== "??";
-      const face = this.shadowRoot.querySelector(
-        isFlipped ? ".card.front" : ".card.back",
+      const face = /** @type {HTMLElement|null} */ (
+        this.shadowRoot?.querySelector(isFlipped ? ".card.front" : ".card.back")
       );
       if (face) {
         const handler = () => {
@@ -258,7 +263,7 @@ class Card extends LitElement {
     const isFlipped = !isHidden;
     const wrapperClasses = `card-wrapper${isFlipped ? " flipped" : ""}${this._flipping ? " flipping" : ""}${this._dealing ? " dealing" : ""}`;
 
-    let frontContent = "";
+    let frontContent = null;
     let frontClasses = "card front";
     if (!isHidden) {
       const rank = this.card.slice(0, -1);

@@ -163,6 +163,15 @@ class Button extends LitElement {
     };
   }
 
+  constructor() {
+    super();
+    this.variant = "secondary";
+    this.size = "normal";
+    this.fullWidth = false;
+    this.disabled = false;
+    this.icon = "";
+  }
+
   render() {
     const iconTemplate = this.icon ? buttonIcons[this.icon] : null;
     const hasIcon = Boolean(iconTemplate);

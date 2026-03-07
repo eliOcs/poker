@@ -34,13 +34,13 @@ class History extends LitElement {
     this.error = null;
     this.playerId = null;
     this.touchStartX = null;
+    this.boundHandleKeydown = this.handleKeydown.bind(this);
+    this.boundHandleTouchStart = this.handleTouchStart.bind(this);
+    this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.boundHandleKeydown = this.handleKeydown.bind(this);
-    this.boundHandleTouchStart = this.handleTouchStart.bind(this);
-    this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
     window.addEventListener("keydown", this.boundHandleKeydown);
     this.addEventListener("touchstart", this.boundHandleTouchStart);
     this.addEventListener("touchend", this.boundHandleTouchEnd);

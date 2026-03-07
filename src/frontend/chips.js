@@ -6,6 +6,7 @@ const MAX_PER_COLUMN = 8;
 const TARGET_MAX_COLUMNS = 4;
 const TARGET_MAX_CHIPS = MAX_PER_COLUMN * TARGET_MAX_COLUMNS;
 const CHIP_DENOMINATION_BASES = [1, 5, 10, 25, 50];
+const DEFAULT_CHIP_STYLE = { base: "#e8e8e8", stripe: "#666666" };
 
 /** @type {Record<Cents, { base: string, stripe: string }>} */
 const CHIP_STYLES = {
@@ -47,10 +48,9 @@ function buildDisplayDenominations(amount) {
   const denominations = new Set();
   let scale = 1;
 
-  while (
-    CHIP_DENOMINATION_BASES[CHIP_DENOMINATION_BASES.length - 1] * scale <=
-    maxTarget
-  ) {
+  const largestBase =
+    CHIP_DENOMINATION_BASES[CHIP_DENOMINATION_BASES.length - 1] ?? 0;
+  while (largestBase * scale <= maxTarget) {
     for (const base of CHIP_DENOMINATION_BASES) {
       denominations.add(base * scale);
     }
@@ -72,6 +72,7 @@ function decomposeDisplayChips(amount) {
 
   for (let i = denominations.length - 1; i >= 0 && remaining > 0; i--) {
     const denom = denominations[i];
+    if (denom === undefined) continue;
     const count = Math.floor(remaining / denom);
     if (count > 0) {
       chips.push({ denom, count });
@@ -93,11 +94,12 @@ function getChipStyle(denom) {
   }
   for (let i = KNOWN_CHIP_VALUES.length - 1; i >= 0; i--) {
     const known = KNOWN_CHIP_VALUES[i];
+    if (known === undefined) continue;
     if (denom >= known) {
-      return CHIP_STYLES[known];
+      return CHIP_STYLES[known] ?? DEFAULT_CHIP_STYLE;
     }
   }
-  return CHIP_STYLES[1];
+  return CHIP_STYLES[1] ?? DEFAULT_CHIP_STYLE;
 }
 
 /**
@@ -149,6 +151,11 @@ class Chips extends LitElement {
     return {
       amount: { type: Number },
     };
+  }
+
+  constructor() {
+    super();
+    this.amount = 0;
   }
 
   render() {

@@ -1,6 +1,6 @@
 import { LitElement } from "lit";
 import { designTokens, baseStyles, actionPanelStyles } from "./styles.js";
-import { getChipDenomination } from "/src/shared/stakes.js";
+import { getChipDenomination } from "../shared/stakes.js";
 import { actionPanelExtraStyles } from "./action-panel-local.styles.js";
 import { renderActionPanel } from "./action-panel-render.js";
 import "./button.js";

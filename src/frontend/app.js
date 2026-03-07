@@ -99,20 +99,23 @@ class App extends LitElement {
       }
     });
     this.addEventListener("navigate", (e) => {
-      history.pushState({}, "", e.detail.path);
-      this.path = e.detail.path;
+      const detail = /** @type {CustomEvent<{ path: string }>} */ (e).detail;
+      history.pushState({}, "", detail.path);
+      this.path = detail.path;
     });
     this.addEventListener("toast", (e) => {
-      this.toast = e.detail;
+      this.toast = /** @type {CustomEvent<object>} */ (e).detail;
     });
     this.addEventListener("hand-select", (e) => {
-      this.handleHandSelect(e.detail.handNumber);
+      const detail = /** @type {CustomEvent<{ handNumber: number }>} */ (e)
+        .detail;
+      this.handleHandSelect(detail.handNumber);
     });
     this.addEventListener("game-action", (e) => {
-      this.sendToGame(e.detail);
+      this.sendToGame(/** @type {CustomEvent<object>} */ (e).detail);
     });
     this.addEventListener("update-user", (e) => {
-      this._updateUser(e.detail);
+      this._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
     });
   }
 
@@ -373,8 +376,9 @@ class App extends LitElement {
 
     // Handle task errors
     if (this._historyListTask.status === TaskStatus.ERROR) {
+      const error = /** @type {Error} */ (this._historyListTask.error);
       this.toast = {
-        message: this._historyListTask.error.message,
+        message: error.message,
         variant: "error",
       };
       history.replaceState({}, "", `/games/${this._historyGameId}`);
@@ -382,8 +386,9 @@ class App extends LitElement {
     }
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
+      const error = /** @type {Error} */ (this._historyHandTask.error);
       this.toast = {
-        message: this._historyHandTask.error.message,
+        message: error.message,
         variant: "error",
       };
       history.replaceState({}, "", `/games/${this._historyGameId}`);
