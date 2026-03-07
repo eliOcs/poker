@@ -32,12 +32,12 @@ class RankingPanel extends LitElement {
 
         th {
           color: var(--color-fg-muted);
-          font-size: var(--font-md);
+          font-size: var(--font-sm);
           border-bottom: 2px solid var(--color-fg-muted);
         }
 
         th .tooltip {
-          font-size: var(--font-sm);
+          font-size: var(--font-xs);
           color: var(--color-fg-muted);
           display: block;
           font-weight: normal;
@@ -46,6 +46,7 @@ class RankingPanel extends LitElement {
 
         td {
           color: var(--color-fg-medium);
+          font-size: var(--font-sm);
         }
 
         .player-name {

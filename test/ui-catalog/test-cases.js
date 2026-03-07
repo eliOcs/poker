@@ -50,6 +50,32 @@ const GAME_TEST_CASES = {
           joinedAt: "2025-11-14T20:15:00.000Z",
           totalNetWinnings: 184250,
           totalHands: 1328,
+          recentGames: [
+            {
+              gameId: "mmgkhas5af01",
+              gameType: "tournament",
+              netWinnings: -500,
+              handsPlayed: 17,
+              lastPlayedAt: "2026-03-06T22:13:00.000Z",
+              lastHandNumber: 17,
+            },
+            {
+              gameId: "mmgkb7da7fa2",
+              gameType: "cash",
+              netWinnings: 4825,
+              handsPlayed: 42,
+              lastPlayedAt: "2026-03-05T19:42:00.000Z",
+              lastHandNumber: 42,
+            },
+            {
+              gameId: "mmgkbe5a1234",
+              gameType: "cash",
+              netWinnings: -1375,
+              handsPlayed: 9,
+              lastPlayedAt: "2026-03-04T21:08:00.000Z",
+              lastHandNumber: 9,
+            },
+          ],
         }}
       ></phg-player-profile>
     </div>

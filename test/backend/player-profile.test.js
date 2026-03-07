@@ -149,6 +149,24 @@ describe("player-profile", function () {
     assert.strictEqual(profile.online, true);
     assert.strictEqual(profile.totalHands, 2);
     assert.strictEqual(profile.totalNetWinnings, 25);
+    assert.deepStrictEqual(profile.recentGames, [
+      {
+        gameId: "gameb456",
+        gameType: "cash",
+        netWinnings: -25,
+        handsPlayed: 1,
+        lastPlayedAt: "2026-03-02T12:00:00.000Z",
+        lastHandNumber: 2,
+      },
+      {
+        gameId: "gamea123",
+        gameType: "cash",
+        netWinnings: 50,
+        handsPlayed: 1,
+        lastPlayedAt: "2026-03-01T12:00:00.000Z",
+        lastHandNumber: 1,
+      },
+    ]);
     assert.match(profile.joinedAt, /^\d{4}-\d{2}-\d{2} /);
     assert.match(profile.lastSeenAt, /^\d{4}-\d{2}-\d{2} /);
   });
@@ -248,6 +266,16 @@ describe("player-profile", function () {
     assert.ok(profile);
     assert.strictEqual(profile.totalHands, 1);
     assert.strictEqual(profile.totalNetWinnings, -500);
+    assert.deepStrictEqual(profile.recentGames, [
+      {
+        gameId: "tour123",
+        gameType: "tournament",
+        netWinnings: -500,
+        handsPlayed: 1,
+        lastPlayedAt: "2026-03-07T12:00:00.000Z",
+        lastHandNumber: 1,
+      },
+    ]);
   });
 
   it("uses final tournament payout from summary when available", async function () {
@@ -328,5 +356,114 @@ describe("player-profile", function () {
 
     assert.ok(profile);
     assert.strictEqual(profile.totalNetWinnings, 100);
+    assert.deepStrictEqual(profile.recentGames, [
+      {
+        gameId: "tour456",
+        gameType: "tournament",
+        netWinnings: 100,
+        handsPlayed: 1,
+        lastPlayedAt: "2026-03-07T12:00:00.000Z",
+        lastHandNumber: 1,
+      },
+    ]);
+  });
+
+  it("links recent games to the player's latest played hand in that game", async function () {
+    const hand1 = createHand(
+      "gamec789",
+      1,
+      1,
+      [
+        {
+          action_number: 1,
+          player_id: "player1",
+          action: "Post SB",
+          amount: 0.25,
+        },
+        {
+          action_number: 2,
+          player_id: "player2",
+          action: "Post BB",
+          amount: 0.5,
+        },
+        {
+          action_number: 3,
+          player_id: "player1",
+          action: "Call",
+          amount: 0.5,
+        },
+      ],
+      [{ player_id: "player1", win_amount: 1, contributed_rake: 0 }],
+    );
+    hand1.start_date_utc = "2026-03-01T12:00:00.000Z";
+
+    const hand3 = createHand(
+      "gamec789",
+      3,
+      0.75,
+      [
+        {
+          action_number: 1,
+          player_id: "player2",
+          action: "Post SB",
+          amount: 0.25,
+        },
+        {
+          action_number: 2,
+          player_id: "player1",
+          action: "Post BB",
+          amount: 0.5,
+        },
+        { action_number: 3, player_id: "player2", action: "Fold" },
+      ],
+      [{ player_id: "player1", win_amount: 0.75, contributed_rake: 0 }],
+    );
+    hand3.start_date_utc = "2026-03-03T12:00:00.000Z";
+
+    const hand4 = createHand(
+      "gamec789",
+      4,
+      0.75,
+      [
+        {
+          action_number: 1,
+          player_id: "player2",
+          action: "Post SB",
+          amount: 0.25,
+        },
+        {
+          action_number: 2,
+          player_id: "player3",
+          action: "Post BB",
+          amount: 0.5,
+        },
+      ],
+      [{ player_id: "player2", win_amount: 0.75, contributed_rake: 0 }],
+    );
+    hand4.players = [
+      { id: "player2", seat: 1, name: "Bob", starting_stack: 10 },
+      { id: "player3", seat: 2, name: "Carol", starting_stack: 10 },
+    ];
+    hand4.start_date_utc = "2026-03-04T12:00:00.000Z";
+
+    await writeHandToFile("gamec789", hand1);
+    await writeHandToFile("gamec789", hand3);
+    await writeHandToFile("gamec789", hand4);
+    recordHandPlayers(hand1, "gamec789");
+    recordHandPlayers(hand3, "gamec789");
+
+    const profile = await getPlayerProfile(new Map(), "player1");
+
+    assert.ok(profile);
+    assert.deepStrictEqual(profile.recentGames, [
+      {
+        gameId: "gamec789",
+        gameType: "cash",
+        netWinnings: 75,
+        handsPlayed: 2,
+        lastPlayedAt: "2026-03-03T12:00:00.000Z",
+        lastHandNumber: 3,
+      },
+    ]);
   });
 });

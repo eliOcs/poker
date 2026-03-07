@@ -20,17 +20,29 @@ const contributionActions = new Set([
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/hand-history/index.js').OHHHand} OHHHand
  * @typedef {import('./poker/types.js').Cents} Cents
+ * @typedef {import('./id.js').Id} Id
+ */
+
+/**
+ * @typedef {object} RecentGame
+ * @property {Id} gameId
+ * @property {"cash"|"tournament"} gameType
+ * @property {Cents} netWinnings
+ * @property {number} handsPlayed
+ * @property {string} lastPlayedAt
+ * @property {number} lastHandNumber
  */
 
 /**
  * @typedef {object} PlayerProfile
- * @property {string} id
+ * @property {Id} id
  * @property {string} name
  * @property {boolean} online
  * @property {string|null} lastSeenAt
  * @property {string} joinedAt
  * @property {Cents} totalNetWinnings
  * @property {number} totalHands
+ * @property {RecentGame[]} recentGames
  */
 
 /**
@@ -52,6 +64,7 @@ export async function getPlayerProfile(games, playerId) {
     joinedAt: resolveJoinedAt(user, totals.hands),
     totalNetWinnings: totals.totalNetWinnings,
     totalHands: totals.totalHands,
+    recentGames: totals.recentGames,
   };
 }
 
@@ -93,18 +106,17 @@ function isPlayerOnline(games, playerId) {
 
 /**
  * @param {string} playerId
- * @returns {Promise<{ totalNetWinnings: Cents, totalHands: number, hands: OHHHand[] }>}
+ * @returns {Promise<{ totalNetWinnings: Cents, totalHands: number, hands: OHHHand[], recentGames: RecentGame[] }>}
  */
 async function summarizePlayerHistory(playerId) {
-  const files = Store.listPlayerGameIds(playerId).map(
-    (gameId) => `${gameId}.ohh`,
-  );
+  const gameIds = Store.listPlayerGameIds(playerId);
   /** @type {OHHHand[]} */
   const matchingHands = [];
   let totalNetWinnings = 0;
+  /** @type {RecentGame[]} */
+  const recentGames = [];
 
-  for (const file of files) {
-    const gameId = file.slice(0, -4);
+  for (const gameId of gameIds) {
     const hands = await readHandsFromFile(gameId);
     const playerHands = hands.filter((hand) =>
       hand.players.some((player) => player.id === playerId),
@@ -114,20 +126,95 @@ async function summarizePlayerHistory(playerId) {
 
     matchingHands.push(...playerHands);
 
-    if (isTournamentHistory(hands)) {
-      totalNetWinnings += await calculateTournamentNetResult(gameId, playerId);
-      continue;
-    }
+    const { netWinnings, gameType } = await summarizeGameResult(
+      playerHands,
+      playerId,
+      gameId,
+    );
+    totalNetWinnings += netWinnings;
 
-    for (const hand of playerHands) {
-      totalNetWinnings += calculateNetResult(hand, playerId);
-    }
+    const lastPlayedHand = findLatestHand(playerHands);
+    if (!lastPlayedHand) continue;
+
+    recentGames.push({
+      gameId,
+      gameType,
+      netWinnings,
+      handsPlayed: playerHands.length,
+      lastPlayedAt: lastPlayedHand.start_date_utc,
+      lastHandNumber: parseHandNumber(lastPlayedHand),
+    });
   }
+
+  recentGames.sort((a, b) => {
+    const dateCompare = b.lastPlayedAt.localeCompare(a.lastPlayedAt);
+    if (dateCompare !== 0) return dateCompare;
+    return b.gameId.localeCompare(a.gameId);
+  });
 
   return {
     totalNetWinnings,
     totalHands: matchingHands.length,
     hands: matchingHands,
+    recentGames,
+  };
+}
+
+/**
+ * @param {OHHHand[]} hands
+ * @returns {OHHHand|null}
+ */
+function findLatestHand(hands) {
+  const [firstHand, ...remainingHands] = hands;
+  if (!firstHand) return null;
+
+  return remainingHands.reduce((latest, hand) => {
+    const dateCompare = hand.start_date_utc.localeCompare(
+      latest.start_date_utc,
+    );
+    if (dateCompare > 0) return hand;
+    if (dateCompare < 0) return latest;
+    return parseHandNumber(hand) > parseHandNumber(latest) ? hand : latest;
+  }, firstHand);
+}
+
+/**
+ * @param {OHHHand} hand
+ * @returns {number}
+ */
+function parseHandNumber(hand) {
+  return parseInt(hand.game_number.split("-").pop() || "0", 10);
+}
+
+/**
+ * @param {OHHHand[]} hands
+ * @returns {"cash"|"tournament"}
+ */
+function getGameType(hands) {
+  return isTournamentHistory(hands) ? "tournament" : "cash";
+}
+
+/**
+ * @param {OHHHand[]} playerHands
+ * @param {string} playerId
+ * @param {Id} gameId
+ * @returns {Promise<{ netWinnings: Cents, gameType: "cash"|"tournament" }>}
+ */
+async function summarizeGameResult(playerHands, playerId, gameId) {
+  const gameType = getGameType(playerHands);
+  if (gameType === "tournament") {
+    return {
+      gameType,
+      netWinnings: await calculateTournamentNetResult(gameId, playerId),
+    };
+  }
+
+  return {
+    gameType,
+    netWinnings: playerHands.reduce(
+      (total, hand) => total + calculateNetResult(hand, playerId),
+      0,
+    ),
   };
 }
 

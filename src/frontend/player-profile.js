@@ -18,7 +18,7 @@ class PlayerProfile extends LitElement {
         }
 
         .panel {
-          width: min(760px, 100%);
+          width: min(1080px, 100%);
           max-width: 100%;
           display: grid;
           gap: 16px;
@@ -27,6 +27,13 @@ class PlayerProfile extends LitElement {
           border: var(--space-sm) solid var(--color-fg-muted);
           background: var(--color-bg-light);
           box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+        }
+
+        .content {
+          width: min(1080px, 100%);
+          max-width: 100%;
+          display: grid;
+          gap: 16px;
         }
 
         .eyebrow {
@@ -43,7 +50,7 @@ class PlayerProfile extends LitElement {
 
         .identity {
           display: grid;
-          gap: 8px;
+          gap: 6px;
         }
 
         h1 {
@@ -58,6 +65,12 @@ class PlayerProfile extends LitElement {
           line-height: 1.8;
           color: var(--color-fg-muted);
           word-break: break-all;
+        }
+
+        .meta {
+          font-size: var(--font-sm);
+          line-height: 1.8;
+          color: var(--color-fg-muted);
         }
 
         .status {
@@ -89,7 +102,6 @@ class PlayerProfile extends LitElement {
           padding: 14px;
           border: 2px solid var(--color-bg-dark);
           background: var(--color-bg-medium);
-          min-height: 72px;
           align-content: start;
         }
 
@@ -117,6 +129,83 @@ class PlayerProfile extends LitElement {
           text-align: center;
           font-size: var(--font-md);
           color: var(--color-fg-medium);
+        }
+
+        .section {
+          display: grid;
+          gap: 12px;
+        }
+
+        h2 {
+          margin: 0;
+          font-size: var(--font-md);
+          color: var(--color-fg-white);
+        }
+
+        .table-wrap {
+          overflow-x: auto;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 720px;
+        }
+
+        th,
+        td {
+          padding: var(--space-md) var(--space-lg);
+          text-align: left;
+        }
+
+        @media (width < 800px) {
+          th,
+          td {
+            padding: var(--space-sm) var(--space-md);
+            font-size: var(--font-sm);
+          }
+        }
+
+        th {
+          color: var(--color-fg-muted);
+          font-size: var(--font-sm);
+          border-bottom: 2px solid var(--color-fg-muted);
+          white-space: nowrap;
+        }
+
+        td {
+          color: var(--color-fg-medium);
+          border-bottom: 1px solid var(--color-bg-dark);
+          font-size: var(--font-sm);
+        }
+
+        tbody tr {
+          cursor: pointer;
+        }
+
+        tbody tr:hover,
+        tbody tr:focus-visible {
+          background: color-mix(
+            in srgb,
+            var(--color-bg-medium) 70%,
+            var(--color-bg-light)
+          );
+        }
+
+        tbody tr:last-child td {
+          border-bottom: 0;
+        }
+
+        .game-type {
+          white-space: nowrap;
+          color: var(--color-fg-white);
+        }
+
+        .empty {
+          padding: 18px;
+          border: 2px solid var(--color-bg-dark);
+          background: var(--color-bg-medium);
+          color: var(--color-fg-muted);
         }
 
         @media (width < 800px) {
@@ -162,6 +251,11 @@ class PlayerProfile extends LitElement {
             min-height: 0;
             padding: 12px;
           }
+
+          th,
+          td {
+            padding: 10px 12px;
+          }
         }
       `,
     ];
@@ -178,6 +272,16 @@ class PlayerProfile extends LitElement {
     this.profile = null;
   }
 
+  navigateToGame(game) {
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: `/history/${game.gameId}/${game.lastHandNumber}` },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   render() {
     if (!this.profile) {
       return html`<div class="panel">
@@ -186,38 +290,97 @@ class PlayerProfile extends LitElement {
     }
 
     return html`
-      <section class="panel">
-        <div class="eyebrow">Player Profile</div>
-        <div class="header">
-          <div class="identity">
-            <h1>${this.profile.name}</h1>
-            <div class="player-id">Player ID: ${this.profile.id}</div>
-          </div>
-          <div class=${`status ${this.profile.online ? "" : "offline"}`}>
-            ${this.profile.online
-              ? "Online"
-              : `Last seen ${formatDate(this.profile.lastSeenAt)}`}
-          </div>
-        </div>
-        <div class="summary">
-          <article class="stat">
-            <div class="label">Total Net Winnings</div>
-            <div
-              class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
-            >
-              ${formatSignedCurrency(this.profile.totalNetWinnings)}
+      <div class="content">
+        <section class="panel">
+          <div class="eyebrow">Player Profile</div>
+          <div class="header">
+            <div class="identity">
+              <h1>${this.profile.name}</h1>
+              <div class="player-id">Player ID: ${this.profile.id}</div>
+              <div class="meta">
+                Joined ${formatDate(this.profile.joinedAt)}
+              </div>
             </div>
-          </article>
-          <article class="stat">
-            <div class="label">Total Hands</div>
-            <div class="value">${formatNumber(this.profile.totalHands)}</div>
-          </article>
-          <article class="stat">
-            <div class="label">Joined</div>
-            <div class="value">${formatDate(this.profile.joinedAt)}</div>
-          </article>
-        </div>
-      </section>
+            <div class=${`status ${this.profile.online ? "" : "offline"}`}>
+              ${this.profile.online
+                ? "Online"
+                : `Last seen ${formatRelativeDate(this.profile.lastSeenAt)}`}
+            </div>
+          </div>
+          <div class="summary">
+            <article class="stat">
+              <div class="label">Total Net Winnings</div>
+              <div
+                class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
+              >
+                ${formatSignedCurrency(this.profile.totalNetWinnings)}
+              </div>
+            </article>
+            <article class="stat">
+              <div class="label">Total Hands</div>
+              <div class="value">${formatNumber(this.profile.totalHands)}</div>
+            </article>
+            <article class="stat">
+              <div class="label">Games Played</div>
+              <div class="value">
+                ${formatNumber(this.profile.recentGames?.length || 0)}
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="section">
+          <div class="panel">
+            <h2>Recent Games</h2>
+            ${this.renderRecentGames()}
+          </div>
+        </section>
+      </div>
+    `;
+  }
+
+  renderRecentGames() {
+    const games = this.profile?.recentGames || [];
+    if (games.length === 0) {
+      return html`<div class="empty">No games recorded yet.</div>`;
+    }
+
+    return html`
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Type</th>
+              <th scope="col">Net Winnings</th>
+              <th scope="col">Hands Played</th>
+              <th scope="col">Last Hand</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${games.map(
+              (game) => html`
+                <tr
+                  tabindex="0"
+                  @click=${() => {
+                    this.navigateToGame(game);
+                  }}
+                  @keydown=${(event) => {
+                    handleRowKeydown(event, () => {
+                      this.navigateToGame(game);
+                    });
+                  }}
+                >
+                  <td class="game-type">${formatGameType(game.gameType)}</td>
+                  <td class=${`value ${getResultClass(game.netWinnings)}`}>
+                    ${formatSignedCurrency(game.netWinnings)}
+                  </td>
+                  <td>${formatNumber(game.handsPlayed)}</td>
+                  <td>${formatDateTime(game.lastPlayedAt)}</td>
+                </tr>
+              `,
+            )}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 }
@@ -262,6 +425,78 @@ function formatDate(value) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+/**
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
+function formatDateTime(value) {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+/**
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
+function formatRelativeDate(value) {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+
+  const diffMs = date.getTime() - Date.now();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
+
+  /** @type {[Intl.RelativeTimeFormatUnit, number][]} */
+  const units = [
+    ["year", year],
+    ["month", month],
+    ["week", week],
+    ["day", day],
+    ["hour", hour],
+    ["minute", minute],
+  ];
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+  for (const [unit, size] of units) {
+    if (Math.abs(diffMs) >= size || unit === "minute") {
+      return formatter.format(Math.round(diffMs / size), unit);
+    }
+  }
+
+  return "just now";
+}
+
+/**
+ * @param {"cash"|"tournament"} gameType
+ * @returns {string}
+ */
+function formatGameType(gameType) {
+  return gameType === "tournament" ? "Sit n Go" : "Cash";
+}
+
+/**
+ * @param {KeyboardEvent} event
+ * @param {() => void} callback
+ */
+function handleRowKeydown(event, callback) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  callback();
 }
 
 customElements.define("phg-player-profile", PlayerProfile);
