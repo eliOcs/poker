@@ -103,11 +103,14 @@ export function startTournament(game) {
   // Capture all players who are seated
   recorder.players = [];
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
+    const seat = /** @type {import('./seat.js').Seat} */ (game.seats[i]);
     if (!seat.empty) {
+      const occupiedSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
+        seat
+      );
       recorder.players.push({
-        id: seat.player.id,
-        name: seat.player.name,
+        id: occupiedSeat.player.id,
+        name: occupiedSeat.player.name,
         seatIndex: i,
       });
     }

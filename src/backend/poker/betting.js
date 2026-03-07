@@ -144,9 +144,10 @@ export function getMinRaise(game) {
  * @returns {Cents}
  */
 export function getCallAmount(game, seatIndex) {
-  const seat = game.seats[seatIndex];
+  const seat = /** @type {import('./seat.js').Seat} */ (game.seats[seatIndex]);
   if (seat.empty) return 0;
-  return Math.min(game.hand.currentBet - seat.bet, seat.stack);
+  const occupiedSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
+  return Math.min(game.hand.currentBet - occupiedSeat.bet, occupiedSeat.stack);
 }
 
 /**
@@ -277,7 +278,9 @@ export function advanceAction(game) {
   // If lastRaiser can't act (folded or all-in), update it to the next player.
   // This ensures the round will end when action returns to them.
   // We do this AFTER the cycle check to avoid immediately ending the round.
-  const lastRaiserSeat = game.seats[game.hand.lastRaiser];
+  const lastRaiserSeat = /** @type {import('./seat.js').Seat} */ (
+    game.seats[game.hand.lastRaiser]
+  );
   if (game.hand.lastRaiser !== -1 && !Seat.canAct(lastRaiserSeat)) {
     game.hand.lastRaiser = next;
   }

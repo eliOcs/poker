@@ -337,7 +337,7 @@ server.on("upgrade", async function upgrade(request, socket, head) {
   }
 
   const cookies = parseCookies(request.headers.cookie ?? "");
-  const user = users[cookies.phg];
+  const user = users[cookies.phg ?? ""];
 
   const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
   const gameId = gameMatch?.[1];
@@ -376,7 +376,13 @@ function handleSocialAction(
 ) {
   const player = Player.fromUser(user);
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
+  if (
+    seatIndex !== -1 &&
+    !(
+      /** @type {import('./poker/seat.js').Seat} */ (game.seats[seatIndex])
+        .empty
+    )
+  ) {
     if (action === "emote") {
       const emoji = String(args.emoji || "").trim();
       if (!emoji) return;
@@ -415,7 +421,11 @@ function handleSocialAction(
 function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
   const player = Player.fromUser(user);
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (seatIndex === -1 || game.seats[seatIndex].empty) return;
+  if (
+    seatIndex === -1 ||
+    /** @type {import('./poker/seat.js').Seat} */ (game.seats[seatIndex]).empty
+  )
+    return;
 
   const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
     game.seats[seatIndex]
@@ -449,7 +459,7 @@ const clientConnections = new Map();
 
 wss.on(
   "connection",
-  async function connection(ws, request, user, game, gameId) {
+  async function connection(ws, _request, user, game, gameId) {
     const playerRateLimitKey = `player:${user.id}`;
     clientConnections.set(ws, { user, gameId });
     logger.info("ws connected", { gameId, playerId: user.id });
@@ -489,7 +499,12 @@ wss.on(
         closedGame,
         closedPlayer,
       );
-      if (closedSeatIndex === -1 || closedGame.seats[closedSeatIndex].empty)
+      if (
+        closedSeatIndex === -1 ||
+        /** @type {import('./poker/seat.js').Seat} */ (
+          closedGame.seats[closedSeatIndex]
+        ).empty
+      )
         return;
 
       const closedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (

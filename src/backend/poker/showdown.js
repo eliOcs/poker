@@ -67,7 +67,7 @@ export function getActiveHands(game) {
   const hands = [];
 
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
+    const seat = /** @type {SeatType} */ (game.seats[i]);
     if (Seat.isActive(seat)) {
       const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
       const result = evaluateHand(occupiedSeat, game.board.cards);
@@ -95,24 +95,27 @@ export function determineWinnersForPot(pot, hands) {
   }
 
   if (eligible.length === 1) {
+    const only = /** @type {HandResult} */ (eligible[0]);
     return {
-      winners: [eligible[0].seat],
-      winningHand: eligible[0].hand,
-      winningCards: eligible[0].cards,
+      winners: [only.seat],
+      winningHand: only.hand,
+      winningCards: only.cards,
     };
   }
 
   // Sort by hand strength (best first - compare returns negative if first is better)
   eligible.sort((a, b) => HandRankings.compare(a.hand, b.hand));
 
-  const winners = [eligible[0].seat];
-  const winningHand = eligible[0].hand;
-  const winningCards = eligible[0].cards;
+  const best = /** @type {HandResult} */ (eligible[0]);
+  const winners = [best.seat];
+  const winningHand = best.hand;
+  const winningCards = best.cards;
 
   // Find all players with equal hands (ties)
   for (let i = 1; i < eligible.length; i++) {
-    if (HandRankings.compare(eligible[0].hand, eligible[i].hand) === 0) {
-      winners.push(eligible[i].seat);
+    const other = /** @type {HandResult} */ (eligible[i]);
+    if (HandRankings.compare(best.hand, other.hand) === 0) {
+      winners.push(other.seat);
     } else {
       break; // Hands are sorted, so we can stop
     }
@@ -211,16 +214,18 @@ function processResults(results, handsBySeat) {
  */
 function setFinalHandResults(game, winnings, winningCardsMap) {
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
+    const seat = /** @type {SeatType} */ (game.seats[i]);
     if (!seat.empty) {
+      const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
       const won = winnings.get(i) || 0;
       // Only set handResult for players who participated (invested or won)
-      if (seat.totalInvested > 0 || won > 0) {
-        seat.handResult = won - seat.totalInvested;
+      if (occupiedSeat.totalInvested > 0 || won > 0) {
+        occupiedSeat.handResult = won - occupiedSeat.totalInvested;
       }
-      seat.lastAction = null;
+      occupiedSeat.lastAction = null;
       const winningCards = winningCardsMap.get(i);
-      seat.winningCards = winningCards === undefined ? null : winningCards;
+      occupiedSeat.winningCards =
+        winningCards === undefined ? null : winningCards;
     }
   }
 }
@@ -266,7 +271,7 @@ export function awardToLastPlayer(game) {
   // Find the active player
   let winner = -1;
   for (let i = 0; i < game.seats.length; i++) {
-    if (Seat.isActive(game.seats[i])) {
+    if (Seat.isActive(/** @type {SeatType} */ (game.seats[i]))) {
       winner = i;
       break;
     }

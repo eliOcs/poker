@@ -25,8 +25,9 @@ export function* createSeatIterator(game, predicate) {
   const start = nextSeat(game.button);
   let current = start;
   do {
-    if (predicate(game.seats[current])) {
-      yield /** @type {OccupiedSeat} */ (game.seats[current]);
+    const currentSeat = /** @type {SeatType} */ (game.seats[current]);
+    if (predicate(currentSeat)) {
+      yield /** @type {OccupiedSeat} */ (currentSeat);
     }
   } while ((current = nextSeat(current)) !== start);
 }

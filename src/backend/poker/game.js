@@ -450,16 +450,17 @@ export function autoStartNextHand(game, onBroadcast) {
  * @param {BroadcastHandler} [onBroadcast] - Callback to broadcast game events
  */
 export function performAutoAction(game, seatIndex, onBroadcast) {
-  const seat = game.seats[seatIndex];
+  const seat = /** @type {import('./seat.js').Seat} */ (game.seats[seatIndex]);
   if (seat.empty) return;
 
   // Auto check/fold: check if possible, otherwise fold
-  if (seat.bet === game.hand.currentBet) {
+  const occupiedSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
+  if (occupiedSeat.bet === game.hand.currentBet) {
     Actions.check(game, { seat: seatIndex });
-    HandHistory.recordAction(game.id, seat.player.id, "check");
+    HandHistory.recordAction(game.id, occupiedSeat.player.id, "check");
   } else {
     Actions.fold(game, { seat: seatIndex });
-    HandHistory.recordAction(game.id, seat.player.id, "fold");
+    HandHistory.recordAction(game.id, occupiedSeat.player.id, "fold");
   }
 
   // Reset tick counters since action was taken
@@ -481,14 +482,23 @@ function autoFoldSittingOutActingPlayers(game) {
 
   while (game.hand.actingSeat !== -1) {
     const actingSeat = game.hand.actingSeat;
-    const seat = game.seats[actingSeat];
+    const seat = /** @type {import('./seat.js').Seat} */ (
+      game.seats[actingSeat]
+    );
 
-    if (seat.empty || !seat.sittingOut || seat.folded) {
+    if (
+      seat.empty ||
+      !(/** @type {import('./seat.js').OccupiedSeat} */ (seat).sittingOut) ||
+      /** @type {import('./seat.js').OccupiedSeat} */ (seat).folded
+    ) {
       break;
     }
 
+    const occupiedActingSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
+      seat
+    );
     Actions.fold(game, { seat: actingSeat });
-    HandHistory.recordAction(game.id, seat.player.id, "fold");
+    HandHistory.recordAction(game.id, occupiedActingSeat.player.id, "fold");
     foldedAny = true;
   }
 
@@ -504,15 +514,25 @@ function autoFoldSittingOutActingPlayers(game) {
 function executePreActions(game) {
   while (game.hand.actingSeat !== -1) {
     const seatIndex = game.hand.actingSeat;
-    const seat = game.seats[seatIndex];
+    const seat = /** @type {import('./seat.js').Seat} */ (
+      game.seats[seatIndex]
+    );
 
-    if (seat.empty || !seat.preAction) break;
+    if (
+      seat.empty ||
+      !(/** @type {import('./seat.js').OccupiedSeat} */ (seat).preAction)
+    )
+      break;
 
-    const preAction = seat.preAction;
-    const betBefore = seat.bet;
+    const occupiedSeatForPreAction =
+      /** @type {import('./seat.js').OccupiedSeat} */ (seat);
+    const preAction = /** @type {import('./pre-action.js').PreAction} */ (
+      occupiedSeatForPreAction.preAction
+    );
+    const betBefore = occupiedSeatForPreAction.bet;
     const currentBetBefore = game.hand.currentBet;
     const resolved = PreAction.resolvePreAction(preAction, game, seatIndex);
-    PreAction.clearPreAction(seat);
+    PreAction.clearPreAction(occupiedSeatForPreAction);
 
     if (!resolved) break;
 
@@ -541,12 +561,13 @@ function executePreActions(game) {
  * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank: string|null, isSplit: boolean } | null}
  */
 function getWinnerInfo(game, potResults) {
-  if (potResults.length === 0 || potResults[0].winners.length === 0) {
-    return null;
-  }
-  const mainPot = potResults[0];
+  if (potResults.length === 0) return null;
+  const mainPot = /** @type {import('./showdown.js').PotResult} */ (
+    potResults[0]
+  );
+  if (mainPot.winners.length === 0) return null;
   const isSplit = mainPot.winners.length > 1;
-  const seatIndex = mainPot.winners[0];
+  const seatIndex = /** @type {number} */ (mainPot.winners[0]);
   const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
     game.seats[seatIndex]
   );
@@ -678,12 +699,12 @@ const STREET_HANDLERS = {
   flop: {
     next: "turn",
     deal: Actions.dealTurn,
-    getCards: (g) => [g.board.cards[3]],
+    getCards: (g) => [/** @type {Card} */ (g.board.cards[3])],
   },
   turn: {
     next: "river",
     deal: Actions.dealRiver,
-    getCards: (g) => [g.board.cards[4]],
+    getCards: (g) => [/** @type {Card} */ (g.board.cards[4])],
   },
 };
 

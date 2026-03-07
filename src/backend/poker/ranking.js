@@ -62,7 +62,7 @@ export function computeRankings(game) {
   const bigBlind = game.blinds.big;
 
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
+    const seat = /** @type {import('./seat.js').Seat} */ (game.seats[i]);
     if (seat.empty) continue;
 
     const occupiedSeat = /** @type {OccupiedSeat} */ (seat);
@@ -99,7 +99,8 @@ export function computeRankings(game) {
 
     for (let i = 0; i < rankings.length; i++) {
       const prize = prizeByPosition.get(i + 1) ?? 0;
-      rankings[i].netWinnings = prize - game.tournament.buyIn;
+      /** @type {(typeof rankings)[number]} */ (rankings[i]).netWinnings =
+        prize - game.tournament.buyIn;
     }
   } else {
     rankings.sort((a, b) => b.netWinnings - a.netWinnings);

@@ -66,7 +66,8 @@ export function sit(game, { seat: requestedSeat, player }) {
   }
   const seat = requestedSeat ?? game.seats.findIndex((s) => s.empty);
   if (seat === -1) throw new Error("no empty seats");
-  if (!game.seats[seat].empty) throw new Error("seat is already occupied");
+  if (!(/** @type {SeatType} */ (game.seats[seat]).empty))
+    throw new Error("seat is already occupied");
 
   const playerSeat = game.seats.findIndex(
     (s) => !s.empty && s.player === player,
@@ -97,12 +98,13 @@ export function buyIn(game, { seat, amount }) {
     throw new Error("buy-in not allowed in tournaments");
   }
 
-  const seatObj = game.seats[seat];
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
   if (!seatObj.empty) {
+    const occupiedSeat = /** @type {OccupiedSeat} */ (seatObj);
     const chipAmount = game.blinds.big * amount;
-    seatObj.stack += chipAmount;
-    seatObj.totalBuyIn += chipAmount;
-    seatObj.sittingOut = false;
+    occupiedSeat.stack += chipAmount;
+    occupiedSeat.totalBuyIn += chipAmount;
+    occupiedSeat.sittingOut = false;
   } else {
     throw new Error("seat is empty");
   }
@@ -265,11 +267,12 @@ export function fold(game, { seat }) {
  * @returns {import('./deck.js').Card[]}
  */
 function revealHoleCards(game, seat, cardIndexes) {
-  const seatObj = game.seats[seat];
-  if (seatObj.empty) {
+  const seatRaw = /** @type {SeatType} */ (game.seats[seat]);
+  if (seatRaw.empty) {
     throw new Error("seat is empty");
   }
 
+  const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
   assertCanRevealHoleCards(seatObj, game.hand?.phase);
   const validIndexes = getValidRevealIndexes(cardIndexes);
   const newlyShown = revealSelectedHoleCards(seatObj, validIndexes);
@@ -490,7 +493,7 @@ export function moveButton(game) {
 
   // Find next occupied seat that isn't sitting out
   while (next !== game.button) {
-    const seat = seats[next];
+    const seat = /** @type {SeatType} */ (seats[next]);
     if (!seat.empty && !seat.sittingOut) {
       break;
     }
@@ -600,12 +603,12 @@ export function sitIn(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function leave(game, { seat }) {
-  const seatObj = game.seats[seat];
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
     throw new Error("seat is empty");
   }
-  if (!seatObj.sittingOut) {
+  if (!(/** @type {OccupiedSeat} */ (seatObj).sittingOut)) {
     throw new Error("must be sitting out to leave");
   }
 
@@ -625,7 +628,7 @@ export function leave(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function callClock(game, { seat }) {
-  const seatObj = game.seats[seat];
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
     throw new Error("seat is empty");

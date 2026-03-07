@@ -134,8 +134,8 @@ function getStraight(cards) {
   const aceValues = ["high", "low"];
   for (const ace of aceValues) {
     const sorted = sortByRank(cards, { ace });
-    const from = getRank(sorted[last]);
-    const to = getRank(sorted[first]);
+    const from = getRank(/** @type {Card} */ (sorted[last]));
+    const to = getRank(/** @type {Card} */ (sorted[first]));
     if (getRankValue(to, { ace }) - getRankValue(from, { ace }) === 4) {
       return {
         name: "straight",
@@ -154,14 +154,15 @@ function getStraight(cards) {
  * @returns {Flush|false}
  */
 function getFlush(cards) {
-  const suit = getSuit(cards[0]);
-  let high = getRank(cards[0]);
+  const suit = getSuit(/** @type {Card} */ (cards[0]));
+  let high = getRank(/** @type {Card} */ (cards[0]));
   for (let i = 1; i < cards.length; i += 1) {
-    if (getSuit(cards[i]) !== suit) {
+    const card = /** @type {Card} */ (cards[i]);
+    if (getSuit(card) !== suit) {
       return false;
     }
-    if (getRankValue(getRank(cards[i])) > getRankValue(high)) {
-      high = getRank(cards[i]);
+    if (getRankValue(getRank(card)) > getRankValue(high)) {
+      high = getRank(card);
     }
   }
   return { name: "flush", suit, high };
@@ -191,14 +192,17 @@ function getGroups(cards) {
     return false;
   }
 
-  const [firstGroup, secondGroup, ...restOfGroups] = groups;
-  const firstRank = getRank(firstGroup[0]);
-  const secondRank = getRank(secondGroup[0]);
+  const firstGroup = /** @type {Card[]} */ (groups[0]);
+  const secondGroup = /** @type {Card[]} */ (groups[1]);
+  const firstRank = getRank(/** @type {Card} */ (firstGroup[0]));
+  const secondRank = getRank(/** @type {Card} */ (secondGroup[0]));
 
   if (firstGroup.length === 2) {
     if (secondGroup.length === 2) {
       const name = "2 pair";
-      const kicker = getRank(restOfGroups[0][0]);
+      const kicker = getRank(
+        /** @type {Card} */ (/** @type {Card[]} */ (groups[2])[0]),
+      );
       if (getRankValue(firstRank) > getRankValue(secondRank)) {
         return {
           name,
@@ -432,7 +436,7 @@ function combinations(array, k) {
       k - 1,
     );
     for (const combination of subcombinations) {
-      combination.unshift(array[i]);
+      combination.unshift(/** @type {T} */ (array[i]));
       result.push(combination);
     }
   }
@@ -451,7 +455,7 @@ function bestCombination(cards) {
     cards: combo,
   }));
   evaluated.sort((a, b) => compare.any(a.hand, b.hand));
-  return evaluated[0];
+  return /** @type {BestHandResult} */ (evaluated[0]);
 }
 
 /**

@@ -52,7 +52,7 @@ const CUMULATIVE_ACTIONS = new Set(["Bet", "Raise", "Call"]);
  */
 function parseHandNumber(gameNumber) {
   const match = gameNumber.match(/-(\d+)$/);
-  return match ? parseInt(match[1], 10) : 0;
+  return match ? parseInt(/** @type {string} */ (match[1]), 10) : 0;
 }
 
 /**
@@ -300,8 +300,11 @@ function getNextButton(seats, previousButton) {
   let next = (start + 1) % seats.length;
 
   while (next !== start) {
-    const seat = seats[next];
-    if (!seat.empty && !seat.sittingOut) {
+    const seat = /** @type {import('./seat.js').Seat} */ (seats[next]);
+    if (
+      !seat.empty &&
+      !(/** @type {import('./seat.js').OccupiedSeat} */ (seat).sittingOut)
+    ) {
       return next;
     }
     next = (next + 1) % seats.length;
@@ -400,7 +403,9 @@ function getWinnerSeatIndex(game, summary) {
     return indices;
   }, /** @type {number[]} */ ([]));
 
-  return playersWithChips.length === 1 ? playersWithChips[0] : null;
+  return playersWithChips.length === 1
+    ? /** @type {number} */ (playersWithChips[0])
+    : null;
 }
 
 /**
@@ -553,7 +558,7 @@ async function readTournamentSummary(gameId) {
 export function rebuildGameFromHistory(gameId, hands, summary = null) {
   if (hands.length === 0) return null;
 
-  const lastHand = hands[hands.length - 1];
+  const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
   const recoveredSeats = buildRecoveredSeatStates(hands);
   const playersInLastHand = new Set(
     (lastHand.players || []).map((player) => player.id),

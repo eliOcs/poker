@@ -45,7 +45,9 @@ export const DEFAULT_SEATS = 6;
  */
 export function getBlindsForLevel(level) {
   const found = BLIND_LEVELS.find((l) => l.level === level);
-  return found || BLIND_LEVELS[BLIND_LEVELS.length - 1];
+  return (
+    found || /** @type {BlindLevel} */ (BLIND_LEVELS[BLIND_LEVELS.length - 1])
+  );
 }
 
 /**
@@ -77,7 +79,7 @@ export const BUYIN_PRESETS = [
 ];
 
 /** @type {BuyInPreset} */
-export const DEFAULT_BUYIN = BUYIN_PRESETS[1]; // $5
+export const DEFAULT_BUYIN = /** @type {BuyInPreset} */ (BUYIN_PRESETS[1]); // $5
 
 /**
  * Validates that a buy-in amount matches a preset

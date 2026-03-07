@@ -61,7 +61,7 @@ export function parseCookies(rawCookies) {
   const cookies = {};
   for (const rawCookie of rawCookies.split("; ")) {
     const [key, value] = rawCookie.split("=");
-    cookies[key] = value;
+    if (key !== undefined) cookies[key] = value ?? "";
   }
   return cookies;
 }
@@ -74,11 +74,12 @@ export function parseCookies(rawCookies) {
  */
 export function getOrCreateUser(req, res, users) {
   const cookies = parseCookies(req.headers.cookie ?? "");
-  let user = users[cookies.phg];
+  const cookieId = cookies.phg ?? "";
+  let user = users[cookieId];
 
   if (!user) {
     // Check database for returning visitor
-    const loadedUser = Store.loadUser(cookies.phg);
+    const loadedUser = Store.loadUser(cookieId);
 
     if (loadedUser) {
       // Returning user - add to memory cache
@@ -360,7 +361,9 @@ export function createRoutes(users, games, broadcast) {
       method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match }) => {
-        const gameId = /** @type {RegExpMatchArray} */ (match)[1];
+        const gameId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
         const user = getOrCreateUser(req, res, users);
 
         const hands = await HandHistory.getAllHands(gameId);
@@ -376,8 +379,8 @@ export function createRoutes(users, games, broadcast) {
       path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
       handler: async ({ req, res, match }) => {
         const m = /** @type {RegExpMatchArray} */ (match);
-        const gameId = m[1];
-        const handNumber = parseInt(m[2], 10);
+        const gameId = /** @type {string} */ (m[1]);
+        const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
         const user = getOrCreateUser(req, res, users);
 
         const hand = await HandHistory.getHand(gameId, handNumber);

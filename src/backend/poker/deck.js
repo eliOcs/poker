@@ -61,7 +61,7 @@ export function create() {
  */
 export function deal(deck) {
   const randomIndex = Math.floor(random() * deck.length);
-  return deck.splice(randomIndex, 1)[0];
+  return /** @type {Card} */ (deck.splice(randomIndex, 1)[0]);
 }
 
 /**

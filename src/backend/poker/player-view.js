@@ -338,10 +338,16 @@ function buildShowCardActions(cards, shownCards) {
   /** @type {PlayerAction[]} */
   const actions = [];
   if (!shownCards[0]) {
-    actions.push({ action: "showCard1", cards: [cards[0]] });
+    actions.push({
+      action: "showCard1",
+      cards: [/** @type {Card} */ (cards[0])],
+    });
   }
   if (!shownCards[1]) {
-    actions.push({ action: "showCard2", cards: [cards[1]] });
+    actions.push({
+      action: "showCard2",
+      cards: [/** @type {Card} */ (cards[1])],
+    });
   }
   if (!shownCards[0] && !shownCards[1]) {
     actions.push({ action: "showBothCards", cards: cards.slice(0, 2) });
@@ -369,8 +375,8 @@ function calculateHandRank(holeCards, boardCards) {
 
   // For just hole cards (preflop), check for pair or high card
   if (holeCards.length === 2) {
-    const rank0 = getRank(holeCards[0]);
-    const rank1 = getRank(holeCards[1]);
+    const rank0 = getRank(/** @type {Card} */ (holeCards[0]));
+    const rank1 = getRank(/** @type {Card} */ (holeCards[1]));
     if (rank0 === rank1) {
       /** @type {import('./hand-rankings.js').Pair} */
       const hand = { name: "pair", of: rank0, kickers: [] };
@@ -463,10 +469,15 @@ function getWaitingPhaseActions(seat, game) {
 function canAnyOpponentRespond(game, seatIndex) {
   for (let i = 0; i < game.seats.length; i++) {
     if (i === seatIndex) continue;
-    const seat = game.seats[i];
-    if (seat.empty || seat.folded) continue;
+    const seat = /** @type {import('./seat.js').Seat} */ (game.seats[i]);
+    if (
+      seat.empty ||
+      /** @type {import('./seat.js').OccupiedSeat} */ (seat).folded
+    )
+      continue;
     // Opponent can respond if they have chips and aren't all-in
-    if (seat.stack > 0 && !seat.allIn) {
+    const oSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
+    if (oSeat.stack > 0 && !oSeat.allIn) {
       return true;
     }
   }

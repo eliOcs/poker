@@ -126,7 +126,7 @@ export async function respondWithFile(req, res, filePath, options = {}) {
   if (replacements) {
     pipeline = pipeline.pipe(
       new stream.Transform({
-        transform(chunk, encoding, callback) {
+        transform(chunk, _encoding, callback) {
           let content = String(chunk);
           for (const [key, value] of Object.entries(replacements)) {
             content = content.replace(new RegExp(key, "g"), value);

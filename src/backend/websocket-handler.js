@@ -105,7 +105,11 @@ export function handlePostAction(action, game, broadcast) {
 export function getSeatStateBefore(game, player) {
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
   const seatBefore =
-    seatIndex !== -1 && !game.seats[seatIndex].empty
+    seatIndex !== -1 &&
+    !(
+      /** @type {import('./poker/seat.js').Seat} */ (game.seats[seatIndex])
+        .empty
+    )
       ? /** @type {OccupiedSeat} */ (game.seats[seatIndex])
       : null;
   return {

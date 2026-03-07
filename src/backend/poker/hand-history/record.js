@@ -7,12 +7,12 @@ import * as HandHistory from "./index.js";
 
 /**
  * Classifies an all-in action as call, bet, or raise based on game context
- * @param {number} betBefore - Player's bet before the action
+ * @param {number} _betBefore - Player's bet before the action (unused)
  * @param {number} currentBet - Current bet to match
  * @param {number} finalBet - Player's bet after going all-in
  * @returns {'call'|'bet'|'raise'}
  */
-export function classifyAllInAction(betBefore, currentBet, finalBet) {
+export function classifyAllInAction(_betBefore, currentBet, finalBet) {
   // No current bet means this is an opening bet
   if (currentBet === 0) {
     return "bet";

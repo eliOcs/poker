@@ -1,18 +1,30 @@
 {
   "compilerOptions": {
+    // Environment
     "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "lib": ["ES2024", "DOM"],
     "types": ["node"],
+
+    // JavaScript + JSDoc mode
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
+
+    // Strict type checking
     "strict": true,
-    "noImplicitAny": false,
-    "useUnknownInCatchVariables": false,
+    "noImplicitAny": false, // intentional: JSDoc annotations are gradual, not enforced everywhere
+    "useUnknownInCatchVariables": false, // assume exceptions are Error
+    "noUncheckedIndexedAccess": true, // arr[0] → T | undefined, catches unsafe index access
+
+    // Additional correctness
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true, // catches dead variables
+    "noUnusedParameters": true, // catches unused function params (prefix with _ to opt out)
+
+    // Performance / interop
     "skipLibCheck": true
   },
   "include": ["src/**/*.js"],

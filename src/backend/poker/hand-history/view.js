@@ -375,14 +375,16 @@ function getWinnerInfoFromPots(hand, playerId) {
     return { winnerName: null, winnerId: null, totalPot: 0, isWinner: false };
   }
 
-  const mainPot = hand.pots[0];
+  const mainPot = /** @type {HandPot} */ (hand.pots[0]);
   const totalPot = toCents(mainPot.amount);
 
   if (mainPot.player_wins.length === 0) {
     return { winnerName: null, winnerId: null, totalPot, isWinner: false };
   }
 
-  const winnerId = mainPot.player_wins[0].player_id;
+  const winnerId = /** @type {HandPot['player_wins'][number]} */ (
+    mainPot.player_wins[0]
+  ).player_id;
   const winner = hand.players.find((p) => p.id === winnerId);
   const winnerName = winner?.name || `Seat ${winner?.seat || "??"}`;
 
@@ -512,7 +514,10 @@ function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
   const sharedWinningCards = mainPot?.winning_cards;
   if (wins.length === 1) {
     if (sharedWinningCards) {
-      winnerCards.set(wins[0].player_id, sharedWinningCards);
+      winnerCards.set(
+        /** @type {HandPot['player_wins'][number]} */ (wins[0]).player_id,
+        sharedWinningCards,
+      );
     }
     return winnerCards;
   }
@@ -634,14 +639,14 @@ function buildViewWinnerMessage(mainPot, players) {
     return { playerName: null, handRank, amount: mainPot.amount, isSplit };
   }
 
-  const playerName = getWinnerDisplayName(
-    players,
-    mainPot.player_wins[0].player_id,
+  const firstWin = /** @type {HandPot['player_wins'][number]} */ (
+    mainPot.player_wins[0]
   );
+  const playerName = getWinnerDisplayName(players, firstWin.player_id);
   return {
     playerName,
     handRank,
-    amount: mainPot.player_wins[0].win_amount,
+    amount: firstWin.win_amount,
     isSplit,
   };
 }

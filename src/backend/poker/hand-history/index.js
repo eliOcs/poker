@@ -161,14 +161,19 @@ export function startHand(game) {
   // Capture players at hand start
   recorder.players = [];
   for (let i = 0; i < game.seats.length; i++) {
-    const seat = game.seats[i];
-    if (!seat.empty && (!seat.sittingOut || seat.bet > 0)) {
-      recorder.players.push({
-        id: seat.player.id,
-        seat: i + 1, // OHH uses 1-indexed seats
-        name: seat.player.name ?? null,
-        starting_stack: seat.stack + seat.bet, // Include any posted blinds
-      });
+    const seat = /** @type {import('../seat.js').Seat} */ (game.seats[i]);
+    if (!seat.empty) {
+      const occupiedSeat = /** @type {import('../seat.js').OccupiedSeat} */ (
+        seat
+      );
+      if (!occupiedSeat.sittingOut || occupiedSeat.bet > 0) {
+        recorder.players.push({
+          id: occupiedSeat.player.id,
+          seat: i + 1, // OHH uses 1-indexed seats
+          name: occupiedSeat.player.name ?? null,
+          starting_stack: occupiedSeat.stack + occupiedSeat.bet, // Include any posted blinds
+        });
+      }
     }
   }
 }

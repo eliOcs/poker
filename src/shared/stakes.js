@@ -25,7 +25,7 @@ export const CHIP_DENOMINATIONS = [
 export function getChipDenomination(small, big) {
   // Find largest chip that divides both blinds evenly
   for (let i = CHIP_DENOMINATIONS.length - 1; i >= 0; i--) {
-    const chip = CHIP_DENOMINATIONS[i];
+    const chip = /** @type {number} */ (CHIP_DENOMINATIONS[i]);
     if (small % chip === 0 && big % chip === 0) {
       return chip;
     }
@@ -55,7 +55,7 @@ export const PRESETS = [
  * Default stakes ($0.02/$0.05)
  * @type {Stakes}
  */
-export const DEFAULT = PRESETS[1];
+export const DEFAULT = /** @type {Stakes} */ (PRESETS[1]);
 
 /**
  * Decompose an amount in cents into chip denominations using a greedy algorithm.
@@ -67,7 +67,7 @@ export function decomposeChips(amount) {
   const chips = [];
   let remaining = amount;
   for (let i = CHIP_DENOMINATIONS.length - 1; i >= 0 && remaining > 0; i--) {
-    const denom = CHIP_DENOMINATIONS[i];
+    const denom = /** @type {number} */ (CHIP_DENOMINATIONS[i]);
     const count = Math.floor(remaining / denom);
     if (count > 0) {
       chips.push({ denom, count });

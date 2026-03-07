@@ -76,12 +76,11 @@ function ipv4ToInt(ip) {
     octets.push(value);
   }
 
-  return (
-    ((octets[0] << 24) >>> 0) +
-    ((octets[1] << 16) >>> 0) +
-    ((octets[2] << 8) >>> 0) +
-    octets[3]
-  );
+  const o0 = /** @type {number} */ (octets[0]);
+  const o1 = /** @type {number} */ (octets[1]);
+  const o2 = /** @type {number} */ (octets[2]);
+  const o3 = /** @type {number} */ (octets[3]);
+  return ((o0 << 24) >>> 0) + ((o1 << 16) >>> 0) + ((o2 << 8) >>> 0) + o3;
 }
 
 /**
@@ -95,7 +94,7 @@ function isIpv4InCidr(ip, cidr) {
   if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
 
   const ipInt = ipv4ToInt(ip);
-  const networkInt = ipv4ToInt(network);
+  const networkInt = ipv4ToInt(/** @type {string} */ (network));
   if (ipInt === null || networkInt === null) return false;
 
   if (prefix === 0) return true;
@@ -135,7 +134,7 @@ export function isTrustedProxyIp(
 
   for (const cidr of trustedCidrs) {
     const normalizedCidr = normalizeIp(cidr);
-    const cidrNetwork = normalizedCidr.split("/")[0];
+    const cidrNetwork = /** @type {string} */ (normalizedCidr.split("/")[0]);
     const cidrType = net.isIP(cidrNetwork);
     if (cidrType !== ipType) continue;
 
@@ -182,7 +181,7 @@ export function getClientIp(req) {
   // RFC-style trust walk: start from the closest peer and skip trusted hops.
   const fullChain = [...forwardedIps, remoteIp];
   for (let index = fullChain.length - 1; index >= 0; index -= 1) {
-    const ip = fullChain[index];
+    const ip = /** @type {string} */ (fullChain[index]);
     if (!isTrustedProxyIp(ip, trustedCidrs)) {
       return ip;
     }
@@ -313,7 +312,10 @@ export function createRateLimiter({
    */
   function trimWindow(tracked, now) {
     const cutoff = now - windowMs;
-    while (tracked.timestamps.length > 0 && tracked.timestamps[0] <= cutoff) {
+    while (
+      tracked.timestamps.length > 0 &&
+      /** @type {number} */ (tracked.timestamps[0]) <= cutoff
+    ) {
       tracked.timestamps.shift();
     }
   }
@@ -382,7 +384,7 @@ export function createRateLimiter({
       if (tracked.timestamps.length >= maxActions) {
         const rollingRetryAfterMs = Math.max(
           0,
-          tracked.timestamps[0] + windowMs - now,
+          /** @type {number} */ (tracked.timestamps[0]) + windowMs - now,
         );
         if (blockDurationMs > 0) {
           tracked.blockedUntil = Math.max(
