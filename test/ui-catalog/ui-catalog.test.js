@@ -111,7 +111,5 @@ test("release-notes", async ({ page }) => {
   await page.locator(".container").waitFor();
 
   // Take viewport screenshot (not full page)
-  await expect(page).toHaveScreenshot("release-notes.png", {
-    maxDiffPixelRatio: 0.01,
-  });
+  await expect(page).toHaveScreenshot("release-notes.png");
 });

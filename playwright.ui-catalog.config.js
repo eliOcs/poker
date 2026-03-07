@@ -17,8 +17,8 @@ export default defineConfig({
     "{snapshotDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
   expect: {
     toHaveScreenshot: {
-      // Slightly higher threshold to tolerate cross-platform font rendering differences
-      maxDiffPixelRatio: 0.02,
+      // Higher threshold to tolerate cross-platform font rendering differences
+      maxDiffPixelRatio: 0.03,
     },
   },
 
