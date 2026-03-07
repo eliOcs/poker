@@ -120,7 +120,7 @@ class RankingPanel extends LitElement {
   }
 
   render() {
-    if (!this.rankings || this.rankings.length === 0) {
+    if (this.rankings.length === 0) {
       return html``;
     }
 

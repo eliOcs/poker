@@ -30,7 +30,7 @@ export default [
     },
   },
   {
-    files: ["src/backend/**/*.js", "test/backend/**/*.js"],
+    files: ["src/**/*.js", "test/**/*.js"],
     plugins: {
       "@typescript-eslint": tseslint,
     },

@@ -497,8 +497,5 @@ export function renderActionPanel(panel) {
       : html`<span class="waiting">Waiting for your turn...</span>`;
   }
 
-  return (
-    renderForActionMap(panel, buildActionMap(panel.actions)) ||
-    html`<span class="waiting">Waiting for your turn...</span>`
-  );
+  return renderForActionMap(panel, buildActionMap(panel.actions));
 }

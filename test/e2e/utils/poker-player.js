@@ -312,7 +312,6 @@ export class PokerPlayer {
       },
     };
     const handler = handlers[action];
-    if (!handler) throw new Error(`Unknown action: ${action}`);
     await handler();
   }
 

@@ -71,7 +71,7 @@ class ActionPanel extends LitElement {
       // Reset throttle when actions change (new turn/round from server)
       this._lastActionTime = 0;
       // Detect action type to reset betAmount when context changes
-      const actionTypes = this.actions?.map((a) => a.action) || [];
+      const actionTypes = this.actions.map((a) => a.action);
       const currentType = actionTypes.includes("buyIn")
         ? "buyIn"
         : actionTypes.includes("bet") || actionTypes.includes("raise")
