@@ -45,7 +45,7 @@ function formatText({ timestamp, level, message, context }) {
   const contextStr = Object.entries(context)
     .map(
       ([k, v]) =>
-        `${k}=${typeof v === "object" && v !== null ? JSON.stringify(v) : v}`,
+        `${k}=${typeof v === "object" && v !== null ? JSON.stringify(v) : String(v)}`,
     )
     .join(" ");
   return `[${new Date(timestamp).toISOString()}] ${level.toUpperCase()} ${message}${contextStr ? " " + contextStr : ""}`;

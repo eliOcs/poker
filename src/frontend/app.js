@@ -216,7 +216,9 @@ class App extends LitElement {
       }
       // Reconnect automatically unless we closed intentionally
       if (!this._intentionalClose && this._activeGameId) {
-        setTimeout(() => this._reconnectIfNeeded(), 1000);
+        setTimeout(() => {
+          this._reconnectIfNeeded();
+        }, 1000);
       }
     };
   }

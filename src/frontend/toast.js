@@ -64,7 +64,9 @@ class Toast extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     if (this.duration > 0) {
-      this.dismissTimer = setTimeout(() => this.dismiss(), this.duration);
+      this.dismissTimer = setTimeout(() => {
+        this.dismiss();
+      }, this.duration);
     }
   }
 

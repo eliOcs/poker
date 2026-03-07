@@ -325,7 +325,12 @@ server.on("request", (req, res) => {
     });
 });
 
-server.on("upgrade", async function upgrade(request, socket, head) {
+/**
+ * @param {import('http').IncomingMessage} request
+ * @param {import('stream').Duplex} socket
+ * @param {Buffer} head
+ */
+async function handleUpgrade(request, socket, head) {
   const rateLimitKey = getRequestRateLimitKey(request);
   try {
     actionRateLimiter.check(rateLimitKey, { source: "ws-upgrade" });
@@ -344,9 +349,9 @@ server.on("upgrade", async function upgrade(request, socket, head) {
   const game = await resolveGameForUpgrade(user, gameId);
 
   if (user && game && gameId) {
-    wss.handleUpgrade(request, socket, head, (ws) =>
-      wss.emit("connection", ws, request, user, game, gameId),
-    );
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request, user, game, gameId);
+    });
   } else {
     logger.warn("ws upgrade rejected", {
       url: request.url,
@@ -355,6 +360,13 @@ server.on("upgrade", async function upgrade(request, socket, head) {
     });
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
   }
+}
+
+server.on("upgrade", function upgrade(request, socket, head) {
+  void handleUpgrade(request, socket, head).catch((err) => {
+    logger.error("ws upgrade failed", { error: err.message, url: request.url });
+    socket.end("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+  });
 });
 
 /**
@@ -384,7 +396,7 @@ function handleSocialAction(
     )
   ) {
     if (action === "emote") {
-      const emoji = String(args.emoji || "").trim();
+      const emoji = typeof args.emoji === "string" ? args.emoji.trim() : "";
       if (!emoji) return;
       broadcastGameMessage({
         type: "social",
@@ -394,9 +406,10 @@ function handleSocialAction(
         emoji,
       });
     } else {
-      const message = String(args.message || "")
-        .trim()
-        .slice(0, 100);
+      const message =
+        typeof args.message === "string"
+          ? args.message.trim().slice(0, 100)
+          : "";
       if (!message) return;
       broadcastGameMessage({
         type: "social",
@@ -457,135 +470,132 @@ const wss = new WebSocketServer({ noServer: true });
 /** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
 const clientConnections = new Map();
 
-wss.on(
-  "connection",
-  async function connection(ws, _request, user, game, gameId) {
-    const playerRateLimitKey = `player:${user.id}`;
-    clientConnections.set(ws, { user, gameId });
-    logger.info("ws connected", { gameId, playerId: user.id });
+wss.on("connection", function connection(ws, _request, user, game, gameId) {
+  const playerRateLimitKey = `player:${user.id}`;
+  clientConnections.set(ws, { user, gameId });
+  logger.info("ws connected", { gameId, playerId: user.id });
 
-    // Create player from user for game operations
-    const player = Player.fromUser(user);
+  // Create player from user for game operations
+  const player = Player.fromUser(user);
 
-    // Mark player as connected if they have a seat
-    const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-    if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-      const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-        game.seats[seatIndex]
-      );
-      seat.disconnected = false;
+  // Mark player as connected if they have a seat
+  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+  if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
+    const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+      game.seats[seatIndex]
+    );
+    seat.disconnected = false;
 
-      // Notify other players that this player reconnected
-      broadcastGameStateMessage(gameId);
-    }
+    // Notify other players that this player reconnected
+    broadcastGameStateMessage(gameId);
+  }
 
-    ws.on("close", () => {
-      const conn = clientConnections.get(ws);
-      clientConnections.delete(ws);
+  ws.on("close", () => {
+    const conn = clientConnections.get(ws);
+    clientConnections.delete(ws);
 
-      if (!conn) return;
+    if (!conn) return;
 
-      logger.info("ws disconnected", {
-        gameId: conn.gameId,
-        playerId: conn.user.id,
-      });
+    logger.info("ws disconnected", {
+      gameId: conn.gameId,
+      playerId: conn.user.id,
+    });
 
-      const closedPlayer = Player.fromUser(conn.user);
-      const closedGameId = conn.gameId;
-      const closedGame = games.get(closedGameId);
-      if (!closedGame) return;
+    const closedPlayer = Player.fromUser(conn.user);
+    const closedGameId = conn.gameId;
+    const closedGame = games.get(closedGameId);
+    if (!closedGame) return;
 
-      const closedSeatIndex = PokerGame.findPlayerSeatIndex(
-        closedGame,
-        closedPlayer,
-      );
-      if (
-        closedSeatIndex === -1 ||
-        /** @type {import('./poker/seat.js').Seat} */ (
-          closedGame.seats[closedSeatIndex]
-        ).empty
-      )
-        return;
-
-      const closedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+    const closedSeatIndex = PokerGame.findPlayerSeatIndex(
+      closedGame,
+      closedPlayer,
+    );
+    if (
+      closedSeatIndex === -1 ||
+      /** @type {import('./poker/seat.js').Seat} */ (
         closedGame.seats[closedSeatIndex]
-      );
+      ).empty
+    )
+      return;
 
-      closedSeat.disconnected = true;
-      PokerGame.ensureGameTick(closedGame, broadcastGameMessage);
-      broadcastGameStateMessage(closedGameId);
-    });
+    const closedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+      closedGame.seats[closedSeatIndex]
+    );
 
-    ws.on("message", function (rawMessage) {
-      const log = createLog("ws_action");
-      Object.assign(log.context, { gameId, playerId: user.id });
+    closedSeat.disconnected = true;
+    PokerGame.ensureGameTick(closedGame, broadcastGameMessage);
+    broadcastGameStateMessage(closedGameId);
+  });
 
-      try {
-        actionRateLimiter.check(playerRateLimitKey, { source: "ws-action" });
+  ws.on("message", function (rawMessage) {
+    const log = createLog("ws_action");
+    Object.assign(log.context, { gameId, playerId: user.id });
 
-        /** @type {{ action: string } & Record<string, unknown>} */
-        const messageData = JSON.parse(String(rawMessage));
+    try {
+      actionRateLimiter.check(playerRateLimitKey, { source: "ws-action" });
 
-        const { action, ...args } = messageData;
-        Object.assign(log.context, { action, ...args });
+      /** @type {{ action: string } & Record<string, unknown>} */
+      const messageData = JSON.parse(String(rawMessage));
 
-        // Handle social actions (emote/chat) — no game logic, just broadcast
-        if (action === "emote" || action === "chat") {
-          handleSocialAction(
-            game,
-            user,
-            action,
-            args,
-            broadcastGameMessage,
-            gameId,
-          );
-          log.context.handNumber = game.handNumber;
-          return;
-        }
+      const { action, ...args } = messageData;
+      Object.assign(log.context, { action, ...args });
 
-        // Handle pre-action toggle — set or clear pre-selected action
-        if (["preAction", "clearPreAction"].includes(action)) {
-          handlePreAction(
-            game,
-            user,
-            action,
-            args,
-            broadcastGameStateMessage,
-            gameId,
-          );
-          log.context.handNumber = game.handNumber;
-          return;
-        }
-
-        processPokerAction(game, player, action, args, broadcastGameMessage);
-
-        const broadcastStats = broadcastGameMessage({
-          type: "gameState",
+      // Handle social actions (emote/chat) — no game logic, just broadcast
+      if (action === "emote" || action === "chat") {
+        handleSocialAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameMessage,
           gameId,
-        });
-        PokerGame.ensureGameTick(game, broadcastGameMessage);
-
-        Object.assign(log.context, {
-          ...PokerGame.gameStateSnapshot(game),
-          broadcastStats,
-        });
-      } catch (err) {
-        log.context.error = err.message;
-        ws.send(
-          JSON.stringify({ error: { message: log.context.error } }, null, 2),
         );
-      } finally {
-        emitLog(log);
+        log.context.handNumber = game.handNumber;
+        return;
       }
-    });
 
-    // Send initial game state
-    ws.send(JSON.stringify(playerView(game, player), null, 2));
+      // Handle pre-action toggle — set or clear pre-selected action
+      if (["preAction", "clearPreAction"].includes(action)) {
+        handlePreAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameStateMessage,
+          gameId,
+        );
+        log.context.handNumber = game.handNumber;
+        return;
+      }
 
-    // Recovered tournaments need ticking resumed after reconnect.
-    PokerGame.ensureGameTick(game, broadcastGameMessage);
-  },
-);
+      processPokerAction(game, player, action, args, broadcastGameMessage);
+
+      const broadcastStats = broadcastGameMessage({
+        type: "gameState",
+        gameId,
+      });
+      PokerGame.ensureGameTick(game, broadcastGameMessage);
+
+      Object.assign(log.context, {
+        ...PokerGame.gameStateSnapshot(game),
+        broadcastStats,
+      });
+    } catch (err) {
+      log.context.error = err.message;
+      ws.send(
+        JSON.stringify({ error: { message: log.context.error } }, null, 2),
+      );
+    } finally {
+      emitLog(log);
+    }
+  });
+
+  // Send initial game state
+  ws.send(JSON.stringify(playerView(game, player), null, 2));
+
+  // Recovered tournaments need ticking resumed after reconnect.
+  PokerGame.ensureGameTick(game, broadcastGameMessage);
+});
 
 Store.initialize();
 
@@ -607,7 +617,9 @@ if (typeof evictionTimer.unref === "function") {
 function gracefulShutdown(signal) {
   logger.info("shutdown initiated", { signal });
 
-  server.close(() => logger.info("http server closed"));
+  server.close(() => {
+    logger.info("http server closed");
+  });
   clearInterval(evictionTimer);
 
   for (const [ws] of clientConnections) {
@@ -628,7 +640,11 @@ function gracefulShutdown(signal) {
   process.exit(0);
 }
 
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => {
+  gracefulShutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  gracefulShutdown("SIGINT");
+});
 
 server.listen(process.env.PORT);

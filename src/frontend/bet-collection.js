@@ -59,6 +59,8 @@ export function animateBetCollection(container, sources) {
         { transform: `translate(${dx}px, ${dy}px)` },
       ],
       { duration: 400, easing: "ease-in", fill: "forwards" },
-    ).onfinish = () => chip.remove();
+    ).onfinish = () => {
+      chip.remove();
+    };
   }
 }

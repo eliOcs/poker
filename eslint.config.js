@@ -42,7 +42,22 @@ export default [
       },
     },
     rules: {
+      "@typescript-eslint/await-thenable": "error",
+      "@typescript-eslint/no-base-to-string": "error",
+      "@typescript-eslint/no-confusing-void-expression": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
       "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/restrict-plus-operands": "error",
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        {
+          allowBoolean: false,
+          allowNullish: false,
+          allowNumber: true,
+          allowRegExp: false,
+        },
+      ],
     },
   },
   {

@@ -110,9 +110,12 @@ export function getOrCreateUser(req, res, users) {
       user = User.create();
       users[user.id] = user;
       Store.saveUser(user);
+      const cookieDomain = process.env.DOMAIN
+        ? ` Domain=${process.env.DOMAIN};`
+        : "";
       res.setHeader(
         "Set-Cookie",
-        `phg=${user.id}; Domain=${process.env.DOMAIN}; HttpOnly; Path=/`,
+        `phg=${user.id};${cookieDomain} HttpOnly; Path=/`,
       );
     }
   }

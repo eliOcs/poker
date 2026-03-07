@@ -78,7 +78,9 @@ export const POST_ACTION_HANDLERS = {
   sitOut: handleSitOutOrLeave,
   cancelSitOut: handleSitOutOrLeave,
   leave: handleSitOutOrLeave,
-  callClock: (game) => startClockTicks(game),
+  callClock: (game) => {
+    startClockTicks(game);
+  },
 };
 
 /**

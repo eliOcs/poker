@@ -402,7 +402,9 @@ class History extends LitElement {
                 class="hand-item ${isActive ? "active" : ""} ${isWinner
                   ? "winner"
                   : ""}"
-                @click=${() => this.navigateTo(item.hand_number)}
+                @click=${() => {
+                  this.navigateTo(item.hand_number);
+                }}
               >
                 <span class="hand-number">#${item.hand_number}</span>
                 <div class="hand-cards">
