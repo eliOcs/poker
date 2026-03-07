@@ -191,20 +191,37 @@ export function getClientIp(req) {
 }
 
 export class RateLimitError extends Error {
-  /** @param {number} retryAfterMs */
-  constructor(retryAfterMs) {
+  /**
+   * @param {number} retryAfterSeconds
+   * @param {RateLimitContext} rateLimit
+   */
+  constructor(retryAfterSeconds, rateLimit) {
     super("Too many requests");
-    this.retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+    this.retryAfterSeconds = retryAfterSeconds;
+    this.rateLimit = rateLimit;
   }
 }
+
+/**
+ * @typedef {object} RateLimitContext
+ * @property {string} ip
+ * @property {string} source
+ * @property {number} maxActions
+ * @property {number} windowMs
+ * @property {number} currentActions
+ * @property {number} remaining
+ * @property {number} retryAfterSeconds
+ * @property {number} blockedUntil
+ */
 
 /**
  * @typedef {object} RateLimitResult
  * @property {boolean} allowed
  * @property {number} limit
  * @property {number} remaining
- * @property {number} retryAfterMs
+ * @property {number} retryAfterSeconds
  * @property {number} windowMs
+ * @property {RateLimitContext} context
  */
 
 /**
@@ -340,19 +357,55 @@ export function createRateLimiter({
     }
   }
 
+  /**
+   * @param {object} details
+   * @param {string} details.ip
+   * @param {string} details.source
+   * @param {number} details.currentActions
+   * @param {number} details.retryAfterSeconds
+   * @param {number} details.blockedUntil
+   * @returns {RateLimitContext}
+   */
+  function buildRateLimitContext({
+    ip,
+    source,
+    currentActions,
+    retryAfterSeconds,
+    blockedUntil,
+  }) {
+    return {
+      ip,
+      source,
+      maxActions,
+      windowMs,
+      currentActions,
+      remaining: Math.max(0, maxActions - currentActions),
+      retryAfterSeconds,
+      blockedUntil,
+    };
+  }
+
   return {
     check(ip, nowOrContext, sourceArg) {
       const { now, source } = resolveCheckContext(nowOrContext, sourceArg);
       totalChecks += 1;
 
       if (!ip) {
+        const context = buildRateLimitContext({
+          ip: "",
+          source,
+          currentActions: 0,
+          retryAfterSeconds: 0,
+          blockedUntil: 0,
+        });
         maybeLogStats(now);
         return {
           allowed: true,
           limit: maxActions,
           remaining: maxActions,
-          retryAfterMs: 0,
+          retryAfterSeconds: 0,
           windowMs,
+          context,
         };
       }
 
@@ -364,18 +417,19 @@ export function createRateLimiter({
 
       if (tracked.blockedUntil > now) {
         const retryAfterMs = tracked.blockedUntil - now;
-        totalBlocked += 1;
-        logWarn("rate limit exceeded", {
+        const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+        const context = buildRateLimitContext({
           ip,
           source,
-          retryAfterMs,
-          maxActions,
-          windowMs,
+          currentActions: tracked.timestamps.length,
+          retryAfterSeconds,
           blockedUntil: tracked.blockedUntil,
         });
+        totalBlocked += 1;
+        logWarn("rate limit exceeded", context);
         cleanup(now);
         maybeLogStats(now);
-        throw new RateLimitError(retryAfterMs);
+        throw new RateLimitError(retryAfterSeconds, context);
       }
 
       trimWindow(tracked, now);
@@ -396,21 +450,29 @@ export function createRateLimiter({
           rollingRetryAfterMs,
           tracked.blockedUntil > now ? tracked.blockedUntil - now : 0,
         );
-        totalBlocked += 1;
-        logWarn("rate limit exceeded", {
+        const retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+        const context = buildRateLimitContext({
           ip,
           source,
-          retryAfterMs,
-          maxActions,
-          windowMs,
+          currentActions: tracked.timestamps.length,
+          retryAfterSeconds,
           blockedUntil: tracked.blockedUntil,
         });
+        totalBlocked += 1;
+        logWarn("rate limit exceeded", context);
         cleanup(now);
         maybeLogStats(now);
-        throw new RateLimitError(retryAfterMs);
+        throw new RateLimitError(retryAfterSeconds, context);
       }
 
       tracked.timestamps.push(now);
+      const context = buildRateLimitContext({
+        ip,
+        source,
+        currentActions: tracked.timestamps.length,
+        retryAfterSeconds: 0,
+        blockedUntil: tracked.blockedUntil,
+      });
       cleanup(now);
       maybeLogStats(now);
 
@@ -418,8 +480,9 @@ export function createRateLimiter({
         allowed: true,
         limit: maxActions,
         remaining: maxActions - tracked.timestamps.length,
-        retryAfterMs: 0,
+        retryAfterSeconds: 0,
         windowMs,
+        context,
       };
     },
     getEntryCount() {

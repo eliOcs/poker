@@ -5,7 +5,11 @@ import * as Stakes from "./poker/stakes.js";
 import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as Store from "./store.js";
-import { createRateLimiter, getClientIp } from "./rate-limit.js";
+import {
+  createRateLimiter,
+  getClientIp,
+  RateLimitError,
+} from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 
 /**
@@ -21,6 +25,53 @@ const userCreationRateLimiter = createRateLimiter({
   maxActions: USER_CREATION_LIMIT_MAX_ACTIONS,
   blockDurationMs: USER_CREATION_BLOCK_DURATION_MS,
 });
+
+/**
+ * @param {Request} req
+ * @param {import('./logger.js').Log|null} log
+ */
+function throwIfUserCreateRateLimited(req, log) {
+  const clientIp = getClientIp(req);
+  try {
+    const creationRateLimit = userCreationRateLimiter.check(`ip:${clientIp}`, {
+      source: "user-create",
+    });
+    if (log) {
+      log.context.userCreateRateLimit = creationRateLimit.context;
+    }
+  } catch (err) {
+    if (log && err instanceof RateLimitError) {
+      log.context.userCreateRateLimit = err.rateLimit;
+    }
+    throw new HttpError(429, "Too many requests", {
+      body: { error: "Too many requests", status: 429 },
+      headers: {
+        "retry-after": String(
+          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
+        ),
+      },
+    });
+  }
+}
+
+/**
+ * @param {Response} res
+ * @param {Record<string, UserType>} users
+ * @returns {UserType}
+ */
+function createAndPersistUser(res, users) {
+  const user = User.create();
+  users[user.id] = user;
+  Store.saveUser(user);
+  const cookieDomain = process.env.DOMAIN
+    ? ` Domain=${process.env.DOMAIN};`
+    : "";
+  res.setHeader(
+    "Set-Cookie",
+    `phg=${user.id};${cookieDomain} HttpOnly; Path=/`,
+  );
+  return user;
+}
 
 /**
  * Parses the request body as JSON
@@ -70,57 +121,25 @@ export function parseCookies(rawCookies) {
  * @param {Request} req
  * @param {Response} res
  * @param {Record<string, UserType>} users
+ * @param {import('./logger.js').Log|null} [log]
  * @returns {UserType}
  */
-export function getOrCreateUser(req, res, users) {
+export function getOrCreateUser(req, res, users, log = null) {
   const cookies = parseCookies(req.headers.cookie ?? "");
   const cookieId = cookies.phg ?? "";
-  let user = users[cookieId];
-
-  if (!user) {
-    // Check database for returning visitor
-    const loadedUser = Store.loadUser(cookieId);
-
-    if (loadedUser) {
-      // Returning user - add to memory cache
-      user = loadedUser;
-      users[user.id] = user;
-    } else {
-      const clientIp = getClientIp(req);
-      const creationRateLimit = userCreationRateLimiter.check(
-        `ip:${clientIp}`,
-        {
-          source: "user-create",
-        },
-      );
-      if (!creationRateLimit.allowed) {
-        const retryAfterSeconds = Math.max(
-          1,
-          Math.ceil(creationRateLimit.retryAfterMs / 1000),
-        );
-        throw new HttpError(429, "Too many requests", {
-          body: { error: "Too many requests", status: 429 },
-          headers: {
-            "retry-after": String(retryAfterSeconds),
-          },
-        });
-      }
-
-      // New user - create and persist
-      user = User.create();
-      users[user.id] = user;
-      Store.saveUser(user);
-      const cookieDomain = process.env.DOMAIN
-        ? ` Domain=${process.env.DOMAIN};`
-        : "";
-      res.setHeader(
-        "Set-Cookie",
-        `phg=${user.id};${cookieDomain} HttpOnly; Path=/`,
-      );
-    }
+  const existingUser = users[cookieId];
+  if (existingUser) {
+    return existingUser;
   }
 
-  return user;
+  const loadedUser = Store.loadUser(cookieId);
+  if (loadedUser) {
+    users[loadedUser.id] = loadedUser;
+    return loadedUser;
+  }
+
+  throwIfUserCreateRateLimited(req, log);
+  return createAndPersistUser(res, users);
 }
 
 /**
@@ -251,16 +270,16 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "GET",
       path: "/",
-      handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
       method: "GET",
       path: "/api/users/me",
-      handler: ({ req, res }) => {
-        const user = getOrCreateUser(req, res, users);
+      handler: ({ req, res, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
         respondWithJson(res, {
           id: user.id,
           name: user.name,
@@ -271,8 +290,8 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "PUT",
       path: "/api/users/me",
-      handler: async ({ req, res }) => {
-        const user = getOrCreateUser(req, res, users);
+      handler: async ({ req, res, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
         const data = await parseBody(req);
 
         if (data && typeof data === "object") {
@@ -305,7 +324,7 @@ export function createRoutes(users, games, broadcast) {
       method: "POST",
       path: "/games",
       handler: async ({ req, res, log }) => {
-        getOrCreateUser(req, res, users);
+        getOrCreateUser(req, res, users, log);
 
         const data = await parseBody(req);
 
@@ -347,27 +366,27 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "GET",
       path: /^\/games\/([a-z0-9]+)$/,
-      handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
       method: "GET",
       path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
-      handler: ({ req, res }) => {
-        getOrCreateUser(req, res, users);
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
       },
     },
     {
       method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)$/,
-      handler: async ({ req, res, match }) => {
+      handler: async ({ req, res, match, log }) => {
         const gameId = /** @type {string} */ (
           /** @type {RegExpMatchArray} */ (match)[1]
         );
-        const user = getOrCreateUser(req, res, users);
+        const user = getOrCreateUser(req, res, users, log);
 
         const hands = await HandHistory.getAllHands(gameId);
         const summaries = hands.map((hand) =>
@@ -380,11 +399,11 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
-      handler: async ({ req, res, match }) => {
+      handler: async ({ req, res, match, log }) => {
         const m = /** @type {RegExpMatchArray} */ (match);
         const gameId = /** @type {string} */ (m[1]);
         const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
-        const user = getOrCreateUser(req, res, users);
+        const user = getOrCreateUser(req, res, users, log);
 
         const hand = await HandHistory.getHand(gameId, handNumber);
         if (!hand) {

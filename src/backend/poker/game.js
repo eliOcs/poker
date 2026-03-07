@@ -96,7 +96,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
  * @property {import('./showdown.js').PotResult[]|null} pendingHandHistory - Pot results to finalize after reveal window
  * @property {{ active: boolean, delayTicks: number }|null} collectingBets - Bet collection animation state
- * @property {import('../logger.js').Log|null} handLog - Wide event for the current hand
+ * @property {import('../logger.js').Log|null} handLog - Deferred hand-level log record for the current hand
  */
 
 /**
@@ -309,7 +309,7 @@ export function ensureGameTick(game, onBroadcast) {
 }
 
 /**
- * Creates and attaches a hand wide event to the game
+ * Creates and attaches a deferred hand-level log record to the game
  * @param {Game} game
  * @param {number} playerCount
  */
@@ -579,7 +579,7 @@ function getWinnerInfo(game, potResults) {
 }
 
 /**
- * Emits the hand wide event with winner details
+ * Emits the deferred hand-level log with winner details
  * @param {Game} game
  * @param {string} winnerName
  * @param {string} wonBy

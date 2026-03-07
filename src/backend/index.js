@@ -14,7 +14,11 @@ import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
-import { createRateLimiter, getClientIp } from "./rate-limit.js";
+import {
+  createRateLimiter,
+  getClientIp,
+  RateLimitError,
+} from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 
 /**
@@ -229,7 +233,7 @@ async function resolveGameForUpgrade(user, gameId) {
  * @param {import('./logger.js').Log|null} log
  */
 async function handleRequest(req, res, log) {
-  throwIfRateLimitedHttpRequest(req);
+  throwIfRateLimitedHttpRequest(req, log);
 
   const url = req.url ?? "";
   const method = req.method ?? "GET";
@@ -271,15 +275,26 @@ async function handleRequest(req, res, log) {
 
 /**
  * @param {import('http').IncomingMessage} req
+ * @param {import('./logger.js').Log|null} log
  */
-function throwIfRateLimitedHttpRequest(req) {
+function throwIfRateLimitedHttpRequest(req, log) {
   const key = getRequestRateLimitKey(req);
   try {
-    actionRateLimiter.check(key, { source: "http" });
+    const rateLimit = actionRateLimiter.check(key, { source: "http" });
+    if (log) {
+      log.context.rateLimit = rateLimit.context;
+    }
   } catch (err) {
+    if (log && err instanceof RateLimitError) {
+      log.context.rateLimit = err.rateLimit;
+    }
     throw new HttpError(429, "Too many requests", {
       body: { error: "Too many requests", status: 429 },
-      headers: { "retry-after": String(err.retryAfterSeconds) },
+      headers: {
+        "retry-after": String(
+          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
+        ),
+      },
     });
   }
 }
@@ -336,7 +351,7 @@ async function handleUpgrade(request, socket, head) {
     actionRateLimiter.check(rateLimitKey, { source: "ws-upgrade" });
   } catch (err) {
     socket.end(
-      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${err.retryAfterSeconds}\r\nConnection: close\r\n\r\n`,
+      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${err instanceof RateLimitError ? err.retryAfterSeconds : 1}\r\nConnection: close\r\n\r\n`,
     );
     return;
   }
@@ -532,7 +547,10 @@ wss.on("connection", function connection(ws, _request, user, game, gameId) {
     Object.assign(log.context, { gameId, playerId: user.id });
 
     try {
-      actionRateLimiter.check(playerRateLimitKey, { source: "ws-action" });
+      const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
+        source: "ws-action",
+      });
+      log.context.rateLimit = rateLimit.context;
 
       /** @type {{ action: string } & Record<string, unknown>} */
       const messageData = JSON.parse(String(rawMessage));
@@ -581,6 +599,9 @@ wss.on("connection", function connection(ws, _request, user, game, gameId) {
         broadcastStats,
       });
     } catch (err) {
+      if (err instanceof RateLimitError) {
+        log.context.rateLimit = err.rateLimit;
+      }
       log.context.error = err.message;
       ws.send(
         JSON.stringify({ error: { message: log.context.error } }, null, 2),
