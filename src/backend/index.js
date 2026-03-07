@@ -75,22 +75,6 @@ function broadcastToGameClients(gameId, buildPayload) {
 }
 
 /**
- * @param {string} gameId
- * @param {'gameState'|'history'|'social'} msgType
- * @param {BroadcastStats} stats
- * @param {Record<string, unknown>} [context]
- */
-function logBroadcast(gameId, msgType, stats, context = {}) {
-  logger.info("ws_broadcast", {
-    gameId,
-    msgType,
-    recipients: stats.recipients,
-    maxPayloadBytes: stats.maxPayloadBytes,
-    ...context,
-  });
-}
-
-/**
  * @param {{ type: "gameState", gameId: string }} message
  * @returns {BroadcastDispatch}
  */
@@ -167,6 +151,7 @@ const BROADCAST_HANDLERS = {
 /**
  * Dispatches a typed game broadcast message.
  * @param {BroadcastMessage} message
+ * @returns {BroadcastStats}
  */
 function broadcastGameMessage(message) {
   const handler =
@@ -174,8 +159,7 @@ function broadcastGameMessage(message) {
       BROADCAST_HANDLERS[message.type]
     );
   const dispatch = handler(message);
-  const stats = broadcastToGameClients(dispatch.gameId, dispatch.buildPayload);
-  logBroadcast(dispatch.gameId, dispatch.msgType, stats, dispatch.context);
+  return broadcastToGameClients(dispatch.gameId, dispatch.buildPayload);
 }
 
 /** @param {string} gameId */
@@ -220,7 +204,7 @@ async function resolveGameForUpgrade(user, gameId) {
   const recoveredGame = await recoverGameFromHistory(gameId).catch((err) => {
     logger.error("game recovery failed", {
       gameId,
-      error: err instanceof Error ? err.message : String(err),
+      error: err.message,
     });
     return null;
   });
@@ -290,19 +274,14 @@ async function handleRequest(req, res, log) {
  */
 function throwIfRateLimitedHttpRequest(req) {
   const key = getRequestRateLimitKey(req);
-  const rateLimit = actionRateLimiter.check(key, { source: "http" });
-  if (rateLimit.allowed) return;
-
-  const retryAfterSeconds = Math.max(
-    1,
-    Math.ceil(rateLimit.retryAfterMs / 1000),
-  );
-  throw new HttpError(429, "Too many requests", {
-    body: { error: "Too many requests", status: 429 },
-    headers: {
-      "retry-after": String(retryAfterSeconds),
-    },
-  });
+  try {
+    actionRateLimiter.check(key, { source: "http" });
+  } catch (err) {
+    throw new HttpError(429, "Too many requests", {
+      body: { error: "Too many requests", status: 429 },
+      headers: { "retry-after": String(err.retryAfterSeconds) },
+    });
+  }
 }
 
 server.on("request", (req, res) => {
@@ -332,8 +311,7 @@ server.on("request", (req, res) => {
         return;
       }
 
-      if (log)
-        log.context.error = err instanceof Error ? err.message : String(err);
+      if (log) log.context.error = err.message;
       if (!res.headersSent) {
         res.writeHead(500, { "content-type": "application/json" });
         res.end(JSON.stringify({ error: "Internal server error" }));
@@ -349,16 +327,11 @@ server.on("request", (req, res) => {
 
 server.on("upgrade", async function upgrade(request, socket, head) {
   const rateLimitKey = getRequestRateLimitKey(request);
-  const upgradeRateLimit = actionRateLimiter.check(rateLimitKey, {
-    source: "ws-upgrade",
-  });
-  if (!upgradeRateLimit.allowed) {
-    const retryAfterSeconds = Math.max(
-      1,
-      Math.ceil(upgradeRateLimit.retryAfterMs / 1000),
-    );
+  try {
+    actionRateLimiter.check(rateLimitKey, { source: "ws-upgrade" });
+  } catch (err) {
     socket.end(
-      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${retryAfterSeconds}\r\nConnection: close\r\n\r\n`,
+      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${err.retryAfterSeconds}\r\nConnection: close\r\n\r\n`,
     );
     return;
   }
@@ -438,12 +411,11 @@ function handleSocialAction(
  * @param {Record<string, unknown>} args
  * @param {(gameId: string) => void} broadcastGameState
  * @param {string} gameId
- * @returns {string|null} Error message or null on success
  */
 function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
   const player = Player.fromUser(user);
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (seatIndex === -1 || game.seats[seatIndex].empty) return null;
+  if (seatIndex === -1 || game.seats[seatIndex].empty) return;
 
   const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
     game.seats[seatIndex]
@@ -452,11 +424,11 @@ function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
   if (action === "clearPreAction") {
     seat.preAction = null;
     broadcastGameState(gameId);
-    return null;
+    return;
   }
 
-  if (game.hand?.actingSeat === seatIndex) {
-    return "cannot set pre-action on your turn";
+  if (game.hand.actingSeat === seatIndex) {
+    throw new Error("cannot set pre-action on your turn");
   }
 
   const preType = /** @type {'checkFold'|'callAmount'} */ (args.type);
@@ -468,7 +440,6 @@ function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
           amount: /** @type {number} */ (args.amount ?? 0),
         };
   broadcastGameState(gameId);
-  return null;
 }
 
 const wss = new WebSocketServer({ noServer: true });
@@ -531,86 +502,66 @@ wss.on(
     });
 
     ws.on("message", function (rawMessage) {
-      const actionRateLimit = actionRateLimiter.check(playerRateLimitKey, {
-        source: "ws-action",
-      });
-      if (!actionRateLimit.allowed) {
-        ws.send(
-          JSON.stringify(
-            { error: { message: "Too many requests", status: 429 } },
-            null,
-            2,
-          ),
-        );
-        return;
-      }
-
-      /** @type {{ action: string } & Record<string, unknown>} */
-      let messageData;
-      try {
-        messageData = JSON.parse(String(rawMessage));
-      } catch {
-        ws.send(
-          JSON.stringify(
-            { error: { message: "Invalid JSON payload", status: 400 } },
-            null,
-            2,
-          ),
-        );
-        return;
-      }
-
-      const { action, ...args } = messageData;
       const log = createLog("ws_action");
-      Object.assign(log.context, {
-        gameId,
-        playerId: user.id,
-        action,
-        ...args,
-      });
-
-      // Handle social actions (emote/chat) — no game logic, just broadcast
-      if (action === "emote" || action === "chat") {
-        handleSocialAction(
-          game,
-          user,
-          action,
-          args,
-          broadcastGameMessage,
-          gameId,
-        );
-        emitLog(log);
-        return;
-      }
-
-      // Handle pre-action toggle — set or clear pre-selected action
-      if (["preAction", "clearPreAction"].includes(action)) {
-        const error = handlePreAction(
-          game,
-          user,
-          action,
-          args,
-          broadcastGameStateMessage,
-          gameId,
-        );
-        if (error) ws.send(JSON.stringify({ error: { message: error } }));
-        emitLog(log);
-        return;
-      }
+      Object.assign(log.context, { gameId, playerId: user.id });
 
       try {
-        const player = Player.fromUser(user);
+        actionRateLimiter.check(playerRateLimitKey, { source: "ws-action" });
+
+        /** @type {{ action: string } & Record<string, unknown>} */
+        const messageData = JSON.parse(String(rawMessage));
+
+        const { action, ...args } = messageData;
+        Object.assign(log.context, { action, ...args });
+
+        // Handle social actions (emote/chat) — no game logic, just broadcast
+        if (action === "emote" || action === "chat") {
+          handleSocialAction(
+            game,
+            user,
+            action,
+            args,
+            broadcastGameMessage,
+            gameId,
+          );
+          log.context.handNumber = game.handNumber;
+          return;
+        }
+
+        // Handle pre-action toggle — set or clear pre-selected action
+        if (["preAction", "clearPreAction"].includes(action)) {
+          handlePreAction(
+            game,
+            user,
+            action,
+            args,
+            broadcastGameStateMessage,
+            gameId,
+          );
+          log.context.handNumber = game.handNumber;
+          return;
+        }
+
         processPokerAction(game, player, action, args, broadcastGameMessage);
+
+        const broadcastStats = broadcastGameMessage({
+          type: "gameState",
+          gameId,
+        });
+        PokerGame.ensureGameTick(game, broadcastGameMessage);
+
+        Object.assign(log.context, {
+          ...PokerGame.gameStateSnapshot(game),
+          broadcastStats,
+        });
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        log.context.error = message;
-        ws.send(JSON.stringify({ error: { message } }, null, 2));
+        log.context.error = err.message;
+        ws.send(
+          JSON.stringify({ error: { message: log.context.error } }, null, 2),
+        );
       } finally {
         emitLog(log);
       }
-
-      broadcastGameMessage({ type: "gameState", gameId });
-      PokerGame.ensureGameTick(game, broadcastGameMessage);
     });
 
     // Send initial game state

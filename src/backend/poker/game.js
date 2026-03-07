@@ -19,7 +19,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @typedef {import('./seat.js').Seat} Seat
  * @typedef {import('./seat.js').Player} PlayerType
  * @typedef {{ type: "gameState", gameId: string } | { type: "history", gameId: string, event: "handRecorded", handNumber: number } | { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }} BroadcastMessage
- * @typedef {(message: BroadcastMessage) => void} BroadcastHandler
+ * @typedef {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} BroadcastHandler
  */
 
 /**
@@ -213,6 +213,20 @@ export function createTournament({
 
 /**
  * @param {Game} game
+ * @returns {{ handNumber: number, phase: string, pot: number, actingSeat: number, currentBet: number }}
+ */
+export function gameStateSnapshot(game) {
+  return {
+    handNumber: game.handNumber,
+    phase: game.hand.phase,
+    pot: game.hand.pot,
+    actingSeat: game.hand.actingSeat,
+    currentBet: game.hand.currentBet,
+  };
+}
+
+/**
+ * @param {Game} game
  * @param {PlayerType} player
  * @returns {number} Seat index or -1 if not found
  */
@@ -251,25 +265,19 @@ export function startGameTick(game, onBroadcast) {
   game.tickTimer = setInterval(() => {
     const result = tick(game);
 
-    // Handle startHand event
-    if (result.startHand) {
-      startHand(game, onBroadcast);
-    }
+    const timerLog = createLog("timer_action");
+    Object.assign(timerLog.context, {
+      gameId: game.id,
+      ...Object.fromEntries(
+        Object.entries(result).filter(([, v]) => v !== false && v !== null),
+      ),
+    });
 
-    // Handle auto-action (disconnect or clock expiry)
-    if (result.autoActionSeat !== null) {
+    if (result.startHand) startHand(game, onBroadcast);
+    if (result.autoActionSeat !== null)
       performAutoAction(game, result.autoActionSeat, onBroadcast);
-    }
-
-    // Handle bet collection completion
-    if (result.collectBets) {
-      finishCollectBets(game, onBroadcast);
-    }
-
-    // Handle runout street dealing
-    if (result.dealNextStreet) {
-      dealRunoutStreet(game, onBroadcast);
-    }
+    if (result.collectBets) finishCollectBets(game, onBroadcast);
+    if (result.dealNextStreet) dealRunoutStreet(game, onBroadcast);
 
     // Stop tick if no longer needed
     if (!shouldTickBeRunning(game)) {
@@ -277,9 +285,16 @@ export function startGameTick(game, onBroadcast) {
     }
 
     // Broadcast state to all clients
+    let broadcastStats = { recipients: 0, maxPayloadBytes: 0 };
     if (result.shouldBroadcast) {
-      onBroadcast({ type: "gameState", gameId: game.id });
+      broadcastStats = onBroadcast({ type: "gameState", gameId: game.id });
     }
+
+    Object.assign(timerLog.context, {
+      ...gameStateSnapshot(game),
+      broadcastStats,
+    });
+    emitLog(timerLog);
   }, TIMER_INTERVAL);
 }
 

@@ -43,13 +43,13 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      assert.strictEqual(limiter.check("127.0.0.1", 0).allowed, true);
-      assert.strictEqual(limiter.check("127.0.0.1", 100).allowed, true);
-      assert.strictEqual(limiter.check("127.0.0.1", 200).allowed, true);
+      limiter.check("127.0.0.1", 0);
+      limiter.check("127.0.0.1", 100);
+      limiter.check("127.0.0.1", 200);
 
-      const blocked = limiter.check("127.0.0.1", 300);
-      assert.strictEqual(blocked.allowed, false);
-      assert.ok(blocked.retryAfterMs > 0);
+      assert.throws(() => limiter.check("127.0.0.1", 300), {
+        retryAfterSeconds: 1,
+      });
     });
 
     it("allows requests again after the window expires", () => {
@@ -60,11 +60,13 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      assert.strictEqual(limiter.check("127.0.0.1", 0).allowed, true);
-      assert.strictEqual(limiter.check("127.0.0.1", 100).allowed, true);
-      assert.strictEqual(limiter.check("127.0.0.1", 200).allowed, false);
+      limiter.check("127.0.0.1", 0);
+      limiter.check("127.0.0.1", 100);
+      assert.throws(() => limiter.check("127.0.0.1", 200), {
+        message: "Too many requests",
+      });
 
-      assert.strictEqual(limiter.check("127.0.0.1", 1_101).allowed, true);
+      limiter.check("127.0.0.1", 1_101);
     });
 
     it("cleans up stale IP entries over time", () => {
@@ -99,7 +101,10 @@ describe("rate-limit", () => {
       });
 
       limiter.check("127.0.0.1", { now: 0, source: "http" });
-      limiter.check("127.0.0.1", { now: 1, source: "ws-action" });
+      assert.throws(
+        () => limiter.check("127.0.0.1", { now: 1, source: "ws-action" }),
+        { message: "Too many requests" },
+      );
 
       assert.strictEqual(warnLogs.length, 1);
       assert.strictEqual(warnLogs[0].message, "rate limit exceeded");
@@ -122,25 +127,21 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      assert.strictEqual(
-        limiter.check("127.0.0.1", { now: 0, source: "http" }).allowed,
-        true,
+      limiter.check("127.0.0.1", { now: 0, source: "http" });
+
+      assert.throws(
+        () => limiter.check("127.0.0.1", { now: 1, source: "http" }),
+        { message: "Too many requests", retryAfterSeconds: 30 },
       );
-      const blocked = limiter.check("127.0.0.1", { now: 1, source: "http" });
-      assert.strictEqual(blocked.allowed, false);
-      assert.ok(blocked.retryAfterMs >= 30_000 - 1);
 
       // Still blocked even after the 1s rolling window has expired.
-      assert.strictEqual(
-        limiter.check("127.0.0.1", { now: 2_000, source: "http" }).allowed,
-        false,
+      assert.throws(
+        () => limiter.check("127.0.0.1", { now: 2_000, source: "http" }),
+        { message: "Too many requests" },
       );
 
       // Unblocked after lockout duration.
-      assert.strictEqual(
-        limiter.check("127.0.0.1", { now: 30_002, source: "http" }).allowed,
-        true,
-      );
+      limiter.check("127.0.0.1", { now: 30_002, source: "http" });
     });
   });
 

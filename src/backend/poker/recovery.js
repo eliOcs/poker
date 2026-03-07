@@ -510,7 +510,7 @@ async function readHandsFromFile(gameId) {
       logger.warn("invalid hand history entry ignored during recovery", {
         gameId,
         entryIndex: i,
-        error: err instanceof Error ? err.message : String(err),
+        error: err.message,
       });
     }
   }
@@ -536,7 +536,7 @@ async function readTournamentSummary(gameId) {
   } catch (err) {
     logger.warn("invalid tournament summary ignored during recovery", {
       gameId,
-      error: err instanceof Error ? err.message : String(err),
+      error: err.message,
     });
     return null;
   }

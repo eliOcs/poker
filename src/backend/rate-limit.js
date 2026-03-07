@@ -191,6 +191,14 @@ export function getClientIp(req) {
   return remoteIp;
 }
 
+export class RateLimitError extends Error {
+  /** @param {number} retryAfterMs */
+  constructor(retryAfterMs) {
+    super("Too many requests");
+    this.retryAfterSeconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
+  }
+}
+
 /**
  * @typedef {object} RateLimitResult
  * @property {boolean} allowed
@@ -365,13 +373,7 @@ export function createRateLimiter({
         });
         cleanup(now);
         maybeLogStats(now);
-        return {
-          allowed: false,
-          limit: maxActions,
-          remaining: 0,
-          retryAfterMs,
-          windowMs,
-        };
+        throw new RateLimitError(retryAfterMs);
       }
 
       trimWindow(tracked, now);
@@ -403,13 +405,7 @@ export function createRateLimiter({
         });
         cleanup(now);
         maybeLogStats(now);
-        return {
-          allowed: false,
-          limit: maxActions,
-          remaining: 0,
-          retryAfterMs,
-          windowMs,
-        };
+        throw new RateLimitError(retryAfterMs);
       }
 
       tracked.timestamps.push(now);
