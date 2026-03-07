@@ -136,7 +136,7 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(p3DisconnectedOnP1).toBeVisible();
 
     // Wait for "Call the clock" to become available
-    // CLOCK_WAIT_TICKS=15 → 1.5s at TIMER_SPEED=10
+    // eslint-disable-next-line
     await player1.page.waitForTimeout(2_000);
     const callClockBtn = player1.actionPanel.getByRole("button", {
       name: "Call the clock",
@@ -144,7 +144,7 @@ test.describe("Poker Game Smoke Test", () => {
     await callClockBtn.click();
 
     // Wait for clock to expire and P3 to auto-fold
-    // CLOCK_DURATION_TICKS=60 → 6s at TIMER_SPEED=10
+    // eslint-disable-next-line
     await player1.page.waitForTimeout(7_000);
 
     // P3 is auto-folded — P1 (BB) closes preflop, then check through remaining streets

@@ -1,6 +1,5 @@
 # To do
 
-- improve e2e debug to paste error stack trace: [Player 1] PAGE ERROR: Cannot read properties of undefined (reading 'findIndex')
 - graph of the evolution
 - background on pot numbers
 - allow sit in in the middle of the hand

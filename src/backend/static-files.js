@@ -51,7 +51,10 @@ for (const file of fs.readdirSync("src/frontend/fonts")) {
   }
 }
 
-// Add shared files (accessible from frontend)
+// Source JS entry paths (used by module script loading from /src/frontend/*).
+const frontendSourceFiles = collectJsFiles("src/frontend", "/src/frontend");
+
+// Shared JS modules exposed to the browser.
 const sharedFiles = collectJsFiles("src/shared", "/src/shared");
 
 /**
@@ -79,7 +82,12 @@ const nodeModulesFiles = buildNodeModulesMap();
  * @returns {string | undefined}
  */
 export function getFilePath(url) {
-  return staticFiles[url] ?? sharedFiles[url] ?? nodeModulesFiles[url];
+  return (
+    staticFiles[url] ??
+    frontendSourceFiles[url] ??
+    sharedFiles[url] ??
+    nodeModulesFiles[url]
+  );
 }
 
 const compressibleTypes = new Set([".html", ".js", ".css", ".json", ".woff2"]);

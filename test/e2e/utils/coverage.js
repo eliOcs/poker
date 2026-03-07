@@ -57,12 +57,17 @@ function urlToFilePath(url) {
   // Skip node_modules (lit, etc.)
   if (pathname.includes("/node_modules/")) return null;
 
+  // /src/frontend/foo.js → src/frontend/foo.js
+  if (pathname.startsWith("/src/frontend/")) {
+    return pathname.slice(1);
+  }
+
   // /src/shared/foo.js → src/shared/foo.js
   if (pathname.startsWith("/src/shared/")) {
     return pathname.slice(1);
   }
 
-  // /app.js → src/frontend/app.js (frontend files served from root)
+  // Legacy root-served frontend modules (/app.js) still map to src/frontend/*.
   if (pathname.startsWith("/") && pathname.endsWith(".js")) {
     return `src/frontend${pathname}`;
   }
