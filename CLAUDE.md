@@ -254,6 +254,7 @@ npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
 npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
+npm run deps:check              # Validate architectural dependency rules
 ```
 
 ### Git Hooks
@@ -391,4 +392,4 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `@open-wc/testing`, `web-test-runner` - Frontend testing
 - `@playwright/test` - E2E and visual regression testing
 - `jscpd` - Code duplication detection
-- `madge` - Dependency graph generation (via npx)
+- `dependency-cruiser` - Dependency graph generation and architectural validation
