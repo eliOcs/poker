@@ -147,7 +147,7 @@ function collectWinnings(pots = []) {
   const winnings = new Map();
   for (const pot of pots) {
     for (const win of pot.player_wins || []) {
-      if (!win?.player_id || typeof win.win_amount !== "number") {
+      if (typeof win.win_amount !== "number") {
         continue;
       }
       addToMapValue(winnings, win.player_id, cents(win.win_amount));
@@ -182,9 +182,9 @@ function buildEndingStacks(startingStacks, contributions, winnings) {
  * @returns {Map<string, number>} playerId -> ending stack in cents
  */
 function calculateEndingStacksForHand(hand) {
-  const startingStacks = createStartingStacks(hand.players || []);
-  const contributions = collectContributions(hand.rounds || []);
-  const winnings = collectWinnings(hand.pots || []);
+  const startingStacks = createStartingStacks(hand.players);
+  const contributions = collectContributions(hand.rounds);
+  const winnings = collectWinnings(hand.pots);
   return buildEndingStacks(startingStacks, contributions, winnings);
 }
 
@@ -280,7 +280,7 @@ function buildRecoveredSeatStates(hands) {
 
   for (const hand of hands) {
     const endingStacks = calculateEndingStacksForHand(hand);
-    for (const player of hand.players || []) {
+    for (const player of hand.players) {
       upsertRecoveredSeat(tracker, player, endingStacks);
     }
   }
@@ -360,8 +360,7 @@ function getTournamentStartTime(lastHand, summary) {
   return (
     lastHand.tournament_info?.start_date_utc ??
     summary?.start_date_utc ??
-    lastHand.start_date_utc ??
-    null
+    lastHand.start_date_utc
   );
 }
 
@@ -561,7 +560,7 @@ export function rebuildGameFromHistory(gameId, hands, summary = null) {
   const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
   const recoveredSeats = buildRecoveredSeatStates(hands);
   const playersInLastHand = new Set(
-    (lastHand.players || []).map((player) => player.id),
+    lastHand.players.map((player) => player.id),
   );
   const { game, isTournament, blinds, tournamentInitialStack } =
     createGameShell(gameId, lastHand, summary);

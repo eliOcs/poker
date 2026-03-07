@@ -270,7 +270,7 @@ export function createRateLimiter({
       };
     }
 
-    if (typeof nowOrContext === "object" && nowOrContext !== null) {
+    if (typeof nowOrContext === "object") {
       return {
         now:
           typeof nowOrContext.now === "number" ? nowOrContext.now : Date.now(),

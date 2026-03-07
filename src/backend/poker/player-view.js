@@ -220,7 +220,7 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 function findPlayerSeat(game, playerId) {
   return game.seats.findIndex(
-    (seat) => !seat.empty && seat.player?.id === playerId,
+    (seat) => !seat.empty && seat.player.id === playerId,
   );
 }
 
@@ -233,7 +233,7 @@ function findPlayerSeat(game, playerId) {
  * @returns {boolean}
  */
 function shouldRevealAllCards(seat, seatIndex, playerSeatIndex, game) {
-  if (seat.empty || !seat.cards || seat.cards.length === 0) {
+  if (seat.empty || seat.cards.length === 0) {
     return false;
   }
 
@@ -243,7 +243,7 @@ function shouldRevealAllCards(seat, seatIndex, playerSeatIndex, game) {
   }
 
   // Show at showdown or when cards were revealed at showdown
-  if (game.hand?.phase === "showdown" || seat.cardsRevealed) {
+  if (game.hand.phase === "showdown" || seat.cardsRevealed) {
     return true;
   }
 
@@ -271,7 +271,7 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
     return seat.cards;
   }
 
-  const shownCards = seat.shownCards || [false, false];
+  const shownCards = seat.shownCards;
   if (shownCards[0] || shownCards[1]) {
     return seat.cards.map((card, index) =>
       shownCards[index] ? card : hiddenCard(),
@@ -279,11 +279,11 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
   }
 
   // Don't render cards for folded opponents
-  if (seat.folded && !isOwnSeat) {
+  if (seat.folded) {
     return [];
   }
   // Show face-down cards for active opponents
-  return seat.cards?.map(() => hiddenCard()) || [];
+  return seat.cards.map(() => hiddenCard());
 }
 
 /**
@@ -293,7 +293,7 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
  * @returns {PlayerAction[]}
  */
 function getShowCardsActions(seat, game) {
-  if (!canShowCards(seat, game.hand?.phase)) {
+  if (!canShowCards(seat, game.hand.phase)) {
     return [];
   }
 
@@ -315,7 +315,7 @@ function getShowCardsActions(seat, game) {
  * @returns {boolean}
  */
 function canShowCards(seat, phase) {
-  if (!seat.cards || seat.cards.length < 2) {
+  if (seat.cards.length < 2) {
     return false;
   }
   return seat.folded || phase === "waiting";
@@ -326,7 +326,7 @@ function canShowCards(seat, phase) {
  * @returns {[boolean, boolean]}
  */
 function getShownCards(seat) {
-  return seat.shownCards || [false, false];
+  return seat.shownCards;
 }
 
 /**
@@ -361,7 +361,7 @@ function buildShowCardActions(cards, shownCards) {
  * @returns {string|null}
  */
 function calculateHandRank(holeCards, boardCards) {
-  if (!holeCards || holeCards.length < 2) {
+  if (holeCards.length < 2) {
     return null;
   }
 
@@ -593,8 +593,8 @@ function addRaiseAction(actions, seat, game) {
  */
 function canCallClock(game, playerSeatIndex) {
   return (
-    game.hand?.actingSeat !== -1 &&
-    game.hand?.actingSeat !== playerSeatIndex &&
+    game.hand.actingSeat !== -1 &&
+    game.hand.actingSeat !== playerSeatIndex &&
     isClockCallable(game)
   );
 }
@@ -656,16 +656,16 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     actions.push({ action: "callClock" });
   }
 
-  if (game.hand?.actingSeat !== seatIndex) {
+  if (game.hand.actingSeat !== seatIndex) {
     actions.push({ action: "emote" });
     actions.push({ action: "chat" });
   }
 
-  if (game.hand?.phase === "waiting") {
+  if (game.hand.phase === "waiting") {
     return actions.concat(getWaitingPhaseActions(seat, game));
   }
 
-  if (game.hand?.actingSeat !== seatIndex) {
+  if (game.hand.actingSeat !== seatIndex) {
     return getNotActingActions(game, seat, actions);
   }
 
@@ -692,7 +692,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
   // Calculate hand rank only for visible cards of non-folded players
   const handRank =
     revealAllCards && !seat.folded
-      ? calculateHandRank(seat.cards, game.board?.cards || [])
+      ? calculateHandRank(seat.cards, game.board.cards)
       : null;
 
   return {
@@ -707,7 +707,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     cards: getCardsForView(seat, revealAllCards, isOwnSeat),
     actions: getAvailableActions(game, index, playerSeatIndex),
     isCurrentPlayer: index === playerSeatIndex,
-    isActing: index === game.hand?.actingSeat,
+    isActing: index === game.hand.actingSeat,
     lastAction: seat.lastAction,
     handResult: seat.handResult,
     handRank,
@@ -716,7 +716,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     ...(isOwnSeat
       ? {
           preAction: seat.preAction,
-          pendingSitOut: seat.pendingSitOut || false,
+          pendingSitOut: seat.pendingSitOut,
         }
       : {}),
   };
@@ -753,20 +753,18 @@ export default function playerView(game, player) {
     blinds: game.blinds,
     handNumber: game.handNumber,
     board: game.board,
-    hand: game.hand
-      ? {
-          phase: game.hand.phase,
-          pot: game.collectingBets?.active
-            ? game.hand.pot +
-              game.seats.reduce((sum, s) => sum + (s.empty ? 0 : s.bet), 0)
-            : game.hand.pot,
-          currentBet: game.hand.currentBet,
-          actingSeat: game.hand.actingSeat,
-          actingTicks: game.actingTicks,
-          clockTicks: game.clockTicks,
-          collectingBets: !!game.collectingBets?.active,
-        }
-      : null,
+    hand: {
+      phase: game.hand.phase,
+      pot: game.collectingBets?.active
+        ? game.hand.pot +
+          game.seats.reduce((sum, s) => sum + (s.empty ? 0 : s.bet), 0)
+        : game.hand.pot,
+      currentBet: game.hand.currentBet,
+      actingSeat: game.hand.actingSeat,
+      actingTicks: game.actingTicks,
+      clockTicks: game.clockTicks,
+      collectingBets: !!game.collectingBets?.active,
+    },
     countdown: game.countdown,
     winnerMessage: game.winnerMessage,
     rankings: Ranking.computeRankings(game),

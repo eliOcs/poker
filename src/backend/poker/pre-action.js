@@ -61,17 +61,14 @@ export function resolvePreAction(preAction, game, seatIndex) {
     return { action: "fold", args: { seat: seatIndex } };
   }
 
-  if (preAction.type === "callAmount") {
-    if (preAction.amount !== toCall) {
-      return null;
-    }
-    if (seat.stack <= toCall) {
-      return { action: "allIn", args: { seat: seatIndex } };
-    }
-    return { action: "call", args: { seat: seatIndex } };
+  if (preAction.amount !== toCall) {
+    return null;
   }
 
-  return null;
+  if (seat.stack <= toCall) {
+    return { action: "allIn", args: { seat: seatIndex } };
+  }
+  return { action: "call", args: { seat: seatIndex } };
 }
 
 /**

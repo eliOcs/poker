@@ -114,8 +114,10 @@ describe("rate-limit", () => {
         (entry) => entry.message === "rate limiter stats",
       );
       assert.ok(statsLog);
-      assert.strictEqual(statsLog.context?.totalChecks, 2);
-      assert.strictEqual(statsLog.context?.totalBlocked, 1);
+      const statsContext = statsLog.context;
+      assert.ok(statsContext);
+      assert.strictEqual(statsContext.totalChecks, 2);
+      assert.strictEqual(statsContext.totalBlocked, 1);
     });
 
     it("keeps an offender blocked for the configured lockout duration", () => {

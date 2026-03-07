@@ -232,7 +232,7 @@ export function gameStateSnapshot(game) {
  */
 export function findPlayerSeatIndex(game, player) {
   return game.seats.findIndex(
-    (seat) => !seat.empty && seat.player?.id === player.id,
+    (seat) => !seat.empty && seat.player.id === player.id,
   );
 }
 
@@ -608,7 +608,7 @@ function handleFoldWin(game, onBroadcast) {
     const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
       game.seats[result.winner]
     );
-    const winnerName = winnerSeat.player?.name || `Seat ${result.winner + 1}`;
+    const winnerName = winnerSeat.player.name || `Seat ${result.winner + 1}`;
 
     game.winnerMessage = {
       playerName: winnerName,
@@ -661,7 +661,7 @@ function handleShowdown(game, onBroadcast) {
   while (!result.done) {
     result = gen.next();
   }
-  const potResults = result.value || [];
+  const potResults = result.value;
 
   HandHistory.recordStreet(game.id, "showdown");
   recordShowdownCards(game);
@@ -669,7 +669,7 @@ function handleShowdown(game, onBroadcast) {
   const winnerInfo = getWinnerInfo(game, potResults);
   if (winnerInfo) {
     const winnerName =
-      winnerInfo.winnerSeat.player?.name || `Seat ${winnerInfo.seatIndex + 1}`;
+      winnerInfo.winnerSeat.player.name || `Seat ${winnerInfo.seatIndex + 1}`;
     game.winnerMessage = {
       playerName: winnerInfo.isSplit ? null : winnerName,
       handRank: winnerInfo.handRank,

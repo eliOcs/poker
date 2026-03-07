@@ -166,7 +166,7 @@ function buildWinnerFinish(game, prizeByPosition) {
   }
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winnerSeatIndex]);
   return {
-    player_name: winnerSeat.player?.name || winnerSeat.player?.id || "Unknown",
+    player_name: winnerSeat.player.name || winnerSeat.player.id,
     finish_position: 1,
     still_playing: false,
     prize: prizeByPosition.get(1) ?? 0,

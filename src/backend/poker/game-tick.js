@@ -123,8 +123,8 @@ function handleTournamentTick(game, result) {
  * @returns {boolean} Whether there's an acting player
  */
 function handleActingTick(game, result) {
-  const actingSeat = game.hand?.actingSeat;
-  const isActing = actingSeat !== -1 && actingSeat !== undefined;
+  const actingSeat = game.hand.actingSeat;
+  const isActing = actingSeat !== -1;
 
   if (isActing) {
     game.actingTicks += 1;
@@ -201,8 +201,7 @@ export function tick(game) {
  */
 export function shouldTickBeRunning(game) {
   const hasCountdown = game.countdown !== null;
-  const hasActingPlayer =
-    game.hand?.actingSeat !== -1 && game.hand?.actingSeat !== undefined;
+  const hasActingPlayer = game.hand.actingSeat !== -1;
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
   const isCollectingBets = game.collectingBets !== null;

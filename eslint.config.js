@@ -1,4 +1,6 @@
 import js from "@eslint/js";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import lit from "eslint-plugin-lit";
@@ -25,6 +27,22 @@ export default [
         "error",
         { max: 500, skipBlankLines: true, skipComments: true },
       ],
+    },
+  },
+  {
+    files: ["src/backend/**/*.js", "test/backend/**/*.js"],
+    plugins: {
+      "@typescript-eslint": tseslint,
+    },
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: "./tsconfig.eslint.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-unnecessary-condition": "error",
     },
   },
   {

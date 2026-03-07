@@ -50,7 +50,7 @@ import * as Seat from "./seat.js";
  * @returns {BestHandResult|null} - Evaluated hand with cards or null if no cards
  */
 export function evaluateHand(seat, boardCards) {
-  if (!seat.cards || seat.cards.length === 0) {
+  if (seat.cards.length === 0) {
     return null;
   }
 

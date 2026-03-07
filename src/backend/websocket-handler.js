@@ -116,7 +116,7 @@ export function getSeatStateBefore(game, player) {
     seatIndex,
     seatBefore,
     betBefore: seatBefore?.bet || 0,
-    currentBetBefore: game.hand?.currentBet || 0,
+    currentBetBefore: game.hand.currentBet,
   };
 }
 

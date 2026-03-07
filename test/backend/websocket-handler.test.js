@@ -243,7 +243,7 @@ describe("websocket-handler", () => {
       let historyEvent = null;
       const historyEventPromise = new Promise((resolve) => {
         processPokerAction(game, player, "sitOut", { seat: 0 }, (message) => {
-          if (message.type === "history" && message.event === "handRecorded") {
+          if (message.type === "history") {
             historyEvent = {
               gameId: message.gameId,
               handNumber: message.handNumber,

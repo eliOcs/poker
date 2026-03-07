@@ -64,7 +64,7 @@ export function sit(game, { seat: requestedSeat, player }) {
   if (game.tournament?.active && game.tournament.level > 1) {
     throw new Error("registration closed");
   }
-  const seat = requestedSeat ?? game.seats.findIndex((s) => s.empty);
+  const seat = requestedSeat;
   if (seat === -1) throw new Error("no empty seats");
   if (!(/** @type {SeatType} */ (game.seats[seat]).empty))
     throw new Error("seat is already occupied");
@@ -273,7 +273,7 @@ function revealHoleCards(game, seat, cardIndexes) {
   }
 
   const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
-  assertCanRevealHoleCards(seatObj, game.hand?.phase);
+  assertCanRevealHoleCards(seatObj, game.hand.phase);
   const validIndexes = getValidRevealIndexes(cardIndexes);
   const newlyShown = revealSelectedHoleCards(seatObj, validIndexes);
 
@@ -297,7 +297,7 @@ function assertCanRevealHoleCards(seatObj, phase) {
     throw new Error("can only show cards after folding or hand ends");
   }
 
-  if (!seatObj.cards || seatObj.cards.length < 2) {
+  if (seatObj.cards.length < 2) {
     throw new Error("no hole cards to show");
   }
 }
@@ -323,7 +323,7 @@ function getValidRevealIndexes(cardIndexes) {
 function revealSelectedHoleCards(seatObj, indexes) {
   /** @type {import('./deck.js').Card[]} */
   const newlyShown = [];
-  const shownCards = seatObj.shownCards || [false, false];
+  const shownCards = seatObj.shownCards;
   seatObj.shownCards = shownCards;
 
   for (const i of indexes) {
@@ -524,7 +524,7 @@ function applyPendingSitOuts(game) {
  * @param {{ seat: number }} options
  */
 export function sitOut(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
     throw new Error("seat is empty");
@@ -536,7 +536,7 @@ export function sitOut(game, { seat }) {
     throw new Error("already pending sit out");
   }
 
-  if (game.hand?.phase === "waiting" || seatObj.folded) {
+  if (game.hand.phase === "waiting" || seatObj.folded) {
     seatObj.sittingOut = true;
   } else {
     seatObj.pendingSitOut = true;
@@ -549,7 +549,7 @@ export function sitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function cancelSitOut(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
     throw new Error("seat is empty");
@@ -567,7 +567,7 @@ export function cancelSitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function sitIn(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
+  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
     throw new Error("seat is empty");
@@ -578,7 +578,7 @@ export function sitIn(game, { seat }) {
 
   // Must post big blind to return if missed (or go all-in if short stacked)
   // Only post between hands — during a hand, defer to next hand start
-  if (seatObj.missedBigBlind && game.hand?.phase === "waiting") {
+  if (seatObj.missedBigBlind && game.hand.phase === "waiting") {
     const postAmount = Math.min(game.blinds.big, seatObj.stack);
     seatObj.stack -= postAmount;
     // The posted blind goes to the pot when the next hand starts
@@ -591,8 +591,8 @@ export function sitIn(game, { seat }) {
   // If sitting in during an active hand, mark as folded so the player
   // isn't included in the current hand's betting rounds (they have no cards).
   // They'll be properly dealt into the next hand after resetForNewHand.
-  const phase = game.hand?.phase;
-  if (phase && phase !== "waiting") {
+  const phase = game.hand.phase;
+  if (phase !== "waiting") {
     seatObj.folded = true;
   }
 }

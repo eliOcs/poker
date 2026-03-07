@@ -7,6 +7,7 @@ import { DEFAULT_SETTINGS } from "./user.js";
  * @typedef {import('./user.js').User} User
  * @typedef {import('./id.js').Id} Id
  * @typedef {import('./user.js').UserSettings} UserSettings
+ * @typedef {{ id: Id, name?: string, settings?: UserSettings }} SaveUserInput
  */
 
 /** @type {DatabaseSync | null} */
@@ -74,11 +75,11 @@ export function initialize(dbPath = undefined) {
   logger.info("store initialized", { path: dbPath });
 }
 
-/** @param {User} user */
+/** @param {SaveUserInput} user */
 export function saveUser(user) {
   if (!db) throw new Error("Store not initialized");
 
-  const settingsJson = JSON.stringify(user.settings || {});
+  const settingsJson = JSON.stringify(user.settings ?? {});
   const nameForDb = user.name === undefined ? null : user.name;
   const stmt = db.prepare(`
     INSERT INTO users (id, name, settings, updated_at)

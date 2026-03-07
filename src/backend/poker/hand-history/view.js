@@ -493,8 +493,9 @@ function getSplitWinnerCards(
   const holeCards = (playerCards.get(winnerId) || []).filter(isKnownCard);
   if (holeCards.length !== 2) return sharedWinningCards;
   const knownBoardCards = boardCards.filter(isKnownCard);
+  if (knownBoardCards.length < 3) return sharedWinningCards;
   const best = HandRankings.bestCombination([...holeCards, ...knownBoardCards]);
-  return best?.cards || sharedWinningCards;
+  return best.cards;
 }
 
 /**
@@ -620,7 +621,7 @@ function calculateTotalPot(hand) {
  */
 function getWinnerDisplayName(players, winnerId) {
   const winner = players.find((p) => p.id === winnerId);
-  return winner?.name || `Seat ${winner?.seat || "??"}`;
+  return winner?.name || `Seat ${winner?.seat ?? "??"}`;
 }
 
 /**
@@ -630,7 +631,7 @@ function getWinnerDisplayName(players, winnerId) {
  * @returns {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null}
  */
 function buildViewWinnerMessage(mainPot, players) {
-  if (!mainPot?.player_wins?.length) return null;
+  if (!mainPot?.player_wins.length) return null;
 
   const handRank = mainPot.winning_hand;
   const isSplit = mainPot.player_wins.length > 1;
