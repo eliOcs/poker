@@ -30,14 +30,14 @@ export default [
     },
   },
   {
-    files: ["src/**/*.js", "test/**/*.js"],
+    files: ["src/**/*.js"],
     plugins: {
       "@typescript-eslint": tseslint,
     },
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: "./tsconfig.eslint.json",
+        project: "./tsconfig.json",
         tsconfigRootDir: import.meta.dirname,
       },
     },
