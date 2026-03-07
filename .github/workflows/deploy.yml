@@ -50,7 +50,6 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 63.182.34.164 >> ~/.ssh/known_hosts 2>/dev/null
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/poker_ed25519
           chmod 600 ~/.ssh/poker_ed25519
           echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null" >> ~/.ssh/config
