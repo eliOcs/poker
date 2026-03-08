@@ -145,9 +145,11 @@ export function createInactiveGameEvictor(
     cleanupDeletedGames(games);
 
     Object.assign(log.context, {
-      gamesChecked: games.size + evictedCount,
-      evictedCount,
-      evictedGameIds,
+      games: {
+        checked: games.size + evictedCount,
+        evictedCount,
+        evictedIds: evictedGameIds,
+      },
     });
     emitLog(log);
 

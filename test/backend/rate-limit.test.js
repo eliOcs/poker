@@ -108,7 +108,7 @@ describe("rate-limit", () => {
 
       assert.strictEqual(warnLogs.length, 1);
       assert.strictEqual(warnLogs[0].message, "rate limit exceeded");
-      assert.strictEqual(warnLogs[0].context?.source, "ws-action");
+      assert.strictEqual(warnLogs[0].context?.rateLimit?.source, "ws-action");
 
       const statsLog = infoLogs.find(
         (entry) => entry.message === "rate limiter stats",
@@ -116,8 +116,8 @@ describe("rate-limit", () => {
       assert.ok(statsLog);
       const statsContext = statsLog.context;
       assert.ok(statsContext);
-      assert.strictEqual(statsContext.totalChecks, 2);
-      assert.strictEqual(statsContext.totalBlocked, 1);
+      assert.strictEqual(statsContext.rateLimit.totalChecks, 2);
+      assert.strictEqual(statsContext.rateLimit.totalBlocked, 1);
     });
 
     it("keeps an offender blocked for the configured lockout duration", () => {

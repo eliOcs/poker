@@ -1,8 +1,4 @@
 import http from "http";
-import { WebSocketServer } from "ws";
-import { getFilePath, respondWithFile } from "./static-files.js";
-import playerView from "./poker/player-view.js";
-import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
 import { recoverGameFromHistory } from "./poker/recovery.js";
 import {
@@ -13,19 +9,19 @@ import * as logger from "./logger.js";
 import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
-import { processPokerAction } from "./websocket-handler.js";
 import {
   createRateLimiter,
   getClientIp,
   RateLimitError,
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
+import { createGameBroadcaster } from "./game-broadcast.js";
+import { createWebSocketServer } from "./ws-server.js";
+import { getFilePath, respondWithFile } from "./static-files.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
- * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
- * @typedef {{ user: UserType, gameId: string }} ClientConn
  */
 
 const server = http.createServer();
@@ -35,144 +31,15 @@ const users = {};
 
 /** @type {Map<string, Game>} */
 const games = new Map();
-/**
- * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
- * @typedef {{
- *   gameId: string,
- *   msgType: "gameState"|"history"|"social",
- *   context?: Record<string, unknown>,
- *   buildPayload: (conn: ClientConn) => string|null
- * }} BroadcastDispatch
- */
 
-/**
- * @param {string} gameId
- * @param {(ws: import('ws').WebSocket, conn: { user: UserType, gameId: string }) => void} callback
- */
-function forEachGameClient(gameId, callback) {
-  for (const [ws, conn] of clientConnections) {
-    if (conn.gameId === gameId && ws.readyState === 1) {
-      callback(ws, conn);
-    }
-  }
-}
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
+const clientConnections = new Map();
 
-/**
- * Broadcasts payloads to all connected clients for a game.
- * @param {string} gameId
- * @param {(conn: { user: UserType, gameId: string }) => string|null} buildPayload
- * @returns {{ recipients: number, maxPayloadBytes: number }}
- */
-function broadcastToGameClients(gameId, buildPayload) {
-  let recipients = 0;
-  let maxPayloadBytes = 0;
-  forEachGameClient(gameId, (ws, conn) => {
-    const payload = buildPayload(conn);
-    if (payload !== null) {
-      ws.send(payload);
-      recipients += 1;
-      const payloadBytes = Buffer.byteLength(payload);
-      maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
-    }
-  });
-  return { recipients, maxPayloadBytes };
-}
-
-/**
- * @param {{ type: "gameState", gameId: string }} message
- * @returns {BroadcastDispatch}
- */
-function broadcastGameState(message) {
-  const game = games.get(message.gameId);
-  if (!game) {
-    throw new Error(
-      `Cannot broadcast gameState: game ${message.gameId} not found`,
-    );
-  }
-
-  return {
-    gameId: message.gameId,
-    msgType: "gameState",
-    context: { handNumber: game.handNumber },
-    buildPayload: (conn) => {
-      const player = Player.fromUser(conn.user);
-      return JSON.stringify(playerView(game, player), null, 2);
-    },
-  };
-}
-
-/**
- * Broadcast a social action message (chat/emote) without mutating game state.
- * @param {{ type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }} message
- * @returns {BroadcastDispatch}
- */
-function broadcastSocialAction(message) {
-  const { gameId, ...socialAction } = message;
-  const handNumber = games.get(gameId)?.handNumber ?? null;
-  const payload = JSON.stringify(socialAction, null, 2);
-  return {
-    gameId,
-    msgType: "social",
-    context: {
-      handNumber,
-      action: socialAction.action,
-      seat: socialAction.seat,
-    },
-    buildPayload: () => payload,
-  };
-}
-
-/**
- * Broadcasts a history update event when a hand is persisted.
- * @param {{ type: "history", gameId: string, event: "handRecorded", handNumber: number }} message
- * @returns {BroadcastDispatch}
- */
-function broadcastHistoryUpdate(message) {
-  const { gameId, ...historyEvent } = message;
-  const payload = JSON.stringify(historyEvent, null, 2);
-  return {
-    gameId,
-    msgType: "history",
-    context: {
-      event: message.event,
-      handNumber: message.handNumber,
-    },
-    buildPayload: () => payload,
-  };
-}
-
-/** @type {{
- *   gameState: (message: { type: "gameState", gameId: string }) => BroadcastDispatch,
- *   social: (message: { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string }) => BroadcastDispatch,
- *   history: (message: { type: "history", gameId: string, event: "handRecorded", handNumber: number }) => BroadcastDispatch,
- * }} */
-const BROADCAST_HANDLERS = {
-  gameState: broadcastGameState,
-  social: broadcastSocialAction,
-  history: broadcastHistoryUpdate,
-};
-
-/**
- * Dispatches a typed game broadcast message.
- * @param {BroadcastMessage} message
- * @returns {BroadcastStats}
- */
-function broadcastGameMessage(message) {
-  const handler =
-    /** @type {(message: BroadcastMessage) => BroadcastDispatch} */ (
-      BROADCAST_HANDLERS[message.type]
-    );
-  const dispatch = handler(message);
-  return broadcastToGameClients(dispatch.gameId, dispatch.buildPayload);
-}
-
-/** @param {string} gameId */
-function broadcastGameStateMessage(gameId) {
-  broadcastGameMessage({ type: "gameState", gameId });
-}
-
+const { broadcastGameMessage, broadcastGameStateMessage } =
+  createGameBroadcaster(games, clientConnections);
 const routes = createRoutes(users, games, broadcastGameStateMessage);
-const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
+const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
 const actionRateLimiter = createRateLimiter({
   blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
 });
@@ -207,24 +74,50 @@ async function resolveGameForUpgrade(user, gameId) {
 
   const recoveredGame = await recoverGameFromHistory(gameId).catch((err) => {
     logger.error("game recovery failed", {
-      gameId,
-      error: err.message,
+      game: { id: gameId },
+      error: { message: err.message },
     });
     return null;
   });
-
   if (!recoveredGame) {
     return null;
   }
 
   games.set(gameId, recoveredGame);
   logger.info("game recovered from hand history", {
-    gameId,
-    handNumber: recoveredGame.handNumber,
-    tournament: !!recoveredGame.tournament,
+    game: {
+      id: gameId,
+      handNumber: recoveredGame.handNumber,
+      tournament: !!recoveredGame.tournament,
+    },
   });
-
   return recoveredGame;
+}
+
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {import('./logger.js').Log|null} log
+ */
+function throwIfRateLimitedHttpRequest(req, log) {
+  const key = getRequestRateLimitKey(req);
+  try {
+    const rateLimit = actionRateLimiter.check(key, { source: "http" });
+    if (log) {
+      log.context.rateLimit = rateLimit.context;
+    }
+  } catch (err) {
+    if (log && err instanceof RateLimitError) {
+      log.context.rateLimit = err.rateLimit;
+    }
+    throw new HttpError(429, "Too many requests", {
+      body: { error: "Too many requests", status: 429 },
+      headers: {
+        "retry-after": String(
+          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
+        ),
+      },
+    });
+  }
 }
 
 /**
@@ -262,7 +155,6 @@ async function handleRequest(req, res, log) {
     return;
   }
 
-  // Static file fallback
   const filePath = getFilePath(url);
   if (method === "GET" && filePath) {
     respondWithFile(req, res, filePath);
@@ -274,348 +166,69 @@ async function handleRequest(req, res, log) {
 }
 
 /**
- * @param {import('http').IncomingMessage} req
+ * @param {import('http').ServerResponse} res
  * @param {import('./logger.js').Log|null} log
+ * @param {unknown} err
  */
-function throwIfRateLimitedHttpRequest(req, log) {
-  const key = getRequestRateLimitKey(req);
-  try {
-    const rateLimit = actionRateLimiter.check(key, { source: "http" });
+function handleRequestError(res, log, err) {
+  if (err instanceof HttpError) {
     if (log) {
-      log.context.rateLimit = rateLimit.context;
+      log.context.error = { message: err.message };
     }
-  } catch (err) {
-    if (log && err instanceof RateLimitError) {
-      log.context.rateLimit = err.rateLimit;
+    if (!res.headersSent) {
+      res.writeHead(err.status, {
+        "content-type": "application/json",
+        ...(err.headers || {}),
+      });
+      res.end(
+        JSON.stringify(err.body || { error: err.message, status: err.status }),
+      );
     }
-    throw new HttpError(429, "Too many requests", {
-      body: { error: "Too many requests", status: 429 },
-      headers: {
-        "retry-after": String(
-          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
-        ),
-      },
-    });
+    return;
+  }
+
+  if (log && err instanceof Error) {
+    log.context.error = { message: err.message };
+  }
+  if (!res.headersSent) {
+    res.writeHead(500, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "Internal server error" }));
   }
 }
 
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
-  const isHealthCheck = url === "/up";
-  const log = isHealthCheck ? null : createLog("http_request");
+  const log = url === "/up" ? null : createLog("http_request");
 
-  if (log) Object.assign(log.context, { method, path: url });
+  if (log) {
+    log.context.request = { method, path: url };
+  }
 
   handleRequest(req, res, log)
     .catch((err) => {
-      if (err instanceof HttpError) {
-        if (log) log.context.error = err.message;
-
-        if (!res.headersSent) {
-          res.writeHead(err.status, {
-            "content-type": "application/json",
-            ...(err.headers || {}),
-          });
-          res.end(
-            JSON.stringify(
-              err.body || { error: err.message, status: err.status },
-            ),
-          );
-        }
-        return;
-      }
-
-      if (log) log.context.error = err.message;
-      if (!res.headersSent) {
-        res.writeHead(500, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "Internal server error" }));
-      }
+      handleRequestError(res, log, err);
     })
     .finally(() => {
-      if (log) {
-        log.context.status = res.statusCode;
-        emitLog(log);
-      }
-    });
-});
-
-/**
- * @param {import('http').IncomingMessage} request
- * @param {import('stream').Duplex} socket
- * @param {Buffer} head
- */
-async function handleUpgrade(request, socket, head) {
-  const rateLimitKey = getRequestRateLimitKey(request);
-  try {
-    actionRateLimiter.check(rateLimitKey, { source: "ws-upgrade" });
-  } catch (err) {
-    socket.end(
-      `HTTP/1.1 429 Too Many Requests\r\nRetry-After: ${err instanceof RateLimitError ? err.retryAfterSeconds : 1}\r\nConnection: close\r\n\r\n`,
-    );
-    return;
-  }
-
-  const cookies = parseCookies(request.headers.cookie ?? "");
-  const user = users[cookies.phg ?? ""];
-
-  const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
-  const gameId = gameMatch?.[1];
-  const game = await resolveGameForUpgrade(user, gameId);
-
-  if (user && game && gameId) {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit("connection", ws, request, user, game, gameId);
-    });
-  } else {
-    logger.warn("ws upgrade rejected", {
-      url: request.url,
-      hasUser: !!user,
-      hasGame: !!game,
-    });
-    socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
-  }
-}
-
-server.on("upgrade", function upgrade(request, socket, head) {
-  void handleUpgrade(request, socket, head).catch((err) => {
-    logger.error("ws upgrade failed", { error: err.message, url: request.url });
-    socket.end("HTTP/1.1 500 Internal Server Error\r\n\r\n");
-  });
-});
-
-/**
- * Handles social actions (emote/chat) by broadcasting a dedicated social event.
- * @param {Game} game
- * @param {UserType} user
- * @param {'emote'|'chat'} action
- * @param {Record<string, unknown>} args
- * @param {(message: BroadcastMessage) => void} broadcastGameMessage
- * @param {string} gameId
- */
-function handleSocialAction(
-  game,
-  user,
-  action,
-  args,
-  broadcastGameMessage,
-  gameId,
-) {
-  const player = Player.fromUser(user);
-  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (
-    seatIndex !== -1 &&
-    !(
-      /** @type {import('./poker/seat.js').Seat} */ (game.seats[seatIndex])
-        .empty
-    )
-  ) {
-    if (action === "emote") {
-      const emoji = typeof args.emoji === "string" ? args.emoji.trim() : "";
-      if (!emoji) return;
-      broadcastGameMessage({
-        type: "social",
-        gameId,
-        action: "emote",
-        seat: seatIndex,
-        emoji,
-      });
-    } else {
-      const message =
-        typeof args.message === "string"
-          ? args.message.trim().slice(0, 100)
-          : "";
-      if (!message) return;
-      broadcastGameMessage({
-        type: "social",
-        gameId,
-        action: "chat",
-        seat: seatIndex,
-        message,
-      });
-    }
-  }
-}
-
-/**
- * Handles preAction/clearPreAction messages
- * @param {Game} game
- * @param {UserType} user
- * @param {string} action
- * @param {Record<string, unknown>} args
- * @param {(gameId: string) => void} broadcastGameState
- * @param {string} gameId
- */
-function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
-  const player = Player.fromUser(user);
-  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (
-    seatIndex === -1 ||
-    /** @type {import('./poker/seat.js').Seat} */ (game.seats[seatIndex]).empty
-  )
-    return;
-
-  const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-    game.seats[seatIndex]
-  );
-
-  if (action === "clearPreAction") {
-    seat.preAction = null;
-    broadcastGameState(gameId);
-    return;
-  }
-
-  if (game.hand.actingSeat === seatIndex) {
-    throw new Error("cannot set pre-action on your turn");
-  }
-
-  const preType = /** @type {'checkFold'|'callAmount'} */ (args.type);
-  seat.preAction =
-    preType === "checkFold"
-      ? { type: /** @type {const} */ ("checkFold"), amount: null }
-      : {
-          type: /** @type {const} */ ("callAmount"),
-          amount: /** @type {number} */ (args.amount ?? 0),
-        };
-  broadcastGameState(gameId);
-}
-
-const wss = new WebSocketServer({ noServer: true });
-
-/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
-const clientConnections = new Map();
-
-wss.on("connection", function connection(ws, _request, user, game, gameId) {
-  const playerRateLimitKey = `player:${user.id}`;
-  clientConnections.set(ws, { user, gameId });
-  logger.info("ws connected", { gameId, playerId: user.id });
-
-  // Create player from user for game operations
-  const player = Player.fromUser(user);
-
-  // Mark player as connected if they have a seat
-  const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-  if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-    const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-      game.seats[seatIndex]
-    );
-    seat.disconnected = false;
-
-    // Notify other players that this player reconnected
-    broadcastGameStateMessage(gameId);
-  }
-
-  ws.on("close", () => {
-    const conn = clientConnections.get(ws);
-    clientConnections.delete(ws);
-
-    if (!conn) return;
-
-    logger.info("ws disconnected", {
-      gameId: conn.gameId,
-      playerId: conn.user.id,
-    });
-
-    const closedPlayer = Player.fromUser(conn.user);
-    const closedGameId = conn.gameId;
-    const closedGame = games.get(closedGameId);
-    if (!closedGame) return;
-
-    const closedSeatIndex = PokerGame.findPlayerSeatIndex(
-      closedGame,
-      closedPlayer,
-    );
-    if (
-      closedSeatIndex === -1 ||
-      /** @type {import('./poker/seat.js').Seat} */ (
-        closedGame.seats[closedSeatIndex]
-      ).empty
-    )
-      return;
-
-    const closedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-      closedGame.seats[closedSeatIndex]
-    );
-
-    closedSeat.disconnected = true;
-    PokerGame.ensureGameTick(closedGame, broadcastGameMessage);
-    broadcastGameStateMessage(closedGameId);
-  });
-
-  ws.on("message", function (rawMessage) {
-    const log = createLog("ws_action");
-    Object.assign(log.context, { gameId, playerId: user.id });
-
-    try {
-      const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
-        source: "ws-action",
-      });
-      log.context.rateLimit = rateLimit.context;
-
-      /** @type {{ action: string } & Record<string, unknown>} */
-      const messageData = JSON.parse(String(rawMessage));
-
-      const { action, ...args } = messageData;
-      Object.assign(log.context, { action, ...args });
-
-      // Handle social actions (emote/chat) — no game logic, just broadcast
-      if (action === "emote" || action === "chat") {
-        handleSocialAction(
-          game,
-          user,
-          action,
-          args,
-          broadcastGameMessage,
-          gameId,
-        );
-        log.context.handNumber = game.handNumber;
-        return;
-      }
-
-      // Handle pre-action toggle — set or clear pre-selected action
-      if (["preAction", "clearPreAction"].includes(action)) {
-        handlePreAction(
-          game,
-          user,
-          action,
-          args,
-          broadcastGameStateMessage,
-          gameId,
-        );
-        log.context.handNumber = game.handNumber;
-        return;
-      }
-
-      processPokerAction(game, player, action, args, broadcastGameMessage);
-
-      const broadcastStats = broadcastGameMessage({
-        type: "gameState",
-        gameId,
-      });
-      PokerGame.ensureGameTick(game, broadcastGameMessage);
-
-      Object.assign(log.context, {
-        ...PokerGame.gameStateSnapshot(game),
-        broadcastStats,
-      });
-    } catch (err) {
-      if (err instanceof RateLimitError) {
-        log.context.rateLimit = err.rateLimit;
-      }
-      log.context.error = err.message;
-      ws.send(
-        JSON.stringify({ error: { message: log.context.error } }, null, 2),
-      );
-    } finally {
+      if (!log) return;
+      log.context.request = {
+        ...(log.context.request || {}),
+        status: res.statusCode,
+      };
       emitLog(log);
-    }
-  });
+    });
+});
 
-  // Send initial game state
-  ws.send(JSON.stringify(playerView(game, player), null, 2));
-
-  // Recovered tournaments need ticking resumed after reconnect.
-  PokerGame.ensureGameTick(game, broadcastGameMessage);
+createWebSocketServer({
+  server,
+  users,
+  games,
+  clientConnections,
+  actionRateLimiter,
+  getRequestRateLimitKey,
+  resolveGameForUpgrade,
+  broadcastGameMessage,
+  broadcastGameStateMessage,
 });
 
 Store.initialize();
@@ -637,7 +250,6 @@ if (typeof evictionTimer.unref === "function") {
 /** @param {string} signal */
 function gracefulShutdown(signal) {
   logger.info("shutdown initiated", { signal });
-
   server.close(() => {
     logger.info("http server closed");
   });
@@ -649,10 +261,7 @@ function gracefulShutdown(signal) {
   clientConnections.clear();
 
   for (const [, game] of games) {
-    if (game.tickTimer) {
-      clearInterval(game.tickTimer);
-      game.tickTimer = null;
-    }
+    PokerGame.stopGameTick(game);
   }
   games.clear();
 

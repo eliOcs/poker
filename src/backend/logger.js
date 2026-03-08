@@ -1,17 +1,11 @@
 /**
  * Structured logger for production monitoring
- * Uses native console with configurable format and level
+ * Uses native console with configurable format
  */
 
-const LOG_LEVELS = {
-  debug: 0,
-  info: 1,
-  warn: 2,
-  error: 3,
-};
-
-const currentLevel =
-  LOG_LEVELS[process.env.LOG_LEVEL?.toLowerCase()] ?? LOG_LEVELS.info;
+/**
+ * @typedef {import('./user.js').User} UserType
+ */
 
 // Default to JSON in production (NODE_ENV=production), text otherwise
 const defaultFormat = process.env.NODE_ENV === "production" ? "json" : "text";
@@ -34,6 +28,20 @@ const format = process.env.LOG_FORMAT?.toLowerCase() || defaultFormat;
  */
 export function createLog(message) {
   return { level: "info", message, timestamp: Date.now(), context: {} };
+}
+
+/**
+ * Builds session-scoped player context for structured logs.
+ * @param {UserType} user
+ * @returns {{ session: { playerId: string, playerName: string|null } }}
+ */
+export function getSessionPlayerLogContext(user) {
+  return {
+    session: {
+      playerId: user.id,
+      playerName: user.name ?? null,
+    },
+  };
 }
 
 /**
@@ -70,8 +78,6 @@ function formatJson({ timestamp, level, message, context }) {
  * @param {Log} log
  */
 function emit(log) {
-  if (LOG_LEVELS[log.level] < currentLevel) return;
-
   const output = format === "json" ? formatJson(log) : formatText(log);
 
   if (log.level === "error") {
@@ -130,4 +136,4 @@ export function emitLog(log) {
 }
 
 // Export for testing
-export { LOG_LEVELS, currentLevel, format };
+export { format };

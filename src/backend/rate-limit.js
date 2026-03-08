@@ -267,11 +267,13 @@ export function createRateLimiter({
   let totalBlocked = 0;
 
   logInfo("rate limiter initialized", {
-    maxActions,
-    windowMs,
-    cleanupInterval,
-    monitorEvery,
-    blockDurationMs,
+    rateLimit: {
+      maxActions,
+      windowMs,
+      cleanupInterval,
+      monitorEvery,
+      blockDurationMs,
+    },
   });
 
   /**
@@ -312,14 +314,16 @@ export function createRateLimiter({
     if (totalChecks % monitorEvery !== 0) return;
 
     logInfo("rate limiter stats", {
-      totalChecks,
-      totalBlocked,
-      blockRate:
-        totalChecks > 0 ? Number((totalBlocked / totalChecks).toFixed(4)) : 0,
-      trackedIps: trackedByIp.size,
-      maxActions,
-      windowMs,
-      timestampMs: now,
+      rateLimit: {
+        totalChecks,
+        totalBlocked,
+        blockRate:
+          totalChecks > 0 ? Number((totalBlocked / totalChecks).toFixed(4)) : 0,
+        trackedIps: trackedByIp.size,
+        maxActions,
+        windowMs,
+        timestampMs: now,
+      },
     });
   }
 
@@ -426,7 +430,7 @@ export function createRateLimiter({
           blockedUntil: tracked.blockedUntil,
         });
         totalBlocked += 1;
-        logWarn("rate limit exceeded", context);
+        logWarn("rate limit exceeded", { rateLimit: context });
         cleanup(now);
         maybeLogStats(now);
         throw new RateLimitError(retryAfterSeconds, context);
@@ -459,7 +463,7 @@ export function createRateLimiter({
           blockedUntil: tracked.blockedUntil,
         });
         totalBlocked += 1;
-        logWarn("rate limit exceeded", context);
+        logWarn("rate limit exceeded", { rateLimit: context });
         cleanup(now);
         maybeLogStats(now);
         throw new RateLimitError(retryAfterSeconds, context);

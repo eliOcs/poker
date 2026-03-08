@@ -69,8 +69,8 @@ describe("game-eviction", () => {
     assert.equal(games.size, 0);
     assert.equal(emitted.length, 3);
     assert.equal(emitted[2].message, "eviction_sweep");
-    assert.equal(emitted[2].context.evictedCount, 1);
-    assert.deepStrictEqual(emitted[2].context.evictedGameIds, ["g1"]);
+    assert.equal(emitted[2].context.games.evictedCount, 1);
+    assert.deepStrictEqual(emitted[2].context.games.evictedIds, ["g1"]);
   });
 
   it("resets inactivity timer when hand number changes", () => {

@@ -12,6 +12,7 @@ import {
   RateLimitError,
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
+import { getSessionPlayerLogContext } from "./logger.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -130,17 +131,22 @@ export function getOrCreateUser(req, res, users, log = null) {
   const cookieId = cookies.phg ?? "";
   const existingUser = users[cookieId];
   if (existingUser) {
+    if (log)
+      Object.assign(log.context, getSessionPlayerLogContext(existingUser));
     return existingUser;
   }
 
   const loadedUser = Store.loadUser(cookieId);
   if (loadedUser) {
     users[loadedUser.id] = loadedUser;
+    if (log) Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
     return loadedUser;
   }
 
   throwIfUserCreateRateLimited(req, log);
-  return createAndPersistUser(res, users);
+  const user = createAndPersistUser(res, users);
+  if (log) Object.assign(log.context, getSessionPlayerLogContext(user));
+  return user;
 }
 
 /**
@@ -342,11 +348,13 @@ export function createRoutes(users, games, broadcast) {
           games.set(game.id, game);
           if (log)
             Object.assign(log.context, {
-              gameType: "tournament",
-              gameId: game.id,
-              seats,
-              buyIn,
-              initialStack: game.tournament?.initialStack,
+              game: {
+                type: "tournament",
+                id: game.id,
+                seats,
+                buyIn,
+                initialStack: game.tournament?.initialStack,
+              },
             });
           respondWithJson(res, { id: game.id, type: "tournament" });
         } else {
@@ -355,10 +363,12 @@ export function createRoutes(users, games, broadcast) {
           games.set(game.id, game);
           if (log)
             Object.assign(log.context, {
-              gameType: "cash",
-              gameId: game.id,
-              blinds: `${blinds.small}/${blinds.big}`,
-              seats,
+              game: {
+                type: "cash",
+                id: game.id,
+                blinds: `${blinds.small}/${blinds.big}`,
+                seats,
+              },
             });
           respondWithJson(res, { id: game.id, type: "cash" });
         }

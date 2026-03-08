@@ -28,32 +28,12 @@ describe("logger", function () {
     mock.reset();
   });
 
-  describe("log level filtering", function () {
-    it("filters out debug messages when level is info", async function () {
-      process.env.LOG_LEVEL = "info";
+  describe("log emission", function () {
+    it("emits debug and info messages without filtering", async function () {
       process.env.LOG_FORMAT = "text";
 
-      // Re-import to pick up new env
       const { debug, info } = await import(
         `../../src/backend/logger.js?t=${Date.now()}-1`
-      );
-
-      debug("debug message");
-      info("info message");
-
-      // debug should be filtered out, info should be logged
-      const calls = consoleLog.mock.calls;
-      assert.strictEqual(calls.length, 1);
-      assert.ok(calls[0].arguments[0].includes("INFO"));
-      assert.ok(calls[0].arguments[0].includes("info message"));
-    });
-
-    it("shows debug messages when level is debug", async function () {
-      process.env.LOG_LEVEL = "debug";
-      process.env.LOG_FORMAT = "text";
-
-      const { debug, info } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-2`
       );
 
       debug("debug message");
@@ -65,47 +45,29 @@ describe("logger", function () {
       assert.ok(calls[1].arguments[0].includes("INFO"));
     });
 
-    it("filters info and debug when level is warn", async function () {
-      process.env.LOG_LEVEL = "warn";
-      process.env.LOG_FORMAT = "text";
-
-      const { debug, info, warn } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-3`
-      );
-
-      debug("debug message");
-      info("info message");
-      warn("warn message");
-
-      const warnCalls = consoleWarn.mock.calls;
-      assert.strictEqual(consoleLog.mock.calls.length, 0);
-      assert.strictEqual(warnCalls.length, 1);
-      assert.ok(warnCalls[0].arguments[0].includes("WARN"));
-    });
-
-    it("only shows error when level is error", async function () {
+    it("emits info, warn, and error messages regardless of LOG_LEVEL", async function () {
       process.env.LOG_LEVEL = "error";
       process.env.LOG_FORMAT = "text";
 
-      const { debug, info, warn, error } = await import(
-        `../../src/backend/logger.js?t=${Date.now()}-4`
+      const { info, warn, error } = await import(
+        `../../src/backend/logger.js?t=${Date.now()}-2`
       );
 
-      debug("debug message");
       info("info message");
       warn("warn message");
       error("error message");
 
-      assert.strictEqual(consoleLog.mock.calls.length, 0);
-      assert.strictEqual(consoleWarn.mock.calls.length, 0);
+      assert.strictEqual(consoleLog.mock.calls.length, 1);
+      assert.strictEqual(consoleWarn.mock.calls.length, 1);
       assert.strictEqual(consoleError.mock.calls.length, 1);
+      assert.ok(consoleLog.mock.calls[0].arguments[0].includes("INFO"));
+      assert.ok(consoleWarn.mock.calls[0].arguments[0].includes("WARN"));
       assert.ok(consoleError.mock.calls[0].arguments[0].includes("ERROR"));
     });
   });
 
   describe("output format", function () {
     it("outputs text format with key=value pairs", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "text";
 
       const { info } = await import(
@@ -122,7 +84,6 @@ describe("logger", function () {
     });
 
     it("outputs JSON format with all fields", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "json";
 
       const { info } = await import(
@@ -144,7 +105,6 @@ describe("logger", function () {
 
   describe("console method routing", function () {
     it("routes error level to console.error", async function () {
-      process.env.LOG_LEVEL = "debug";
       process.env.LOG_FORMAT = "text";
 
       const { error } = await import(
@@ -158,7 +118,6 @@ describe("logger", function () {
     });
 
     it("routes warn level to console.warn", async function () {
-      process.env.LOG_LEVEL = "debug";
       process.env.LOG_FORMAT = "text";
 
       const { warn } = await import(
@@ -172,7 +131,6 @@ describe("logger", function () {
     });
 
     it("routes info and debug to console.log", async function () {
-      process.env.LOG_LEVEL = "debug";
       process.env.LOG_FORMAT = "text";
 
       const { debug, info } = await import(
@@ -201,7 +159,6 @@ describe("logger", function () {
     });
 
     it("accumulates context via Object.assign", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
@@ -222,7 +179,6 @@ describe("logger", function () {
     });
 
     it("later assigns override earlier context", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
@@ -239,7 +195,6 @@ describe("logger", function () {
     });
 
     it("includes durationMs on emit", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
@@ -255,7 +210,6 @@ describe("logger", function () {
     });
 
     it("emitLog produces exactly one log line", async function () {
-      process.env.LOG_LEVEL = "info";
       process.env.LOG_FORMAT = "json";
 
       const { createLog, emitLog } = await import(
