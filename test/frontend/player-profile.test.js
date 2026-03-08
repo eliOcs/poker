@@ -96,7 +96,7 @@ describe("phg-player-profile", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      element.shadowRoot.querySelector(".drawer-item").click();
+      element.shadowRoot.querySelector("button").click();
     });
 
     const event = await oneEvent(element, "open-settings");

@@ -110,32 +110,6 @@ class PlayerProfile extends LitElement {
           color: var(--color-primary);
         }
 
-        .drawer-item {
-          display: flex;
-          align-items: center;
-          gap: var(--space-md);
-          width: 100%;
-          padding: var(--space-md);
-          border: 0;
-          background: none;
-          color: var(--color-fg-medium);
-          font: inherit;
-          font-size: var(--font-sm);
-          text-align: left;
-          cursor: pointer;
-        }
-
-        .drawer-item:hover {
-          color: var(--color-fg-white);
-          background: var(--color-bg-light);
-        }
-
-        .drawer-item svg {
-          width: 20px;
-          height: 20px;
-          fill: currentcolor;
-        }
-
         .summary {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -426,12 +400,7 @@ class PlayerProfile extends LitElement {
         ?open=${this.drawerOpen}
         @drawer-toggle=${this.toggleDrawer}
       >
-        <button
-          class="drawer-item"
-          @click=${() => {
-            this.openSettings();
-          }}
-        >
+        <button @click=${this.openSettings}>
           ${ICONS.settings}
           <span>Settings</span>
         </button>

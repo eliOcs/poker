@@ -480,7 +480,7 @@ describe("phg-app", () => {
       await profile.updateComplete;
 
       await profile.updateComplete;
-      profile.shadowRoot.querySelector(".drawer-item").click();
+      profile.shadowRoot.querySelector("button").click();
       await element.updateComplete;
 
       const modal = element.shadowRoot.querySelector("phg-modal");

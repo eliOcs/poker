@@ -126,15 +126,37 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = element.shadowRoot.querySelector(".drawer-btn");
+      const settingsBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Settings"));
       expect(settingsBtn).to.exist;
+    });
+
+    it("keeps drawer icons sized and tinted on the game page", async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const settingsIcon = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      )
+        .find((button) => button.textContent.includes("Settings"))
+        ?.querySelector("svg");
+      expect(settingsIcon).to.exist;
+
+      const styles = getComputedStyle(settingsIcon);
+      expect(styles.width).to.equal("20px");
+      expect(styles.height).to.equal("20px");
+      expect(styles.minWidth).to.equal("20px");
+      expect(styles.fill).to.not.equal("rgb(0, 0, 0)");
     });
 
     it("opens settings modal when settings button clicked", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = element.shadowRoot.querySelector(".drawer-btn");
+      const settingsBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Settings"));
       settingsBtn.click();
       await element.updateComplete;
 
@@ -147,7 +169,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const buttons = Array.from(
-        element.shadowRoot.querySelectorAll(".drawer-btn"),
+        element.shadowRoot.querySelectorAll("button"),
       );
       const rankingsBtn = buttons.find((button) =>
         button.textContent.includes("Rankings"),

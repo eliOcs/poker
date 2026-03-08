@@ -126,6 +126,7 @@ class NavigationDrawer extends LitElement {
           image-rendering: pixelated;
         }
 
+        ::slotted(.drawer-entry),
         ::slotted(.drawer-btn),
         ::slotted(.drawer-item) {
           display: flex;
@@ -141,19 +142,24 @@ class NavigationDrawer extends LitElement {
           text-align: left;
           cursor: pointer;
           white-space: nowrap;
+          text-decoration: none;
+          appearance: none;
         }
 
+        ::slotted(.drawer-entry:hover),
         ::slotted(.drawer-btn:hover),
         ::slotted(.drawer-item:hover) {
           color: var(--color-fg-white);
           background: var(--color-bg-light);
         }
 
+        ::slotted(.drawer-entry.active),
         ::slotted(.drawer-btn.active),
         ::slotted(.drawer-item.active) {
           color: var(--color-primary);
         }
 
+        ::slotted(.drawer-entry:disabled),
         ::slotted(.drawer-btn:disabled),
         ::slotted(.drawer-item:disabled) {
           color: var(--color-fg-muted);
@@ -161,18 +167,11 @@ class NavigationDrawer extends LitElement {
           cursor: default;
         }
 
+        ::slotted(.drawer-entry:disabled:hover),
         ::slotted(.drawer-btn:disabled:hover),
         ::slotted(.drawer-item:disabled:hover) {
           color: var(--color-fg-muted);
           background: none;
-        }
-
-        ::slotted(.drawer-btn svg),
-        ::slotted(.drawer-item svg) {
-          width: 20px;
-          height: 20px;
-          min-width: 20px;
-          fill: currentcolor;
         }
       `,
     ];
@@ -189,6 +188,10 @@ class NavigationDrawer extends LitElement {
     this.open = false;
   }
 
+  firstUpdated() {
+    this._syncSlottedItems();
+  }
+
   toggle() {
     this.dispatchEvent(
       new CustomEvent("drawer-toggle", {
@@ -196,6 +199,25 @@ class NavigationDrawer extends LitElement {
         composed: true,
       }),
     );
+  }
+
+  _syncSlottedItems() {
+    const slot = this.shadowRoot?.querySelector("slot");
+    if (!slot) return;
+    const items = slot.assignedElements({ flatten: true });
+    for (const item of items) {
+      if (!(item instanceof HTMLElement)) continue;
+      if (item.matches("a, button")) {
+        item.classList.add("drawer-entry");
+      }
+
+      for (const icon of Array.from(item.querySelectorAll("svg"))) {
+        icon.style.width = "20px";
+        icon.style.height = "20px";
+        icon.style.minWidth = "20px";
+        icon.style.fill = "currentColor";
+      }
+    }
   }
 
   render() {
@@ -215,7 +237,7 @@ class NavigationDrawer extends LitElement {
           >
             <img class="home-logo" src="/logo.webp" alt="Pluton Poker" />
           </a>
-          <slot></slot>
+          <slot @slotchange=${this._syncSlottedItems}></slot>
         </nav>
       </div>
     `;
