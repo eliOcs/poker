@@ -85,9 +85,7 @@ function renderSitOutButton(game) {
   if (state === "sittingOut") {
     const canLeave = !game.game?.tournament || game.game?.handNumber === 0;
     if (!canLeave) return "";
-    return html`<button @click=${game.leaveTable}>
-      ${iconSitOut} Leave
-    </button>`;
+    return html`<button @click=${game.leaveTable}>${iconSitOut} Leave</button>`;
   }
   return "";
 }
@@ -100,9 +98,7 @@ export function renderDrawer(game) {
       ?open=${game._drawerOpen}
       @drawer-toggle=${game.toggleDrawer}
     >
-      <button @click=${game.openSettings}>
-        ${ICONS.settings} Settings
-      </button>
+      <button @click=${game.openSettings}>${ICONS.settings} Settings</button>
       <button ?disabled=${!hasRecordedHands} @click=${game.openRanking}>
         ${iconRankings} Rankings
       </button>
@@ -114,9 +110,7 @@ export function renderDrawer(game) {
         ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
       </button>
       ${canShare
-        ? html`<button @click=${game.shareGameLink}>
-            ${iconShare} Share
-          </button>`
+        ? html`<button @click=${game.shareGameLink}>${iconShare} Share</button>`
         : ""}
     </phg-navigation-drawer>
   `;

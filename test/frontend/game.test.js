@@ -168,9 +168,7 @@ describe("phg-game", () => {
       element.game = createMockGameState({ handNumber: 0 });
       await element.updateComplete;
 
-      const buttons = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      );
+      const buttons = Array.from(element.shadowRoot.querySelectorAll("button"));
       const rankingsBtn = buttons.find((button) =>
         button.textContent.includes("Rankings"),
       );
