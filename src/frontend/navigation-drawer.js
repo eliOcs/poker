@@ -42,7 +42,7 @@ class NavigationDrawer extends LitElement {
           }
         }
 
-        #toggle {
+        #drawer-toggle {
           position: absolute;
           top: var(--space-md);
           left: 0;
@@ -60,28 +60,28 @@ class NavigationDrawer extends LitElement {
           pointer-events: auto;
         }
 
-        :host([open]) #toggle {
+        :host([open]) #drawer-toggle {
           left: clamp(140px, 12vw, 200px);
           border-left: none;
         }
 
         @media (width >= 800px) {
-          #toggle {
+          #drawer-toggle {
             display: none;
           }
         }
 
-        #toggle:hover {
+        #drawer-toggle:hover {
           color: var(--color-fg-white);
         }
 
-        #toggle svg {
+        #drawer-toggle svg {
           width: 20px;
           height: 20px;
           fill: currentcolor;
         }
 
-        #panel {
+        #drawer-nav {
           width: clamp(140px, 12vw, 200px);
           height: 100%;
           background: var(--color-bg-dark);
@@ -93,7 +93,7 @@ class NavigationDrawer extends LitElement {
           pointer-events: auto;
         }
 
-        :host([open]) #panel {
+        :host([open]) #drawer-nav {
           transform: translateX(0);
         }
 
@@ -223,10 +223,10 @@ class NavigationDrawer extends LitElement {
   render() {
     return html`
       <div id="backdrop" @click=${this.toggle}></div>
-      <button id="toggle" @click=${this.toggle}>
+      <button id="drawer-toggle" @click=${this.toggle}>
         ${this.open ? ICONS.close : ICONS.menu}
       </button>
-      <div id="panel">
+      <div id="drawer-nav">
         <nav>
           <a
             class="home-link"

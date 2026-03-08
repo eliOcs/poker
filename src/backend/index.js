@@ -277,4 +277,10 @@ process.on("SIGINT", () => {
   gracefulShutdown("SIGINT");
 });
 
-server.listen(process.env.PORT);
+const port = Number(process.env.PORT);
+const host = process.env.HOST;
+if (host) {
+  server.listen(port, host);
+} else {
+  server.listen(port);
+}
