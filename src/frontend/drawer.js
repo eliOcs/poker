@@ -112,7 +112,9 @@ export function renderDrawer(game) {
       ${canShare
         ? html`<button @click=${game.shareGameLink}>${iconShare} Share</button>`
         : ""}
-      <button class="drawer-sign-in">${ICONS.signIn} Sign in</button>
+      <button class="drawer-sign-in" @click=${game.openSignIn}>
+        ${ICONS.signIn} Sign in
+      </button>
     </phg-navigation-drawer>
   `;
 }

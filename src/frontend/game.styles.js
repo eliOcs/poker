@@ -113,7 +113,8 @@ export const gameStyles = css`
     color: var(--color-bg-disabled);
   }
 
-  .settings-content input {
+  .settings-content input,
+  .sign-in-content input {
     width: 100%;
     padding: var(--space-md);
     font-family: inherit;
@@ -123,19 +124,79 @@ export const gameStyles = css`
     color: var(--color-fg-white);
     margin-bottom: var(--space-lg);
     box-sizing: border-box;
+    outline: none;
   }
 
-  .settings-content .buttons {
+  .sign-in-content input:focus {
+    border-color: var(--color-secondary);
+    box-shadow: 0 0 0 2px rgb(136 68 170 / 20%);
+  }
+
+  .sign-in-content input[aria-invalid="true"] {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px rgb(204 51 51 / 18%);
+  }
+
+  .sign-in-content input[aria-invalid="true"]:focus {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 2px rgb(204 51 51 / 22%);
+  }
+
+  .settings-content .buttons,
+  .sign-in-content .buttons {
     display: flex;
     gap: var(--space-md);
     justify-content: flex-end;
   }
 
-  .settings-content label {
+  .settings-content label,
+  .sign-in-content label {
     display: block;
     margin-bottom: var(--space-sm);
     color: var(--color-fg-medium);
     font-size: var(--font-sm);
+  }
+
+  .sign-in-intro {
+    margin: 0 0 var(--space-lg);
+    color: var(--color-fg-light);
+    font-size: var(--font-sm);
+    line-height: 1.8;
+  }
+
+  .sign-in-benefits {
+    display: grid;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .sign-in-benefit {
+    border: 2px solid var(--color-bg-dark);
+    background: var(--color-bg-medium);
+    padding: var(--space-md);
+  }
+
+  .sign-in-benefit h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin: 0 0 var(--space-sm);
+    color: var(--color-fg-white);
+    font-size: var(--font-sm);
+  }
+
+  .sign-in-benefit h4 svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--color-success);
+  }
+
+  .sign-in-benefit p {
+    margin: 0;
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+    line-height: 1.8;
   }
 
   .volume-slider {
@@ -160,9 +221,9 @@ export const gameStyles = css`
   }
 
   .volume-slider button.active {
-    background: var(--color-primary);
+    background: var(--color-secondary);
     color: var(--color-fg-white);
-    border-color: var(--color-primary);
+    border-color: var(--color-secondary);
   }
 
   .collecting-chip {

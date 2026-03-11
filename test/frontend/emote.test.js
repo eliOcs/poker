@@ -74,8 +74,9 @@ describe("emote picker", () => {
     emoteButton.click();
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    const modal = element.shadowRoot.querySelector("phg-modal");
     expect(modal).to.exist;
+    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal("Emote");
     const grid = modal.querySelector(".emote-grid");
     expect(grid).to.exist;
     const emojiButtons = grid.querySelectorAll("button");
@@ -99,7 +100,7 @@ describe("emote picker", () => {
       sentMessage = e.detail;
     });
 
-    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    const modal = element.shadowRoot.querySelector("phg-modal");
     const emojiButtons = modal.querySelectorAll(".emote-grid button");
     emojiButtons[0].click();
 
@@ -120,13 +121,11 @@ describe("emote picker", () => {
     await element.updateComplete;
 
     // Click an emoji
-    const modal = element.shadowRoot.querySelector("phg-modal[title='Emote']");
+    const modal = element.shadowRoot.querySelector("phg-modal");
     modal.querySelectorAll(".emote-grid button")[0].click();
     await element.updateComplete;
 
-    const closedModal = element.shadowRoot.querySelector(
-      "phg-modal[title='Emote']",
-    );
+    const closedModal = element.shadowRoot.querySelector("phg-modal");
     expect(closedModal).to.not.exist;
   });
 });

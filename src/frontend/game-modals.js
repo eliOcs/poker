@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { ICONS } from "./icons.js";
 
 const EMOJIS = [
   "🤣",
@@ -21,7 +22,7 @@ const EMOJIS = [
 
 export function renderRankingModal(game) {
   if (!game.showRanking) return "";
-  return html`<phg-modal title="Table Ranking" @close=${game.closeRanking}
+  return html`<phg-modal .title=${"Table Ranking"} @close=${game.closeRanking}
     ><phg-ranking-panel
       .rankings=${game.game?.rankings || []}
       .tournament=${game.game?.tournament}
@@ -34,7 +35,7 @@ export function renderSettingsModal(game) {
   const labels = ["Off", "25%", "75%", "100%"];
   const volumeSteps = [0, 0.25, 0.75, 1];
   return html`
-    <phg-modal title="Settings" @close=${game.closeSettings}>
+    <phg-modal .title=${"Settings"} @close=${game.closeSettings}>
       <div class="settings-content">
         <label>Name</label>
         <input
@@ -59,10 +60,10 @@ export function renderSettingsModal(game) {
           )}
         </div>
         <div class="buttons">
-          <phg-button variant="secondary" @click=${game.closeSettings}
+          <phg-button variant="muted" @click=${game.closeSettings}
             >Cancel</phg-button
           >
-          <phg-button variant="success" @click=${game.saveSettings}
+          <phg-button variant="action" @click=${game.saveSettings}
             >Save</phg-button
           >
         </div>
@@ -71,9 +72,57 @@ export function renderSettingsModal(game) {
   `;
 }
 
+export function renderSignInModal(game) {
+  if (!game.showSignIn) return "";
+  return html`
+    <phg-modal .title=${"Sign in"} @close=${game.closeSignIn}>
+      <form
+        class="sign-in-content"
+        @submit=${(e) => {
+          e.preventDefault();
+          game.requestSignIn();
+        }}
+      >
+        <p class="sign-in-intro">
+          Enter your email and we&apos;ll send you a one-time sign-in link.
+        </p>
+        <label for="sign-in-email">Email</label>
+        <input
+          id="sign-in-email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          ?required=${true}
+          aria-invalid=${game._signInInvalid ? "true" : "false"}
+          autofocus
+          @input=${game.clearSignInValidation}
+        />
+        <div class="sign-in-benefits">
+          <div class="sign-in-benefit">
+            <h4>${ICONS.check} Keep your setup</h4>
+            <p>Use your name and settings across multiple devices.</p>
+          </div>
+          <div class="sign-in-benefit">
+            <h4>${ICONS.check} Review previous games</h4>
+            <p>See your recent tables and come back to past sessions faster.</p>
+          </div>
+        </div>
+        <div class="buttons">
+          <phg-button variant="muted" @click=${game.closeSignIn}
+            >Cancel</phg-button
+          >
+          <phg-button variant="action" @click=${game.requestSignIn}
+            >Send sign-in link</phg-button
+          >
+        </div>
+      </form>
+    </phg-modal>
+  `;
+}
+
 export function renderEmoteModal(game) {
   if (!game.showEmotePicker) return "";
-  return html`<phg-modal title="Emote" @close=${game.closeEmotePicker}>
+  return html`<phg-modal .title=${"Emote"} @close=${game.closeEmotePicker}>
     <div class="emote-grid">
       ${EMOJIS.map(
         (emoji) =>
@@ -85,7 +134,7 @@ export function renderEmoteModal(game) {
 
 export function renderChatModal(game) {
   if (!game.showChat) return "";
-  return html`<phg-modal title="Chat" @close=${game.closeChat}>
+  return html`<phg-modal .title=${"Chat"} @close=${game.closeChat}>
     <div class="chat-input-container">
       <textarea
         id="chat-input"
@@ -102,7 +151,7 @@ export function renderChatModal(game) {
         }}
       ></textarea>
       <phg-button
-        variant="primary"
+        variant="action"
         full-width
         @click=${() => {
           const input = game.shadowRoot.querySelector("#chat-input");

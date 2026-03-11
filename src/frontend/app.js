@@ -361,6 +361,10 @@ class App extends LitElement {
       settings: { volume: this._settingsVolume },
     });
     this._showProfileSettings = false;
+    this.toast = {
+      message: "Settings saved",
+      variant: "success",
+    };
   }
 
   renderToast() {
@@ -427,7 +431,10 @@ class App extends LitElement {
   _renderProfileSettingsModal() {
     if (!this._showProfileSettings) return "";
 
-    return html`<phg-modal title="Settings" @close=${this.closeProfileSettings}>
+    return html`<phg-modal
+      .title=${"Settings"}
+      @close=${this.closeProfileSettings}
+    >
       <div class="settings-content">
         <label>Name</label>
         <input
@@ -458,7 +465,7 @@ class App extends LitElement {
           <phg-button variant="secondary" @click=${this.closeProfileSettings}
             >Cancel</phg-button
           >
-          <phg-button variant="success" @click=${this.saveProfileSettings}
+          <phg-button variant="action" @click=${this.saveProfileSettings}
             >Save</phg-button
           >
         </div>
