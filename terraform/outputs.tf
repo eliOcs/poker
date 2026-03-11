@@ -27,3 +27,18 @@ output "github_actions_role_arn" {
   description = "IAM role ARN for GitHub Actions"
   value       = aws_iam_role.github_actions.arn
 }
+
+output "ec2_role_arn" {
+  description = "IAM role ARN attached to the EC2 instance"
+  value       = aws_iam_role.poker_ec2.arn
+}
+
+output "ses_domain_identity_arn" {
+  description = "SES domain identity ARN"
+  value       = aws_ses_domain_identity.poker.arn
+}
+
+output "ses_mail_from_domain" {
+  description = "Custom MAIL FROM domain configured for SES"
+  value       = local.ses_mail_from_domain
+}

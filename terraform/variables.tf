@@ -33,3 +33,15 @@ variable "github_repo" {
   type        = string
   default     = "eliOcs/poker"
 }
+
+variable "ses_mail_from_subdomain" {
+  description = "Subdomain used for SES custom MAIL FROM"
+  type        = string
+  default     = "mail"
+}
+
+variable "ses_dns_ttl" {
+  description = "TTL for SES DNS records"
+  type        = number
+  default     = 600
+}
