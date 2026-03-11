@@ -107,6 +107,16 @@ export class PokerPlayer {
   }
 
   /**
+   * Sit using the waiting-panel "sit anywhere" button
+   */
+  async sitAnywhere() {
+    await this.actionPanel
+      .getByRole("button", { name: /^Sit(?:\s+\$.*)?$/ })
+      .click();
+    await this.mySeat.waitFor();
+  }
+
+  /**
    * Buy in with amount (in big blinds)
    * @param {number} bbAmount - Number of big blinds to buy in with
    */

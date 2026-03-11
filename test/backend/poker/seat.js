@@ -34,6 +34,30 @@ describe("sit", function () {
     assert.deepEqual(g.seats[1].player, p);
   });
 
+  it("uses the first available seat when no seat is provided", function () {
+    const g = Game.createTournament();
+    const p1 = Player.fromUser(User.create());
+    const p2 = Player.fromUser(User.create());
+
+    sit(g, { seat: 0, player: p1 });
+    sit(g, { player: p2 });
+
+    assert.deepEqual(g.seats[1].player, p2);
+  });
+
+  it("throws when sitting without a seat and the table is full", function () {
+    const g = Game.createTournament();
+
+    for (let i = 0; i < g.seats.length; i += 1) {
+      sit(g, { seat: i, player: Player.fromUser(User.create()) });
+    }
+
+    assert.throws(
+      () => sit(g, { player: Player.fromUser(User.create()) }),
+      /no empty seats/,
+    );
+  });
+
   it("player occupies seat before next hand starts");
 
   it("allows sitting in tournament during level 1", function () {

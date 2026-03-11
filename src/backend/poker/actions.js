@@ -56,16 +56,33 @@ export function start(game) {
 }
 
 /**
+ * Resolves the seat index for a sit action
+ * @param {Game} game
+ * @param {number|undefined} requestedSeat
+ * @returns {number}
+ */
+function resolveSeatForSit(game, requestedSeat) {
+  const seat =
+    requestedSeat == null
+      ? game.seats.findIndex((seat) => seat.empty)
+      : requestedSeat;
+  if (seat === -1) throw new Error("no empty seats");
+  if (!Number.isInteger(seat) || seat < 0 || seat >= game.seats.length) {
+    throw new Error("invalid seat");
+  }
+  return seat;
+}
+
+/**
  * Sits a player at a seat
  * @param {Game} game
- * @param {{ seat: number, player: Player }} options
+ * @param {{ seat?: number, player: Player }} options
  */
 export function sit(game, { seat: requestedSeat, player }) {
   if (game.tournament?.active && game.tournament.level > 1) {
     throw new Error("registration closed");
   }
-  const seat = requestedSeat;
-  if (seat === -1) throw new Error("no empty seats");
+  const seat = resolveSeatForSit(game, requestedSeat);
   if (!(/** @type {SeatType} */ (game.seats[seat]).empty))
     throw new Error("seat is already occupied");
 

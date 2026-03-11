@@ -16,7 +16,7 @@ test.describe("Poker Game Smoke Test", () => {
     await player3.joinGameByUrl(gameUrl);
 
     await player1.sit(0);
-    await player2.sit(1);
+    await player2.sitAnywhere();
     await player1.buyIn(20);
     await player2.buyIn(20);
 
