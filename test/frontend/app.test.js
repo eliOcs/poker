@@ -148,6 +148,78 @@ describe("phg-app", () => {
     });
   });
 
+  describe("frontend error reporting", () => {
+    it("reports uncaught window errors with route and game context", async () => {
+      /** @type {Array<{url: string, options: RequestInit|undefined}>} */
+      const requests = [];
+      globalThis.fetch = async (url, options) => {
+        requests.push({ url, options });
+        if (url === "/api/users/me") {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        if (url === "/api/client-errors") {
+          return { ok: true, json: async () => ({}) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      history.pushState({}, "", "/games/testgame");
+      element.path = window.location.pathname;
+      element._activeGameId = "testgame";
+      element.gameConnectionStatus = "connected";
+
+      element._handleWindowError({
+        error: new Error("boom"),
+        message: "boom",
+        filename: "/src/frontend/index.js",
+        lineno: 10,
+        colno: 20,
+      });
+      await Promise.resolve();
+
+      const report = requests.find(
+        (request) => request.url === "/api/client-errors",
+      );
+      expect(report).to.exist;
+      const payload = JSON.parse(String(report.options?.body));
+      expect(payload.message).to.equal("boom");
+      expect(payload.route).to.equal("/games/testgame");
+      expect(payload.gameId).to.equal("testgame");
+      expect(payload.connectionStatus).to.equal("connected");
+    });
+
+    it("reports unhandled rejections", async () => {
+      /** @type {Array<{url: string, options: RequestInit|undefined}>} */
+      const requests = [];
+      globalThis.fetch = async (url, options) => {
+        requests.push({ url, options });
+        if (url === "/api/users/me") {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        if (url === "/api/client-errors") {
+          return { ok: true, json: async () => ({}) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element._handleUnhandledRejection({
+        reason: new Error("async boom"),
+      });
+      await Promise.resolve();
+
+      const report = requests.find(
+        (request) => request.url === "/api/client-errors",
+      );
+      expect(report).to.exist;
+      const payload = JSON.parse(String(report.options?.body));
+      expect(payload.type).to.equal("unhandledrejection");
+      expect(payload.message).to.equal("async boom");
+      expect(payload.source).to.equal("window.unhandledrejection");
+    });
+  });
+
   describe("history data fetching", () => {
     it("shows empty state when no hands exist, then shows hands after playing", async () => {
       let handsToReturn = [];

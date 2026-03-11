@@ -8,6 +8,12 @@ import "./player-profile.js";
 import "./toast.js";
 import "./modal.js";
 import "./button.js";
+import {
+  connectAppEventHandlers,
+  disconnectAppEventHandlers,
+  initAppEventHandlers,
+} from "./app-event-handlers.js";
+import { createFrontendErrorReport } from "./error-reporting.js";
 
 const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
 const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
@@ -118,6 +124,7 @@ class App extends LitElement {
     this._playerProfileId = null;
     this._showProfileSettings = false;
     this._settingsVolume = 0.75;
+    initAppEventHandlers(this);
   }
 
   // --- History Tasks ---
@@ -164,36 +171,13 @@ class App extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._fetchUser();
-    window.addEventListener("popstate", () => {
-      this.path = window.location.pathname;
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        this._reconnectIfNeeded();
-      }
-    });
-    this.addEventListener("navigate", (e) => {
-      const detail = /** @type {CustomEvent<{ path: string }>} */ (e).detail;
-      history.pushState({}, "", detail.path);
-      this.path = detail.path;
-    });
-    this.addEventListener("toast", (e) => {
-      this.toast = /** @type {CustomEvent<object>} */ (e).detail;
-    });
-    this.addEventListener("hand-select", (e) => {
-      const detail = /** @type {CustomEvent<{ handNumber: number }>} */ (e)
-        .detail;
-      this.handleHandSelect(detail.handNumber);
-    });
-    this.addEventListener("game-action", (e) => {
-      this.sendToGame(/** @type {CustomEvent<object>} */ (e).detail);
-    });
-    this.addEventListener("update-user", (e) => {
-      this._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
-    });
-    this.addEventListener("open-settings", () => {
-      this.openProfileSettings();
-    });
+    connectAppEventHandlers(this);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    disconnectAppEventHandlers(this);
+    this.disconnectFromGame();
   }
 
   async _fetchUser() {
@@ -329,6 +313,22 @@ class App extends LitElement {
     if (this._socket?.readyState === WebSocket.OPEN) {
       this._socket.send(JSON.stringify(message));
     }
+  }
+
+  reportFrontendError(error) {
+    const payload = createFrontendErrorReport(
+      error,
+      window.location.pathname,
+      this._activeGameId,
+      this.gameConnectionStatus,
+    );
+
+    void fetch("/api/client-errors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
   }
 
   handleGameNotFound() {
