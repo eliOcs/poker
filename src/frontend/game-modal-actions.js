@@ -9,6 +9,17 @@ function dispatchToast(host, detail) {
 }
 
 export const gameModalActions = {
+  openAccount() {
+    if (!this.user?.id) return;
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: `/players/${this.user.id}` },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  },
+
   openSettings() {
     this.showSettings = true;
   },

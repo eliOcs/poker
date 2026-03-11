@@ -33,13 +33,14 @@ export function createLog(message) {
 /**
  * Builds session-scoped player context for structured logs.
  * @param {UserType} user
- * @returns {{ session: { playerId: string, playerName: string|null } }}
+ * @returns {{ session: { playerId: string, playerName: string|null, signedIn: boolean } }}
  */
 export function getSessionPlayerLogContext(user) {
   return {
     session: {
       playerId: user.id,
       playerName: user.name ?? null,
+      signedIn: !!user.email,
     },
   };
 }

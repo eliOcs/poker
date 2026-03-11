@@ -225,4 +225,28 @@ describe("logger", function () {
       assert.strictEqual(consoleLog.mock.calls.length, 1);
     });
   });
+
+  describe("session context", function () {
+    it("marks users with a verified email as signed in", async function () {
+      const { getSessionPlayerLogContext } = await import(
+        `../../src/backend/logger.js?t=${Date.now()}-18`
+      );
+
+      assert.deepStrictEqual(
+        getSessionPlayerLogContext({
+          id: "user-1",
+          name: "Alice",
+          email: "alice@example.com",
+          settings: { volume: 0.75 },
+        }),
+        {
+          session: {
+            playerId: "user-1",
+            playerName: "Alice",
+            signedIn: true,
+          },
+        },
+      );
+    });
+  });
 });

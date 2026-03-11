@@ -38,6 +38,7 @@ describe("http-routes", () => {
       session: {
         playerId: "user-1",
         playerName: "Alice",
+        signedIn: false,
       },
     });
   });
@@ -60,6 +61,7 @@ describe("http-routes", () => {
     assert.strictEqual(users[resolvedUser.id], resolvedUser);
     assert.strictEqual(log.context.session.playerId, resolvedUser.id);
     assert.strictEqual(log.context.session.playerName, null);
+    assert.strictEqual(log.context.session.signedIn, false);
     assert.ok(log.context.userCreateRateLimit);
     assert.strictEqual(headers[0][0], "Set-Cookie");
   });

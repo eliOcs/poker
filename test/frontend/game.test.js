@@ -181,6 +181,64 @@ describe("phg-game", () => {
       );
     });
 
+    it("shows signed-in account item with player name", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "Elio",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("Elio"));
+      expect(accountLink).to.exist;
+      expect(accountLink.classList.contains("drawer-account")).to.equal(true);
+
+      const signInBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Sign in"));
+      expect(signInBtn).to.not.exist;
+    });
+
+    it("renders the signed-in account item as a profile link in a new tab", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "Elio",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("Elio"));
+      expect(accountLink).to.exist;
+      expect(accountLink.getAttribute("href")).to.equal("/players/player123");
+      expect(accountLink.getAttribute("target")).to.equal("_blank");
+      expect(accountLink.getAttribute("rel")).to.equal("noopener noreferrer");
+    });
+
+    it("falls back to player id for signed-in account item without name", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("player123"));
+      expect(accountLink).to.exist;
+      expect(accountLink.classList.contains("drawer-account")).to.equal(true);
+    });
+
     it("disables rankings and history before the first hand", async () => {
       element.game = createMockGameState({ handNumber: 0 });
       await element.updateComplete;

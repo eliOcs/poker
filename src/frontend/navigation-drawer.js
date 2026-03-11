@@ -187,6 +187,12 @@ class NavigationDrawer extends LitElement {
           color: var(--color-primary);
         }
 
+        ::slotted(.drawer-account) {
+          margin-top: auto;
+          border-top: 1px solid var(--color-bg-light);
+          padding-top: calc(var(--space-md) + var(--space-sm));
+        }
+
         ::slotted(.drawer-entry:disabled),
         ::slotted(.drawer-btn:disabled),
         ::slotted(.drawer-item:disabled) {

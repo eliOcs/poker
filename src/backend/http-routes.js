@@ -235,6 +235,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
         respondWithJson(res, {
           id: user.id,
           name: user.name,
+          email: user.email,
           settings: user.settings,
         });
       },
@@ -268,6 +269,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
         respondWithJson(res, {
           id: user.id,
           name: user.name,
+          email: user.email,
           settings: user.settings,
         });
       },

@@ -92,13 +92,14 @@ function renderSitOutButton(game) {
 
 export function renderDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
+  const accountLabel = game.user?.name || game.user?.id || "Sign in";
+  const isSignedIn = !!game.user?.email;
 
   return html`
     <phg-navigation-drawer
       ?open=${game._drawerOpen}
       @drawer-toggle=${game.toggleDrawer}
     >
-      <button @click=${game.openSettings}>${ICONS.settings} Settings</button>
       <button ?disabled=${!hasRecordedHands} @click=${game.openRanking}>
         ${iconRankings} Rankings
       </button>
@@ -112,9 +113,19 @@ export function renderDrawer(game) {
       ${canShare
         ? html`<button @click=${game.shareGameLink}>${iconShare} Share</button>`
         : ""}
-      <button class="drawer-sign-in" @click=${game.openSignIn}>
-        ${ICONS.signIn} Sign in
-      </button>
+      ${isSignedIn
+        ? html`<a
+            class="drawer-account"
+            href=${`/players/${game.user.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ${ICONS.signIn} ${accountLabel}
+          </a>`
+        : html`<button class="drawer-sign-in" @click=${game.openSignIn}>
+            ${ICONS.signIn} Sign in
+          </button>`}
+      <button @click=${game.openSettings}>${ICONS.settings} Settings</button>
     </phg-navigation-drawer>
   `;
 }
