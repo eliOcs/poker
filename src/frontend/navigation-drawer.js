@@ -86,8 +86,10 @@ class NavigationDrawer extends LitElement {
           height: 100%;
           background: var(--color-bg-dark);
           border-right: 2px solid var(--color-bg-light);
+          box-sizing: border-box;
           display: flex;
           flex-direction: column;
+          overflow: hidden;
           transform: translateX(-100%);
           transition: transform 0.2s ease;
           pointer-events: auto;
@@ -100,8 +102,16 @@ class NavigationDrawer extends LitElement {
         nav {
           display: flex;
           flex-direction: column;
-          padding: var(--space-md);
-          padding-top: var(--space-lg);
+          height: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          padding: var(--space-lg) 0 var(--space-md);
+        }
+
+        slot {
+          display: flex;
+          flex-direction: column;
+          min-width: 0;
           gap: var(--space-sm);
         }
 
@@ -109,6 +119,7 @@ class NavigationDrawer extends LitElement {
           display: flex;
           justify-content: center;
           align-items: center;
+          margin-inline: var(--space-md);
           padding: var(--space-sm) var(--space-md) var(--space-md);
           margin-bottom: var(--space-sm);
           border-bottom: 1px solid var(--color-bg-light);
@@ -133,6 +144,10 @@ class NavigationDrawer extends LitElement {
           align-items: center;
           gap: var(--space-md);
           width: 100%;
+          max-width: 100%;
+          min-width: 0;
+          align-self: stretch;
+          box-sizing: border-box;
           padding: var(--space-md);
           border: 0;
           background: none;
@@ -156,6 +171,17 @@ class NavigationDrawer extends LitElement {
         ::slotted(.drawer-entry.active),
         ::slotted(.drawer-btn.active),
         ::slotted(.drawer-item.active) {
+          color: var(--color-primary);
+        }
+
+        ::slotted(.drawer-sign-in) {
+          margin-top: auto;
+          color: var(--color-primary);
+          border-top: 1px solid var(--color-bg-light);
+          padding-top: calc(var(--space-md) + var(--space-sm));
+        }
+
+        ::slotted(.drawer-sign-in:hover) {
           color: var(--color-primary);
         }
 
