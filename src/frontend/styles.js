@@ -1,6 +1,33 @@
-import { css } from "lit";
+/* stylelint-disable comment-empty-line-before */
+import { css, unsafeCSS } from "lit";
+import { COLORS, FONT_SIZES, SPACING } from "../shared/design-tokens.js";
 
 /** @typedef {import('../backend/poker/types.js').Cents} Cents */
+
+/**
+ * @param {string} value
+ * @returns {string}
+ */
+function camelToKebab(value) {
+  return value.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`);
+}
+
+/**
+ * @param {string} prefix
+ * @param {Record<string, string>} values
+ * @returns {string}
+ */
+function cssVariables(prefix, values) {
+  return Object.entries(values)
+    .map(([key, value]) => `--${prefix}-${camelToKebab(key)}: ${value};`)
+    .join("\n");
+}
+
+const desktopFontVariables = cssVariables("font", FONT_SIZES.desktop);
+const mobileFontVariables = cssVariables("font", FONT_SIZES.mobile);
+const desktopSpacingVariables = cssVariables("space", SPACING.desktop);
+const mobileSpacingVariables = cssVariables("space", SPACING.mobile);
+const colorVariables = cssVariables("color", COLORS);
 
 /**
  * Design Tokens
@@ -14,50 +41,18 @@ import { css } from "lit";
  */
 export const designTokens = css`
   :host {
-    /* Font sizes */
-    --font-sm: 10px;
-    --font-md: 12px;
-    --font-lg: 14px;
+    ${unsafeCSS(desktopFontVariables)}
 
-    /* Spacing */
-    --space-sm: 4px;
-    --space-md: 8px;
-    --space-lg: 16px;
+    ${unsafeCSS(desktopSpacingVariables)}
 
-    /* Colors - Semantic */
-    --color-primary: #f4a020;
-    --color-secondary: #84a;
-    --color-accent: #36c;
-    --color-success: #3a5;
-    --color-error: #c33;
-    --color-warning: #e07020;
-    --color-highlight: #c4a;
-
-    /* Colors - Backgrounds */
-    --color-bg-dark: #0f0f1a;
-    --color-bg-medium: #1a1a2e;
-    --color-bg-light: #2d2d44;
-    --color-bg-disabled: #4a4a5e;
-    --color-table: #2d5a27;
-    --color-table-history: #622028;
-
-    /* Colors - Foregrounds */
-    --color-fg-muted: #88a;
-    --color-fg-medium: #c0c0d0;
-    --color-fg-light: #e0e0e8;
-    --color-fg-white: #f0f0f0;
+    ${unsafeCSS(colorVariables)}
   }
 
   @media (width < 800px) {
     :host {
-      /* Smaller sizes for mobile */
-      --font-sm: 9px;
-      --font-md: 10px;
-      --font-lg: 12px;
+      ${unsafeCSS(mobileFontVariables)}
 
-      --space-sm: 3px;
-      --space-md: 6px;
-      --space-lg: 12px;
+      ${unsafeCSS(mobileSpacingVariables)}
     }
   }
 `;
