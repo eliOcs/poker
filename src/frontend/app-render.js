@@ -52,5 +52,7 @@ export function renderHistoryView(app, historyMatch) {
 export function renderPlayerProfileView(app) {
   return html`${renderToast(app)}<phg-player-profile
       .profile=${app._playerProfileTask.value}
+      .user=${app.user}
+      .path=${app.path}
     ></phg-player-profile>`;
 }

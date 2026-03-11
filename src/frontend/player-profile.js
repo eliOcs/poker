@@ -1,7 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
-import { ICONS } from "./icons.js";
 import "./navigation-drawer.js";
+import { renderPlayerProfileDrawer } from "./player-profile-drawer.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -280,6 +280,8 @@ class PlayerProfile extends LitElement {
   static get properties() {
     return {
       profile: { type: Object },
+      user: { type: Object },
+      path: { type: String },
       drawerOpen: { type: Boolean, state: true },
     };
   }
@@ -287,6 +289,8 @@ class PlayerProfile extends LitElement {
   constructor() {
     super();
     this.profile = null;
+    this.user = null;
+    this.path = window.location.pathname;
     this.drawerOpen = false;
     this._onMediaChange = (event) => {
       this.drawerOpen = event.matches;
@@ -340,7 +344,7 @@ class PlayerProfile extends LitElement {
 
     return html`
       <div class="layout">
-        ${this.renderDrawer()}
+        ${renderPlayerProfileDrawer(this)}
         <div class="main">
           <div class="content">
             <section class="panel">
@@ -394,18 +398,16 @@ class PlayerProfile extends LitElement {
     `;
   }
 
-  renderDrawer() {
-    return html`
-      <phg-navigation-drawer
-        ?open=${this.drawerOpen}
-        @drawer-toggle=${this.toggleDrawer}
-      >
-        <button @click=${this.openSettings}>
-          ${ICONS.settings}
-          <span>Settings</span>
-        </button>
-      </phg-navigation-drawer>
-    `;
+  openSignIn() {
+    if (!this._mql?.matches) {
+      this.drawerOpen = false;
+    }
+    this.dispatchEvent(
+      new CustomEvent("open-sign-in", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   renderRecentGames() {

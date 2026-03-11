@@ -15,6 +15,7 @@ describe("phg-app profile settings", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
+            email: "test@example.com",
             settings: { volume: 0.75 },
           }),
         };
@@ -40,6 +41,7 @@ describe("phg-app profile settings", () => {
           json: async () => ({
             id: "user1",
             name: updatedName,
+            email: "test@example.com",
             settings: { volume: 0.75 },
           }),
         };
@@ -63,7 +65,10 @@ describe("phg-app profile settings", () => {
       timeout: 2000,
     });
     await profile.updateComplete;
-    profile.shadowRoot.querySelector("button").click();
+    const settingsBtn = Array.from(
+      profile.shadowRoot.querySelectorAll("button"),
+    ).find((button) => button.textContent.includes("Settings"));
+    settingsBtn.click();
     await element.updateComplete;
 
     return element;

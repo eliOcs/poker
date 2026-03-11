@@ -207,4 +207,62 @@ describe("phg-app sign in", () => {
     });
     expect(window.location.pathname).to.equal("/");
   });
+
+  it("opens the sign-in modal from the profile drawer event", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Test",
+            settings: { volume: 0.75 },
+          }),
+        };
+      }
+      if (url.match(/\/api\/players\/player2$/)) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "player2",
+            name: "Alice",
+            online: false,
+            lastSeenAt: "2026-03-05T18:42:00.000Z",
+            joinedAt: "2025-11-14T20:15:00.000Z",
+            totalNetWinnings: 7500,
+            totalHands: 8,
+            recentGames: [],
+          }),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    history.replaceState({}, "", "/players/player2");
+    element.path = "/players/player2";
+    await element.updateComplete;
+
+    await waitUntil(
+      () => element.shadowRoot.querySelector("phg-player-profile"),
+      {
+        timeout: 2000,
+      },
+    );
+    const profile = element.shadowRoot.querySelector("phg-player-profile");
+    profile.dispatchEvent(
+      new CustomEvent("open-sign-in", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await element.updateComplete;
+
+    const modal = element.shadowRoot.querySelector("phg-modal");
+    expect(modal).to.exist;
+    await modal.updateComplete;
+    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
+      "Sign in",
+    );
+  });
 });

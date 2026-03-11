@@ -1,6 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
+import { appModalStyles } from "./app-modal-styles.js";
 import "./home.js";
 import "./index.js";
 import "./history.js";
@@ -14,6 +15,7 @@ import {
   initAppEventHandlers,
 } from "./app-event-handlers.js";
 import { renderProfileSettingsModal } from "./app-profile-settings.js";
+import { renderProfileSignInModal } from "./app-sign-in-modal.js";
 import {
   renderGameView,
   renderHistoryView,
@@ -27,62 +29,11 @@ class App extends LitElement {
     return [
       designTokens,
       baseStyles,
+      appModalStyles,
       css`
         :host {
           display: block;
           height: 100%;
-        }
-
-        .settings-content input {
-          width: 100%;
-          padding: var(--space-md);
-          font-family: inherit;
-          font-size: var(--font-md);
-          border: 3px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          color: var(--color-fg-white);
-          margin-bottom: var(--space-lg);
-          box-sizing: border-box;
-        }
-
-        .settings-content .buttons {
-          display: flex;
-          gap: var(--space-md);
-          justify-content: flex-end;
-        }
-
-        .settings-content label {
-          display: block;
-          margin-bottom: var(--space-sm);
-          color: var(--color-fg-medium);
-          font-size: var(--font-sm);
-        }
-
-        .volume-slider {
-          display: flex;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-        }
-
-        .volume-slider button {
-          flex: 1;
-          padding: var(--space-md);
-          font-family: inherit;
-          font-size: var(--font-md);
-          border: 3px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          color: var(--color-fg-medium);
-          cursor: pointer;
-        }
-
-        .volume-slider button:hover {
-          background: var(--color-bg-dark);
-        }
-
-        .volume-slider button.active {
-          background: var(--color-primary);
-          color: var(--color-fg-white);
-          border-color: var(--color-primary);
         }
       `,
     ];
@@ -105,7 +56,9 @@ class App extends LitElement {
       _historyListRefreshNonce: { state: true },
       _playerProfileId: { state: true },
       _showProfileSettings: { state: true },
+      _showProfileSignIn: { state: true },
       _settingsVolume: { state: true },
+      _profileSignInInvalid: { state: true },
     };
   }
 
@@ -127,7 +80,9 @@ class App extends LitElement {
     this._historyListRefreshNonce = 0;
     this._playerProfileId = null;
     this._showProfileSettings = false;
+    this._showProfileSignIn = false;
     this._settingsVolume = 0.75;
+    this._profileSignInInvalid = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -422,6 +377,41 @@ class App extends LitElement {
     this._showProfileSettings = false;
   }
 
+  openProfileSignIn() {
+    this._profileSignInInvalid = false;
+    this._showProfileSignIn = true;
+  }
+
+  closeProfileSignIn() {
+    this._profileSignInInvalid = false;
+    this._showProfileSignIn = false;
+  }
+
+  clearProfileSignInValidation() {
+    this._profileSignInInvalid = false;
+  }
+
+  requestProfileSignIn() {
+    const input = /** @type {HTMLInputElement|null} */ (
+      this.shadowRoot?.querySelector("#profile-sign-in-email")
+    );
+    const email = input?.value.trim() || "";
+    if (!email || !input?.checkValidity()) {
+      this._profileSignInInvalid = true;
+      input?.focus();
+      return;
+    }
+    this._profileSignInInvalid = false;
+    this.dispatchEvent(
+      new CustomEvent("request-sign-in", {
+        detail: { email },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this._showProfileSignIn = false;
+  }
+
   async saveProfileSettings() {
     const input = /** @type {HTMLInputElement|null} */ (
       this.shadowRoot?.querySelector("#profile-settings-name-input")
@@ -565,7 +555,7 @@ class App extends LitElement {
     if (historyMatch) return renderHistoryView(this, historyMatch);
     if (playerMatch) {
       return html`${renderPlayerProfileView(this)}
-      ${renderProfileSettingsModal(this)}`;
+      ${renderProfileSettingsModal(this)} ${renderProfileSignInModal(this)}`;
     }
     return html`${renderToast(this)}<phg-home></phg-home>`;
   }

@@ -47,6 +47,9 @@ export function initAppEventHandlers(app) {
   app._handleOpenSettings = () => {
     app.openProfileSettings();
   };
+  app._handleOpenSignIn = () => {
+    app.openProfileSignIn();
+  };
   app._handleWindowError = (event) => {
     app.reportFrontendError(getWindowErrorDetails(event));
   };
@@ -71,6 +74,7 @@ export function connectAppEventHandlers(app) {
   app.addEventListener("update-user", app._handleUpdateUser);
   app.addEventListener("request-sign-in", app._handleRequestSignIn);
   app.addEventListener("open-settings", app._handleOpenSettings);
+  app.addEventListener("open-sign-in", app._handleOpenSignIn);
 }
 
 /**
@@ -92,4 +96,5 @@ export function disconnectAppEventHandlers(app) {
   app.removeEventListener("update-user", app._handleUpdateUser);
   app.removeEventListener("request-sign-in", app._handleRequestSignIn);
   app.removeEventListener("open-settings", app._handleOpenSettings);
+  app.removeEventListener("open-sign-in", app._handleOpenSignIn);
 }
