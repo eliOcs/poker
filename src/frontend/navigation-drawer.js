@@ -112,6 +112,8 @@ class NavigationDrawer extends LitElement {
           display: flex;
           flex-direction: column;
           min-width: 0;
+          box-sizing: border-box;
+          padding-inline: var(--space-md);
           gap: var(--space-sm);
         }
 
