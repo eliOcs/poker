@@ -191,18 +191,32 @@ resource "aws_instance" "poker" {
 
   user_data = <<-EOF
     #!/bin/bash
-    DEVICE=/dev/$(lsblk -dno NAME,TYPE | awk '$2 == "disk" {print $1}' | grep -v nvme0n1)
     MOUNT=/opt/poker/data
+    DEVICE=""
+
+    if [ -b /dev/nvme1n1 ]; then
+      DEVICE=/dev/nvme1n1
+    elif [ -b /dev/xvdf ]; then
+      DEVICE=/dev/xvdf
+    else
+      echo "Data volume device not found" >&2
+      exit 1
+    fi
+
     # Only format if not already formatted
     if ! blkid "$DEVICE"; then
       mkfs.ext4 "$DEVICE"
     fi
+
+    UUID=$(blkid -s UUID -o value "$DEVICE")
     mkdir -p "$MOUNT"
-    chown 1001:1001 "$MOUNT"
-    if ! grep -q "$MOUNT" /etc/fstab; then
-      echo "$DEVICE $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
-    fi
+
+    # Keep exactly one mount entry for the app data directory.
+    sed -i "\\# $MOUNT #d" /etc/fstab
+    echo "UUID=$UUID $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
+
     mount -a
+    chown 1001:1001 "$MOUNT"
   EOF
 
   root_block_device {
