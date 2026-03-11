@@ -1,6 +1,5 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
-import crypto from "crypto";
 import { rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as Store from "../../src/backend/store.js";
@@ -11,6 +10,7 @@ import {
 } from "../../src/backend/poker/hand-history/io.js";
 import * as Game from "../../src/backend/poker/game.js";
 import * as Seat from "../../src/backend/poker/seat.js";
+import { createTempDataDir } from "./temp-data-dir.js";
 
 let testDataDir;
 
@@ -62,8 +62,8 @@ function recordHandPlayers(hand, gameId) {
 }
 
 describe("player-profile", function () {
-  beforeEach(function () {
-    testDataDir = `test-data-${crypto.randomBytes(4).toString("hex")}`;
+  beforeEach(async function () {
+    testDataDir = await createTempDataDir();
     process.env.DATA_DIR = testDataDir;
     Store._reset();
     Store.initialize();

@@ -2,6 +2,7 @@ import {
   getUnhandledRejectionDetails,
   getWindowErrorDetails,
 } from "./error-reporting.js";
+import { requestSignIn } from "./app-auth.js";
 
 /**
  * Initializes event handler callbacks on the app instance
@@ -35,6 +36,10 @@ export function initAppEventHandlers(app) {
   app._handleUpdateUser = (e) => {
     app._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
   };
+  app._handleRequestSignIn = (e) => {
+    const detail = /** @type {CustomEvent<{ email: string }>} */ (e).detail;
+    requestSignIn(app, detail.email);
+  };
   app._handleOpenSettings = () => {
     app.openProfileSettings();
   };
@@ -60,6 +65,7 @@ export function connectAppEventHandlers(app) {
   app.addEventListener("hand-select", app._handleHandSelect);
   app.addEventListener("game-action", app._handleGameAction);
   app.addEventListener("update-user", app._handleUpdateUser);
+  app.addEventListener("request-sign-in", app._handleRequestSignIn);
   app.addEventListener("open-settings", app._handleOpenSettings);
 }
 
@@ -80,5 +86,6 @@ export function disconnectAppEventHandlers(app) {
   app.removeEventListener("hand-select", app._handleHandSelect);
   app.removeEventListener("game-action", app._handleGameAction);
   app.removeEventListener("update-user", app._handleUpdateUser);
+  app.removeEventListener("request-sign-in", app._handleRequestSignIn);
   app.removeEventListener("open-settings", app._handleOpenSettings);
 }

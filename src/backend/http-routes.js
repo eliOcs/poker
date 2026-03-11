@@ -1,8 +1,6 @@
 import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
 import * as User from "./user.js";
-import * as Stakes from "./poker/stakes.js";
-import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as Store from "./store.js";
 import { getPlayerProfile } from "./player-profile.js";
@@ -13,7 +11,10 @@ import {
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 import { getSessionPlayerLogContext } from "./logger.js";
-import * as logger from "./logger.js";
+import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
+import { logFrontendErrorReport } from "./client-error-reporting.js";
+export { logFrontendErrorReport } from "./client-error-reporting.js";
+import { createSignInRoutes } from "./sign-in-routes.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -151,67 +152,6 @@ export function getOrCreateUser(req, res, users, log = null) {
 }
 
 /**
- * Parses seat count from request data
- * @param {unknown} data
- * @param {number} defaultSeats
- * @returns {number}
- */
-function parseSeats(data, defaultSeats) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "seats" in data &&
-    [2, 6, 9].includes(/** @type {number} */ (data.seats))
-  ) {
-    return /** @type {number} */ (data.seats);
-  }
-  return defaultSeats;
-}
-
-/**
- * Parses blinds from request data
- * @param {unknown} data
- * @returns {{ ante: number, small: number, big: number }}
- */
-function parseBlinds(data) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "small" in data &&
-    "big" in data &&
-    Stakes.isValidPreset({
-      small: /** @type {number} */ (data.small),
-      big: /** @type {number} */ (data.big),
-    })
-  ) {
-    return {
-      ante: 0,
-      small: /** @type {number} */ (data.small),
-      big: /** @type {number} */ (data.big),
-    };
-  }
-  return { ante: 0, small: Stakes.DEFAULT.small, big: Stakes.DEFAULT.big };
-}
-
-/**
- * Parses buy-in from request data
- * @param {unknown} data
- * @returns {number}
- */
-function parseBuyIn(data) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "buyIn" in data &&
-    typeof data.buyIn === "number" &&
-    Tournament.isValidBuyin(data.buyIn)
-  ) {
-    return data.buyIn;
-  }
-  return Tournament.DEFAULT_BUYIN.amount;
-}
-
-/**
  * Sends a JSON response
  * @param {import('http').ServerResponse} res
  * @param {unknown} data
@@ -222,62 +162,9 @@ function respondWithJson(res, data) {
 }
 
 /**
- * Trims a string value to a safe loggable form
- * @param {unknown} value
- * @param {number} maxLength
- * @returns {string|null}
- */
-function trimLogString(value, maxLength) {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, maxLength);
-}
-
-/**
- * Logs a frontend error report received from the client
  * @param {Request} req
- * @param {UserType} user
- * @param {unknown} data
+ * @returns {string}
  */
-export function logFrontendErrorReport(req, user, data) {
-  if (!data || typeof data !== "object") {
-    throw new HttpError(400, "Invalid frontend error payload", {
-      body: { error: "Invalid frontend error payload", status: 400 },
-    });
-  }
-  const payload = /** @type {Record<string, unknown>} */ (data);
-
-  const message = trimLogString(payload.message, 500);
-  if (!message) {
-    throw new HttpError(400, "Frontend error message is required", {
-      body: { error: "Frontend error message is required", status: 400 },
-    });
-  }
-
-  const level = payload.level === "warn" ? "warn" : "error";
-  const clientError = {
-    type: trimLogString(payload.type, 100) ?? "error",
-    message,
-    stack: trimLogString(payload.stack, 4000),
-    filename: trimLogString(payload.filename, 500),
-    source: trimLogString(payload.source, 200),
-    route: trimLogString(payload.route, 500),
-    gameId: trimLogString(payload.gameId, 100),
-    userAgent: trimLogString(payload.userAgent, 500),
-    rejection: trimLogString(payload.rejection, 2000),
-    line: typeof payload.line === "number" ? payload.line : null,
-    column: typeof payload.column === "number" ? payload.column : null,
-    connectionStatus: trimLogString(payload.connectionStatus, 50),
-  };
-
-  logger[level]("frontend_error", {
-    ...getSessionPlayerLogContext(user),
-    request: { path: req.url ?? "", method: req.method ?? "POST" },
-    frontend: clientError,
-  });
-}
-
 /**
  * Syncs user changes to all game seats where the user is seated
  * @param {UserType} user
@@ -322,7 +209,7 @@ function syncUserToGames(user, games, broadcast) {
  * @param {(gameId: string) => void} broadcast
  * @returns {Route[]}
  */
-export function createRoutes(users, games, broadcast) {
+export function createRoutes(users, games, broadcast, services = {}) {
   return [
     {
       method: "GET",
@@ -396,6 +283,17 @@ export function createRoutes(users, games, broadcast) {
         res.end();
       },
     },
+    ...createSignInRoutes({
+      sendSignInEmail: services.sendSignInEmail,
+    }).map((route) => ({
+      ...route,
+      handler: (ctx) =>
+        route.handler({
+          ...ctx,
+          getOrCreateUser,
+          parseBody,
+        }),
+    })),
     {
       method: "POST",
       path: "/games",

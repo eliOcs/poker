@@ -5,8 +5,7 @@ import { existsSync } from "node:fs";
 import * as HandHistory from "../../../../src/backend/poker/hand-history/index.js";
 import * as Game from "../../../../src/backend/poker/game.js";
 
-// Test data directory (unique to avoid conflicts with hand-history.js tests)
-const TEST_DATA_DIR = "test-data-view-core";
+let testDataDir;
 
 /** Creates a base OHH hand structure for testing */
 function createTestHand(overrides = {}) {
@@ -45,8 +44,8 @@ describe("hand-history-view", function () {
 
   afterEach(async function () {
     // Clean up test data directory
-    if (existsSync(TEST_DATA_DIR)) {
-      await rm(TEST_DATA_DIR, { recursive: true });
+    if (existsSync(testDataDir)) {
+      await rm(testDataDir, { recursive: true });
     }
   });
 

@@ -74,7 +74,6 @@ export const gameModalActions = {
         composed: true,
       }),
     );
-    dispatchToast(this, { message: "Sign-in link sent", variant: "success" });
     this.showSignIn = false;
   },
 };

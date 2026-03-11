@@ -3,8 +3,9 @@ import assert from "node:assert";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { recoverGameFromHistory } from "../../../src/backend/poker/recovery.js";
+import { createTempDataDir } from "../temp-data-dir.js";
 
-const TEST_DATA_DIR = "test-data-recovery";
+let testDataDir;
 
 /**
  * @param {string} gameId
@@ -16,22 +17,20 @@ async function writeOHH(gameId, hands, trailing = "") {
     hands.map((hand) => JSON.stringify({ ohh: hand })).join("\n\n") +
     "\n\n" +
     trailing;
-  await writeFile(`${TEST_DATA_DIR}/${gameId}.ohh`, content, "utf8");
+  await writeFile(`${testDataDir}/${gameId}.ohh`, content, "utf8");
 }
 
 describe("game recovery", () => {
   beforeEach(async () => {
-    process.env.DATA_DIR = TEST_DATA_DIR;
-    if (existsSync(TEST_DATA_DIR)) {
-      await rm(TEST_DATA_DIR, { recursive: true, force: true });
-    }
-    await mkdir(TEST_DATA_DIR, { recursive: true });
+    testDataDir = await createTempDataDir();
+    process.env.DATA_DIR = testDataDir;
+    await mkdir(testDataDir, { recursive: true });
   });
 
   afterEach(async () => {
     delete process.env.DATA_DIR;
-    if (existsSync(TEST_DATA_DIR)) {
-      await rm(TEST_DATA_DIR, { recursive: true, force: true });
+    if (existsSync(testDataDir)) {
+      await rm(testDataDir, { recursive: true, force: true });
     }
   });
 
@@ -265,7 +264,7 @@ describe("game recovery", () => {
     ]);
 
     await writeFile(
-      `${TEST_DATA_DIR}/${gameId}.ots`,
+      `${testDataDir}/${gameId}.ots`,
       JSON.stringify(
         {
           ots: {

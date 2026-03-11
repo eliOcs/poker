@@ -329,12 +329,8 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       let request = null;
-      let toast = null;
       element.addEventListener("request-sign-in", (e) => {
         request = e.detail;
-      });
-      element.addEventListener("toast", (e) => {
-        toast = e.detail;
       });
 
       const input = /** @type {HTMLInputElement} */ (
@@ -346,10 +342,6 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       expect(request).to.deep.equal({ email: "player@example.com" });
-      expect(toast).to.deep.equal({
-        message: "Sign-in link sent",
-        variant: "success",
-      });
       expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
     });
 

@@ -7,8 +7,9 @@ import * as Game from "../../../../src/backend/poker/game.js";
 import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
+import { createTempDataDir } from "../../temp-data-dir.js";
 
-const TEST_DATA_DIR = "test-data-view-file-ops";
+let testDataDir;
 
 function createPlayer() {
   return Player.fromUser(User.create());
@@ -35,13 +36,15 @@ describe("hand-history-view", function () {
   });
 
   afterEach(async function () {
-    if (existsSync(TEST_DATA_DIR)) {
-      await rm(TEST_DATA_DIR, { recursive: true });
+    if (existsSync(testDataDir)) {
+      await rm(testDataDir, { recursive: true });
     }
+    delete process.env.DATA_DIR;
   });
   describe("getAllHands", function () {
     it("returns empty array for non-existent game", async function () {
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       const hands = await HandHistory.getAllHands("nonexistent");
       assert.deepStrictEqual(hands, []);
@@ -52,7 +55,8 @@ describe("hand-history-view", function () {
     it("returns all hands from file", async function () {
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       // Create two hands
       game.handNumber++;
@@ -78,7 +82,8 @@ describe("hand-history-view", function () {
     it("writes hand to .ohh file", async function () {
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);
@@ -88,7 +93,7 @@ describe("hand-history-view", function () {
       await HandHistory.finalizeHand(game, []);
 
       // Verify file exists and contains valid JSON
-      const filePath = `${TEST_DATA_DIR}/${game.id}.ohh`;
+      const filePath = `${testDataDir}/${game.id}.ohh`;
       assert.ok(existsSync(filePath));
 
       const content = await readFile(filePath, "utf8");
@@ -106,7 +111,8 @@ describe("hand-history-view", function () {
     it("appends multiple hands to same file", async function () {
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       // First hand
       game.handNumber++;
@@ -120,7 +126,7 @@ describe("hand-history-view", function () {
       HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
       await HandHistory.finalizeHand(game, []);
 
-      const content = await readFile(`${TEST_DATA_DIR}/${game.id}.ohh`, "utf8");
+      const content = await readFile(`${testDataDir}/${game.id}.ohh`, "utf8");
       const lines = content.split("\n\n").filter(Boolean);
       assert.strictEqual(lines.length, 2);
 

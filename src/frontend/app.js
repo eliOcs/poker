@@ -13,10 +13,14 @@ import {
   disconnectAppEventHandlers,
   initAppEventHandlers,
 } from "./app-event-handlers.js";
+import { renderProfileSettingsModal } from "./app-profile-settings.js";
+import {
+  renderGameView,
+  renderHistoryView,
+  renderPlayerProfileView,
+  renderToast,
+} from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
-
-const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
-const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
 
 class App extends LitElement {
   static get styles() {
@@ -367,18 +371,6 @@ class App extends LitElement {
     };
   }
 
-  renderToast() {
-    if (!this.toast) return "";
-    return html`
-      <phg-toast
-        variant=${this.toast.variant || "info"}
-        .duration=${this.toast.duration || 3000}
-        .message=${this.toast.message}
-        @dismiss=${this.dismissToast}
-      ></phg-toast>
-    `;
-  }
-
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
     history.pushState({}, "", `/history/${this._historyGameId}/${handNumber}`);
@@ -397,80 +389,6 @@ class App extends LitElement {
     } else if (this._activeGameId) {
       this.disconnectFromGame();
     }
-  }
-
-  _renderGameView(gameMatch) {
-    return html`${this.renderToast()}<phg-game
-        .gameId=${gameMatch[1]}
-        .game=${this.game}
-        .socialAction=${this.socialAction}
-        .user=${this.user}
-      ></phg-game>`;
-  }
-
-  _renderHistoryView(historyMatch) {
-    const listData = this._historyListTask.value;
-    const handData = this._historyHandTask.value;
-
-    return html`${this.renderToast()}<phg-history
-        .gameId=${historyMatch[1]}
-        .handNumber=${this._historyHandNumber}
-        .hand=${handData?.hand}
-        .view=${handData?.view}
-        .handList=${listData?.hands}
-        .playerId=${listData?.playerId}
-      ></phg-history>`;
-  }
-
-  _renderPlayerProfileView() {
-    return html`${this.renderToast()}<phg-player-profile
-        .profile=${this._playerProfileTask.value}
-      ></phg-player-profile>`;
-  }
-
-  _renderProfileSettingsModal() {
-    if (!this._showProfileSettings) return "";
-
-    return html`<phg-modal
-      .title=${"Settings"}
-      @close=${this.closeProfileSettings}
-    >
-      <div class="settings-content">
-        <label>Name</label>
-        <input
-          id="profile-settings-name-input"
-          type="text"
-          placeholder="Enter your name"
-          maxlength="20"
-          autofocus
-          .value=${this.user?.name || ""}
-          @keydown=${(e) => e.key === "Enter" && this.saveProfileSettings()}
-        />
-        <label>Sound Volume</label>
-        <div class="volume-slider">
-          ${SETTINGS_VOLUME_STEPS.map(
-            (value, index) => html`
-              <button
-                class=${this._settingsVolume === value ? "active" : ""}
-                @click=${() => {
-                  this._settingsVolume = value;
-                }}
-              >
-                ${SETTINGS_VOLUME_LABELS[index]}
-              </button>
-            `,
-          )}
-        </div>
-        <div class="buttons">
-          <phg-button variant="secondary" @click=${this.closeProfileSettings}
-            >Cancel</phg-button
-          >
-          <phg-button variant="action" @click=${this.saveProfileSettings}
-            >Save</phg-button
-          >
-        </div>
-      </div>
-    </phg-modal>`;
   }
 
   _clearHistoryState() {
@@ -576,13 +494,13 @@ class App extends LitElement {
 
     this._manageConnection(gameId);
 
-    if (gameMatch) return this._renderGameView(gameMatch);
-    if (historyMatch) return this._renderHistoryView(historyMatch);
+    if (gameMatch) return renderGameView(this, gameMatch);
+    if (historyMatch) return renderHistoryView(this, historyMatch);
     if (playerMatch) {
-      return html`${this._renderPlayerProfileView()}
-      ${this._renderProfileSettingsModal()}`;
+      return html`${renderPlayerProfileView(this)}
+      ${renderProfileSettingsModal(this)}`;
     }
-    return html`${this.renderToast()}<phg-home></phg-home>`;
+    return html`${renderToast(this)}<phg-home></phg-home>`;
   }
 }
 
