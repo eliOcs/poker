@@ -70,6 +70,9 @@ const TEST_CASES = [
   "game-rankings-modal-tournament",
   "game-settings-modal",
 
+  // Email states
+  "email-sign-in",
+
   // Hand history states
   "history-empty",
   "history-preflop-fold",
@@ -79,6 +82,7 @@ const TEST_CASES = [
 ];
 
 function getComponentSelector(testCase) {
+  if (testCase.startsWith("email-")) return ".email-preview";
   if (testCase === "landing-page") return "phg-home";
   if (testCase.startsWith("history-")) return "phg-history";
   if (testCase.startsWith("player-profile-")) return "phg-player-profile";
