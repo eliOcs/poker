@@ -8,6 +8,7 @@ describe("phg-app sign in", () => {
   });
 
   it("shows a success toast after requesting a sign-in link", async () => {
+    let requestBody = null;
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
         return {
@@ -20,6 +21,7 @@ describe("phg-app sign in", () => {
         };
       }
       if (url === "/api/sign-in-links" && options.method === "POST") {
+        requestBody = JSON.parse(String(options.body));
         return {
           ok: true,
           json: async () => ({}),
@@ -44,6 +46,10 @@ describe("phg-app sign in", () => {
     expect(element.toast).to.deep.include({
       message: "Sign-in link sent",
       variant: "success",
+    });
+    expect(requestBody).to.deep.equal({
+      email: "player@example.com",
+      returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
     });
   });
 

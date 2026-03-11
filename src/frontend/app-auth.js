@@ -1,13 +1,14 @@
 /**
  * @param {any} app
  * @param {string} email
+ * @param {string} returnPath
  */
-export async function requestSignIn(app, email) {
+export async function requestSignIn(app, email, returnPath) {
   try {
     const res = await fetch("/api/sign-in-links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, returnPath }),
     });
     if (res.ok) {
       app.toast = {

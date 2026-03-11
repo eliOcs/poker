@@ -5,10 +5,10 @@ export const EMAIL_SIGN_IN_TTL_MINUTES = Number.parseInt(
   10,
 );
 
-/** @type {Map<string, { token: string, userId: string, email: string, expiresAt: number }>} */
+/** @type {Map<string, { token: string, userId: string, email: string, expiresAt: number, returnPath: string }>} */
 const tokensByUserId = new Map();
 
-/** @type {Map<string, { userId: string, email: string, expiresAt: number }>} */
+/** @type {Map<string, { userId: string, email: string, expiresAt: number, returnPath: string }>} */
 const tokensByValue = new Map();
 
 /**
@@ -30,6 +30,20 @@ export function isValidEmail(email) {
 
 export function createEmailSignInToken() {
   return crypto.randomBytes(32).toString("base64url");
+}
+
+/**
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function normalizeReturnPath(value) {
+  if (typeof value !== "string" || !value.startsWith("/")) {
+    return "/";
+  }
+  if (value.startsWith("//")) {
+    return "/";
+  }
+  return value;
 }
 
 /**
@@ -58,9 +72,15 @@ export function buildEmailSignInUrl(origin, token) {
 }
 
 /**
- * @param {{ token: string, userId: string, email: string, expiresAt: string }} params
+ * @param {{ token: string, userId: string, email: string, expiresAt: string, returnPath: string }} params
  */
-export function saveEmailSignInToken({ token, userId, email, expiresAt }) {
+export function saveEmailSignInToken({
+  token,
+  userId,
+  email,
+  expiresAt,
+  returnPath,
+}) {
   const existing = tokensByUserId.get(userId);
   if (existing) {
     tokensByValue.delete(existing.token);
@@ -71,18 +91,20 @@ export function saveEmailSignInToken({ token, userId, email, expiresAt }) {
     userId,
     email,
     expiresAt: Date.parse(expiresAt),
+    returnPath,
   };
   tokensByUserId.set(userId, entry);
   tokensByValue.set(token, {
     userId,
     email,
     expiresAt: entry.expiresAt,
+    returnPath,
   });
 }
 
 /**
  * @param {string} token
- * @returns {{ userId: string, email: string }|null}
+ * @returns {{ userId: string, email: string, returnPath: string }|null}
  */
 export function consumeEmailSignInToken(token) {
   const entry = tokensByValue.get(token);
@@ -101,6 +123,7 @@ export function consumeEmailSignInToken(token) {
   return {
     userId: entry.userId,
     email: entry.email,
+    returnPath: entry.returnPath,
   };
 }
 

@@ -4,6 +4,10 @@ import {
 } from "./error-reporting.js";
 import { requestSignIn } from "./app-auth.js";
 
+function getCurrentReturnPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
 /**
  * Initializes event handler callbacks on the app instance
  * @param {any} app
@@ -38,7 +42,7 @@ export function initAppEventHandlers(app) {
   };
   app._handleRequestSignIn = (e) => {
     const detail = /** @type {CustomEvent<{ email: string }>} */ (e).detail;
-    requestSignIn(app, detail.email);
+    requestSignIn(app, detail.email, getCurrentReturnPath());
   };
   app._handleOpenSettings = () => {
     app.openProfileSettings();

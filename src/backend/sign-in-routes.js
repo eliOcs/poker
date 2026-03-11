@@ -8,6 +8,7 @@ import {
   getEmailSignInExpiry,
   isValidEmail,
   normalizeEmail,
+  normalizeReturnPath,
   saveEmailSignInToken,
 } from "./sign-in.js";
 
@@ -51,6 +52,10 @@ export function createSignInRoutes(services = {}) {
           typeof data.email === "string"
             ? normalizeEmail(data.email)
             : "";
+        const returnPath =
+          data && typeof data === "object" && "returnPath" in data
+            ? normalizeReturnPath(data.returnPath)
+            : "/";
 
         if (!email || !isValidEmail(email)) {
           throw new HttpError(400, "Valid email is required", {
@@ -67,6 +72,7 @@ export function createSignInRoutes(services = {}) {
           userId: user.id,
           email,
           expiresAt,
+          returnPath,
         });
 
         await sendSignInEmail({
@@ -100,7 +106,7 @@ export function createSignInRoutes(services = {}) {
         }
 
         setSessionCookie(res, signIn.userId);
-        res.writeHead(302, { Location: "/" });
+        res.writeHead(302, { Location: signIn.returnPath });
         res.end();
       },
     },

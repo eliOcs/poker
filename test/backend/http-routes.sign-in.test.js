@@ -67,6 +67,7 @@ describe("http-routes sign in", () => {
 
     const req = createRequest("/api/sign-in-links", "POST", {
       email: "Player@Example.com",
+      returnPath: "/games/abc123?buyin=1#seat-3",
     });
     const res = createResponse();
 
@@ -107,6 +108,7 @@ describe("http-routes sign in", () => {
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
+      returnPath: "/games/test-game?buyin=50",
     });
     const requestRes = createResponse();
     await requestRoute.handler({
@@ -139,10 +141,61 @@ describe("http-routes sign in", () => {
     });
 
     assert.equal(verifyRes.statusCode, 302);
-    assert.equal(verifyRes.headers.Location, "/");
+    assert.equal(verifyRes.headers.Location, "/games/test-game?buyin=50");
     assert.match(
       String(verifyRes.headers["Set-Cookie"]),
       new RegExp(originalUserId),
     );
+  });
+
+  it("falls back to root when the requested return path is not relative", async () => {
+    const users = {};
+    let signInUrl = "";
+    const routes = createRoutes(users, new Map(), () => {}, {
+      sendSignInEmail: async (payload) => {
+        signInUrl = payload.signInUrl;
+      },
+    });
+    const requestRoute = findRoute(routes, "POST", "/api/sign-in-links");
+    const verifyRoute = routes.find(
+      (route) =>
+        route.method === "GET" &&
+        String(route.path) ===
+          String(/^\/auth\/email-sign-in\/verify(?:\?.*)?$/),
+    );
+
+    const requestReq = createRequest("/api/sign-in-links", "POST", {
+      email: "player@example.com",
+      returnPath: "https://evil.example/steal",
+    });
+    const requestRes = createResponse();
+    await requestRoute.handler({
+      req: requestReq,
+      res: requestRes,
+      match: null,
+      users,
+      games: new Map(),
+      broadcast: () => {},
+      log: { context: {} },
+    });
+
+    const token = new URL(signInUrl).searchParams.get("token");
+    const verifyReq = createRequest(
+      `/auth/email-sign-in/verify?token=${encodeURIComponent(String(token))}`,
+      "GET",
+    );
+    const verifyRes = createResponse();
+    await verifyRoute.handler({
+      req: verifyReq,
+      res: verifyRes,
+      match: null,
+      users,
+      games: new Map(),
+      broadcast: () => {},
+      log: null,
+    });
+
+    assert.equal(verifyRes.statusCode, 302);
+    assert.equal(verifyRes.headers.Location, "/");
   });
 });

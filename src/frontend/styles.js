@@ -1,4 +1,3 @@
-/* stylelint-disable comment-empty-line-before */
 import { css, unsafeCSS } from "lit";
 import { COLORS, FONT_SIZES, SPACING } from "../shared/design-tokens.js";
 
