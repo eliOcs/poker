@@ -7,8 +7,8 @@ import { DEFAULT_SETTINGS } from "./user.js";
  * @typedef {import('./user.js').User} User
  * @typedef {import('./id.js').Id} Id
  * @typedef {import('./user.js').UserSettings} UserSettings
- * @typedef {{ id: Id, name?: string, settings?: UserSettings }} SaveUserInput
- * @typedef {{ id: Id, name?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
+ * @typedef {{ id: Id, name?: string|null, email?: string|null, settings?: UserSettings }} SaveUserInput
+ * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
  * @typedef {{ playerId: Id, gameId: Id }} PlayerGameInput
  */
 
@@ -90,6 +90,7 @@ export function initialize(dbPath = undefined) {
       CREATE TABLE users (
         id TEXT PRIMARY KEY,
         name TEXT,
+        email TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
@@ -127,6 +128,10 @@ export function initialize(dbPath = undefined) {
     db.exec("ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}'");
   }
 
+  if (!columnExists("users", "email")) {
+    db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+  }
+
   logger.info("store initialized", { path: dbPath });
 }
 
@@ -136,15 +141,17 @@ export function saveUser(user) {
 
   const settingsJson = JSON.stringify(user.settings ?? {});
   const nameForDb = user.name === undefined ? null : user.name;
+  const emailForDb = user.email === undefined ? null : user.email;
   const stmt = db.prepare(`
-    INSERT INTO users (id, name, settings, updated_at)
-    VALUES (?, ?, ?, datetime('now'))
+    INSERT INTO users (id, name, email, settings, updated_at)
+    VALUES (?, ?, ?, ?, datetime('now'))
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
+      email = excluded.email,
       settings = excluded.settings,
       updated_at = datetime('now')
   `);
-  stmt.run(user.id, nameForDb, settingsJson);
+  stmt.run(user.id, nameForDb, emailForDb, settingsJson);
 }
 
 /**
@@ -156,7 +163,7 @@ export function loadUser(id) {
   if (!id) return null;
 
   const stmt = db.prepare(
-    "SELECT id, name, settings, created_at, updated_at FROM users WHERE id = ?",
+    "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE id = ?",
   );
   const row = stmt.get(id);
 
@@ -172,7 +179,7 @@ export function loadUserProfile(id) {
   if (!id) return null;
 
   const stmt = db.prepare(
-    "SELECT id, name, settings, created_at, updated_at FROM users WHERE id = ?",
+    "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE id = ?",
   );
   const row = stmt.get(id);
 
@@ -243,6 +250,7 @@ function hydrateUserRow(row) {
   return {
     id: /** @type {Id} */ (row.id),
     name: row.name === null ? undefined : /** @type {string} */ (row.name),
+    email: row.email === null ? undefined : /** @type {string} */ (row.email),
     settings: { ...DEFAULT_SETTINGS, ...savedSettings },
   };
 }

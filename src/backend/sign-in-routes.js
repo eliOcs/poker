@@ -11,6 +11,7 @@ import {
   normalizeReturnPath,
   saveEmailSignInToken,
 } from "./sign-in.js";
+import { DEFAULT_SETTINGS } from "./user.js";
 
 /** @returns {string} */
 function getAppOrigin() {
@@ -30,6 +31,37 @@ function setSessionCookie(res, userId) {
     ? ` Domain=${process.env.DOMAIN};`
     : "";
   res.setHeader("Set-Cookie", `phg=${userId};${cookieDomain} HttpOnly; Path=/`);
+}
+
+/**
+ * @param {Record<string, any>} users
+ * @param {import('./http-routes.js').Response} res
+ * @param {{ userId: string, email: string, returnPath: string }} signIn
+ * @returns {string}
+ */
+function completeSignIn(users, res, signIn) {
+  const resolvedUser = Store.loadUser(signIn.userId);
+  if (resolvedUser) {
+    Store.saveUser({
+      ...resolvedUser,
+      email: signIn.email,
+    });
+    users[resolvedUser.id] = {
+      ...resolvedUser,
+      email: signIn.email,
+    };
+  } else {
+    users[signIn.userId] = {
+      id: signIn.userId,
+      name: undefined,
+      email: signIn.email,
+      settings: { ...DEFAULT_SETTINGS },
+    };
+    Store.saveUser(users[signIn.userId]);
+  }
+
+  setSessionCookie(res, signIn.userId);
+  return signIn.returnPath;
 }
 
 /**
@@ -87,27 +119,28 @@ export function createSignInRoutes(services = {}) {
       },
     },
     {
-      method: "GET",
-      path: /^\/auth\/email-sign-in\/verify(?:\?.*)?$/,
-      handler: ({ req, res, users }) => {
-        const url = new URL(req.url ?? "", getAppOrigin());
-        const token = url.searchParams.get("token") ?? "";
+      method: "POST",
+      path: "/api/sign-in-links/verify",
+      handler: async ({ req, res, users, parseBody }) => {
+        const data = await parseBody(req);
+        const token =
+          data &&
+          typeof data === "object" &&
+          "token" in data &&
+          typeof data.token === "string"
+            ? data.token
+            : "";
+
         const signIn = consumeEmailSignInToken(token);
-
         if (!signIn) {
-          res.writeHead(302, { Location: "/" });
-          res.end();
-          return;
+          throw new HttpError(400, "Invalid or expired sign-in link", {
+            body: { error: "Invalid or expired sign-in link", status: 400 },
+          });
         }
 
-        const resolvedUser = Store.loadUser(signIn.userId);
-        if (resolvedUser) {
-          users[resolvedUser.id] = resolvedUser;
-        }
-
-        setSessionCookie(res, signIn.userId);
-        res.writeHead(302, { Location: signIn.returnPath });
-        res.end();
+        const returnPath = completeSignIn(users, res, signIn);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ returnPath }));
       },
     },
   ];

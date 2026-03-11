@@ -13,6 +13,7 @@ import * as Id from "./id.js";
  * @typedef {object} User
  * @property {Id} id - Unique identifier
  * @property {string|undefined} name - Display name
+ * @property {string|undefined} email - Verified sign-in email
  * @property {UserSettings} settings - User preferences
  */
 
@@ -29,6 +30,7 @@ export function create() {
   return {
     id: Id.generate(),
     name: undefined,
+    email: undefined,
     settings: { ...DEFAULT_SETTINGS },
   };
 }

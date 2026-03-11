@@ -367,6 +367,14 @@ export function createRoutes(users, games, broadcast, services = {}) {
     },
     {
       method: "GET",
+      path: /^\/auth\/email-sign-in\/callback(?:\?.*)?$/,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match, log }) => {
         const gameId = /** @type {string} */ (

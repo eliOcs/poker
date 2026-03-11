@@ -86,7 +86,7 @@ describe("http-routes sign in", () => {
     assert.equal(sentEmails[0].toEmail, "player@example.com");
     assert.match(
       sentEmails[0].signInUrl,
-      /^https:\/\/plutonpoker\.com\/auth\/email-sign-in\/verify\?token=/,
+      /^https:\/\/plutonpoker\.com\/auth\/email-sign-in\/callback\?token=/,
     );
   });
 
@@ -99,12 +99,7 @@ describe("http-routes sign in", () => {
       },
     });
     const requestRoute = findRoute(routes, "POST", "/api/sign-in-links");
-    const verifyRoute = routes.find(
-      (route) =>
-        route.method === "GET" &&
-        String(route.path) ===
-          String(/^\/auth\/email-sign-in\/verify(?:\?.*)?$/),
-    );
+    const verifyRoute = findRoute(routes, "POST", "/api/sign-in-links/verify");
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
@@ -125,10 +120,9 @@ describe("http-routes sign in", () => {
     const originalUserId = originalCookie.match(/phg=([^;]+)/)?.[1];
     const token = new URL(signInUrl).searchParams.get("token");
 
-    const verifyReq = createRequest(
-      `/auth/email-sign-in/verify?token=${encodeURIComponent(String(token))}`,
-      "GET",
-    );
+    const verifyReq = createRequest("/api/sign-in-links/verify", "POST", {
+      token,
+    });
     const verifyRes = createResponse();
     await verifyRoute.handler({
       req: verifyReq,
@@ -140,12 +134,15 @@ describe("http-routes sign in", () => {
       log: null,
     });
 
-    assert.equal(verifyRes.statusCode, 302);
-    assert.equal(verifyRes.headers.Location, "/games/test-game?buyin=50");
+    assert.equal(verifyRes.statusCode, 200);
+    assert.deepEqual(JSON.parse(verifyRes.body), {
+      returnPath: "/games/test-game?buyin=50",
+    });
     assert.match(
       String(verifyRes.headers["Set-Cookie"]),
       new RegExp(originalUserId),
     );
+    assert.equal(Store.loadUser(originalUserId)?.email, "player@example.com");
   });
 
   it("falls back to root when the requested return path is not relative", async () => {
@@ -157,12 +154,7 @@ describe("http-routes sign in", () => {
       },
     });
     const requestRoute = findRoute(routes, "POST", "/api/sign-in-links");
-    const verifyRoute = routes.find(
-      (route) =>
-        route.method === "GET" &&
-        String(route.path) ===
-          String(/^\/auth\/email-sign-in\/verify(?:\?.*)?$/),
-    );
+    const verifyRoute = findRoute(routes, "POST", "/api/sign-in-links/verify");
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
@@ -180,10 +172,9 @@ describe("http-routes sign in", () => {
     });
 
     const token = new URL(signInUrl).searchParams.get("token");
-    const verifyReq = createRequest(
-      `/auth/email-sign-in/verify?token=${encodeURIComponent(String(token))}`,
-      "GET",
-    );
+    const verifyReq = createRequest("/api/sign-in-links/verify", "POST", {
+      token,
+    });
     const verifyRes = createResponse();
     await verifyRoute.handler({
       req: verifyReq,
@@ -195,7 +186,31 @@ describe("http-routes sign in", () => {
       log: null,
     });
 
-    assert.equal(verifyRes.statusCode, 302);
-    assert.equal(verifyRes.headers.Location, "/");
+    assert.equal(verifyRes.statusCode, 200);
+    assert.deepEqual(JSON.parse(verifyRes.body), {
+      returnPath: "/",
+    });
+  });
+
+  it("returns an error when the sign-in token is invalid", async () => {
+    const users = {};
+    const routes = createRoutes(users, new Map(), () => {}, {});
+    const verifyRoute = findRoute(routes, "POST", "/api/sign-in-links/verify");
+
+    const verifyReq = createRequest("/api/sign-in-links/verify", "POST", {
+      token: "invalid-token",
+    });
+    const verifyRes = createResponse();
+    await assert.rejects(() =>
+      verifyRoute.handler({
+        req: verifyReq,
+        res: verifyRes,
+        match: null,
+        users,
+        games: new Map(),
+        broadcast: () => {},
+        log: null,
+      }),
+    );
   });
 });

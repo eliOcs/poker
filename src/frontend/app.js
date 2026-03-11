@@ -128,7 +128,70 @@ class App extends LitElement {
     this._playerProfileId = null;
     this._showProfileSettings = false;
     this._settingsVolume = 0.75;
+    this._signInCallbackHandled = false;
     initAppEventHandlers(this);
+  }
+
+  _normalizeCallbackReturnPath(value) {
+    if (typeof value !== "string" || !value.startsWith("/")) {
+      return "/";
+    }
+    if (value.startsWith("//")) {
+      return "/";
+    }
+    return value;
+  }
+
+  _isSignInCallbackRoute() {
+    return window.location.pathname === "/auth/email-sign-in/callback";
+  }
+
+  async _handleSignInCallback() {
+    if (this._signInCallbackHandled) return;
+    this._signInCallbackHandled = true;
+
+    const url = new URL(window.location.href);
+    if (!this._isSignInCallbackRoute()) return;
+
+    const token = url.searchParams.get("token") ?? "";
+    if (!token) {
+      this.toast = {
+        message: "Unable to sign in",
+        variant: "error",
+      };
+      history.replaceState({}, "", "/");
+      this.path = "/";
+      return;
+    }
+
+    let returnTo = "/";
+    try {
+      const res = await fetch("/api/sign-in-links/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) {
+        throw new Error("Invalid or expired sign-in link");
+      }
+      const data = await res.json();
+      returnTo = this._normalizeCallbackReturnPath(data?.returnPath ?? "/");
+      this.toast = {
+        message: "Signed in successfully",
+        variant: "success",
+      };
+      await this._fetchUser();
+    } catch {
+      this.toast = {
+        message: "Unable to sign in",
+        variant: "error",
+      };
+    }
+
+    const nextUrl = new URL(returnTo, window.location.origin);
+    const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+    history.replaceState({}, "", nextPath);
+    this.path = nextUrl.pathname;
   }
 
   // --- History Tasks ---
@@ -174,7 +237,11 @@ class App extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._fetchUser();
+    if (this._isSignInCallbackRoute()) {
+      void this._handleSignInCallback();
+    } else {
+      this._fetchUser();
+    }
     connectAppEventHandlers(this);
   }
 

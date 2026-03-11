@@ -66,7 +66,7 @@ export function getEmailSignInExpiry(now = new Date()) {
  * @returns {string}
  */
 export function buildEmailSignInUrl(origin, token) {
-  const url = new URL("/auth/email-sign-in/verify", origin);
+  const url = new URL("/auth/email-sign-in/callback", origin);
   url.searchParams.set("token", token);
   return url.toString();
 }

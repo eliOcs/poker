@@ -120,12 +120,18 @@ describe("store", function () {
     it("persists a user", function () {
       Store.initialize();
 
-      const user = { id: "abc123", name: "Alice", settings: { volume: 0.5 } };
+      const user = {
+        id: "abc123",
+        name: "Alice",
+        email: "alice@example.com",
+        settings: { volume: 0.5 },
+      };
       Store.saveUser(user);
 
       const loaded = Store.loadUser("abc123");
       assert.strictEqual(loaded.id, "abc123");
       assert.strictEqual(loaded.name, "Alice");
+      assert.strictEqual(loaded.email, "alice@example.com");
       assert.strictEqual(loaded.settings.volume, 0.5);
     });
 
@@ -174,11 +180,17 @@ describe("store", function () {
     it("normalizes null name from DB to undefined", function () {
       Store.initialize();
 
-      const user = { id: "abc123", name: null, settings: { volume: 0.75 } };
+      const user = {
+        id: "abc123",
+        name: null,
+        email: null,
+        settings: { volume: 0.75 },
+      };
       Store.saveUser(user);
 
       const loaded = Store.loadUser("abc123");
       assert.strictEqual(loaded.name, undefined);
+      assert.strictEqual(loaded.email, undefined);
     });
 
     it("persists user settings", function () {
