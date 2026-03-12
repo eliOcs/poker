@@ -8,7 +8,7 @@ import {
 import * as logger from "./logger.js";
 import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
-import { cleanupEmailSink } from "./ses.js";
+import { cleanupEmailSink } from "./email.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import {
   createRateLimiter,
@@ -100,17 +100,15 @@ async function resolveGameForUpgrade(user, gameId) {
 
 /**
  * @param {import('http').IncomingMessage} req
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  */
 function throwIfRateLimitedHttpRequest(req, log) {
   const key = getRequestRateLimitKey(req);
   try {
     const rateLimit = actionRateLimiter.check(key, { source: "http" });
-    if (log) {
-      log.context.rateLimit = rateLimit.context;
-    }
+    log.context.rateLimit = rateLimit.context;
   } catch (err) {
-    if (log && err instanceof RateLimitError) {
+    if (err instanceof RateLimitError) {
       log.context.rateLimit = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
@@ -127,7 +125,7 @@ function throwIfRateLimitedHttpRequest(req, log) {
 /**
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  */
 async function handleRequest(req, res, log) {
   throwIfRateLimitedHttpRequest(req, log);
@@ -171,14 +169,12 @@ async function handleRequest(req, res, log) {
 
 /**
  * @param {import('http').ServerResponse} res
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  * @param {unknown} err
  */
 function handleRequestError(res, log, err) {
   if (err instanceof HttpError) {
-    if (log) {
-      log.context.error = { message: err.message };
-    }
+    log.context.error = { message: err.message };
     if (!res.headersSent) {
       res.writeHead(err.status, {
         "content-type": "application/json",
@@ -191,7 +187,7 @@ function handleRequestError(res, log, err) {
     return;
   }
 
-  if (log && err instanceof Error) {
+  if (err instanceof Error) {
     log.context.error = { message: err.message };
   }
   if (!res.headersSent) {
@@ -203,18 +199,14 @@ function handleRequestError(res, log, err) {
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
-  const log = url === "/up" ? null : createLog("http_request");
-
-  if (log) {
-    log.context.request = { method, path: url };
-  }
+  const log = createLog("http_request");
+  log.context.request = { method, path: url };
 
   handleRequest(req, res, log)
     .catch((err) => {
       handleRequestError(res, log, err);
     })
     .finally(() => {
-      if (!log) return;
       log.context.request = {
         ...(log.context.request || {}),
         status: res.statusCode,

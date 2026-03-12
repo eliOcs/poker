@@ -12,6 +12,10 @@ import { createTempDataDir } from "./temp-data-dir.js";
 
 let testDataDir;
 
+function createLog() {
+  return { context: {} };
+}
+
 function createRequest(url, method, body = null) {
   const req = Readable.from(body ? [JSON.stringify(body)] : []);
   req.url = url;
@@ -74,9 +78,15 @@ describe("http-routes sign in", () => {
   it("sends a sign-in email with a verification link", async () => {
     const users = {};
     const sentEmails = [];
+    const log = { context: {} };
     const routes = createRoutes(users, new Map(), () => {}, {
       sendSignInEmail: async (payload) => {
         sentEmails.push(payload);
+        return {
+          kind: "sign_in",
+          provider: "test",
+          toEmail: payload.toEmail,
+        };
       },
     });
     const route = findRoute(routes, "POST", "/api/sign-in-links");
@@ -94,7 +104,7 @@ describe("http-routes sign in", () => {
       users,
       games: new Map(),
       broadcast: () => {},
-      log: { context: {} },
+      log,
     });
 
     assert.equal(res.statusCode, 204);
@@ -104,6 +114,11 @@ describe("http-routes sign in", () => {
       sentEmails[0].signInUrl,
       /^https:\/\/plutonpoker\.com\/auth\/email-sign-in\/callback\?token=/,
     );
+    assert.deepEqual(log.context.email, {
+      kind: "sign_in",
+      provider: "test",
+      toEmail: "player@example.com",
+    });
   });
 
   it("verifies a sign-in token and restores the original user session", async () => {
@@ -147,7 +162,7 @@ describe("http-routes sign in", () => {
       users,
       games: new Map(),
       broadcast: () => {},
-      log: null,
+      log: createLog(),
     });
 
     assert.equal(verifyRes.statusCode, 200);
@@ -235,7 +250,7 @@ describe("http-routes sign in", () => {
       broadcast: (gameId) => {
         broadcastedGameId = gameId;
       },
-      log: null,
+      log: createLog(),
     });
 
     assert.equal(verifyRes.statusCode, 200);
@@ -393,7 +408,7 @@ describe("http-routes sign in", () => {
       users,
       games,
       broadcast: () => {},
-      log: null,
+      log: createLog(),
     });
 
     const rewritten = await readFile(`${testDataDir}/history-game.ohh`, "utf8");
@@ -439,7 +454,7 @@ describe("http-routes sign in", () => {
       users,
       games: new Map(),
       broadcast: () => {},
-      log: null,
+      log: createLog(),
     });
 
     assert.equal(verifyRes.statusCode, 200);
@@ -465,7 +480,7 @@ describe("http-routes sign in", () => {
         users,
         games: new Map(),
         broadcast: () => {},
-        log: null,
+        log: createLog(),
       }),
     );
   });

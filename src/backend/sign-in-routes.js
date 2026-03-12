@@ -1,6 +1,6 @@
 import { HttpError } from "./http-error.js";
 import * as Store from "./store.js";
-import { sendSignInEmail as sendSesSignInEmail } from "./ses.js";
+import { sendSignInEmail as sendEmail } from "./email.js";
 import { rewritePlayerIdInHandHistory } from "./poker/hand-history/io.js";
 import {
   buildEmailSignInUrl,
@@ -117,6 +117,14 @@ function migrateGuestSessionToRegisteredUser(
 }
 
 /**
+ * @param {import('./logger.js').Log} log
+ * @param {{ kind: string, provider?: string, toEmail: string, sinkFileName?: string }} delivery
+ */
+function setEmailDeliveryLogContext(log, delivery) {
+  log.context.email = delivery;
+}
+
+/**
  * @param {Record<string, any>} users
  * @param {Map<Id, import('./poker/game.js').Game>} games
  * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
@@ -185,12 +193,12 @@ async function completeSignIn(
 
 /**
  * @param {{
- *   sendSignInEmail?: typeof sendSesSignInEmail,
+ *   sendSignInEmail?: typeof sendEmail,
  *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>
  * }} [services]
  */
 export function createSignInRoutes(services = {}) {
-  const sendSignInEmail = services.sendSignInEmail || sendSesSignInEmail;
+  const sendSignInEmail = services.sendSignInEmail || sendEmail;
   const clientConnections = services.clientConnections || new Map();
 
   return [
@@ -230,12 +238,13 @@ export function createSignInRoutes(services = {}) {
           returnPath,
         });
 
-        await sendSignInEmail({
+        const delivery = await sendSignInEmail({
           toEmail: email,
           appOrigin,
           signInUrl: buildEmailSignInUrl(appOrigin, token),
           expiresInMinutes,
         });
+        setEmailDeliveryLogContext(log, delivery);
 
         res.writeHead(204);
         res.end();

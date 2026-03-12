@@ -11,6 +11,7 @@ import {
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 import { getSessionPlayerLogContext } from "./logger.js";
+import { createLog } from "./logger.js";
 import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 export { logFrontendErrorReport } from "./client-error-reporting.js";
@@ -33,7 +34,7 @@ const userCreationRateLimiter = createRateLimiter({
 
 /**
  * @param {Request} req
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  */
 function throwIfUserCreateRateLimited(req, log) {
   const clientIp = getClientIp(req);
@@ -41,11 +42,9 @@ function throwIfUserCreateRateLimited(req, log) {
     const creationRateLimit = userCreationRateLimiter.check(`ip:${clientIp}`, {
       source: "user-create",
     });
-    if (log) {
-      log.context.userCreateRateLimit = creationRateLimit.context;
-    }
+    log.context.userCreateRateLimit = creationRateLimit.context;
   } catch (err) {
-    if (log && err instanceof RateLimitError) {
+    if (err instanceof RateLimitError) {
       log.context.userCreateRateLimit = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
@@ -126,29 +125,28 @@ export function parseCookies(rawCookies) {
  * @param {Request} req
  * @param {Response} res
  * @param {Record<string, UserType>} users
- * @param {import('./logger.js').Log|null} [log]
+ * @param {import('./logger.js').Log} log
  * @returns {UserType}
  */
-export function getOrCreateUser(req, res, users, log = null) {
+export function getOrCreateUser(req, res, users, log) {
   const cookies = parseCookies(req.headers.cookie ?? "");
   const cookieId = cookies.phg ?? "";
   const existingUser = users[cookieId];
   if (existingUser) {
-    if (log)
-      Object.assign(log.context, getSessionPlayerLogContext(existingUser));
+    Object.assign(log.context, getSessionPlayerLogContext(existingUser));
     return existingUser;
   }
 
   const loadedUser = Store.loadUser(cookieId);
   if (loadedUser) {
     users[loadedUser.id] = loadedUser;
-    if (log) Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
+    Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
     return loadedUser;
   }
 
   throwIfUserCreateRateLimited(req, log);
   const user = createAndPersistUser(res, users);
-  if (log) Object.assign(log.context, getSessionPlayerLogContext(user));
+  Object.assign(log.context, getSessionPlayerLogContext(user));
   return user;
 }
 
@@ -193,7 +191,7 @@ function syncUserToGames(user, games, broadcast) {
  * @property {Record<string, UserType>} users
  * @property {Map<Id, Game>} games
  * @property {(gameId: Id) => void} broadcast
- * @property {import('./logger.js').Log|null} log
+ * @property {import('./logger.js').Log} log
  */
 
 /**
@@ -317,30 +315,28 @@ export function createRoutes(users, games, broadcast, services = {}) {
           const buyIn = parseBuyIn(data);
           const game = PokerGame.createTournament({ seats, buyIn });
           games.set(game.id, game);
-          if (log)
-            Object.assign(log.context, {
-              game: {
-                type: "tournament",
-                id: game.id,
-                seats,
-                buyIn,
-                initialStack: game.tournament?.initialStack,
-              },
-            });
+          Object.assign(log.context, {
+            game: {
+              type: "tournament",
+              id: game.id,
+              seats,
+              buyIn,
+              initialStack: game.tournament?.initialStack,
+            },
+          });
           respondWithJson(res, { id: game.id, type: "tournament" });
         } else {
           const blinds = parseBlinds(data);
           const game = PokerGame.create({ blinds, seats });
           games.set(game.id, game);
-          if (log)
-            Object.assign(log.context, {
-              game: {
-                type: "cash",
-                id: game.id,
-                blinds: `${blinds.small}/${blinds.big}`,
-                seats,
-              },
-            });
+          Object.assign(log.context, {
+            game: {
+              type: "cash",
+              id: game.id,
+              blinds: `${blinds.small}/${blinds.big}`,
+              seats,
+            },
+          });
           respondWithJson(res, { id: game.id, type: "cash" });
         }
       },
@@ -468,7 +464,7 @@ export async function handleRequest(req, res, routes) {
       users: {},
       games: new Map(),
       broadcast: () => {},
-      log: null,
+      log: createLog("http_request"),
     });
     return;
   }

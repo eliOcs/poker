@@ -42,6 +42,8 @@ async function writeEmailToSink(email) {
     JSON.stringify(email, null, 2),
     "utf8",
   );
+
+  return { provider: "sink", sinkFileName: fileName };
 }
 
 /**
@@ -60,7 +62,7 @@ export async function sendSignInEmail({
   });
 
   if (getEmailSinkDir()) {
-    await writeEmailToSink({
+    const sink = await writeEmailToSink({
       toEmail,
       appOrigin,
       signInUrl,
@@ -69,7 +71,12 @@ export async function sendSignInEmail({
       html: email.html,
       text: email.text,
     });
-    return;
+    return {
+      kind: "sign_in",
+      provider: sink.provider,
+      toEmail,
+      sinkFileName: sink.sinkFileName,
+    };
   }
 
   await sesClient.send(
@@ -96,4 +103,10 @@ export async function sendSignInEmail({
       },
     }),
   );
+
+  return {
+    kind: "sign_in",
+    provider: "ses",
+    toEmail,
+  };
 }
