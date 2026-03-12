@@ -55,6 +55,11 @@ jobs:
       - name: Create .env file
         run: cp .env.example .env
 
+      - name: Prepare e2e artifact directories
+        run: |
+          rm -rf test-results/runtime-data test-results/runtime-emails
+          mkdir -p test-results/runtime-data test-results/runtime-emails
+
       - name: Run e2e tests
         run: npm run test:e2e
 
@@ -62,7 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: e2e-failure-artifacts
           path: |
             test-results/
             playwright-report/

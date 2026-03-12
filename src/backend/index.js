@@ -8,7 +8,6 @@ import {
 import * as logger from "./logger.js";
 import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
-import { cleanupEmailSink } from "./email.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import {
   createRateLimiter,
@@ -288,11 +287,6 @@ async function gracefulShutdown(signal) {
   games.clear();
 
   Store.close();
-  await cleanupEmailSink().catch((err) => {
-    logger.error("email sink cleanup failed", {
-      error: { message: err.message },
-    });
-  });
   logger.info("shutdown complete");
   process.exit(0);
 }
