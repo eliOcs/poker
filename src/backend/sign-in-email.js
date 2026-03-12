@@ -34,7 +34,7 @@ function escapeHtml(value) {
 export function renderSignInEmail({ appOrigin, signInUrl, expiresInMinutes }) {
   const safeOrigin = escapeHtml(appOrigin.replace(/\/$/, ""));
   const safeUrl = escapeHtml(signInUrl);
-  const logoUrl = `${safeOrigin}/logo.webp`;
+  const logoUrl = `${safeOrigin}/logo.png`;
 
   return {
     subject: "Sign in to Pluton Poker",

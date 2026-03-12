@@ -61,6 +61,26 @@ export function renderPlayerProfileView(app) {
 /**
  * @param {any} app
  */
+export function renderHomeView(app) {
+  return html`${renderToast(app)}<phg-home
+      .user=${app.user}
+      .path=${app.path}
+    ></phg-home>`;
+}
+
+/**
+ * @param {any} app
+ */
+export function renderReleaseNotesView(app) {
+  return html`${renderToast(app)}<phg-release-notes
+      .user=${app.user}
+      .path=${app.path}
+    ></phg-release-notes>`;
+}
+
+/**
+ * @param {any} app
+ */
 export function renderAuthStatusView(app) {
   return html`${renderToast(app)}${renderAuthStatus()}`;
 }

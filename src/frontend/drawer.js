@@ -74,19 +74,21 @@ const canShare = typeof navigator.share === "function";
 function renderSitOutButton(game) {
   const state = game._getSitOutState();
   if (state === "active") {
-    return html`<button @click=${game.toggleSitOut}>
+    return html`<button slot="main" @click=${game.toggleSitOut}>
       ${iconSitOut} Sit Out
     </button>`;
   }
   if (state === "pendingSitOut") {
-    return html`<button class="active" @click=${game.toggleSitOut}>
+    return html`<button slot="main" class="active" @click=${game.toggleSitOut}>
       ${iconSitOut} Sitting Out
     </button>`;
   }
   if (state === "sittingOut") {
     const canLeave = !game.game?.tournament || game.game?.handNumber === 0;
     if (!canLeave) return "";
-    return html`<button @click=${game.leaveTable}>${iconSitOut} Leave</button>`;
+    return html`<button slot="main" @click=${game.leaveTable}>
+      ${iconSitOut} Leave
+    </button>`;
   }
   return "";
 }
@@ -105,21 +107,32 @@ export function renderDrawer(game) {
       ?open=${game._drawerOpen}
       @drawer-toggle=${game.toggleDrawer}
     >
-      <button ?disabled=${!hasRecordedHands} @click=${game.openRanking}>
+      <button
+        slot="main"
+        ?disabled=${!hasRecordedHands}
+        @click=${game.openRanking}
+      >
         ${iconRankings} Rankings
       </button>
-      <button ?disabled=${!hasRecordedHands} @click=${game.openHistory}>
+      <button
+        slot="main"
+        ?disabled=${!hasRecordedHands}
+        @click=${game.openHistory}
+      >
         ${iconHistory} History
       </button>
       ${renderSitOutButton(game)}
-      <button @click=${game.copyGameLink}>
+      <button slot="main" @click=${game.copyGameLink}>
         ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
       </button>
       ${canShare
-        ? html`<button @click=${game.shareGameLink}>${iconShare} Share</button>`
+        ? html`<button slot="main" @click=${game.shareGameLink}>
+            ${iconShare} Share
+          </button>`
         : ""}
       ${isSignedIn
         ? html`<a
+            slot="footer"
             class="drawer-account"
             href=${`/players/${game.user.id}`}
             target="_blank"
@@ -127,10 +140,16 @@ export function renderDrawer(game) {
           >
             ${ICONS.signIn} ${accountLabel}
           </a>`
-        : html`<button class="drawer-sign-in" @click=${game.openSignIn}>
+        : html`<button
+            slot="footer"
+            class="drawer-sign-in"
+            @click=${game.openSignIn}
+          >
             ${ICONS.signIn} Sign in
           </button>`}
-      <button @click=${game.openSettings}>${ICONS.settings} Settings</button>
+      <button slot="footer" @click=${game.openSettings}>
+        ${ICONS.settings} Settings
+      </button>
     </phg-navigation-drawer>
   `;
 }

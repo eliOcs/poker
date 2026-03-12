@@ -164,6 +164,7 @@ describe("phg-player-profile", () => {
     expect(accountLink).to.exist;
     expect(accountLink.classList.contains("drawer-account")).to.equal(true);
     expect(accountLink.classList.contains("active")).to.equal(true);
+    expect(accountLink.hasAttribute("target")).to.equal(false);
   });
 
   it("dispatches open-sign-in from the drawer when signed out", async () => {

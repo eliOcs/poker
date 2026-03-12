@@ -46,6 +46,25 @@ describe("phg-app", () => {
     globalThis.fetch = OriginalFetch;
   });
 
+  describe("SPA routes", () => {
+    it("renders release notes on the app route", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/release-notes";
+      await element.updateComplete;
+
+      const releaseNotes =
+        element.shadowRoot?.querySelector("phg-release-notes");
+      expect(releaseNotes).to.exist;
+    });
+  });
+
   describe("WebSocket reconnection", () => {
     let element;
 

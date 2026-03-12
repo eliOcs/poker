@@ -36,7 +36,7 @@ const routes = {
   "/logo.webp": "src/frontend/logo.webp",
   "/base.css": "src/frontend/base.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
-  "/release-notes.html": "src/frontend/release-notes.html",
+  "/release-notes": "src/frontend/index.html",
 };
 
 // Handle requests

@@ -1,8 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
-import "./navigation-drawer.js";
-import { renderPlayerProfileDrawer } from "./player-profile-drawer.js";
+import { renderAppNavigationDrawer } from "./app-navigation-drawer.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -345,7 +344,12 @@ class PlayerProfile extends LitElement {
 
     return html`
       <div class="layout">
-        ${renderPlayerProfileDrawer(this)}
+        ${renderAppNavigationDrawer({
+          view: this,
+          playActive: false,
+          accountActive:
+            !!this.user?.id && this.path === `/players/${this.user.id}`,
+        })}
         <div class="main">
           <div class="content">
             <section class="panel">

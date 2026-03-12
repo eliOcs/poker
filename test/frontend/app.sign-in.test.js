@@ -265,4 +265,41 @@ describe("phg-app sign in", () => {
       "Sign in",
     );
   });
+
+  it("opens the sign-in modal from the landing page drawer event", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Test",
+            settings: { volume: 0.75 },
+          }),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    await waitUntil(() => element.shadowRoot.querySelector("phg-home"), {
+      timeout: 2000,
+    });
+
+    const home = element.shadowRoot.querySelector("phg-home");
+    home.dispatchEvent(
+      new CustomEvent("open-sign-in", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await element.updateComplete;
+
+    const modal = element.shadowRoot.querySelector("phg-modal");
+    expect(modal).to.exist;
+    await modal.updateComplete;
+    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
+      "Sign in",
+    );
+  });
 });

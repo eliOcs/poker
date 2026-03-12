@@ -7,6 +7,7 @@ import "./home.js";
 import "./index.js";
 import "./history.js";
 import "./player-profile.js";
+import "./release-notes.js";
 import "./toast.js";
 import "./modal.js";
 import "./button.js";
@@ -21,8 +22,9 @@ import {
   renderGameView,
   renderHistoryView,
   renderPlayerProfileView,
+  renderHomeView,
+  renderReleaseNotesView,
   renderAuthStatusView,
-  renderToast,
 } from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 
@@ -550,6 +552,7 @@ class App extends LitElement {
       /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
     );
     const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
+    const releaseNotesMatch = this.path === "/release-notes";
     const gameId = gameMatch?.[1] || historyMatch?.[1];
 
     this._manageConnection(gameId);
@@ -563,7 +566,12 @@ class App extends LitElement {
       return html`${renderPlayerProfileView(this)}
       ${renderProfileSettingsModal(this)} ${renderProfileSignInModal(this)}`;
     }
-    return html`${renderToast(this)}<phg-home></phg-home>`;
+    if (releaseNotesMatch) {
+      return html`${renderReleaseNotesView(this)}
+      ${renderProfileSettingsModal(this)} ${renderProfileSignInModal(this)}`;
+    }
+    return html`${renderHomeView(this)} ${renderProfileSettingsModal(this)}
+    ${renderProfileSignInModal(this)}`;
   }
 }
 

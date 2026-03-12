@@ -108,7 +108,7 @@ class NavigationDrawer extends LitElement {
           padding: var(--space-lg) 0 var(--space-md);
         }
 
-        slot {
+        .section {
           display: flex;
           flex-direction: column;
           min-width: 0;
@@ -117,14 +117,20 @@ class NavigationDrawer extends LitElement {
           gap: var(--space-sm);
         }
 
+        .section.main {
+          flex: 1;
+        }
+
+        .section.footer {
+          padding-top: var(--space-lg);
+        }
+
         .home-link {
           display: flex;
           justify-content: center;
           align-items: center;
           margin-inline: var(--space-md);
-          padding: var(--space-sm) var(--space-md) var(--space-md);
-          margin-bottom: var(--space-sm);
-          border-bottom: 1px solid var(--color-bg-light);
+          padding: var(--space-md) var(--space-md) var(--space-lg);
           text-decoration: none;
         }
 
@@ -137,6 +143,21 @@ class NavigationDrawer extends LitElement {
           max-width: 140px;
           height: auto;
           image-rendering: pixelated;
+        }
+
+        hr {
+          width: 100%;
+          margin: 0;
+          border: 0;
+          border-top: 1px solid var(--color-bg-light);
+        }
+
+        .section-divider {
+          margin: 0 var(--space-md) var(--space-md);
+        }
+
+        .footer-divider {
+          margin: var(--space-lg) var(--space-md) 0;
         }
 
         ::slotted(.drawer-entry),
@@ -170,27 +191,28 @@ class NavigationDrawer extends LitElement {
           background: var(--color-bg-light);
         }
 
+        ::slotted(a.drawer-entry:visited),
+        ::slotted(a.drawer-item:visited) {
+          color: var(--color-fg-medium);
+        }
+
         ::slotted(.drawer-entry.active),
         ::slotted(.drawer-btn.active),
         ::slotted(.drawer-item.active) {
           color: var(--color-primary);
         }
 
-        ::slotted(.drawer-sign-in) {
-          margin-top: auto;
+        ::slotted(a.drawer-entry.active:visited),
+        ::slotted(a.drawer-item.active:visited) {
           color: var(--color-primary);
-          border-top: 1px solid var(--color-bg-light);
-          padding-top: calc(var(--space-md) + var(--space-sm));
+        }
+
+        ::slotted(.drawer-sign-in) {
+          color: var(--color-primary);
         }
 
         ::slotted(.drawer-sign-in:hover) {
           color: var(--color-primary);
-        }
-
-        ::slotted(.drawer-account) {
-          margin-top: auto;
-          border-top: 1px solid var(--color-bg-light);
-          padding-top: calc(var(--space-md) + var(--space-sm));
         }
 
         ::slotted(.drawer-entry:disabled),
@@ -236,20 +258,21 @@ class NavigationDrawer extends LitElement {
   }
 
   _syncSlottedItems() {
-    const slot = this.shadowRoot?.querySelector("slot");
-    if (!slot) return;
-    const items = slot.assignedElements({ flatten: true });
-    for (const item of items) {
-      if (!(item instanceof HTMLElement)) continue;
-      if (item.matches("a, button")) {
-        item.classList.add("drawer-entry");
-      }
+    const slots = Array.from(this.shadowRoot?.querySelectorAll("slot") ?? []);
+    for (const slot of slots) {
+      const items = slot.assignedElements({ flatten: true });
+      for (const item of items) {
+        if (!(item instanceof HTMLElement)) continue;
+        if (item.matches("a, button")) {
+          item.classList.add("drawer-entry");
+        }
 
-      for (const icon of Array.from(item.querySelectorAll("svg"))) {
-        icon.style.width = "20px";
-        icon.style.height = "20px";
-        icon.style.minWidth = "20px";
-        icon.style.fill = "currentColor";
+        for (const icon of Array.from(item.querySelectorAll("svg"))) {
+          icon.style.width = "20px";
+          icon.style.height = "20px";
+          icon.style.minWidth = "20px";
+          icon.style.fill = "currentColor";
+        }
       }
     }
   }
@@ -271,7 +294,14 @@ class NavigationDrawer extends LitElement {
           >
             <img class="home-logo" src="/logo.webp" alt="Pluton Poker" />
           </a>
-          <slot @slotchange=${this._syncSlottedItems}></slot>
+          <hr class="section-divider" />
+          <div class="section main">
+            <slot name="main" @slotchange=${this._syncSlottedItems}></slot>
+          </div>
+          <hr class="footer-divider" />
+          <div class="section footer">
+            <slot name="footer" @slotchange=${this._syncSlottedItems}></slot>
+          </div>
         </nav>
       </div>
     `;
