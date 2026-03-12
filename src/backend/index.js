@@ -22,6 +22,7 @@ import { getFilePath, respondWithFile } from "./static-files.js";
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./id.js').Id} Id
  */
 
 const server = http.createServer();
@@ -29,15 +30,17 @@ const server = http.createServer();
 /** @type {Record<string, UserType>} */
 const users = {};
 
-/** @type {Map<string, Game>} */
+/** @type {Map<Id, Game>} */
 const games = new Map();
 
-/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id }>} */
 const clientConnections = new Map();
 
 const { broadcastGameMessage, broadcastGameStateMessage } =
   createGameBroadcaster(games, clientConnections);
-const routes = createRoutes(users, games, broadcastGameStateMessage);
+const routes = createRoutes(users, games, broadcastGameStateMessage, {
+  clientConnections,
+});
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
 const actionRateLimiter = createRateLimiter({
@@ -59,7 +62,7 @@ function getRequestRateLimitKey(req) {
 
 /**
  * @param {UserType|undefined} user
- * @param {string|undefined} gameId
+ * @param {Id|undefined} gameId
  * @returns {Promise<Game|null>}
  */
 async function resolveGameForUpgrade(user, gameId) {

@@ -1,6 +1,7 @@
 import { HttpError } from "./http-error.js";
 import * as Store from "./store.js";
 import { sendSignInEmail as sendSesSignInEmail } from "./ses.js";
+import { rewritePlayerIdInHandHistory } from "./poker/hand-history/io.js";
 import {
   buildEmailSignInUrl,
   consumeEmailSignInToken,
@@ -13,6 +14,10 @@ import {
 } from "./sign-in.js";
 import { DEFAULT_SETTINGS } from "./user.js";
 
+/**
+ * @typedef {import('./id.js').Id} Id
+ */
+
 /** @returns {string} */
 function getAppOrigin() {
   const appOrigin = process.env.APP_ORIGIN?.replace(/\/$/, "");
@@ -24,7 +29,7 @@ function getAppOrigin() {
 
 /**
  * @param {import('./http-routes.js').Response} res
- * @param {string} userId
+ * @param {Id} userId
  */
 function setSessionCookie(res, userId) {
   const cookieDomain = process.env.DOMAIN
@@ -34,41 +39,159 @@ function setSessionCookie(res, userId) {
 }
 
 /**
- * @param {Record<string, any>} users
- * @param {import('./http-routes.js').Response} res
- * @param {{ userId: string, email: string, returnPath: string }} signIn
- * @returns {string}
+ * @param {Map<Id, import('./poker/game.js').Game>} games
+ * @param {Id} guestUserId
+ * @param {import('./user.js').User} targetUser
+ * @returns {Set<Id>}
  */
-function completeSignIn(users, res, signIn) {
-  const resolvedUser = Store.loadUser(signIn.userId);
-  if (resolvedUser) {
-    Store.saveUser({
-      ...resolvedUser,
-      email: signIn.email,
-    });
-    users[resolvedUser.id] = {
-      ...resolvedUser,
-      email: signIn.email,
-    };
-  } else {
-    users[signIn.userId] = {
-      id: signIn.userId,
-      name: undefined,
-      email: signIn.email,
-      settings: { ...DEFAULT_SETTINGS },
-    };
-    Store.saveUser(users[signIn.userId]);
+function migrateGuestSeatsToRegisteredUser(games, guestUserId, targetUser) {
+  /** @type {Set<Id>} */
+  const changedGameIds = new Set();
+  for (const [gameId, game] of games) {
+    let changed = false;
+    for (const seat of game.seats) {
+      if (!seat.empty && seat.player.id === guestUserId) {
+        seat.player.id = targetUser.id;
+        seat.player.name = targetUser.name;
+        seat.disconnected = false;
+        changed = true;
+      }
+    }
+    if (changed) {
+      changedGameIds.add(gameId);
+    }
   }
 
-  setSessionCookie(res, signIn.userId);
+  return changedGameIds;
+}
+
+/**
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {Id} guestUserId
+ * @param {import('./user.js').User} targetUser
+ * @param {Set<Id>} changedGameIds
+ */
+function migrateGuestConnectionsToRegisteredUser(
+  clientConnections,
+  guestUserId,
+  targetUser,
+  changedGameIds,
+) {
+  for (const [, connection] of clientConnections) {
+    if (connection.user.id === guestUserId) {
+      connection.user = targetUser;
+      changedGameIds.add(connection.gameId);
+    }
+  }
+}
+
+/**
+ * @param {Map<Id, import('./poker/game.js').Game>} games
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {(gameId: Id) => void} broadcast
+ * @param {Id} guestUserId
+ * @param {import('./user.js').User} targetUser
+ */
+function migrateGuestSessionToRegisteredUser(
+  games,
+  clientConnections,
+  broadcast,
+  guestUserId,
+  targetUser,
+) {
+  const changedGameIds = migrateGuestSeatsToRegisteredUser(
+    games,
+    guestUserId,
+    targetUser,
+  );
+  migrateGuestConnectionsToRegisteredUser(
+    clientConnections,
+    guestUserId,
+    targetUser,
+    changedGameIds,
+  );
+
+  for (const gameId of changedGameIds) {
+    broadcast(gameId);
+  }
+}
+
+/**
+ * @param {Record<string, any>} users
+ * @param {Map<Id, import('./poker/game.js').Game>} games
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {(gameId: Id) => void} broadcast
+ * @param {import('./http-routes.js').Response} res
+ * @param {{ userId: Id, email: string, returnPath: string }} signIn
+ * @returns {Promise<string>}
+ */
+async function completeSignIn(
+  users,
+  games,
+  clientConnections,
+  broadcast,
+  res,
+  signIn,
+) {
+  const guestUser = Store.loadUser(signIn.userId) ?? users[signIn.userId];
+  const existingUser = Store.loadUserByEmail(signIn.email);
+
+  if (existingUser && existingUser.id !== signIn.userId) {
+    const mergedUser = {
+      ...existingUser,
+      email: signIn.email,
+      name: existingUser.name ?? guestUser?.name,
+    };
+    Store.saveUser(mergedUser);
+    users[mergedUser.id] = mergedUser;
+
+    const guestGameIds = Store.listPlayerGameIds(signIn.userId);
+    for (const gameId of guestGameIds) {
+      await rewritePlayerIdInHandHistory(gameId, signIn.userId, mergedUser.id);
+    }
+    Store.migratePlayerGames(signIn.userId, mergedUser.id);
+    migrateGuestSessionToRegisteredUser(
+      games,
+      clientConnections,
+      broadcast,
+      signIn.userId,
+      mergedUser,
+    );
+
+    delete users[signIn.userId];
+    Store.deleteUser(signIn.userId);
+
+    setSessionCookie(res, mergedUser.id);
+    return signIn.returnPath;
+  }
+
+  const resolvedUser = guestUser
+    ? {
+        ...guestUser,
+        email: signIn.email,
+      }
+    : {
+        id: signIn.userId,
+        name: undefined,
+        email: signIn.email,
+        settings: { ...DEFAULT_SETTINGS },
+      };
+  Store.saveUser(resolvedUser);
+  users[resolvedUser.id] = resolvedUser;
+
+  setSessionCookie(res, resolvedUser.id);
   return signIn.returnPath;
 }
 
 /**
- * @param {{ sendSignInEmail?: typeof sendSesSignInEmail }} [services]
+ * @param {{
+ *   sendSignInEmail?: typeof sendSesSignInEmail,
+ *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>
+ * }} [services]
  */
 export function createSignInRoutes(services = {}) {
   const sendSignInEmail = services.sendSignInEmail || sendSesSignInEmail;
+  const clientConnections = services.clientConnections || new Map();
 
   return [
     {
@@ -121,7 +244,7 @@ export function createSignInRoutes(services = {}) {
     {
       method: "POST",
       path: "/api/sign-in-links/verify",
-      handler: async ({ req, res, users, parseBody }) => {
+      handler: async ({ req, res, users, games, broadcast, parseBody }) => {
         const data = await parseBody(req);
         const token =
           data &&
@@ -138,7 +261,14 @@ export function createSignInRoutes(services = {}) {
           });
         }
 
-        const returnPath = completeSignIn(users, res, signIn);
+        const returnPath = await completeSignIn(
+          users,
+          games,
+          clientConnections,
+          broadcast,
+          res,
+          signIn,
+        );
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ returnPath }));
       },

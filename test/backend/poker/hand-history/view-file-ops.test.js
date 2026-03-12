@@ -3,6 +3,7 @@ import assert from "assert";
 import { rm, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import * as HandHistory from "../../../../src/backend/poker/hand-history/index.js";
+import { rewritePlayerIdInHandHistory } from "../../../../src/backend/poker/hand-history/io.js";
 import * as Game from "../../../../src/backend/poker/game.js";
 import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
@@ -134,6 +135,69 @@ describe("hand-history-view", function () {
       const hand2 = JSON.parse(lines[1]).ohh;
       assert.strictEqual(hand1.game_number, `${game.id}-1`);
       assert.strictEqual(hand2.game_number, `${game.id}-2`);
+
+      delete process.env.DATA_DIR;
+    });
+
+    it("rewrites player ids in persisted hand history", async function () {
+      const { game, players } = createGameWithPlayers();
+
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
+
+      game.handNumber++;
+      HandHistory.startHand(game);
+      HandHistory.recordBlind(game.id, players[0].id, "sb", 25);
+      HandHistory.recordBlind(game.id, players[1].id, "bb", 50);
+      HandHistory.recordAction(game.id, players[0].id, "call", 50);
+      await HandHistory.finalizeHand(game, [
+        {
+          visibleSeats: [0, 1],
+          potAmount: 100,
+          winners: [0],
+          winningHand: null,
+          awards: [{ seat: 0, amount: 100 }],
+        },
+      ]);
+
+      const changed = await rewritePlayerIdInHandHistory(
+        game.id,
+        players[0].id,
+        "registered-player",
+      );
+      assert.equal(changed, true);
+
+      const hands = await HandHistory.getAllHands(game.id);
+      assert.equal(hands[0].players[0].id, "registered-player");
+      assert.equal(
+        hands[0].rounds[0].actions.some(
+          (action) => action.player_id === "registered-player",
+        ),
+        true,
+      );
+      assert.equal(
+        hands[0].pots[0].player_wins[0].player_id,
+        "registered-player",
+      );
+
+      delete process.env.DATA_DIR;
+    });
+
+    it("throws when rewriting hand history to the same player id", async function () {
+      const { game, players } = createGameWithPlayers();
+
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
+
+      game.handNumber++;
+      HandHistory.startHand(game);
+      await HandHistory.finalizeHand(game, []);
+
+      await assert.rejects(
+        () =>
+          rewritePlayerIdInHandHistory(game.id, players[0].id, players[0].id),
+        /same player id/,
+      );
 
       delete process.env.DATA_DIR;
     });

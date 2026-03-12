@@ -19,6 +19,7 @@ import { createSignInRoutes } from "./sign-in-routes.js";
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./id.js').Id} Id
  * @typedef {import('http').IncomingMessage} Request
  * @typedef {import('http').ServerResponse} Response
  */
@@ -168,8 +169,8 @@ function respondWithJson(res, data) {
 /**
  * Syncs user changes to all game seats where the user is seated
  * @param {UserType} user
- * @param {Map<string, Game>} games
- * @param {(gameId: string) => void} broadcast
+ * @param {Map<Id, Game>} games
+ * @param {(gameId: Id) => void} broadcast
  */
 function syncUserToGames(user, games, broadcast) {
   for (const [gameId, game] of games) {
@@ -190,8 +191,8 @@ function syncUserToGames(user, games, broadcast) {
  * @property {Response} res
  * @property {RegExpMatchArray|null} match
  * @property {Record<string, UserType>} users
- * @property {Map<string, Game>} games
- * @property {(gameId: string) => void} broadcast
+ * @property {Map<Id, Game>} games
+ * @property {(gameId: Id) => void} broadcast
  * @property {import('./logger.js').Log|null} log
  */
 
@@ -205,8 +206,8 @@ function syncUserToGames(user, games, broadcast) {
 /**
  * Creates the routes array
  * @param {Record<string, UserType>} users
- * @param {Map<string, Game>} games
- * @param {(gameId: string) => void} broadcast
+ * @param {Map<Id, Game>} games
+ * @param {(gameId: Id) => void} broadcast
  * @returns {Route[]}
  */
 export function createRoutes(users, games, broadcast, services = {}) {
@@ -287,6 +288,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     },
     ...createSignInRoutes({
       sendSignInEmail: services.sendSignInEmail,
+      clientConnections: services.clientConnections,
     }).map((route) => ({
       ...route,
       handler: (ctx) =>

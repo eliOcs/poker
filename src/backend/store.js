@@ -171,6 +171,22 @@ export function loadUser(id) {
 }
 
 /**
+ * @param {string} email
+ * @returns {User | null}
+ */
+export function loadUserByEmail(email) {
+  if (!db) throw new Error("Store not initialized");
+  if (!email) return null;
+
+  const stmt = db.prepare(
+    "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE email = ? ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT 1",
+  );
+  const row = stmt.get(email);
+
+  return hydrateUserRow(row);
+}
+
+/**
  * @param {string} id
  * @returns {UserProfile | null}
  */
@@ -234,6 +250,40 @@ export function listPlayerGameIds(playerId) {
   `);
 
   return stmt.all(playerId).map((row) => /** @type {Id} */ (row.game_id));
+}
+
+/**
+ * Reassigns indexed game participation from one player id to another.
+ * @param {Id} fromPlayerId
+ * @param {Id} toPlayerId
+ */
+export function migratePlayerGames(fromPlayerId, toPlayerId) {
+  if (!db) throw new Error("Store not initialized");
+  if (fromPlayerId === toPlayerId) {
+    throw new Error("Cannot migrate player games to the same player id");
+  }
+
+  const insertStmt = db.prepare(`
+    INSERT INTO player_games (player_id, game_id)
+    SELECT ?, game_id
+    FROM player_games
+    WHERE player_id = ?
+    ON CONFLICT(player_id, game_id) DO NOTHING
+  `);
+  insertStmt.run(toPlayerId, fromPlayerId);
+
+  const deleteStmt = db.prepare("DELETE FROM player_games WHERE player_id = ?");
+  deleteStmt.run(fromPlayerId);
+}
+
+/**
+ * @param {Id} id
+ */
+export function deleteUser(id) {
+  if (!db) throw new Error("Store not initialized");
+
+  const stmt = db.prepare("DELETE FROM users WHERE id = ?");
+  stmt.run(id);
 }
 
 /**

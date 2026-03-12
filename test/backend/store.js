@@ -177,6 +177,21 @@ describe("store", function () {
       assert.strictEqual(Store.loadUser(null), null);
     });
 
+    it("loads a user by verified email", function () {
+      Store.initialize();
+
+      Store.saveUser({
+        id: "abc123",
+        name: "Alice",
+        email: "alice@example.com",
+        settings: { volume: 0.5 },
+      });
+
+      const loaded = Store.loadUserByEmail("alice@example.com");
+      assert.ok(loaded);
+      assert.strictEqual(loaded.id, "abc123");
+    });
+
     it("normalizes null name from DB to undefined", function () {
       Store.initialize();
 
@@ -275,6 +290,48 @@ describe("store", function () {
     it("returns empty list for unknown player", function () {
       Store.initialize();
       assert.deepStrictEqual(Store.listPlayerGameIds("missing"), []);
+    });
+
+    it("migrates player game ids between users", function () {
+      Store.initialize();
+
+      Store.recordPlayerGames([
+        { playerId: "guest", gameId: "g1" },
+        { playerId: "guest", gameId: "g2" },
+        { playerId: "registered", gameId: "g2" },
+      ]);
+
+      Store.migratePlayerGames("guest", "registered");
+
+      assert.deepStrictEqual(Store.listPlayerGameIds("guest"), []);
+      assert.deepStrictEqual(Store.listPlayerGameIds("registered"), [
+        "g1",
+        "g2",
+      ]);
+    });
+
+    it("throws when migrating player games to the same user id", function () {
+      Store.initialize();
+
+      assert.throws(
+        () => Store.migratePlayerGames("guest", "guest"),
+        /same player id/,
+      );
+    });
+  });
+
+  describe("deleteUser", function () {
+    it("removes an existing user", function () {
+      Store.initialize();
+
+      Store.saveUser({
+        id: "abc123",
+        name: "Alice",
+        settings: { volume: 0.75 },
+      });
+      Store.deleteUser("abc123");
+
+      assert.strictEqual(Store.loadUser("abc123"), null);
     });
   });
 
