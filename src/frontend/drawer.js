@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { ICONS } from "./icons.js";
+import { formatPlayerLabel } from "./player-label.js";
 import "./navigation-drawer.js";
 
 const iconRankings = html`<svg viewBox="0 0 24 24">
@@ -92,7 +93,11 @@ function renderSitOutButton(game) {
 
 export function renderDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
-  const accountLabel = game.user?.name || game.user?.id || "Sign in";
+  const accountLabel = formatPlayerLabel(
+    game.user?.name,
+    game.user?.id,
+    "Sign in",
+  );
   const isSignedIn = !!game.user?.email;
 
   return html`

@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { ICONS } from "./icons.js";
+import { formatPlayerLabel } from "./player-label.js";
 
 /**
  * @param {any} profile
@@ -7,7 +8,11 @@ import { ICONS } from "./icons.js";
 export function renderPlayerProfileDrawer(profile) {
   const isSignedIn = !!profile.user?.email;
   const accountPath = profile.user?.id ? `/players/${profile.user.id}` : null;
-  const accountLabel = profile.user?.name || profile.user?.id || "Sign in";
+  const accountLabel = formatPlayerLabel(
+    profile.user?.name,
+    profile.user?.id,
+    "Sign in",
+  );
   const isAccountActive = !!accountPath && profile.path === accountPath;
 
   return html`

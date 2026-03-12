@@ -8,6 +8,7 @@ import {
 import * as logger from "./logger.js";
 import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
+import { cleanupEmailSink } from "./ses.js";
 import { parseCookies, createRoutes } from "./http-routes.js";
 import {
   createRateLimiter,
@@ -251,7 +252,7 @@ if (typeof evictionTimer.unref === "function") {
 }
 
 /** @param {string} signal */
-function gracefulShutdown(signal) {
+async function gracefulShutdown(signal) {
   logger.info("shutdown initiated", { signal });
   server.close(() => {
     logger.info("http server closed");
@@ -269,15 +270,20 @@ function gracefulShutdown(signal) {
   games.clear();
 
   Store.close();
+  await cleanupEmailSink().catch((err) => {
+    logger.error("email sink cleanup failed", {
+      error: { message: err.message },
+    });
+  });
   logger.info("shutdown complete");
   process.exit(0);
 }
 
 process.on("SIGTERM", () => {
-  gracefulShutdown("SIGTERM");
+  void gracefulShutdown("SIGTERM");
 });
 process.on("SIGINT", () => {
-  gracefulShutdown("SIGINT");
+  void gracefulShutdown("SIGINT");
 });
 
 const port = Number(process.env.PORT);

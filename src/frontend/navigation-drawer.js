@@ -61,7 +61,7 @@ class NavigationDrawer extends LitElement {
         }
 
         :host([open]) #drawer-toggle {
-          left: clamp(140px, 12vw, 200px);
+          left: clamp(180px, 16vw, 240px);
           border-left: none;
         }
 
@@ -82,7 +82,7 @@ class NavigationDrawer extends LitElement {
         }
 
         #drawer-nav {
-          width: clamp(140px, 12vw, 200px);
+          width: clamp(180px, 16vw, 240px);
           height: 100%;
           background: var(--color-bg-dark);
           border-right: 2px solid var(--color-bg-light);

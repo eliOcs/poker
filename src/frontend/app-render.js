@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { renderAuthStatus } from "./app-auth-status.js";
 
 /**
  * @param {any} app
@@ -55,4 +56,11 @@ export function renderPlayerProfileView(app) {
       .user=${app.user}
       .path=${app.path}
     ></phg-player-profile>`;
+}
+
+/**
+ * @param {any} app
+ */
+export function renderAuthStatusView(app) {
+  return html`${renderToast(app)}${renderAuthStatus()}`;
 }

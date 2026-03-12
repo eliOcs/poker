@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { formatPlayerLabel } from "./player-label.js";
 import "./navigation-drawer.js";
 import { renderPlayerProfileDrawer } from "./player-profile-drawer.js";
 
@@ -351,7 +352,9 @@ class PlayerProfile extends LitElement {
               <div class="eyebrow">Player Profile</div>
               <div class="header">
                 <div class="identity">
-                  <h1>${this.profile.name}</h1>
+                  <h1>
+                    ${formatPlayerLabel(this.profile.name, this.profile.id)}
+                  </h1>
                   <div class="player-id">Player ID: ${this.profile.id}</div>
                   <div class="meta">
                     Joined ${formatDate(this.profile.joinedAt)}

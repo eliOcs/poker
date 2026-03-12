@@ -79,8 +79,24 @@ export class PokerPlayer {
   async openDrawer() {
     const nav = this.game.locator("#drawer-nav");
     if (await nav.isVisible()) return;
-    await this.game.locator("#drawer-toggle").click();
+    const toggle = this.game.locator("#drawer-toggle");
+    if (!(await toggle.isVisible().catch(() => false))) {
+      throw new Error("Drawer is closed but toggle is not visible");
+    }
+    await toggle.click();
     await nav.waitFor();
+  }
+
+  /**
+   * Close the navigation drawer if it is open
+   */
+  async closeDrawer() {
+    const nav = this.game.locator("#drawer-nav");
+    if (!(await nav.isVisible().catch(() => false))) return;
+    const toggle = this.game.locator("#drawer-toggle");
+    if (!(await toggle.isVisible().catch(() => false))) return;
+    await toggle.click();
+    await nav.waitFor({ state: "hidden" });
   }
 
   /**
@@ -359,8 +375,9 @@ export class PokerPlayer {
    */
   async emote(emoji) {
     await this.actionPanel.getByRole("button", { name: "Emote" }).click();
+    await this.game.locator(".emote-grid").waitFor();
     await this.game
-      .locator("phg-modal[title='Emote'] .emote-grid button", {
+      .locator(".emote-grid button", {
         hasText: emoji,
       })
       .click();
@@ -372,9 +389,10 @@ export class PokerPlayer {
    */
   async chat(message) {
     await this.actionPanel.getByRole("button", { name: "Chat" }).click();
-    const modal = this.game.locator("phg-modal[title='Chat']");
-    await modal.locator("textarea").fill(message);
-    await modal.getByRole("button", { name: "Send" }).click();
+    const input = this.game.locator("#chat-input");
+    await input.waitFor();
+    await input.fill(message);
+    await this.game.getByRole("button", { name: "Send" }).click();
   }
 
   /**
@@ -510,6 +528,37 @@ export class PokerPlayer {
    */
   async waitForCountdownCancelled() {
     await this.board.locator(".countdown").waitFor({ state: "hidden" });
+  }
+
+  /**
+   * Open the profile sign-in modal from the drawer
+   */
+  async openSignIn() {
+    await this.openDrawer();
+    await this.game.locator(".drawer-sign-in").click();
+    await this.game.locator("#sign-in-email").waitFor();
+  }
+
+  /**
+   * Request an email sign-in link from the profile sign-in modal
+   * @param {string} email
+   */
+  async requestSignIn(email) {
+    await this.openSignIn();
+    await this.game.locator("#sign-in-email").fill(email);
+    await this.game.getByRole("button", { name: "Send sign-in link" }).click();
+  }
+
+  /**
+   * Complete sign in by loading the captured email HTML and clicking the sign-in link
+   * @param {string} emailHtml
+   */
+  async completeSignInFromEmail(emailHtml) {
+    await this.page.setContent(emailHtml, { waitUntil: "domcontentloaded" });
+    await this.page.getByRole("link", { name: "Sign in" }).click();
+    await this.page.waitForURL(
+      (url) => !url.pathname.startsWith("/auth/email-sign-in/callback"),
+    );
   }
 
   /**

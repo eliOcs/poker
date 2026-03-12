@@ -2,6 +2,7 @@ import { html, css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
 import { appModalStyles } from "./app-modal-styles.js";
+import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
 import "./index.js";
 import "./history.js";
@@ -20,6 +21,7 @@ import {
   renderGameView,
   renderHistoryView,
   renderPlayerProfileView,
+  renderAuthStatusView,
   renderToast,
 } from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
@@ -30,6 +32,7 @@ class App extends LitElement {
       designTokens,
       baseStyles,
       appModalStyles,
+      appAuthStatusStyles,
       css`
         :host {
           display: block;
@@ -551,6 +554,9 @@ class App extends LitElement {
 
     this._manageConnection(gameId);
 
+    if (this._isSignInCallbackRoute()) {
+      return renderAuthStatusView(this);
+    }
     if (gameMatch) return renderGameView(this, gameMatch);
     if (historyMatch) return renderHistoryView(this, historyMatch);
     if (playerMatch) {
