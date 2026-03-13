@@ -40,7 +40,7 @@ export function renderProfileSettingsModal(app) {
         )}
       </div>
       <div class="buttons">
-        <phg-button variant="secondary" @click=${app.closeProfileSettings}
+        <phg-button variant="muted" @click=${app.closeProfileSettings}
           >Cancel</phg-button
         >
         <phg-button variant="action" @click=${app.saveProfileSettings}
