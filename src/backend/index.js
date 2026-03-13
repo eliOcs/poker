@@ -17,6 +17,7 @@ import {
 import { HttpError } from "./http-error.js";
 import { createGameBroadcaster } from "./game-broadcast.js";
 import { createWebSocketServer } from "./ws-server.js";
+import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
 
 /**
@@ -36,8 +37,42 @@ const games = new Map();
 /** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id }>} */
 const clientConnections = new Map();
 
-const { broadcastGameMessage, broadcastGameStateMessage } =
-  createGameBroadcaster(games, clientConnections);
+const {
+  broadcastGameMessage: rawBroadcastGameMessage,
+  broadcastGameStateMessage,
+} = createGameBroadcaster(games, clientConnections);
+
+/** @param {import('./poker/game.js').BroadcastMessage} message */
+function broadcastGameMessage(message) {
+  if (message.type === "handEnded") {
+    const game = games.get(message.gameId);
+    if (game) {
+      HandHistory.finalizeHand(game, message.potResults)
+        .then((hand) => {
+          Store.recordPlayerGames(
+            hand.players.map((player) => ({
+              playerId: player.id,
+              gameId: message.gameId,
+            })),
+          );
+          rawBroadcastGameMessage({
+            type: "history",
+            gameId: message.gameId,
+            event: "handRecorded",
+            handNumber: message.handNumber,
+          });
+        })
+        .catch((err) => {
+          logger.error("hand finalization failed", {
+            err,
+            game: { id: message.gameId },
+          });
+        });
+    }
+    return { recipients: 0, maxPayloadBytes: 0 };
+  }
+  return rawBroadcastGameMessage(message);
+}
 const routes = createRoutes(users, games, broadcastGameStateMessage, {
   clientConnections,
 });

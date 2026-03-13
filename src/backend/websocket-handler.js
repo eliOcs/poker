@@ -1,12 +1,12 @@
 import * as PokerActions from "./poker/actions.js";
 import * as HandHistory from "./poker/hand-history/index.js";
-import * as Store from "./store.js";
 import {
   classifyAllInAction,
   recordBettingAction,
 } from "./poker/hand-history/record.js";
 import { resetActingTicks, startClockTicks } from "./poker/game-tick.js";
 import * as PokerGame from "./poker/game.js";
+import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
 
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
@@ -48,24 +48,7 @@ function handleSitOutOrLeave(game, broadcast) {
   if (game.countdown !== null && PokerActions.countPlayersWithChips(game) < 2) {
     game.countdown = null;
     PokerGame.stopGameTick(game);
-    if (game.pendingHandHistory) {
-      const finalizedHandNumber = game.handNumber;
-      HandHistory.finalizeHand(game, game.pendingHandHistory).then((hand) => {
-        Store.recordPlayerGames(
-          hand.players.map((player) => ({
-            playerId: player.id,
-            gameId: game.id,
-          })),
-        );
-        broadcast({
-          type: "history",
-          gameId: game.id,
-          event: "handRecorded",
-          handNumber: finalizedHandNumber,
-        });
-      });
-      game.pendingHandHistory = null;
-    }
+    if (game.pendingHandHistory) finalizePendingHandHistory(game, broadcast);
   }
 }
 

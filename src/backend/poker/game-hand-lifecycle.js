@@ -1,7 +1,5 @@
 import * as Actions from "./actions.js";
-import * as HandHistory from "./hand-history/index.js";
 import * as TournamentSummary from "./tournament-summary.js";
-import * as Store from "../store.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -24,21 +22,16 @@ export function sitOutDisconnectedPlayers(game) {
  * @param {BroadcastHandler} [onBroadcast]
  */
 export function finalizePendingHandHistory(game, onBroadcast) {
-  if (!game.pendingHandHistory) return;
-
-  const finalizedHandNumber = game.handNumber;
-  HandHistory.finalizeHand(game, game.pendingHandHistory).then((hand) => {
-    Store.recordPlayerGames(
-      hand.players.map((player) => ({ playerId: player.id, gameId: game.id })),
-    );
-    onBroadcast?.({
-      type: "history",
-      gameId: game.id,
-      event: "handRecorded",
-      handNumber: finalizedHandNumber,
-    });
-  });
+  const potResults = /** @type {import('./showdown.js').PotResult[]} */ (
+    game.pendingHandHistory
+  );
   game.pendingHandHistory = null;
+  onBroadcast?.({
+    type: "handEnded",
+    gameId: game.id,
+    handNumber: game.handNumber,
+    potResults,
+  });
 }
 
 /**
@@ -54,7 +47,7 @@ export function autoStartNextHand(game, onBroadcast) {
     game.tournament.winner === null &&
     playersWithChips === 1
   ) {
-    finalizePendingHandHistory(game, onBroadcast);
+    if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
     const winnerIndex = game.seats.findIndex(
       (seat) => !seat.empty && seat.stack > 0 && !seat.sittingOut,
     );
@@ -68,5 +61,5 @@ export function autoStartNextHand(game, onBroadcast) {
     return;
   }
 
-  finalizePendingHandHistory(game, onBroadcast);
+  if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
 }

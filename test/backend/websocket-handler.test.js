@@ -253,12 +253,20 @@ describe("websocket-handler", () => {
       let historyEvent = null;
       const historyEventPromise = new Promise((resolve) => {
         processPokerAction(game, player, "sitOut", { seat: 0 }, (message) => {
-          if (message.type === "history") {
-            historyEvent = {
-              gameId: message.gameId,
-              handNumber: message.handNumber,
-            };
-            resolve();
+          if (message.type === "handEnded") {
+            HandHistory.finalizeHand(game, message.potResults).then((hand) => {
+              Store.recordPlayerGames(
+                hand.players.map((p) => ({
+                  playerId: p.id,
+                  gameId: message.gameId,
+                })),
+              );
+              historyEvent = {
+                gameId: message.gameId,
+                handNumber: message.handNumber,
+              };
+              resolve();
+            });
           }
         });
       });

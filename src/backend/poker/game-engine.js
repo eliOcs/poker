@@ -139,7 +139,7 @@ function recordDealtCards(game) {
  * @param {BroadcastHandler} [onBroadcast]
  */
 export function startHand(game, onBroadcast) {
-  finalizePendingHandHistory(game, onBroadcast);
+  if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
 
   if (Actions.countPlayersWithChips(game) < 2) {
     return;
