@@ -136,7 +136,7 @@ function recordDealtCards(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function startHand(game, onBroadcast) {
   if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
@@ -186,7 +186,7 @@ export function startHand(game, onBroadcast) {
 /**
  * @param {Game} game
  * @param {number} seatIndex
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function performAutoAction(game, seatIndex, onBroadcast) {
   const seat = /** @type {import('./seat.js').Seat} */ (game.seats[seatIndex]);

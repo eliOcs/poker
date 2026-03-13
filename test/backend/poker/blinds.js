@@ -213,7 +213,7 @@ describe("tournament blinds", function () {
     game.seats[1].sittingOut = true;
     game.button = 0; // SB: seat 1 (sitting out), BB: seat 2
 
-    Game.startHand(game);
+    Game.startHand(game, () => {});
     const recorder = HandHistory.getRecorder(game.id);
 
     assert.equal(game.seats[1].cards.length, 2, "Blind poster should be dealt");

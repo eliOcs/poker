@@ -63,7 +63,7 @@ function logHandEnded(game, winnerName, wonBy, amount) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 function handleFoldWin(game, onBroadcast) {
   const result = Showdown.awardToLastPlayer(game);
@@ -115,7 +115,7 @@ function recordShowdownCards(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 function handleShowdown(game, onBroadcast) {
   const gen = Showdown.showdown(game);
@@ -172,7 +172,7 @@ const STREET_HANDLERS = {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function processGameFlow(game, onBroadcast) {
   const phase = game.hand.phase;
@@ -199,7 +199,7 @@ export function processGameFlow(game, onBroadcast) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function finishCollectBets(game, onBroadcast) {
   const phase = game.hand.phase;
@@ -233,7 +233,7 @@ export function finishCollectBets(game, onBroadcast) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function dealRunoutStreet(game, onBroadcast) {
   const phase = game.hand.phase;
@@ -251,7 +251,5 @@ export function dealRunoutStreet(game, onBroadcast) {
 
   game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
 
-  if (onBroadcast) {
-    onBroadcast({ type: "gameState", gameId: game.id });
-  }
+  onBroadcast({ type: "gameState", gameId: game.id });
 }

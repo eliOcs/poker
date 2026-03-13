@@ -19,14 +19,14 @@ export function sitOutDisconnectedPlayers(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function finalizePendingHandHistory(game, onBroadcast) {
   const potResults = /** @type {import('./showdown.js').PotResult[]} */ (
     game.pendingHandHistory
   );
   game.pendingHandHistory = null;
-  onBroadcast?.({
+  onBroadcast({
     type: "handEnded",
     gameId: game.id,
     handNumber: game.handNumber,
@@ -36,7 +36,7 @@ export function finalizePendingHandHistory(game, onBroadcast) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @param {BroadcastHandler} onBroadcast
  */
 export function autoStartNextHand(game, onBroadcast) {
   sitOutDisconnectedPlayers(game);
