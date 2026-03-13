@@ -109,6 +109,41 @@ class ReleaseNotes extends LitElement {
         <div class="container">
           <h1>Release Notes</h1>
 
+          <h2>March 13, 2026</h2>
+          <h3>New Features</h3>
+          <h4>Email Sign-In</h4>
+          <ul>
+            <li>
+              Sign in with your email address to keep your identity across
+              devices
+            </li>
+            <li>A magic link is sent to your inbox — no password needed</li>
+            <li>
+              Your guest session merges into your account when you sign in
+            </li>
+          </ul>
+          <h4>Player Profiles</h4>
+          <ul>
+            <li>View your stats: total hands played and net winnings</li>
+            <li>
+              Recent games table with game type, net result, and hands played
+            </li>
+            <li>Click a game row to jump to your last hand in that game</li>
+          </ul>
+          <h3>Improvements</h3>
+          <ul>
+            <li>
+              Smooth navigation between home, profile, and release notes pages
+            </li>
+            <li>
+              Navigation drawer now available on landing page and release notes
+            </li>
+          </ul>
+          <h3>Bug Fixes</h3>
+          <ul>
+            <li>Fixed text not being selectable in release notes</li>
+          </ul>
+
           <h2>February 27, 2026</h2>
           <h3>New Features</h3>
           <h4>Chat</h4>
