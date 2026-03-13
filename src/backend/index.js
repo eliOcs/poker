@@ -47,7 +47,7 @@ function broadcastGameMessage(message) {
   if (message.type === "handEnded") {
     const game = games.get(message.gameId);
     if (game) {
-      HandHistory.finalizeHand(game, message.potResults)
+      HandHistory.finalizeHand(game, message.potResults, message.handNumber)
         .then((hand) => {
           Store.recordPlayerGames(
             hand.players.map((player) => ({

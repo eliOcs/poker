@@ -202,7 +202,7 @@ describe("websocket-handler", () => {
       HandHistory.clearRecorder(game.id);
       HandHistory.startHand(game);
 
-      processPokerAction(game, player, "showCard1", { seat: 0 }, () => {});
+      processPokerAction(game, player, "showCard1", { seat: 0 });
 
       const recorder = HandHistory.getRecorder(game.id);
       const showAction = recorder.actions.find(
@@ -250,27 +250,22 @@ describe("websocket-handler", () => {
         },
       ];
 
+      const handData = processPokerAction(game, player, "sitOut", { seat: 0 });
       let historyEvent = null;
-      const historyEventPromise = new Promise((resolve) => {
-        processPokerAction(game, player, "sitOut", { seat: 0 }, (message) => {
-          if (message.type === "handEnded") {
-            HandHistory.finalizeHand(game, message.potResults).then((hand) => {
-              Store.recordPlayerGames(
-                hand.players.map((p) => ({
-                  playerId: p.id,
-                  gameId: message.gameId,
-                })),
-              );
-              historyEvent = {
-                gameId: message.gameId,
-                handNumber: message.handNumber,
-              };
-              resolve();
-            });
-          }
-        });
-      });
-      await historyEventPromise;
+      if (handData) {
+        const hand = await HandHistory.finalizeHand(
+          game,
+          handData.potResults,
+          handData.handNumber,
+        );
+        Store.recordPlayerGames(
+          hand.players.map((p) => ({
+            playerId: p.id,
+            gameId: game.id,
+          })),
+        );
+        historyEvent = { gameId: game.id, handNumber: handData.handNumber };
+      }
 
       assert.strictEqual(game.countdown, null);
       assert.strictEqual(game.pendingHandHistory, null);

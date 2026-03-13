@@ -217,6 +217,45 @@ async function handleUpgrade(request, socket, head, params) {
 }
 
 /**
+ * @param {(message: BroadcastMessage) => void} broadcastGameMessage
+ * @param {string} gameId
+ * @param {import('./poker/game-hand-lifecycle.js').FinalizedHand} handData
+ */
+function broadcastHandEnded(broadcastGameMessage, gameId, handData) {
+  broadcastGameMessage({
+    type: "handEnded",
+    gameId,
+    handNumber: handData.handNumber,
+    potResults: handData.potResults,
+  });
+}
+
+/**
+ * @param {Game} game
+ * @param {import('./poker/seat.js').Player} player
+ * @param {string} action
+ * @param {Record<string, unknown>} args
+ * @param {string} gameId
+ * @param {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
+ * @returns {{ broadcast: { recipients: number, maxPayloadBytes: number }, gameSnapshot: ReturnType<import('./poker/game-engine.js').gameStateSnapshot> }}
+ */
+function handleGameAction(
+  game,
+  player,
+  action,
+  args,
+  gameId,
+  broadcastGameMessage,
+) {
+  const handData = processPokerAction(game, player, action, args);
+  if (handData) broadcastHandEnded(broadcastGameMessage, gameId, handData);
+
+  const broadcast = broadcastGameMessage({ type: "gameState", gameId });
+  PokerGame.ensureGameTick(game, broadcastGameMessage);
+  return { broadcast, gameSnapshot: PokerGame.gameStateSnapshot(game) };
+}
+
+/**
  * @param {WebSocketServerParams} params
  * @returns {{ wss: WebSocketServer }}
  */
@@ -344,19 +383,17 @@ export function createWebSocketServer(params) {
           return;
         }
 
-        processPokerAction(game, player, action, args, broadcastGameMessage);
-
-        const broadcast = broadcastGameMessage({
-          type: "gameState",
+        const { broadcast, gameSnapshot } = handleGameAction(
+          game,
+          player,
+          action,
+          args,
           gameId,
-        });
-        PokerGame.ensureGameTick(game, broadcastGameMessage);
+          broadcastGameMessage,
+        );
 
         Object.assign(log.context, {
-          game: {
-            ...(log.context.game || {}),
-            ...PokerGame.gameStateSnapshot(game),
-          },
+          game: { ...(log.context.game || {}), ...gameSnapshot },
           broadcast,
         });
       } catch (err) {

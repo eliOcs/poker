@@ -11,8 +11,8 @@ import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
 /**
  * @typedef {import('./poker/seat.js').Player} PlayerType
  * @typedef {import('./poker/game.js').Game} Game
- * @typedef {import('./poker/game.js').BroadcastHandler} BroadcastHandler
  * @typedef {import('./poker/seat.js').OccupiedSeat} OccupiedSeat
+ * @typedef {import('./poker/game-hand-lifecycle.js').FinalizedHand} FinalizedHand
  */
 
 export const BETTING_ACTIONS = [
@@ -29,47 +29,37 @@ export const SHOW_CARD_ACTIONS = ["showCard1", "showCard2", "showBothCards"];
 export { classifyAllInAction, recordBettingAction };
 
 /**
- * Handles the start action
- * @param {Game} game
- * @param {BroadcastHandler} broadcast
- */
-function handleStartAction(game, broadcast) {
-  if (game.countdown !== null) {
-    PokerGame.startGameTick(game, broadcast);
-  }
-}
-
-/**
  * Handles sitOut/leave actions that may cancel countdown
  * @param {Game} game
- * @param {BroadcastHandler} broadcast
+ * @returns {FinalizedHand | null}
  */
-function handleSitOutOrLeave(game, broadcast) {
+function handleSitOutOrLeave(game) {
   if (game.countdown !== null && PokerActions.countPlayersWithChips(game) < 2) {
     game.countdown = null;
     PokerGame.stopGameTick(game);
-    if (game.pendingHandHistory) finalizePendingHandHistory(game, broadcast);
+    if (game.pendingHandHistory) return finalizePendingHandHistory(game);
   }
+  return null;
 }
 
 /**
  * Handles betting actions (processes game flow)
  * @param {Game} game
- * @param {BroadcastHandler} broadcast
+ * @returns {FinalizedHand | null}
  */
-function handleBettingAction(game, broadcast) {
+function handleBettingAction(game) {
   resetActingTicks(game);
-  PokerGame.processGameFlow(game, broadcast);
+  return PokerGame.processGameFlow(game);
 }
 
-/** @type {Record<string, (game: Game, broadcast: BroadcastHandler) => void>} */
+/** @type {Record<string, (game: Game) => FinalizedHand | null>} */
 export const POST_ACTION_HANDLERS = {
-  start: handleStartAction,
   sitOut: handleSitOutOrLeave,
   cancelSitOut: handleSitOutOrLeave,
   leave: handleSitOutOrLeave,
   callClock: (game) => {
     startClockTicks(game);
+    return null;
   },
 };
 
@@ -77,15 +67,16 @@ export const POST_ACTION_HANDLERS = {
  * Handles post-action side effects for specific actions
  * @param {string} action
  * @param {Game} game
- * @param {BroadcastHandler} broadcast
+ * @returns {FinalizedHand | null}
  */
-export function handlePostAction(action, game, broadcast) {
+export function handlePostAction(action, game) {
   const handler = POST_ACTION_HANDLERS[action];
   if (handler) {
-    handler(game, broadcast);
+    return handler(game);
   } else if (BETTING_ACTIONS.includes(action)) {
-    handleBettingAction(game, broadcast);
+    return handleBettingAction(game);
   }
+  return null;
 }
 
 /**
@@ -118,9 +109,9 @@ export function getSeatStateBefore(game, player) {
  * @param {PlayerType} player
  * @param {string} action
  * @param {Record<string, unknown>} args
- * @param {BroadcastHandler} broadcast
+ * @returns {FinalizedHand | null}
  */
-export function processPokerAction(game, player, action, args, broadcast) {
+export function processPokerAction(game, player, action, args) {
   const { seatIndex, seatBefore, betBefore, currentBetBefore } =
     getSeatStateBefore(game, player);
 
@@ -147,5 +138,5 @@ export function processPokerAction(game, player, action, args, broadcast) {
     HandHistory.recordShowdown(game.id, player.id, actionResult, true);
   }
 
-  handlePostAction(action, game, broadcast);
+  return handlePostAction(action, game);
 }

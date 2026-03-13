@@ -18,6 +18,10 @@ import {
 } from "./game-flow.js";
 
 /**
+ * @typedef {import('./game-hand-lifecycle.js').FinalizedHand} FinalizedHand
+ */
+
+/**
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./game.js').BroadcastHandler} BroadcastHandler
  */
@@ -47,6 +51,22 @@ export function stopGameTick(game) {
 /**
  * @param {Game} game
  * @param {BroadcastHandler} onBroadcast
+ * @param {FinalizedHand | null} handData
+ */
+function emitHandEnded(game, onBroadcast, handData) {
+  if (handData) {
+    onBroadcast({
+      type: "handEnded",
+      gameId: game.id,
+      handNumber: handData.handNumber,
+      potResults: handData.potResults,
+    });
+  }
+}
+
+/**
+ * @param {Game} game
+ * @param {BroadcastHandler} onBroadcast
  */
 export function startGameTick(game, onBroadcast) {
   if (game.tickTimer) {
@@ -68,12 +88,21 @@ export function startGameTick(game, onBroadcast) {
       },
     });
 
-    if (result.startHand) startHand(game, onBroadcast);
+    if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));
     if (result.autoActionSeat !== null) {
-      performAutoAction(game, result.autoActionSeat, onBroadcast);
+      emitHandEnded(
+        game,
+        onBroadcast,
+        performAutoAction(game, result.autoActionSeat),
+      );
     }
-    if (result.collectBets) finishCollectBets(game, onBroadcast);
-    if (result.dealNextStreet) dealRunoutStreet(game, onBroadcast);
+    if (result.collectBets) {
+      emitHandEnded(game, onBroadcast, finishCollectBets(game));
+    }
+    if (result.dealNextStreet) {
+      emitHandEnded(game, onBroadcast, dealRunoutStreet(game));
+      onBroadcast({ type: "gameState", gameId: game.id });
+    }
 
     if (!shouldTickBeRunning(game)) {
       stopGameTick(game);
@@ -136,13 +165,15 @@ function recordDealtCards(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} onBroadcast
+ * @returns {FinalizedHand | null}
  */
-export function startHand(game, onBroadcast) {
-  if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
+export function startHand(game) {
+  const handData = game.pendingHandHistory
+    ? finalizePendingHandHistory(game)
+    : null;
 
   if (Actions.countPlayersWithChips(game) < 2) {
-    return;
+    return handData;
   }
 
   game.winnerMessage = null;
@@ -181,16 +212,17 @@ export function startHand(game, onBroadcast) {
   game.hand.currentBet = game.blinds.big;
   resetActingTicks(game);
   executePreActions(game);
+  return handData;
 }
 
 /**
  * @param {Game} game
  * @param {number} seatIndex
- * @param {BroadcastHandler} onBroadcast
+ * @returns {FinalizedHand | null}
  */
-export function performAutoAction(game, seatIndex, onBroadcast) {
+export function performAutoAction(game, seatIndex) {
   const seat = /** @type {import('./seat.js').Seat} */ (game.seats[seatIndex]);
-  if (seat.empty) return;
+  if (seat.empty) return null;
 
   const occupiedSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
   if (occupiedSeat.bet === game.hand.currentBet) {
@@ -202,5 +234,5 @@ export function performAutoAction(game, seatIndex, onBroadcast) {
   }
 
   resetActingTicks(game);
-  processGameFlow(game, onBroadcast);
+  return processGameFlow(game);
 }

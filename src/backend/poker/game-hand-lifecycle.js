@@ -3,7 +3,8 @@ import * as TournamentSummary from "./tournament-summary.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
- * @typedef {import('./game.js').BroadcastHandler} BroadcastHandler
+ * @typedef {import('./showdown.js').PotResult} PotResult
+ * @typedef {{ handNumber: number, potResults: PotResult[] }} FinalizedHand
  */
 
 /**
@@ -19,26 +20,19 @@ export function sitOutDisconnectedPlayers(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} onBroadcast
+ * @returns {FinalizedHand}
  */
-export function finalizePendingHandHistory(game, onBroadcast) {
-  const potResults = /** @type {import('./showdown.js').PotResult[]} */ (
-    game.pendingHandHistory
-  );
+export function finalizePendingHandHistory(game) {
+  const potResults = /** @type {PotResult[]} */ (game.pendingHandHistory);
   game.pendingHandHistory = null;
-  onBroadcast({
-    type: "handEnded",
-    gameId: game.id,
-    handNumber: game.handNumber,
-    potResults,
-  });
+  return { handNumber: game.handNumber, potResults };
 }
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} onBroadcast
+ * @returns {FinalizedHand | null}
  */
-export function autoStartNextHand(game, onBroadcast) {
+export function autoStartNextHand(game) {
   sitOutDisconnectedPlayers(game);
 
   const playersWithChips = Actions.countPlayersWithChips(game);
@@ -47,19 +41,21 @@ export function autoStartNextHand(game, onBroadcast) {
     game.tournament.winner === null &&
     playersWithChips === 1
   ) {
-    if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
+    const handData = game.pendingHandHistory
+      ? finalizePendingHandHistory(game)
+      : null;
     const winnerIndex = game.seats.findIndex(
       (seat) => !seat.empty && seat.stack > 0 && !seat.sittingOut,
     );
     game.tournament.winner = winnerIndex;
     TournamentSummary.finalizeTournament(game);
-    return;
+    return handData;
   }
 
   if (playersWithChips >= 2) {
     game.countdown = 5;
-    return;
+    return null;
   }
 
-  if (game.pendingHandHistory) finalizePendingHandHistory(game, onBroadcast);
+  return game.pendingHandHistory ? finalizePendingHandHistory(game) : null;
 }
