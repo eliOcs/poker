@@ -26,6 +26,26 @@ const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
  * @param {boolean} [params.accountActive]
  * @returns {import("lit").TemplateResult}
  */
+/**
+ * @param {Element} el
+ * @param {string} path
+ * @returns {(e: MouseEvent) => void}
+ */
+function navClick(el, path) {
+  return (e) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
+      return;
+    e.preventDefault();
+    el.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+}
+
 export function renderAppNavigationDrawer({
   view,
   playActive,
@@ -49,6 +69,7 @@ export function renderAppNavigationDrawer({
         slot="main"
         class=${playActive ? "drawer-item active" : "drawer-item"}
         href="/"
+        @click=${navClick(view, "/")}
       >
         ${ICONS.play}
         <span>Play</span>
@@ -57,6 +78,7 @@ export function renderAppNavigationDrawer({
         slot="main"
         class=${releaseNotesActive ? "drawer-item active" : "drawer-item"}
         href="/release-notes"
+        @click=${navClick(view, "/release-notes")}
       >
         ${iconReleaseNotes}
         <span>Release Notes</span>
@@ -66,7 +88,7 @@ export function renderAppNavigationDrawer({
         accountPath,
         accountLabel,
         accountActive,
-        view.openSignIn,
+        view,
       )}
       <button slot="footer" @click=${view.openSettings}>
         ${ICONS.settings}
@@ -81,13 +103,14 @@ function renderAccountEntry(
   accountPath,
   accountLabel,
   accountActive,
-  openSignIn,
+  view,
 ) {
   if (isSignedIn && accountPath) {
     return html`<a
       slot="footer"
       class=${`drawer-item drawer-account${accountActive ? " active" : ""}`}
       href=${accountPath}
+      @click=${navClick(view, accountPath)}
     >
       ${ICONS.signIn}
       <span>${accountLabel}</span>
@@ -97,7 +120,7 @@ function renderAccountEntry(
   return html`<button
     slot="footer"
     class="drawer-item drawer-sign-in"
-    @click=${openSignIn}
+    @click=${view.openSignIn}
   >
     ${ICONS.signIn}
     <span>Sign in</span>

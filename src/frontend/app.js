@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "lit";
+import { css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
 import { appModalStyles } from "./app-modal-styles.js";
@@ -8,6 +8,7 @@ import "./index.js";
 import "./history.js";
 import "./player-profile.js";
 import "./release-notes.js";
+import "./app-shell.js";
 import "./toast.js";
 import "./modal.js";
 import "./button.js";
@@ -16,8 +17,6 @@ import {
   disconnectAppEventHandlers,
   initAppEventHandlers,
 } from "./app-event-handlers.js";
-import { renderProfileSettingsModal } from "./app-profile-settings.js";
-import { renderProfileSignInModal } from "./app-sign-in-modal.js";
 import {
   renderGameView,
   renderHistoryView,
@@ -25,6 +24,7 @@ import {
   renderHomeView,
   renderReleaseNotesView,
   renderAuthStatusView,
+  renderShellView,
 } from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 
@@ -562,16 +562,15 @@ class App extends LitElement {
     }
     if (gameMatch) return renderGameView(this, gameMatch);
     if (historyMatch) return renderHistoryView(this, historyMatch);
-    if (playerMatch) {
-      return html`${renderPlayerProfileView(this)}
-      ${renderProfileSettingsModal(this)} ${renderProfileSignInModal(this)}`;
-    }
-    if (releaseNotesMatch) {
-      return html`${renderReleaseNotesView(this)}
-      ${renderProfileSettingsModal(this)} ${renderProfileSignInModal(this)}`;
-    }
-    return html`${renderHomeView(this)} ${renderProfileSettingsModal(this)}
-    ${renderProfileSignInModal(this)}`;
+
+    // All shell routes use the same template so phg-app-shell stays alive
+    const shellContent = playerMatch
+      ? renderPlayerProfileView(this)
+      : releaseNotesMatch
+        ? renderReleaseNotesView()
+        : renderHomeView();
+
+    return renderShellView(this, shellContent);
   }
 }
 

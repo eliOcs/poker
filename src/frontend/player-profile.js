@@ -1,7 +1,6 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
-import { renderAppNavigationDrawer } from "./app-navigation-drawer.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -10,21 +9,15 @@ class PlayerProfile extends LitElement {
       baseStyles,
       css`
         :host {
-          min-height: 100vh;
-          display: block;
-          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
           background: var(--color-bg-medium);
           color: var(--color-fg-medium);
+          box-sizing: border-box;
         }
 
         :host * {
           box-sizing: inherit;
-        }
-
-        .layout {
-          min-height: 100vh;
-          display: flex;
-          background: var(--color-bg-dark);
         }
 
         .main {
@@ -281,8 +274,6 @@ class PlayerProfile extends LitElement {
     return {
       profile: { type: Object },
       user: { type: Object },
-      path: { type: String },
-      drawerOpen: { type: Boolean, state: true },
     };
   }
 
@@ -290,23 +281,6 @@ class PlayerProfile extends LitElement {
     super();
     this.profile = null;
     this.user = null;
-    this.path = window.location.pathname;
-    this.drawerOpen = false;
-    this._onMediaChange = (event) => {
-      this.drawerOpen = event.matches;
-    };
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._mql = window.matchMedia("(min-width: 800px)");
-    this._mql.addEventListener("change", this._onMediaChange);
-    this.drawerOpen = this._mql.matches;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._mql?.removeEventListener("change", this._onMediaChange);
   }
 
   navigateToGame(game) {
@@ -319,22 +293,6 @@ class PlayerProfile extends LitElement {
     );
   }
 
-  openSettings() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-settings", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-
-  toggleDrawer() {
-    this.drawerOpen = !this.drawerOpen;
-  }
-
   render() {
     if (!this.profile) {
       return html`<div class="panel">
@@ -343,78 +301,58 @@ class PlayerProfile extends LitElement {
     }
 
     return html`
-      <div class="layout">
-        ${renderAppNavigationDrawer({
-          view: this,
-          playActive: false,
-          accountActive:
-            !!this.user?.id && this.path === `/players/${this.user.id}`,
-        })}
-        <div class="main">
-          <div class="content">
-            <section class="panel">
-              <div class="eyebrow">Player Profile</div>
-              <div class="header">
-                <div class="identity">
-                  <h1>
-                    ${formatPlayerLabel(this.profile.name, this.profile.id)}
-                  </h1>
-                  <div class="player-id">Player ID: ${this.profile.id}</div>
-                  <div class="meta">
-                    Joined ${formatDate(this.profile.joinedAt)}
-                  </div>
-                </div>
-                <div class=${`status ${this.profile.online ? "" : "offline"}`}>
-                  ${this.profile.online
-                    ? "Playing"
-                    : `Last played ${formatRelativeDate(this.profile.lastSeenAt)}`}
+      <div class="main">
+        <div class="content">
+          <section class="panel">
+            <div class="eyebrow">Player Profile</div>
+            <div class="header">
+              <div class="identity">
+                <h1>
+                  ${formatPlayerLabel(this.profile.name, this.profile.id)}
+                </h1>
+                <div class="player-id">Player ID: ${this.profile.id}</div>
+                <div class="meta">
+                  Joined ${formatDate(this.profile.joinedAt)}
                 </div>
               </div>
-              <div class="summary">
-                <article class="stat">
-                  <div class="label">Total Net Winnings</div>
-                  <div
-                    class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
-                  >
-                    ${formatSignedCurrency(this.profile.totalNetWinnings)}
-                  </div>
-                </article>
-                <article class="stat">
-                  <div class="label">Total Hands</div>
-                  <div class="value">
-                    ${formatNumber(this.profile.totalHands)}
-                  </div>
-                </article>
-                <article class="stat">
-                  <div class="label">Games Played</div>
-                  <div class="value">
-                    ${formatNumber(this.profile.recentGames?.length || 0)}
-                  </div>
-                </article>
+              <div class=${`status ${this.profile.online ? "" : "offline"}`}>
+                ${this.profile.online
+                  ? "Playing"
+                  : `Last played ${formatRelativeDate(this.profile.lastSeenAt)}`}
               </div>
-            </section>
-            <section class="section">
-              <div class="panel">
-                <h2>Recent Games</h2>
-                ${this.renderRecentGames()}
-              </div>
-            </section>
-          </div>
+            </div>
+            <div class="summary">
+              <article class="stat">
+                <div class="label">Total Net Winnings</div>
+                <div
+                  class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
+                >
+                  ${formatSignedCurrency(this.profile.totalNetWinnings)}
+                </div>
+              </article>
+              <article class="stat">
+                <div class="label">Total Hands</div>
+                <div class="value">
+                  ${formatNumber(this.profile.totalHands)}
+                </div>
+              </article>
+              <article class="stat">
+                <div class="label">Games Played</div>
+                <div class="value">
+                  ${formatNumber(this.profile.recentGames?.length || 0)}
+                </div>
+              </article>
+            </div>
+          </section>
+          <section class="section">
+            <div class="panel">
+              <h2>Recent Games</h2>
+              ${this.renderRecentGames()}
+            </div>
+          </section>
         </div>
       </div>
     `;
-  }
-
-  openSignIn() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-sign-in", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
   }
 
   renderRecentGames() {

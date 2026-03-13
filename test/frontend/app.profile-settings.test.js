@@ -65,8 +65,11 @@ describe("phg-app profile settings", () => {
       timeout: 2000,
     });
     await profile.updateComplete;
+    const shell = element.shadowRoot.querySelector("phg-app-shell");
+    shell.drawerOpen = true;
+    await shell.updateComplete;
     const settingsBtn = Array.from(
-      profile.shadowRoot.querySelectorAll("button"),
+      shell.shadowRoot.querySelectorAll("button"),
     ).find((button) => button.textContent.includes("Settings"));
     settingsBtn.click();
     await element.updateComplete;

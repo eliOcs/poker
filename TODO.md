@@ -38,12 +38,6 @@
   Full House
   Straight
 
-## Sign up [WIP]
-
-- Current users are only stored with a browser cookie
-- I would like to help users understand the benefits of sign up:
-  - restore your settings in different devices
-
 ## Tournaments
 
 - multi table tournaments

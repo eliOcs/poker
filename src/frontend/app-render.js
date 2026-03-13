@@ -1,5 +1,7 @@
 import { html } from "lit";
 import { renderAuthStatus } from "./app-auth-status.js";
+import { renderProfileSettingsModal } from "./app-profile-settings.js";
+import { renderProfileSignInModal } from "./app-sign-in-modal.js";
 
 /**
  * @param {any} app
@@ -51,31 +53,34 @@ export function renderHistoryView(app, historyMatch) {
  * @param {any} app
  */
 export function renderPlayerProfileView(app) {
-  return html`${renderToast(app)}<phg-player-profile
-      .profile=${app._playerProfileTask.value}
-      .user=${app.user}
-      .path=${app.path}
-    ></phg-player-profile>`;
+  return html`<phg-player-profile
+    .profile=${app._playerProfileTask.value}
+    .user=${app.user}
+  ></phg-player-profile>`;
+}
+
+/**
+ */
+export function renderHomeView() {
+  return html`<phg-home></phg-home>`;
+}
+
+/**
+ */
+export function renderReleaseNotesView() {
+  return html`<phg-release-notes></phg-release-notes>`;
 }
 
 /**
  * @param {any} app
+ * @param {import("lit").TemplateResult} content
  */
-export function renderHomeView(app) {
-  return html`${renderToast(app)}<phg-home
+export function renderShellView(app, content) {
+  return html`${renderToast(app)}<phg-app-shell
       .user=${app.user}
       .path=${app.path}
-    ></phg-home>`;
-}
-
-/**
- * @param {any} app
- */
-export function renderReleaseNotesView(app) {
-  return html`${renderToast(app)}<phg-release-notes
-      .user=${app.user}
-      .path=${app.path}
-    ></phg-release-notes>`;
+      >${content}</phg-app-shell
+    >${renderProfileSettingsModal(app)}${renderProfileSignInModal(app)}`;
 }
 
 /**
