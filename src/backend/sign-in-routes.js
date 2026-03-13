@@ -35,7 +35,11 @@ function setSessionCookie(res, userId) {
   const cookieDomain = process.env.DOMAIN
     ? ` Domain=${process.env.DOMAIN};`
     : "";
-  res.setHeader("Set-Cookie", `phg=${userId};${cookieDomain} HttpOnly; Path=/`);
+  const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
+  res.setHeader(
+    "Set-Cookie",
+    `phg=${userId};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
+  );
 }
 
 /**

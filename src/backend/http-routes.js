@@ -70,9 +70,10 @@ function createAndPersistUser(res, users) {
   const cookieDomain = process.env.DOMAIN
     ? ` Domain=${process.env.DOMAIN};`
     : "";
+  const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
   res.setHeader(
     "Set-Cookie",
-    `phg=${user.id};${cookieDomain} HttpOnly; Path=/`,
+    `phg=${user.id};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
   );
   return user;
 }
