@@ -531,11 +531,58 @@ export class PokerPlayer {
   }
 
   /**
+   * Open the game settings modal from the drawer
+   */
+  async openSettings() {
+    await this.openDrawer();
+    const settingsButton = this.game.getByRole("button", { name: "Settings" });
+    await settingsButton.waitFor();
+    await settingsButton.evaluate((button) => button.click());
+    await this.game.locator("#name-input").waitFor();
+  }
+
+  /**
+   * Save settings from the in-game settings modal
+   * @param {{ name?: string, volumeLabel?: "Off" | "25%" | "75%" | "100%" }} [options]
+   */
+  async saveSettings(options = {}) {
+    await this.openSettings();
+
+    if (options.name !== undefined) {
+      const input = this.game.locator("#name-input");
+      await input.fill(options.name);
+    }
+
+    if (options.volumeLabel) {
+      await this.game
+        .locator(".volume-slider")
+        .getByRole("button", {
+          name: options.volumeLabel,
+          exact: true,
+        })
+        .click();
+    }
+
+    await this.game.getByRole("button", { name: "Save" }).click();
+    await this.game.locator("#name-input").waitFor({ state: "hidden" });
+  }
+
+  /**
+   * Open the settings modal from the drawer, set the player name, and save
+   * @param {string} name
+   */
+  async setName(name) {
+    await this.saveSettings({ name });
+  }
+
+  /**
    * Open the profile sign-in modal from the drawer
    */
   async openSignIn() {
     await this.openDrawer();
-    await this.game.locator(".drawer-sign-in").click();
+    const signInButton = this.game.locator(".drawer-sign-in");
+    await signInButton.waitFor();
+    await signInButton.evaluate((button) => button.click());
     await this.game.locator("#sign-in-email").waitFor();
   }
 

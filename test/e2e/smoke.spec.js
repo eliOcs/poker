@@ -21,6 +21,9 @@ test.describe("Poker Game Smoke Test", () => {
     await player1.buyIn(20);
     await player2.buyIn(20);
 
+    await player1.saveSettings({ name: "Player 1", volumeLabel: "25%" });
+    await player2.setName("Player 2");
+
     const player1Email = "player1@example.com";
     const player1StackBeforeSignIn = await player1.getStack();
     const emailWaitStartedAt = Date.now();
@@ -132,6 +135,7 @@ test.describe("Poker Game Smoke Test", () => {
     // P3 sits and buys in during the runout, before the hand ends and auto-start fires
     await player3.sit(2);
     await player3.buyIn(20);
+    await player3.setName("Player 3");
 
     // === DISCONNECT / CALL CLOCK / RECONNECT ===
     await expect(boardCards).toHaveCount(0);
@@ -260,6 +264,9 @@ test.describe("Poker Game Smoke Test", () => {
 
     // === VERIFY SIGNED-IN ACCOUNT LINK ===
     await player1.joinGame(gameId);
+    await expect(player1.game.locator(".drawer-account")).toContainText(
+      "Player 1",
+    );
     const accountPath = await player1.game
       .locator(".drawer-account")
       .getAttribute("href");
@@ -270,5 +277,13 @@ test.describe("Poker Game Smoke Test", () => {
     expect(accountPath).toMatch(/^\/players\/[a-z0-9]+$/);
     await expect(profilePage).toHaveURL(new RegExp(`${accountPath}$`));
     await expect(profilePage.locator("phg-player-profile")).toBeVisible();
+
+    await profilePage.getByRole("button", { name: "Settings" }).click();
+    await expect(
+      profilePage.locator("#profile-settings-name-input"),
+    ).toHaveValue("Player 1");
+    await expect(
+      profilePage.locator(".volume-slider button.active"),
+    ).toHaveText("25%");
   });
 });
