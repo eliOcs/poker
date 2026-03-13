@@ -229,7 +229,7 @@ export function createWebSocketServer(params) {
     broadcastGameMessage,
     broadcastGameStateMessage,
   } = params;
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
 
   server.on("upgrade", (request, socket, head) => {
     void handleUpgrade(request, socket, head, { ...params, wss }).catch(
