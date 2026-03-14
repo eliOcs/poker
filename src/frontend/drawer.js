@@ -69,6 +69,16 @@ const iconSitOut = html`<svg viewBox="0 0 24 24">
   <rect x="18" y="17" width="2" height="3" />
 </svg>`;
 
+const iconLobby = html`<svg viewBox="0 0 24 24">
+  <rect x="3" y="8" width="18" height="2" />
+  <rect x="5" y="10" width="2" height="8" />
+  <rect x="17" y="10" width="2" height="8" />
+  <rect x="9" y="12" width="6" height="2" />
+  <rect x="9" y="16" width="6" height="2" />
+  <rect x="7" y="6" width="10" height="2" />
+  <rect x="3" y="18" width="18" height="2" />
+</svg>`;
+
 const canShare = typeof navigator.share === "function";
 
 function renderSitOutButton(game) {
@@ -121,6 +131,11 @@ export function renderDrawer(game) {
       >
         ${iconHistory} History
       </button>
+      ${game.gameKind === "mtt" && game.tournamentId
+        ? html`<button slot="main" @click=${game.openTournamentLobby}>
+            ${iconLobby} Lobby
+          </button>`
+        : ""}
       ${renderSitOutButton(game)}
       <button slot="main" @click=${game.copyGameLink}>
         ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}

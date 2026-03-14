@@ -6,7 +6,7 @@ import {
   DEFAULT as DEFAULT_STAKES,
 } from "../shared/stakes.js";
 import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
-import { getTablePath } from "../shared/routes.js";
+import { getMttPath, getTablePath } from "../shared/routes.js";
 
 const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
@@ -228,20 +228,23 @@ class Home extends LitElement {
     this.creating = true;
     try {
       const body =
-        this.selectedGameType === "sitngo"
+        this.selectedGameType === "cash"
           ? {
-              type: "sitngo",
-              seats: this.selectedTableSize,
-              buyIn: this.selectedBuyIn.amount,
-            }
-          : {
               type: "cash",
               small: this.selectedStakes.small,
               big: this.selectedStakes.big,
               seats: this.selectedTableSize,
+            }
+          : {
+              type: this.selectedGameType,
+              seats: this.selectedTableSize,
+              buyIn: this.selectedBuyIn.amount,
             };
 
-      const endpoint = this.selectedGameType === "sitngo" ? "/sitngo" : "/cash";
+      const endpoint =
+        this.selectedGameType === "cash"
+          ? "/cash"
+          : `/${this.selectedGameType}`;
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -252,7 +255,10 @@ class Home extends LitElement {
       this.dispatchEvent(
         new CustomEvent("navigate", {
           detail: {
-            path: getTablePath(type === "sitngo" ? "sitngo" : "cash", id),
+            path:
+              type === "mtt"
+                ? getMttPath(id)
+                : getTablePath(type === "sitngo" ? "sitngo" : "cash", id),
           },
           bubbles: true,
           composed: true,
@@ -270,7 +276,7 @@ class Home extends LitElement {
         stakes.small === this.selectedStakes.small &&
         stakes.big === this.selectedStakes.big,
     );
-    const isTournament = this.selectedGameType === "sitngo";
+    const isTournament = this.selectedGameType !== "cash";
 
     return html`
       <main class="main">
@@ -295,10 +301,20 @@ class Home extends LitElement {
                   type="radio"
                   name="gameType"
                   value="sitngo"
-                  ?checked=${isTournament}
+                  ?checked=${this.selectedGameType === "sitngo"}
                   @change=${this.handleGameTypeChange}
                 />
                 Sit & Go
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="gameType"
+                  value="mtt"
+                  ?checked=${this.selectedGameType === "mtt"}
+                  @change=${this.handleGameTypeChange}
+                />
+                Tournament
               </label>
             </div>
           </div>
@@ -360,7 +376,11 @@ class Home extends LitElement {
               ?disabled=${this.creating}
               @click=${this.createGame}
             >
-              ${this.creating ? "Creating..." : "Create Game"}
+              ${this.creating
+                ? "Creating..."
+                : this.selectedGameType === "mtt"
+                  ? "Create Tournament"
+                  : "Create Game"}
             </phg-button>
           </div>
         </section>

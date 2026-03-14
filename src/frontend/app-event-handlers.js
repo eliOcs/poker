@@ -50,6 +50,10 @@ export function initAppEventHandlers(app) {
   app._handleOpenSignIn = () => {
     app.openProfileSignIn();
   };
+  app._handleMttAction = (e) => {
+    const detail = /** @type {CustomEvent<{ action: string }>} */ (e).detail;
+    app.performMttAction(detail.action);
+  };
   app._handleWindowError = (event) => {
     app.reportFrontendError(getWindowErrorDetails(event));
   };
@@ -75,6 +79,7 @@ export function connectAppEventHandlers(app) {
   app.addEventListener("request-sign-in", app._handleRequestSignIn);
   app.addEventListener("open-settings", app._handleOpenSettings);
   app.addEventListener("open-sign-in", app._handleOpenSignIn);
+  app.addEventListener("mtt-action", app._handleMttAction);
 }
 
 /**
@@ -97,4 +102,5 @@ export function disconnectAppEventHandlers(app) {
   app.removeEventListener("request-sign-in", app._handleRequestSignIn);
   app.removeEventListener("open-settings", app._handleOpenSettings);
   app.removeEventListener("open-sign-in", app._handleOpenSignIn);
+  app.removeEventListener("mtt-action", app._handleMttAction);
 }

@@ -75,6 +75,19 @@ export function renderHomeView() {
 }
 
 /**
+ * @param {any} app
+ */
+export function renderMttLobbyView(app) {
+  return html`<phg-mtt-lobby
+    .tournamentId=${app._mttTournamentId}
+    .tournament=${app._mttView}
+    .loading=${app._mttLoading}
+    .error=${app._mttError}
+    .actionPending=${app._mttActionPending}
+  ></phg-mtt-lobby>`;
+}
+
+/**
  */
 export function renderReleaseNotesView() {
   return html`<phg-release-notes></phg-release-notes>`;

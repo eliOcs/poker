@@ -7,6 +7,7 @@ import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
 import "./index.js";
 import "./history.js";
+import "./mtt-lobby.js";
 import "./player-profile.js";
 import "./release-notes.js";
 import "./app-shell.js";
@@ -23,12 +24,13 @@ import {
   renderHistoryView,
   renderPlayerProfileView,
   renderHomeView,
+  renderMttLobbyView,
   renderReleaseNotesView,
   renderAuthStatusView,
   renderShellView,
 } from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
-import { matchLiveRoute } from "../shared/routes.js";
+import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import {
   getHistoryApiBase,
   getHistoryPath,
@@ -72,6 +74,11 @@ class App extends LitElement {
       _historyTournamentId: { state: true },
       _historyHandNumber: { state: true },
       _historyListRefreshNonce: { state: true },
+      _mttTournamentId: { state: true },
+      _mttView: { state: true },
+      _mttLoading: { state: true },
+      _mttError: { state: true },
+      _mttActionPending: { state: true },
       _playerProfileId: { state: true },
       _showProfileSettings: { state: true },
       _showProfileSignIn: { state: true },
@@ -99,6 +106,11 @@ class App extends LitElement {
     this._historyTournamentId = null;
     this._historyHandNumber = null;
     this._historyListRefreshNonce = 0;
+    this._mttTournamentId = null;
+    this._mttView = null;
+    this._mttLoading = false;
+    this._mttError = "";
+    this._mttActionPending = false;
     this._playerProfileId = null;
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
@@ -223,6 +235,7 @@ class App extends LitElement {
     super.disconnectedCallback();
     disconnectAppEventHandlers(this);
     this.disconnectFromGame();
+    this._stopMttPolling();
   }
 
   async _fetchUser() {
@@ -462,6 +475,13 @@ class App extends LitElement {
 
   _manageConnection(path) {
     if (path) {
+      if (
+        this._activeGamePath === path &&
+        !this._socket &&
+        !this._intentionalClose
+      ) {
+        return;
+      }
       this.connectToGame(path);
     } else if (this._activeGamePath) {
       this.disconnectFromGame();
@@ -500,6 +520,149 @@ class App extends LitElement {
     );
   }
 
+  _stopMttPolling() {
+    if (this._mttPollTimer) {
+      clearInterval(this._mttPollTimer);
+      this._mttPollTimer = null;
+    }
+    if (this._mttAbortController) {
+      this._mttAbortController.abort();
+      this._mttAbortController = null;
+    }
+  }
+
+  _startMttPolling() {
+    if (!this._mttTournamentId || this._mttPollTimer) return;
+    this._mttPollTimer = setInterval(() => {
+      void this._refreshMttView({ silent: true });
+    }, 2000);
+  }
+
+  _syncMttRoute(liveRoute) {
+    const tournamentId =
+      liveRoute?.kind === "mtt" || liveRoute?.kind === "mtt_table"
+        ? liveRoute.tournamentId
+        : null;
+    if (tournamentId === this._mttTournamentId) return;
+
+    this._stopMttPolling();
+    this._mttTournamentId = tournamentId;
+    this._mttView = null;
+    this._mttLoading = false;
+    this._mttError = "";
+    this._mttActionPending = false;
+
+    if (!tournamentId) {
+      return;
+    }
+
+    void this._refreshMttView();
+    this._startMttPolling();
+  }
+
+  // eslint-disable-next-line complexity
+  async _refreshMttView(options = {}) {
+    const { silent = false } = options;
+    if (!this._mttTournamentId) return;
+
+    if (this._mttAbortController) {
+      this._mttAbortController.abort();
+    }
+
+    const controller = new AbortController();
+    const tournamentId = this._mttTournamentId;
+    this._mttAbortController = controller;
+    if (!silent || !this._mttView) {
+      this._mttLoading = true;
+    }
+
+    try {
+      const res = await fetch(`/api/mtt/${tournamentId}`, {
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to load tournament");
+      }
+      if (this._mttAbortController !== controller) return;
+      this._mttView = data;
+      this._mttError = "";
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (this._mttAbortController !== controller) return;
+      const error = /** @type {Error} */ (err);
+      this._mttError = error.message;
+    } finally {
+      if (this._mttAbortController === controller) {
+        this._mttAbortController = null;
+      }
+      this._mttLoading = false;
+    }
+  }
+
+  _resolveMttRedirectPath(liveRoute) {
+    if (!liveRoute || !this._mttTournamentId || !this._mttView) {
+      return null;
+    }
+
+    const nextTableId = this._mttView.currentPlayer?.tableId;
+    if (this._mttView.status !== "running" || !nextTableId) {
+      return null;
+    }
+
+    if (liveRoute.kind === "mtt") {
+      return getTablePath("mtt", nextTableId, this._mttTournamentId);
+    }
+
+    if (liveRoute.kind === "mtt_table" && liveRoute.tableId !== nextTableId) {
+      return getTablePath("mtt", nextTableId, this._mttTournamentId);
+    }
+
+    return null;
+  }
+
+  _maybeRedirectMttRoute() {
+    const { liveRoute } = parseAppPath(this.path);
+    const nextPath = this._resolveMttRedirectPath(liveRoute);
+    if (!nextPath || nextPath === this.path) return;
+
+    if (liveRoute?.kind === "mtt_table") {
+      const tableName =
+        this._mttView?.tables.find(
+          (table) => table.tableId === this._mttView?.currentPlayer?.tableId,
+        )?.tableName || "your new table";
+      this.toast = {
+        message: `Moved to ${tableName}`,
+        variant: "info",
+      };
+    }
+
+    history.replaceState({}, "", nextPath);
+    this.path = nextPath;
+  }
+
+  async performMttAction(action) {
+    if (!this._mttTournamentId || this._mttActionPending) return;
+
+    this._mttActionPending = true;
+    try {
+      const res = await fetch(`/api/mtt/${this._mttTournamentId}/${action}`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to ${action}`);
+      }
+      this._mttView = data;
+      this._mttError = "";
+    } catch (err) {
+      const error = /** @type {Error} */ (err);
+      this.toast = { message: error.message, variant: "error" };
+    } finally {
+      this._mttActionPending = false;
+    }
+  }
+
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
       const { liveRoute, historyRoute, playerProfileId } = parseAppPath(
@@ -513,7 +676,14 @@ class App extends LitElement {
     }
   }
 
+  // eslint-disable-next-line complexity
   updated() {
+    if (parseAppPath(this.path).liveRoute) {
+      this._syncMttRoute(parseAppPath(this.path).liveRoute);
+    } else if (this._mttTournamentId) {
+      this._syncMttRoute(null);
+    }
+
     // Handle redirect to latest hand when list loads
     if (this._historyListTask.status === TaskStatus.COMPLETE) {
       const listData = this._historyListTask.value;
@@ -564,8 +734,11 @@ class App extends LitElement {
       history.replaceState({}, "", "/");
       this.path = "/";
     }
+
+    this._maybeRedirectMttRoute();
   }
 
+  // eslint-disable-next-line complexity
   render() {
     const { liveRoute, historyRoute, playerProfileId, resourcePath } =
       parseAppPath(this.path);
@@ -589,9 +762,11 @@ class App extends LitElement {
     // All shell routes use the same template so phg-app-shell stays alive
     const shellContent = playerProfileId
       ? renderPlayerProfileView(this)
-      : releaseNotesMatch
-        ? renderReleaseNotesView()
-        : renderHomeView();
+      : liveRoute?.kind === "mtt"
+        ? renderMttLobbyView(this)
+        : releaseNotesMatch
+          ? renderReleaseNotesView()
+          : renderHomeView();
 
     return renderShellView(this, shellContent);
   }

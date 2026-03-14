@@ -2,7 +2,7 @@ import { html, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
-import { getTableHistoryPath } from "../shared/routes.js";
+import { getMttPath, getTableHistoryPath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
@@ -250,6 +250,17 @@ class Game extends LitElement {
     return (this.game?.handNumber || 0) > 0;
   }
 
+  openTournamentLobby() {
+    if (this.gameKind !== "mtt" || !this.tournamentId) return;
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: getMttPath(this.tournamentId) },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   getCurrentPlayerName() {
     return this.user?.name || "";
   }
@@ -393,9 +404,14 @@ class Game extends LitElement {
     const sizeLabel = TABLE_SIZE_LABELS[this.game.seats.length] || "";
 
     const cells = [
+      this.gameKind === "mtt" && this.tournamentId
+        ? html`<button class="info-link" @click=${this.openTournamentLobby}>
+            Lobby
+          </button>`
+        : null,
       html`<span class="info-cell info-type">${this._getTypeLabel()}</span>`,
       html`<span class="info-cell info-size">${sizeLabel}</span>`,
-    ];
+    ].filter(Boolean);
 
     if (this.game.blinds) {
       cells.push(

@@ -101,13 +101,31 @@ export const gameStyles = css`
     white-space: nowrap;
   }
 
+  .info-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-primary);
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .info-link:hover {
+    color: var(--color-fg-white);
+  }
+
   @media (width < 800px) {
     .info-size {
       display: none;
     }
   }
 
-  .info-cell + .info-cell::before {
+  .info-cell + .info-cell::before,
+  .info-link + .info-cell::before,
+  .info-cell + .info-link::before,
+  .info-link + .info-link::before {
     content: "|";
     margin-right: var(--space-sm);
     color: var(--color-bg-disabled);
