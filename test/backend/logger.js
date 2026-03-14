@@ -1,5 +1,10 @@
 import { describe, it, beforeEach, afterEach, mock } from "node:test";
 import assert from "assert";
+import { stripVTControlCharacters } from "util";
+
+function stripAnsi(value) {
+  return stripVTControlCharacters(value);
+}
 
 describe("logger", function () {
   let originalEnv;
@@ -77,10 +82,27 @@ describe("logger", function () {
       info("test message", { foo: "bar", count: 42 });
 
       const output = consoleLog.mock.calls[0].arguments[0];
-      assert.ok(output.includes("INFO"));
+      assert.ok(output.includes("\u001b["));
+      const plainOutput = stripAnsi(output);
+      assert.ok(plainOutput.includes("INFO"));
+      assert.ok(plainOutput.includes("test message"));
+      assert.ok(plainOutput.includes("foo=bar"));
+      assert.ok(plainOutput.includes("count=42"));
+    });
+
+    it("adds ANSI colors in text mode", async function () {
+      process.env.LOG_FORMAT = "text";
+
+      const { warn } = await import(
+        `../../src/backend/logger.js?t=${Date.now()}-5-color`
+      );
+
+      warn("test message", { foo: "bar" });
+
+      const output = consoleWarn.mock.calls[0].arguments[0];
+      assert.ok(output.includes("\u001b["));
       assert.ok(output.includes("test message"));
-      assert.ok(output.includes("foo=bar"));
-      assert.ok(output.includes("count=42"));
+      assert.ok(output.includes("foo"));
     });
 
     it("outputs JSON format with all fields", async function () {
