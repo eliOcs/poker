@@ -404,11 +404,6 @@ class Game extends LitElement {
     const sizeLabel = TABLE_SIZE_LABELS[this.game.seats.length] || "";
 
     const cells = [
-      this.gameKind === "mtt" && this.tournamentId
-        ? html`<button class="info-link" @click=${this.openTournamentLobby}>
-            Lobby
-          </button>`
-        : null,
       html`<span class="info-cell info-type">${this._getTypeLabel()}</span>`,
       html`<span class="info-cell info-size">${sizeLabel}</span>`,
     ].filter(Boolean);

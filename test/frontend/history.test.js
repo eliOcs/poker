@@ -362,22 +362,25 @@ describe("phg-history", () => {
       expect(selectEvent.detail.handNumber).to.equal(3);
     });
 
-    it("dispatches close and navigate events on goBack", async () => {
+    it("dispatches close event and calls history.back on goBack", async () => {
       let closeEvent = null;
-      let navigateEvent = null;
       element.addEventListener("close", (e) => {
         closeEvent = e;
       });
-      element.addEventListener("navigate", (e) => {
-        navigateEvent = e;
-      });
+
+      let historyBackCalled = false;
+      const originalBack = window.history.back;
+      window.history.back = () => {
+        historyBackCalled = true;
+      };
 
       const backBtn = element.shadowRoot.querySelector(".sidebar-back");
       backBtn.click();
 
+      window.history.back = originalBack;
+
       expect(closeEvent).to.exist;
-      expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.equal("/cash/test123");
+      expect(historyBackCalled).to.be.true;
     });
 
     it("emits hand-select event with previous hand on navigatePrev", async () => {

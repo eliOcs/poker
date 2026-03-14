@@ -60,6 +60,7 @@ function emitHandEnded(game, onBroadcast, handData) {
       gameId: game.id,
       handNumber: handData.handNumber,
       potResults: handData.potResults,
+      historyHand: handData.historyHand,
     });
   }
 }

@@ -495,7 +495,7 @@ class App extends LitElement {
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
     const nextPath = this._getHistoryPath(handNumber);
-    history.pushState({}, "", nextPath);
+    history.replaceState({}, "", nextPath);
     this.path = nextPath;
   }
 

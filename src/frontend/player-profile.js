@@ -1,36 +1,20 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import {
+  designTokens,
+  baseStyles,
+  shellPageStyles,
+  formatCurrency,
+} from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
-import { getTableHistoryPath } from "../shared/routes.js";
+import { getTableHistoryPath, getMttPath } from "../shared/routes.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
     return [
       designTokens,
       baseStyles,
+      shellPageStyles,
       css`
-        :host {
-          display: flex;
-          flex-direction: column;
-          background: var(--color-bg-medium);
-          color: var(--color-fg-medium);
-          box-sizing: border-box;
-        }
-
-        :host * {
-          box-sizing: inherit;
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          padding: clamp(12px, 3vw, 32px);
-          background: var(--color-bg-medium);
-        }
-
         .panel {
           width: min(1080px, 100%);
           max-width: 100%;
@@ -286,6 +270,19 @@ class PlayerProfile extends LitElement {
 
   navigateToGame(game) {
     const gameType = normalizeGameType(game.gameType);
+    const tournamentId = game.tournamentId || null;
+
+    if (gameType === "mtt" && tournamentId) {
+      this.dispatchEvent(
+        new CustomEvent("navigate", {
+          detail: { path: getMttPath(tournamentId) },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return;
+    }
+
     const tableId = game.tableId || game.lastTableId || game.gameId;
     if (!tableId) return;
 
@@ -293,10 +290,10 @@ class PlayerProfile extends LitElement {
       new CustomEvent("navigate", {
         detail: {
           path: getTableHistoryPath(
-            gameType === "mtt" ? "mtt" : gameType,
+            gameType,
             tableId,
             game.lastHandNumber,
-            game.tournamentId || null,
+            null,
           ),
         },
         bubbles: true,

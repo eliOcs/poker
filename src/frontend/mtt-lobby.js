@@ -1,7 +1,16 @@
 /* eslint-disable max-lines */
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
-import { getMttPath, getTablePath } from "../shared/routes.js";
+import {
+  designTokens,
+  baseStyles,
+  shellPageStyles,
+  formatCurrency,
+} from "./styles.js";
+import {
+  getMttPath,
+  getTablePath,
+  getTableHistoryPath,
+} from "../shared/routes.js";
 import "./button.js";
 
 class MttLobby extends LitElement {
@@ -9,28 +18,8 @@ class MttLobby extends LitElement {
     return [
       designTokens,
       baseStyles,
+      shellPageStyles,
       css`
-        :host {
-          display: flex;
-          flex-direction: column;
-          background: var(--color-bg-medium);
-          color: var(--color-fg-medium);
-          box-sizing: border-box;
-        }
-
-        :host * {
-          box-sizing: inherit;
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          justify-content: center;
-          padding: clamp(12px, 3vw, 32px);
-          background: var(--color-bg-medium);
-        }
-
         .panel {
           width: min(1120px, 100%);
           display: grid;
@@ -289,6 +278,7 @@ class MttLobby extends LitElement {
       loading: { type: Boolean },
       error: { type: String },
       actionPending: { type: Boolean, attribute: "action-pending" },
+      _copied: { type: Boolean, state: true },
     };
   }
 
@@ -299,6 +289,7 @@ class MttLobby extends LitElement {
     this.loading = false;
     this.error = "";
     this.actionPending = false;
+    this._copied = false;
   }
 
   _dispatchMttAction(action) {
@@ -372,12 +363,28 @@ class MttLobby extends LitElement {
     );
   }
 
+  _tournamentUrl() {
+    return `${window.location.origin}${getMttPath(this.tournamentId)}`;
+  }
+
+  async _copyLink() {
+    await navigator.clipboard.writeText(this._tournamentUrl());
+    this._copied = true;
+    setTimeout(() => {
+      this._copied = false;
+    }, 2000);
+  }
+
+  _share() {
+    navigator.share({
+      title: "Join my poker tournament",
+      url: this._tournamentUrl(),
+    });
+  }
+
   _renderActions(tournament) {
     if (!tournament) return "";
     const { actions } = tournament;
-    if (!actions.canRegister && !actions.canUnregister && !actions.canStart) {
-      return "";
-    }
 
     return html`
       <div class="action-row">
@@ -414,6 +421,14 @@ class MttLobby extends LitElement {
               Start Tournament
             </phg-button>`
           : ""}
+        <phg-button variant="secondary" @click=${this._copyLink}>
+          ${this._copied ? "Copied!" : "Copy Link"}
+        </phg-button>
+        ${"share" in navigator
+          ? html`<phg-button variant="secondary" @click=${this._share}>
+              Share
+            </phg-button>`
+          : ""}
       </div>
     `;
   }
@@ -421,11 +436,15 @@ class MttLobby extends LitElement {
   _renderAssignment(tournament) {
     if (!tournament?.currentPlayer?.tableId) return "";
 
-    const tableName = this._getTableName(tournament.currentPlayer.tableId);
+    const tableId = tournament.currentPlayer.tableId;
+    const tableName = this._getTableName(tableId);
     const isRunning = tournament.status === "running";
+    const isClosed =
+      tournament.tables.find((t) => t.tableId === tableId)?.closed ?? false;
+
     return html`
       <div class="assignment">
-        <strong>${isRunning ? "Current Table" : "Last Table"}</strong>
+        <strong>${isRunning ? "Current Table" : "Final Table"}</strong>
         <p>
           ${tableName}
           ${tournament.currentPlayer.seatIndex != null
@@ -433,14 +452,30 @@ class MttLobby extends LitElement {
             : ""}
         </p>
         <div class="table-actions">
-          <phg-button
-            variant="primary"
-            @click=${() => {
-              this.openTable(tournament.currentPlayer.tableId);
-            }}
-          >
-            Open Table
-          </phg-button>
+          ${isClosed
+            ? html`<phg-button
+                variant="secondary"
+                @click=${() => {
+                  this._navigate(
+                    getTableHistoryPath(
+                      "mtt",
+                      tableId,
+                      null,
+                      this.tournamentId,
+                    ),
+                  );
+                }}
+              >
+                Show History
+              </phg-button>`
+            : html`<phg-button
+                variant="primary"
+                @click=${() => {
+                  this.openTable(tableId);
+                }}
+              >
+                Open Table
+              </phg-button>`}
         </div>
       </div>
     `;
@@ -481,15 +516,30 @@ class MttLobby extends LitElement {
                 </span>
               </div>
               <div class="table-actions">
-                <phg-button
-                  variant=${isCurrent ? "success" : "secondary"}
-                  ?disabled=${table.closed}
-                  @click=${() => {
-                    this.openTable(table.tableId);
-                  }}
-                >
-                  ${isCurrent ? "Open My Table" : "Open Table"}
-                </phg-button>
+                ${table.closed
+                  ? html`<phg-button
+                      variant="secondary"
+                      @click=${() => {
+                        this._navigate(
+                          getTableHistoryPath(
+                            "mtt",
+                            table.tableId,
+                            null,
+                            this.tournamentId,
+                          ),
+                        );
+                      }}
+                    >
+                      Show History
+                    </phg-button>`
+                  : html`<phg-button
+                      variant=${isCurrent ? "success" : "secondary"}
+                      @click=${() => {
+                        this.openTable(table.tableId);
+                      }}
+                    >
+                      ${isCurrent ? "Open My Table" : "Open Table"}
+                    </phg-button>`}
               </div>
             </article>
           `;
@@ -597,7 +647,7 @@ class MttLobby extends LitElement {
                   <div class="eyebrow">Multi-Table Tournament</div>
                   <div class="title-row">
                     <div>
-                      <h1>Tournament ${tournament.id}</h1>
+                      <h1>Tournament #${tournament.id}</h1>
                       <div class="meta">
                         <span>Owner: ${tournament.ownerId}</span>
                         <span
@@ -637,20 +687,24 @@ class MttLobby extends LitElement {
 
                 ${this._renderActions(tournament)}
                 ${this._renderAssignment(tournament)}
+                ${tournament.status !== "registration"
+                  ? html`
+                      <section class="section">
+                        <h2>Tables</h2>
+                        ${this._renderTables(tournament)}
+                      </section>
+                    `
+                  : ""}
 
                 <section class="section">
-                  <h2>Tables</h2>
-                  ${this._renderTables(tournament)}
-                </section>
-
-                <section class="section">
-                  <h2>Entrants</h2>
-                  ${this._renderEntrantsTable(tournament)}
-                </section>
-
-                <section class="section">
-                  <h2>Standings</h2>
-                  ${this._renderStandingsTable(tournament)}
+                  <h2>
+                    ${tournament.status === "registration"
+                      ? "Entrants"
+                      : "Standings"}
+                  </h2>
+                  ${tournament.status === "registration"
+                    ? this._renderEntrantsTable(tournament)
+                    : this._renderStandingsTable(tournament)}
                 </section>
               `
             : ""}

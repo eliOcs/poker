@@ -102,4 +102,34 @@ describe("game history timing", () => {
     assert.ok(savedHand);
     assert.strictEqual(savedHand.game_number, `${game.id}-1`);
   });
+
+  it("includes historyHand with players and rounds in finalized hand data", () => {
+    game.handNumber = 1;
+    HandHistory.startHand(game);
+    HandHistory.recordBlind(game.id, "player1", "sb", 25);
+    HandHistory.recordBlind(game.id, "player2", "bb", 50);
+
+    game.pendingHandHistory = [
+      {
+        potAmount: 75,
+        winners: [0],
+        winningHand: null,
+        winningCards: null,
+        awards: [{ seat: 0, amount: 75 }],
+      },
+    ];
+
+    const handData = Game.startHand(game);
+
+    assert.ok(handData, "startHand should return finalized hand data");
+    assert.ok(handData.historyHand, "finalized data must include historyHand");
+    assert.ok(
+      handData.historyHand.players.length > 0,
+      "historyHand.players must not be empty",
+    );
+    assert.ok(
+      handData.historyHand.rounds.length > 0,
+      "historyHand.rounds must not be empty",
+    );
+  });
 });

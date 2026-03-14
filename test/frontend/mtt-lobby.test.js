@@ -70,10 +70,9 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Tournament mtt123");
+    expect(element.shadowRoot.textContent).to.include("Tournament #mtt123");
     expect(element.shadowRoot.textContent).to.include("Current Table");
     expect(element.shadowRoot.textContent).to.include("Table 1");
-    expect(element.shadowRoot.textContent).to.include("Entrants");
     expect(element.shadowRoot.textContent).to.include("Standings");
   });
 
@@ -86,7 +85,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("phg-button").click();
+      element.shadowRoot.querySelector(".assignment phg-button").click();
     });
 
     const event = await oneEvent(element, "navigate");

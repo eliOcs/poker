@@ -123,7 +123,6 @@ class History extends LitElement {
   }
 
   goBack() {
-    const livePath = this.getLivePath();
     // Emit close event for embedded mode (inside phg-game)
     this.dispatchEvent(
       new CustomEvent("close", {
@@ -131,14 +130,8 @@ class History extends LitElement {
         composed: true,
       }),
     );
-    // Also emit navigate for standalone mode (direct URL access)
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: livePath },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    // Go back in browser history for standalone mode (direct URL access)
+    window.history.back();
   }
 
   getPlayerName(playerId) {

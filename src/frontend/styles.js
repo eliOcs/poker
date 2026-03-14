@@ -68,6 +68,33 @@ export const baseStyles = css`
 `;
 
 /**
+ * Layout styles for full-page shell views (lobby, profile, etc.)
+ */
+export const shellPageStyles = css`
+  :host {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-medium);
+    color: var(--color-fg-medium);
+    box-sizing: border-box;
+  }
+
+  :host * {
+    box-sizing: inherit;
+  }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: clamp(12px, 3vw, 32px);
+    background: var(--color-bg-medium);
+  }
+`;
+
+/**
  * Check if an amount in cents has decimal cents
  * @param {Cents} amount
  * @returns {boolean} - True if there are cents (not a whole dollar)

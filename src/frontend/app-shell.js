@@ -10,7 +10,7 @@ class AppShell extends LitElement {
       baseStyles,
       css`
         .layout {
-          min-height: 100vh;
+          height: 100vh;
           display: flex;
           background: var(--color-bg-dark);
         }
@@ -18,6 +18,7 @@ class AppShell extends LitElement {
         ::slotted(*) {
           flex: 1;
           min-width: 0;
+          overflow-y: auto;
         }
       `,
     ];
