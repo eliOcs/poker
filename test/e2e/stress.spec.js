@@ -1,16 +1,9 @@
 /* eslint-disable playwright/no-conditional-in-test */
 import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
-import * as fs from "node:fs";
-import * as path from "node:path";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
 test.setTimeout(10 * 60 * 1000);
-
-const ACTIONS_FILE = path.join(
-  process.cwd(),
-  "test/e2e/data/tournament-actions.json",
-);
 
 const WEIGHTED_ACTIONS = [
   { threshold: 0.01, action: "allIn" },
@@ -270,27 +263,13 @@ async function assertNotStalled(players, activePlayers, state) {
 }
 
 /**
- * Save recorded actions to file
- * @param {Array} actions
- * @param {string} filePath
- */
-function saveActionsFile(actions, filePath) {
-  if (actions.length > 0) {
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(actions, null, 2));
-    console.log(`Saved ${actions.length} actions to ${filePath}`);
-  }
-}
-
-/**
  * Run the tournament game loop until a winner is found
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
  * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string}} state
- * @param {Array} newActions
  * @returns {Promise<string|null>} Winner name or null
  */
-async function runTournamentLoop(players, activePlayers, state, newActions) {
+async function runTournamentLoop(players, activePlayers, state) {
   const maxActions = 8000;
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
@@ -309,11 +288,6 @@ async function runTournamentLoop(players, activePlayers, state, newActions) {
 
     const result = await tryTakeAction(players, activePlayers);
     if (result) {
-      newActions.push({
-        seat: result.seatIdx,
-        action: result.action,
-        hand: state.handCount,
-      });
       markProgress(
         state,
         `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
@@ -378,24 +352,13 @@ test.describe("Tournament E2E", () => {
       lastProgressAt: Date.now(),
       lastProgressReason: "tournament-started",
     };
-    const newActions = [];
     const activePlayers = new Set([0, 1, 2, 3, 4, 5]);
-    const actionsFileExists = fs.existsSync(ACTIONS_FILE);
-
-    const winnerName = await runTournamentLoop(
-      players,
-      activePlayers,
-      state,
-      newActions,
-    );
+    const winnerName = await runTournamentLoop(players, activePlayers, state);
 
     if (winnerName) {
       console.log(
         `Tournament Winner: ${winnerName} (after ${state.handCount} hands)`,
       );
-      if (!actionsFileExists) {
-        saveActionsFile(newActions, ACTIONS_FILE);
-      }
     }
     expect(winnerName).toBeTruthy();
   });
