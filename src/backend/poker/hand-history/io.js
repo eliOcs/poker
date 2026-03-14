@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
  * @typedef {import('../types.js').Cents} Cents
  * @typedef {import('./index.js').OHHHand} OHHHand
  * @typedef {import('../tournament-summary.js').OTSSummary} OTSSummary
+ * @typedef {import('../../id.js').Id} Id
  */
 
 /**
@@ -87,7 +88,7 @@ export function getDataDir() {
 
 /**
  * Writes a hand to the .ohh file
- * @param {string} gameId
+ * @param {Id} gameId
  * @param {OHHHand} hand
  */
 export async function writeHandToFile(gameId, hand) {
@@ -106,7 +107,7 @@ export async function writeHandToFile(gameId, hand) {
 
 /**
  * Reads all hands from a game's .ohh file
- * @param {string} gameId
+ * @param {Id} gameId
  * @returns {Promise<OHHHand[]>}
  */
 export async function readHandsFromFile(gameId) {
@@ -121,6 +122,45 @@ export async function readHandsFromFile(gameId) {
   const lines = content.split("\n\n").filter(Boolean);
 
   return lines.map((line) => normalizeFromFile(JSON.parse(line).ohh));
+}
+
+/**
+ * Rewrites player ids in a game's hand history file.
+ * @param {Id} gameId
+ * @param {Id} fromPlayerId
+ * @param {Id} toPlayerId
+ * @returns {Promise<boolean>} true when the file was updated
+ */
+export async function rewritePlayerIdInHandHistory(
+  gameId,
+  fromPlayerId,
+  toPlayerId,
+) {
+  if (fromPlayerId === toPlayerId) {
+    throw new Error("Cannot rewrite hand history to the same player id");
+  }
+
+  const dataDir = getDataDir();
+  const filePath = `${dataDir}/${gameId}.ohh`;
+  if (!existsSync(filePath)) {
+    return false;
+  }
+
+  const originalContent = await readFile(filePath, "utf8");
+  const fromLiteral = JSON.stringify(fromPlayerId);
+  const toLiteral = JSON.stringify(toPlayerId);
+  const rewrittenContent = originalContent.replaceAll(fromLiteral, toLiteral);
+
+  if (rewrittenContent === originalContent) return false;
+
+  await writeFile(filePath, rewrittenContent, "utf8");
+
+  const hands = await readHandsFromFile(gameId);
+  for (const hand of hands) {
+    addToCache(hand.game_number, hand);
+  }
+
+  return true;
 }
 
 /**
@@ -158,7 +198,7 @@ export function hasInCache(cacheKey) {
 
 /**
  * Gets a hand from cache or file
- * @param {string} gameId
+ * @param {Id} gameId
  * @param {number} handNumber
  * @returns {Promise<OHHHand|undefined>}
  */
@@ -184,7 +224,7 @@ export async function getHand(gameId, handNumber) {
 
 /**
  * Gets all hands for a game (for list endpoint)
- * @param {string} gameId
+ * @param {Id} gameId
  * @returns {Promise<OHHHand[]>}
  */
 export async function getAllHands(gameId) {
@@ -208,7 +248,7 @@ export function getCacheSize() {
 
 /**
  * Writes a tournament summary to the .ots file
- * @param {string} gameId
+ * @param {Id} gameId
  * @param {OTSSummary} summary
  */
 export async function writeTournamentSummary(gameId, summary) {
@@ -227,7 +267,7 @@ export async function writeTournamentSummary(gameId, summary) {
 
 /**
  * Reads a tournament summary from the .ots file
- * @param {string} gameId
+ * @param {Id} gameId
  * @returns {Promise<OTSSummary|null>}
  */
 export async function readTournamentSummary(gameId) {

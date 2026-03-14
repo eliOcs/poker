@@ -7,9 +7,9 @@ import * as Game from "../../../../src/backend/poker/game.js";
 import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
+import { createTempDataDir } from "../../temp-data-dir.js";
 
-// Test data directory
-const TEST_DATA_DIR = "test-data";
+let testDataDir;
 
 /** Helper to create a test player */
 function createPlayer() {
@@ -42,9 +42,10 @@ describe("hand-history", function () {
 
   afterEach(async function () {
     // Clean up test data directory
-    if (existsSync(TEST_DATA_DIR)) {
-      await rm(TEST_DATA_DIR, { recursive: true });
+    if (existsSync(testDataDir)) {
+      await rm(testDataDir, { recursive: true });
     }
+    delete process.env.DATA_DIR;
   });
 
   describe("getRecorder", function () {
@@ -224,7 +225,8 @@ describe("hand-history", function () {
     it("groups actions by street correctly", async function () {
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);
@@ -305,7 +307,8 @@ describe("hand-history", function () {
       // duplicate 'Flop' round with the same board cards (8 cards on board).
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);
@@ -387,7 +390,8 @@ describe("hand-history", function () {
       };
       players.push(game.seats[2].player);
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);
@@ -434,7 +438,8 @@ describe("hand-history", function () {
       const { game, players } = createGameWithPlayers();
 
       // Set test data directory
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);
@@ -451,7 +456,8 @@ describe("hand-history", function () {
     it("retrieves hand from cache", async function () {
       const { game, players } = createGameWithPlayers();
 
-      process.env.DATA_DIR = TEST_DATA_DIR;
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
 
       game.handNumber++;
       HandHistory.startHand(game);

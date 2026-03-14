@@ -46,6 +46,25 @@ describe("phg-app", () => {
     globalThis.fetch = OriginalFetch;
   });
 
+  describe("SPA routes", () => {
+    it("renders release notes on the app route", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/release-notes";
+      await element.updateComplete;
+
+      const releaseNotes =
+        element.shadowRoot?.querySelector("phg-release-notes");
+      expect(releaseNotes).to.exist;
+    });
+  });
+
   describe("WebSocket reconnection", () => {
     let element;
 
@@ -145,6 +164,78 @@ describe("phg-app", () => {
 
       expect(element.game).to.deep.equal(initialGame);
       expect(element.game?.type).to.equal(undefined);
+    });
+  });
+
+  describe("frontend error reporting", () => {
+    it("reports uncaught window errors with route and game context", async () => {
+      /** @type {Array<{url: string, options: RequestInit|undefined}>} */
+      const requests = [];
+      globalThis.fetch = async (url, options) => {
+        requests.push({ url, options });
+        if (url === "/api/users/me") {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        if (url === "/api/client-errors") {
+          return { ok: true, json: async () => ({}) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      history.pushState({}, "", "/games/testgame");
+      element.path = window.location.pathname;
+      element._activeGameId = "testgame";
+      element.gameConnectionStatus = "connected";
+
+      element._handleWindowError({
+        error: new Error("boom"),
+        message: "boom",
+        filename: "/src/frontend/index.js",
+        lineno: 10,
+        colno: 20,
+      });
+      await Promise.resolve();
+
+      const report = requests.find(
+        (request) => request.url === "/api/client-errors",
+      );
+      expect(report).to.exist;
+      const payload = JSON.parse(String(report.options?.body));
+      expect(payload.message).to.equal("boom");
+      expect(payload.route).to.equal("/games/testgame");
+      expect(payload.gameId).to.equal("testgame");
+      expect(payload.connectionStatus).to.equal("connected");
+    });
+
+    it("reports unhandled rejections", async () => {
+      /** @type {Array<{url: string, options: RequestInit|undefined}>} */
+      const requests = [];
+      globalThis.fetch = async (url, options) => {
+        requests.push({ url, options });
+        if (url === "/api/users/me") {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        if (url === "/api/client-errors") {
+          return { ok: true, json: async () => ({}) };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element._handleUnhandledRejection({
+        reason: new Error("async boom"),
+      });
+      await Promise.resolve();
+
+      const report = requests.find(
+        (request) => request.url === "/api/client-errors",
+      );
+      expect(report).to.exist;
+      const payload = JSON.parse(String(report.options?.body));
+      expect(payload.type).to.equal("unhandledrejection");
+      expect(payload.message).to.equal("async boom");
+      expect(payload.source).to.equal("window.unhandledrejection");
     });
   });
 
@@ -420,75 +511,6 @@ describe("phg-app", () => {
 
       expect(element.path).to.equal("/history/testgame123/2");
       expect(element.historyHandList.map((h) => h.hand_number)).to.include(4);
-    });
-  });
-
-  describe("player profile settings", () => {
-    it("opens settings modal from your own profile", async () => {
-      globalThis.fetch = async (url, options = {}) => {
-        if (url.match(/\/api\/users\/me$/) && !options.method) {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "user1",
-              name: "Test",
-              settings: { volume: 0.75 },
-            }),
-          };
-        }
-        if (url.match(/\/api\/players\/user1$/)) {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "user1",
-              name: "Test",
-              online: false,
-              lastSeenAt: "2026-03-05T18:42:00.000Z",
-              joinedAt: "2025-11-14T20:15:00.000Z",
-              totalNetWinnings: 7500,
-              totalHands: 8,
-              recentGames: [],
-            }),
-          };
-        }
-        if (url.match(/\/api\/users\/me$/) && options.method === "PUT") {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "user1",
-              name: "Test",
-              settings: { volume: 0.75 },
-            }),
-          };
-        }
-        return { ok: false };
-      };
-
-      const element = await fixture(html`<phg-app></phg-app>`);
-      element.path = "/players/user1";
-      await element.updateComplete;
-
-      await waitUntil(
-        () => element.shadowRoot.querySelector("phg-player-profile"),
-        { timeout: 2000 },
-      );
-
-      const profile = element.shadowRoot.querySelector("phg-player-profile");
-      await waitUntil(() => profile.profile?.id === "user1", {
-        timeout: 2000,
-      });
-      await profile.updateComplete;
-
-      await profile.updateComplete;
-      profile.shadowRoot.querySelector("button").click();
-      await element.updateComplete;
-
-      const modal = element.shadowRoot.querySelector("phg-modal");
-      expect(modal).to.exist;
-      await modal.updateComplete;
-      expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-        "Settings",
-      );
     });
   });
 });

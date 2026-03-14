@@ -164,6 +164,81 @@ describe("phg-game", () => {
       expect(modal).to.exist;
     });
 
+    it("opens sign-in modal when sign-in button clicked", async () => {
+      element.game = createMockGameState();
+      await element.updateComplete;
+
+      const signInBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Sign in"));
+      signInBtn.click();
+      await element.updateComplete;
+
+      const modal = element.shadowRoot.querySelector("phg-modal");
+      expect(modal).to.exist;
+      expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
+        "Sign in",
+      );
+    });
+
+    it("shows signed-in account item with player name", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "Elio",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("Elio"));
+      expect(accountLink).to.exist;
+      expect(accountLink.classList.contains("drawer-account")).to.equal(true);
+
+      const signInBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Sign in"));
+      expect(signInBtn).to.not.exist;
+    });
+
+    it("renders the signed-in account item as a profile link in a new tab", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "Elio",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("Elio"));
+      expect(accountLink).to.exist;
+      expect(accountLink.getAttribute("href")).to.equal("/players/player123");
+      expect(accountLink.getAttribute("target")).to.equal("_blank");
+      expect(accountLink.getAttribute("rel")).to.equal("noopener noreferrer");
+    });
+
+    it("falls back to player id for signed-in account item without name", async () => {
+      element.game = createMockGameState();
+      element.user = {
+        id: "player123",
+        email: "player@example.com",
+        name: "",
+        settings: { volume: 0.75 },
+      };
+      await element.updateComplete;
+
+      const accountLink = Array.from(
+        element.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("player123"));
+      expect(accountLink).to.exist;
+      expect(accountLink.classList.contains("drawer-account")).to.equal(true);
+    });
+
     it("disables rankings and history before the first hand", async () => {
       element.game = createMockGameState({ handNumber: 0 });
       await element.updateComplete;
@@ -205,13 +280,30 @@ describe("phg-game", () => {
       expect(input.getAttribute("placeholder")).to.include("name");
     });
 
+    it("sign-in modal contains email input and benefit copy", async () => {
+      element.game = createMockGameState();
+      element.showSignIn = true;
+      await element.updateComplete;
+
+      const input = element.shadowRoot.querySelector("#sign-in-email");
+      const modalText = element.shadowRoot
+        .querySelector("phg-modal")
+        .textContent.replace(/\s+/g, " ");
+
+      expect(input).to.exist;
+      expect(input.getAttribute("type")).to.equal("email");
+      expect(modalText).to.include("one-time sign-in link");
+      expect(modalText).to.include("Keep your setup");
+      expect(modalText).to.include("Review previous games");
+    });
+
     it("closes modal when cancel button clicked", async () => {
       element.game = createMockGameState();
       element.showSettings = true;
       await element.updateComplete;
 
       const cancelBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="secondary"]',
+        'phg-button[variant="muted"]',
       );
       cancelBtn.click();
       await element.updateComplete;
@@ -257,7 +349,7 @@ describe("phg-game", () => {
       input.value = "TestPlayer";
 
       const saveBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="success"]',
+        'phg-button[variant="action"]',
       );
       saveBtn.click();
 
@@ -270,14 +362,63 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
+      let toast = null;
+      element.addEventListener("toast", (e) => {
+        toast = e.detail;
+      });
+
       const saveBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="success"]',
+        'phg-button[variant="action"]',
       );
       saveBtn.click();
       await element.updateComplete;
 
       const modal = element.shadowRoot.querySelector("phg-modal");
       expect(modal).to.not.exist;
+      expect(toast).to.deep.equal({
+        message: "Settings saved",
+        variant: "success",
+      });
+    });
+
+    it("dispatches request-sign-in event with the email", async () => {
+      element.game = createMockGameState();
+      element.showSignIn = true;
+      await element.updateComplete;
+
+      let request = null;
+      element.addEventListener("request-sign-in", (e) => {
+        request = e.detail;
+      });
+
+      const input = /** @type {HTMLInputElement} */ (
+        element.shadowRoot.querySelector("#sign-in-email")
+      );
+      input.value = "player@example.com";
+
+      element.requestSignIn();
+      await element.updateComplete;
+
+      expect(request).to.deep.equal({ email: "player@example.com" });
+      expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
+    });
+
+    it("marks sign-in email invalid and focuses it when submitted empty", async () => {
+      element.game = createMockGameState();
+      element.showSignIn = true;
+      await element.updateComplete;
+
+      const input = /** @type {HTMLInputElement} */ (
+        element.shadowRoot.querySelector("#sign-in-email")
+      );
+
+      element.requestSignIn();
+      await element.updateComplete;
+
+      expect(element._signInInvalid).to.equal(true);
+      expect(input.getAttribute("aria-invalid")).to.equal("true");
+      expect(element.shadowRoot.activeElement).to.equal(input);
+      expect(element.shadowRoot.querySelector("phg-modal")).to.exist;
     });
 
     it("pre-fills input with current user name", async () => {

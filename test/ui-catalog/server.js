@@ -25,6 +25,7 @@ const routes = {
   "/test-cases-history.js": "test/ui-catalog/test-cases-history.js",
   "/test-cases/history-extended.js":
     "test/ui-catalog/test-cases/history-extended.js",
+  "/test-cases-email.js": "test/ui-catalog/test-cases-email.js",
   "/test-cases/game-helpers.js": "test/ui-catalog/test-cases/game-helpers.js",
   "/test-cases/game-special.js": "test/ui-catalog/test-cases/game-special.js",
   "/test-cases/table-sizes.js": "test/ui-catalog/test-cases/table-sizes.js",
@@ -35,7 +36,7 @@ const routes = {
   "/logo.webp": "src/frontend/logo.webp",
   "/base.css": "src/frontend/base.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
-  "/release-notes.html": "src/frontend/release-notes.html",
+  "/release-notes": "src/frontend/index.html",
 };
 
 // Handle requests
@@ -53,6 +54,7 @@ function handleRequest(req, res) {
 
   // Serve frontend and shared source files
   if (
+    pathname.startsWith("/src/backend/") ||
     pathname.startsWith("/src/frontend/") ||
     pathname.startsWith("/src/shared/")
   ) {

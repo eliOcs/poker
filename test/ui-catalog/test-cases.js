@@ -13,6 +13,7 @@ import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
+import { EMAIL_TEST_CASES } from "./test-cases-email.js";
 import {
   emptySeat,
   emptySeats,
@@ -451,6 +452,7 @@ const TEST_CASES = {
   ...RANKING_MODAL_TEST_CASES,
   ...TABLE_SIZE_TEST_CASES,
   ...ACTION_PANEL_TEST_CASES,
+  ...EMAIL_TEST_CASES,
   ...HISTORY_TEST_CASES,
 };
 

@@ -354,9 +354,14 @@ function buildRounds(recorder) {
  * Finalizes and saves the current hand
  * @param {Game} game
  * @param {PotResult[]} [potResults]
+ * @param {number} [handNumber]
  * @returns {Promise<OHHHand>}
  */
-export async function finalizeHand(game, potResults = []) {
+export async function finalizeHand(
+  game,
+  potResults = [],
+  handNumber = game.handNumber,
+) {
   const recorder = getRecorder(game.id);
 
   const pots = potResults.map((pot, index) => ({
@@ -385,7 +390,7 @@ export async function finalizeHand(game, potResults = []) {
   const hand = {
     spec_version: "1.4.6",
     site_name: "Pluton Poker",
-    game_number: `${game.id}-${game.handNumber}`,
+    game_number: `${game.id}-${handNumber}`,
     start_date_utc: recorder.startTime || new Date().toISOString(),
     game_type: "Holdem",
     bet_limit: { bet_type: "NL" },
@@ -419,7 +424,7 @@ export async function finalizeHand(game, potResults = []) {
   }
 
   // Add to cache
-  const cacheKey = `${game.id}-${game.handNumber}`;
+  const cacheKey = `${game.id}-${handNumber}`;
   addToCache(cacheKey, hand);
 
   // Reset recorder immediately so a quickly starting next hand cannot be wiped

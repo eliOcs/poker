@@ -1,8 +1,6 @@
 import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
 import * as User from "./user.js";
-import * as Stakes from "./poker/stakes.js";
-import * as Tournament from "../shared/tournament.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import * as Store from "./store.js";
 import { getPlayerProfile } from "./player-profile.js";
@@ -13,10 +11,16 @@ import {
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 import { getSessionPlayerLogContext } from "./logger.js";
+import { createLog } from "./logger.js";
+import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
+import { logFrontendErrorReport } from "./client-error-reporting.js";
+export { logFrontendErrorReport } from "./client-error-reporting.js";
+import { createSignInRoutes } from "./sign-in-routes.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./id.js').Id} Id
  * @typedef {import('http').IncomingMessage} Request
  * @typedef {import('http').ServerResponse} Response
  */
@@ -30,7 +34,7 @@ const userCreationRateLimiter = createRateLimiter({
 
 /**
  * @param {Request} req
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  */
 function throwIfUserCreateRateLimited(req, log) {
   const clientIp = getClientIp(req);
@@ -38,11 +42,9 @@ function throwIfUserCreateRateLimited(req, log) {
     const creationRateLimit = userCreationRateLimiter.check(`ip:${clientIp}`, {
       source: "user-create",
     });
-    if (log) {
-      log.context.userCreateRateLimit = creationRateLimit.context;
-    }
+    log.context.userCreateRateLimit = creationRateLimit.context;
   } catch (err) {
-    if (log && err instanceof RateLimitError) {
+    if (err instanceof RateLimitError) {
       log.context.userCreateRateLimit = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
@@ -68,9 +70,10 @@ function createAndPersistUser(res, users) {
   const cookieDomain = process.env.DOMAIN
     ? ` Domain=${process.env.DOMAIN};`
     : "";
+  const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
   res.setHeader(
     "Set-Cookie",
-    `phg=${user.id};${cookieDomain} HttpOnly; Path=/`,
+    `phg=${user.id};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
   );
   return user;
 }
@@ -123,91 +126,29 @@ export function parseCookies(rawCookies) {
  * @param {Request} req
  * @param {Response} res
  * @param {Record<string, UserType>} users
- * @param {import('./logger.js').Log|null} [log]
+ * @param {import('./logger.js').Log} log
  * @returns {UserType}
  */
-export function getOrCreateUser(req, res, users, log = null) {
+export function getOrCreateUser(req, res, users, log) {
   const cookies = parseCookies(req.headers.cookie ?? "");
   const cookieId = cookies.phg ?? "";
   const existingUser = users[cookieId];
   if (existingUser) {
-    if (log)
-      Object.assign(log.context, getSessionPlayerLogContext(existingUser));
+    Object.assign(log.context, getSessionPlayerLogContext(existingUser));
     return existingUser;
   }
 
   const loadedUser = Store.loadUser(cookieId);
   if (loadedUser) {
     users[loadedUser.id] = loadedUser;
-    if (log) Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
+    Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
     return loadedUser;
   }
 
   throwIfUserCreateRateLimited(req, log);
   const user = createAndPersistUser(res, users);
-  if (log) Object.assign(log.context, getSessionPlayerLogContext(user));
+  Object.assign(log.context, getSessionPlayerLogContext(user));
   return user;
-}
-
-/**
- * Parses seat count from request data
- * @param {unknown} data
- * @param {number} defaultSeats
- * @returns {number}
- */
-function parseSeats(data, defaultSeats) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "seats" in data &&
-    [2, 6, 9].includes(/** @type {number} */ (data.seats))
-  ) {
-    return /** @type {number} */ (data.seats);
-  }
-  return defaultSeats;
-}
-
-/**
- * Parses blinds from request data
- * @param {unknown} data
- * @returns {{ ante: number, small: number, big: number }}
- */
-function parseBlinds(data) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "small" in data &&
-    "big" in data &&
-    Stakes.isValidPreset({
-      small: /** @type {number} */ (data.small),
-      big: /** @type {number} */ (data.big),
-    })
-  ) {
-    return {
-      ante: 0,
-      small: /** @type {number} */ (data.small),
-      big: /** @type {number} */ (data.big),
-    };
-  }
-  return { ante: 0, small: Stakes.DEFAULT.small, big: Stakes.DEFAULT.big };
-}
-
-/**
- * Parses buy-in from request data
- * @param {unknown} data
- * @returns {number}
- */
-function parseBuyIn(data) {
-  if (
-    data &&
-    typeof data === "object" &&
-    "buyIn" in data &&
-    typeof data.buyIn === "number" &&
-    Tournament.isValidBuyin(data.buyIn)
-  ) {
-    return data.buyIn;
-  }
-  return Tournament.DEFAULT_BUYIN.amount;
 }
 
 /**
@@ -221,10 +162,14 @@ function respondWithJson(res, data) {
 }
 
 /**
+ * @param {Request} req
+ * @returns {string}
+ */
+/**
  * Syncs user changes to all game seats where the user is seated
  * @param {UserType} user
- * @param {Map<string, Game>} games
- * @param {(gameId: string) => void} broadcast
+ * @param {Map<Id, Game>} games
+ * @param {(gameId: Id) => void} broadcast
  */
 function syncUserToGames(user, games, broadcast) {
   for (const [gameId, game] of games) {
@@ -245,9 +190,9 @@ function syncUserToGames(user, games, broadcast) {
  * @property {Response} res
  * @property {RegExpMatchArray|null} match
  * @property {Record<string, UserType>} users
- * @property {Map<string, Game>} games
- * @property {(gameId: string) => void} broadcast
- * @property {import('./logger.js').Log|null} log
+ * @property {Map<Id, Game>} games
+ * @property {(gameId: Id) => void} broadcast
+ * @property {import('./logger.js').Log} log
  */
 
 /**
@@ -260,11 +205,11 @@ function syncUserToGames(user, games, broadcast) {
 /**
  * Creates the routes array
  * @param {Record<string, UserType>} users
- * @param {Map<string, Game>} games
- * @param {(gameId: string) => void} broadcast
+ * @param {Map<Id, Game>} games
+ * @param {(gameId: Id) => void} broadcast
  * @returns {Route[]}
  */
-export function createRoutes(users, games, broadcast) {
+export function createRoutes(users, games, broadcast, services = {}) {
   return [
     {
       method: "GET",
@@ -290,6 +235,7 @@ export function createRoutes(users, games, broadcast) {
         respondWithJson(res, {
           id: user.id,
           name: user.name,
+          email: user.email,
           settings: user.settings,
         });
       },
@@ -323,10 +269,34 @@ export function createRoutes(users, games, broadcast) {
         respondWithJson(res, {
           id: user.id,
           name: user.name,
+          email: user.email,
           settings: user.settings,
         });
       },
     },
+    {
+      method: "POST",
+      path: "/api/client-errors",
+      handler: async ({ req, res, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const data = await parseBody(req);
+        logFrontendErrorReport(req, user, data);
+        res.writeHead(204);
+        res.end();
+      },
+    },
+    ...createSignInRoutes({
+      sendSignInEmail: services.sendSignInEmail,
+      clientConnections: services.clientConnections,
+    }).map((route) => ({
+      ...route,
+      handler: (ctx) =>
+        route.handler({
+          ...ctx,
+          getOrCreateUser,
+          parseBody,
+        }),
+    })),
     {
       method: "POST",
       path: "/games",
@@ -346,30 +316,28 @@ export function createRoutes(users, games, broadcast) {
           const buyIn = parseBuyIn(data);
           const game = PokerGame.createTournament({ seats, buyIn });
           games.set(game.id, game);
-          if (log)
-            Object.assign(log.context, {
-              game: {
-                type: "tournament",
-                id: game.id,
-                seats,
-                buyIn,
-                initialStack: game.tournament?.initialStack,
-              },
-            });
+          Object.assign(log.context, {
+            game: {
+              type: "tournament",
+              id: game.id,
+              seats,
+              buyIn,
+              initialStack: game.tournament?.initialStack,
+            },
+          });
           respondWithJson(res, { id: game.id, type: "tournament" });
         } else {
           const blinds = parseBlinds(data);
           const game = PokerGame.create({ blinds, seats });
           games.set(game.id, game);
-          if (log)
-            Object.assign(log.context, {
-              game: {
-                type: "cash",
-                id: game.id,
-                blinds: `${blinds.small}/${blinds.big}`,
-                seats,
-              },
-            });
+          Object.assign(log.context, {
+            game: {
+              type: "cash",
+              id: game.id,
+              blinds: `${blinds.small}/${blinds.big}`,
+              seats,
+            },
+          });
           respondWithJson(res, { id: game.id, type: "cash" });
         }
       },
@@ -393,6 +361,22 @@ export function createRoutes(users, games, broadcast) {
     {
       method: "GET",
       path: /^\/players\/([a-z0-9]+)$/,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: "/release-notes",
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/auth\/email-sign-in\/callback(?:\?.*)?$/,
       handler: ({ req, res, log }) => {
         getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
@@ -489,7 +473,7 @@ export async function handleRequest(req, res, routes) {
       users: {},
       games: new Map(),
       broadcast: () => {},
-      log: null,
+      log: createLog("http_request"),
     });
     return;
   }

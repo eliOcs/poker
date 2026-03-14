@@ -1,7 +1,6 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
-import { ICONS } from "./icons.js";
-import "./navigation-drawer.js";
+import { formatPlayerLabel } from "./player-label.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -10,21 +9,15 @@ class PlayerProfile extends LitElement {
       baseStyles,
       css`
         :host {
-          min-height: 100vh;
-          display: block;
-          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
           background: var(--color-bg-medium);
           color: var(--color-fg-medium);
+          box-sizing: border-box;
         }
 
         :host * {
           box-sizing: inherit;
-        }
-
-        .layout {
-          min-height: 100vh;
-          display: flex;
-          background: var(--color-bg-dark);
         }
 
         .main {
@@ -280,29 +273,14 @@ class PlayerProfile extends LitElement {
   static get properties() {
     return {
       profile: { type: Object },
-      drawerOpen: { type: Boolean, state: true },
+      user: { type: Object },
     };
   }
 
   constructor() {
     super();
     this.profile = null;
-    this.drawerOpen = false;
-    this._onMediaChange = (event) => {
-      this.drawerOpen = event.matches;
-    };
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._mql = window.matchMedia("(min-width: 800px)");
-    this._mql.addEventListener("change", this._onMediaChange);
-    this.drawerOpen = this._mql.matches;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._mql?.removeEventListener("change", this._onMediaChange);
+    this.user = null;
   }
 
   navigateToGame(game) {
@@ -315,22 +293,6 @@ class PlayerProfile extends LitElement {
     );
   }
 
-  openSettings() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-settings", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
-
-  toggleDrawer() {
-    this.drawerOpen = !this.drawerOpen;
-  }
-
   render() {
     if (!this.profile) {
       return html`<div class="panel">
@@ -339,72 +301,57 @@ class PlayerProfile extends LitElement {
     }
 
     return html`
-      <div class="layout">
-        ${this.renderDrawer()}
-        <div class="main">
-          <div class="content">
-            <section class="panel">
-              <div class="eyebrow">Player Profile</div>
-              <div class="header">
-                <div class="identity">
-                  <h1>${this.profile.name}</h1>
-                  <div class="player-id">Player ID: ${this.profile.id}</div>
-                  <div class="meta">
-                    Joined ${formatDate(this.profile.joinedAt)}
-                  </div>
-                </div>
-                <div class=${`status ${this.profile.online ? "" : "offline"}`}>
-                  ${this.profile.online
-                    ? "Online"
-                    : `Last seen ${formatRelativeDate(this.profile.lastSeenAt)}`}
+      <div class="main">
+        <div class="content">
+          <section class="panel">
+            <div class="eyebrow">Player Profile</div>
+            <div class="header">
+              <div class="identity">
+                <h1>
+                  ${formatPlayerLabel(this.profile.name, this.profile.id)}
+                </h1>
+                <div class="player-id">Player ID: ${this.profile.id}</div>
+                <div class="meta">
+                  Joined ${formatDate(this.profile.joinedAt)}
                 </div>
               </div>
-              <div class="summary">
-                <article class="stat">
-                  <div class="label">Total Net Winnings</div>
-                  <div
-                    class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
-                  >
-                    ${formatSignedCurrency(this.profile.totalNetWinnings)}
-                  </div>
-                </article>
-                <article class="stat">
-                  <div class="label">Total Hands</div>
-                  <div class="value">
-                    ${formatNumber(this.profile.totalHands)}
-                  </div>
-                </article>
-                <article class="stat">
-                  <div class="label">Games Played</div>
-                  <div class="value">
-                    ${formatNumber(this.profile.recentGames?.length || 0)}
-                  </div>
-                </article>
+              <div class=${`status ${this.profile.online ? "" : "offline"}`}>
+                ${this.profile.online
+                  ? "Playing"
+                  : `Last played ${formatRelativeDate(this.profile.lastSeenAt)}`}
               </div>
-            </section>
-            <section class="section">
-              <div class="panel">
-                <h2>Recent Games</h2>
-                ${this.renderRecentGames()}
-              </div>
-            </section>
-          </div>
+            </div>
+            <div class="summary">
+              <article class="stat">
+                <div class="label">Total Net Winnings</div>
+                <div
+                  class=${`value ${getResultClass(this.profile.totalNetWinnings)}`}
+                >
+                  ${formatSignedCurrency(this.profile.totalNetWinnings)}
+                </div>
+              </article>
+              <article class="stat">
+                <div class="label">Total Hands</div>
+                <div class="value">
+                  ${formatNumber(this.profile.totalHands)}
+                </div>
+              </article>
+              <article class="stat">
+                <div class="label">Games Played</div>
+                <div class="value">
+                  ${formatNumber(this.profile.recentGames?.length || 0)}
+                </div>
+              </article>
+            </div>
+          </section>
+          <section class="section">
+            <div class="panel">
+              <h2>Recent Games</h2>
+              ${this.renderRecentGames()}
+            </div>
+          </section>
         </div>
       </div>
-    `;
-  }
-
-  renderDrawer() {
-    return html`
-      <phg-navigation-drawer
-        ?open=${this.drawerOpen}
-        @drawer-toggle=${this.toggleDrawer}
-      >
-        <button @click=${this.openSettings}>
-          ${ICONS.settings}
-          <span>Settings</span>
-        </button>
-      </phg-navigation-drawer>
     `;
   }
 

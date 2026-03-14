@@ -2,6 +2,7 @@ import { test as base, devices } from "@playwright/test";
 import { PokerPlayer } from "./poker-player.js";
 import { attachDebugListeners } from "./page-debug.js";
 import { startCoverage, stopCoverage } from "./coverage.js";
+import { ensureEmailSinkDir } from "./email.js";
 
 // Set DEBUG_E2E=1 to enable console/error logging
 const DEBUG = process.env.DEBUG_E2E === "1";
@@ -38,6 +39,13 @@ function createPlayerFixture(name, contextOptions = {}) {
  * Enable debug logging: DEBUG_E2E=1 npm run test:e2e
  */
 export const test = base.extend({
+  emailSink: [
+    async ({}, use) => {
+      await ensureEmailSinkDir();
+      await use();
+    },
+    { auto: true },
+  ],
   /** @type {PokerPlayer} */
   player1: createPlayerFixture("Player 1"),
   /** @type {PokerPlayer} Player 2 uses a mobile viewport */

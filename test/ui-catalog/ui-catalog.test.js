@@ -70,6 +70,9 @@ const TEST_CASES = [
   "game-rankings-modal-tournament",
   "game-settings-modal",
 
+  // Email states
+  "email-sign-in",
+
   // Hand history states
   "history-empty",
   "history-preflop-fold",
@@ -79,6 +82,7 @@ const TEST_CASES = [
 ];
 
 function getComponentSelector(testCase) {
+  if (testCase.startsWith("email-")) return ".email-preview";
   if (testCase === "landing-page") return "phg-home";
   if (testCase.startsWith("history-")) return "phg-history";
   if (testCase.startsWith("player-profile-")) return "phg-player-profile";
@@ -107,10 +111,9 @@ for (const testCase of TEST_CASES) {
 
 // Static pages (non-Lit components)
 test("release-notes", async ({ page }) => {
-  await page.goto("/release-notes.html");
+  await page.goto("/release-notes");
 
-  // Wait for the container to be visible
-  await page.locator(".container").waitFor();
+  await page.locator("phg-release-notes").waitFor();
 
   // Take viewport screenshot (not full page)
   await expect(page).toHaveScreenshot("release-notes.png");

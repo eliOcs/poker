@@ -18,9 +18,11 @@ import { renderDrawer } from "./drawer.js";
 import {
   renderRankingModal,
   renderSettingsModal,
+  renderSignInModal,
   renderEmoteModal,
   renderChatModal,
 } from "./game-modals.js";
+import { gameModalActions } from "./game-modal-actions.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 /** @typedef {HTMLElement & { showEmote: (emoji: string) => void, showChat: (message: string) => void }} SeatElement */
@@ -37,12 +39,14 @@ class Game extends LitElement {
       socialAction: { type: Object },
       user: { type: Object },
       showSettings: { type: Boolean },
+      showSignIn: { type: Boolean },
       showRanking: { type: Boolean },
       showEmotePicker: { type: Boolean },
       showChat: { type: Boolean },
       volume: { type: Number },
       _drawerOpen: { type: Boolean, state: true },
       _copied: { type: Boolean, state: true },
+      _signInInvalid: { type: Boolean, state: true },
     };
   }
 
@@ -53,12 +57,14 @@ class Game extends LitElement {
     this.socialAction = null;
     this.user = null;
     this.showSettings = false;
+    this.showSignIn = false;
     this.showRanking = false;
     this.showEmotePicker = false;
     this.showChat = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
     this._drawerOpen = false;
     this._copied = false;
+    this._signInInvalid = false;
     this._settingsInitialized = false;
     this._onMediaChange = (e) => {
       this._drawerOpen = e.matches;
@@ -150,21 +156,9 @@ class Game extends LitElement {
     this.send(e.detail);
   }
 
-  openSettings() {
-    this.showSettings = true;
-  }
-
-  closeSettings() {
-    this.showSettings = false;
-  }
-
-  openRanking() {
-    if (!this.hasRecordedHands()) return;
-    this.showRanking = true;
-  }
-
-  closeRanking() {
-    this.showRanking = false;
+  sendEmote(emoji) {
+    this.send({ action: "emote", emoji });
+    this.showEmotePicker = false;
   }
 
   openEmotePicker() {
@@ -172,11 +166,6 @@ class Game extends LitElement {
   }
 
   closeEmotePicker() {
-    this.showEmotePicker = false;
-  }
-
-  sendEmote(emoji) {
-    this.send({ action: "emote", emoji });
     this.showEmotePicker = false;
   }
 
@@ -242,21 +231,6 @@ class Game extends LitElement {
         composed: true,
       }),
     );
-  }
-
-  saveSettings() {
-    const input = /** @type {HTMLInputElement|null} */ (
-      this.shadowRoot?.querySelector("#name-input")
-    );
-    const name = input?.value.trim() || "";
-    this.dispatchEvent(
-      new CustomEvent("update-user", {
-        detail: { name },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    this.showSettings = false;
   }
 
   hasRecordedHands() {
@@ -513,11 +487,13 @@ class Game extends LitElement {
           isWinner,
         )}
         ${this._renderInfoBar()} ${renderRankingModal(this)}
-        ${renderSettingsModal(this)} ${renderEmoteModal(this)}
-        ${renderChatModal(this)}
+        ${renderSettingsModal(this)} ${renderSignInModal(this)}
+        ${renderEmoteModal(this)} ${renderChatModal(this)}
       </div>
     `;
   }
 }
+
+Object.assign(Game.prototype, gameModalActions);
 
 customElements.define("phg-game", Game);

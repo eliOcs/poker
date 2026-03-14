@@ -17,11 +17,13 @@ import {
 import { HttpError } from "./http-error.js";
 import { createGameBroadcaster } from "./game-broadcast.js";
 import { createWebSocketServer } from "./ws-server.js";
+import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./id.js').Id} Id
  */
 
 const server = http.createServer();
@@ -29,18 +31,59 @@ const server = http.createServer();
 /** @type {Record<string, UserType>} */
 const users = {};
 
-/** @type {Map<string, Game>} */
+/** @type {Map<Id, Game>} */
 const games = new Map();
 
-/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} */
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id }>} */
 const clientConnections = new Map();
 
-const { broadcastGameMessage, broadcastGameStateMessage } =
-  createGameBroadcaster(games, clientConnections);
-const routes = createRoutes(users, games, broadcastGameStateMessage);
+const {
+  broadcastGameMessage: rawBroadcastGameMessage,
+  broadcastGameStateMessage,
+} = createGameBroadcaster(games, clientConnections);
+
+/** @param {import('./poker/game.js').BroadcastMessage} message */
+function broadcastGameMessage(message) {
+  if (message.type === "handEnded") {
+    const game = games.get(message.gameId);
+    if (game) {
+      HandHistory.finalizeHand(game, message.potResults, message.handNumber)
+        .then((hand) => {
+          Store.recordPlayerGames(
+            hand.players.map((player) => ({
+              playerId: player.id,
+              gameId: message.gameId,
+            })),
+          );
+          rawBroadcastGameMessage({
+            type: "history",
+            gameId: message.gameId,
+            event: "handRecorded",
+            handNumber: message.handNumber,
+          });
+        })
+        .catch((err) => {
+          logger.error("hand finalization failed", {
+            err,
+            game: { id: message.gameId },
+          });
+        });
+    }
+    return { recipients: 0, maxPayloadBytes: 0 };
+  }
+  return rawBroadcastGameMessage(message);
+}
+const routes = createRoutes(users, games, broadcastGameStateMessage, {
+  clientConnections,
+});
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
+const STATIC_HTTP_RATE_LIMIT_MAX_ACTIONS = 500;
 const actionRateLimiter = createRateLimiter({
+  blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
+});
+const staticFileRateLimiter = createRateLimiter({
+  maxActions: STATIC_HTTP_RATE_LIMIT_MAX_ACTIONS,
   blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
 });
 
@@ -59,7 +102,7 @@ function getRequestRateLimitKey(req) {
 
 /**
  * @param {UserType|undefined} user
- * @param {string|undefined} gameId
+ * @param {Id|undefined} gameId
  * @returns {Promise<Game|null>}
  */
 async function resolveGameForUpgrade(user, gameId) {
@@ -96,17 +139,36 @@ async function resolveGameForUpgrade(user, gameId) {
 
 /**
  * @param {import('http').IncomingMessage} req
- * @param {import('./logger.js').Log|null} log
+ * @returns {{ limiter: ReturnType<typeof createRateLimiter>, source: string }}
+ */
+function getHttpRateLimiter(req) {
+  const method = req.method ?? "GET";
+  const url = req.url ?? "";
+  if (method === "GET" && getFilePath(url)) {
+    return {
+      limiter: staticFileRateLimiter,
+      source: "http-static",
+    };
+  }
+
+  return {
+    limiter: actionRateLimiter,
+    source: "http",
+  };
+}
+
+/**
+ * @param {import('http').IncomingMessage} req
+ * @param {import('./logger.js').Log} log
  */
 function throwIfRateLimitedHttpRequest(req, log) {
   const key = getRequestRateLimitKey(req);
+  const { limiter, source } = getHttpRateLimiter(req);
   try {
-    const rateLimit = actionRateLimiter.check(key, { source: "http" });
-    if (log) {
-      log.context.rateLimit = rateLimit.context;
-    }
+    const rateLimit = limiter.check(key, { source });
+    log.context.rateLimit = rateLimit.context;
   } catch (err) {
-    if (log && err instanceof RateLimitError) {
+    if (err instanceof RateLimitError) {
       log.context.rateLimit = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
@@ -123,7 +185,7 @@ function throwIfRateLimitedHttpRequest(req, log) {
 /**
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  */
 async function handleRequest(req, res, log) {
   throwIfRateLimitedHttpRequest(req, log);
@@ -167,14 +229,12 @@ async function handleRequest(req, res, log) {
 
 /**
  * @param {import('http').ServerResponse} res
- * @param {import('./logger.js').Log|null} log
+ * @param {import('./logger.js').Log} log
  * @param {unknown} err
  */
 function handleRequestError(res, log, err) {
   if (err instanceof HttpError) {
-    if (log) {
-      log.context.error = { message: err.message };
-    }
+    log.context.error = { message: err.message };
     if (!res.headersSent) {
       res.writeHead(err.status, {
         "content-type": "application/json",
@@ -187,7 +247,7 @@ function handleRequestError(res, log, err) {
     return;
   }
 
-  if (log && err instanceof Error) {
+  if (err instanceof Error) {
     log.context.error = { message: err.message };
   }
   if (!res.headersSent) {
@@ -199,18 +259,14 @@ function handleRequestError(res, log, err) {
 server.on("request", (req, res) => {
   const url = req.url ?? "";
   const method = req.method ?? "GET";
-  const log = url === "/up" ? null : createLog("http_request");
-
-  if (log) {
-    log.context.request = { method, path: url };
-  }
+  const log = createLog("http_request");
+  log.context.request = { method, path: url };
 
   handleRequest(req, res, log)
     .catch((err) => {
       handleRequestError(res, log, err);
     })
     .finally(() => {
-      if (!log) return;
       log.context.request = {
         ...(log.context.request || {}),
         status: res.statusCode,
@@ -248,7 +304,7 @@ if (typeof evictionTimer.unref === "function") {
 }
 
 /** @param {string} signal */
-function gracefulShutdown(signal) {
+async function gracefulShutdown(signal) {
   logger.info("shutdown initiated", { signal });
   server.close(() => {
     logger.info("http server closed");
@@ -271,10 +327,10 @@ function gracefulShutdown(signal) {
 }
 
 process.on("SIGTERM", () => {
-  gracefulShutdown("SIGTERM");
+  void gracefulShutdown("SIGTERM");
 });
 process.on("SIGINT", () => {
-  gracefulShutdown("SIGINT");
+  void gracefulShutdown("SIGINT");
 });
 
 const port = Number(process.env.PORT);

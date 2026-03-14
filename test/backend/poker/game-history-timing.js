@@ -75,7 +75,21 @@ describe("game history timing", () => {
       },
     ];
 
-    Game.startHand(game);
+    const handData = Game.startHand(game);
+    if (handData) {
+      HandHistory.finalizeHand(
+        game,
+        handData.potResults,
+        handData.handNumber,
+      ).then((hand) => {
+        Store.recordPlayerGames(
+          hand.players.map((player) => ({
+            playerId: player.id,
+            gameId: game.id,
+          })),
+        );
+      });
+    }
     await waitForHandHistoryFlush();
 
     assert.strictEqual(game.pendingHandHistory, null);

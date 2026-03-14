@@ -26,6 +26,8 @@ registry:
 # Environment variables for the container
 env:
   clear:
+    NODE_ENV: production
+    APP_ORIGIN: https://plutonpoker.com
     DOMAIN: plutonpoker.com
     LOG_FORMAT: json
     PORT: 3000

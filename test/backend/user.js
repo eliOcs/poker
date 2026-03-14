@@ -19,13 +19,14 @@ describe("user", function () {
       assert.strictEqual(u.name, undefined);
     });
 
-    it("user object has id, name, and settings properties", function () {
+    it("user object has id, name, email, and settings properties", function () {
       const u = User.create();
 
       assert.ok("id" in u);
       assert.ok("name" in u);
+      assert.ok("email" in u);
       assert.ok("settings" in u);
-      assert.strictEqual(Object.keys(u).length, 3);
+      assert.strictEqual(Object.keys(u).length, 4);
     });
 
     it("creates a user with default settings", function () {

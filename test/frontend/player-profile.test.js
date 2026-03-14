@@ -75,31 +75,4 @@ describe("phg-player-profile", () => {
     const event = await oneEvent(element, "navigate");
     expect(event.detail).to.deep.equal({ path: "/history/tour123/12" });
   });
-
-  it("shows the settings item in the profile drawer", async () => {
-    const element = await fixture(html`
-      <phg-player-profile
-        .profile=${{
-          id: "player2",
-          name: "Alice",
-          online: false,
-          lastSeenAt: "2026-03-05T18:42:00.000Z",
-          joinedAt: "2025-11-14T20:15:00.000Z",
-          totalNetWinnings: 7500,
-          totalHands: 8,
-          recentGames: [],
-        }}
-      ></phg-player-profile>
-    `);
-
-    element.drawerOpen = true;
-    await element.updateComplete;
-
-    setTimeout(() => {
-      element.shadowRoot.querySelector("button").click();
-    });
-
-    const event = await oneEvent(element, "open-settings");
-    expect(event).to.exist;
-  });
 });

@@ -14,6 +14,10 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+locals {
+  ses_mail_from_domain = "${var.ses_mail_from_subdomain}.${var.domain}"
+}
+
 # Adopt default VPC with dual-stack (IPv6 is free)
 resource "aws_default_vpc" "default" {
   assign_generated_ipv6_cidr_block = true
@@ -137,11 +141,49 @@ resource "aws_key_pair" "poker" {
   public_key = file(var.ssh_public_key_path)
 }
 
+resource "aws_iam_role" "poker_ec2" {
+  name = "poker-ec2"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_instance_profile" "poker" {
+  name = "poker-ec2"
+  role = aws_iam_role.poker_ec2.name
+}
+
+resource "aws_iam_role_policy" "poker_ec2_ses" {
+  name = "ses-send"
+  role = aws_iam_role.poker_ec2.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ses:SendEmail",
+        "ses:SendRawEmail"
+      ]
+      Resource = aws_ses_domain_identity.poker.arn
+    }]
+  })
+}
+
 # EC2 Instance (Graviton t4g.micro)
 # AMI: Ubuntu 24.04 ARM64 (eu-central-1, 2026-02-18)
 resource "aws_instance" "poker" {
   ami                    = "ami-052b310a8f0d76968"
   instance_type          = "t4g.micro"
+  iam_instance_profile   = aws_iam_instance_profile.poker.name
   key_name               = aws_key_pair.poker.key_name
   vpc_security_group_ids = [aws_security_group.poker.id]
   subnet_id              = aws_default_subnet.default.id
@@ -149,18 +191,32 @@ resource "aws_instance" "poker" {
 
   user_data = <<-EOF
     #!/bin/bash
-    DEVICE=/dev/$(lsblk -dno NAME,TYPE | awk '$2 == "disk" {print $1}' | grep -v nvme0n1)
     MOUNT=/opt/poker/data
+    DEVICE=""
+
+    if [ -b /dev/nvme1n1 ]; then
+      DEVICE=/dev/nvme1n1
+    elif [ -b /dev/xvdf ]; then
+      DEVICE=/dev/xvdf
+    else
+      echo "Data volume device not found" >&2
+      exit 1
+    fi
+
     # Only format if not already formatted
     if ! blkid "$DEVICE"; then
       mkfs.ext4 "$DEVICE"
     fi
+
+    UUID=$(blkid -s UUID -o value "$DEVICE")
     mkdir -p "$MOUNT"
-    chown 1001:1001 "$MOUNT"
-    if ! grep -q "$MOUNT" /etc/fstab; then
-      echo "$DEVICE $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
-    fi
+
+    # Keep exactly one mount entry for the app data directory.
+    sed -i "\\# $MOUNT #d" /etc/fstab
+    echo "UUID=$UUID $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
+
     mount -a
+    chown 1001:1001 "$MOUNT"
   EOF
 
   root_block_device {
@@ -219,6 +275,59 @@ resource "aws_route53_record" "poker_ipv6" {
   type    = "AAAA"
   ttl     = 300
   records = [aws_instance.poker.ipv6_addresses[0]]
+}
+
+resource "aws_ses_domain_identity" "poker" {
+  domain = var.domain
+}
+
+resource "aws_route53_record" "ses_verification" {
+  zone_id = var.route53_zone_id
+  name    = "_amazonses.${var.domain}"
+  type    = "TXT"
+  ttl     = var.ses_dns_ttl
+  records = [aws_ses_domain_identity.poker.verification_token]
+}
+
+resource "aws_ses_domain_identity_verification" "poker" {
+  domain = aws_ses_domain_identity.poker.id
+
+  depends_on = [aws_route53_record.ses_verification]
+}
+
+resource "aws_ses_domain_dkim" "poker" {
+  domain = aws_ses_domain_identity.poker.domain
+}
+
+resource "aws_route53_record" "ses_dkim" {
+  count   = 3
+  zone_id = var.route53_zone_id
+  name    = "${aws_ses_domain_dkim.poker.dkim_tokens[count.index]}._domainkey.${var.domain}"
+  type    = "CNAME"
+  ttl     = var.ses_dns_ttl
+  records = ["${aws_ses_domain_dkim.poker.dkim_tokens[count.index]}.dkim.amazonses.com"]
+}
+
+resource "aws_ses_domain_mail_from" "poker" {
+  domain                 = aws_ses_domain_identity.poker.domain
+  mail_from_domain       = local.ses_mail_from_domain
+  behavior_on_mx_failure = "UseDefaultValue"
+}
+
+resource "aws_route53_record" "ses_mail_from_mx" {
+  zone_id = var.route53_zone_id
+  name    = local.ses_mail_from_domain
+  type    = "MX"
+  ttl     = var.ses_dns_ttl
+  records = ["10 feedback-smtp.${var.aws_region}.amazonses.com"]
+}
+
+resource "aws_route53_record" "ses_mail_from_spf" {
+  zone_id = var.route53_zone_id
+  name    = local.ses_mail_from_domain
+  type    = "TXT"
+  ttl     = var.ses_dns_ttl
+  records = ["v=spf1 include:amazonses.com -all"]
 }
 
 # GitHub OIDC Provider for GitHub Actions

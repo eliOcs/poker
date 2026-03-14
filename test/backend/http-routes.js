@@ -1,15 +1,22 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { getOrCreateUser } from "../../src/backend/http-routes.js";
+import {
+  getOrCreateUser,
+  logFrontendErrorReport,
+} from "../../src/backend/http-routes.js";
 import * as Store from "../../src/backend/store.js";
 
 describe("http-routes", () => {
+  let originalConsoleError;
+
   beforeEach(() => {
     Store._reset();
     Store.initialize(":memory:");
+    originalConsoleError = console.error;
   });
 
   afterEach(() => {
+    console.error = originalConsoleError;
     Store.close();
   });
 
@@ -31,6 +38,7 @@ describe("http-routes", () => {
       session: {
         playerId: "user-1",
         playerName: "Alice",
+        signedIn: false,
       },
     });
   });
@@ -53,7 +61,61 @@ describe("http-routes", () => {
     assert.strictEqual(users[resolvedUser.id], resolvedUser);
     assert.strictEqual(log.context.session.playerId, resolvedUser.id);
     assert.strictEqual(log.context.session.playerName, null);
+    assert.strictEqual(log.context.session.signedIn, false);
     assert.ok(log.context.userCreateRateLimit);
     assert.strictEqual(headers[0][0], "Set-Cookie");
+  });
+
+  it("logs frontend errors with session and client context", () => {
+    /** @type {string[]} */
+    const lines = [];
+    console.error = (line) => lines.push(String(line));
+
+    logFrontendErrorReport(
+      {
+        url: "/api/client-errors",
+        method: "POST",
+      },
+      {
+        id: "user-1",
+        name: "Alice",
+        settings: { volume: 0.75 },
+      },
+      {
+        type: "unhandledrejection",
+        message: "Cannot read properties of undefined",
+        stack: "TypeError: Cannot read properties of undefined",
+        route: "/games/abc123",
+        gameId: "abc123",
+        line: 12,
+        column: 9,
+        source: "window.unhandledrejection",
+      },
+    );
+
+    assert.equal(lines.length, 1);
+    assert.match(lines[0], /frontend_error/);
+    assert.match(lines[0], /playerId":"user-1"/);
+    assert.match(lines[0], /"gameId":"abc123"/);
+    assert.match(lines[0], /"route":"\/games\/abc123"/);
+  });
+
+  it("rejects frontend error reports without a message", () => {
+    assert.throws(
+      () =>
+        logFrontendErrorReport(
+          {
+            url: "/api/client-errors",
+            method: "POST",
+          },
+          {
+            id: "user-1",
+            name: "Alice",
+            settings: { volume: 0.75 },
+          },
+          { type: "error" },
+        ),
+      /Frontend error message is required/,
+    );
   });
 });

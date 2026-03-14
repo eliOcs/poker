@@ -17,7 +17,7 @@ import { emitLog } from "../logger.js";
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./game.js').Phase} Phase
- * @typedef {import('./game.js').BroadcastHandler} BroadcastHandler
+ * @typedef {import('./game-hand-lifecycle.js').FinalizedHand} FinalizedHand
  */
 
 /**
@@ -63,9 +63,9 @@ function logHandEnded(game, winnerName, wonBy, amount) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @returns {FinalizedHand | null}
  */
-function handleFoldWin(game, onBroadcast) {
+function handleFoldWin(game) {
   const result = Showdown.awardToLastPlayer(game);
   if (result.winner !== -1) {
     const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
@@ -94,7 +94,7 @@ function handleFoldWin(game, onBroadcast) {
   }
 
   Actions.endHand(game);
-  autoStartNextHand(game, onBroadcast);
+  return autoStartNextHand(game);
 }
 
 /**
@@ -115,9 +115,9 @@ function recordShowdownCards(game) {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @returns {FinalizedHand | null}
  */
-function handleShowdown(game, onBroadcast) {
+function handleShowdown(game) {
   const gen = Showdown.showdown(game);
   let result = gen.next();
   while (!result.done) {
@@ -148,7 +148,7 @@ function handleShowdown(game, onBroadcast) {
 
   game.pendingHandHistory = potResults;
   Actions.endHand(game);
-  autoStartNextHand(game, onBroadcast);
+  return autoStartNextHand(game);
 }
 
 /** @type {Record<string, { next: Phase, deal: (game: Game) => Generator, getCards: (game: Game) => Card[] }>} */
@@ -172,12 +172,12 @@ const STREET_HANDLERS = {
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @returns {FinalizedHand | null}
  */
-export function processGameFlow(game, onBroadcast) {
+export function processGameFlow(game) {
   const phase = game.hand.phase;
   if (!["preflop", "flop", "turn", "river"].includes(phase)) {
-    return;
+    return null;
   }
 
   if (autoFoldSittingOutActingPlayers(game)) {
@@ -186,39 +186,38 @@ export function processGameFlow(game, onBroadcast) {
   executePreActions(game);
 
   if (Betting.countActivePlayers(game) <= 1) {
-    handleFoldWin(game, onBroadcast);
-    return;
+    return handleFoldWin(game);
   }
 
   if (game.hand.actingSeat !== -1) {
-    return;
+    return null;
   }
 
   game.collectingBets = { active: false, delayTicks: 1 };
+  return null;
 }
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @returns {FinalizedHand | null}
  */
-export function finishCollectBets(game, onBroadcast) {
+export function finishCollectBets(game) {
   const phase = game.hand.phase;
   game.collectingBets = null;
 
   Betting.collectBets(game);
 
   if (phase === "river") {
-    handleShowdown(game, onBroadcast);
-    return;
+    return handleShowdown(game);
   }
 
   if (Betting.countPlayersWhoCanAct(game) <= 1) {
     game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
-    return;
+    return null;
   }
 
   const handler = STREET_HANDLERS[phase];
-  if (!handler) return;
+  if (!handler) return null;
 
   runAll(handler.deal(game));
   HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
@@ -228,18 +227,17 @@ export function finishCollectBets(game, onBroadcast) {
     resetActingTicks(game);
   }
   executePreActions(game);
-  processGameFlow(game, onBroadcast);
+  return processGameFlow(game);
 }
 
 /**
  * @param {Game} game
- * @param {BroadcastHandler} [onBroadcast]
+ * @returns {FinalizedHand | null}
  */
-export function dealRunoutStreet(game, onBroadcast) {
+export function dealRunoutStreet(game) {
   const phase = game.hand.phase;
   if (phase === "river") {
-    handleShowdown(game, onBroadcast);
-    return;
+    return handleShowdown(game);
   }
 
   const handler = STREET_HANDLERS[phase];
@@ -250,8 +248,5 @@ export function dealRunoutStreet(game, onBroadcast) {
   }
 
   game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
-
-  if (onBroadcast) {
-    onBroadcast({ type: "gameState", gameId: game.id });
-  }
+  return null;
 }

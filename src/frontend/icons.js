@@ -154,4 +154,89 @@ export const ICONS = {
     <rect x="11" y="9" width="2" height="4" fill="currentColor" />
     <rect x="13" y="13" width="2" height="2" fill="currentColor" />
   </svg>`,
+  check: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 16 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <rect x="1" y="7" width="2" height="2" fill="currentColor" />
+    <rect x="3" y="9" width="2" height="2" fill="currentColor" />
+    <rect x="3" y="7" width="2" height="2" fill="currentColor" />
+    <rect x="5" y="11" width="2" height="2" fill="currentColor" />
+    <rect x="5" y="9" width="2" height="2" fill="currentColor" />
+    <rect x="7" y="9" width="2" height="2" fill="currentColor" />
+    <rect x="7" y="7" width="2" height="2" fill="currentColor" />
+    <rect x="9" y="7" width="2" height="2" fill="currentColor" />
+    <rect x="9" y="5" width="2" height="2" fill="currentColor" />
+    <rect x="11" y="5" width="2" height="2" fill="currentColor" />
+    <rect x="11" y="3" width="2" height="2" fill="currentColor" />
+    <rect x="13" y="3" width="2" height="2" fill="currentColor" />
+  </svg>`,
+  signIn: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <rect x="9" y="2" width="6" height="2" fill="currentColor" />
+    <rect x="9" y="10" width="6" height="2" fill="currentColor" />
+    <rect x="15" y="4" width="2" height="6" fill="currentColor" />
+    <rect x="7" y="4" width="2" height="6" fill="currentColor" />
+    <rect x="4" y="18" width="2" height="4" fill="currentColor" />
+    <rect x="18" y="18" width="2" height="4" fill="currentColor" />
+    <rect x="8" y="14" width="8" height="2" fill="currentColor" />
+    <rect x="6" y="16" width="2" height="2" fill="currentColor" />
+    <rect x="16" y="16" width="2" height="2" fill="currentColor" />
+  </svg>`,
+  play: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <rect
+      x="4"
+      y="20"
+      width="16"
+      height="2"
+      transform="rotate(-90 4 20)"
+      fill="currentColor"
+    />
+    <rect
+      x="18"
+      y="20"
+      width="16"
+      height="2"
+      transform="rotate(-90 18 20)"
+      fill="currentColor"
+    />
+    <rect
+      x="4"
+      y="22"
+      width="2"
+      height="16"
+      transform="rotate(-90 4 22)"
+      fill="currentColor"
+    />
+    <rect
+      x="4"
+      y="4"
+      width="2"
+      height="16"
+      transform="rotate(-90 4 4)"
+      fill="currentColor"
+    />
+    <rect x="11" y="10" width="2" height="6" fill="currentColor" />
+    <rect x="9" y="8" width="2" height="6" fill="currentColor" />
+    <rect x="13" y="8" width="2" height="6" fill="currentColor" />
+    <rect x="7" y="8" width="2" height="4" fill="currentColor" />
+    <rect x="15" y="8" width="2" height="4" fill="currentColor" />
+  </svg>`,
 };

@@ -1,78 +1,44 @@
-import { html, css, LitElement } from "lit";
+import { css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
+import { appModalStyles } from "./app-modal-styles.js";
+import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
 import "./index.js";
 import "./history.js";
 import "./player-profile.js";
+import "./release-notes.js";
+import "./app-shell.js";
 import "./toast.js";
 import "./modal.js";
 import "./button.js";
-
-const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
-const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
+import {
+  connectAppEventHandlers,
+  disconnectAppEventHandlers,
+  initAppEventHandlers,
+} from "./app-event-handlers.js";
+import {
+  renderGameView,
+  renderHistoryView,
+  renderPlayerProfileView,
+  renderHomeView,
+  renderReleaseNotesView,
+  renderAuthStatusView,
+  renderShellView,
+} from "./app-render.js";
+import { createFrontendErrorReport } from "./error-reporting.js";
 
 class App extends LitElement {
   static get styles() {
     return [
       designTokens,
       baseStyles,
+      appModalStyles,
+      appAuthStatusStyles,
       css`
         :host {
           display: block;
           height: 100%;
-        }
-
-        .settings-content input {
-          width: 100%;
-          padding: var(--space-md);
-          font-family: inherit;
-          font-size: var(--font-md);
-          border: 3px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          color: var(--color-fg-white);
-          margin-bottom: var(--space-lg);
-          box-sizing: border-box;
-        }
-
-        .settings-content .buttons {
-          display: flex;
-          gap: var(--space-md);
-          justify-content: flex-end;
-        }
-
-        .settings-content label {
-          display: block;
-          margin-bottom: var(--space-sm);
-          color: var(--color-fg-medium);
-          font-size: var(--font-sm);
-        }
-
-        .volume-slider {
-          display: flex;
-          gap: var(--space-sm);
-          margin-bottom: var(--space-lg);
-        }
-
-        .volume-slider button {
-          flex: 1;
-          padding: var(--space-md);
-          font-family: inherit;
-          font-size: var(--font-md);
-          border: 3px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          color: var(--color-fg-medium);
-          cursor: pointer;
-        }
-
-        .volume-slider button:hover {
-          background: var(--color-bg-dark);
-        }
-
-        .volume-slider button.active {
-          background: var(--color-primary);
-          color: var(--color-fg-white);
-          border-color: var(--color-primary);
         }
       `,
     ];
@@ -95,7 +61,9 @@ class App extends LitElement {
       _historyListRefreshNonce: { state: true },
       _playerProfileId: { state: true },
       _showProfileSettings: { state: true },
+      _showProfileSignIn: { state: true },
       _settingsVolume: { state: true },
+      _profileSignInInvalid: { state: true },
     };
   }
 
@@ -117,7 +85,73 @@ class App extends LitElement {
     this._historyListRefreshNonce = 0;
     this._playerProfileId = null;
     this._showProfileSettings = false;
+    this._showProfileSignIn = false;
     this._settingsVolume = 0.75;
+    this._profileSignInInvalid = false;
+    this._signInCallbackHandled = false;
+    initAppEventHandlers(this);
+  }
+
+  _normalizeCallbackReturnPath(value) {
+    if (typeof value !== "string" || !value.startsWith("/")) {
+      return "/";
+    }
+    if (value.startsWith("//")) {
+      return "/";
+    }
+    return value;
+  }
+
+  _isSignInCallbackRoute() {
+    return window.location.pathname === "/auth/email-sign-in/callback";
+  }
+
+  async _handleSignInCallback() {
+    if (this._signInCallbackHandled) return;
+    this._signInCallbackHandled = true;
+
+    const url = new URL(window.location.href);
+    if (!this._isSignInCallbackRoute()) return;
+
+    const token = url.searchParams.get("token") ?? "";
+    if (!token) {
+      this.toast = {
+        message: "Unable to sign in",
+        variant: "error",
+      };
+      history.replaceState({}, "", "/");
+      this.path = "/";
+      return;
+    }
+
+    let returnTo = "/";
+    try {
+      const res = await fetch("/api/sign-in-links/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      if (!res.ok) {
+        throw new Error("Invalid or expired sign-in link");
+      }
+      const data = await res.json();
+      returnTo = this._normalizeCallbackReturnPath(data?.returnPath ?? "/");
+      this.toast = {
+        message: "Signed in successfully",
+        variant: "success",
+      };
+      await this._fetchUser();
+    } catch {
+      this.toast = {
+        message: "Unable to sign in",
+        variant: "error",
+      };
+    }
+
+    const nextUrl = new URL(returnTo, window.location.origin);
+    const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+    history.replaceState({}, "", nextPath);
+    this.path = nextUrl.pathname;
   }
 
   // --- History Tasks ---
@@ -163,37 +197,18 @@ class App extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._fetchUser();
-    window.addEventListener("popstate", () => {
-      this.path = window.location.pathname;
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") {
-        this._reconnectIfNeeded();
-      }
-    });
-    this.addEventListener("navigate", (e) => {
-      const detail = /** @type {CustomEvent<{ path: string }>} */ (e).detail;
-      history.pushState({}, "", detail.path);
-      this.path = detail.path;
-    });
-    this.addEventListener("toast", (e) => {
-      this.toast = /** @type {CustomEvent<object>} */ (e).detail;
-    });
-    this.addEventListener("hand-select", (e) => {
-      const detail = /** @type {CustomEvent<{ handNumber: number }>} */ (e)
-        .detail;
-      this.handleHandSelect(detail.handNumber);
-    });
-    this.addEventListener("game-action", (e) => {
-      this.sendToGame(/** @type {CustomEvent<object>} */ (e).detail);
-    });
-    this.addEventListener("update-user", (e) => {
-      this._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
-    });
-    this.addEventListener("open-settings", () => {
-      this.openProfileSettings();
-    });
+    if (this._isSignInCallbackRoute()) {
+      void this._handleSignInCallback();
+    } else {
+      this._fetchUser();
+    }
+    connectAppEventHandlers(this);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    disconnectAppEventHandlers(this);
+    this.disconnectFromGame();
   }
 
   async _fetchUser() {
@@ -331,6 +346,22 @@ class App extends LitElement {
     }
   }
 
+  reportFrontendError(error) {
+    const payload = createFrontendErrorReport(
+      error,
+      window.location.pathname,
+      this._activeGameId,
+      this.gameConnectionStatus,
+    );
+
+    void fetch("/api/client-errors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   handleGameNotFound() {
     this.toast = { message: "Game not found", variant: "error" };
     this.disconnectFromGame();
@@ -351,6 +382,41 @@ class App extends LitElement {
     this._showProfileSettings = false;
   }
 
+  openProfileSignIn() {
+    this._profileSignInInvalid = false;
+    this._showProfileSignIn = true;
+  }
+
+  closeProfileSignIn() {
+    this._profileSignInInvalid = false;
+    this._showProfileSignIn = false;
+  }
+
+  clearProfileSignInValidation() {
+    this._profileSignInInvalid = false;
+  }
+
+  requestProfileSignIn() {
+    const input = /** @type {HTMLInputElement|null} */ (
+      this.shadowRoot?.querySelector("#profile-sign-in-email")
+    );
+    const email = input?.value.trim() || "";
+    if (!email || !input?.checkValidity()) {
+      this._profileSignInInvalid = true;
+      input?.focus();
+      return;
+    }
+    this._profileSignInInvalid = false;
+    this.dispatchEvent(
+      new CustomEvent("request-sign-in", {
+        detail: { email },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this._showProfileSignIn = false;
+  }
+
   async saveProfileSettings() {
     const input = /** @type {HTMLInputElement|null} */ (
       this.shadowRoot?.querySelector("#profile-settings-name-input")
@@ -361,18 +427,10 @@ class App extends LitElement {
       settings: { volume: this._settingsVolume },
     });
     this._showProfileSettings = false;
-  }
-
-  renderToast() {
-    if (!this.toast) return "";
-    return html`
-      <phg-toast
-        variant=${this.toast.variant || "info"}
-        .duration=${this.toast.duration || 3000}
-        .message=${this.toast.message}
-        @dismiss=${this.dismissToast}
-      ></phg-toast>
-    `;
+    this.toast = {
+      message: "Settings saved",
+      variant: "success",
+    };
   }
 
   handleHandSelect(handNumber) {
@@ -393,77 +451,6 @@ class App extends LitElement {
     } else if (this._activeGameId) {
       this.disconnectFromGame();
     }
-  }
-
-  _renderGameView(gameMatch) {
-    return html`${this.renderToast()}<phg-game
-        .gameId=${gameMatch[1]}
-        .game=${this.game}
-        .socialAction=${this.socialAction}
-        .user=${this.user}
-      ></phg-game>`;
-  }
-
-  _renderHistoryView(historyMatch) {
-    const listData = this._historyListTask.value;
-    const handData = this._historyHandTask.value;
-
-    return html`${this.renderToast()}<phg-history
-        .gameId=${historyMatch[1]}
-        .handNumber=${this._historyHandNumber}
-        .hand=${handData?.hand}
-        .view=${handData?.view}
-        .handList=${listData?.hands}
-        .playerId=${listData?.playerId}
-      ></phg-history>`;
-  }
-
-  _renderPlayerProfileView() {
-    return html`${this.renderToast()}<phg-player-profile
-        .profile=${this._playerProfileTask.value}
-      ></phg-player-profile>`;
-  }
-
-  _renderProfileSettingsModal() {
-    if (!this._showProfileSettings) return "";
-
-    return html`<phg-modal title="Settings" @close=${this.closeProfileSettings}>
-      <div class="settings-content">
-        <label>Name</label>
-        <input
-          id="profile-settings-name-input"
-          type="text"
-          placeholder="Enter your name"
-          maxlength="20"
-          autofocus
-          .value=${this.user?.name || ""}
-          @keydown=${(e) => e.key === "Enter" && this.saveProfileSettings()}
-        />
-        <label>Sound Volume</label>
-        <div class="volume-slider">
-          ${SETTINGS_VOLUME_STEPS.map(
-            (value, index) => html`
-              <button
-                class=${this._settingsVolume === value ? "active" : ""}
-                @click=${() => {
-                  this._settingsVolume = value;
-                }}
-              >
-                ${SETTINGS_VOLUME_LABELS[index]}
-              </button>
-            `,
-          )}
-        </div>
-        <div class="buttons">
-          <phg-button variant="secondary" @click=${this.closeProfileSettings}
-            >Cancel</phg-button
-          >
-          <phg-button variant="success" @click=${this.saveProfileSettings}
-            >Save</phg-button
-          >
-        </div>
-      </div>
-    </phg-modal>`;
   }
 
   _clearHistoryState() {
@@ -565,17 +552,25 @@ class App extends LitElement {
       /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
     );
     const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
+    const releaseNotesMatch = this.path === "/release-notes";
     const gameId = gameMatch?.[1] || historyMatch?.[1];
 
     this._manageConnection(gameId);
 
-    if (gameMatch) return this._renderGameView(gameMatch);
-    if (historyMatch) return this._renderHistoryView(historyMatch);
-    if (playerMatch) {
-      return html`${this._renderPlayerProfileView()}
-      ${this._renderProfileSettingsModal()}`;
+    if (this._isSignInCallbackRoute()) {
+      return renderAuthStatusView(this);
     }
-    return html`${this.renderToast()}<phg-home></phg-home>`;
+    if (gameMatch) return renderGameView(this, gameMatch);
+    if (historyMatch) return renderHistoryView(this, historyMatch);
+
+    // All shell routes use the same template so phg-app-shell stays alive
+    const shellContent = playerMatch
+      ? renderPlayerProfileView(this)
+      : releaseNotesMatch
+        ? renderReleaseNotesView()
+        : renderHomeView();
+
+    return renderShellView(this, shellContent);
   }
 }
 

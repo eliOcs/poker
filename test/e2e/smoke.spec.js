@@ -1,5 +1,6 @@
 import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
+import { waitForLatestEmail } from "./utils/email.js";
 
 test.describe("Poker Game Smoke Test", () => {
   test("plays 3 hands with varied actions (check, call, raise, all-in)", async ({
@@ -16,9 +17,28 @@ test.describe("Poker Game Smoke Test", () => {
     await player3.joinGameByUrl(gameUrl);
 
     await player1.sit(0);
-    await player2.sit(1);
+    await player2.sitAnywhere();
     await player1.buyIn(20);
     await player2.buyIn(20);
+
+    await player1.saveSettings({ name: "Player 1", volumeLabel: "25%" });
+    await player2.setName("Player 2");
+
+    const player1Email = "player1@example.com";
+    const player1StackBeforeSignIn = await player1.getStack();
+    const emailWaitStartedAt = Date.now();
+    const [signInEmail] = await Promise.all([
+      waitForLatestEmail(player1Email, emailWaitStartedAt),
+      player1.requestSignIn(player1Email),
+    ]);
+    await player1.completeSignInFromEmail(signInEmail.html);
+    await expect(player1.mySeat).toBeVisible();
+    expect(await player1.getStack()).toBe(player1StackBeforeSignIn);
+    await player1.openDrawer();
+    await expect(
+      player1.game.getByRole("button", { name: "Sign in" }),
+    ).toHaveCount(0);
+    await player1.closeDrawer();
 
     await player1.startGame();
 
@@ -115,6 +135,7 @@ test.describe("Poker Game Smoke Test", () => {
     // P3 sits and buys in during the runout, before the hand ends and auto-start fires
     await player3.sit(2);
     await player3.buyIn(20);
+    await player3.setName("Player 3");
 
     // === DISCONNECT / CALL CLOCK / RECONNECT ===
     await expect(boardCards).toHaveCount(0);
@@ -240,5 +261,29 @@ test.describe("Poker Game Smoke Test", () => {
     // Previous hand navigation works
     await nextBtn.click();
     await expect(nextBtn).toBeDisabled();
+
+    // === VERIFY SIGNED-IN ACCOUNT LINK ===
+    await player1.joinGame(gameId);
+    await expect(player1.game.locator(".drawer-account")).toContainText(
+      "Player 1",
+    );
+    const accountPath = await player1.game
+      .locator(".drawer-account")
+      .getAttribute("href");
+    const profilePagePromise = player1.context.waitForEvent("page");
+    await player1.game.locator(".drawer-account").click();
+    const profilePage = await profilePagePromise;
+    await profilePage.waitForLoadState("domcontentloaded");
+    expect(accountPath).toMatch(/^\/players\/[a-z0-9]+$/);
+    await expect(profilePage).toHaveURL(new RegExp(`${accountPath}$`));
+    await expect(profilePage.locator("phg-player-profile")).toBeVisible();
+
+    await profilePage.getByRole("button", { name: "Settings" }).click();
+    await expect(
+      profilePage.locator("#profile-settings-name-input"),
+    ).toHaveValue("Player 1");
+    await expect(
+      profilePage.locator(".volume-slider button.active"),
+    ).toHaveText("25%");
   });
 });

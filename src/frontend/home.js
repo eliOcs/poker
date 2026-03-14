@@ -12,8 +12,7 @@ const TABLE_SIZES = [
   { seats: 6, label: "6-Max" },
   { seats: 9, label: "Full Ring" },
 ];
-const DEFAULT_TABLE_SIZE_CASH = 6;
-const DEFAULT_TABLE_SIZE_TOURNAMENT = 6;
+const DEFAULT_TABLE_SIZE = 6;
 
 class Home extends LitElement {
   static get styles() {
@@ -22,15 +21,32 @@ class Home extends LitElement {
       baseStyles,
       css`
         :host {
-          height: 100%;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          justify-content: center;
           background-color: var(--color-bg-medium);
           color: var(--color-fg-medium);
-          padding: 1em;
           box-sizing: border-box;
+        }
+
+        :host * {
+          box-sizing: inherit;
+        }
+
+        .main {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(16px, 3vw, 32px);
+          background: var(--color-bg-medium);
+        }
+
+        .panel {
+          width: min(720px, 100%);
+          display: grid;
+          justify-items: center;
+          padding: clamp(24px, 5vw, 40px);
         }
 
         .logo {
@@ -68,11 +84,22 @@ class Home extends LitElement {
         select {
           font-family: inherit;
           font-size: var(--font-md);
-          padding: var(--space-sm) var(--space-md);
+          padding: var(--space-md);
           background: var(--color-bg-light);
           color: var(--color-fg-white);
-          border: 2px solid var(--color-bg-dark);
+          border: 2px solid var(--color-bg-disabled);
           cursor: pointer;
+          accent-color: var(--color-secondary);
+          outline: none;
+        }
+
+        select:focus {
+          border-color: var(--color-secondary);
+        }
+
+        option {
+          color: var(--color-fg-white);
+          background: var(--color-bg-light);
         }
 
         .game-type-selector {
@@ -94,14 +121,14 @@ class Home extends LitElement {
           gap: var(--space-xs);
           cursor: pointer;
           font-size: var(--font-md);
-          padding: var(--space-sm) var(--space-md);
-          background: var(--color-bg-light);
-          border: 2px solid var(--color-bg-dark);
+          padding: var(--space-md);
+          background: var(--color-bg-medium);
+          border: 2px solid var(--color-bg-disabled);
           transition: border-color 0.2s;
         }
 
         .radio-group label:has(input:checked) {
-          border-color: var(--color-accent);
+          border-color: var(--color-secondary);
         }
 
         .radio-group input[type="radio"] {
@@ -114,28 +141,40 @@ class Home extends LitElement {
         }
 
         .radio-group input[type="radio"]:checked {
-          border-color: var(--color-accent);
-          background: var(--color-accent);
+          border-color: var(--color-secondary);
+          background: var(--color-secondary);
         }
 
-        .footer-link {
-          margin-top: 6em;
-          font-size: var(--font-sm);
-          color: var(--color-fg-muted);
-          text-decoration: none;
-        }
-
-        .footer-link:hover {
-          color: var(--color-primary);
+        .create-button-row {
+          width: min(100%, 320px);
+          display: flex;
+          justify-self: center;
+          justify-content: center;
         }
 
         @media (width >= 600px) {
           .logo {
             width: 60%;
           }
+        }
 
-          p {
-            font-size: var(--font-md);
+        @media (width < 800px) {
+          .main {
+            padding: 56px var(--space-md) var(--space-md);
+          }
+
+          .panel {
+            width: 100%;
+          }
+
+          .radio-group {
+            flex-direction: column;
+            width: 100%;
+          }
+
+          .radio-group label,
+          .create-button-row {
+            width: 100%;
           }
         }
       `,
@@ -158,18 +197,13 @@ class Home extends LitElement {
     this.selectedGameType = "cash";
     this.selectedStakes = DEFAULT_STAKES;
     this.selectedBuyIn = DEFAULT_BUYIN;
-    this.selectedTableSize = DEFAULT_TABLE_SIZE_CASH;
+    this.selectedTableSize = DEFAULT_TABLE_SIZE;
   }
 
   handleGameTypeChange(e) {
     const target = /** @type {HTMLInputElement} */ (e.target);
     this.selectedGameType = target.value;
-    // Update default table size based on game type
-    if (this.selectedGameType === "tournament") {
-      this.selectedTableSize = DEFAULT_TABLE_SIZE_TOURNAMENT;
-    } else {
-      this.selectedTableSize = DEFAULT_TABLE_SIZE_CASH;
-    }
+    this.selectedTableSize = DEFAULT_TABLE_SIZE;
   }
 
   handleStakesChange(e) {
@@ -211,6 +245,7 @@ class Home extends LitElement {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (!response.ok) throw new Error(`${response.status}`);
       const { id } = await response.json();
       this.dispatchEvent(
         new CustomEvent("navigate", {
@@ -227,96 +262,105 @@ class Home extends LitElement {
 
   render() {
     const selectedIndex = STAKES_PRESETS.findIndex(
-      (s) =>
-        s.small === this.selectedStakes.small &&
-        s.big === this.selectedStakes.big,
+      (stakes) =>
+        stakes.small === this.selectedStakes.small &&
+        stakes.big === this.selectedStakes.big,
     );
     const isTournament = this.selectedGameType === "tournament";
 
     return html`
-      <img src="logo.webp" alt="Pluton Poker" class="logo" />
-      <p>Create a new game and invite your friends to play</p>
-      <div class="game-type-selector">
-        <span class="stakes-label">Game Type</span>
-        <div class="radio-group">
-          <label>
-            <input
-              type="radio"
-              name="gameType"
-              value="cash"
-              ?checked=${!isTournament}
-              @change=${this.handleGameTypeChange}
-            />
-            Cash
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="gameType"
-              value="tournament"
-              ?checked=${isTournament}
-              @change=${this.handleGameTypeChange}
-            />
-            Sit & Go
-          </label>
-        </div>
-      </div>
-      ${!isTournament
-        ? html`
-            <div class="stakes-selector">
-              <span class="stakes-label">Stakes</span>
-              <select @change=${this.handleStakesChange}>
-                ${STAKES_PRESETS.map(
-                  (stakes, i) => html`
-                    <option value="${i}" ?selected=${i === selectedIndex}>
-                      ${stakes.label}
-                    </option>
-                  `,
-                )}
-              </select>
+      <main class="main">
+        <section class="panel">
+          <img src="logo.webp" alt="Pluton Poker" class="logo" />
+          <p>Create a new game and invite your friends to play</p>
+          <div class="game-type-selector">
+            <span class="stakes-label">Game Type</span>
+            <div class="radio-group">
+              <label>
+                <input
+                  type="radio"
+                  name="gameType"
+                  value="cash"
+                  ?checked=${!isTournament}
+                  @change=${this.handleGameTypeChange}
+                />
+                Cash
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="gameType"
+                  value="tournament"
+                  ?checked=${isTournament}
+                  @change=${this.handleGameTypeChange}
+                />
+                Sit & Go
+              </label>
             </div>
-          `
-        : html`
-            <div class="stakes-selector">
-              <span class="stakes-label">Buy-In</span>
-              <select @change=${this.handleBuyInChange}>
-                ${BUYIN_PRESETS.map(
-                  (preset, i) => html`
-                    <option
-                      value="${i}"
-                      ?selected=${preset.amount === this.selectedBuyIn.amount}
-                    >
-                      ${preset.label}
-                    </option>
-                  `,
-                )}
-              </select>
-            </div>
-          `}
-      <div class="stakes-selector">
-        <span class="stakes-label">Table Size</span>
-        <select @change=${this.handleTableSizeChange}>
-          ${TABLE_SIZES.map(
-            (size) => html`
-              <option
-                value="${size.seats}"
-                ?selected=${size.seats === this.selectedTableSize}
-              >
-                ${size.label}
-              </option>
-            `,
-          )}
-        </select>
-      </div>
-      <phg-button
-        variant="primary"
-        size="large"
-        ?disabled=${this.creating}
-        @click=${this.createGame}
-      >
-        ${this.creating ? "Creating..." : "Create Game"}
-      </phg-button>
-      <a href="/release-notes.html" class="footer-link">Release Notes</a>
+          </div>
+          ${!isTournament
+            ? html`
+                <div class="stakes-selector">
+                  <span class="stakes-label">Stakes</span>
+                  <select @change=${this.handleStakesChange}>
+                    ${STAKES_PRESETS.map(
+                      (stakes, index) => html`
+                        <option
+                          value=${index}
+                          ?selected=${index === selectedIndex}
+                        >
+                          ${stakes.label}
+                        </option>
+                      `,
+                    )}
+                  </select>
+                </div>
+              `
+            : html`
+                <div class="stakes-selector">
+                  <span class="stakes-label">Buy-In</span>
+                  <select @change=${this.handleBuyInChange}>
+                    ${BUYIN_PRESETS.map(
+                      (preset, index) => html`
+                        <option
+                          value=${index}
+                          ?selected=${preset.amount ===
+                          this.selectedBuyIn.amount}
+                        >
+                          ${preset.label}
+                        </option>
+                      `,
+                    )}
+                  </select>
+                </div>
+              `}
+          <div class="stakes-selector">
+            <span class="stakes-label">Table Size</span>
+            <select @change=${this.handleTableSizeChange}>
+              ${TABLE_SIZES.map(
+                (size) => html`
+                  <option
+                    value=${size.seats}
+                    ?selected=${size.seats === this.selectedTableSize}
+                  >
+                    ${size.label}
+                  </option>
+                `,
+              )}
+            </select>
+          </div>
+          <div class="create-button-row">
+            <phg-button
+              variant="primary"
+              size="large"
+              ?disabled=${this.creating}
+              @click=${this.createGame}
+            >
+              ${this.creating ? "Creating..." : "Create Game"}
+            </phg-button>
+          </div>
+        </section>
+      </main>
     `;
   }
 }
