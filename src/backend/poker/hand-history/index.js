@@ -64,6 +64,8 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {string} start_date_utc
  * @property {string} game_type
  * @property {{ bet_type: string }} bet_limit
+ * @property {string} [table_name]
+ * @property {string} [table_handle]
  * @property {number} table_size
  * @property {number} dealer_seat
  * @property {number} small_blind_amount
@@ -79,6 +81,8 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
 /**
  * @typedef {object} TournamentRecordInfo
  * @property {boolean} active
+ * @property {"sitngo"|"mtt"} kind
+ * @property {string} tournamentId
  * @property {string|null} startTime
  * @property {number} initialStack
  * @property {number} level
@@ -92,6 +96,8 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {number} actionCounter
  * @property {string} currentStreet
  * @property {string|null} startTime
+ * @property {string} tableName
+ * @property {string} tableHandle
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: Cents }>} players
  * @property {number} dealerSeat
  * @property {{ ante: Cents, small: Cents, big: Cents }} blinds
@@ -116,6 +122,8 @@ export function getRecorder(gameId) {
       actionCounter: 0,
       currentStreet: "Preflop",
       startTime: null,
+      tableName: gameId,
+      tableHandle: gameId,
       players: [],
       dealerSeat: 0,
       blinds: { ante: 0, small: 0, big: 0 },
@@ -137,6 +145,8 @@ export function startHand(game) {
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
   recorder.startTime = new Date().toISOString();
+  recorder.tableName = game.tableName || game.id;
+  recorder.tableHandle = game.id;
   recorder.dealerSeat = game.button + 1; // OHH uses 1-indexed seats
   recorder.blinds = { ...game.blinds };
   recorder.boardByStreet = new Map();
@@ -149,6 +159,8 @@ export function startHand(game) {
     }
     recorder.tournament = {
       active: true,
+      kind: game.tournament.kind,
+      tournamentId: game.tournament.competitionId,
       startTime: game.tournament.startTime,
       initialStack: game.tournament.initialStack,
       level: game.tournament.level,
@@ -351,6 +363,28 @@ function buildRounds(recorder) {
 }
 
 /**
+ * @param {TournamentRecordInfo|null} tournament
+ * @param {string|null} fallbackStartTime
+ * @returns {OHHTournamentInfo|null}
+ */
+function buildTournamentInfo(tournament, fallbackStartTime) {
+  if (!tournament?.active) return null;
+
+  return {
+    tournament_number: tournament.tournamentId,
+    name: tournament.kind === "mtt" ? "Multi-Table Tournament" : "Sit & Go",
+    start_date_utc:
+      tournament.startTime || fallbackStartTime || new Date().toISOString(),
+    currency: "USD",
+    buyin_amount: toDollars(tournament.buyIn),
+    fee_amount: 0,
+    initial_stack: toDollars(tournament.initialStack),
+    type: tournament.kind === "mtt" ? "MTT" : "SnG",
+    speed: "Regular",
+  };
+}
+
+/**
  * Finalizes and saves the current hand
  * @param {Game} game
  * @param {PotResult[]} [potResults]
@@ -388,12 +422,14 @@ export async function finalizeHand(
 
   /** @type {OHHHand} */
   const hand = {
-    spec_version: "1.4.6",
+    spec_version: "1.4.7",
     site_name: "Pluton Poker",
     game_number: `${game.id}-${handNumber}`,
     start_date_utc: recorder.startTime || new Date().toISOString(),
     game_type: "Holdem",
     bet_limit: { bet_type: "NL" },
+    table_name: recorder.tableName,
+    table_handle: recorder.tableHandle,
     table_size: game.seats.length,
     dealer_seat: recorder.dealerSeat,
     small_blind_amount: toDollars(recorder.blinds.small),
@@ -404,23 +440,13 @@ export async function finalizeHand(
     pots,
   };
 
-  // Add tournament info if this is a tournament hand
-  if (recorder.tournament?.active) {
+  const tournamentInfo = buildTournamentInfo(
+    recorder.tournament,
+    recorder.startTime,
+  );
+  if (tournamentInfo) {
     hand.tournament = true;
-    hand.tournament_info = {
-      tournament_number: game.id,
-      name: "Sit & Go",
-      start_date_utc:
-        recorder.tournament.startTime ||
-        recorder.startTime ||
-        new Date().toISOString(),
-      currency: "USD",
-      buyin_amount: toDollars(recorder.tournament.buyIn),
-      fee_amount: 0,
-      initial_stack: toDollars(recorder.tournament.initialStack),
-      type: "SnG",
-      speed: "Regular",
-    };
+    hand.tournament_info = tournamentInfo;
   }
 
   // Add to cache
@@ -433,6 +459,8 @@ export async function finalizeHand(
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
   recorder.startTime = null;
+  recorder.tableName = game.tableName || game.id;
+  recorder.tableHandle = game.id;
   recorder.players = [];
   recorder.boardByStreet = new Map();
   // Note: tournament info is kept but will be refreshed on next startHand

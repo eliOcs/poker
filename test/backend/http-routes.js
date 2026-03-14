@@ -85,7 +85,7 @@ describe("http-routes", () => {
         type: "unhandledrejection",
         message: "Cannot read properties of undefined",
         stack: "TypeError: Cannot read properties of undefined",
-        route: "/games/abc123",
+        route: "/cash/abc123",
         gameId: "abc123",
         line: 12,
         column: 9,
@@ -97,7 +97,7 @@ describe("http-routes", () => {
     assert.match(lines[0], /frontend_error/);
     assert.match(lines[0], /playerId":"user-1"/);
     assert.match(lines[0], /"gameId":"abc123"/);
-    assert.match(lines[0], /"route":"\/games\/abc123"/);
+    assert.match(lines[0], /"route":"\/cash\/abc123"/);
   });
 
   it("rejects frontend error reports without a message", () => {

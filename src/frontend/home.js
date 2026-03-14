@@ -6,6 +6,7 @@ import {
   DEFAULT as DEFAULT_STAKES,
 } from "../shared/stakes.js";
 import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
+import { getTablePath } from "../shared/routes.js";
 
 const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
@@ -227,9 +228,9 @@ class Home extends LitElement {
     this.creating = true;
     try {
       const body =
-        this.selectedGameType === "tournament"
+        this.selectedGameType === "sitngo"
           ? {
-              type: "tournament",
+              type: "sitngo",
               seats: this.selectedTableSize,
               buyIn: this.selectedBuyIn.amount,
             }
@@ -240,16 +241,19 @@ class Home extends LitElement {
               seats: this.selectedTableSize,
             };
 
-      const response = await fetch("/games", {
+      const endpoint = this.selectedGameType === "sitngo" ? "/sitngo" : "/cash";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error(`${response.status}`);
-      const { id } = await response.json();
+      const { id, type } = await response.json();
       this.dispatchEvent(
         new CustomEvent("navigate", {
-          detail: { path: `/games/${id}` },
+          detail: {
+            path: getTablePath(type === "sitngo" ? "sitngo" : "cash", id),
+          },
           bubbles: true,
           composed: true,
         }),
@@ -266,7 +270,7 @@ class Home extends LitElement {
         stakes.small === this.selectedStakes.small &&
         stakes.big === this.selectedStakes.big,
     );
-    const isTournament = this.selectedGameType === "tournament";
+    const isTournament = this.selectedGameType === "sitngo";
 
     return html`
       <main class="main">
@@ -290,7 +294,7 @@ class Home extends LitElement {
                 <input
                   type="radio"
                   name="gameType"
-                  value="tournament"
+                  value="sitngo"
                   ?checked=${isTournament}
                   @change=${this.handleGameTypeChange}
                 />

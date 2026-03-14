@@ -91,7 +91,7 @@ function getRecorder(gameId) {
  * @param {Game} game
  */
 export function startTournament(game) {
-  if (!game.tournament?.active) return;
+  if (!game.tournament?.active || game.tournament.kind !== "sitngo") return;
 
   const recorder = getRecorder(game.id);
 
@@ -125,6 +125,7 @@ export function startTournament(game) {
  * @param {number} position - Finishing position (e.g., 6 for 6th place)
  */
 export function recordElimination(game, seat, position) {
+  if (game.tournament?.kind !== "sitngo") return;
   const recorder = recorders.get(game.id);
   if (!recorder) return;
 
@@ -200,7 +201,7 @@ function buildOTSSummary(recorder, game) {
   finishes.sort((a, b) => a.finish_position - b.finish_position);
 
   return {
-    spec_version: "1.1.3",
+    spec_version: "1.1.5",
     site_name: "Pluton Poker",
     tournament_number: recorder.gameId,
     tournament_name: "Sit & Go",
@@ -228,6 +229,7 @@ function buildOTSSummary(recorder, game) {
  * @param {Game} game
  */
 export async function finalizeTournament(game) {
+  if (game.tournament?.kind !== "sitngo") return;
   const recorder = recorders.get(game.id);
   if (!recorder) return;
 

@@ -16,7 +16,7 @@ describe("phg-player-profile", () => {
           recentGames: [
             {
               gameId: "tour123",
-              gameType: "tournament",
+              gameType: "sitngo",
               netWinnings: -500,
               handsPlayed: 3,
               lastPlayedAt: "2026-03-06T21:08:00.000Z",
@@ -57,7 +57,7 @@ describe("phg-player-profile", () => {
           recentGames: [
             {
               gameId: "tour123",
-              gameType: "tournament",
+              gameType: "sitngo",
               netWinnings: -500,
               handsPlayed: 3,
               lastPlayedAt: "2026-03-06T21:08:00.000Z",
@@ -73,6 +73,6 @@ describe("phg-player-profile", () => {
     });
 
     const event = await oneEvent(element, "navigate");
-    expect(event.detail).to.deep.equal({ path: "/history/tour123/12" });
+    expect(event.detail).to.deep.equal({ path: "/sitngo/tour123/history/12" });
   });
 });

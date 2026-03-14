@@ -1,6 +1,7 @@
 import { html, css, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
+import { getTableHistoryPath } from "../shared/routes.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -284,9 +285,20 @@ class PlayerProfile extends LitElement {
   }
 
   navigateToGame(game) {
+    const gameType = normalizeGameType(game.gameType);
+    const tableId = game.tableId || game.lastTableId || game.gameId;
+    if (!tableId) return;
+
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { path: `/history/${game.gameId}/${game.lastHandNumber}` },
+        detail: {
+          path: getTableHistoryPath(
+            gameType === "mtt" ? "mtt" : gameType,
+            tableId,
+            game.lastHandNumber,
+            game.tournamentId || null,
+          ),
+        },
         bubbles: true,
         composed: true,
       }),
@@ -499,11 +511,22 @@ function formatRelativeDate(value) {
 }
 
 /**
- * @param {"cash"|"tournament"} gameType
+ * @param {"cash"|"sitngo"|"mtt"|"tournament"} gameType
  * @returns {string}
  */
 function formatGameType(gameType) {
-  return gameType === "tournament" ? "Sit n Go" : "Cash";
+  const normalized = normalizeGameType(gameType);
+  if (normalized === "sitngo") return "Sit n Go";
+  if (normalized === "mtt") return "Tournament";
+  return "Cash";
+}
+
+/**
+ * @param {"cash"|"sitngo"|"mtt"|"tournament"} gameType
+ * @returns {"cash"|"sitngo"|"mtt"}
+ */
+function normalizeGameType(gameType) {
+  return gameType === "tournament" ? "sitngo" : gameType;
 }
 
 /**

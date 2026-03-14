@@ -55,9 +55,15 @@ export class PokerPlayer {
   /**
    * Navigate to game page and wait for UI to load
    * @param {string} gameId
+   * @param {"cash"|"sitngo"|"mtt"} [kind]
+   * @param {string|null} [tournamentId]
    */
-  async joinGame(gameId) {
-    await this.page.goto(`/games/${gameId}`);
+  async joinGame(gameId, kind = "cash", tournamentId = null) {
+    const path =
+      kind === "mtt"
+        ? `/mtt/${tournamentId}/tables/${gameId}`
+        : `/${kind}/${gameId}`;
+    await this.page.goto(path);
     // Wait for the game element to be visible, then board inside it
     await this.game.waitFor();
     await this.board.waitFor();
@@ -615,7 +621,7 @@ export class PokerPlayer {
     await this.openDrawer();
     await this.game.getByRole("button", { name: "History" }).click();
     // Wait for URL to change to history page
-    await this.page.waitForURL(/\/history\//);
+    await this.page.waitForURL(/\/(?:cash|sitngo)\/[a-z0-9]+\/history/);
     // Wait for history component to load
     await this.page.locator("phg-history").waitFor();
   }
@@ -623,9 +629,15 @@ export class PokerPlayer {
   /**
    * Navigate to history page for a game via URL (for testing URL-based routing)
    * @param {string} gameId
+   * @param {"cash"|"sitngo"|"mtt"} [kind]
+   * @param {string|null} [tournamentId]
    */
-  async goToHistory(gameId) {
-    await this.page.goto(`/history/${gameId}`);
+  async goToHistory(gameId, kind = "cash", tournamentId = null) {
+    const path =
+      kind === "mtt"
+        ? `/mtt/${tournamentId}/tables/${gameId}/history`
+        : `/${kind}/${gameId}/history`;
+    await this.page.goto(path);
     // Wait for history component to load
     await this.page.locator("phg-history").waitFor();
   }

@@ -177,7 +177,7 @@ describe("tournament-summary", () => {
       const data = JSON.parse(content);
 
       assert.ok(data.ots, "should have ots wrapper");
-      assert.equal(data.ots.spec_version, "1.1.3");
+      assert.equal(data.ots.spec_version, "1.1.5");
       assert.equal(data.ots.site_name, "Pluton Poker");
       assert.equal(data.ots.tournament_number, game.id);
       assert.equal(data.ots.tournament_name, "Sit & Go");

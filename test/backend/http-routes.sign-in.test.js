@@ -93,7 +93,7 @@ describe("http-routes sign in", () => {
 
     const req = createRequest("/api/sign-in-links", "POST", {
       email: "Player@Example.com",
-      returnPath: "/games/abc123?buyin=1#seat-3",
+      returnPath: "/cash/abc123?buyin=1#seat-3",
     });
     const res = createResponse();
 
@@ -134,7 +134,7 @@ describe("http-routes sign in", () => {
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
-      returnPath: "/games/test-game?buyin=50",
+      returnPath: "/cash/test-game?buyin=50",
     });
     const requestRes = createResponse();
     await requestRoute.handler({
@@ -167,7 +167,7 @@ describe("http-routes sign in", () => {
 
     assert.equal(verifyRes.statusCode, 200);
     assert.deepEqual(JSON.parse(verifyRes.body), {
-      returnPath: "/games/test-game?buyin=50",
+      returnPath: "/cash/test-game?buyin=50",
     });
     assert.match(
       String(verifyRes.headers["Set-Cookie"]),
@@ -209,7 +209,7 @@ describe("http-routes sign in", () => {
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
-      returnPath: "/games/test-game",
+      returnPath: "/cash/test-game",
     });
     const requestRes = createResponse();
     await requestRoute.handler({
@@ -255,7 +255,7 @@ describe("http-routes sign in", () => {
 
     assert.equal(verifyRes.statusCode, 200);
     assert.deepEqual(JSON.parse(verifyRes.body), {
-      returnPath: "/games/test-game",
+      returnPath: "/cash/test-game",
     });
     assert.match(String(verifyRes.headers["Set-Cookie"]), /registered-user/);
     assert.equal(
@@ -361,7 +361,7 @@ describe("http-routes sign in", () => {
 
     const requestReq = createRequest("/api/sign-in-links", "POST", {
       email: "player@example.com",
-      returnPath: "/games/history-game",
+      returnPath: "/cash/history-game",
     });
     const requestRes = createResponse();
     await requestRoute.handler({

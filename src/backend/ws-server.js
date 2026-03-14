@@ -7,6 +7,7 @@ import { createLog, emitLog, getSessionPlayerLogContext } from "./logger.js";
 import { parseCookies } from "./http-routes.js";
 import { processPokerAction } from "./websocket-handler.js";
 import { RateLimitError } from "./rate-limit.js";
+import { matchLiveRoute } from "../shared/routes.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -165,10 +166,16 @@ function allowUpgradeRequest(
  */
 function getUpgradeSession(users, request) {
   const cookies = parseCookies(request.headers.cookie ?? "");
-  const gameMatch = request.url?.match(/^\/games\/([a-z0-9]+)$/);
+  const liveRoute = request.url ? matchLiveRoute(request.url) : null;
   return {
     user: users[cookies.phg ?? ""],
-    gameId: gameMatch?.[1],
+    gameId:
+      liveRoute &&
+      (liveRoute.kind === "cash" ||
+        liveRoute.kind === "sitngo" ||
+        liveRoute.kind === "mtt_table")
+        ? liveRoute.tableId
+        : undefined,
   };
 }
 

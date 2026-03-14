@@ -1,15 +1,27 @@
+/* eslint-disable max-lines */
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
 import { DEFAULT_SETTINGS } from "./user.js";
+import {
+  backfillPlayerGamesFromHistory,
+  backfillPlayerTableLinksFromHistory,
+} from "./store-history-backfill.js";
 
 /**
  * @typedef {import('./user.js').User} User
  * @typedef {import('./id.js').Id} Id
  * @typedef {import('./user.js').UserSettings} UserSettings
+ * @typedef {"cash"|"sitngo"|"mtt"} TableKind
  * @typedef {{ id: Id, name?: string|null, email?: string|null, settings?: UserSettings }} SaveUserInput
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
  * @typedef {{ playerId: Id, gameId: Id }} PlayerGameInput
+ * @typedef {{ id: Id, kind: TableKind, tournamentId?: Id|null, seatCount: number, tableName?: string|null, createdAt?: string|null, closedAt?: string|null }} SaveTableInput
+ * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
+ * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
+ * @typedef {{ id: Id, kind: TableKind, tournamentId: Id|null, seatCount: number, tableName: string|null, createdAt: string, closedAt: string|null }} TableRecord
+ * @typedef {{ tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableLink
+ * @typedef {{ tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentLink
  */
 
 /** @type {DatabaseSync | null} */
@@ -65,72 +77,11 @@ function saveMetaValue(key, value) {
 export function initialize(dbPath = undefined) {
   if (db) return;
   const isInMemory = dbPath === ":memory:";
-
-  if (isInMemory) {
-    db = new DatabaseSync(":memory:");
-  } else {
-    const dataDir = getDataDir();
-    if (!existsSync(dataDir)) {
-      mkdirSync(dataDir, { recursive: true });
-    }
-
-    dbPath = `${dataDir}/poker.db`;
-    db = new DatabaseSync(dbPath);
-    db.exec("PRAGMA journal_mode=WAL");
-  }
-
-  const hasUsersTable = db
-    .prepare(
-      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1",
-    )
-    .get();
-  if (!hasUsersTable) {
-    // Create users table if missing.
-    db.exec(`
-      CREATE TABLE users (
-        id TEXT PRIMARY KEY,
-        name TEXT,
-        email TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-      )
-    `);
-  }
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS store_meta (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    )
-  `);
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS player_games (
-      player_id TEXT NOT NULL,
-      game_id TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      PRIMARY KEY (player_id, game_id)
-    )
-  `);
-  db.exec(
-    "CREATE INDEX IF NOT EXISTS idx_player_games_player_id ON player_games (player_id)",
-  );
-
-  if (!isInMemory && loadMetaValue("player_games_backfilled_at") === null) {
-    backfillPlayerGamesFromHistory();
-    saveMetaValue("player_games_backfilled_at", new Date().toISOString());
-  }
-
-  migrateUserTimestamps();
-
-  // Migration: add settings column if it doesn't exist
-  if (!columnExists("users", "settings")) {
-    db.exec("ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}'");
-  }
-
-  if (!columnExists("users", "email")) {
-    db.exec("ALTER TABLE users ADD COLUMN email TEXT");
-  }
+  dbPath = openDatabase(dbPath, isInMemory);
+  ensureUsersTable();
+  ensureStoreTables();
+  runHistoryBackfills(isInMemory);
+  migrateUserSchema();
 
   logger.info("store initialized", { path: dbPath });
 }
@@ -234,6 +185,113 @@ export function recordPlayerGames(entries) {
   stmt.run(...validEntries.flatMap((entry) => [entry.playerId, entry.gameId]));
 }
 
+/** @param {SaveTableInput} table */
+export function saveTable(table) {
+  if (!db) throw new Error("Store not initialized");
+  const stmt = db.prepare(`
+    INSERT INTO tables (
+      id, kind, tournament_id, seat_count, table_name, created_at, closed_at
+    )
+    VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')), ?)
+    ON CONFLICT(id) DO UPDATE SET
+      kind = excluded.kind,
+      tournament_id = excluded.tournament_id,
+      seat_count = excluded.seat_count,
+      table_name = excluded.table_name,
+      created_at = excluded.created_at,
+      closed_at = excluded.closed_at
+  `);
+  stmt.run(
+    table.id,
+    table.kind,
+    table.tournamentId ?? null,
+    table.seatCount,
+    table.tableName ?? null,
+    table.createdAt ?? null,
+    table.closedAt ?? null,
+  );
+}
+
+/**
+ * @param {Id} tableId
+ * @param {string} closedAt
+ */
+export function closeTable(tableId, closedAt = new Date().toISOString()) {
+  if (!db) throw new Error("Store not initialized");
+  const stmt = db.prepare("UPDATE tables SET closed_at = ? WHERE id = ?");
+  stmt.run(closedAt, tableId);
+}
+
+/**
+ * @param {PlayerTableInput[]} entries
+ */
+export function recordPlayerTableActivity(entries) {
+  if (!db) throw new Error("Store not initialized");
+  for (const entry of entries) {
+    if (!entry.playerId || !entry.tableId) continue;
+    const stmt = db.prepare(`
+      INSERT INTO player_tables (
+        player_id, table_id, tournament_id, last_hand_number, last_played_at
+      )
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(player_id, table_id) DO UPDATE SET
+        tournament_id = excluded.tournament_id,
+        last_hand_number = MAX(player_tables.last_hand_number, excluded.last_hand_number),
+        last_played_at = CASE
+          WHEN player_tables.last_played_at >= excluded.last_played_at
+          THEN player_tables.last_played_at
+          ELSE excluded.last_played_at
+        END
+    `);
+    stmt.run(
+      entry.playerId,
+      entry.tableId,
+      entry.tournamentId ?? null,
+      entry.lastHandNumber,
+      entry.lastPlayedAt,
+    );
+  }
+}
+
+/**
+ * @param {PlayerTournamentInput[]} entries
+ */
+export function recordPlayerTournamentActivity(entries) {
+  if (!db) throw new Error("Store not initialized");
+  for (const entry of entries) {
+    if (!entry.playerId || !entry.tournamentId || !entry.lastTableId) continue;
+    const stmt = db.prepare(`
+      INSERT INTO player_tournaments (
+        player_id, tournament_id, last_table_id, last_hand_number, last_played_at
+      )
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(player_id, tournament_id) DO UPDATE SET
+        last_table_id = CASE
+          WHEN player_tournaments.last_played_at >= excluded.last_played_at
+          THEN player_tournaments.last_table_id
+          ELSE excluded.last_table_id
+        END,
+        last_hand_number = CASE
+          WHEN player_tournaments.last_played_at >= excluded.last_played_at
+          THEN player_tournaments.last_hand_number
+          ELSE excluded.last_hand_number
+        END,
+        last_played_at = CASE
+          WHEN player_tournaments.last_played_at >= excluded.last_played_at
+          THEN player_tournaments.last_played_at
+          ELSE excluded.last_played_at
+        END
+    `);
+    stmt.run(
+      entry.playerId,
+      entry.tournamentId,
+      entry.lastTableId,
+      entry.lastHandNumber,
+      entry.lastPlayedAt,
+    );
+  }
+}
+
 /**
  * @param {Id} playerId
  * @returns {Id[]}
@@ -250,6 +308,107 @@ export function listPlayerGameIds(playerId) {
   `);
 
   return stmt.all(playerId).map((row) => /** @type {Id} */ (row.game_id));
+}
+
+/**
+ * @param {Id} playerId
+ * @returns {PlayerTableLink[]}
+ */
+export function listPlayerTables(playerId) {
+  if (!db) throw new Error("Store not initialized");
+  if (!playerId) return [];
+
+  const stmt = db.prepare(`
+    SELECT table_id, tournament_id, last_hand_number, last_played_at
+    FROM player_tables
+    WHERE player_id = ?
+    ORDER BY last_played_at DESC, table_id DESC
+  `);
+
+  return stmt.all(playerId).map((row) => ({
+    tableId: /** @type {Id} */ (row.table_id),
+    tournamentId: row.tournament_id
+      ? /** @type {Id} */ (row.tournament_id)
+      : null,
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  }));
+}
+
+/**
+ * @param {Id} playerId
+ * @returns {PlayerTournamentLink[]}
+ */
+export function listPlayerTournaments(playerId) {
+  if (!db) throw new Error("Store not initialized");
+  if (!playerId) return [];
+
+  const stmt = db.prepare(`
+    SELECT tournament_id, last_table_id, last_hand_number, last_played_at
+    FROM player_tournaments
+    WHERE player_id = ?
+    ORDER BY last_played_at DESC, tournament_id DESC
+  `);
+
+  return stmt.all(playerId).map((row) => ({
+    tournamentId: /** @type {Id} */ (row.tournament_id),
+    lastTableId: /** @type {Id} */ (row.last_table_id),
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  }));
+}
+
+/**
+ * @param {Id} playerId
+ * @param {Id} tournamentId
+ * @returns {PlayerTableLink[]}
+ */
+export function listPlayerTablesForTournament(playerId, tournamentId) {
+  if (!db) throw new Error("Store not initialized");
+  if (!playerId || !tournamentId) return [];
+
+  const stmt = db.prepare(`
+    SELECT table_id, tournament_id, last_hand_number, last_played_at
+    FROM player_tables
+    WHERE player_id = ? AND tournament_id = ?
+    ORDER BY last_played_at DESC, table_id DESC
+  `);
+
+  return stmt.all(playerId, tournamentId).map((row) => ({
+    tableId: /** @type {Id} */ (row.table_id),
+    tournamentId: row.tournament_id
+      ? /** @type {Id} */ (row.tournament_id)
+      : null,
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  }));
+}
+
+/**
+ * @param {Id} tableId
+ * @returns {TableRecord|null}
+ */
+export function loadTable(tableId) {
+  if (!db) throw new Error("Store not initialized");
+  if (!tableId) return null;
+  const stmt = db.prepare(`
+    SELECT id, kind, tournament_id, seat_count, table_name, created_at, closed_at
+    FROM tables
+    WHERE id = ?
+  `);
+  const row = stmt.get(tableId);
+  if (!row) return null;
+  return {
+    id: /** @type {Id} */ (row.id),
+    kind: /** @type {TableKind} */ (row.kind),
+    tournamentId: row.tournament_id
+      ? /** @type {Id} */ (row.tournament_id)
+      : null,
+    seatCount: /** @type {number} */ (row.seat_count),
+    tableName: row.table_name ? /** @type {string} */ (row.table_name) : null,
+    createdAt: /** @type {string} */ (row.created_at),
+    closedAt: row.closed_at ? /** @type {string} */ (row.closed_at) : null,
+  };
 }
 
 /**
@@ -274,6 +433,66 @@ export function migratePlayerGames(fromPlayerId, toPlayerId) {
 
   const deleteStmt = db.prepare("DELETE FROM player_games WHERE player_id = ?");
   deleteStmt.run(fromPlayerId);
+
+  const playerTableRows = /** @type {PlayerTableLink[]} */ (
+    db
+      .prepare(
+        `
+        SELECT table_id, tournament_id, last_hand_number, last_played_at
+        FROM player_tables
+        WHERE player_id = ?
+      `,
+      )
+      .all(fromPlayerId)
+      .map((row) => ({
+        tableId: /** @type {Id} */ (row.table_id),
+        tournamentId: row.tournament_id
+          ? /** @type {Id} */ (row.tournament_id)
+          : null,
+        lastHandNumber: /** @type {number} */ (row.last_hand_number),
+        lastPlayedAt: /** @type {string} */ (row.last_played_at),
+      }))
+  );
+  recordPlayerTableActivity(
+    playerTableRows.map((row) => ({
+      playerId: toPlayerId,
+      tableId: row.tableId,
+      tournamentId: row.tournamentId,
+      lastHandNumber: row.lastHandNumber,
+      lastPlayedAt: row.lastPlayedAt,
+    })),
+  );
+  db.prepare("DELETE FROM player_tables WHERE player_id = ?").run(fromPlayerId);
+
+  const playerTournamentRows = /** @type {PlayerTournamentLink[]} */ (
+    db
+      .prepare(
+        `
+        SELECT tournament_id, last_table_id, last_hand_number, last_played_at
+        FROM player_tournaments
+        WHERE player_id = ?
+      `,
+      )
+      .all(fromPlayerId)
+      .map((row) => ({
+        tournamentId: /** @type {Id} */ (row.tournament_id),
+        lastTableId: /** @type {Id} */ (row.last_table_id),
+        lastHandNumber: /** @type {number} */ (row.last_hand_number),
+        lastPlayedAt: /** @type {string} */ (row.last_played_at),
+      }))
+  );
+  recordPlayerTournamentActivity(
+    playerTournamentRows.map((row) => ({
+      playerId: toPlayerId,
+      tournamentId: row.tournamentId,
+      lastTableId: row.lastTableId,
+      lastHandNumber: row.lastHandNumber,
+      lastPlayedAt: row.lastPlayedAt,
+    })),
+  );
+  db.prepare("DELETE FROM player_tournaments WHERE player_id = ?").run(
+    fromPlayerId,
+  );
 }
 
 /**
@@ -331,61 +550,6 @@ function migrateUserTimestamps() {
   `);
 }
 
-function backfillPlayerGamesFromHistory() {
-  const dataDir = getDataDir();
-  if (!existsSync(dataDir)) return;
-
-  const files = readdirSync(dataDir).filter((file) => file.endsWith(".ohh"));
-  if (files.length === 0) return;
-
-  for (const file of files) {
-    try {
-      recordPlayerGames(readPlayerGamesFromHistoryFile(dataDir, file));
-    } catch (error) {
-      logger.warn("player game backfill skipped invalid history file", {
-        file,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-}
-
-/**
- * @param {string} dataDir
- * @param {string} file
- * @returns {PlayerGameInput[]}
- */
-function readPlayerGamesFromHistoryFile(dataDir, file) {
-  const gameId = /** @type {Id} */ (file.slice(0, -4));
-  const content = readFileSync(`${dataDir}/${file}`, "utf8");
-  const lines = content.split("\n\n").filter(Boolean);
-  /** @type {PlayerGameInput[]} */
-  const entries = [];
-
-  for (const line of lines) {
-    entries.push(...readPlayerGamesFromHistoryLine(line, gameId));
-  }
-
-  return entries;
-}
-
-/**
- * @param {string} line
- * @param {Id} gameId
- * @returns {PlayerGameInput[]}
- */
-function readPlayerGamesFromHistoryLine(line, gameId) {
-  const hand = JSON.parse(line).ohh;
-  if (!Array.isArray(hand?.players)) return [];
-
-  return hand.players
-    .filter((player) => player?.id)
-    .map((player) => ({
-      playerId: /** @type {Id} */ (player.id),
-      gameId,
-    }));
-}
-
 export function close() {
   if (db) {
     db.close();
@@ -408,5 +572,155 @@ export function _reset() {
   if (db) {
     db.close();
     db = null;
+  }
+}
+
+/**
+ * @param {string|undefined} dbPath
+ * @param {boolean} isInMemory
+ * @returns {string|undefined}
+ */
+function openDatabase(dbPath, isInMemory) {
+  if (isInMemory) {
+    db = new DatabaseSync(":memory:");
+    return dbPath;
+  }
+
+  const dataDir = getDataDir();
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
+  }
+
+  const resolvedPath = `${dataDir}/poker.db`;
+  db = new DatabaseSync(resolvedPath);
+  db.exec("PRAGMA journal_mode=WAL");
+  return resolvedPath;
+}
+
+function ensureUsersTable() {
+  const database = /** @type {DatabaseSync} */ (db);
+  const hasUsersTable = database
+    .prepare(
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1",
+    )
+    .get();
+  if (hasUsersTable) return;
+
+  database.exec(`
+    CREATE TABLE users (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+}
+
+function ensureStoreTables() {
+  const database = /** @type {DatabaseSync} */ (db);
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS store_meta (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS player_games (
+      player_id TEXT NOT NULL,
+      game_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (player_id, game_id)
+    )
+  `);
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_player_games_player_id ON player_games (player_id)",
+  );
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS tables (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      tournament_id TEXT,
+      seat_count INTEGER NOT NULL,
+      table_name TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      closed_at TEXT
+    )
+  `);
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_tables_tournament_id ON tables (tournament_id)",
+  );
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS player_tables (
+      player_id TEXT NOT NULL,
+      table_id TEXT NOT NULL,
+      tournament_id TEXT,
+      last_hand_number INTEGER NOT NULL DEFAULT 0,
+      last_played_at TEXT NOT NULL,
+      PRIMARY KEY (player_id, table_id)
+    )
+  `);
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_player_tables_player_id ON player_tables (player_id)",
+  );
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_player_tables_tournament_id ON player_tables (tournament_id)",
+  );
+
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS player_tournaments (
+      player_id TEXT NOT NULL,
+      tournament_id TEXT NOT NULL,
+      last_table_id TEXT NOT NULL,
+      last_hand_number INTEGER NOT NULL DEFAULT 0,
+      last_played_at TEXT NOT NULL,
+      PRIMARY KEY (player_id, tournament_id)
+    )
+  `);
+  database.exec(
+    "CREATE INDEX IF NOT EXISTS idx_player_tournaments_player_id ON player_tournaments (player_id)",
+  );
+}
+
+/**
+ * @param {boolean} isInMemory
+ */
+function runHistoryBackfills(isInMemory) {
+  if (isInMemory) return;
+
+  runBackfill("player_games_backfilled_at", () => {
+    backfillPlayerGamesFromHistory(getDataDir(), recordPlayerGames);
+  });
+  runBackfill("player_table_links_backfilled_at", () => {
+    backfillPlayerTableLinksFromHistory(
+      getDataDir(),
+      saveTable,
+      recordPlayerTableActivity,
+      recordPlayerTournamentActivity,
+    );
+  });
+}
+
+/**
+ * @param {string} key
+ * @param {() => void} callback
+ */
+function runBackfill(key, callback) {
+  if (loadMetaValue(key) !== null) return;
+  callback();
+  saveMetaValue(key, new Date().toISOString());
+}
+
+function migrateUserSchema() {
+  const database = /** @type {DatabaseSync} */ (db);
+  migrateUserTimestamps();
+  if (!columnExists("users", "settings")) {
+    database.exec("ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}'");
+  }
+  if (!columnExists("users", "email")) {
+    database.exec("ALTER TABLE users ADD COLUMN email TEXT");
   }
 }

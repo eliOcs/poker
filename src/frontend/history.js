@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
 import { seatPositions } from "./game-layout.js";
+import { getTablePath } from "../shared/routes.js";
 import "./card.js";
 import "./button.js";
 import "./seat.js";
@@ -15,6 +16,8 @@ class History extends LitElement {
   static get properties() {
     return {
       gameId: { type: String },
+      gameKind: { type: String },
+      tournamentId: { type: String },
       handNumber: { type: Number },
       hand: { type: Object },
       view: { type: Object },
@@ -27,6 +30,8 @@ class History extends LitElement {
   constructor() {
     super();
     this.gameId = null;
+    this.gameKind = "cash";
+    this.tournamentId = null;
     this.handNumber = null;
     this.hand = null;
     this.view = null;
@@ -118,6 +123,7 @@ class History extends LitElement {
   }
 
   goBack() {
+    const livePath = this.getLivePath();
     // Emit close event for embedded mode (inside phg-game)
     this.dispatchEvent(
       new CustomEvent("close", {
@@ -128,7 +134,7 @@ class History extends LitElement {
     // Also emit navigate for standalone mode (direct URL access)
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { path: `/games/${this.gameId}` },
+        detail: { path: livePath },
         bubbles: true,
         composed: true,
       }),
@@ -142,6 +148,13 @@ class History extends LitElement {
 
   getCurrentHandSummary() {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
+  }
+
+  getLivePath() {
+    const gameKind = /** @type {"cash"|"sitngo"|"mtt"} */ (
+      this.gameKind === "mtt_table" ? "mtt" : this.gameKind
+    );
+    return getTablePath(gameKind, this.gameId, this.tournamentId);
   }
 
   renderHandSummaryCards(summary) {
@@ -429,7 +442,7 @@ class History extends LitElement {
           ${this.error}
           <a
             class="back-link"
-            href="/games/${this.gameId}"
+            href=${this.getLivePath()}
             @click=${(e) => {
               e.preventDefault();
               this.goBack();
@@ -452,7 +465,7 @@ class History extends LitElement {
           No hands recorded yet
           <a
             class="back-link"
-            href="/games/${this.gameId}"
+            href=${this.getLivePath()}
             @click=${(e) => {
               e.preventDefault();
               this.goBack();

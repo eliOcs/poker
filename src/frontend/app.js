@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
@@ -27,6 +28,16 @@ import {
   renderShellView,
 } from "./app-render.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
+import { matchLiveRoute } from "../shared/routes.js";
+import {
+  getHistoryApiBase,
+  getHistoryPath,
+  getLivePathFromHistory,
+  isConnectableLiveRoute,
+  isHistoryRouteForLivePath,
+  parseAppPath,
+  syncAppHistoryState,
+} from "./app-route-state.js";
 
 class App extends LitElement {
   static get styles() {
@@ -56,7 +67,9 @@ class App extends LitElement {
       socialAction: { type: Object },
       gameConnectionStatus: { type: String },
       // History route params (triggers tasks)
-      _historyGameId: { state: true },
+      _historyKind: { state: true },
+      _historyTableId: { state: true },
+      _historyTournamentId: { state: true },
       _historyHandNumber: { state: true },
       _historyListRefreshNonce: { state: true },
       _playerProfileId: { state: true },
@@ -78,9 +91,12 @@ class App extends LitElement {
     this.socialAction = null;
     this.gameConnectionStatus = "disconnected";
     this._activeGameId = null;
+    this._activeGamePath = null;
     this._socket = null;
     // History route params
-    this._historyGameId = null;
+    this._historyKind = null;
+    this._historyTableId = null;
+    this._historyTournamentId = null;
     this._historyHandNumber = null;
     this._historyListRefreshNonce = 0;
     this._playerProfileId = null;
@@ -164,25 +180,23 @@ class App extends LitElement {
   }
 
   _historyListTask = new Task(this, {
-    task: async ([gameId], { signal }) => {
-      if (!gameId) return null;
-      const res = await fetch(`/api/history/${gameId}`, { signal });
+    task: async ([historyApiBase], { signal }) => {
+      if (!historyApiBase) return null;
+      const res = await fetch(historyApiBase, { signal });
       if (!res.ok) throw new Error("Failed to load hand history");
       return res.json();
     },
-    args: () => [this._historyGameId, this._historyListRefreshNonce],
+    args: () => [this._getHistoryApiBase(), this._historyListRefreshNonce],
   });
 
   _historyHandTask = new Task(this, {
-    task: async ([gameId, handNumber], { signal }) => {
-      if (!gameId || !handNumber) return null;
-      const res = await fetch(`/api/history/${gameId}/${handNumber}`, {
-        signal,
-      });
+    task: async ([historyApiBase, handNumber], { signal }) => {
+      if (!historyApiBase || !handNumber) return null;
+      const res = await fetch(`${historyApiBase}/${handNumber}`, { signal });
       if (!res.ok) throw new Error("Hand not found");
       return res.json();
     },
-    args: () => [this._historyGameId, this._historyHandNumber],
+    args: () => [this._getHistoryApiBase(), this._historyHandNumber],
   });
 
   _playerProfileTask = new Task(this, {
@@ -241,27 +255,31 @@ class App extends LitElement {
 
   // --- Game WebSocket Management ---
 
-  connectToGame(gameId) {
+  connectToGame(path) {
+    const liveRoute = matchLiveRoute(path);
+    if (!liveRoute || liveRoute.kind === "mtt") {
+      return;
+    }
+
     // Already connected to this game
-    if (this._activeGameId === gameId && this._socket) {
+    if (this._activeGamePath === path && this._socket) {
       return;
     }
 
     // Disconnect from previous game if different
-    if (this._activeGameId && this._activeGameId !== gameId) {
+    if (this._activeGamePath && this._activeGamePath !== path) {
       this.disconnectFromGame();
     }
 
-    this._activeGameId = gameId;
+    this._activeGameId = liveRoute.tableId;
+    this._activeGamePath = path;
     this.game = null;
     this.socialAction = null;
     this.gameConnectionStatus = "connecting";
     this._intentionalClose = false;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this._socket = new WebSocket(
-      `${protocol}//${window.location.host}/games/${gameId}`,
-    );
+    this._socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
 
     this._socket.onopen = () => {
       this.gameConnectionStatus = "connected";
@@ -275,7 +293,7 @@ class App extends LitElement {
       }
 
       if (data.type === "social") {
-        if (!this.path.match(/^\/games\/[a-z0-9]+$/)) return;
+        if (!matchLiveRoute(this.path)) return;
         this.socialAction = data;
         return;
       }
@@ -283,7 +301,7 @@ class App extends LitElement {
       if (data.type === "history") {
         if (
           data.event === "handRecorded" &&
-          this._isOnHistoryRouteForGame(this._activeGameId)
+          isHistoryRouteForLivePath(this.path, this._activeGamePath)
         ) {
           this._historyListRefreshNonce += 1;
         }
@@ -309,7 +327,7 @@ class App extends LitElement {
         return;
       }
       // Reconnect automatically unless we closed intentionally
-      if (!this._intentionalClose && this._activeGameId) {
+      if (!this._intentionalClose && this._activeGamePath) {
         setTimeout(() => {
           this._reconnectIfNeeded();
         }, 1000);
@@ -319,12 +337,13 @@ class App extends LitElement {
 
   _reconnectIfNeeded() {
     if (
-      this._activeGameId &&
+      this._activeGamePath &&
       (!this._socket || this._socket.readyState === WebSocket.CLOSED)
     ) {
-      const gameId = this._activeGameId;
-      this._activeGameId = null; // allow connectToGame to proceed
-      this.connectToGame(gameId);
+      const path = this._activeGamePath;
+      this._activeGameId = null;
+      this._activeGamePath = null;
+      this.connectToGame(path);
     }
   }
 
@@ -335,6 +354,7 @@ class App extends LitElement {
       this._socket = null;
     }
     this._activeGameId = null;
+    this._activeGamePath = null;
     this.game = null;
     this.socialAction = null;
     this.gameConnectionStatus = "disconnected";
@@ -435,60 +455,61 @@ class App extends LitElement {
 
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
-    history.pushState({}, "", `/history/${this._historyGameId}/${handNumber}`);
-    this.path = `/history/${this._historyGameId}/${handNumber}`;
+    const nextPath = this._getHistoryPath(handNumber);
+    history.pushState({}, "", nextPath);
+    this.path = nextPath;
   }
 
-  _isOnHistoryRouteForGame(gameId) {
-    if (!gameId) return false;
-    const historyMatch = this.path.match(/^\/history\/([a-z0-9]+)(?:\/\d+)?$/);
-    return historyMatch?.[1] === gameId;
-  }
-
-  _manageConnection(gameId) {
-    if (gameId) {
-      this.connectToGame(gameId);
-    } else if (this._activeGameId) {
+  _manageConnection(path) {
+    if (path) {
+      this.connectToGame(path);
+    } else if (this._activeGamePath) {
       this.disconnectFromGame();
     }
   }
 
   _clearHistoryState() {
-    this._historyGameId = null;
+    this._historyKind = null;
+    this._historyTableId = null;
+    this._historyTournamentId = null;
     this._historyHandNumber = null;
+  }
+
+  _getHistoryApiBase() {
+    return getHistoryApiBase(
+      this._historyKind,
+      this._historyTableId,
+      this._historyTournamentId,
+    );
+  }
+
+  _getHistoryPath(handNumber = null) {
+    return getHistoryPath(
+      this._historyKind,
+      this._historyTableId,
+      handNumber,
+      this._historyTournamentId,
+    );
+  }
+
+  _getLivePathFromHistory() {
+    return getLivePathFromHistory(
+      this._historyKind,
+      this._historyTableId,
+      this._historyTournamentId,
+    );
   }
 
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
-      if (!this.path.match(/^\/games\/[a-z0-9]+$/)) {
+      const { liveRoute, historyRoute, playerProfileId } = parseAppPath(
+        this.path,
+      );
+      if (!isConnectableLiveRoute(liveRoute)) {
         this.socialAction = null;
       }
-      const historyMatch = this.path.match(
-        /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
-      );
-      if (historyMatch) {
-        const gameId = historyMatch[1];
-        const handNumber = historyMatch[2]
-          ? parseInt(historyMatch[2], 10)
-          : null;
-
-        // Set gameId - this triggers list task if changed
-        if (gameId !== this._historyGameId) {
-          this._historyGameId = gameId;
-          this._historyHandNumber = null; // Reset hand when game changes
-        }
-
-        // Set handNumber - this triggers hand task if changed
-        if (handNumber !== null && handNumber !== this._historyHandNumber) {
-          this._historyHandNumber = handNumber;
-        }
-      } else {
-        // Clear history state when navigating away from history
-        this._clearHistoryState();
-      }
-
-      const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
-      this._playerProfileId = playerMatch?.[1] || null;
+      syncAppHistoryState(this, historyRoute);
+      this._playerProfileId = playerProfileId;
     }
   }
 
@@ -502,15 +523,12 @@ class App extends LitElement {
       if (
         this._historyHandNumber === null &&
         hands.length > 0 &&
-        this.path === `/history/${this._historyGameId}`
+        this.path === this._getHistoryPath()
       ) {
         const latest = hands[hands.length - 1].hand_number;
-        history.replaceState(
-          {},
-          "",
-          `/history/${this._historyGameId}/${latest}`,
-        );
-        this.path = `/history/${this._historyGameId}/${latest}`;
+        const nextPath = this._getHistoryPath(latest);
+        history.replaceState({}, "", nextPath);
+        this.path = nextPath;
       }
     }
 
@@ -521,8 +539,9 @@ class App extends LitElement {
         message: error.message,
         variant: "error",
       };
-      history.replaceState({}, "", `/games/${this._historyGameId}`);
-      this.path = `/games/${this._historyGameId}`;
+      const livePath = this._getLivePathFromHistory();
+      history.replaceState({}, "", livePath);
+      this.path = livePath;
     }
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
@@ -531,8 +550,9 @@ class App extends LitElement {
         message: error.message,
         variant: "error",
       };
-      history.replaceState({}, "", `/games/${this._historyGameId}`);
-      this.path = `/games/${this._historyGameId}`;
+      const livePath = this._getLivePathFromHistory();
+      history.replaceState({}, "", livePath);
+      this.path = livePath;
     }
 
     if (this._playerProfileTask.status === TaskStatus.ERROR) {
@@ -547,24 +567,27 @@ class App extends LitElement {
   }
 
   render() {
-    const gameMatch = this.path.match(/^\/games\/([a-z0-9]+)$/);
-    const historyMatch = this.path.match(
-      /^\/history\/([a-z0-9]+)(?:\/(\d+))?$/,
-    );
-    const playerMatch = this.path.match(/^\/players\/([a-z0-9]+)$/);
+    const { liveRoute, historyRoute, playerProfileId, resourcePath } =
+      parseAppPath(this.path);
     const releaseNotesMatch = this.path === "/release-notes";
-    const gameId = gameMatch?.[1] || historyMatch?.[1];
 
-    this._manageConnection(gameId);
+    this._manageConnection(resourcePath);
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);
     }
-    if (gameMatch) return renderGameView(this, gameMatch);
-    if (historyMatch) return renderHistoryView(this, historyMatch);
+    if (
+      liveRoute &&
+      (liveRoute.kind === "cash" ||
+        liveRoute.kind === "sitngo" ||
+        liveRoute.kind === "mtt_table")
+    ) {
+      return renderGameView(this, liveRoute);
+    }
+    if (historyRoute) return renderHistoryView(this, historyRoute);
 
     // All shell routes use the same template so phg-app-shell stays alive
-    const shellContent = playerMatch
+    const shellContent = playerProfileId
       ? renderPlayerProfileView(this)
       : releaseNotesMatch
         ? renderReleaseNotesView()

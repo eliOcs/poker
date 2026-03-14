@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
+import { getTableHistoryPath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
@@ -35,6 +36,8 @@ class Game extends LitElement {
   static get properties() {
     return {
       gameId: { type: String, attribute: "game-id" },
+      gameKind: { type: String },
+      tournamentId: { type: String },
       game: { type: Object },
       socialAction: { type: Object },
       user: { type: Object },
@@ -53,6 +56,8 @@ class Game extends LitElement {
   constructor() {
     super();
     this.gameId = null;
+    this.gameKind = "cash";
+    this.tournamentId = null;
     this.game = null;
     this.socialAction = null;
     this.user = null;
@@ -224,9 +229,17 @@ class Game extends LitElement {
 
   openHistory() {
     if (!this.hasRecordedHands()) return;
+    const gameKind = /** @type {"cash"|"sitngo"|"mtt"} */ (this.gameKind);
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { path: `/history/${this.gameId}` },
+        detail: {
+          path: getTableHistoryPath(
+            gameKind,
+            this.gameId,
+            null,
+            this.tournamentId,
+          ),
+        },
         bubbles: true,
         composed: true,
       }),
@@ -353,14 +366,34 @@ class Game extends LitElement {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  _getTypeLabel() {
+    if (this.gameKind === "mtt") return "Tournament";
+    if (this.gameKind === "sitngo" || this.game?.tournament) {
+      return "Sit & Go";
+    }
+    return "Cash";
+  }
+
+  _getTournamentTimerCell() {
+    const tournament = this.game?.tournament;
+    if (!tournament || tournament.timeToNextLevel == null) {
+      return null;
+    }
+
+    const timerText = tournament.onBreak
+      ? `Break ${this._formatTime(tournament.timeToNextLevel)}`
+      : `Level ${tournament.level}: ${this._formatTime(
+          tournament.timeToNextLevel,
+        )}`;
+    return html`<span class="info-cell info-timer">${timerText}</span>`;
+  }
+
   _renderInfoBar() {
     if (!this.game) return "";
-    const isTournament = !!this.game.tournament;
     const sizeLabel = TABLE_SIZE_LABELS[this.game.seats.length] || "";
-    const typeLabel = isTournament ? "Sit & Go" : "Cash";
 
     const cells = [
-      html`<span class="info-cell info-type">${typeLabel}</span>`,
+      html`<span class="info-cell info-type">${this._getTypeLabel()}</span>`,
       html`<span class="info-cell info-size">${sizeLabel}</span>`,
     ];
 
@@ -380,12 +413,9 @@ class Game extends LitElement {
       );
     }
 
-    if (isTournament && this.game.tournament.timeToNextLevel != null) {
-      const t = this.game.tournament;
-      const timerText = t.onBreak
-        ? `Break ${this._formatTime(t.timeToNextLevel)}`
-        : `Level ${t.level}: ${this._formatTime(t.timeToNextLevel)}`;
-      cells.push(html`<span class="info-cell info-timer">${timerText}</span>`);
+    const tournamentTimerCell = this._getTournamentTimerCell();
+    if (tournamentTimerCell) {
+      cells.push(tournamentTimerCell);
     }
 
     return html`<div id="info-bar">${cells}</div>`;

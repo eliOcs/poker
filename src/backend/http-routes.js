@@ -16,6 +16,15 @@ import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 export { logFrontendErrorReport } from "./client-error-reporting.js";
 import { createSignInRoutes } from "./sign-in-routes.js";
+import {
+  LIVE_CASH_ROUTE,
+  LIVE_SITNGO_ROUTE,
+  HISTORY_CASH_ROUTE,
+  HISTORY_SITNGO_ROUTE,
+  HISTORY_MTT_TABLE_ROUTE,
+  LIVE_MTT_ROUTE,
+  LIVE_MTT_TABLE_ROUTE,
+} from "../shared/routes.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -299,52 +308,62 @@ export function createRoutes(users, games, broadcast, services = {}) {
     })),
     {
       method: "POST",
-      path: "/games",
+      path: "/cash",
       handler: async ({ req, res, log }) => {
         getOrCreateUser(req, res, users, log);
-
         const data = await parseBody(req);
-
-        const isTournament =
-          data !== null &&
-          typeof data === "object" &&
-          "type" in data &&
-          data.type === "tournament";
-        const seats = parseSeats(data, isTournament ? 6 : 9);
-
-        if (isTournament) {
-          const buyIn = parseBuyIn(data);
-          const game = PokerGame.createTournament({ seats, buyIn });
-          games.set(game.id, game);
-          Object.assign(log.context, {
-            game: {
-              type: "tournament",
-              id: game.id,
-              seats,
-              buyIn,
-              initialStack: game.tournament?.initialStack,
-            },
-          });
-          respondWithJson(res, { id: game.id, type: "tournament" });
-        } else {
-          const blinds = parseBlinds(data);
-          const game = PokerGame.create({ blinds, seats });
-          games.set(game.id, game);
-          Object.assign(log.context, {
-            game: {
-              type: "cash",
-              id: game.id,
-              blinds: `${blinds.small}/${blinds.big}`,
-              seats,
-            },
-          });
-          respondWithJson(res, { id: game.id, type: "cash" });
-        }
+        const seats = parseSeats(data, 9);
+        const blinds = parseBlinds(data);
+        const game = PokerGame.create({ blinds, seats, kind: "cash" });
+        games.set(game.id, game);
+        Store.saveTable({
+          id: game.id,
+          kind: "cash",
+          seatCount: seats,
+          tableName: game.tableName,
+        });
+        Object.assign(log.context, {
+          game: {
+            type: "cash",
+            id: game.id,
+            blinds: `${blinds.small}/${blinds.big}`,
+            seats,
+          },
+        });
+        respondWithJson(res, { id: game.id, type: "cash" });
+      },
+    },
+    {
+      method: "POST",
+      path: "/sitngo",
+      handler: async ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        const data = await parseBody(req);
+        const seats = parseSeats(data, 6);
+        const buyIn = parseBuyIn(data);
+        const game = PokerGame.createTournament({ seats, buyIn });
+        games.set(game.id, game);
+        Store.saveTable({
+          id: game.id,
+          kind: "sitngo",
+          seatCount: seats,
+          tableName: game.tableName,
+        });
+        Object.assign(log.context, {
+          game: {
+            type: "sitngo",
+            id: game.id,
+            seats,
+            buyIn,
+            initialStack: game.tournament?.initialStack,
+          },
+        });
+        respondWithJson(res, { id: game.id, type: "sitngo" });
       },
     },
     {
       method: "GET",
-      path: /^\/games\/([a-z0-9]+)$/,
+      path: LIVE_CASH_ROUTE,
       handler: ({ req, res, log }) => {
         getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
@@ -352,7 +371,47 @@ export function createRoutes(users, games, broadcast, services = {}) {
     },
     {
       method: "GET",
-      path: /^\/history\/([a-z0-9]+)(\/\d+)?$/,
+      path: LIVE_SITNGO_ROUTE,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: LIVE_MTT_ROUTE,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: LIVE_MTT_TABLE_ROUTE,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: HISTORY_CASH_ROUTE,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: HISTORY_SITNGO_ROUTE,
+      handler: ({ req, res, log }) => {
+        getOrCreateUser(req, res, users, log);
+        respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: HISTORY_MTT_TABLE_ROUTE,
       handler: ({ req, res, log }) => {
         getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
@@ -384,7 +443,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     },
     {
       method: "GET",
-      path: /^\/api\/history\/([a-z0-9]+)$/,
+      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history$/,
       handler: async ({ req, res, match, log }) => {
         const gameId = /** @type {string} */ (
           /** @type {RegExpMatchArray} */ (match)[1]
@@ -401,7 +460,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     },
     {
       method: "GET",
-      path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
+      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history\/(\d+)$/,
       handler: async ({ req, res, match, log }) => {
         const m = /** @type {RegExpMatchArray} */ (match);
         const gameId = /** @type {string} */ (m[1]);
@@ -409,6 +468,46 @@ export function createRoutes(users, games, broadcast, services = {}) {
         const user = getOrCreateUser(req, res, users, log);
 
         const hand = await HandHistory.getHand(gameId, handNumber);
+        if (!hand) {
+          throw new HttpError(404, "Hand not found", {
+            body: { error: "Hand not found", status: 404 },
+          });
+        }
+
+        const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
+        const view = HandHistory.getHandView(filteredHand, user.id);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(
+          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
+        );
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history$/,
+      handler: async ({ req, res, match, log }) => {
+        const m = /** @type {RegExpMatchArray} */ (match);
+        const tableId = /** @type {string} */ (m[2]);
+        const user = getOrCreateUser(req, res, users, log);
+
+        const hands = await HandHistory.getAllHands(tableId);
+        const summaries = hands.map((hand) =>
+          HandHistory.getHandSummary(hand, user.id),
+        );
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ hands: summaries, playerId: user.id }));
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history\/(\d+)$/,
+      handler: async ({ req, res, match, log }) => {
+        const m = /** @type {RegExpMatchArray} */ (match);
+        const tableId = /** @type {string} */ (m[2]);
+        const handNumber = parseInt(/** @type {string} */ (m[3]), 10);
+        const user = getOrCreateUser(req, res, users, log);
+
+        const hand = await HandHistory.getHand(tableId, handNumber);
         if (!hand) {
           throw new HttpError(404, "Hand not found", {
             body: { error: "Hand not found", status: 404 },

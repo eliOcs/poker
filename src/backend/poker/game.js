@@ -65,6 +65,8 @@ export {
 /**
  * @typedef {object} TournamentState
  * @property {boolean} active - Whether this is a tournament game
+ * @property {"sitngo"|"mtt"} kind - Tournament mode
+ * @property {string} competitionId - Sit & Go id or parent MTT id
  * @property {number} level - Current blind level (1-7)
  * @property {number} levelTicks - Ticks elapsed in current level
  * @property {boolean} onBreak - Currently in break period
@@ -88,6 +90,9 @@ export {
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
  * @property {Blinds} blinds - Blind structure
+ * @property {"cash"|"sitngo"|"mtt"} kind - Table resource kind
+ * @property {string|null} tournamentId - Parent tournament id for MTT tables
+ * @property {string|null} tableName - Human-readable table name for history/UX
  * @property {Seat[]} seats - Array of seats
  * @property {Card[]} deck - Current deck
  * @property {Board} board - Community cards
@@ -109,6 +114,9 @@ export {
  * @typedef {object} GameOptions
  * @property {number} [seats] - Number of seats
  * @property {Blinds} [blinds] - Blind structure
+ * @property {"cash"|"sitngo"|"mtt"} [kind] - Table kind
+ * @property {string|null} [tournamentId] - Parent tournament id for MTT tables
+ * @property {string|null} [tableName] - Human-readable table name
  */
 
 /**
@@ -134,6 +142,9 @@ export function createHand() {
 export function create({
   seats: numberOfSeats = 9,
   blinds = { ante: 5, small: 25, big: 50 },
+  kind = "cash",
+  tournamentId = null,
+  tableName = null,
 } = {}) {
   const id = Id.generate();
   /** @type {Seat[]} */
@@ -146,6 +157,9 @@ export function create({
     running: true,
     button: 0,
     blinds,
+    kind,
+    tournamentId,
+    tableName,
     seats,
     deck: Deck.create(),
     board: { cards: [] },
@@ -186,16 +200,69 @@ export function createTournament({
     big: level1Blinds.big,
   };
 
-  const game = create({ seats: numberOfSeats, blinds });
+  const game = create({
+    seats: numberOfSeats,
+    blinds,
+    kind: "sitngo",
+    tableName: "Sit & Go Table",
+  });
 
   game.tournament = {
     active: true,
+    kind: "sitngo",
+    competitionId: game.id,
     level: 1,
     levelTicks: 0,
     onBreak: false,
     pendingBreak: false,
     breakTicks: 0,
     startTime: null,
+    initialStack: Tournament.INITIAL_STACK,
+    winner: null,
+    buyIn,
+  };
+
+  return game;
+}
+
+/**
+ * Creates a new multi-table tournament table
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: string, tableName: string, startTime: string|null, level?: number }} options
+ * @returns {Game}
+ */
+export function createMttTable({
+  seats: numberOfSeats = Tournament.DEFAULT_SEATS,
+  buyIn = Tournament.DEFAULT_BUYIN.amount,
+  tournamentId,
+  tableName,
+  startTime,
+  level = 1,
+}) {
+  const initialBlinds = Tournament.getBlindsForLevel(level);
+  const blinds = {
+    ante: initialBlinds.ante,
+    small: initialBlinds.small,
+    big: initialBlinds.big,
+  };
+
+  const game = create({
+    seats: numberOfSeats,
+    blinds,
+    kind: "mtt",
+    tournamentId,
+    tableName,
+  });
+
+  game.tournament = {
+    active: true,
+    kind: "mtt",
+    competitionId: tournamentId,
+    level,
+    levelTicks: 0,
+    onBreak: false,
+    pendingBreak: false,
+    breakTicks: 0,
+    startTime,
     initialStack: Tournament.INITIAL_STACK,
     winner: null,
     buyIn,

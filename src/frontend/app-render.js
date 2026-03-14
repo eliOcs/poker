@@ -20,11 +20,16 @@ export function renderToast(app) {
 
 /**
  * @param {any} app
- * @param {RegExpMatchArray} gameMatch
+ * @param {{ kind: "cash"|"sitngo"|"mtt_table", tableId: string, tournamentId?: string }} liveRoute
  */
-export function renderGameView(app, gameMatch) {
+export function renderGameView(app, liveRoute) {
+  const gameKind = liveRoute.kind === "mtt_table" ? "mtt" : liveRoute.kind;
   return html`${renderToast(app)}<phg-game
-      .gameId=${gameMatch[1]}
+      .gameId=${liveRoute.tableId}
+      .gameKind=${gameKind}
+      .tournamentId=${"tournamentId" in liveRoute
+        ? liveRoute.tournamentId
+        : null}
       .game=${app.game}
       .socialAction=${app.socialAction}
       .user=${app.user}
@@ -33,14 +38,18 @@ export function renderGameView(app, gameMatch) {
 
 /**
  * @param {any} app
- * @param {RegExpMatchArray} historyMatch
+ * @param {{ kind: string, tableId: string, tournamentId?: string }} historyRoute
  */
-export function renderHistoryView(app, historyMatch) {
+export function renderHistoryView(app, historyRoute) {
   const listData = app._historyListTask.value;
   const handData = app._historyHandTask.value;
 
   return html`${renderToast(app)}<phg-history
-      .gameId=${historyMatch[1]}
+      .gameId=${historyRoute.tableId}
+      .gameKind=${historyRoute.kind}
+      .tournamentId=${historyRoute.kind === "mtt_table"
+        ? historyRoute.tournamentId
+        : null}
       .handNumber=${app._historyHandNumber}
       .hand=${handData?.hand}
       .view=${handData?.view}

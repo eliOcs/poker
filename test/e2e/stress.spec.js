@@ -310,7 +310,7 @@ test.describe("Tournament E2E", () => {
     player6,
   }) => {
     // Create tournament game via UI
-    await createGame(player1, { type: "tournament" });
+    await createGame(player1, { type: "sitngo" });
     console.log("Tournament created");
 
     const players = [player1, player2, player3, player4, player5, player6];

@@ -103,7 +103,7 @@ describe("hand-history-view", function () {
 
       const parsed = JSON.parse(lines[0]);
       assert.ok(parsed.ohh);
-      assert.strictEqual(parsed.ohh.spec_version, "1.4.6");
+      assert.strictEqual(parsed.ohh.spec_version, "1.4.7");
       assert.strictEqual(parsed.ohh.site_name, "Pluton Poker");
 
       delete process.env.DATA_DIR;

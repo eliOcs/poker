@@ -55,6 +55,27 @@ function broadcastGameMessage(message) {
               gameId: message.gameId,
             })),
           );
+          Store.recordPlayerTableActivity(
+            hand.players.map((player) => ({
+              playerId: player.id,
+              tableId: message.gameId,
+              tournamentId: game.kind === "mtt" ? game.tournamentId : null,
+              lastHandNumber: message.handNumber,
+              lastPlayedAt: hand.start_date_utc,
+            })),
+          );
+          const tournamentId = game.tournamentId;
+          if (game.kind === "mtt" && tournamentId) {
+            Store.recordPlayerTournamentActivity(
+              hand.players.map((player) => ({
+                playerId: player.id,
+                tournamentId,
+                lastTableId: message.gameId,
+                lastHandNumber: message.handNumber,
+                lastPlayedAt: hand.start_date_utc,
+              })),
+            );
+          }
           rawBroadcastGameMessage({
             type: "history",
             gameId: message.gameId,

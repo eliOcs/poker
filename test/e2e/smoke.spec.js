@@ -190,7 +190,9 @@ test.describe("Poker Game Smoke Test", () => {
     await player1.waitForHandStart();
 
     // P3 reconnects — open a new page in the same browser context (same cookies)
-    const gameId = player1.page.url().match(/\/games\/([a-z0-9]+)/)[1];
+    const gameId = player1.page
+      .url()
+      .match(/\/(?:cash|sitngo)\/([a-z0-9]+)/)?.[1];
     const p3Page = await player3.context.newPage();
     player3.page = p3Page;
     await player3.joinGame(gameId);

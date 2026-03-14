@@ -116,7 +116,7 @@ describe("phg-app sign in", () => {
         return {
           ok: true,
           json: async () => ({
-            returnPath: "/games/test-game?buyin=50",
+            returnPath: "/cash/test-game?buyin=50",
           }),
         };
       }
@@ -133,7 +133,7 @@ describe("phg-app sign in", () => {
       message: "Signed in successfully",
       variant: "success",
     });
-    expect(window.location.pathname).to.equal("/games/test-game");
+    expect(window.location.pathname).to.equal("/cash/test-game");
     expect(window.location.search).to.equal("?buyin=50");
   });
 

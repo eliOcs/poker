@@ -377,7 +377,7 @@ describe("phg-history", () => {
 
       expect(closeEvent).to.exist;
       expect(navigateEvent).to.exist;
-      expect(navigateEvent.detail.path).to.equal("/games/test123");
+      expect(navigateEvent.detail.path).to.equal("/cash/test123");
     });
 
     it("emits hand-select event with previous hand on navigatePrev", async () => {

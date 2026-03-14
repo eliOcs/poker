@@ -26,7 +26,9 @@ const contributionActions = new Set([
 /**
  * @typedef {object} RecentGame
  * @property {Id} gameId
- * @property {"cash"|"tournament"} gameType
+ * @property {Id} tableId
+ * @property {Id|null} tournamentId
+ * @property {"cash"|"sitngo"|"mtt"} gameType
  * @property {Cents} netWinnings
  * @property {number} handsPlayed
  * @property {string} lastPlayedAt
@@ -109,47 +111,47 @@ function isPlayerOnline(games, playerId) {
  * @returns {Promise<{ totalNetWinnings: Cents, totalHands: number, hands: OHHHand[], recentGames: RecentGame[] }>}
  */
 async function summarizePlayerHistory(playerId) {
-  const gameIds = Store.listPlayerGameIds(playerId);
   /** @type {OHHHand[]} */
   const matchingHands = [];
   let totalNetWinnings = 0;
   /** @type {RecentGame[]} */
   const recentGames = [];
+  const mttTournamentLinks = Store.listPlayerTournaments(playerId);
+  const mttTournamentIds = new Set(
+    mttTournamentLinks.map((link) => link.tournamentId),
+  );
 
-  for (const gameId of gameIds) {
-    const hands = await readHandsFromFile(gameId);
-    const playerHands = hands.filter((hand) =>
-      hand.players.some((player) => player.id === playerId),
-    );
+  for (const tableLink of listPlayerHistoryTables(playerId)) {
+    if (
+      tableLink.tournamentId &&
+      mttTournamentIds.has(tableLink.tournamentId)
+    ) {
+      continue;
+    }
 
-    if (playerHands.length === 0) continue;
+    const summary = await summarizeTableHistory(tableLink, playerId);
+    if (!summary) continue;
 
-    matchingHands.push(...playerHands);
+    matchingHands.push(...summary.hands);
+    totalNetWinnings += summary.recentGame.netWinnings;
+    recentGames.push(summary.recentGame);
+  }
 
-    const { netWinnings, gameType } = await summarizeGameResult(
-      playerHands,
-      playerId,
-      gameId,
-    );
-    totalNetWinnings += netWinnings;
+  for (const tournamentLink of mttTournamentLinks) {
+    const summary = await summarizeMttHistory(tournamentLink, playerId);
+    if (!summary) continue;
 
-    const lastPlayedHand = findLatestHand(playerHands);
-    if (!lastPlayedHand) continue;
-
-    recentGames.push({
-      gameId,
-      gameType,
-      netWinnings,
-      handsPlayed: playerHands.length,
-      lastPlayedAt: lastPlayedHand.start_date_utc,
-      lastHandNumber: parseHandNumber(lastPlayedHand),
-    });
+    matchingHands.push(...summary.hands);
+    totalNetWinnings += summary.recentGame.netWinnings;
+    recentGames.push(summary.recentGame);
   }
 
   recentGames.sort((a, b) => {
     const dateCompare = b.lastPlayedAt.localeCompare(a.lastPlayedAt);
     if (dateCompare !== 0) return dateCompare;
-    return b.gameId.localeCompare(a.gameId);
+    return (b.tournamentId || b.tableId).localeCompare(
+      a.tournamentId || a.tableId,
+    );
   });
 
   return {
@@ -184,46 +186,6 @@ function findLatestHand(hands) {
  */
 function parseHandNumber(hand) {
   return parseInt(hand.game_number.split("-").pop() || "0", 10);
-}
-
-/**
- * @param {OHHHand[]} hands
- * @returns {"cash"|"tournament"}
- */
-function getGameType(hands) {
-  return isTournamentHistory(hands) ? "tournament" : "cash";
-}
-
-/**
- * @param {OHHHand[]} playerHands
- * @param {string} playerId
- * @param {Id} gameId
- * @returns {Promise<{ netWinnings: Cents, gameType: "cash"|"tournament" }>}
- */
-async function summarizeGameResult(playerHands, playerId, gameId) {
-  const gameType = getGameType(playerHands);
-  if (gameType === "tournament") {
-    return {
-      gameType,
-      netWinnings: await calculateTournamentNetResult(gameId, playerId),
-    };
-  }
-
-  return {
-    gameType,
-    netWinnings: playerHands.reduce(
-      (total, hand) => total + calculateNetResult(hand, playerId),
-      0,
-    ),
-  };
-}
-
-/**
- * @param {OHHHand[]} hands
- * @returns {boolean}
- */
-function isTournamentHistory(hands) {
-  return hands.some((hand) => hand.tournament || hand.tournament_info);
 }
 
 /**
@@ -277,17 +239,22 @@ function calculateNetResult(hand, playerId) {
 }
 
 /**
- * @param {string} gameId
+ * @param {string} tournamentId
  * @param {string} playerId
+ * @param {string} [fallbackTableId]
  * @returns {Promise<Cents>}
  */
-async function calculateTournamentNetResult(gameId, playerId) {
-  const summary = await readTournamentSummary(gameId);
+async function calculateTournamentNetResult(
+  tournamentId,
+  playerId,
+  fallbackTableId = tournamentId,
+) {
+  const summary = await readTournamentSummary(tournamentId);
   if (summary) {
     return calculateTournamentSummaryNetResult(summary, playerId);
   }
 
-  const game = await recoverGameFromHistory(gameId);
+  const game = await recoverGameFromHistory(fallbackTableId);
   if (!game?.tournament?.active) {
     return 0;
   }
@@ -315,6 +282,147 @@ function calculateTournamentSummaryNetResult(summary, playerId) {
   }
 
   return toCents(finish.prize || 0) - buyIn;
+}
+
+/**
+ * @param {Id} playerId
+ * @returns {Store.PlayerTableLink[]}
+ */
+function listPlayerHistoryTables(playerId) {
+  const tableLinks = Store.listPlayerTables(playerId);
+  const tableIds = new Set(tableLinks.map((link) => link.tableId));
+
+  for (const gameId of Store.listPlayerGameIds(playerId)) {
+    if (tableIds.has(gameId)) continue;
+    tableLinks.push({
+      tableId: gameId,
+      tournamentId: null,
+      lastHandNumber: 0,
+      lastPlayedAt: new Date(0).toISOString(),
+    });
+  }
+
+  return tableLinks;
+}
+
+/**
+ * @param {Store.PlayerTableLink} tableLink
+ * @param {Id} playerId
+ * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|null>}
+ */
+async function summarizeTableHistory(tableLink, playerId) {
+  const hands = await readHandsFromFile(tableLink.tableId);
+  const playerHands = hands.filter((hand) =>
+    hand.players.some((player) => player.id === playerId),
+  );
+  if (playerHands.length === 0) return null;
+
+  const lastPlayedHand = findLatestHand(playerHands);
+  if (!lastPlayedHand) return null;
+
+  const gameType = resolveGameType(tableLink.tableId, playerHands);
+  const netWinnings =
+    gameType === "cash"
+      ? playerHands.reduce(
+          (total, hand) => total + calculateNetResult(hand, playerId),
+          0,
+        )
+      : await calculateTournamentNetResult(
+          tableLink.tournamentId || tableLink.tableId,
+          playerId,
+          tableLink.tableId,
+        );
+
+  return {
+    hands: playerHands,
+    recentGame: {
+      gameId: tableLink.tableId,
+      tableId: tableLink.tableId,
+      tournamentId: gameType === "mtt" ? tableLink.tournamentId : null,
+      gameType,
+      netWinnings,
+      handsPlayed: playerHands.length,
+      lastPlayedAt:
+        tableLink.lastPlayedAt !== new Date(0).toISOString()
+          ? tableLink.lastPlayedAt
+          : lastPlayedHand.start_date_utc,
+      lastHandNumber:
+        tableLink.lastHandNumber || parseHandNumber(lastPlayedHand),
+    },
+  };
+}
+
+/**
+ * @param {Store.PlayerTournamentLink} tournamentLink
+ * @param {Id} playerId
+ * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|null>}
+ */
+async function summarizeMttHistory(tournamentLink, playerId) {
+  const tableLinks = Store.listPlayerTablesForTournament(
+    playerId,
+    tournamentLink.tournamentId,
+  );
+  const sourceTableLinks =
+    tableLinks.length > 0
+      ? tableLinks
+      : [
+          {
+            tableId: tournamentLink.lastTableId,
+            tournamentId: tournamentLink.tournamentId,
+            lastHandNumber: tournamentLink.lastHandNumber,
+            lastPlayedAt: tournamentLink.lastPlayedAt,
+          },
+        ];
+
+  /** @type {OHHHand[]} */
+  const playerHands = [];
+  for (const tableLink of sourceTableLinks) {
+    const hands = await readHandsFromFile(tableLink.tableId);
+    playerHands.push(
+      ...hands.filter((hand) =>
+        hand.players.some((player) => player.id === playerId),
+      ),
+    );
+  }
+
+  if (playerHands.length === 0) return null;
+
+  return {
+    hands: playerHands,
+    recentGame: {
+      gameId: tournamentLink.lastTableId,
+      tableId: tournamentLink.lastTableId,
+      tournamentId: tournamentLink.tournamentId,
+      gameType: "mtt",
+      netWinnings: await calculateTournamentNetResult(
+        tournamentLink.tournamentId,
+        playerId,
+        tournamentLink.lastTableId,
+      ),
+      handsPlayed: playerHands.length,
+      lastPlayedAt: tournamentLink.lastPlayedAt,
+      lastHandNumber: tournamentLink.lastHandNumber,
+    },
+  };
+}
+
+/**
+ * @param {Id} tableId
+ * @param {OHHHand[]} hands
+ * @returns {"cash"|"sitngo"|"mtt"}
+ */
+function resolveGameType(tableId, hands) {
+  const table = Store.loadTable(tableId);
+  if (table?.kind === "sitngo" || table?.kind === "mtt") {
+    return table.kind;
+  }
+  if (hands.some((hand) => hand.tournament_info?.type === "MTT")) {
+    return "mtt";
+  }
+  if (hands.some((hand) => hand.tournament || hand.tournament_info)) {
+    return "sitngo";
+  }
+  return "cash";
 }
 
 /**

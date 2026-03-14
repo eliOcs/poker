@@ -59,6 +59,15 @@ function recordHandPlayers(hand, gameId) {
   Store.recordPlayerGames(
     hand.players.map((player) => ({ playerId: player.id, gameId })),
   );
+  Store.recordPlayerTableActivity(
+    hand.players.map((player) => ({
+      playerId: player.id,
+      tableId: gameId,
+      tournamentId: hand?.tournament_info?.type === "MTT" ? gameId : null,
+      lastHandNumber: parseInt(hand.game_number.split("-").pop() || "0", 10),
+      lastPlayedAt: hand.start_date_utc,
+    })),
+  );
 }
 
 describe("player-profile", function () {
@@ -152,6 +161,8 @@ describe("player-profile", function () {
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "gameb456",
+        tableId: "gameb456",
+        tournamentId: null,
         gameType: "cash",
         netWinnings: -25,
         handsPlayed: 1,
@@ -160,6 +171,8 @@ describe("player-profile", function () {
       },
       {
         gameId: "gamea123",
+        tableId: "gamea123",
+        tournamentId: null,
         gameType: "cash",
         netWinnings: 50,
         handsPlayed: 1,
@@ -269,7 +282,9 @@ describe("player-profile", function () {
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "tour123",
-        gameType: "tournament",
+        tableId: "tour123",
+        tournamentId: null,
+        gameType: "sitngo",
         netWinnings: -500,
         handsPlayed: 1,
         lastPlayedAt: "2026-03-07T12:00:00.000Z",
@@ -359,7 +374,9 @@ describe("player-profile", function () {
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "tour456",
-        gameType: "tournament",
+        tableId: "tour456",
+        tournamentId: null,
+        gameType: "sitngo",
         netWinnings: 100,
         handsPlayed: 1,
         lastPlayedAt: "2026-03-07T12:00:00.000Z",
@@ -458,6 +475,8 @@ describe("player-profile", function () {
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "gamec789",
+        tableId: "gamec789",
+        tournamentId: null,
         gameType: "cash",
         netWinnings: 75,
         handsPlayed: 2,
