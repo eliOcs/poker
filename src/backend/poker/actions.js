@@ -39,6 +39,9 @@ export function countPlayersWithChips(game) {
  * @param {Game} game
  */
 export function start(game) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("table flow is managed by the tournament");
+  }
   if (game.hand.phase !== "waiting") {
     throw new Error("hand already in progress");
   }
@@ -79,6 +82,9 @@ function resolveSeatForSit(game, requestedSeat) {
  * @param {{ seat?: number, player: Player }} options
  */
 export function sit(game, { seat: requestedSeat, player }) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("table seating is managed by the tournament");
+  }
   if (game.tournament?.active && game.tournament.level > 1) {
     throw new Error("registration closed");
   }
@@ -480,7 +486,7 @@ export function endHand(game) {
     if (!seat.empty && seat.stack === 0 && !seat.sittingOut) {
       seat.sittingOut = true;
       // In tournaments, record the busted position
-      if (game.tournament?.active) {
+      if (game.tournament?.kind === "sitngo") {
         // Position = number of players still with chips + 1
         const playersWithChips = countPlayersWithChips(game);
         seat.bustedPosition = playersWithChips + 1;
@@ -541,6 +547,9 @@ function applyPendingSitOuts(game) {
  * @param {{ seat: number }} options
  */
 export function sitOut(game, { seat }) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("sit out is not available during multi-table tournaments");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
@@ -566,6 +575,9 @@ export function sitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function cancelSitOut(game, { seat }) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("sit out is not available during multi-table tournaments");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
@@ -584,6 +596,9 @@ export function cancelSitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function sitIn(game, { seat }) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("sit in is not available during multi-table tournaments");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
@@ -620,6 +635,9 @@ export function sitIn(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function leave(game, { seat }) {
+  if (game.tournament?.kind === "mtt") {
+    throw new Error("table seating is managed by the tournament");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {

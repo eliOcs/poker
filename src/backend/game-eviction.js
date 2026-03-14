@@ -52,6 +52,16 @@ export function hasConnectedClientsForGame(clientConnections, gameId) {
 }
 
 /**
+ * Active MTT tables are children of an in-memory parent aggregate, so evicting
+ * the table would orphan the running tournament state.
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function canEvictGame(game) {
+  return game.kind !== "mtt";
+}
+
+/**
  * @typedef {object} TrackedActivity
  * @property {number} handNumber
  * @property {number} seenAt
@@ -111,6 +121,11 @@ export function createInactiveGameEvictor(
     const evictedGameIds = [];
 
     for (const [gameId, game] of games) {
+      if (!canEvictGame(game)) {
+        track(gameId, game, now);
+        continue;
+      }
+
       if (hasConnectedClientsForGame(clientConnections, gameId)) {
         track(gameId, game, now);
         continue;

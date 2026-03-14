@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
 import { rm } from "node:fs/promises";
@@ -482,6 +483,124 @@ describe("player-profile", function () {
         handsPlayed: 2,
         lastPlayedAt: "2026-03-03T12:00:00.000Z",
         lastHandNumber: 3,
+      },
+    ]);
+  });
+
+  it("groups multi-table tournament history by tournament id and links to the latest table", async function () {
+    const tableOneHand = createHand(
+      "mtttable1",
+      1,
+      1,
+      [
+        {
+          action_number: 1,
+          player_id: "player1",
+          action: "Post SB",
+          amount: 0.25,
+        },
+      ],
+      [{ player_id: "player2", win_amount: 1, contributed_rake: 0 }],
+    );
+    tableOneHand.tournament = true;
+    tableOneHand.tournament_info = {
+      tournament_number: "mtt999",
+      name: "Multi-Table Tournament",
+      start_date_utc: "2026-03-10T12:00:00.000Z",
+      currency: "USD",
+      buyin_amount: 5,
+      fee_amount: 0,
+      initial_stack: 50,
+      type: "MTT",
+      speed: "Regular",
+    };
+    tableOneHand.start_date_utc = "2026-03-10T12:00:00.000Z";
+
+    const tableTwoHand = createHand(
+      "mtttable2",
+      2,
+      1,
+      [
+        {
+          action_number: 1,
+          player_id: "player1",
+          action: "Post BB",
+          amount: 0.5,
+        },
+      ],
+      [{ player_id: "player1", win_amount: 1, contributed_rake: 0 }],
+    );
+    tableTwoHand.players = [
+      { id: "player1", seat: 1, name: "Alice", starting_stack: 10 },
+      { id: "player3", seat: 2, name: "Carol", starting_stack: 10 },
+    ];
+    tableTwoHand.tournament = true;
+    tableTwoHand.tournament_info = {
+      ...tableOneHand.tournament_info,
+      tournament_number: "mtt999",
+    };
+    tableTwoHand.start_date_utc = "2026-03-11T12:00:00.000Z";
+
+    await writeHandToFile("mtttable1", tableOneHand);
+    await writeHandToFile("mtttable2", tableTwoHand);
+
+    Store.saveTable({
+      id: "mtttable1",
+      kind: "mtt",
+      tournamentId: "mtt999",
+      seatCount: 6,
+      tableName: "Table 1",
+    });
+    Store.saveTable({
+      id: "mtttable2",
+      kind: "mtt",
+      tournamentId: "mtt999",
+      seatCount: 6,
+      tableName: "Table 2",
+    });
+    Store.recordPlayerGames([{ playerId: "player1", gameId: "mtttable1" }]);
+    Store.recordPlayerGames([{ playerId: "player1", gameId: "mtttable2" }]);
+    Store.recordPlayerTableActivity([
+      {
+        playerId: "player1",
+        tableId: "mtttable1",
+        tournamentId: "mtt999",
+        lastHandNumber: 1,
+        lastPlayedAt: tableOneHand.start_date_utc,
+      },
+      {
+        playerId: "player1",
+        tableId: "mtttable2",
+        tournamentId: "mtt999",
+        lastHandNumber: 2,
+        lastPlayedAt: tableTwoHand.start_date_utc,
+      },
+    ]);
+    Store.recordPlayerTournamentActivity([
+      {
+        playerId: "player1",
+        tournamentId: "mtt999",
+        lastTableId: "mtttable2",
+        lastHandNumber: 2,
+        lastPlayedAt: tableTwoHand.start_date_utc,
+      },
+    ]);
+
+    const profile = await getPlayerProfile(new Map(), "player1");
+
+    assert.ok(profile);
+    assert.equal(profile.totalHands, 2);
+    assert.equal(profile.totalNetWinnings, 0);
+    assert.deepStrictEqual(profile.recentGames, [
+      {
+        gameId: "mtttable2",
+        tableId: "mtttable2",
+        tournamentId: "mtt999",
+        gameType: "mtt",
+        netWinnings: 0,
+        handsPlayed: 2,
+        lastPlayedAt: "2026-03-11T12:00:00.000Z",
+        lastHandNumber: 2,
       },
     ]);
   });

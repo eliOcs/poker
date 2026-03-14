@@ -197,4 +197,30 @@ describe("game-eviction", () => {
     );
     assert.equal(game.tickTimer, null);
   });
+
+  it("does not evict active MTT tables", () => {
+    const evictInactiveGames = createInactiveGameEvictor(60 * 60 * 1000);
+    const game = { kind: "mtt", handNumber: 2, tickTimer: null };
+    const games = new Map([["g1", game]]);
+
+    assert.equal(
+      evictInactiveGames({
+        games,
+        clientConnections: createClientConnections(),
+        ...mockLogFns(),
+        now: 0,
+      }),
+      0,
+    );
+    assert.equal(
+      evictInactiveGames({
+        games,
+        clientConnections: createClientConnections(),
+        ...mockLogFns(),
+        now: 24 * 60 * 60 * 1000,
+      }),
+      0,
+    );
+    assert.equal(games.size, 1);
+  });
 });

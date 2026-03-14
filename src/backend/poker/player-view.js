@@ -404,6 +404,9 @@ function calculateHandRank(holeCards, boardCards) {
  * @returns {PlayerAction[]}
  */
 function getSittingOutActions(seat, game, isTournament, showActions) {
+  if (game.tournament?.kind === "mtt") {
+    return showActions;
+  }
   // Cash game player who sat but hasn't bought in yet
   if (!isTournament && seat.stack === 0) {
     return [
@@ -424,6 +427,36 @@ function getSittingOutActions(seat, game, isTournament, showActions) {
 }
 
 /**
+ * @param {Game} game
+ * @param {boolean} isTournament
+ * @param {PlayerAction[]} showActions
+ * @returns {PlayerAction[]}
+ */
+function getEmptyStackWaitingActions(game, isTournament, showActions) {
+  if (isTournament) {
+    return showActions;
+  }
+
+  return [
+    { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
+    ...showActions,
+  ];
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function canStartWaitingHand(game) {
+  return (
+    game.tournament?.kind !== "mtt" &&
+    game.countdown === null &&
+    countPlayersWithChips(game) >= 2 &&
+    !game.tournament?.onBreak
+  );
+}
+
+/**
  * Gets waiting phase actions for a seated player
  * @param {import('./seat.js').OccupiedSeat} seat
  * @param {Game} game
@@ -438,21 +471,12 @@ function getWaitingPhaseActions(seat, game) {
   }
 
   if (seat.stack === 0) {
-    if (isTournament) return showActions;
-    return [
-      { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
-      ...showActions,
-    ];
+    return getEmptyStackWaitingActions(game, isTournament, showActions);
   }
 
   /** @type {PlayerAction[]} */
   const actions = [];
-  const canStart =
-    game.countdown === null &&
-    countPlayersWithChips(game) >= 2 &&
-    !game.tournament?.onBreak;
-
-  if (canStart) {
+  if (canStartWaitingHand(game)) {
     actions.push({ action: "start" });
   }
   if (game.handNumber === 0) actions.push({ action: "share" });
@@ -605,6 +629,7 @@ function canCallClock(game, playerSeatIndex) {
  * @returns {boolean}
  */
 function isRegistrationOpen(game) {
+  if (game.tournament?.kind === "mtt") return false;
   if (game.tournament?.active && game.tournament.level > 1) return false;
   return true;
 }
@@ -628,7 +653,7 @@ function addFoldedActions(game, seat, actions) {
 }
 
 function getNotActingActions(game, seat, actions) {
-  if (seat.sittingOut) {
+  if (seat.sittingOut && game.tournament?.kind !== "mtt") {
     const cost = seat.missedBigBlind
       ? Math.min(game.blinds.big, seat.stack)
       : 0;

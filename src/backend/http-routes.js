@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { getFilePath, respondWithFile } from "./static-files.js";
 import * as PokerGame from "./poker/game.js";
 import * as User from "./user.js";
@@ -194,6 +195,28 @@ function syncUserToGames(user, games, broadcast) {
 }
 
 /**
+ * @param {unknown} err
+ * @throws {HttpError}
+ */
+function rethrowTournamentError(err) {
+  if (err instanceof HttpError) {
+    throw err;
+  }
+
+  const message =
+    err instanceof Error ? err.message : "Unable to process tournament request";
+  if (message === "tournament not found") {
+    throw new HttpError(404, message, {
+      body: { error: message, status: 404 },
+    });
+  }
+
+  throw new HttpError(400, message, {
+    body: { error: message, status: 400 },
+  });
+}
+
+/**
  * @typedef {object} RouteContext
  * @property {Request} req
  * @property {Response} res
@@ -274,6 +297,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
 
         Store.saveUser(user);
         syncUserToGames(user, games, broadcast);
+        services.mttManager?.syncUser(user);
 
         respondWithJson(res, {
           id: user.id,
@@ -362,6 +386,38 @@ export function createRoutes(users, games, broadcast, services = {}) {
       },
     },
     {
+      method: "POST",
+      path: "/mtt",
+      handler: async ({ req, res, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const data = await parseBody(req);
+        const tableSize = parseSeats(data, 6);
+        const buyIn = parseBuyIn(data);
+        try {
+          const id = services.mttManager?.createTournament({
+            owner: user,
+            buyIn,
+            tableSize,
+          });
+          if (!id) {
+            throw new Error("tournament service unavailable");
+          }
+          Object.assign(log.context, {
+            tournament: {
+              type: "mtt",
+              id,
+              ownerId: user.id,
+              buyIn,
+              tableSize,
+            },
+          });
+          respondWithJson(res, { id, type: "mtt" });
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
+      },
+    },
+    {
       method: "GET",
       path: LIVE_CASH_ROUTE,
       handler: ({ req, res, log }) => {
@@ -439,6 +495,95 @@ export function createRoutes(users, games, broadcast, services = {}) {
       handler: ({ req, res, log }) => {
         getOrCreateUser(req, res, users, log);
         respondWithFile(req, res, "src/frontend/index.html");
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/api\/mtt\/([a-z0-9]+)$/,
+      handler: ({ req, res, match, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const tournamentId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        try {
+          const tournament = services.mttManager?.getTournamentView(
+            tournamentId,
+            user.id,
+          );
+          if (!tournament) {
+            throw new Error("tournament service unavailable");
+          }
+          respondWithJson(res, tournament);
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
+      },
+    },
+    {
+      method: "POST",
+      path: /^\/api\/mtt\/([a-z0-9]+)\/register$/,
+      handler: ({ req, res, match, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const tournamentId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        try {
+          const tournament = services.mttManager?.registerPlayer(
+            tournamentId,
+            user,
+          );
+          if (!tournament) {
+            throw new Error("tournament service unavailable");
+          }
+          respondWithJson(res, tournament);
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
+      },
+    },
+    {
+      method: "POST",
+      path: /^\/api\/mtt\/([a-z0-9]+)\/unregister$/,
+      handler: ({ req, res, match, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const tournamentId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        try {
+          const tournament = services.mttManager?.unregisterPlayer(
+            tournamentId,
+            user.id,
+            user.id,
+          );
+          if (!tournament) {
+            throw new Error("tournament service unavailable");
+          }
+          respondWithJson(res, tournament);
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
+      },
+    },
+    {
+      method: "POST",
+      path: /^\/api\/mtt\/([a-z0-9]+)\/start$/,
+      handler: ({ req, res, match, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const tournamentId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        try {
+          const tournament = services.mttManager?.startTournament(
+            tournamentId,
+            user.id,
+          );
+          if (!tournament) {
+            throw new Error("tournament service unavailable");
+          }
+          respondWithJson(res, tournament);
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
       },
     },
     {

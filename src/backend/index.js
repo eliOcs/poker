@@ -19,6 +19,7 @@ import { createGameBroadcaster } from "./game-broadcast.js";
 import { createWebSocketServer } from "./ws-server.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
+import { createMttManager } from "./mtt.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -41,6 +42,8 @@ const {
   broadcastGameMessage: rawBroadcastGameMessage,
   broadcastGameStateMessage,
 } = createGameBroadcaster(games, clientConnections);
+
+let mttManager = null;
 
 /** @param {import('./poker/game.js').BroadcastMessage} message */
 function broadcastGameMessage(message) {
@@ -76,6 +79,9 @@ function broadcastGameMessage(message) {
               })),
             );
           }
+          if (game.kind === "mtt" && mttManager) {
+            mttManager.handleHandFinalized(game);
+          }
           rawBroadcastGameMessage({
             type: "history",
             gameId: message.gameId,
@@ -94,8 +100,16 @@ function broadcastGameMessage(message) {
   }
   return rawBroadcastGameMessage(message);
 }
+mttManager = createMttManager({
+  games,
+  broadcastTableState: broadcastGameStateMessage,
+  ensureTableTick: (game) => {
+    PokerGame.ensureGameTick(game, broadcastGameMessage);
+  },
+});
 const routes = createRoutes(users, games, broadcastGameStateMessage, {
   clientConnections,
+  mttManager,
 });
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -144,6 +158,9 @@ async function resolveGameForUpgrade(user, gameId) {
     return null;
   });
   if (!recoveredGame) {
+    return null;
+  }
+  if (recoveredGame.kind === "mtt") {
     return null;
   }
 
@@ -342,6 +359,7 @@ async function gracefulShutdown(signal) {
   }
   games.clear();
 
+  mttManager?.close();
   Store.close();
   logger.info("shutdown complete");
   process.exit(0);

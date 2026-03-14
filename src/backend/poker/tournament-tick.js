@@ -123,7 +123,11 @@ function handleLevelTick(game, result) {
 export function tick(game) {
   const result = createEmptyResult();
 
-  if (!game.tournament?.active || !game.tournament.startTime) {
+  if (
+    !game.tournament?.active ||
+    game.tournament.kind !== "sitngo" ||
+    !game.tournament.startTime
+  ) {
     return result;
   }
 
@@ -151,7 +155,7 @@ export function startPendingBreak(game) {
   const result = createEmptyResult();
   const tournament = game.tournament;
 
-  if (!tournament?.pendingBreak) {
+  if (!tournament?.pendingBreak || tournament.kind !== "sitngo") {
     return result;
   }
 
@@ -184,7 +188,8 @@ export function getTimeToNextLevel(game) {
  * @returns {boolean}
  */
 export function shouldTournamentTick(game) {
-  if (!game.tournament?.active) return false;
+  if (!game.tournament?.active || game.tournament.kind !== "sitngo")
+    return false;
   // Only tick after tournament has started (first hand dealt)
   if (!game.tournament.startTime) return false;
   return true;

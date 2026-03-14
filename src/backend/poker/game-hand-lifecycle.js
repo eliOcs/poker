@@ -37,7 +37,7 @@ export function autoStartNextHand(game) {
 
   const playersWithChips = Actions.countPlayersWithChips(game);
   if (
-    game.tournament?.active &&
+    game.tournament?.kind === "sitngo" &&
     game.tournament.winner === null &&
     playersWithChips === 1
   ) {

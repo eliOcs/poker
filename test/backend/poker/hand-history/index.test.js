@@ -7,6 +7,7 @@ import * as Game from "../../../../src/backend/poker/game.js";
 import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
+import * as Tournament from "../../../../src/shared/tournament.js";
 import { createTempDataDir } from "../../temp-data-dir.js";
 
 let testDataDir;
@@ -103,6 +104,29 @@ describe("hand-history", function () {
       assert.strictEqual(recorder.players.length, 3);
       assert.strictEqual(recorder.players[1].id, players[1].id);
       assert.strictEqual(recorder.players[1].starting_stack, 1000);
+    });
+
+    it("records parent tournament metadata for MTT table hands", async function () {
+      testDataDir = await createTempDataDir();
+      process.env.DATA_DIR = testDataDir;
+
+      const players = [createPlayer(), createPlayer()];
+      const game = Game.createMttTable({
+        tournamentId: "mtt123",
+        tableName: "Table 1",
+        startTime: "2026-03-14T12:00:00.000Z",
+        level: 2,
+      });
+      game.seats[0] = Seat.occupied(players[0], Tournament.INITIAL_STACK);
+      game.seats[1] = Seat.occupied(players[1], Tournament.INITIAL_STACK);
+      game.handNumber = 1;
+
+      HandHistory.startHand(game);
+      const hand = await HandHistory.finalizeHand(game, [], 1);
+
+      assert.equal(hand.table_name, "Table 1");
+      assert.equal(hand.tournament_info?.tournament_number, "mtt123");
+      assert.equal(hand.tournament_info?.type, "MTT");
     });
   });
 

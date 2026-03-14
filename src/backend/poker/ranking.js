@@ -94,13 +94,17 @@ export function computeRankings(game) {
   if (game.tournament?.active) {
     rankings.sort(compareTournamentRankings);
 
-    const prizes = calculatePrizes(rankings.length, game.tournament.buyIn);
-    const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
+    if (game.tournament.kind !== "mtt") {
+      const prizes = calculatePrizes(rankings.length, game.tournament.buyIn);
+      const prizeByPosition = new Map(
+        prizes.map((p) => [p.position, p.amount]),
+      );
 
-    for (let i = 0; i < rankings.length; i++) {
-      const prize = prizeByPosition.get(i + 1) ?? 0;
-      /** @type {(typeof rankings)[number]} */ (rankings[i]).netWinnings =
-        prize - game.tournament.buyIn;
+      for (let i = 0; i < rankings.length; i++) {
+        const prize = prizeByPosition.get(i + 1) ?? 0;
+        /** @type {(typeof rankings)[number]} */ (rankings[i]).netWinnings =
+          prize - game.tournament.buyIn;
+      }
     }
   } else {
     rankings.sort((a, b) => b.netWinnings - a.netWinnings);
