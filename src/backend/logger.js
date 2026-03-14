@@ -7,9 +7,19 @@
  * @typedef {import('./user.js').User} UserType
  */
 
-// Default to JSON in production (NODE_ENV=production), text otherwise
-const defaultFormat = process.env.NODE_ENV === "production" ? "json" : "text";
-const format = process.env.LOG_FORMAT?.toLowerCase() || defaultFormat;
+// Default to text unless deployment config opts into JSON explicitly
+const format = process.env.LOG_FORMAT?.toLowerCase() || "text";
+
+const ANSI = {
+  reset: "\u001b[0m",
+  dim: "\u001b[2m",
+  cyan: "\u001b[36m",
+  blue: "\u001b[34m",
+  yellow: "\u001b[33m",
+  red: "\u001b[31m",
+  bold: "\u001b[1m",
+};
+const useColor = format === "text";
 
 /**
  * @typedef {object} Log
@@ -50,13 +60,52 @@ export function getSessionPlayerLogContext(user) {
  * @returns {string}
  */
 function formatText({ timestamp, level, message, context }) {
+  const levelLabel = level.toUpperCase();
   const contextStr = Object.entries(context)
     .map(
       ([k, v]) =>
-        `${k}=${typeof v === "object" && v !== null ? JSON.stringify(v) : String(v)}`,
+        `${colorizeContextKey(k)}=${typeof v === "object" && v !== null ? JSON.stringify(v) : String(v)}`,
     )
     .join(" ");
-  return `[${new Date(timestamp).toISOString()}] ${level.toUpperCase()} ${message}${contextStr ? " " + contextStr : ""}`;
+  const prefix = `${colorizeTimestamp(timestamp)} ${colorizeLevel(levelLabel, level)}`;
+  return `${prefix} ${message}${contextStr ? " " + contextStr : ""}`;
+}
+
+/**
+ * @param {number} timestamp
+ * @returns {string}
+ */
+function colorizeTimestamp(timestamp) {
+  const text = `[${new Date(timestamp).toISOString()}]`;
+  return useColor ? `${ANSI.dim}${text}${ANSI.reset}` : text;
+}
+
+/**
+ * @param {string} levelLabel
+ * @param {string} level
+ * @returns {string}
+ */
+function colorizeLevel(levelLabel, level) {
+  if (!useColor) {
+    return levelLabel;
+  }
+  const color =
+    level === "error"
+      ? ANSI.red
+      : level === "warn"
+        ? ANSI.yellow
+        : level === "debug"
+          ? ANSI.blue
+          : ANSI.cyan;
+  return `${ANSI.bold}${color}${levelLabel}${ANSI.reset}`;
+}
+
+/**
+ * @param {string} key
+ * @returns {string}
+ */
+function colorizeContextKey(key) {
+  return useColor ? `${ANSI.cyan}${key}${ANSI.reset}` : key;
 }
 
 /**
