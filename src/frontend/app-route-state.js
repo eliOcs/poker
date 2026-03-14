@@ -12,7 +12,8 @@ import {
 export function isConnectableLiveRoute(liveRoute) {
   return !!(
     liveRoute &&
-    (liveRoute.kind === "cash" ||
+    (liveRoute.kind === "mtt" ||
+      liveRoute.kind === "cash" ||
       liveRoute.kind === "sitngo" ||
       liveRoute.kind === "mtt_table")
   );

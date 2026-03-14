@@ -211,7 +211,16 @@ describe("mtt-manager", () => {
     assert.equal(bustedEntrant?.finishPosition, 3);
     assert.ok(tournament.tables[0].closedAt);
     assert.equal(sourceTable.tournament?.redirects?.owner, destinationTable.id);
+    assert.equal(sourceTable.hand.phase, "waiting");
+    assert.equal(sourceTable.hand.actingSeat, -1);
+    assert.equal(sourceTable.countdown, null);
+    assert.equal(countActivePlayers(sourceTable), 0);
+    assert.ok(sourceTable.seats.every((seat) => seat.empty));
     assert.equal(countActivePlayers(destinationTable), 2);
+
+    tableBroadcasts = [];
+    manager.tickTournament(tournamentId);
+    assert.deepStrictEqual(tableBroadcasts, [destinationTable.id]);
 
     const finalBustSeat =
       /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (

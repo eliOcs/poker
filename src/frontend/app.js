@@ -100,6 +100,7 @@ class App extends LitElement {
     this._activeGameId = null;
     this._activeGamePath = null;
     this._socket = null;
+    this._intentionalSocketCloses = new WeakSet();
     // History route params
     this._historyKind = null;
     this._historyTableId = null;
@@ -235,7 +236,6 @@ class App extends LitElement {
     super.disconnectedCallback();
     disconnectAppEventHandlers(this);
     this.disconnectFromGame();
-    this._stopMttPolling();
   }
 
   async _fetchUser() {
@@ -270,7 +270,7 @@ class App extends LitElement {
 
   connectToGame(path) {
     const liveRoute = matchLiveRoute(path);
-    if (!liveRoute || liveRoute.kind === "mtt") {
+    if (!liveRoute) {
       return;
     }
 
@@ -284,21 +284,23 @@ class App extends LitElement {
       this.disconnectFromGame();
     }
 
-    this._activeGameId = liveRoute.tableId;
+    this._activeGameId =
+      liveRoute.kind === "mtt" ? liveRoute.tournamentId : liveRoute.tableId;
     this._activeGamePath = path;
     this.game = null;
     this.socialAction = null;
     this.gameConnectionStatus = "connecting";
-    this._intentionalClose = false;
-
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    this._socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
+    const socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
+    this._socket = socket;
 
-    this._socket.onopen = () => {
+    socket.onopen = () => {
+      if (this._socket !== socket) return;
       this.gameConnectionStatus = "connected";
     };
 
-    this._socket.onmessage = (event) => {
+    socket.onmessage = (event) => {
+      if (this._socket !== socket) return;
       const data = JSON.parse(event.data);
       if (data.error) {
         this.toast = { message: data.error.message, variant: "error" };
@@ -321,28 +323,47 @@ class App extends LitElement {
         return;
       }
 
+      if (data.type === "tournamentState") {
+        this._mttView = data.tournament;
+        this._mttLoading = false;
+        this._mttError = "";
+        this._maybeRedirectMttRoute();
+        return;
+      }
+
       // Ignore any typed envelope that is not a direct player-view payload.
       if (data.type) return;
 
       this.game = data;
     };
 
-    this._socket.onerror = () => {
+    socket.onerror = () => {
+      if (this._socket !== socket) return;
       this.handleGameNotFound();
     };
 
-    this._socket.onclose = (event) => {
+    socket.onclose = (event) => {
+      const intentionallyClosed =
+        this._intentionalSocketCloses.has(socket) || this._socket !== socket;
+      this._intentionalSocketCloses.delete(socket);
+
+      if (this._socket !== socket) {
+        return;
+      }
+
       this._socket = null;
       this.gameConnectionStatus = "disconnected";
       // Code 1006 = abnormal closure (connection rejected before game loaded)
-      if (!this.game && event.code === 1006) {
+      if (!this.game && !this._mttView && event.code === 1006) {
         this.handleGameNotFound();
         return;
       }
       // Reconnect automatically unless we closed intentionally
-      if (!this._intentionalClose && this._activeGamePath) {
+      if (!intentionallyClosed && this._activeGamePath === path) {
         setTimeout(() => {
-          this._reconnectIfNeeded();
+          if (!this._socket && this._activeGamePath === path) {
+            this._reconnectIfNeeded();
+          }
         }, 1000);
       }
     };
@@ -361,8 +382,8 @@ class App extends LitElement {
   }
 
   disconnectFromGame() {
-    this._intentionalClose = true;
     if (this._socket) {
+      this._intentionalSocketCloses.add(this._socket);
       this._socket.close();
       this._socket = null;
     }
@@ -396,7 +417,12 @@ class App extends LitElement {
   }
 
   handleGameNotFound() {
-    this.toast = { message: "Game not found", variant: "error" };
+    const liveRoute = matchLiveRoute(this.path);
+    this.toast = {
+      message:
+        liveRoute?.kind === "mtt" ? "Tournament not found" : "Game not found",
+      variant: "error",
+    };
     this.disconnectFromGame();
     history.replaceState({}, "", "/");
     this.path = "/";
@@ -475,11 +501,7 @@ class App extends LitElement {
 
   _manageConnection(path) {
     if (path) {
-      if (
-        this._activeGamePath === path &&
-        !this._socket &&
-        !this._intentionalClose
-      ) {
+      if (this._activeGamePath === path && !this._socket) {
         return;
       }
       this.connectToGame(path);
@@ -520,24 +542,6 @@ class App extends LitElement {
     );
   }
 
-  _stopMttPolling() {
-    if (this._mttPollTimer) {
-      clearInterval(this._mttPollTimer);
-      this._mttPollTimer = null;
-    }
-    if (this._mttAbortController) {
-      this._mttAbortController.abort();
-      this._mttAbortController = null;
-    }
-  }
-
-  _startMttPolling() {
-    if (!this._mttTournamentId || this._mttPollTimer) return;
-    this._mttPollTimer = setInterval(() => {
-      void this._refreshMttView({ silent: true });
-    }, 2000);
-  }
-
   _syncMttRoute(liveRoute) {
     const tournamentId =
       liveRoute?.kind === "mtt" || liveRoute?.kind === "mtt_table"
@@ -545,59 +549,11 @@ class App extends LitElement {
         : null;
     if (tournamentId === this._mttTournamentId) return;
 
-    this._stopMttPolling();
     this._mttTournamentId = tournamentId;
     this._mttView = null;
-    this._mttLoading = false;
+    this._mttLoading = tournamentId !== null;
     this._mttError = "";
     this._mttActionPending = false;
-
-    if (!tournamentId) {
-      return;
-    }
-
-    void this._refreshMttView();
-    this._startMttPolling();
-  }
-
-  // eslint-disable-next-line complexity
-  async _refreshMttView(options = {}) {
-    const { silent = false } = options;
-    if (!this._mttTournamentId) return;
-
-    if (this._mttAbortController) {
-      this._mttAbortController.abort();
-    }
-
-    const controller = new AbortController();
-    const tournamentId = this._mttTournamentId;
-    this._mttAbortController = controller;
-    if (!silent || !this._mttView) {
-      this._mttLoading = true;
-    }
-
-    try {
-      const res = await fetch(`/api/mtt/${tournamentId}`, {
-        signal: controller.signal,
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to load tournament");
-      }
-      if (this._mttAbortController !== controller) return;
-      this._mttView = data;
-      this._mttError = "";
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      if (this._mttAbortController !== controller) return;
-      const error = /** @type {Error} */ (err);
-      this._mttError = error.message;
-    } finally {
-      if (this._mttAbortController === controller) {
-        this._mttAbortController = null;
-      }
-      this._mttLoading = false;
-    }
   }
 
   _resolveMttRedirectPath(liveRoute) {
@@ -655,6 +611,7 @@ class App extends LitElement {
       }
       this._mttView = data;
       this._mttError = "";
+      this._maybeRedirectMttRoute();
     } catch (err) {
       const error = /** @type {Error} */ (err);
       this.toast = { message: error.message, variant: "error" };

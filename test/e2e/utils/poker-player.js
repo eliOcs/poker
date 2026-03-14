@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * Represents a player in the e2e test
  * All interactions use visible UI elements only - no component internal access
@@ -24,30 +25,22 @@ export class PokerPlayer {
     this.name = name;
   }
 
-  /**
-   * Get the game element locator (pierces through phg-app)
-   */
   get game() {
     return this.page.locator("phg-game");
   }
 
-  /**
-   * Get the current player's seat locator (pierces shadow DOM)
-   */
+  get mttLobby() {
+    return this.page.locator("phg-mtt-lobby");
+  }
+
   get mySeat() {
     return this.game.locator("phg-seat.current-player");
   }
 
-  /**
-   * Get the board element locator (pierces shadow DOM)
-   */
   get board() {
     return this.game.locator("phg-board");
   }
 
-  /**
-   * Get the action panel locator (pierces shadow DOM)
-   */
   get actionPanel() {
     return this.game.locator("phg-action-panel");
   }
@@ -77,6 +70,15 @@ export class PokerPlayer {
     await this.page.goto(url);
     await this.game.waitFor();
     await this.board.waitFor();
+  }
+
+  /**
+   * Navigate to an MTT lobby page and wait for it to load
+   * @param {string} url
+   */
+  async joinTournamentLobbyByUrl(url) {
+    await this.page.goto(url);
+    await this.mttLobby.waitFor();
   }
 
   /**
@@ -162,6 +164,32 @@ export class PokerPlayer {
   }
 
   /**
+   * Register from the MTT lobby
+   */
+  async registerForTournament() {
+    await this.mttLobby.getByRole("button", { name: "Register" }).click();
+    await this.mttLobby.getByRole("button", { name: "Unregister" }).waitFor();
+  }
+
+  /**
+   * Start an MTT from the lobby
+   */
+  async startTournament() {
+    await this.mttLobby
+      .getByRole("button", { name: "Start Tournament" })
+      .click();
+  }
+
+  /**
+   * Wait until the app has navigated from the MTT lobby into a table
+   */
+  async waitForTournamentTable() {
+    await this.page.waitForURL(/\/mtt\/[a-z0-9]+\/tables\/[a-z0-9]+$/);
+    await this.game.waitFor();
+    await this.board.waitFor();
+  }
+
+  /**
    * Wait for countdown to start (countdown element visible)
    */
   async waitForCountdownStart() {
@@ -198,9 +226,11 @@ export class PokerPlayer {
   /**
    * Wait for it to be this player's turn
    */
-  async waitForTurn() {
+  async waitForTurn(timeout = undefined) {
     // Wait for actual betting buttons only; excludes pre-action toggles and "Call Clock".
-    await this.turnButtons.first().waitFor();
+    await this.turnButtons
+      .first()
+      .waitFor(timeout === undefined ? {} : { timeout });
   }
 
   /**
@@ -234,6 +264,12 @@ export class PokerPlayer {
         .isVisible()
         .catch(() => false);
       return hasSlider;
+    }
+    if (actionName === "callClock") {
+      return await this.actionPanel
+        .getByRole("button", { name: "Call the clock" })
+        .isVisible()
+        .catch(() => false);
     }
     const buttonName = actionName.charAt(0).toUpperCase() + actionName.slice(1);
     return await this.actionPanel

@@ -3,7 +3,7 @@ import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
-test.setTimeout(10 * 60 * 1000);
+test.setTimeout(15 * 60 * 1000);
 
 const WEIGHTED_ACTIONS = [
   { threshold: 0.01, action: "allIn" },
@@ -15,6 +15,8 @@ const WEIGHTED_ACTIONS = [
 const PASSIVE_FALLBACKS = ["check", "fold"];
 const STALL_TIMEOUT_MS = 15000;
 const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
+const USER_CREATION_BATCH_LIMIT = 8;
+const USER_CREATION_WINDOW_BUFFER_MS = 6500;
 
 /**
  * @param {unknown} err
@@ -31,6 +33,42 @@ function formatError(err) {
 function markProgress(state, reason) {
   state.lastProgressAt = Date.now();
   state.lastProgressReason = reason;
+}
+
+/**
+ * Run async player setup one player at a time to avoid tripping the shared
+ * pre-cookie HTTP rate limiter during initial page/bootstrap requests.
+ * @template T
+ * @param {T[]} items
+ * @param {(item: T, index: number) => Promise<void>} task
+ */
+async function runSequentially(items, task) {
+  for (let index = 0; index < items.length; index += 1) {
+    await task(items[index], index);
+  }
+}
+
+/**
+ * @param {number} ms
+ */
+async function delay(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Pre-create guest sessions on the home route so later tournament-lobby
+ * navigations reuse an existing player cookie instead of hitting the shared
+ * pre-cookie IP limiter.
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ */
+async function initializeGuestSessions(players) {
+  await runSequentially(players, async (player, index) => {
+    if (index === USER_CREATION_BATCH_LIMIT) {
+      await delay(USER_CREATION_WINDOW_BUFFER_MS);
+    }
+    await player.page.goto("/");
+    await player.page.locator("phg-home").waitFor();
+  });
 }
 
 /**
@@ -88,6 +126,7 @@ async function getAvailableActions(player) {
   if (await player.hasAction("bet")) actions.push("bet");
   if (await player.hasAction("raise")) actions.push("raise");
   if (await player.hasAction("allIn")) actions.push("allIn");
+  if (await player.hasAction("callClock")) actions.push("callClock");
   return actions;
 }
 
@@ -132,6 +171,30 @@ async function tryTakeAction(players, activePlayers) {
       console.log(
         `Seat ${seatIdx + 1} action attempt failed` +
           `${attemptedAction ? ` (${attemptedAction})` : ""}: ${formatError(err)}`,
+      );
+    }
+  }
+  return null;
+}
+
+/**
+ * Use the same disconnect recovery path as live play: if a player has stopped
+ * acting and the UI exposes "Call the clock", trigger it from any active seat.
+ * @param {import('./utils/poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
+ * @returns {Promise<{seatIdx: number, action: "callClock"}|null>}
+ */
+async function tryCallClock(players, activePlayers) {
+  for (const seatIdx of activePlayers) {
+    try {
+      const player = players[seatIdx];
+      if (await player.hasAction("callClock")) {
+        await player.callClock();
+        return { seatIdx, action: "callClock" };
+      }
+    } catch (err) {
+      console.log(
+        `Seat ${seatIdx + 1} call clock attempt failed: ${formatError(err)}`,
       );
     }
   }
@@ -199,6 +262,7 @@ async function collectStallSnapshot(players, activePlayers, state) {
         seatClass,
         buttonTexts,
         serverState,
+        path,
       ] = await Promise.all([
         player.getPhase().catch(() => "<error>"),
         player.getTournamentLevel().catch(() => null),
@@ -223,6 +287,9 @@ async function collectStallSnapshot(players, activePlayers, state) {
             };
           })
           .catch(() => null),
+        player.page
+          .evaluate(() => window.location.pathname)
+          .catch(() => "<error>"),
       ]);
 
       const compactButtons = buttonTexts
@@ -236,7 +303,7 @@ async function collectStallSnapshot(players, activePlayers, state) {
         : "server=<error>";
 
       lines.push(
-        `Seat ${idx + 1}: phase=${phase} level=${level ?? "?"} onBreak=${onBreak} isMyTurn=${isMyTurn} class="${seatClass}" ${serverStr} actions=[${availableActions.join(",")}] buttons=[${compactButtons}]`,
+        `Seat ${idx + 1}: path=${path} phase=${phase} level=${level ?? "?"} onBreak=${onBreak} isMyTurn=${isMyTurn} class="${seatClass}" ${serverStr} actions=[${availableActions.join(",")}] buttons=[${compactButtons}]`,
       );
     } catch (err) {
       lines.push(`Seat ${idx + 1}: snapshot failed (${formatError(err)})`);
@@ -270,7 +337,7 @@ async function assertNotStalled(players, activePlayers, state) {
  * @returns {Promise<string|null>} Winner name or null
  */
 async function runTournamentLoop(players, activePlayers, state) {
-  const maxActions = 8000;
+  const maxActions = 16000;
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
     await assertNotStalled(players, activePlayers, state);
@@ -293,7 +360,15 @@ async function runTournamentLoop(players, activePlayers, state) {
         `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
       );
     } else {
-      await waitForAnyTurn(players, activePlayers);
+      const clockResult = await tryCallClock(players, activePlayers);
+      if (clockResult) {
+        markProgress(
+          state,
+          `seat-${clockResult.seatIdx + 1}-callClock-hand-${state.handCount}`,
+        );
+      } else {
+        await waitForAnyTurn(players, activePlayers);
+      }
     }
   }
 
@@ -301,37 +376,78 @@ async function runTournamentLoop(players, activePlayers, state) {
 }
 
 test.describe("Tournament E2E", () => {
-  test("6 players play at least 50 hands until one wins", async ({
+  test("11 players finish a 6-max MTT from multiple tables", async ({
     player1,
     player2,
     player3,
     player4,
     player5,
     player6,
+    player7,
+    player8,
+    player9,
+    player10,
+    player11,
   }) => {
-    // Create tournament game via UI
-    await createGame(player1, { type: "sitngo" });
-    console.log("Tournament created");
+    const players = [
+      player1,
+      player2,
+      player3,
+      player4,
+      player5,
+      player6,
+      player7,
+      player8,
+      player9,
+      player10,
+      player11,
+    ];
 
-    const players = [player1, player2, player3, player4, player5, player6];
+    const tournamentUrl = await createGame(player1, {
+      type: "mtt",
+      tableSize: 6,
+    });
+    console.log(`Tournament created at ${tournamentUrl}`);
 
-    // Other players join via copied link
-    const gameUrl = await player1.copyGameLink();
+    const joiningPlayers = players.slice(1);
+    await initializeGuestSessions(joiningPlayers);
+    console.log("All guest sessions initialized");
 
-    await Promise.all(players.slice(1).map((p) => p.joinGameByUrl(gameUrl)));
+    await runSequentially(joiningPlayers, async (player) => {
+      await player.joinTournamentLobbyByUrl(tournamentUrl);
+    });
+    console.log("All players reached the MTT lobby");
 
-    // Each player sits at their seat (0-5)
-    for (let i = 0; i < players.length; i++) {
-      await players[i].sit(i);
-    }
-    console.log("All players seated");
+    await runSequentially(players.slice(1), async (player) => {
+      await player.registerForTournament();
+    });
+    console.log("All lobby registrations completed");
 
-    // Verify starting stack ($5,000)
+    await player1.startTournament();
+    await Promise.all(players.map((player) => player.waitForTournamentTable()));
+    console.log("Tournament started and all players reached a table");
+
+    const initialTableIds = new Set(
+      players
+        .map(
+          (player) =>
+            player.page
+              .url()
+              .match(/\/mtt\/[a-z0-9]+\/tables\/([a-z0-9]+)$/)?.[1],
+        )
+        .filter(Boolean),
+    );
+    console.log(
+      `Initial tables: ${[...initialTableIds]
+        .map((tableId) => tableId)
+        .join(", ")}`,
+    );
+    expect(initialTableIds.size).toBeGreaterThan(1);
+
     const p1Stack = await player1.getStack();
     console.log(`Starting stack: ${p1Stack}`);
     expect(p1Stack).toBe("$5,000");
 
-    // Verify initial tournament state
     const initialLevel = await player1.getTournamentLevel();
     const initialBlinds = await player1.getBlinds();
     console.log(
@@ -341,18 +457,13 @@ test.describe("Tournament E2E", () => {
     expect(initialBlinds?.small).toBe(25);
     expect(initialBlinds?.big).toBe(50);
 
-    // Start the tournament
-    await player1.startGame();
-    await player1.waitForHandStart();
-    console.log("Tournament started");
-
     // Run tournament loop
     const state = {
       handCount: 1,
       lastProgressAt: Date.now(),
       lastProgressReason: "tournament-started",
     };
-    const activePlayers = new Set([0, 1, 2, 3, 4, 5]);
+    const activePlayers = new Set(players.map((_, idx) => idx));
     const winnerName = await runTournamentLoop(players, activePlayers, state);
 
     if (winnerName) {

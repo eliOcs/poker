@@ -41,6 +41,53 @@ function createMockFetch(options = {}) {
   };
 }
 
+function createMockTournamentView(overrides = {}) {
+  const base = {
+    id: "mtt123",
+    status: "registration",
+    ownerId: "u1",
+    buyIn: 500,
+    tableSize: 6,
+    level: 1,
+    timeToNextLevel: 300,
+    onBreak: false,
+    pendingBreak: false,
+    createdAt: "2026-03-14T10:00:00.000Z",
+    startedAt: null,
+    endedAt: null,
+    entrants: [],
+    standings: [],
+    tables: [],
+    currentPlayer: {
+      isOwner: true,
+      status: "registered",
+      tableId: null,
+      seatIndex: null,
+    },
+    actions: {
+      canRegister: false,
+      canUnregister: true,
+      canStart: false,
+    },
+  };
+
+  return {
+    ...base,
+    ...overrides,
+    currentPlayer: {
+      ...base.currentPlayer,
+      ...(overrides.currentPlayer || {}),
+    },
+    actions: {
+      ...base.actions,
+      ...(overrides.actions || {}),
+    },
+    tables: overrides.tables || base.tables,
+    entrants: overrides.entrants || base.entrants,
+    standings: overrides.standings || base.standings,
+  };
+}
+
 describe("phg-app", () => {
   afterEach(() => {
     // Always restore original fetch after each test
@@ -66,110 +113,84 @@ describe("phg-app", () => {
     });
 
     it("renders the MTT lobby on tournament routes", async () => {
+      MockWebSocket.instances = [];
+      const fetchedUrls = [];
       globalThis.fetch = async (url) => {
+        fetchedUrls.push(url);
         if (url === "/api/users/me") {
           return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
-        }
-        if (url === "/api/mtt/mtt123") {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "mtt123",
-              status: "registration",
-              ownerId: "u1",
-              buyIn: 500,
-              tableSize: 6,
-              level: 1,
-              timeToNextLevel: 300,
-              onBreak: false,
-              pendingBreak: false,
-              createdAt: "2026-03-14T10:00:00.000Z",
-              startedAt: null,
-              endedAt: null,
-              entrants: [],
-              standings: [],
-              tables: [],
-              currentPlayer: {
-                isOwner: true,
-                status: "registered",
-                tableId: null,
-                seatIndex: null,
-              },
-              actions: {
-                canRegister: false,
-                canUnregister: true,
-                canStart: false,
-              },
-            }),
-          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
 
       const element = await fixture(html`<phg-app></phg-app>`);
       element.path = "/mtt/mtt123";
+      await waitUntil(() => MockWebSocket.instances.length === 1, {
+        timeout: 2000,
+      });
+      await waitUntil(() => element._mttTournamentId === "mtt123", {
+        timeout: 2000,
+      });
+      const ws = MockWebSocket.instances.at(-1);
+      ws.simulateMessage({
+        type: "tournamentState",
+        tournament: createMockTournamentView(),
+      });
       await waitUntil(
         () => element.shadowRoot?.querySelector("phg-mtt-lobby"),
         { timeout: 2000 },
       );
 
       expect(element.shadowRoot?.querySelector("phg-mtt-lobby")).to.exist;
+      expect(ws.url).to.include("/mtt/mtt123");
+      expect(fetchedUrls).to.not.include("/api/mtt/mtt123");
     });
   });
 
   describe("MTT routing", () => {
     it("redirects from the lobby into the assigned table", async () => {
+      MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
           return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
-        }
-        if (url === "/api/mtt/mtt123") {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "mtt123",
-              status: "running",
-              ownerId: "u1",
-              buyIn: 500,
-              tableSize: 6,
-              level: 1,
-              timeToNextLevel: 300,
-              onBreak: false,
-              pendingBreak: false,
-              createdAt: "2026-03-14T10:00:00.000Z",
-              startedAt: "2026-03-14T10:05:00.000Z",
-              endedAt: null,
-              entrants: [],
-              standings: [],
-              tables: [
-                {
-                  tableId: "table9",
-                  tableName: "Table 9",
-                  playerCount: 4,
-                  handNumber: 0,
-                  waiting: true,
-                  closed: false,
-                },
-              ],
-              currentPlayer: {
-                isOwner: true,
-                status: "seated",
-                tableId: "table9",
-                seatIndex: 2,
-              },
-              actions: {
-                canRegister: false,
-                canUnregister: false,
-                canStart: false,
-              },
-            }),
-          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
 
       const element = await fixture(html`<phg-app></phg-app>`);
       element.path = "/mtt/mtt123";
+      await waitUntil(() => MockWebSocket.instances.length === 1, {
+        timeout: 2000,
+      });
+      await waitUntil(() => element._mttTournamentId === "mtt123", {
+        timeout: 2000,
+      });
+      MockWebSocket.instances.at(-1).simulateMessage({
+        type: "tournamentState",
+        tournament: createMockTournamentView({
+          status: "running",
+          startedAt: "2026-03-14T10:05:00.000Z",
+          tables: [
+            {
+              tableId: "table9",
+              tableName: "Table 9",
+              playerCount: 4,
+              handNumber: 0,
+              waiting: true,
+              closed: false,
+            },
+          ],
+          currentPlayer: {
+            status: "seated",
+            tableId: "table9",
+            seatIndex: 2,
+          },
+          actions: {
+            canUnregister: false,
+            canStart: false,
+          },
+        }),
+      });
       await waitUntil(() => element.path === "/mtt/mtt123/tables/table9", {
         timeout: 2000,
       });
@@ -178,58 +199,46 @@ describe("phg-app", () => {
     });
 
     it("redirects to a new table when the player is reseated", async () => {
-      MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
           return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
-        }
-        if (url === "/api/mtt/mtt123") {
-          return {
-            ok: true,
-            json: async () => ({
-              id: "mtt123",
-              status: "running",
-              ownerId: "u1",
-              buyIn: 500,
-              tableSize: 6,
-              level: 2,
-              timeToNextLevel: 200,
-              onBreak: false,
-              pendingBreak: false,
-              createdAt: "2026-03-14T10:00:00.000Z",
-              startedAt: "2026-03-14T10:05:00.000Z",
-              endedAt: null,
-              entrants: [],
-              standings: [],
-              tables: [
-                {
-                  tableId: "table2",
-                  tableName: "Table 2",
-                  playerCount: 5,
-                  handNumber: 8,
-                  waiting: true,
-                  closed: false,
-                },
-              ],
-              currentPlayer: {
-                isOwner: false,
-                status: "seated",
-                tableId: "table2",
-                seatIndex: 1,
-              },
-              actions: {
-                canRegister: false,
-                canUnregister: false,
-                canStart: false,
-              },
-            }),
-          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
 
       const element = await fixture(html`<phg-app></phg-app>`);
       element.path = "/mtt/mtt123/tables/table1";
+      await waitUntil(() => element._mttTournamentId === "mtt123", {
+        timeout: 2000,
+      });
+      element._mttView = createMockTournamentView({
+        status: "running",
+        level: 2,
+        timeToNextLevel: 200,
+        startedAt: "2026-03-14T10:05:00.000Z",
+        tables: [
+          {
+            tableId: "table2",
+            tableName: "Table 2",
+            playerCount: 5,
+            handNumber: 8,
+            waiting: true,
+            closed: false,
+          },
+        ],
+        currentPlayer: {
+          isOwner: false,
+          status: "seated",
+          tableId: "table2",
+          seatIndex: 1,
+        },
+        actions: {
+          canRegister: false,
+          canUnregister: false,
+          canStart: false,
+        },
+      });
+      element._maybeRedirectMttRoute();
       await waitUntil(() => element.path === "/mtt/mtt123/tables/table2", {
         timeout: 2000,
       });
@@ -307,6 +316,65 @@ describe("phg-app", () => {
 
       // The reconnect timer fired but _activeGameId is null, so no new connection
       expect(MockWebSocket.instances.length).to.equal(countAfterNav);
+    });
+
+    it("ignores a stale lobby close after redirecting into an MTT table", async () => {
+      MockWebSocket.instances = [];
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        return { ok: false };
+      };
+
+      const app = await fixture(html`<phg-app></phg-app>`);
+      app.path = "/mtt/mtt123";
+      await waitUntil(() => MockWebSocket.instances.length === 1, {
+        timeout: 2000,
+      });
+
+      const lobbySocket = MockWebSocket.instances[0];
+      lobbySocket.simulateMessage({
+        type: "tournamentState",
+        tournament: createMockTournamentView({
+          status: "running",
+          startedAt: "2026-03-14T10:05:00.000Z",
+          tables: [
+            {
+              tableId: "table9",
+              tableName: "Table 9",
+              playerCount: 4,
+              handNumber: 0,
+              waiting: true,
+              closed: false,
+            },
+          ],
+          currentPlayer: {
+            status: "seated",
+            tableId: "table9",
+            seatIndex: 2,
+          },
+          actions: {
+            canUnregister: false,
+            canStart: false,
+          },
+        }),
+      });
+
+      await waitUntil(() => app.path === "/mtt/mtt123/tables/table9", {
+        timeout: 2000,
+      });
+      await waitUntil(() => MockWebSocket.instances.length === 2, {
+        timeout: 2000,
+      });
+
+      lobbySocket.simulateClose(1000);
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      expect(MockWebSocket.instances.length).to.equal(2);
+      expect(MockWebSocket.instances.at(-1).url).to.include(
+        "/mtt/mtt123/tables/table9",
+      );
     });
   });
 

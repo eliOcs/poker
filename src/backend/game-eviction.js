@@ -38,7 +38,7 @@ export function getGameEvictionIntervalMs() {
 }
 
 /**
- * @param {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>} clientConnections
  * @param {string} gameId
  * @returns {boolean}
  */
@@ -74,7 +74,7 @@ function canEvictGame(game) {
  * @param {number} [defaultInactivityMs]
  * @returns {(options: {
  *   games: Map<string, Game>,
- *   clientConnections: Map<import('ws').WebSocket, { user: UserType, gameId: string }>,
+ *   clientConnections: Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>,
  *   createLog: (message: string) => import('./logger.js').Log,
  *   emitLog: (log: import('./logger.js').Log) => void,
  *   now?: number,

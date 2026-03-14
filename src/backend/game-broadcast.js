@@ -5,7 +5,7 @@ import * as Player from "./poker/player.js";
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
- * @typedef {{ user: UserType, gameId: string }} ClientConn
+ * @typedef {{ user: UserType, gameId: string|null, tournamentId: string|null }} ClientConn
  * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
  * @typedef {{
  *   gameId: string,
@@ -18,8 +18,11 @@ import * as Player from "./poker/player.js";
 /**
  * @param {Map<string, Game>} games
  * @param {Map<import('ws').WebSocket, ClientConn>} clientConnections
+ * @param {{ getTournamentView?: (tournamentId: string, playerId: string) => unknown|null }} [options]
  */
-export function createGameBroadcaster(games, clientConnections) {
+export function createGameBroadcaster(games, clientConnections, options = {}) {
+  const { getTournamentView = () => null } = options;
+
   /**
    * @param {string} gameId
    * @param {(ws: import('ws').WebSocket, conn: ClientConn) => void} callback
@@ -27,6 +30,18 @@ export function createGameBroadcaster(games, clientConnections) {
   function forEachGameClient(gameId, callback) {
     for (const [ws, conn] of clientConnections) {
       if (conn.gameId === gameId && ws.readyState === 1) {
+        callback(ws, conn);
+      }
+    }
+  }
+
+  /**
+   * @param {string} tournamentId
+   * @param {(ws: import('ws').WebSocket, conn: ClientConn) => void} callback
+   */
+  function forEachTournamentClient(tournamentId, callback) {
+    for (const [ws, conn] of clientConnections) {
+      if (conn.tournamentId === tournamentId && ws.readyState === 1) {
         callback(ws, conn);
       }
     }
@@ -49,6 +64,36 @@ export function createGameBroadcaster(games, clientConnections) {
       }
     });
     return { recipients, maxPayloadBytes };
+  }
+
+  /**
+   * @param {string} tournamentId
+   * @param {(conn: ClientConn) => string|null} buildPayload
+   * @returns {BroadcastStats}
+   */
+  function broadcastToTournamentClients(tournamentId, buildPayload) {
+    let recipients = 0;
+    let maxPayloadBytes = 0;
+    forEachTournamentClient(tournamentId, (ws, conn) => {
+      const payload = buildPayload(conn);
+      if (payload !== null) {
+        ws.send(payload);
+        recipients += 1;
+        maxPayloadBytes = Math.max(maxPayloadBytes, Buffer.byteLength(payload));
+      }
+    });
+    return { recipients, maxPayloadBytes };
+  }
+
+  /**
+   * @param {string} tournamentId
+   * @param {UserType} user
+   * @returns {string|null}
+   */
+  function buildTournamentStatePayload(tournamentId, user) {
+    const tournament = getTournamentView(tournamentId, user.id);
+    if (!tournament) return null;
+    return JSON.stringify({ type: "tournamentState", tournament }, null, 2);
   }
 
   /**
@@ -144,5 +189,11 @@ export function createGameBroadcaster(games, clientConnections) {
   return {
     broadcastGameMessage,
     broadcastGameStateMessage,
+    broadcastTournamentStateMessage(tournamentId) {
+      return broadcastToTournamentClients(tournamentId, (conn) =>
+        buildTournamentStatePayload(tournamentId, conn.user),
+      );
+    },
+    buildTournamentStatePayload,
   };
 }

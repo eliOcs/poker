@@ -35,13 +35,23 @@ const users = {};
 /** @type {Map<Id, Game>} */
 const games = new Map();
 
-/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id }>} */
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id|null, tournamentId: Id|null }>} */
 const clientConnections = new Map();
 
 const {
   broadcastGameMessage: rawBroadcastGameMessage,
   broadcastGameStateMessage,
-} = createGameBroadcaster(games, clientConnections);
+  broadcastTournamentStateMessage,
+  buildTournamentStatePayload,
+} = createGameBroadcaster(games, clientConnections, {
+  getTournamentView: (tournamentId, playerId) => {
+    try {
+      return mttManager?.getTournamentView(tournamentId, playerId) || null;
+    } catch {
+      return null;
+    }
+  },
+});
 
 let mttManager = null;
 
@@ -103,6 +113,7 @@ function broadcastGameMessage(message) {
 mttManager = createMttManager({
   games,
   broadcastTableState: broadcastGameStateMessage,
+  broadcastTournamentState: broadcastTournamentStateMessage,
   ensureTableTick: (game) => {
     PokerGame.ensureGameTick(game, broadcastGameMessage);
   },
@@ -323,6 +334,7 @@ createWebSocketServer({
   resolveGameForUpgrade,
   broadcastGameMessage,
   broadcastGameStateMessage,
+  buildTournamentStatePayload,
 });
 
 Store.initialize();

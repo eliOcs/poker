@@ -379,6 +379,27 @@ function clearTableWinner(game) {
 }
 
 /**
+ * Collapsed tables stay in memory for history/profile links, but they should no
+ * longer run hand state or countdown logic after all players are reseated away.
+ * @param {Game} game
+ */
+function resetClosedTable(game) {
+  PokerGame.stopGameTick(game);
+  game.countdown = null;
+  game.board.cards = [];
+  game.hand = PokerGame.createHand();
+  game.collectingBets = null;
+  game.runout = null;
+  game.pendingHandHistory = null;
+  game.winnerMessage = null;
+  game.actingTicks = 0;
+  game.clockTicks = 0;
+  for (let i = 0; i < game.seats.length; i += 1) {
+    game.seats[i] = Seat.empty();
+  }
+}
+
+/**
  * @param {ManagedTournament} tournament
  * @param {Game} sourceGame
  * @param {number} sourceSeatIndex
@@ -493,16 +514,9 @@ function sortByLargestTable(tables) {
  * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
- * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
  */
-function collapseExtraTables(
-  tournament,
-  games,
-  changedTables,
-  ensureTableTick,
-  now,
-) {
+function collapseExtraTables(tournament, games, changedTables, now) {
   for (;;) {
     const activeTables = getActiveTables(tournament, games);
     const totalPlayers = activeTables.reduce(
@@ -558,7 +572,8 @@ function collapseExtraTables(
       breakCandidate.table.closedAt,
     );
     clearTableWinner(breakCandidate.game);
-    syncWaitingTableState(tournament, breakCandidate.game, ensureTableTick);
+    resetClosedTable(breakCandidate.game);
+    applyTournamentStateToTable(tournament, breakCandidate.game);
   }
 }
 
@@ -613,7 +628,7 @@ function rebalanceTournament(tournament, games, ensureTableTick, now) {
   /** @type {Set<string>} */
   const changedTables = new Set();
 
-  collapseExtraTables(tournament, games, changedTables, ensureTableTick, now);
+  collapseExtraTables(tournament, games, changedTables, now);
   balanceWaitingTables(tournament, games, changedTables);
 
   for (const tableId of changedTables) {
@@ -844,43 +859,67 @@ export function createMttManager({
       return;
     }
 
-    if (tournament.onBreak) {
-      tournament.breakTicks += 1;
-      if (tournament.breakTicks >= Tournament.BREAK_DURATION_TICKS) {
-        tournament.onBreak = false;
-        tournament.breakTicks = 0;
-        tournament.pendingBreak = false;
-        advanceLevel(tournament);
-      }
-    } else {
-      tournament.levelTicks += 1;
-      if (tournament.levelTicks >= Tournament.LEVEL_DURATION_TICKS) {
-        tournament.levelTicks = 0;
-        if (tournament.level === Tournament.BREAK_AFTER_LEVEL) {
-          if (
-            getActiveTables(tournament, games).every((entry) =>
-              isTableWaiting(entry.game),
-            )
-          ) {
-            tournament.onBreak = true;
-            tournament.breakTicks = 0;
-            tournament.pendingBreak = false;
-          } else {
-            tournament.pendingBreak = true;
-          }
-        } else {
-          advanceLevel(tournament);
-        }
-      }
-    }
+    tickTournamentClock(tournament);
 
     for (const table of tournament.tables) {
       const game = games.get(table.tableId);
       if (!game) continue;
+      if (table.closedAt !== null) {
+        continue;
+      }
       syncWaitingTableState(tournament, game, ensureTableTick);
       broadcastTableState(table.tableId);
     }
     broadcastTournament(tournament);
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   */
+  function tickTournamentClock(tournament) {
+    if (tournament.onBreak) {
+      tickBreakClock(tournament);
+      return;
+    }
+
+    tournament.levelTicks += 1;
+    if (tournament.levelTicks < Tournament.LEVEL_DURATION_TICKS) {
+      return;
+    }
+
+    tournament.levelTicks = 0;
+    if (tournament.level !== Tournament.BREAK_AFTER_LEVEL) {
+      advanceLevel(tournament);
+      return;
+    }
+
+    if (
+      getActiveTables(tournament, games).every((entry) =>
+        isTableWaiting(entry.game),
+      )
+    ) {
+      tournament.onBreak = true;
+      tournament.breakTicks = 0;
+      tournament.pendingBreak = false;
+      return;
+    }
+
+    tournament.pendingBreak = true;
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   */
+  function tickBreakClock(tournament) {
+    tournament.breakTicks += 1;
+    if (tournament.breakTicks < Tournament.BREAK_DURATION_TICKS) {
+      return;
+    }
+
+    tournament.onBreak = false;
+    tournament.breakTicks = 0;
+    tournament.pendingBreak = false;
+    advanceLevel(tournament);
   }
 
   /**

@@ -21,12 +21,13 @@ import { matchLiveRoute } from "../shared/routes.js";
  * @property {import('http').Server} server
  * @property {Record<string, UserType>} users
  * @property {Map<string, Game>} games
- * @property {Map<import('ws').WebSocket, { user: UserType, gameId: string }>} clientConnections
+ * @property {Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>} clientConnections
  * @property {ReturnType<import('./rate-limit.js').createRateLimiter>} actionRateLimiter
  * @property {(req: import('http').IncomingMessage) => string} getRequestRateLimitKey
  * @property {(user: UserType|undefined, gameId: string|undefined) => Promise<Game|null>} resolveGameForUpgrade
  * @property {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
  * @property {(gameId: string) => void} broadcastGameStateMessage
+ * @property {(tournamentId: string, user: UserType) => string|null} buildTournamentStatePayload
  */
 
 /**
@@ -162,19 +163,30 @@ function allowUpgradeRequest(
 /**
  * @param {Record<string, UserType>} users
  * @param {import('http').IncomingMessage} request
- * @returns {{ user: UserType|undefined, gameId: string|undefined }}
+ * @returns {{
+ *   user: UserType|undefined,
+ *   gameId: string|undefined,
+ *   tournamentId: string|undefined,
+ *   liveKind: "cash"|"sitngo"|"mtt"|"mtt_table"|null,
+ * }}
  */
+// eslint-disable-next-line complexity
 function getUpgradeSession(users, request) {
   const cookies = parseCookies(request.headers.cookie ?? "");
   const liveRoute = request.url ? matchLiveRoute(request.url) : null;
   return {
     user: users[cookies.phg ?? ""],
+    liveKind: liveRoute?.kind ?? null,
     gameId:
       liveRoute &&
       (liveRoute.kind === "cash" ||
         liveRoute.kind === "sitngo" ||
         liveRoute.kind === "mtt_table")
         ? liveRoute.tableId
+        : undefined,
+    tournamentId:
+      liveRoute && (liveRoute.kind === "mtt" || liveRoute.kind === "mtt_table")
+        ? liveRoute.tournamentId
         : undefined,
   };
 }
@@ -185,12 +197,14 @@ function getUpgradeSession(users, request) {
  * @param {Buffer} head
  * @param {WebSocketServerParams & { wss: WebSocketServer }} params
  */
+// eslint-disable-next-line complexity
 async function handleUpgrade(request, socket, head, params) {
   const {
     users,
     actionRateLimiter,
     getRequestRateLimitKey,
     resolveGameForUpgrade,
+    buildTournamentStatePayload,
     wss,
   } = params;
 
@@ -205,21 +219,46 @@ async function handleUpgrade(request, socket, head, params) {
     return;
   }
 
-  const { user, gameId } = getUpgradeSession(users, request);
-  const game = await resolveGameForUpgrade(user, gameId);
+  const { user, gameId, tournamentId, liveKind } = getUpgradeSession(
+    users,
+    request,
+  );
+  const game = gameId ? await resolveGameForUpgrade(user, gameId) : null;
+  const initialTournamentPayload =
+    user && tournamentId
+      ? buildTournamentStatePayload(tournamentId, user)
+      : null;
 
-  if (!user || !game || !gameId) {
+  if (
+    !user ||
+    !liveKind ||
+    (gameId && !game) ||
+    (liveKind === "mtt" && !initialTournamentPayload)
+  ) {
     logger.warn("ws upgrade rejected", {
       request: { url: request.url },
       session: { hasPlayer: !!user },
       game: { id: gameId ?? null, found: !!game },
+      tournament: {
+        id: tournamentId ?? null,
+        found: !!initialTournamentPayload,
+      },
     });
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
     return;
   }
 
   wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit("connection", ws, request, user, game, gameId);
+    wss.emit(
+      "connection",
+      ws,
+      request,
+      user,
+      game,
+      gameId ?? null,
+      tournamentId ?? null,
+      initialTournamentPayload,
+    );
   });
 }
 
@@ -263,48 +302,193 @@ function handleGameAction(
 }
 
 /**
- * @param {WebSocketServerParams} params
- * @returns {{ wss: WebSocketServer }}
+ * @param {import("ws").RawData} rawMessage
+ * @returns {string}
  */
-export function createWebSocketServer(params) {
-  const {
-    server,
-    clientConnections,
-    games,
-    actionRateLimiter,
-    broadcastGameMessage,
-    broadcastGameStateMessage,
-  } = params;
-  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+function getRawMessageText(rawMessage) {
+  if (typeof rawMessage === "string") return rawMessage;
+  if (rawMessage instanceof Buffer) return rawMessage.toString("utf8");
+  if (Array.isArray(rawMessage)) {
+    return Buffer.concat(rawMessage).toString("utf8");
+  }
+  return Buffer.from(new Uint8Array(rawMessage)).toString("utf8");
+}
 
-  server.on("upgrade", (request, socket, head) => {
-    void handleUpgrade(request, socket, head, { ...params, wss }).catch(
-      (err) => {
-        logger.error("ws upgrade failed", {
-          request: { url: request.url },
-          error: { message: err.message },
-        });
-        socket.end("HTTP/1.1 500 Internal Server Error\r\n\r\n");
-      },
-    );
-  });
+/**
+ * @param {{
+ *   ws: import("ws").WebSocket,
+ *   user: UserType,
+ *   game: Game|null,
+ *   gameId: string|null,
+ *   player: import("./poker/seat.js").Player,
+ *   playerRateLimitKey: string,
+ *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
+ *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
+ *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
+ * }} params
+ * @returns {(rawMessage: import("ws").RawData) => void}
+ */
+function createMessageHandler({
+  ws,
+  user,
+  game,
+  gameId,
+  player,
+  playerRateLimitKey,
+  actionRateLimiter,
+  broadcastGameMessage,
+  broadcastGameStateMessage,
+}) {
+  // eslint-disable-next-line complexity
+  return (rawMessage) => {
+    if (!game || !gameId) {
+      ws.send(
+        JSON.stringify(
+          {
+            error: {
+              message:
+                "game actions are unavailable on tournament lobby connections",
+            },
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
 
-  wss.on("connection", (ws, _request, user, game, gameId) => {
+    const log = createLog("ws_action");
+    assignWsSessionContext(log, gameId, user);
+
+    try {
+      const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
+        source: "ws-action",
+      });
+      log.context.rateLimit = rateLimit.context;
+
+      /** @type {{ action: string } & Record<string, unknown>} */
+      const messageData = JSON.parse(getRawMessageText(rawMessage));
+      const { action, ...args } = messageData;
+      log.context.action = { name: action, ...args };
+
+      if (action === "emote" || action === "chat") {
+        handleSocialAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameMessage,
+          gameId,
+        );
+        log.context.game = {
+          ...(log.context.game || {}),
+          handNumber: game.handNumber,
+        };
+        return;
+      }
+
+      if (action === "preAction" || action === "clearPreAction") {
+        handlePreAction(
+          game,
+          user,
+          action,
+          args,
+          broadcastGameStateMessage,
+          gameId,
+        );
+        log.context.game = {
+          ...(log.context.game || {}),
+          handNumber: game.handNumber,
+        };
+        return;
+      }
+
+      const { broadcast, gameSnapshot } = handleGameAction(
+        game,
+        player,
+        action,
+        args,
+        gameId,
+        broadcastGameMessage,
+      );
+
+      Object.assign(log.context, {
+        game: { ...(log.context.game || {}), ...gameSnapshot },
+        broadcast,
+      });
+    } catch (err) {
+      if (err instanceof RateLimitError) {
+        log.context.rateLimit = err.rateLimit;
+      }
+      log.context.error = { message: err.message };
+      ws.send(JSON.stringify({ error: { message: err.message } }, null, 2));
+    } finally {
+      emitLog(log);
+    }
+  };
+}
+
+/**
+ * @param {{
+ *   clientConnections: WebSocketServerParams["clientConnections"],
+ *   games: WebSocketServerParams["games"],
+ *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
+ *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
+ *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
+ *   buildTournamentStatePayload: WebSocketServerParams["buildTournamentStatePayload"],
+ * }} params
+ * @returns {(
+ *   ws: import("ws").WebSocket,
+ *   request: import("http").IncomingMessage,
+ *   user: UserType,
+ *   game: Game|null,
+ *   gameId: string|null,
+ *   tournamentId: string|null,
+ *   initialTournamentPayload: string|null,
+ * ) => void}
+ */
+function createConnectionHandler({
+  clientConnections,
+  games,
+  actionRateLimiter,
+  broadcastGameMessage,
+  broadcastGameStateMessage,
+  buildTournamentStatePayload,
+}) {
+  // eslint-disable-next-line complexity
+  function handleConnection(
+    ws,
+    _request,
+    user,
+    game,
+    gameId,
+    tournamentId,
+    initialTournamentPayload,
+  ) {
     const playerRateLimitKey = `player:${user.id}`;
-    clientConnections.set(ws, { user, gameId });
+    clientConnections.set(ws, {
+      user,
+      gameId,
+      tournamentId,
+    });
     logger.info("ws connected", {
       game: { id: gameId },
+      tournament: { id: tournamentId },
       ...getSessionPlayerLogContext(user),
     });
 
     const player = Player.fromUser(user);
-    const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
-    if (seatIndex !== -1 && !game.seats[seatIndex].empty) {
-      const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
-        game.seats[seatIndex]
-      );
-      seat.disconnected = false;
-      broadcastGameStateMessage(gameId);
+    if (game && gameId) {
+      const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
+      if (seatIndex !== -1) {
+        const seat = game.seats[seatIndex];
+        if (seat && !seat.empty) {
+          const occupiedSeat =
+            /** @type {import('./poker/seat.js').OccupiedSeat} */ (seat);
+          occupiedSeat.disconnected = false;
+          broadcastGameStateMessage(gameId);
+        }
+      }
     }
 
     ws.on("close", () => {
@@ -315,8 +499,11 @@ export function createWebSocketServer(params) {
 
       logger.info("ws disconnected", {
         game: { id: conn.gameId },
+        tournament: { id: conn.tournamentId },
         ...getSessionPlayerLogContext(conn.user),
       });
+
+      if (!conn.gameId) return;
 
       const closedPlayer = Player.fromUser(conn.user);
       const closedGame = games.get(conn.gameId);
@@ -343,80 +530,78 @@ export function createWebSocketServer(params) {
       broadcastGameStateMessage(conn.gameId);
     });
 
-    ws.on("message", (rawMessage) => {
-      const log = createLog("ws_action");
-      assignWsSessionContext(log, gameId, user);
+    ws.on(
+      "message",
+      createMessageHandler({
+        ws,
+        user,
+        game,
+        gameId,
+        player,
+        playerRateLimitKey,
+        actionRateLimiter,
+        broadcastGameMessage,
+        broadcastGameStateMessage,
+      }),
+    );
 
-      try {
-        const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
-          source: "ws-action",
-        });
-        log.context.rateLimit = rateLimit.context;
-
-        /** @type {{ action: string } & Record<string, unknown>} */
-        const messageData = JSON.parse(String(rawMessage));
-        const { action, ...args } = messageData;
-        log.context.action = { name: action, ...args };
-
-        if (action === "emote" || action === "chat") {
-          handleSocialAction(
-            game,
-            user,
-            action,
-            args,
-            broadcastGameMessage,
-            gameId,
-          );
-          log.context.game = {
-            ...(log.context.game || {}),
-            handNumber: game.handNumber,
-          };
-          return;
-        }
-
-        if (action === "preAction" || action === "clearPreAction") {
-          handlePreAction(
-            game,
-            user,
-            action,
-            args,
-            broadcastGameStateMessage,
-            gameId,
-          );
-          log.context.game = {
-            ...(log.context.game || {}),
-            handNumber: game.handNumber,
-          };
-          return;
-        }
-
-        const { broadcast, gameSnapshot } = handleGameAction(
-          game,
-          player,
-          action,
-          args,
-          gameId,
-          broadcastGameMessage,
-        );
-
-        Object.assign(log.context, {
-          game: { ...(log.context.game || {}), ...gameSnapshot },
-          broadcast,
-        });
-      } catch (err) {
-        if (err instanceof RateLimitError) {
-          log.context.rateLimit = err.rateLimit;
-        }
-        log.context.error = { message: err.message };
-        ws.send(JSON.stringify({ error: { message: err.message } }, null, 2));
-      } finally {
-        emitLog(log);
+    if (!initialTournamentPayload && tournamentId) {
+      const payload = buildTournamentStatePayload(tournamentId, user);
+      if (payload) {
+        ws.send(payload);
       }
-    });
+    } else if (initialTournamentPayload) {
+      ws.send(initialTournamentPayload);
+    }
 
-    ws.send(JSON.stringify(playerView(game, player), null, 2));
-    PokerGame.ensureGameTick(game, broadcastGameMessage);
+    if (game) {
+      ws.send(JSON.stringify(playerView(game, player), null, 2));
+      PokerGame.ensureGameTick(game, broadcastGameMessage);
+    }
+  }
+
+  return handleConnection;
+}
+
+/**
+ * @param {WebSocketServerParams} params
+ * @returns {{ wss: WebSocketServer }}
+ */
+export function createWebSocketServer(params) {
+  const {
+    server,
+    clientConnections,
+    games,
+    actionRateLimiter,
+    broadcastGameMessage,
+    broadcastGameStateMessage,
+    buildTournamentStatePayload,
+  } = params;
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+
+  server.on("upgrade", (request, socket, head) => {
+    void handleUpgrade(request, socket, head, { ...params, wss }).catch(
+      (err) => {
+        logger.error("ws upgrade failed", {
+          request: { url: request.url },
+          error: { message: err.message },
+        });
+        socket.end("HTTP/1.1 500 Internal Server Error\r\n\r\n");
+      },
+    );
   });
+
+  wss.on(
+    "connection",
+    createConnectionHandler({
+      clientConnections,
+      games,
+      actionRateLimiter,
+      broadcastGameMessage,
+      broadcastGameStateMessage,
+      buildTournamentStatePayload,
+    }),
+  );
 
   return { wss };
 }

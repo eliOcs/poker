@@ -70,7 +70,7 @@ function migrateGuestSeatsToRegisteredUser(games, guestUserId, targetUser) {
 }
 
 /**
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
  * @param {Id} guestUserId
  * @param {import('./user.js').User} targetUser
  * @param {Set<Id>} changedGameIds
@@ -84,14 +84,16 @@ function migrateGuestConnectionsToRegisteredUser(
   for (const [, connection] of clientConnections) {
     if (connection.user.id === guestUserId) {
       connection.user = targetUser;
-      changedGameIds.add(connection.gameId);
+      if (connection.gameId) {
+        changedGameIds.add(connection.gameId);
+      }
     }
   }
 }
 
 /**
  * @param {Map<Id, import('./poker/game.js').Game>} games
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
  * @param {(gameId: Id) => void} broadcast
  * @param {Id} guestUserId
  * @param {import('./user.js').User} targetUser
@@ -131,7 +133,7 @@ function setEmailDeliveryLogContext(log, delivery) {
 /**
  * @param {Record<string, any>} users
  * @param {Map<Id, import('./poker/game.js').Game>} games
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
  * @param {(gameId: Id) => void} broadcast
  * @param {import('./http-routes.js').Response} res
  * @param {{ userId: Id, email: string, returnPath: string }} signIn
@@ -198,7 +200,7 @@ async function completeSignIn(
 /**
  * @param {{
  *   sendSignInEmail?: typeof sendEmail,
- *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id }>
+ *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>
  * }} [services]
  */
 export function createSignInRoutes(services = {}) {
