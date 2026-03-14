@@ -15,7 +15,16 @@ Single instance, vertical scaling. One server, one process — no clustering, no
 
 - **Database**: SQLite — single-file, zero-config, embedded in the application process
 - **Files**: Stored directly on the instance disk (hand histories, etc.)
-- **No external services**: No S3, no managed databases, no caches — everything lives on the single server
+
+## AWS SES
+
+AWS Simple Email Service (SES) is used to send passwordless sign-in emails.
+
+- **Region**: `eu-central-1` (overridable via `AWS_REGION` env var)
+- **From address**: `no-reply@plutonpoker.com` (overridable via `SES_FROM_EMAIL` env var)
+- **Implementation**: `src/backend/email.js` — wraps `@aws-sdk/client-ses`
+
+**Development fallback**: Set `EMAIL_SINK_DIR` to a directory path and emails are written as JSON files instead of being sent via SES. Useful for local development and preview environments.
 
 ## Deployment
 
@@ -63,3 +72,17 @@ KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1 --pro
 ```
 
 ECR tokens expire after 12 hours. If deploy fails with auth errors, the token has expired.
+
+### Environment Variables
+
+| Variable              | Description                                              |
+| --------------------- | -------------------------------------------------------- |
+| `NODE_ENV`            | `production` in deployed containers                      |
+| `APP_ORIGIN`          | Public origin (e.g. `https://plutonpoker.com`)           |
+| `DOMAIN`              | Domain name                                              |
+| `PORT`                | HTTP port (default `3000`)                               |
+| `LOG_FORMAT`          | `json` for structured logging in production              |
+| `TRUSTED_PROXY_CIDRS` | CIDRs to trust for `X-Forwarded-For`                     |
+| `AWS_REGION`          | AWS region for SES (default `eu-central-1`)              |
+| `SES_FROM_EMAIL`      | Sender address for sign-in emails                        |
+| `EMAIL_SINK_DIR`      | If set, writes emails to disk instead of sending via SES |

@@ -26,70 +26,96 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ```
 src/
-├── backend/             # Server-side code
-│   ├── index.js         # HTTP + WebSocket server entry
-│   ├── http-routes.js   # HTTP route handlers
-│   ├── websocket-handler.js # WebSocket message handling
-│   ├── static-files.js  # Static file serving
-│   ├── logger.js        # Logging utilities
-│   ├── store.js         # Player session management
-│   ├── user.js          # User identity and creation
-│   ├── id.js            # ID generation utilities
-│   ├── http-error.js    # Structured HTTP error class
-│   ├── rate-limit.js    # Rate limiting
-│   ├── game-eviction.js # Player eviction/timeout logic
-│   └── poker/           # Game logic (pure functions)
-│       ├── game.js          # Game state initialization
-│       ├── game-tick.js     # Game tick orchestration
-│       ├── actions.js       # Game actions (generators)
-│       ├── betting.js       # Betting logic and turn management
-│       ├── dealing.js       # Card dealing logic
-│       ├── hand-rankings.js # Hand evaluation & comparison
-│       ├── hand-history/    # Hand history (OHH spec: https://hh-specs.handhistory.org/)
-│       │   ├── index.js     # History generation
-│       │   ├── io.js        # File I/O operations
-│       │   └── view.js      # History view formatting
-│       ├── player.js        # Player identity
-│       ├── player-view.js   # Server-side view filtering
-│       ├── pots.js          # Pot calculation and side pots
-│       ├── ranking.js       # Hand ranking utilities
-│       ├── recovery.js      # Game state recovery from hand history
-│       ├── seat.js          # Seat representation
-│       ├── showdown.js      # Showdown logic
-│       ├── stakes.js        # Blind/ante configuration
+├── backend/                  # Server-side code
+│   ├── index.js              # HTTP + WebSocket server entry
+│   ├── http-routes.js        # HTTP route handlers
+│   ├── websocket-handler.js  # WebSocket message handling
+│   ├── ws-server.js          # WebSocket server and message routing
+│   ├── static-files.js       # Static file serving
+│   ├── logger.js             # Logging utilities
+│   ├── store.js              # SQLite database, session and history management
+│   ├── store-history-backfill.js # Migrate legacy .ohh files to DB indices
+│   ├── user.js               # User identity and creation
+│   ├── id.js                 # ID generation utilities
+│   ├── http-error.js         # Structured HTTP error class
+│   ├── rate-limit.js         # Rate limiting
+│   ├── game-eviction.js      # Player eviction/timeout logic
+│   ├── game-broadcast.js     # Broadcasting game/tournament state to clients
+│   ├── game-route-parsers.js # Route parsing for cash/sitngo/mtt URLs
+│   ├── mtt.js                # Multi-table tournament lifecycle and table management
+│   ├── player-profile.js     # Public player profile stats and history aggregation
+│   ├── sign-in.js            # Passwordless sign-in token generation and validation
+│   ├── sign-in-routes.js     # HTTP API routes for sign-in flow
+│   ├── sign-in-email.js      # HTML + plain text sign-in email template
+│   ├── email.js              # AWS SES client with local file-sink fallback
+│   ├── client-error-reporting.js # Frontend error logging endpoint
+│   └── poker/                # Game logic (pure functions)
+│       ├── game.js           # Game state initialization
+│       ├── game-tick.js      # Game tick orchestration
+│       ├── actions.js        # Game actions (generators)
+│       ├── betting.js        # Betting logic and turn management
+│       ├── dealing.js        # Card dealing logic
+│       ├── hand-rankings.js  # Hand evaluation & comparison
+│       ├── hand-history/     # Hand history (OHH spec: https://hh-specs.handhistory.org/)
+│       │   ├── index.js      # History generation
+│       │   ├── io.js         # File I/O operations
+│       │   └── view.js       # History view formatting
+│       ├── player.js         # Player identity
+│       ├── player-view.js    # Server-side view filtering
+│       ├── pots.js           # Pot calculation and side pots
+│       ├── ranking.js        # Hand ranking utilities
+│       ├── recovery.js       # Game state recovery from hand history
+│       ├── seat.js           # Seat representation
+│       ├── showdown.js       # Showdown logic
+│       ├── stakes.js         # Blind/ante configuration
 │       ├── tournament-summary.js # Tournament summary (OTS spec: https://ts-specs.handhistory.org/)
 │       ├── tournament-tick.js    # Tournament blind level progression
-│       ├── deck.js          # Card deck management
-│       ├── rng.js           # Random number generation
-│       ├── types.js         # TypeScript type definitions
+│       ├── deck.js           # Card deck management
+│       ├── rng.js            # Random number generation
+│       ├── types.js          # TypeScript type definitions
 │       └── circular-array.js
-├── shared/              # Code shared between frontend and backend
-│   ├── stakes.js        # Chip denominations and stake presets
-│   └── tournament.js    # Tournament configuration constants
-└── frontend/            # Browser UI (Lit web components)
-    ├── index.html       # Entry point with importmap
-    ├── base.css         # Shared base styles (font, body reset)
-    ├── manifest.json    # PWA manifest
-    ├── release-notes.html # Release notes page
-    ├── app.js           # Main app router
-    ├── index.js         # Game table component
-    ├── history.js       # Hand history viewer
-    ├── history-styles.js # History page styles
-    ├── home.js          # Landing page
-    ├── action-panel.js  # Betting action buttons
-    ├── audio.js         # Sound effects
-    ├── bet-collection.js # Bet collection animation
-    ├── board.js         # Community cards
-    ├── card.js          # Card component
-    ├── chips.js         # Chip stack visual component
-    ├── currency-slider.js # Currency amount slider
-    ├── game-layout.js   # Game table layout
-    ├── seat.js          # Player seat component
-    ├── button.js        # Generic button component
-    ├── modal.js         # Modal dialog
-    ├── ranking-panel.js # Hand rankings display
-    ├── toast.js         # Toast notifications
-    └── styles.js        # Design tokens and base styles
+├── shared/                   # Code shared between frontend and backend
+│   ├── stakes.js             # Chip denominations and stake presets
+│   ├── tournament.js         # Tournament configuration constants (blind levels, buy-ins)
+│   └── routes.js             # Route matchers for cash/sitngo/mtt URLs
+└── frontend/                 # Browser UI (Lit web components)
+    ├── index.html            # Entry point with importmap
+    ├── base.css              # Shared base styles (font, body reset)
+    ├── manifest.json         # PWA manifest
+    ├── release-notes.html    # Release notes page
+    ├── app.js                # Main app router
+    ├── app-shell.js          # App shell (top-level chrome, header, nav)
+    ├── app-auth.js           # Auth state management (guest → registered flow)
+    ├── app-auth-status.js    # Auth status indicator
+    ├── app-sign-in-modal.js  # Passwordless email sign-in form
+    ├── app-profile-settings.js # User profile and settings panel
+    ├── app-navigation-drawer.js # Navigation drawer with tournament list
+    ├── navigation-drawer.js  # Sliding drawer container component
+    ├── drawer.js             # Base drawer primitive
+    ├── mtt-lobby.js          # Multi-table tournament lobby
+    ├── player-profile.js     # Public player profile view
+    ├── player-label.js       # Player name label component
+    ├── game-modals.js        # Create cash / SNG / MTT game modals
+    ├── index.js              # Game table component
+    ├── history.js            # Hand history viewer
+    ├── history-styles.js     # History page styles
+    ├── home.js               # Landing page
+    ├── action-panel.js       # Betting action buttons
+    ├── audio.js              # Sound effects
+    ├── error-reporting.js    # Client-side error reporting to backend
+    ├── bet-collection.js     # Bet collection animation
+    ├── board.js              # Community cards
+    ├── card.js               # Card component
+    ├── chips.js              # Chip stack visual component
+    ├── currency-slider.js    # Currency amount slider
+    ├── game-layout.js        # Game table layout
+    ├── icons.js              # SVG icon definitions
+    ├── seat.js               # Player seat component
+    ├── button.js             # Generic button component
+    ├── modal.js              # Modal dialog
+    ├── ranking-panel.js      # Hand rankings display
+    ├── toast.js              # Toast notifications
+    └── styles.js             # Design tokens and base styles
 
 test/
 ├── backend/             # Backend unit tests (mirrors src/backend)
@@ -266,6 +292,8 @@ A shared pre-commit hook runs `npm run validate` before each commit. It is confi
 ```
 DOMAIN=localhost
 PORT=3000
+# Optional for local email testing (writes emails to disk instead of sending via SES):
+# EMAIL_SINK_DIR=./tmp/emails
 ```
 
 ### Frontend Development
@@ -384,6 +412,7 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 
 - `ws` - WebSocket server
 - `lit` - Web components
+- `@aws-sdk/client-ses` - Passwordless sign-in emails via AWS SES
 
 **Dev**:
 
