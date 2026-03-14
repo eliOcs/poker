@@ -26,7 +26,7 @@ export {
  * @typedef {import('./deck.js').Card} Card
  * @typedef {import('./seat.js').Seat} Seat
  * @typedef {import('./seat.js').Player} PlayerType
- * @typedef {{ type: "gameState", gameId: string } | { type: "history", gameId: string, event: "handRecorded", handNumber: number } | { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string } | { type: "handEnded", gameId: string, handNumber: number, potResults: import('./showdown.js').PotResult[] }} BroadcastMessage
+ * @typedef {{ type: "gameState", gameId: string } | { type: "history", gameId: string, event: "handRecorded", handNumber: number } | { type: "social", gameId: string, action: "chat", seat: number, message: string } | { type: "social", gameId: string, action: "emote", seat: number, emoji: string } | { type: "handEnded", gameId: string, handNumber: number, potResults: import('./showdown.js').PotResult[], historyHand?: import('./hand-history/index.js').OHHHand }} BroadcastMessage
  * @typedef {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} BroadcastHandler
  */
 

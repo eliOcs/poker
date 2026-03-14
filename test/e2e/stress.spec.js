@@ -90,8 +90,14 @@ async function collectGameSnapshots(players, activePlayers) {
   let removedCount = 0;
   let maxHandNumber = null;
 
-  for (const idx of activePlayers) {
-    const snapshot = await players[idx].getGameSnapshot();
+  const snapshotEntries = await Promise.all(
+    [...activePlayers].map(async (idx) => ({
+      idx,
+      snapshot: await players[idx].getGameSnapshot(),
+    })),
+  );
+
+  for (const { idx, snapshot } of snapshotEntries) {
     if (!snapshot) continue;
 
     if (snapshot.tournamentWinner) {
@@ -151,11 +157,19 @@ function selectRandomAction(availableActions) {
  * @returns {Promise<{seatIdx: number, action: string}|null>}
  */
 async function tryTakeAction(players, activePlayers) {
-  for (const seatIdx of activePlayers) {
+  const seatOrder = [...activePlayers];
+  const turnStates = await Promise.all(
+    seatOrder.map(async (seatIdx) => ({
+      seatIdx,
+      isMyTurn: await players[seatIdx].isMyTurn().catch(() => false),
+    })),
+  );
+
+  for (const { seatIdx, isMyTurn } of turnStates) {
     let attemptedAction = null;
     try {
       const player = players[seatIdx];
-      if (await player.isMyTurn().catch(() => false)) {
+      if (isMyTurn) {
         const availableActions = await getAvailableActions(player);
         if (availableActions.length > 0) {
           const action = selectRandomAction(availableActions);
@@ -185,10 +199,20 @@ async function tryTakeAction(players, activePlayers) {
  * @returns {Promise<{seatIdx: number, action: "callClock"}|null>}
  */
 async function tryCallClock(players, activePlayers) {
-  for (const seatIdx of activePlayers) {
+  const seatOrder = [...activePlayers];
+  const callableSeats = await Promise.all(
+    seatOrder.map(async (seatIdx) => ({
+      seatIdx,
+      canCallClock: await players[seatIdx]
+        .hasAction("callClock")
+        .catch(() => false),
+    })),
+  );
+
+  for (const { seatIdx, canCallClock } of callableSeats) {
     try {
       const player = players[seatIdx];
-      if (await player.hasAction("callClock")) {
+      if (canCallClock) {
         await player.callClock();
         return { seatIdx, action: "callClock" };
       }
@@ -208,13 +232,21 @@ async function tryCallClock(players, activePlayers) {
  * @returns {Promise<boolean>} Whether any actionable turn appeared
  */
 async function waitForAnyTurn(players, activePlayers) {
-  return await Promise.any(
-    [...activePlayers].map((idx) =>
-      players[idx].waitForTurn(WAIT_FOR_TURN_TIMEOUT_MS),
-    ),
-  )
-    .then(() => true)
-    .catch(() => false);
+  const deadline = Date.now() + WAIT_FOR_TURN_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const turnStates = await Promise.all(
+      [...activePlayers].map((idx) =>
+        players[idx].isMyTurn().catch(() => false),
+      ),
+    );
+    if (turnStates.some(Boolean)) {
+      return true;
+    }
+    await delay(100);
+  }
+
+  return false;
 }
 
 /**

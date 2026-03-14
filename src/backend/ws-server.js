@@ -273,6 +273,7 @@ function broadcastHandEnded(broadcastGameMessage, gameId, handData) {
     gameId,
     handNumber: handData.handNumber,
     potResults: handData.potResults,
+    historyHand: handData.historyHand,
   });
 }
 

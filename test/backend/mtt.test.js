@@ -241,4 +241,50 @@ describe("mtt-manager", () => {
     assert.ok(Store.loadTable(tournament.tables[0].tableId)?.closedAt);
     assert.ok(Store.loadTable(tournament.tables[1].tableId)?.closedAt);
   });
+
+  it("matches sitngo disconnect behavior when only one contender remains", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 2,
+    });
+    manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+    manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const mainTable = games.get(tournament.tables[0].tableId);
+    const sideTable = games.get(tournament.tables[1].tableId);
+    assert.ok(mainTable);
+    assert.ok(sideTable);
+
+    const disconnectedSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        sideTable.seats[0]
+      );
+    disconnectedSeat.sittingOut = true;
+
+    const bustedSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        mainTable.seats[1]
+      );
+    bustedSeat.stack = 0;
+    bustedSeat.sittingOut = true;
+
+    manager.handleHandFinalized(mainTable);
+
+    const winner = tournament.entrants.get("owner");
+    const disconnected = tournament.entrants.get(disconnectedSeat.player.id);
+    const busted = tournament.entrants.get(bustedSeat.player.id);
+    assert.equal(tournament.status, "finished");
+    assert.equal(winner?.status, "winner");
+    assert.equal(winner?.finishPosition, 1);
+    assert.equal(disconnected?.status, "eliminated");
+    assert.equal(disconnected?.finishPosition, 2);
+    assert.equal(disconnected?.stack, 0);
+    assert.equal(busted?.finishPosition, 3);
+    assert.equal(sideTable.tournament?.winner, null);
+    assert.equal(mainTable.tournament?.winner, winner?.seatIndex);
+  });
 });

@@ -389,9 +389,9 @@ function buildTournamentInfo(tournament, fallbackStartTime) {
  * @param {Game} game
  * @param {PotResult[]} [potResults]
  * @param {number} [handNumber]
- * @returns {Promise<OHHHand>}
+ * @returns {OHHHand}
  */
-export async function finalizeHand(
+export function captureHand(
   game,
   potResults = [],
   handNumber = game.handNumber,
@@ -465,7 +465,32 @@ export async function finalizeHand(
   recorder.boardByStreet = new Map();
   // Note: tournament info is kept but will be refreshed on next startHand
 
-  // Write to file
+  return hand;
+}
+
+/**
+ * @param {string} gameId
+ * @param {OHHHand} hand
+ * @returns {Promise<OHHHand>}
+ */
+export async function persistHand(gameId, hand) {
+  await writeHandToFile(gameId, hand);
+  return hand;
+}
+
+/**
+ * Finalizes and saves the current hand
+ * @param {Game} game
+ * @param {PotResult[]} [potResults]
+ * @param {number} [handNumber]
+ * @returns {Promise<OHHHand>}
+ */
+export async function finalizeHand(
+  game,
+  potResults = [],
+  handNumber = game.handNumber,
+) {
+  const hand = captureHand(game, potResults, handNumber);
   await writeHandToFile(game.id, hand);
   return hand;
 }

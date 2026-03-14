@@ -1,10 +1,12 @@
 import * as Actions from "./actions.js";
+import * as HandHistory from "./hand-history/index.js";
 import * as TournamentSummary from "./tournament-summary.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
  * @typedef {import('./showdown.js').PotResult} PotResult
- * @typedef {{ handNumber: number, potResults: PotResult[] }} FinalizedHand
+ * @typedef {import('./hand-history/index.js').OHHHand} OHHHand
+ * @typedef {{ handNumber: number, potResults: PotResult[], historyHand: OHHHand }} FinalizedHand
  */
 
 /**
@@ -23,9 +25,14 @@ export function sitOutDisconnectedPlayers(game) {
  * @returns {FinalizedHand}
  */
 export function finalizePendingHandHistory(game) {
+  const handNumber = game.handNumber;
   const potResults = /** @type {PotResult[]} */ (game.pendingHandHistory);
   game.pendingHandHistory = null;
-  return { handNumber: game.handNumber, potResults };
+  return {
+    handNumber,
+    potResults,
+    historyHand: HandHistory.captureHand(game, potResults, handNumber),
+  };
 }
 
 /**

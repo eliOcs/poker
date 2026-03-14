@@ -1,6 +1,7 @@
 test-results
 test-data
 node_modules
+.claude/
 tags
 .nyc_output
 coverage

@@ -1,3 +1,4 @@
+import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
@@ -5,13 +6,14 @@ import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import lit from "eslint-plugin-lit";
 import playwright from "eslint-plugin-playwright";
+import { fileURLToPath } from "node:url";
+
+const gitignorePath = fileURLToPath(new URL(".gitignore", import.meta.url));
 
 export default [
+  includeIgnoreFile(gitignorePath),
   js.configs.recommended,
   prettierConfig,
-  {
-    ignores: ["node_modules/**"],
-  },
   {
     languageOptions: {
       ecmaVersion: 2024,

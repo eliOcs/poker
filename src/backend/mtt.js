@@ -153,6 +153,85 @@ function countActiveEntrants(tournament) {
 
 /**
  * @param {ManagedTournament} tournament
+ * @param {string|null} tableId
+ * @returns {number}
+ */
+function getTableCreatedOrder(tournament, tableId) {
+  if (!tableId) return Number.MAX_SAFE_INTEGER;
+  const table = tournament.tables.find((entry) => entry.tableId === tableId);
+  return table?.createdOrder ?? Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * @param {Map<string, Game>} games
+ * @param {TournamentEntrant} entrant
+ * @returns {{ game: Game, seat: import("./poker/seat.js").OccupiedSeat } | null}
+ */
+function getEntrantSeatContext(games, entrant) {
+  if (entrant.tableId === null || entrant.seatIndex === null) {
+    return null;
+  }
+  const game = games.get(entrant.tableId);
+  if (!game) {
+    return null;
+  }
+  const seat = game.seats[entrant.seatIndex];
+  if (!seat || seat.empty) {
+    return null;
+  }
+  return {
+    game,
+    seat: /** @type {import("./poker/seat.js").OccupiedSeat} */ (seat),
+  };
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
+ * @returns {TournamentEntrant[]}
+ */
+function getContendingEntrants(tournament, games) {
+  return [...tournament.entrants.values()].filter((entrant) => {
+    if (entrant.status !== "seated") {
+      return false;
+    }
+    const seatContext = getEntrantSeatContext(games, entrant);
+    return (
+      seatContext !== null &&
+      seatContext.seat.stack > 0 &&
+      !seatContext.seat.sittingOut
+    );
+  });
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {TournamentEntrant} a
+ * @param {TournamentEntrant} b
+ * @returns {number}
+ */
+function compareForcedFinishEntrants(tournament, a, b) {
+  if (a.stack !== b.stack) {
+    return b.stack - a.stack;
+  }
+  const tableOrderCompare =
+    getTableCreatedOrder(tournament, a.tableId) -
+    getTableCreatedOrder(tournament, b.tableId);
+  if (tableOrderCompare !== 0) {
+    return tableOrderCompare;
+  }
+  if (
+    a.seatIndex !== null &&
+    b.seatIndex !== null &&
+    a.seatIndex !== b.seatIndex
+  ) {
+    return a.seatIndex - b.seatIndex;
+  }
+  return a.playerId.localeCompare(b.playerId);
+}
+
+/**
+ * @param {ManagedTournament} tournament
  * @returns {number}
  */
 function getTimeToNextLevel(tournament) {
@@ -646,18 +725,51 @@ function rebalanceTournament(tournament, games, ensureTableTick, now) {
  * @param {Map<string, Game>} games
  * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
+ * @param {TournamentEntrant | null} [winnerEntrant]
  */
-function finishTournament(tournament, games, ensureTableTick, now) {
+function finishTournament(
+  tournament,
+  games,
+  ensureTableTick,
+  now,
+  winnerEntrant = null,
+) {
   const activeEntrants = [...tournament.entrants.values()].filter(
     (entrant) => entrant.status === "seated",
   );
-  const winner = activeEntrants[0];
-  if (!winner) return;
+  const resolvedWinner = winnerEntrant ?? activeEntrants[0];
+  if (!resolvedWinner) return;
 
-  winner.status = "winner";
-  winner.finishPosition = 1;
+  const forcedEliminations = activeEntrants
+    .filter((entrant) => entrant.playerId !== resolvedWinner.playerId)
+    .sort((a, b) => compareForcedFinishEntrants(tournament, a, b));
+
+  forcedEliminations.forEach((entrant, index) => {
+    const finishPosition = index + 2;
+    const seatContext = getEntrantSeatContext(games, entrant);
+    if (seatContext) {
+      seatContext.seat.bustedPosition = finishPosition;
+      seatContext.seat.stack = 0;
+      seatContext.seat.bet = 0;
+      seatContext.seat.sittingOut = true;
+    }
+    entrant.status = "eliminated";
+    entrant.stack = 0;
+    entrant.tableId = null;
+    entrant.seatIndex = null;
+    entrant.finishPosition = finishPosition;
+    entrant.eliminatedAt = now();
+  });
+
+  const winnerSeatContext = getEntrantSeatContext(games, resolvedWinner);
+  if (!winnerSeatContext) return;
+
+  const winnerEndedAt = now();
+  resolvedWinner.status = "winner";
+  resolvedWinner.finishPosition = 1;
+  resolvedWinner.tableId = winnerSeatContext.game.id;
   tournament.status = "finished";
-  tournament.endedAt = now();
+  tournament.endedAt = winnerEndedAt;
 
   for (const table of tournament.tables) {
     table.closedAt = tournament.endedAt;
@@ -668,10 +780,10 @@ function finishTournament(tournament, games, ensureTableTick, now) {
     applyTournamentStateToTable(tournament, game);
     if (
       game.tournament &&
-      winner.tableId === table.tableId &&
-      winner.seatIndex !== null
+      resolvedWinner.tableId === table.tableId &&
+      resolvedWinner.seatIndex !== null
     ) {
-      game.tournament.winner = winner.seatIndex;
+      game.tournament.winner = resolvedWinner.seatIndex;
     }
     game.countdown = null;
     ensureTableTick(game);
@@ -975,7 +1087,7 @@ export function createMttManager({
       entrant.name = occupiedSeat.player.name || entrant.name;
       entrant.handsPlayed = occupiedSeat.handsPlayed;
 
-      if (occupiedSeat.stack > 0) {
+      if (occupiedSeat.stack > 0 && !occupiedSeat.sittingOut) {
         occupiedSeat.bustedPosition = null;
         entrant.status = "seated";
         entrant.stack = occupiedSeat.stack;
@@ -1002,6 +1114,9 @@ export function createMttManager({
       .forEach(({ seat, entrant }, index) => {
         const finishPosition = activeBefore - index;
         seat.bustedPosition = finishPosition;
+        seat.stack = 0;
+        seat.bet = 0;
+        seat.sittingOut = true;
         entrant.status = "eliminated";
         entrant.stack = 0;
         entrant.tableId = null;
@@ -1191,9 +1306,15 @@ export function createMttManager({
       markBustedEntrants(bustedEntrants, activeBefore);
       maybeStartPendingBreak(tournament, changedTableIds);
 
-      const activeAfter = countActiveEntrants(tournament);
-      if (activeAfter === 1) {
-        finishTournament(tournament, games, ensureTableTick, now);
+      const contenders = getContendingEntrants(tournament, games);
+      if (contenders.length === 1) {
+        finishTournament(
+          tournament,
+          games,
+          ensureTableTick,
+          now,
+          contenders[0],
+        );
         stopTicking(tournament);
         for (const table of tournament.tables) {
           changedTableIds.add(table.tableId);
