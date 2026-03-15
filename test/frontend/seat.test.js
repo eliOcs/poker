@@ -125,7 +125,7 @@ describe("phg-seat", () => {
         pot: 7500,
         currentBet: 5000,
         actingSeat: 0,
-        clockTicks: 15,
+        clockRemaining: 45,
       },
       seats: [
         { ...mockOccupiedSeat, isActing: true },
@@ -142,7 +142,7 @@ describe("phg-seat", () => {
     await seats[0].updateComplete;
     const clock = seats[0].shadowRoot.querySelector(".clock-countdown");
     expect(clock).to.exist;
-    expect(clock.textContent).to.include("15s");
+    expect(clock.textContent).to.include("45s");
     expect(clock.querySelector("svg")).to.exist;
   });
 

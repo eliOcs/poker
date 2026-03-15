@@ -97,6 +97,21 @@ export function isValidBuyin(amount) {
  */
 
 /**
+ * Prize payout structures indexed by minimum player count.
+ * Each entry is [minPlayers, percentages[]].
+ * The last matching entry (where playerCount >= minPlayers) is used.
+ * @type {Array<[number, number[]]>}
+ */
+const PAYOUT_TIERS = [
+  [2, [1.0]],
+  [5, [0.8, 0.2]],
+  [8, [0.7, 0.2, 0.1]],
+  [13, [0.55, 0.25, 0.12, 0.08]],
+  [19, [0.45, 0.25, 0.15, 0.1, 0.05]],
+  [28, [0.38, 0.23, 0.14, 0.09, 0.06, 0.04, 0.03, 0.03]],
+];
+
+/**
  * Calculates prize distribution based on player count and buy-in
  * @param {number} playerCount - Number of players
  * @param {Cents} buyinAmount - Buy-in amount per player in cents
@@ -109,21 +124,17 @@ export function calculatePrizes(playerCount, buyinAmount) {
     return [];
   }
 
-  if (playerCount <= 4) {
-    return [{ position: 1, amount: pool }];
+  let percentages = /** @type {number[]} */ (
+    /** @type {*} */ (PAYOUT_TIERS[0])[1]
+  );
+  for (const [minPlayers, pcts] of PAYOUT_TIERS) {
+    if (playerCount >= minPlayers) {
+      percentages = pcts;
+    }
   }
 
-  if (playerCount <= 7) {
-    return [
-      { position: 1, amount: Math.round(pool * 0.8) },
-      { position: 2, amount: Math.round(pool * 0.2) },
-    ];
-  }
-
-  // 8-9 players
-  return [
-    { position: 1, amount: Math.round(pool * 0.7) },
-    { position: 2, amount: Math.round(pool * 0.2) },
-    { position: 3, amount: Math.round(pool * 0.1) },
-  ];
+  return percentages.map((pct, i) => ({
+    position: i + 1,
+    amount: Math.round(pool * pct),
+  }));
 }

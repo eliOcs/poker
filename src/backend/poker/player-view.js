@@ -1,6 +1,6 @@
 import * as Betting from "./betting.js";
 import { countPlayersWithChips } from "./actions.js";
-import { isClockCallable } from "./game-tick.js";
+import { isClockCallable, CLOCK_DURATION_TICKS } from "./game-tick.js";
 import * as TournamentTick from "./tournament-tick.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
@@ -175,7 +175,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {Cents} currentBet
  * @property {number} actingSeat
  * @property {number} actingTicks - Ticks the current player has been acting
- * @property {number} clockTicks - Ticks since clock was called (0 if not called)
+ * @property {number|null} clockRemaining - Seconds remaining on clock (null if not called)
  * @property {boolean} collectingBets - Whether bets are being collected (animation cue)
  */
 
@@ -787,7 +787,10 @@ export default function playerView(game, player) {
       currentBet: game.hand.currentBet,
       actingSeat: game.hand.actingSeat,
       actingTicks: game.actingTicks,
-      clockTicks: game.clockTicks,
+      clockRemaining:
+        game.clockTicks > 0
+          ? Math.max(0, CLOCK_DURATION_TICKS - game.clockTicks)
+          : null,
       collectingBets: !!game.collectingBets?.active,
     },
     countdown: game.countdown,

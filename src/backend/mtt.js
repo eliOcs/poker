@@ -70,6 +70,7 @@ const TABLE_TICK_INTERVAL_MS = 1000;
  * @property {string|null} tableId
  * @property {number|null} seatIndex
  * @property {number|null} finishPosition
+ * @property {number|null} netWinnings
  *
  * @typedef {object} ManagedTournamentView
  * @property {string} id
@@ -255,6 +256,7 @@ function buildEntrants(tournament) {
       tableId: entrant.tableId,
       seatIndex: entrant.seatIndex,
       finishPosition: entrant.finishPosition,
+      netWinnings: null,
     }));
 }
 
@@ -274,7 +276,7 @@ function getStandingBucket(entrant) {
  * @returns {ManagedTournamentViewEntrant[]}
  */
 function buildStandings(tournament) {
-  return buildEntrants(tournament).sort((a, b) => {
+  const standings = buildEntrants(tournament).sort((a, b) => {
     const bucketCompare = getStandingBucket(a) - getStandingBucket(b);
     if (bucketCompare !== 0) return bucketCompare;
 
@@ -292,6 +294,22 @@ function buildStandings(tournament) {
 
     return a.playerId.localeCompare(b.playerId);
   });
+
+  if (tournament.status !== "registration") {
+    const playerCount = tournament.entrants.size;
+    const prizes = Tournament.calculatePrizes(playerCount, tournament.buyIn);
+    const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
+
+    for (let i = 0; i < standings.length; i++) {
+      const entry = /** @type {ManagedTournamentViewEntrant} */ (standings[i]);
+      if (entry.status === "registered") continue;
+      const position = entry.finishPosition ?? i + 1;
+      const prize = prizeByPosition.get(position) ?? 0;
+      entry.netWinnings = prize - tournament.buyIn;
+    }
+  }
+
+  return standings;
 }
 
 /**

@@ -266,7 +266,7 @@ describe("call the clock", () => {
       assert.strictEqual(hasCallClock, false);
     });
 
-    it("should include clockTicks in hand state for all players", () => {
+    it("should include clockRemaining in hand state for all players", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -284,12 +284,12 @@ describe("call the clock", () => {
       // Simulate clock being started
       game.clockTicks = 1;
 
-      // Both players should see clockTicks in their view
+      // Both players should see clockRemaining in their view
       const view1 = playerView(game, player1);
       const view2 = playerView(game, player2);
 
-      assert.strictEqual(view1.hand.clockTicks, 1);
-      assert.strictEqual(view2.hand.clockTicks, 1);
+      assert.strictEqual(view1.hand.clockRemaining, 59);
+      assert.strictEqual(view2.hand.clockRemaining, 59);
     });
 
     it("should include actingTicks in hand state for all players", () => {

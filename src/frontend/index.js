@@ -293,7 +293,8 @@ class Game extends LitElement {
 
   _checkTurnSounds(prev, curr) {
     if (curr.actingSeat !== prev.actingSeat) Audio.playTurnSound();
-    if (!prev.clockTicks && curr.clockTicks) Audio.playClockSound();
+    if (prev.clockRemaining == null && curr.clockRemaining != null)
+      Audio.playClockSound();
   }
 
   willUpdate(changedProperties) {
@@ -512,9 +513,9 @@ class Game extends LitElement {
                     .showSitAction=${!isSeated}
                     .buyIn=${this.game.tournament?.buyIn ?? 0}
                     .hideBet=${!!this.game.hand?.collectingBets}
-                    .clockTicks=${this.game.hand?.actingSeat === i
-                      ? this.game.hand?.clockTicks
-                      : 0}
+                    .clockRemaining=${this.game.hand?.actingSeat === i
+                      ? this.game.hand?.clockRemaining
+                      : null}
                     @seat-action=${this.handleSeatAction}
                   ></phg-seat>`,
             )}

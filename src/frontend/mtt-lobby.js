@@ -11,7 +11,14 @@ import {
   getTablePath,
   getTableHistoryPath,
 } from "../shared/routes.js";
+import { calculatePrizes } from "../shared/tournament.js";
 import "./button.js";
+
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
 
 class MttLobby extends LitElement {
   static get styles() {
@@ -343,6 +350,22 @@ class MttLobby extends LitElement {
     return status;
   }
 
+  _formatNetWinnings(cents) {
+    const prefix = cents > 0 ? "+" : "";
+    return `${prefix}${formatCurrency(cents)}`;
+  }
+
+  _formatPayoutTier(tournament) {
+    const prizes = calculatePrizes(
+      tournament.entrants.length,
+      tournament.buyIn,
+    );
+    if (prizes.length === 0) return "—";
+    return prizes
+      .map((p) => `${ordinal(p.position)}: ${formatCurrency(p.amount)}`)
+      .join(", ");
+  }
+
   _formatLevel(tournament) {
     if (!tournament) return "Level 1";
     if (tournament.onBreak) {
@@ -606,6 +629,7 @@ class MttLobby extends LitElement {
               <th>Stack</th>
               <th>Table</th>
               <th>Finish</th>
+              <th>Net</th>
             </tr>
           </thead>
           <tbody>
@@ -621,6 +645,11 @@ class MttLobby extends LitElement {
                       : "—"}
                   </td>
                   <td>${entrant.finishPosition ?? "—"}</td>
+                  <td>
+                    ${entrant.netWinnings != null
+                      ? this._formatNetWinnings(entrant.netWinnings)
+                      : "—"}
+                  </td>
                 </tr>
               `,
             )}
@@ -681,6 +710,12 @@ class MttLobby extends LitElement {
                     <div class="label">Players</div>
                     <div class="value">
                       ${tournament.entrants.length} entrants
+                    </div>
+                  </article>
+                  <article class="stat">
+                    <div class="label">Payouts</div>
+                    <div class="value">
+                      ${this._formatPayoutTier(tournament)}
                     </div>
                   </article>
                 </section>

@@ -154,7 +154,7 @@ export const SPECIAL_GAME_TEST_CASES = {
           currentBet: 100,
           actingSeat: 1,
           actingTicks: 75,
-          clockTicks: 15,
+          clockRemaining: 45,
         },
         board: { cards: ["Jh", "Td", "5c"] },
         seats: [

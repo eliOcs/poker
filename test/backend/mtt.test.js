@@ -173,7 +173,6 @@ describe("mtt-manager", () => {
     assert.equal(tournament.onBreak, true);
   });
 
-  // eslint-disable-next-line complexity
   it("breaks small tables, moves players deterministically, and detects the winner", () => {
     const tournamentId = manager.createTournament({
       owner: createUser("owner", "Owner"),

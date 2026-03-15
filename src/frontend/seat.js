@@ -28,7 +28,7 @@ class Seat extends LitElement {
       seatNumber: { type: Number },
       isButton: { type: Boolean },
       showSitAction: { type: Boolean },
-      clockTicks: { type: Number },
+      clockRemaining: { type: Number },
       buyIn: { type: Number },
       hideBet: { type: Boolean },
       noAnimation: { type: Boolean },
@@ -42,7 +42,7 @@ class Seat extends LitElement {
     this.isButton = false;
     this.noAnimation = false;
     this.showSitAction = true;
-    this.clockTicks = 0;
+    this.clockRemaining = null;
     this.buyIn = 0;
     this.hideBet = false;
     this._activeEmote = null;
@@ -55,13 +55,6 @@ class Seat extends LitElement {
     super.disconnectedCallback();
     clearTimeout(this._emoteTimer);
     clearTimeout(this._chatTimer);
-  }
-
-  get _clockRemaining() {
-    if (this.clockTicks > 0) {
-      return Math.max(0, 30 - this.clockTicks);
-    }
-    return null;
   }
 
   /** @type {[string, SeatClassCondition][]} */
@@ -182,14 +175,14 @@ class Seat extends LitElement {
   }
 
   _renderClock() {
-    return this._clockRemaining !== null
+    return this.clockRemaining !== null
       ? html`<div
-          class="clock-countdown ${this._clockRemaining <= 10 ? "urgent" : ""}"
+          class="clock-countdown ${this.clockRemaining <= 10 ? "urgent" : ""}"
         >
           <span class="clock-countdown-icon" aria-hidden="true"
             >${ICONS.clock}</span
           >
-          <span>${this._clockRemaining}s</span>
+          <span>${this.clockRemaining}s</span>
         </div>`
       : "";
   }
