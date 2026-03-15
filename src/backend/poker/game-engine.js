@@ -78,16 +78,17 @@ export function startGameTick(game, onBroadcast) {
     const result = tick(game);
 
     const timerLog = createLog("timer_action");
-    Object.assign(timerLog.context, {
-      game: {
-        id: game.id,
-        ...Object.fromEntries(
-          Object.entries(result).filter(
-            ([, value]) => value !== false && value !== null,
-          ),
+    /** @type {Record<string, unknown>} */
+    const gameContext = {
+      tableId: game.id,
+      ...Object.fromEntries(
+        Object.entries(result).filter(
+          ([, value]) => value !== false && value !== null,
         ),
-      },
-    });
+      ),
+    };
+    if (game.tournamentId) gameContext.tournamentId = game.tournamentId;
+    Object.assign(timerLog.context, { game: gameContext });
 
     if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));
     if (result.autoActionSeat !== null) {

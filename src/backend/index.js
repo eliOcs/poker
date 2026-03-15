@@ -103,7 +103,7 @@ function broadcastGameMessage(message) {
         .catch((err) => {
           logger.error("hand finalization failed", {
             err,
-            game: { id: message.gameId },
+            game: { tableId: message.gameId },
           });
         });
     }
@@ -164,7 +164,7 @@ async function resolveGameForUpgrade(user, gameId) {
 
   const recoveredGame = await recoverGameFromHistory(gameId).catch((err) => {
     logger.error("game recovery failed", {
-      game: { id: gameId },
+      game: { tableId: gameId },
       error: { message: err.message },
     });
     return null;

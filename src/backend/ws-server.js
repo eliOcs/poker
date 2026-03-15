@@ -32,12 +32,15 @@ import { matchLiveRoute } from "../shared/routes.js";
 
 /**
  * @param {Log} log
- * @param {string} gameId
+ * @param {Game} game
  * @param {UserType} user
  */
-function assignWsSessionContext(log, gameId, user) {
+function assignWsSessionContext(log, game, user) {
+  /** @type {{ tableId: string, tournamentId?: string }} */
+  const gameContext = { tableId: game.id };
+  if (game.tournamentId) gameContext.tournamentId = game.tournamentId;
   Object.assign(log.context, {
-    game: { id: gameId },
+    game: gameContext,
     ...getSessionPlayerLogContext(user),
   });
 }
@@ -238,7 +241,7 @@ async function handleUpgrade(request, socket, head, params) {
     logger.warn("ws upgrade rejected", {
       request: { url: request.url },
       session: { hasPlayer: !!user },
-      game: { id: gameId ?? null, found: !!game },
+      game: { tableId: gameId ?? null, found: !!game },
       tournament: {
         id: tournamentId ?? null,
         found: !!initialTournamentPayload,
@@ -359,7 +362,7 @@ function createMessageHandler({
     }
 
     const log = createLog("ws_action");
-    assignWsSessionContext(log, gameId, user);
+    assignWsSessionContext(log, game, user);
 
     try {
       const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
@@ -473,8 +476,7 @@ function createConnectionHandler({
       tournamentId,
     });
     logger.info("ws connected", {
-      game: { id: gameId },
-      tournament: { id: tournamentId },
+      game: { tableId: gameId, ...(tournamentId && { tournamentId }) },
       ...getSessionPlayerLogContext(user),
     });
 
@@ -499,8 +501,10 @@ function createConnectionHandler({
       if (!conn) return;
 
       logger.info("ws disconnected", {
-        game: { id: conn.gameId },
-        tournament: { id: conn.tournamentId },
+        game: {
+          tableId: conn.gameId,
+          ...(conn.tournamentId && { tournamentId: conn.tournamentId }),
+        },
         ...getSessionPlayerLogContext(conn.user),
       });
 

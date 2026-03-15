@@ -516,7 +516,7 @@ async function readHandsFromFile(gameId) {
       }
     } catch (err) {
       logger.warn("invalid hand history entry ignored during recovery", {
-        game: { id: gameId },
+        game: { tableId: gameId },
         recovery: { entryIndex: i },
         error: { message: err.message },
       });
