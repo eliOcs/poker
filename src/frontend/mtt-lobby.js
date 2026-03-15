@@ -225,6 +225,14 @@ class MttLobby extends LitElement {
           color: var(--color-fg-medium);
         }
 
+        .positive {
+          color: var(--color-success);
+        }
+
+        .negative {
+          color: var(--color-error);
+        }
+
         td strong {
           color: var(--color-fg-white);
         }
@@ -530,13 +538,7 @@ class MttLobby extends LitElement {
               <div class="table-meta">
                 <span>Players: ${table.playerCount}</span>
                 <span>Hand: #${table.handNumber || 0}</span>
-                <span>
-                  ${table.closed
-                    ? "Closed"
-                    : table.waiting
-                      ? "Waiting between hands"
-                      : "Hand in progress"}
-                </span>
+                ${table.closed ? html`<span>Closed</span>` : ""}
               </div>
               <div class="table-actions">
                 ${table.closed
@@ -645,7 +647,13 @@ class MttLobby extends LitElement {
                       : "—"}
                   </td>
                   <td>${entrant.finishPosition ?? "—"}</td>
-                  <td>
+                  <td
+                    class=${entrant.netWinnings > 0
+                      ? "positive"
+                      : entrant.netWinnings < 0
+                        ? "negative"
+                        : ""}
+                  >
                     ${entrant.netWinnings != null
                       ? this._formatNetWinnings(entrant.netWinnings)
                       : "—"}

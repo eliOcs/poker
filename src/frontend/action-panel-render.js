@@ -492,9 +492,9 @@ export function renderActionPanel(panel) {
   if (tournamentResult) return tournamentResult;
 
   if (!panel.actions || panel.actions.length === 0) {
-    return panel.seatedCount < 2
-      ? renderWaitingForPlayers(panel)
-      : html`<span class="waiting">Waiting for your turn...</span>`;
+    if (panel.seatedCount < 2) return renderWaitingForPlayers(panel);
+    if (panel.seatIndex === -1) return html``;
+    return html`<span class="waiting">Waiting for your turn...</span>`;
   }
 
   return renderForActionMap(panel, buildActionMap(panel.actions));
