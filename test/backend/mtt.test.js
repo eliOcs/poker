@@ -369,6 +369,7 @@ describe("mtt-manager", () => {
 
     // Table A (the smaller/break candidate) cannot collapse into table B
     // because table B has pending history — no valid destination
+    assert.equal(tournament.pendingCollapse, true);
     assert.equal(tournament.tables[0].closedAt, null);
     assert.equal(tournament.tables[1].closedAt, null);
     assert.equal(countActivePlayers(tableA), 1);
@@ -380,8 +381,72 @@ describe("mtt-manager", () => {
     // Now a tick should retry and collapse table A into table B
     manager.tickTournament(tournamentId);
 
+    assert.equal(tournament.pendingCollapse, false);
     assert.ok(tournament.tables[0].closedAt);
     assert.equal(countActivePlayers(tableA), 0);
     assert.equal(countActivePlayers(tableB), 2);
+  });
+
+  it("suppresses countdowns on waiting tables until pending collapse completes", () => {
+    // 6-max with 7 players → 2 tables (4 + 3). Bust 2 from table A → 5 left
+    // → fits on 1 table (ceil(5/6) = 1). Table B mid-hand blocks collapse.
+    // Table A (now 2 players, both waiting) must NOT start a new hand.
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 7; i++) {
+      manager.registerPlayer(tournamentId, createUser(`p${i}`, `Player ${i}`));
+    }
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    assert.equal(tournament.tables.length, 2);
+
+    const tableA = games.get(tournament.tables[0].tableId);
+    const tableB = games.get(tournament.tables[1].tableId);
+    assert.ok(tableA);
+    assert.ok(tableB);
+    const tableAPlayers = countActivePlayers(tableA);
+    const tableBPlayers = countActivePlayers(tableB);
+    assert.equal(tableAPlayers + tableBPlayers, 7);
+
+    // Bust 2 players on table A so remaining 5 fit on one 6-max table
+    let busted = 0;
+    for (const seat of tableA.seats) {
+      if (!seat.empty && seat.player.id !== "owner" && busted < 2) {
+        seat.stack = 0;
+        seat.sittingOut = true;
+        busted++;
+      }
+    }
+    assert.equal(busted, 2);
+    assert.ok(countActivePlayers(tableA) >= 2, "table A still has 2+ players");
+
+    // Table B is mid-hand — collapse is blocked
+    tableB.hand.phase = "flop";
+    manager.handleHandFinalized(tableA);
+
+    assert.equal(tournament.pendingCollapse, true);
+    // Table A is waiting with >= 2 active players — countdown must be
+    // suppressed so it doesn't start a new hand while collapse is pending
+    assert.equal(tableA.countdown, null);
+    assert.equal(tournament.tables[0].closedAt, null);
+    assert.equal(tournament.tables[1].closedAt, null);
+
+    // Table B finishes its hand
+    tableB.hand.phase = "waiting";
+    manager.handleHandFinalized(tableB);
+
+    // Now the collapse should have completed
+    assert.equal(tournament.pendingCollapse, false);
+    // One table should be closed, the other should have all remaining players
+    const closedCount = tournament.tables.filter((t) => t.closedAt).length;
+    assert.equal(closedCount, 1);
+    const totalRemaining =
+      countActivePlayers(tableA) + countActivePlayers(tableB);
+    assert.equal(totalRemaining, 5);
   });
 });

@@ -43,6 +43,7 @@ import { tickClock } from "./poker/tournament-clock.js";
  * @property {number} levelTicks
  * @property {boolean} onBreak
  * @property {boolean} pendingBreak
+ * @property {boolean} pendingCollapse
  * @property {number} breakTicks
  * @property {string} createdAt
  * @property {string|null} startedAt
@@ -551,7 +552,7 @@ function syncWaitingTableState(tournament, game, ensureTableTick) {
     return;
   }
 
-  if (tournament.onBreak) {
+  if (tournament.onBreak || tournament.pendingCollapse) {
     game.countdown = null;
   } else if (countActivePlayers(game) >= 2 && game.countdown === null) {
     game.countdown = 5;
@@ -626,6 +627,7 @@ function collapseExtraTables(tournament, games, changedTables, now) {
     );
 
     if (activeTables.length <= targetTableCount) {
+      tournament.pendingCollapse = false;
       return;
     }
 
@@ -633,6 +635,7 @@ function collapseExtraTables(tournament, games, changedTables, now) {
       isTableWaiting(entry.game),
     );
     if (!breakCandidate) {
+      tournament.pendingCollapse = true;
       break;
     }
 
@@ -646,6 +649,7 @@ function collapseExtraTables(tournament, games, changedTables, now) {
       breakCandidate.game,
     ).sort((a, b) => b - a);
 
+    let blocked = false;
     for (const seatIndex of activeSeats) {
       const destination = sortBySmallestTable(
         destinationTables
@@ -656,11 +660,16 @@ function collapseExtraTables(tournament, games, changedTables, now) {
           .filter((entry) => isTableWaiting(entry.game)),
       )[0];
       if (!destination) {
-        return;
+        tournament.pendingCollapse = true;
+        blocked = true;
+        break;
       }
       movePlayer(tournament, breakCandidate.game, seatIndex, destination.game);
       changedTables.add(breakCandidate.game.id);
       changedTables.add(destination.game.id);
+    }
+    if (blocked) {
+      return;
     }
 
     breakCandidate.table.closedAt = now();
@@ -1130,6 +1139,7 @@ export function createMttManager({
         levelTicks: 0,
         onBreak: false,
         pendingBreak: false,
+        pendingCollapse: false,
         breakTicks: 0,
         createdAt,
         startedAt: null,
