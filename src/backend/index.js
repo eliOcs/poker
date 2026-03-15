@@ -69,12 +69,6 @@ function broadcastGameMessage(message) {
           );
       handPromise
         .then((hand) => {
-          Store.recordPlayerGames(
-            hand.players.map((player) => ({
-              playerId: player.id,
-              gameId: message.gameId,
-            })),
-          );
           Store.recordPlayerTableActivity(
             hand.players.map((player) => ({
               playerId: player.id,

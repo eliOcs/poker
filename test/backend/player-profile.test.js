@@ -57,9 +57,6 @@ function createHand(gameId, handNumber, potAmount, actions, playerWins) {
  * @param {string} gameId
  */
 function recordHandPlayers(hand, gameId) {
-  Store.recordPlayerGames(
-    hand.players.map((player) => ({ playerId: player.id, gameId })),
-  );
   Store.recordPlayerTableActivity(
     hand.players.map((player) => ({
       playerId: player.id,
@@ -558,8 +555,6 @@ describe("player-profile", function () {
       seatCount: 6,
       tableName: "Table 2",
     });
-    Store.recordPlayerGames([{ playerId: "player1", gameId: "mtttable1" }]);
-    Store.recordPlayerGames([{ playerId: "player1", gameId: "mtttable2" }]);
     Store.recordPlayerTableActivity([
       {
         playerId: "player1",

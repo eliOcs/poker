@@ -10,8 +10,8 @@ async function waitForHandHistoryFlush() {
   for (let i = 0; i < 200; i += 1) {
     if (
       HandHistory.getCacheSize() === 1 &&
-      Store.listPlayerGameIds("player1").length === 1 &&
-      Store.listPlayerGameIds("player2").length === 1
+      Store.listPlayerTables("player1").length === 1 &&
+      Store.listPlayerTables("player2").length === 1
     ) {
       return;
     }
@@ -82,10 +82,13 @@ describe("game history timing", () => {
         handData.potResults,
         handData.handNumber,
       ).then((hand) => {
-        Store.recordPlayerGames(
+        Store.recordPlayerTableActivity(
           hand.players.map((player) => ({
             playerId: player.id,
-            gameId: game.id,
+            tableId: game.id,
+            tournamentId: null,
+            lastHandNumber: handData.handNumber,
+            lastPlayedAt: hand.start_date_utc,
           })),
         );
       });
@@ -95,8 +98,10 @@ describe("game history timing", () => {
     assert.strictEqual(game.pendingHandHistory, null);
     assert.strictEqual(game.handNumber, 2);
     assert.strictEqual(HandHistory.getCacheSize(), 1);
-    assert.deepStrictEqual(Store.listPlayerGameIds("player1"), [game.id]);
-    assert.deepStrictEqual(Store.listPlayerGameIds("player2"), [game.id]);
+    assert.strictEqual(Store.listPlayerTables("player1").length, 1);
+    assert.strictEqual(Store.listPlayerTables("player1")[0].tableId, game.id);
+    assert.strictEqual(Store.listPlayerTables("player2").length, 1);
+    assert.strictEqual(Store.listPlayerTables("player2")[0].tableId, game.id);
 
     const savedHand = await HandHistory.getHand(game.id, 1);
     assert.ok(savedHand);

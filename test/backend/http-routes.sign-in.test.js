@@ -227,7 +227,15 @@ describe("http-routes sign in", () => {
     )?.[1];
     assert.ok(guestUserId);
 
-    Store.recordPlayerGames([{ playerId: guestUserId, gameId: "test-game" }]);
+    Store.recordPlayerTableActivity([
+      {
+        playerId: guestUserId,
+        tableId: "test-game",
+        tournamentId: null,
+        lastHandNumber: 1,
+        lastPlayedAt: new Date().toISOString(),
+      },
+    ]);
     const game = PokerGame.create({ seats: 2 });
     game.id = "test-game";
     game.seats[0] = Seat.occupied({ id: guestUserId, name: "Guest" }, 5000);
@@ -266,10 +274,10 @@ describe("http-routes sign in", () => {
     assert.equal(Store.loadUser(guestUserId), null);
     assert.equal(users[guestUserId], undefined);
     assert.equal(users["registered-user"]?.id, "registered-user");
-    assert.deepStrictEqual(Store.listPlayerGameIds("registered-user"), [
-      "test-game",
-    ]);
-    assert.deepStrictEqual(Store.listPlayerGameIds(guestUserId), []);
+    const registeredTables = Store.listPlayerTables("registered-user");
+    assert.strictEqual(registeredTables.length, 1);
+    assert.strictEqual(registeredTables[0].tableId, "test-game");
+    assert.deepStrictEqual(Store.listPlayerTables(guestUserId), []);
     assert.equal(game.seats[0].empty, false);
     if (!game.seats[0].empty) {
       assert.equal(game.seats[0].player.id, "registered-user");
@@ -379,12 +387,19 @@ describe("http-routes sign in", () => {
     )?.[1];
     assert.ok(guestUserId);
 
-    Store.recordPlayerGames([
-      { playerId: guestUserId, gameId: "history-game" },
+    Store.recordPlayerTableActivity([
+      {
+        playerId: guestUserId,
+        tableId: "history-game",
+        tournamentId: null,
+        lastHandNumber: 1,
+        lastPlayedAt: new Date().toISOString(),
+      },
     ]);
 
-    const originalHistory = await Store.listPlayerGameIds(guestUserId);
-    assert.deepStrictEqual(originalHistory, ["history-game"]);
+    const originalTables = Store.listPlayerTables(guestUserId);
+    assert.strictEqual(originalTables.length, 1);
+    assert.strictEqual(originalTables[0].tableId, "history-game");
 
     const originalFile = await readFile(
       `${testDataDir}/history-game.ohh`,

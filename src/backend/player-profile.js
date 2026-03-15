@@ -289,20 +289,7 @@ function calculateTournamentSummaryNetResult(summary, playerId) {
  * @returns {Store.PlayerTableLink[]}
  */
 function listPlayerHistoryTables(playerId) {
-  const tableLinks = Store.listPlayerTables(playerId);
-  const tableIds = new Set(tableLinks.map((link) => link.tableId));
-
-  for (const gameId of Store.listPlayerGameIds(playerId)) {
-    if (tableIds.has(gameId)) continue;
-    tableLinks.push({
-      tableId: gameId,
-      tournamentId: null,
-      lastHandNumber: 0,
-      lastPlayedAt: new Date(0).toISOString(),
-    });
-  }
-
-  return tableLinks;
+  return Store.listPlayerTables(playerId);
 }
 
 /**

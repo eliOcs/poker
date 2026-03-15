@@ -3,10 +3,7 @@ import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
 import { DEFAULT_SETTINGS } from "./user.js";
-import {
-  backfillPlayerGamesFromHistory,
-  backfillPlayerTableLinksFromHistory,
-} from "./store-history-backfill.js";
+import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -15,7 +12,6 @@ import {
  * @typedef {"cash"|"sitngo"|"mtt"} TableKind
  * @typedef {{ id: Id, name?: string|null, email?: string|null, settings?: UserSettings }} SaveUserInput
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
- * @typedef {{ playerId: Id, gameId: Id }} PlayerGameInput
  * @typedef {{ id: Id, kind: TableKind, tournamentId?: Id|null, seatCount: number, tableName?: string|null, createdAt?: string|null, closedAt?: string|null }} SaveTableInput
  * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
@@ -163,28 +159,6 @@ export function loadUserProfile(id) {
   };
 }
 
-/**
- * Records that players have participated in games.
- * Safe to call repeatedly for the same pairs.
- * @param {PlayerGameInput[]} entries
- */
-export function recordPlayerGames(entries) {
-  if (!db) throw new Error("Store not initialized");
-
-  const validEntries = entries.filter(
-    (entry) => entry.playerId && entry.gameId,
-  );
-  if (validEntries.length === 0) return;
-
-  const placeholders = validEntries.map(() => "(?, ?)").join(", ");
-  const stmt = db.prepare(`
-    INSERT INTO player_games (player_id, game_id)
-    VALUES ${placeholders}
-    ON CONFLICT(player_id, game_id) DO NOTHING
-  `);
-  stmt.run(...validEntries.flatMap((entry) => [entry.playerId, entry.gameId]));
-}
-
 /** @param {SaveTableInput} table */
 export function saveTable(table) {
   if (!db) throw new Error("Store not initialized");
@@ -294,24 +268,6 @@ export function recordPlayerTournamentActivity(entries) {
 
 /**
  * @param {Id} playerId
- * @returns {Id[]}
- */
-export function listPlayerGameIds(playerId) {
-  if (!db) throw new Error("Store not initialized");
-  if (!playerId) return [];
-
-  const stmt = db.prepare(`
-    SELECT game_id
-    FROM player_games
-    WHERE player_id = ?
-    ORDER BY created_at ASC, game_id ASC
-  `);
-
-  return stmt.all(playerId).map((row) => /** @type {Id} */ (row.game_id));
-}
-
-/**
- * @param {Id} playerId
  * @returns {PlayerTableLink[]}
  */
 export function listPlayerTables(playerId) {
@@ -416,23 +372,11 @@ export function loadTable(tableId) {
  * @param {Id} fromPlayerId
  * @param {Id} toPlayerId
  */
-export function migratePlayerGames(fromPlayerId, toPlayerId) {
+export function migratePlayerData(fromPlayerId, toPlayerId) {
   if (!db) throw new Error("Store not initialized");
   if (fromPlayerId === toPlayerId) {
-    throw new Error("Cannot migrate player games to the same player id");
+    throw new Error("Cannot migrate player data to the same player id");
   }
-
-  const insertStmt = db.prepare(`
-    INSERT INTO player_games (player_id, game_id)
-    SELECT ?, game_id
-    FROM player_games
-    WHERE player_id = ?
-    ON CONFLICT(player_id, game_id) DO NOTHING
-  `);
-  insertStmt.run(toPlayerId, fromPlayerId);
-
-  const deleteStmt = db.prepare("DELETE FROM player_games WHERE player_id = ?");
-  deleteStmt.run(fromPlayerId);
 
   const playerTableRows = /** @type {PlayerTableLink[]} */ (
     db
@@ -627,18 +571,6 @@ function ensureStoreTables() {
   `);
 
   database.exec(`
-    CREATE TABLE IF NOT EXISTS player_games (
-      player_id TEXT NOT NULL,
-      game_id TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      PRIMARY KEY (player_id, game_id)
-    )
-  `);
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_player_games_player_id ON player_games (player_id)",
-  );
-
-  database.exec(`
     CREATE TABLE IF NOT EXISTS tables (
       id TEXT PRIMARY KEY,
       kind TEXT NOT NULL,
@@ -691,9 +623,6 @@ function ensureStoreTables() {
 function runHistoryBackfills(isInMemory) {
   if (isInMemory) return;
 
-  runBackfill("player_games_backfilled_at", () => {
-    backfillPlayerGamesFromHistory(getDataDir(), recordPlayerGames);
-  });
   runBackfill("player_table_links_backfilled_at", () => {
     backfillPlayerTableLinksFromHistory(
       getDataDir(),

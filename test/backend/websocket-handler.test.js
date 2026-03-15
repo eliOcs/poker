@@ -253,16 +253,10 @@ describe("websocket-handler", () => {
       const handData = processPokerAction(game, player, "sitOut", { seat: 0 });
       let historyEvent = null;
       if (handData) {
-        const hand = await HandHistory.finalizeHand(
+        await HandHistory.finalizeHand(
           game,
           handData.potResults,
           handData.handNumber,
-        );
-        Store.recordPlayerGames(
-          hand.players.map((p) => ({
-            playerId: p.id,
-            gameId: game.id,
-          })),
         );
         historyEvent = { gameId: game.id, handNumber: handData.handNumber };
       }

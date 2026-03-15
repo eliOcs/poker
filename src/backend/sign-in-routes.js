@@ -159,11 +159,13 @@ async function completeSignIn(
     Store.saveUser(mergedUser);
     users[mergedUser.id] = mergedUser;
 
-    const guestGameIds = Store.listPlayerGameIds(signIn.userId);
-    for (const gameId of guestGameIds) {
-      await rewritePlayerIdInHandHistory(gameId, signIn.userId, mergedUser.id);
+    const guestTableIds = Store.listPlayerTables(signIn.userId).map(
+      (link) => link.tableId,
+    );
+    for (const tableId of guestTableIds) {
+      await rewritePlayerIdInHandHistory(tableId, signIn.userId, mergedUser.id);
     }
-    Store.migratePlayerGames(signIn.userId, mergedUser.id);
+    Store.migratePlayerData(signIn.userId, mergedUser.id);
     migrateGuestSessionToRegisteredUser(
       games,
       clientConnections,

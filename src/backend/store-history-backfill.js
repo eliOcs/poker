@@ -7,27 +7,9 @@ const EPOCH_ISO = new Date(0).toISOString();
  * @typedef {import('./id.js').Id} Id
  * @typedef {"cash"|"sitngo"|"mtt"} TableKind
  * @typedef {{ id: Id, kind: TableKind, tournamentId: Id|null, seatCount: number, tableName: string|null, createdAt: string|null }} BackfilledTable
- * @typedef {{ playerId: Id, gameId: Id }} PlayerGameInput
  * @typedef {{ playerId: Id, tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
  */
-
-/**
- * @param {string} dataDir
- * @param {(entries: PlayerGameInput[]) => void} recordPlayerGames
- */
-export function backfillPlayerGamesFromHistory(dataDir, recordPlayerGames) {
-  for (const file of listHistoryFiles(dataDir)) {
-    try {
-      recordPlayerGames(readPlayerGamesFromHistoryFile(dataDir, file));
-    } catch (error) {
-      logger.warn("player game backfill skipped invalid history file", {
-        file,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-}
 
 /**
  * @param {string} dataDir
@@ -157,42 +139,6 @@ function createPlayerTableEntries(hand, tableId) {
     lastHandNumber,
     lastPlayedAt,
   }));
-}
-
-/**
- * @param {string} dataDir
- * @param {string} file
- * @returns {PlayerGameInput[]}
- */
-function readPlayerGamesFromHistoryFile(dataDir, file) {
-  const gameId = /** @type {Id} */ (file.slice(0, -4));
-  const content = readFileSync(`${dataDir}/${file}`, "utf8");
-  const lines = content.split("\n\n").filter(Boolean);
-  /** @type {PlayerGameInput[]} */
-  const entries = [];
-
-  for (const line of lines) {
-    entries.push(...readPlayerGamesFromHistoryLine(line, gameId));
-  }
-
-  return entries;
-}
-
-/**
- * @param {string} line
- * @param {Id} gameId
- * @returns {PlayerGameInput[]}
- */
-function readPlayerGamesFromHistoryLine(line, gameId) {
-  const hand = JSON.parse(line).ohh;
-  if (!Array.isArray(hand?.players)) return [];
-
-  return hand.players
-    .filter((player) => player?.id)
-    .map((player) => ({
-      playerId: /** @type {Id} */ (player.id),
-      gameId,
-    }));
 }
 
 /**

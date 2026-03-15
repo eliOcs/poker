@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "assert";
-import { rm, writeFile } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { existsSync, mkdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import * as Store from "../../src/backend/store.js";
@@ -61,58 +61,6 @@ describe("store", function () {
       assert.ok(profile);
       assert.match(profile.createdAt, /^\d{4}-\d{2}-\d{2} /);
       assert.match(profile.updatedAt, /^\d{4}-\d{2}-\d{2} /);
-    });
-
-    it("backfills player_games from existing hand histories when migration has not run yet", async function () {
-      mkdirSync(testDataDir, { recursive: true });
-      const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
-      legacyDb.exec(`
-        CREATE TABLE users (
-          id TEXT PRIMARY KEY,
-          name TEXT,
-          created_at TEXT,
-          updated_at TEXT
-        );
-      `);
-      legacyDb.exec(`
-        CREATE TABLE player_games (
-          player_id TEXT NOT NULL,
-          game_id TEXT NOT NULL,
-          created_at TEXT NOT NULL DEFAULT (datetime('now')),
-          PRIMARY KEY (player_id, game_id)
-        );
-      `);
-      legacyDb.close();
-
-      await writeFile(
-        `${testDataDir}/gameabc.ohh`,
-        `${JSON.stringify({
-          ohh: {
-            spec_version: "1.4.6",
-            site_name: "Pluton Poker",
-            game_number: "gameabc-1",
-            start_date_utc: "2026-03-07T12:00:00.000Z",
-            game_type: "Hold'em",
-            bet_limit: { bet_type: "NL" },
-            table_size: 6,
-            dealer_seat: 1,
-            small_blind_amount: 0.25,
-            big_blind_amount: 0.5,
-            ante_amount: 0,
-            players: [
-              { id: "p1", seat: 1, name: "Alice", starting_stack: 10 },
-              { id: "p2", seat: 2, name: "Bob", starting_stack: 10 },
-            ],
-            rounds: [],
-            pots: [],
-          },
-        })}\n\n`,
-      );
-
-      Store.initialize();
-
-      assert.deepStrictEqual(Store.listPlayerGameIds("p1"), ["gameabc"]);
-      assert.deepStrictEqual(Store.listPlayerGameIds("p2"), ["gameabc"]);
     });
   });
 
@@ -272,49 +220,40 @@ describe("store", function () {
     });
   });
 
-  describe("player game index", function () {
-    it("records and lists unique game ids for a player", function () {
+  describe("player data migration", function () {
+    it("migrates player table and tournament links between users", function () {
       Store.initialize();
 
-      Store.recordPlayerGames([
-        { playerId: "u1", gameId: "g1" },
-        { playerId: "u1", gameId: "g2" },
-        { playerId: "u1", gameId: "g1" },
-        { playerId: "u2", gameId: "g3" },
+      Store.recordPlayerTableActivity([
+        {
+          playerId: "guest",
+          tableId: "t1",
+          tournamentId: null,
+          lastHandNumber: 1,
+          lastPlayedAt: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          playerId: "guest",
+          tableId: "t2",
+          tournamentId: null,
+          lastHandNumber: 2,
+          lastPlayedAt: "2026-01-02T00:00:00.000Z",
+        },
       ]);
 
-      assert.deepStrictEqual(Store.listPlayerGameIds("u1"), ["g1", "g2"]);
-      assert.deepStrictEqual(Store.listPlayerGameIds("u2"), ["g3"]);
+      Store.migratePlayerData("guest", "registered");
+
+      assert.deepStrictEqual(Store.listPlayerTables("guest"), []);
+      const tables = Store.listPlayerTables("registered");
+      assert.strictEqual(tables.length, 2);
+      assert.deepStrictEqual(tables.map((t) => t.tableId).sort(), ["t1", "t2"]);
     });
 
-    it("returns empty list for unknown player", function () {
-      Store.initialize();
-      assert.deepStrictEqual(Store.listPlayerGameIds("missing"), []);
-    });
-
-    it("migrates player game ids between users", function () {
-      Store.initialize();
-
-      Store.recordPlayerGames([
-        { playerId: "guest", gameId: "g1" },
-        { playerId: "guest", gameId: "g2" },
-        { playerId: "registered", gameId: "g2" },
-      ]);
-
-      Store.migratePlayerGames("guest", "registered");
-
-      assert.deepStrictEqual(Store.listPlayerGameIds("guest"), []);
-      assert.deepStrictEqual(Store.listPlayerGameIds("registered"), [
-        "g1",
-        "g2",
-      ]);
-    });
-
-    it("throws when migrating player games to the same user id", function () {
+    it("throws when migrating player data to the same user id", function () {
       Store.initialize();
 
       assert.throws(
-        () => Store.migratePlayerGames("guest", "guest"),
+        () => Store.migratePlayerData("guest", "guest"),
         /same player id/,
       );
     });

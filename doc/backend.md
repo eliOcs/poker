@@ -82,11 +82,6 @@ erDiagram
         text key PK
         text value
     }
-    player_games {
-        text player_id FK
-        text game_id
-        text created_at
-    }
     tables {
         text id PK
         text kind
@@ -111,7 +106,6 @@ erDiagram
         text last_played_at
     }
 
-    users ||--o{ player_games : "plays in"
     users ||--o{ player_tables : "sits at"
     users ||--o{ player_tournaments : "enters"
     tables ||--o{ player_tables : "has players"
@@ -126,7 +120,6 @@ erDiagram
 | -------------------- | ------------------------------------------------------------ |
 | `users`              | Registered player accounts (name, email, settings JSON)      |
 | `store_meta`         | Internal metadata (e.g. backfill tracking)                   |
-| `player_games`       | Records which players participated in each game              |
 | `tables`             | Cash/SNG/MTT table records; `kind` ∈ `cash`, `sitngo`, `mtt` |
 | `player_tables`      | Player activity per table (last hand, last played timestamp) |
 | `player_tournaments` | Player participation per MTT (last table, last hand)         |
@@ -143,7 +136,7 @@ Passwordless email-based sign-in via one-time tokens.
 4. Client calls `POST /api/sign-in-links/verify` — token is consumed (one-time use)
 5. `completeSignIn()` merges the guest session into the registered account:
    - Rewrites player IDs in hand history files
-   - Migrates `player_games` and `player_tables` DB records
+   - Migrates `player_tables` and `player_tournaments` DB records
    - Updates all live game seats (guest UUID → registered ID)
    - Migrates active WebSocket connections
    - Deletes the guest user record
