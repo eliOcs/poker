@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
