@@ -3,8 +3,8 @@ import * as Id from "./id.js";
 import * as PokerGame from "./poker/game.js";
 import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
-
-const TABLE_TICK_INTERVAL_MS = 1000;
+import { TIMER_INTERVAL } from "./poker/game-constants.js";
+import { tickClock } from "./poker/tournament-clock.js";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -815,15 +815,6 @@ function canStartPendingBreak(tournament, games) {
 }
 
 /**
- * @param {ManagedTournament} tournament
- */
-function advanceLevel(tournament) {
-  if (tournament.level < Tournament.getMaxLevel()) {
-    tournament.level += 1;
-  }
-}
-
-/**
  * @param {{
  *   games: Map<string, Game>,
  *   broadcastTableState?: (tableId: string) => void,
@@ -893,7 +884,7 @@ export function createMttManager({
     stopTicking(tournament);
     const tickTimer = setIntervalFn(() => {
       tickTournament(tournament.id);
-    }, TABLE_TICK_INTERVAL_MS);
+    }, TIMER_INTERVAL);
     if ("unref" in tickTimer && typeof tickTimer.unref === "function") {
       tickTimer.unref();
     }
@@ -975,7 +966,12 @@ export function createMttManager({
       return;
     }
 
-    tickTournamentClock(tournament);
+    const canStartBreak = getActiveTables(tournament, games).every((entry) =>
+      isTableWaiting(entry.game),
+    );
+    tickClock(tournament, canStartBreak);
+
+    rebalanceTournament(tournament, games, ensureTableTick, now);
 
     for (const table of tournament.tables) {
       const game = games.get(table.tableId);
@@ -987,55 +983,6 @@ export function createMttManager({
       broadcastTableState(table.tableId);
     }
     broadcastTournament(tournament);
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   */
-  function tickTournamentClock(tournament) {
-    if (tournament.onBreak) {
-      tickBreakClock(tournament);
-      return;
-    }
-
-    tournament.levelTicks += 1;
-    if (tournament.levelTicks < Tournament.LEVEL_DURATION_TICKS) {
-      return;
-    }
-
-    tournament.levelTicks = 0;
-    if (tournament.level !== Tournament.BREAK_AFTER_LEVEL) {
-      advanceLevel(tournament);
-      return;
-    }
-
-    if (
-      getActiveTables(tournament, games).every((entry) =>
-        isTableWaiting(entry.game),
-      )
-    ) {
-      tournament.onBreak = true;
-      tournament.breakTicks = 0;
-      tournament.pendingBreak = false;
-      return;
-    }
-
-    tournament.pendingBreak = true;
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   */
-  function tickBreakClock(tournament) {
-    tournament.breakTicks += 1;
-    if (tournament.breakTicks < Tournament.BREAK_DURATION_TICKS) {
-      return;
-    }
-
-    tournament.onBreak = false;
-    tournament.breakTicks = 0;
-    tournament.pendingBreak = false;
-    advanceLevel(tournament);
   }
 
   /**

@@ -237,6 +237,54 @@ describe("mtt-manager", () => {
     assert.ok(tournament.tables[1].closedAt);
   });
 
+  it("retries table collapse on tick when destination was mid-hand during handleHandFinalized", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 2,
+    });
+    manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+    manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    // Table 1: owner + p2, Table 2: p3
+    const sourceTable = games.get(tournament.tables[0].tableId);
+    const destTable = games.get(tournament.tables[1].tableId);
+    assert.ok(sourceTable);
+    assert.ok(destTable);
+    assert.equal(countActivePlayers(sourceTable), 2);
+    assert.equal(countActivePlayers(destTable), 1);
+
+    // Bust p2 on source table
+    const bustedSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        sourceTable.seats[1]
+      );
+    bustedSeat.stack = 0;
+    bustedSeat.sittingOut = true;
+
+    // Destination table is mid-hand — collapse cannot happen yet
+    destTable.hand.phase = "flop";
+    manager.handleHandFinalized(sourceTable);
+
+    // Source table should NOT be collapsed because destination is mid-hand
+    assert.equal(tournament.tables[0].closedAt, null);
+    assert.equal(countActivePlayers(sourceTable), 1);
+
+    // Destination finishes its hand
+    destTable.hand.phase = "waiting";
+
+    // Tournament tick should now retry the collapse
+    manager.tickTournament(tournamentId);
+
+    // Source table is now collapsed, player moved to destination
+    assert.ok(tournament.tables[0].closedAt);
+    assert.equal(countActivePlayers(sourceTable), 0);
+    assert.equal(countActivePlayers(destTable), 2);
+  });
+
   it("matches sitngo disconnect behavior when only one contender remains", () => {
     const tournamentId = manager.createTournament({
       owner: createUser("owner", "Owner"),
