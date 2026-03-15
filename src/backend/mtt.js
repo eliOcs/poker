@@ -125,7 +125,8 @@ function isTableWaiting(game) {
   return (
     game.hand.phase === "waiting" &&
     game.collectingBets === null &&
-    game.runout?.active !== true
+    game.runout?.active !== true &&
+    game.pendingHandHistory === null
   );
 }
 

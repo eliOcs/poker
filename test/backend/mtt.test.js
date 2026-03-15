@@ -330,4 +330,58 @@ describe("mtt-manager", () => {
     assert.equal(sideTable.tournament?.winner, null);
     assert.equal(mainTable.tournament?.winner, winner?.seatIndex);
   });
+
+  it("does not move players from a table with pending hand history", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 2,
+    });
+    manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+    manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    // Table A: owner + p2, Table B: p3
+    const tableA = games.get(tournament.tables[0].tableId);
+    const tableB = games.get(tournament.tables[1].tableId);
+    assert.ok(tableA);
+    assert.ok(tableB);
+    assert.equal(countActivePlayers(tableA), 2);
+    assert.equal(countActivePlayers(tableB), 1);
+
+    // Bust p2 on table A — should collapse table B into table A
+    const bustedSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        tableA.seats[1]
+      );
+    bustedSeat.stack = 0;
+    bustedSeat.sittingOut = true;
+
+    // Table B has pending hand history (between hand end and next hand start).
+    // The rebalancer must not move its player until the history is finalized.
+    tableB.pendingHandHistory = [
+      { potAmount: 100, awards: [{ seat: 0, amount: 100 }] },
+    ];
+
+    manager.handleHandFinalized(tableA);
+
+    // Table A (the smaller/break candidate) cannot collapse into table B
+    // because table B has pending history — no valid destination
+    assert.equal(tournament.tables[0].closedAt, null);
+    assert.equal(tournament.tables[1].closedAt, null);
+    assert.equal(countActivePlayers(tableA), 1);
+    assert.equal(countActivePlayers(tableB), 1);
+
+    // Clear pending history (as startHand would)
+    tableB.pendingHandHistory = null;
+
+    // Now a tick should retry and collapse table A into table B
+    manager.tickTournament(tournamentId);
+
+    assert.ok(tournament.tables[0].closedAt);
+    assert.equal(countActivePlayers(tableA), 0);
+    assert.equal(countActivePlayers(tableB), 2);
+  });
 });

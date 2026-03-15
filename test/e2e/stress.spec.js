@@ -157,7 +157,7 @@ function selectRandomAction(availableActions) {
  * @returns {Promise<{seatIdx: number, action: string}|null>}
  */
 async function tryTakeAction(players, activePlayers) {
-  const seatOrder = [...activePlayers];
+  const seatOrder = [...activePlayers].sort(() => Math.random() - 0.5);
   const turnStates = await Promise.all(
     seatOrder.map(async (seatIdx) => ({
       seatIdx,
@@ -399,6 +399,16 @@ async function runTournamentLoop(players, activePlayers, state) {
           `seat-${clockResult.seatIdx + 1}-callClock-hand-${state.handCount}`,
         );
       } else {
+        // During tournament breaks no actions are possible — check if any
+        // active player sees the break overlay and count that as progress
+        // so the stall detector doesn't fire.
+        const firstPlayer = players[[...activePlayers][0]];
+        const onBreak = firstPlayer
+          ? await firstPlayer.isOnBreak().catch(() => false)
+          : false;
+        if (onBreak) {
+          markProgress(state, `break-hand-${state.handCount}`);
+        }
         await waitForAnyTurn(players, activePlayers);
       }
     }
