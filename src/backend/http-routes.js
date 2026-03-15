@@ -340,12 +340,6 @@ export function createRoutes(users, games, broadcast, services = {}) {
         const blinds = parseBlinds(data);
         const game = PokerGame.create({ blinds, seats, kind: "cash" });
         games.set(game.id, game);
-        Store.saveTable({
-          id: game.id,
-          kind: "cash",
-          seatCount: seats,
-          tableName: game.tableName,
-        });
         Object.assign(log.context, {
           game: {
             type: "cash",
@@ -367,12 +361,6 @@ export function createRoutes(users, games, broadcast, services = {}) {
         const buyIn = parseBuyIn(data);
         const game = PokerGame.createTournament({ seats, buyIn });
         games.set(game.id, game);
-        Store.saveTable({
-          id: game.id,
-          kind: "sitngo",
-          seatCount: seats,
-          tableName: game.tableName,
-        });
         Object.assign(log.context, {
           game: {
             type: "sitngo",

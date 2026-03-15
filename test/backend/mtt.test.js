@@ -128,10 +128,6 @@ describe("mtt-manager", () => {
     assert.equal(countActivePlayers(firstTable), 4);
     assert.equal(countActivePlayers(secondTable), 3);
 
-    const savedFirstTable = Store.loadTable(tournament.tables[0].tableId);
-    assert.equal(savedFirstTable?.tournamentId, tournamentId);
-    assert.equal(savedFirstTable?.kind, "mtt");
-
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     manager.tickTournament(tournamentId);
 
@@ -238,8 +234,8 @@ describe("mtt-manager", () => {
     assert.equal(winner?.finishPosition, 1);
     assert.equal(runnerUp?.finishPosition, 2);
     assert.equal(destinationTable.tournament?.winner, winner?.seatIndex);
-    assert.ok(Store.loadTable(tournament.tables[0].tableId)?.closedAt);
-    assert.ok(Store.loadTable(tournament.tables[1].tableId)?.closedAt);
+    assert.ok(tournament.tables[0].closedAt);
+    assert.ok(tournament.tables[1].closedAt);
   });
 
   it("matches sitngo disconnect behavior when only one contender remains", () => {

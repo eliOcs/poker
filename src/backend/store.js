@@ -8,13 +8,10 @@ import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js
  * @typedef {import('./user.js').User} User
  * @typedef {import('./id.js').Id} Id
  * @typedef {import('./user.js').UserSettings} UserSettings
- * @typedef {"cash"|"sitngo"|"mtt"} TableKind
  * @typedef {{ id: Id, name?: string|null, email?: string|null, settings?: UserSettings }} SaveUserInput
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
- * @typedef {{ id: Id, kind: TableKind, tournamentId?: Id|null, seatCount: number, tableName?: string|null, createdAt?: string|null, closedAt?: string|null }} SaveTableInput
  * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
- * @typedef {{ id: Id, kind: TableKind, tournamentId: Id|null, seatCount: number, tableName: string|null, createdAt: string, closedAt: string|null }} TableRecord
  * @typedef {{ tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableLink
  * @typedef {{ tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentLink
  */
@@ -156,43 +153,6 @@ export function loadUserProfile(id) {
     createdAt: userRow.created_at,
     updatedAt: userRow.updated_at,
   };
-}
-
-/** @param {SaveTableInput} table */
-export function saveTable(table) {
-  if (!db) throw new Error("Store not initialized");
-  const stmt = db.prepare(`
-    INSERT INTO tables (
-      id, kind, tournament_id, seat_count, table_name, created_at, closed_at
-    )
-    VALUES (?, ?, ?, ?, ?, COALESCE(?, datetime('now')), ?)
-    ON CONFLICT(id) DO UPDATE SET
-      kind = excluded.kind,
-      tournament_id = excluded.tournament_id,
-      seat_count = excluded.seat_count,
-      table_name = excluded.table_name,
-      created_at = excluded.created_at,
-      closed_at = excluded.closed_at
-  `);
-  stmt.run(
-    table.id,
-    table.kind,
-    table.tournamentId ?? null,
-    table.seatCount,
-    table.tableName ?? null,
-    table.createdAt ?? null,
-    table.closedAt ?? null,
-  );
-}
-
-/**
- * @param {Id} tableId
- * @param {string} closedAt
- */
-export function closeTable(tableId, closedAt = new Date().toISOString()) {
-  if (!db) throw new Error("Store not initialized");
-  const stmt = db.prepare("UPDATE tables SET closed_at = ? WHERE id = ?");
-  stmt.run(closedAt, tableId);
 }
 
 /**
@@ -337,33 +297,6 @@ export function listPlayerTablesForTournament(playerId, tournamentId) {
     lastHandNumber: /** @type {number} */ (row.last_hand_number),
     lastPlayedAt: /** @type {string} */ (row.last_played_at),
   }));
-}
-
-/**
- * @param {Id} tableId
- * @returns {TableRecord|null}
- */
-export function loadTable(tableId) {
-  if (!db) throw new Error("Store not initialized");
-  if (!tableId) return null;
-  const stmt = db.prepare(`
-    SELECT id, kind, tournament_id, seat_count, table_name, created_at, closed_at
-    FROM tables
-    WHERE id = ?
-  `);
-  const row = stmt.get(tableId);
-  if (!row) return null;
-  return {
-    id: /** @type {Id} */ (row.id),
-    kind: /** @type {TableKind} */ (row.kind),
-    tournamentId: row.tournament_id
-      ? /** @type {Id} */ (row.tournament_id)
-      : null,
-    seatCount: /** @type {number} */ (row.seat_count),
-    tableName: row.table_name ? /** @type {string} */ (row.table_name) : null,
-    createdAt: /** @type {string} */ (row.created_at),
-    closedAt: row.closed_at ? /** @type {string} */ (row.closed_at) : null,
-  };
 }
 
 /**
@@ -570,21 +503,6 @@ function ensureStoreTables() {
   `);
 
   database.exec(`
-    CREATE TABLE IF NOT EXISTS tables (
-      id TEXT PRIMARY KEY,
-      kind TEXT NOT NULL,
-      tournament_id TEXT,
-      seat_count INTEGER NOT NULL,
-      table_name TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      closed_at TEXT
-    )
-  `);
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_tables_tournament_id ON tables (tournament_id)",
-  );
-
-  database.exec(`
     CREATE TABLE IF NOT EXISTS player_tables (
       player_id TEXT NOT NULL,
       table_id TEXT NOT NULL,
@@ -625,7 +543,6 @@ function runHistoryBackfills(isInMemory) {
   runBackfill("player_table_links_backfilled_at", () => {
     backfillPlayerTableLinksFromHistory(
       getDataDir(),
-      saveTable,
       recordPlayerTableActivity,
       recordPlayerTournamentActivity,
     );

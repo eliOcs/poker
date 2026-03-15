@@ -541,20 +541,6 @@ describe("player-profile", function () {
     await writeHandToFile("mtttable1", tableOneHand);
     await writeHandToFile("mtttable2", tableTwoHand);
 
-    Store.saveTable({
-      id: "mtttable1",
-      kind: "mtt",
-      tournamentId: "mtt999",
-      seatCount: 6,
-      tableName: "Table 1",
-    });
-    Store.saveTable({
-      id: "mtttable2",
-      kind: "mtt",
-      tournamentId: "mtt999",
-      seatCount: 6,
-      tableName: "Table 2",
-    });
     Store.recordPlayerTableActivity([
       {
         playerId: "player1",

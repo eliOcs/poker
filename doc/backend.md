@@ -82,15 +82,6 @@ erDiagram
         text key PK
         text value
     }
-    tables {
-        text id PK
-        text kind
-        text tournament_id
-        integer seat_count
-        text table_name
-        text created_at
-        text closed_at
-    }
     player_tables {
         text player_id FK
         text table_id FK
@@ -108,11 +99,9 @@ erDiagram
 
     users ||--o{ player_tables : "sits at"
     users ||--o{ player_tournaments : "enters"
-    tables ||--o{ player_tables : "has players"
-    tables ||--o{ player_tournaments : "last table played"
 ```
 
-> **Note**: Tournaments are managed in-memory by `mtt.js` — there is no `tournaments` table. The `tournament_id` column on `tables`, `player_tables`, and `player_tournaments` is an opaque ID linking rows that belong to the same MTT.
+> **Note**: Tournaments are managed in-memory by `mtt.js` — there is no `tournaments` table. The `tournament_id` column on `player_tables` and `player_tournaments` is an opaque ID linking rows that belong to the same MTT.
 
 ### Tables
 
@@ -120,7 +109,6 @@ erDiagram
 | -------------------- | ------------------------------------------------------------ |
 | `users`              | Registered player accounts (name, email, settings JSON)      |
 | `store_meta`         | Internal metadata (e.g. backfill tracking)                   |
-| `tables`             | Cash/SNG/MTT table records; `kind` ∈ `cash`, `sitngo`, `mtt` |
 | `player_tables`      | Player activity per table (last hand, last played timestamp) |
 | `player_tournaments` | Player participation per MTT (last table, last hand)         |
 

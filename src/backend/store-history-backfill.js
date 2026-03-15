@@ -5,21 +5,17 @@ const EPOCH_ISO = new Date(0).toISOString();
 
 /**
  * @typedef {import('./id.js').Id} Id
- * @typedef {"cash"|"sitngo"|"mtt"} TableKind
- * @typedef {{ id: Id, kind: TableKind, tournamentId: Id|null, seatCount: number, tableName: string|null, createdAt: string|null }} BackfilledTable
  * @typedef {{ playerId: Id, tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
  */
 
 /**
  * @param {string} dataDir
- * @param {(table: BackfilledTable) => void} saveTable
  * @param {(entries: PlayerTableInput[]) => void} recordPlayerTableActivity
  * @param {(entries: PlayerTournamentInput[]) => void} recordPlayerTournamentActivity
  */
 export function backfillPlayerTableLinksFromHistory(
   dataDir,
-  saveTable,
   recordPlayerTableActivity,
   recordPlayerTournamentActivity,
 ) {
@@ -30,7 +26,6 @@ export function backfillPlayerTableLinksFromHistory(
         dataDir,
         file,
         tableId,
-        saveTable,
         recordPlayerTableActivity,
         recordPlayerTournamentActivity,
       );
@@ -56,7 +51,6 @@ function listHistoryFiles(dataDir) {
  * @param {string} dataDir
  * @param {string} file
  * @param {Id} tableId
- * @param {(table: BackfilledTable) => void} saveTable
  * @param {(entries: PlayerTableInput[]) => void} recordPlayerTableActivity
  * @param {(entries: PlayerTournamentInput[]) => void} recordPlayerTournamentActivity
  */
@@ -64,22 +58,11 @@ function backfillHistoryFile(
   dataDir,
   file,
   tableId,
-  saveTable,
   recordPlayerTableActivity,
   recordPlayerTournamentActivity,
 ) {
   const hands = readHandsFromHistoryFile(dataDir, file);
-  const firstHand = hands[0];
-  if (!firstHand) return;
-
-  saveTable({
-    id: tableId,
-    kind: inferTableKindFromHand(firstHand),
-    tournamentId: getTournamentIdFromHand(firstHand),
-    seatCount: firstHand.table_size || 0,
-    tableName: firstHand.table_name || null,
-    createdAt: firstHand.start_date_utc || null,
-  });
+  if (hands.length === 0) return;
 
   for (const hand of hands) {
     const tableEntries = createPlayerTableEntries(hand, tableId);
@@ -143,7 +126,7 @@ function createPlayerTableEntries(hand, tableId) {
 
 /**
  * @param {any} hand
- * @returns {TableKind}
+ * @returns {"cash"|"sitngo"|"mtt"}
  */
 function inferTableKindFromHand(hand) {
   if (!hand?.tournament) return "cash";

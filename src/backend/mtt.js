@@ -1,6 +1,5 @@
 /* eslint-disable max-lines */
 import * as Id from "./id.js";
-import * as Store from "./store.js";
 import * as PokerGame from "./poker/game.js";
 import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
@@ -646,10 +645,6 @@ function collapseExtraTables(tournament, games, changedTables, now) {
     }
 
     breakCandidate.table.closedAt = now();
-    Store.closeTable(
-      breakCandidate.table.tableId,
-      breakCandidate.table.closedAt,
-    );
     clearTableWinner(breakCandidate.game);
     resetClosedTable(breakCandidate.game);
     applyTournamentStateToTable(tournament, breakCandidate.game);
@@ -773,7 +768,6 @@ function finishTournament(
 
   for (const table of tournament.tables) {
     table.closedAt = tournament.endedAt;
-    Store.closeTable(table.tableId, tournament.endedAt);
     const game = games.get(table.tableId);
     if (!game) continue;
     clearTableWinner(game);
@@ -939,14 +933,6 @@ export function createMttManager({
       });
       createdTableIds.push(game.id);
       games.set(game.id, game);
-      Store.saveTable({
-        id: game.id,
-        kind: "mtt",
-        tournamentId: tournament.id,
-        seatCount: tournament.tableSize,
-        tableName,
-        createdAt: tournament.startedAt,
-      });
 
       for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
         const entrant = entrants[entrantIndex];

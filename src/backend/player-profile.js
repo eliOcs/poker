@@ -307,7 +307,7 @@ async function summarizeTableHistory(tableLink, playerId) {
   const lastPlayedHand = findLatestHand(playerHands);
   if (!lastPlayedHand) return null;
 
-  const gameType = resolveGameType(tableLink.tableId, playerHands);
+  const gameType = resolveGameType(playerHands);
   const netWinnings =
     gameType === "cash"
       ? playerHands.reduce(
@@ -390,15 +390,10 @@ async function summarizeMttHistory(tournamentLink, playerId) {
 }
 
 /**
- * @param {Id} tableId
  * @param {OHHHand[]} hands
  * @returns {"cash"|"sitngo"|"mtt"}
  */
-function resolveGameType(tableId, hands) {
-  const table = Store.loadTable(tableId);
-  if (table?.kind === "sitngo" || table?.kind === "mtt") {
-    return table.kind;
-  }
+function resolveGameType(hands) {
   if (hands.some((hand) => hand.tournament_info?.type === "MTT")) {
     return "mtt";
   }
