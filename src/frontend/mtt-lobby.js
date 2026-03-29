@@ -225,99 +225,112 @@ class MttLobby extends LitElement {
         },
       })}
       <main class="main">
-        <section class="panel">
+        <div class="content">
           ${this.loading && !tournament
-            ? html`<div class="loading">Loading tournament lobby…</div>`
+            ? html`<section class="panel">
+                <div class="loading">Loading tournament lobby…</div>
+              </section>`
             : this.error && !tournament
-              ? html`<div class="error">${this.error}</div>`
+              ? html`<section class="panel">
+                  <div class="error">${this.error}</div>
+                </section>`
               : ""}
           ${tournament
             ? html`
-                <header class="header">
-                  <div class="eyebrow">Multi-Table Tournament</div>
-                  <div class="title-row">
-                    <div>
-                      <h1>Tournament #${tournament.id}</h1>
-                      <div class="meta">
-                        <span>Owner: ${tournament.ownerId}</span>
-                        <span
-                          >Created
-                          ${new Date(
-                            tournament.createdAt,
-                          ).toLocaleString()}</span
-                        >
+                <section class="panel">
+                  <header class="header">
+                    <div class="eyebrow">Multi-Table Tournament</div>
+                    <div class="title-row">
+                      <div>
+                        <h1>Tournament #${tournament.id}</h1>
+                        <div class="meta">
+                          <span>Owner: ${tournament.ownerId}</span>
+                          <span
+                            >Created
+                            ${new Date(
+                              tournament.createdAt,
+                            ).toLocaleString()}</span
+                          >
+                        </div>
+                      </div>
+                      <div class=${`status-pill ${tournament.status}`}>
+                        ${formatStatus(tournament.status)}
                       </div>
                     </div>
-                    <div class=${`status-pill ${tournament.status}`}>
-                      ${formatStatus(tournament.status)}
-                    </div>
-                  </div>
-                </header>
+                  </header>
 
-                <section class="summary">
-                  <article class="stat">
-                    <div class="label">Buy-In</div>
-                    <div class="value">${formatCurrency(tournament.buyIn)}</div>
-                  </article>
-                  <article class="stat">
-                    <div class="label">Table Size</div>
-                    <div class="value">${tournament.tableSize}-Max</div>
-                  </article>
-                  <article class="stat">
-                    <div class="label">Clock</div>
-                    <div class="value">${formatLevel(tournament)}</div>
-                  </article>
-                  <article class="stat">
-                    <div class="label">Players</div>
-                    <div class="value">
-                      ${tournament.entrants.length} entrants
-                    </div>
-                  </article>
-                  <article class="stat">
-                    <div class="label">Payouts</div>
-                    <div class="value">${formatPayoutTier(tournament)}</div>
-                  </article>
+                  <section class="summary">
+                    <article class="stat">
+                      <div class="label">Buy-In</div>
+                      <div class="value">
+                        ${formatCurrency(tournament.buyIn)}
+                      </div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Table Size</div>
+                      <div class="value">${tournament.tableSize}-Max</div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Clock</div>
+                      <div class="value">${formatLevel(tournament)}</div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Players</div>
+                      <div class="value">
+                        ${tournament.entrants.length} entrants
+                      </div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Payouts</div>
+                      <div class="value">${formatPayoutTier(tournament)}</div>
+                    </article>
+                  </section>
+
+                  ${renderActions({
+                    tournament,
+                    actionPending: this.actionPending,
+                    onMttAction,
+                    onCopyLink: copyLink,
+                    copied: this._copied,
+                    onShare: share,
+                  })}
+                  ${renderAssignment({
+                    tournament,
+                    tournamentId: this.tournamentId,
+                    onNavigate,
+                  })}
                 </section>
 
-                ${renderActions({
-                  tournament,
-                  actionPending: this.actionPending,
-                  onMttAction,
-                  onCopyLink: copyLink,
-                  copied: this._copied,
-                  onShare: share,
-                })}
-                ${renderAssignment({
-                  tournament,
-                  tournamentId: this.tournamentId,
-                  onNavigate,
-                })}
                 ${tournament.status !== "registration"
                   ? html`
                       <section class="section">
-                        <h2>Tables</h2>
-                        ${renderTables({
-                          tournament,
-                          tournamentId: this.tournamentId,
-                          onNavigate,
-                        })}
+                        <div class="panel">
+                          <h2>Tables</h2>
+                          ${renderTables({
+                            tournament,
+                            tournamentId: this.tournamentId,
+                            onNavigate,
+                          })}
+                        </div>
                       </section>
                     `
                   : ""}
 
                 <section class="section">
-                  <h2>
+                  <div class="panel">
+                    <h2>
+                      ${tournament.status === "registration"
+                        ? "Entrants"
+                        : "Standings"}
+                    </h2>
                     ${tournament.status === "registration"
-                      ? "Entrants"
-                      : "Standings"}
-                  </h2>
-                  ${tournament.status === "registration"
-                    ? renderEntrantsTable(tournament)
-                    : renderStandingsTable(tournament)}
+                      ? renderEntrantsTable(tournament)
+                      : renderStandingsTable(tournament)}
+                  </div>
                 </section>
               `
             : ""}
-        </section>
+        </div>
       </main>
     `;
   }

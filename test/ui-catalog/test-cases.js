@@ -29,6 +29,7 @@ import {
 } from "./test-cases/game-special.js";
 import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
 import { ACTION_PANEL_TEST_CASES } from "./test-cases/action-panel.js";
+import { MTT_LOBBY_TEST_CASES } from "./test-cases/mtt-lobby.js";
 
 // === GAME TEST CASES ===
 
@@ -454,6 +455,7 @@ const TEST_CASES = {
   ...ACTION_PANEL_TEST_CASES,
   ...EMAIL_TEST_CASES,
   ...HISTORY_TEST_CASES,
+  ...MTT_LOBBY_TEST_CASES,
 };
 
 // Export test case IDs for Playwright

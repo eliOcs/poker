@@ -17,13 +17,19 @@ export const mttLobbyStyles = [
     }
 
     .panel {
-      width: min(1120px, 100%);
+      width: 100%;
       display: grid;
       gap: 16px;
       padding: clamp(18px, 4vw, 28px);
       border: var(--space-sm) solid var(--color-fg-muted);
       background: var(--color-bg-light);
       box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+    }
+
+    .content {
+      width: min(1120px, 100%);
+      display: grid;
+      gap: 16px;
     }
 
     .header {

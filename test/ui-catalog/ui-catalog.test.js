@@ -73,6 +73,20 @@ const TEST_CASES = [
   // Email states
   "email-sign-in",
 
+  // MTT lobby states
+  "mtt-lobby-loading",
+  "mtt-lobby-error",
+  "mtt-lobby-registration-can-register",
+  "mtt-lobby-registration-registered",
+  "mtt-lobby-registration-owner-can-start",
+  "mtt-lobby-registration-action-pending",
+  "mtt-lobby-running",
+  "mtt-lobby-running-on-break",
+  "mtt-lobby-running-pending-break",
+  "mtt-lobby-running-multiple-tables",
+  "mtt-lobby-finished",
+  "mtt-lobby-finished-as-winner",
+
   // Hand history states
   "history-empty",
   "history-preflop-fold",
@@ -86,6 +100,7 @@ function getComponentSelector(testCase) {
   if (testCase === "landing-page") return "phg-home";
   if (testCase.startsWith("history-")) return "phg-history";
   if (testCase.startsWith("player-profile-")) return "phg-player-profile";
+  if (testCase.startsWith("mtt-lobby-")) return "phg-mtt-lobby";
   // game-*, table-* all use phg-game
   return "phg-game";
 }
