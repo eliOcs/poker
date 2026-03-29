@@ -43,13 +43,9 @@ const iconShare = html`<svg viewBox="0 0 24 24">
 </svg>`;
 
 const iconLobby = html`<svg viewBox="0 0 24 24">
-  <rect x="3" y="8" width="18" height="2" />
-  <rect x="5" y="10" width="2" height="8" />
-  <rect x="17" y="10" width="2" height="8" />
-  <rect x="9" y="12" width="6" height="2" />
-  <rect x="9" y="16" width="6" height="2" />
-  <rect x="7" y="6" width="10" height="2" />
-  <rect x="3" y="18" width="18" height="2" />
+  <path
+    d="M10 14v6h4v-6h-4Zm-4-4H4V8h2v2Zm14 0h-2V8h2v2ZM8 8H6V6h2v2Zm10 0h-2V6h2v2Zm-8-2H8V4h2v2Zm6 0h-2V4h2v2Zm-2-2h-4V2h4v2Zm2 16h4V10h2v12H2V10h2v10h4v-8h8v8Z"
+  />
 </svg>`;
 
 const iconTable = html`<svg viewBox="0 0 24 24">
@@ -82,10 +78,7 @@ function handleAction(fn) {
  * @param {any} params.user
  * @param {boolean} [params.lobbyActive]
  * @param {(() => void)|null} [params.onOpenLobby]
- * @param {boolean} [params.tableActive]
- * @param {string} [params.tableLabel]
- * @param {(() => void)|null} [params.onOpenTable]
- * @param {boolean} [params.tableDisabled]
+ * @param {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [params.tableItems]
  * @param {(() => void)|null} [params.onOpenHistory]
  * @param {boolean} [params.historyDisabled]
  * @param {(() => void)|null} [params.onCopyLink]
@@ -103,10 +96,7 @@ export function renderMttNavigationDrawer({
   user,
   lobbyActive = false,
   onOpenLobby = null,
-  tableActive = false,
-  tableLabel = "Open My Table",
-  onOpenTable = null,
-  tableDisabled = false,
+  tableItems = [],
   onOpenHistory = null,
   historyDisabled = false,
   onCopyLink = null,
@@ -121,7 +111,6 @@ export function renderMttNavigationDrawer({
 
   return html`
     <phg-navigation-drawer ?open=${open} @drawer-toggle=${onToggle}>
-      ${extraMainItems}
       <button
         slot="main"
         class=${drawerItemClass(lobbyActive)}
@@ -131,15 +120,23 @@ export function renderMttNavigationDrawer({
         ${iconLobby}
         <span>Lobby</span>
       </button>
-      <button
-        slot="main"
-        class=${drawerItemClass(tableActive)}
-        ?disabled=${tableDisabled || !onOpenTable}
-        @click=${handleAction(onOpenTable)}
-      >
-        ${iconTable}
-        <span>${tableLabel}</span>
-      </button>
+      ${tableItems.map(
+        (table) =>
+          html`<button
+            slot="main"
+            class=${drawerItemClass(table.active)}
+            @click=${handleAction(table.onOpen)}
+          >
+            ${iconTable}
+            <span>${table.label}</span>
+            ${table.isCurrentPlayerTable
+              ? html`<span
+                  aria-hidden="true"
+                  style="width: 8px; height: 8px; border-radius: 999px; background: var(--color-secondary); flex: none;"
+                ></span>`
+              : ""}
+          </button>`,
+      )}
       <button
         slot="main"
         ?disabled=${historyDisabled || !onOpenHistory}
@@ -148,6 +145,7 @@ export function renderMttNavigationDrawer({
         ${iconHistory}
         <span>History</span>
       </button>
+      ${extraMainItems}
       <button
         slot="main"
         ?disabled=${!onCopyLink}

@@ -387,7 +387,16 @@ class MttLobby extends LitElement {
 
   openLobby() {
     if (!this.tournamentId) return;
-    this._navigate(getMttPath(this.tournamentId));
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: {
+          path: getMttPath(this.tournamentId),
+          allowMttLobby: true,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   openTable(tableId) {
@@ -460,18 +469,6 @@ class MttLobby extends LitElement {
     const tableId = this.tournament?.currentPlayer?.tableId;
     if (!tableId) return null;
     return this.tournament?.tables.find((table) => table.tableId === tableId);
-  }
-
-  _openCurrentTableTarget() {
-    const table = this._getCurrentTable();
-    if (!table || !this.tournamentId) return;
-    if (table.closed) {
-      this._navigate(
-        getTableHistoryPath("mtt", table.tableId, null, this.tournamentId),
-      );
-      return;
-    }
-    this.openTable(table.tableId);
   }
 
   _openCurrentTableHistory() {
@@ -754,10 +751,9 @@ class MttLobby extends LitElement {
   // eslint-disable-next-line complexity
   render() {
     const tournament = this.tournament;
+    const activeTables =
+      tournament?.tables.filter((table) => !table.closed) ?? [];
     const currentTable = this._getCurrentTable();
-    const currentTableLabel = currentTable?.closed
-      ? "My Table History"
-      : "Open My Table";
     const hasCurrentTableHistory = (currentTable?.handNumber || 0) > 0;
     const toggleDrawer = () => {
       this.toggleDrawer();
@@ -765,11 +761,6 @@ class MttLobby extends LitElement {
     const openLobby = () => {
       this.openLobby();
     };
-    const openCurrentTable = currentTable
-      ? () => {
-          this._openCurrentTableTarget();
-        }
-      : null;
     const openCurrentHistory = hasCurrentTableHistory
       ? () => {
           this._openCurrentTableHistory();
@@ -798,9 +789,13 @@ class MttLobby extends LitElement {
         user: this.user,
         lobbyActive: true,
         onOpenLobby: openLobby,
-        tableLabel: currentTableLabel,
-        onOpenTable: openCurrentTable,
-        tableDisabled: !currentTable,
+        tableItems: activeTables.map((table) => ({
+          label: table.tableName,
+          isCurrentPlayerTable: table.tableId === currentTable?.tableId,
+          onOpen: () => {
+            this.openTable(table.tableId);
+          },
+        })),
         onOpenHistory: openCurrentHistory,
         historyDisabled: !hasCurrentTableHistory,
         onCopyLink: copyLink,

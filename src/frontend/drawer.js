@@ -94,31 +94,29 @@ function renderSitOutButton(game) {
   return "";
 }
 
+// eslint-disable-next-line complexity
 export function renderDrawer(game) {
   if (game.gameKind === "mtt") {
+    const activeTables =
+      game.mttTournament?.tables.filter((table) => !table.closed) ?? [];
     return renderMttNavigationDrawer({
       open: game._drawerOpen,
       onToggle: game.toggleDrawer,
       user: game.user,
       onOpenLobby: () => game.openTournamentLobby(),
-      tableActive: true,
-      tableLabel: "Current Table",
-      onOpenTable: () => {},
+      tableItems: activeTables.map((table) => ({
+        label: table.tableName,
+        active: table.tableId === game.gameId,
+        isCurrentPlayerTable:
+          table.tableId === game.mttTournament?.currentPlayer?.tableId,
+        onOpen: () => game.openTournamentTable(table.tableId),
+      })),
       onOpenHistory: game.hasRecordedHands() ? () => game.openHistory() : null,
       historyDisabled: !game.hasRecordedHands(),
       onCopyLink: () => game.copyGameLink(),
       copied: game._copied,
       onShare: canShare ? () => game.shareGameLink() : null,
-      extraMainItems: [
-        html`<button
-          slot="main"
-          ?disabled=${!game.hasRecordedHands()}
-          @click=${game.openRanking}
-        >
-          ${iconRankings} Rankings
-        </button>`,
-        renderSitOutButton(game),
-      ],
+      extraMainItems: [renderSitOutButton(game)],
       onOpenSettings: () => game.openSettings(),
       onOpenSignIn: () => game.openSignIn(),
     });

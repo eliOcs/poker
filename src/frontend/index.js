@@ -1,8 +1,13 @@
+/* eslint-disable max-lines */
 import { html, LitElement } from "lit";
 import { designTokens, baseStyles, formatCurrency } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
-import { getMttPath, getTableHistoryPath } from "../shared/routes.js";
+import {
+  getMttPath,
+  getTableHistoryPath,
+  getTablePath,
+} from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
@@ -38,6 +43,7 @@ class Game extends LitElement {
       gameId: { type: String, attribute: "game-id" },
       gameKind: { type: String },
       tournamentId: { type: String },
+      mttTournament: { type: Object },
       tournamentFinishPosition: { type: Number },
       connectionStatus: { type: String },
       game: { type: Object },
@@ -60,6 +66,7 @@ class Game extends LitElement {
     this.gameId = null;
     this.gameKind = "cash";
     this.tournamentId = null;
+    this.mttTournament = null;
     this.tournamentFinishPosition = null;
     this.connectionStatus = "connected";
     this.game = null;
@@ -258,7 +265,21 @@ class Game extends LitElement {
     if (this.gameKind !== "mtt" || !this.tournamentId) return;
     this.dispatchEvent(
       new CustomEvent("navigate", {
-        detail: { path: getMttPath(this.tournamentId) },
+        detail: {
+          path: getMttPath(this.tournamentId),
+          allowMttLobby: true,
+        },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  openTournamentTable(tableId) {
+    if (this.gameKind !== "mtt" || !this.tournamentId) return;
+    this.dispatchEvent(
+      new CustomEvent("navigate", {
+        detail: { path: getTablePath("mtt", tableId, this.tournamentId) },
         bubbles: true,
         composed: true,
       }),

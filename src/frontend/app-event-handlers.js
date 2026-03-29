@@ -13,7 +13,9 @@ function getCurrentReturnPath() {
  * @param {any} app
  */
 export function initAppEventHandlers(app) {
-  app._handlePopState = () => {
+  app._handlePopState = (event) => {
+    const state = /** @type {PopStateEvent} */ (event).state;
+    app._setMttLobbyOverride(Boolean(state?.allowMttLobby));
     app.path = window.location.pathname;
   };
   app._handleVisibilityChange = () => {
@@ -22,8 +24,12 @@ export function initAppEventHandlers(app) {
     }
   };
   app._handleNavigate = (e) => {
-    const detail = /** @type {CustomEvent<{ path: string }>} */ (e).detail;
-    history.pushState({}, "", detail.path);
+    const detail =
+      /** @type {CustomEvent<{ path: string, allowMttLobby?: boolean }>} */ (e)
+        .detail;
+    const allowMttLobby = detail.allowMttLobby === true;
+    history.pushState({ allowMttLobby }, "", detail.path);
+    app._setMttLobbyOverride(allowMttLobby);
     app.path = detail.path;
   };
   app._handleToast = (e) => {

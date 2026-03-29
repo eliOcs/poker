@@ -4,6 +4,7 @@ import {
   MockWebSocket,
   createMockGameState,
   createMockGameAtFlop,
+  createMockTournamentGameState,
   mockOccupiedSeat,
   mockEmptySeat,
 } from "./setup.js";
@@ -148,6 +149,42 @@ describe("phg-game", () => {
       expect(styles.height).to.equal("20px");
       expect(styles.minWidth).to.equal("20px");
       expect(styles.fill).to.not.equal("rgb(0, 0, 0)");
+    });
+
+    it("shows active MTT tables in the drawer and omits rankings", async () => {
+      element.gameId = "table1";
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.game = createMockTournamentGameState();
+      element.mttTournament = {
+        tables: [
+          {
+            tableId: "table1",
+            tableName: "Table 1",
+            playerCount: 6,
+            handNumber: 8,
+            waiting: false,
+            closed: false,
+          },
+          {
+            tableId: "table2",
+            tableName: "Table 2",
+            playerCount: 5,
+            handNumber: 4,
+            waiting: false,
+            closed: false,
+          },
+        ],
+        currentPlayer: {
+          tableId: "table2",
+        },
+      };
+      await element.updateComplete;
+
+      const drawerText = element.shadowRoot.textContent;
+      expect(drawerText).to.include("Table 1");
+      expect(drawerText).to.include("Table 2");
+      expect(drawerText).to.not.include("Rankings");
     });
 
     it("opens settings modal when settings button clicked", async () => {

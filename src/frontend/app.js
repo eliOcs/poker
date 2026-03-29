@@ -112,6 +112,7 @@ class App extends LitElement {
     this._mttLoading = false;
     this._mttError = "";
     this._mttActionPending = false;
+    this._allowMttLobby = false;
     this._playerProfileId = null;
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
@@ -556,6 +557,15 @@ class App extends LitElement {
     this._mttActionPending = false;
   }
 
+  _setMttLobbyOverride(allowMttLobby) {
+    this._allowMttLobby = allowMttLobby;
+  }
+
+  _shouldStayOnMttLobby(liveRoute) {
+    return liveRoute?.kind === "mtt" && this._allowMttLobby;
+  }
+
+  // eslint-disable-next-line complexity
   _resolveMttRedirectPath(liveRoute) {
     if (!liveRoute || !this._mttTournamentId || !this._mttView) {
       return null;
@@ -563,6 +573,10 @@ class App extends LitElement {
 
     const nextTableId = this._mttView.currentPlayer?.tableId;
     if (this._mttView.status !== "running" || !nextTableId) {
+      return null;
+    }
+
+    if (this._shouldStayOnMttLobby(liveRoute)) {
       return null;
     }
 
@@ -594,6 +608,7 @@ class App extends LitElement {
     }
 
     history.replaceState({}, "", nextPath);
+    this._setMttLobbyOverride(false);
     this.path = nextPath;
   }
 

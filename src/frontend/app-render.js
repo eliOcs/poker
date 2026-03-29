@@ -30,6 +30,7 @@ export function renderGameView(app, liveRoute) {
       .tournamentId=${"tournamentId" in liveRoute
         ? liveRoute.tournamentId
         : null}
+      .mttTournament=${liveRoute.kind === "mtt_table" ? app._mttView : null}
       .tournamentFinishPosition=${app._mttView?.currentPlayer?.finishPosition ??
       null}
       .connectionStatus=${app.gameConnectionStatus}

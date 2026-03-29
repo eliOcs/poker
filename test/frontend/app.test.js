@@ -198,6 +198,58 @@ describe("phg-app", () => {
       expect(element.path).to.equal("/mtt/mtt123/tables/table9");
     });
 
+    it("keeps the user on the lobby after an explicit lobby navigation", async () => {
+      globalThis.fetch = async (url) => {
+        if (url === "/api/users/me") {
+          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+        }
+        return { ok: false, json: async () => ({ error: "not found" }) };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/mtt/mtt123/tables/table1";
+      await waitUntil(() => element._mttTournamentId === "mtt123", {
+        timeout: 2000,
+      });
+      element._mttView = createMockTournamentView({
+        status: "running",
+        startedAt: "2026-03-14T10:05:00.000Z",
+        tables: [
+          {
+            tableId: "table1",
+            tableName: "Table 1",
+            playerCount: 5,
+            handNumber: 7,
+            waiting: false,
+            closed: false,
+          },
+        ],
+        currentPlayer: {
+          isOwner: false,
+          status: "seated",
+          tableId: "table1",
+          seatIndex: 2,
+        },
+        actions: {
+          canRegister: false,
+          canUnregister: false,
+          canStart: false,
+        },
+      });
+
+      element.dispatchEvent(
+        new CustomEvent("navigate", {
+          detail: { path: "/mtt/mtt123", allowMttLobby: true },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      await element.updateComplete;
+      element._maybeRedirectMttRoute();
+
+      expect(element.path).to.equal("/mtt/mtt123");
+    });
+
     it("redirects to a new table when the player is reseated", async () => {
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
