@@ -610,6 +610,75 @@ function sortByLargestTable(tables) {
 
 /**
  * @param {ManagedTournament} tournament
+ * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
+ * @param {Set<string>} changedTables
+ */
+function markPendingCollapse(tournament, activeTables, changedTables) {
+  tournament.pendingCollapse = true;
+  for (const entry of activeTables) {
+    changedTables.add(entry.game.id);
+  }
+}
+
+/**
+ * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
+ * @returns {{ table: ManagedTable, game: Game, activePlayers: number } | undefined}
+ */
+function getBreakCandidate(activeTables) {
+  return sortBySmallestTable(activeTables).find((entry) =>
+    isTableWaiting(entry.game),
+  );
+}
+
+/**
+ * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} destinationTables
+ * @returns {{ table: ManagedTable, game: Game, activePlayers: number } | undefined}
+ */
+function getWaitingDestinationTable(destinationTables) {
+  return sortBySmallestTable(
+    destinationTables
+      .map((entry) => ({
+        ...entry,
+        activePlayers: countActivePlayers(entry.game),
+      }))
+      .filter((entry) => isTableWaiting(entry.game)),
+  )[0];
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {{ table: ManagedTable, game: Game, activePlayers: number }} breakCandidate
+ * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} destinationTables
+ * @param {Set<string>} changedTables
+ * @returns {boolean}
+ */
+function collapseTableIntoDestinations(
+  tournament,
+  breakCandidate,
+  destinationTables,
+  changedTables,
+) {
+  const activeSeats = getActiveSeatIndexes(
+    tournament,
+    breakCandidate.game,
+  ).sort((a, b) => b - a);
+
+  for (const seatIndex of activeSeats) {
+    const destination = getWaitingDestinationTable(destinationTables);
+    if (!destination) {
+      return false;
+    }
+
+    movePlayer(tournament, breakCandidate.game, seatIndex, destination.game);
+    changedTables.add(breakCandidate.game.id);
+    changedTables.add(destination.game.id);
+  }
+
+  return true;
+}
+
+/**
+ * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
  * @param {() => string} now
@@ -631,50 +700,24 @@ function collapseExtraTables(tournament, games, changedTables, now) {
       return;
     }
 
-    const breakCandidate = sortBySmallestTable(activeTables).find((entry) =>
-      isTableWaiting(entry.game),
-    );
+    const breakCandidate = getBreakCandidate(activeTables);
     if (!breakCandidate) {
-      tournament.pendingCollapse = true;
-      for (const entry of activeTables) {
-        changedTables.add(entry.game.id);
-      }
-      break;
+      markPendingCollapse(tournament, activeTables, changedTables);
+      return;
     }
 
-    const destinationTables = sortBySmallestTable(
-      activeTables.filter(
-        (entry) => entry.table.tableId !== breakCandidate.table.tableId,
-      ),
+    const destinationTables = activeTables.filter(
+      (entry) => entry.table.tableId !== breakCandidate.table.tableId,
     );
-    const activeSeats = getActiveSeatIndexes(
-      tournament,
-      breakCandidate.game,
-    ).sort((a, b) => b - a);
-
-    let blocked = false;
-    for (const seatIndex of activeSeats) {
-      const destination = sortBySmallestTable(
-        destinationTables
-          .map((entry) => ({
-            ...entry,
-            activePlayers: countActivePlayers(entry.game),
-          }))
-          .filter((entry) => isTableWaiting(entry.game)),
-      )[0];
-      if (!destination) {
-        tournament.pendingCollapse = true;
-        for (const entry of activeTables) {
-          changedTables.add(entry.game.id);
-        }
-        blocked = true;
-        break;
-      }
-      movePlayer(tournament, breakCandidate.game, seatIndex, destination.game);
-      changedTables.add(breakCandidate.game.id);
-      changedTables.add(destination.game.id);
-    }
-    if (blocked) {
+    if (
+      !collapseTableIntoDestinations(
+        tournament,
+        breakCandidate,
+        destinationTables,
+        changedTables,
+      )
+    ) {
+      markPendingCollapse(tournament, activeTables, changedTables);
       return;
     }
 
