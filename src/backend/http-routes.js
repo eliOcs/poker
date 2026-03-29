@@ -1,22 +1,9 @@
-/* eslint-disable max-lines */
 import { getFilePath, respondWithFile } from "./static-files.js";
-import * as PokerGame from "./poker/game.js";
-import * as User from "./user.js";
-import * as HandHistory from "./poker/hand-history/index.js";
-import * as Store from "./store.js";
-import { getPlayerProfile } from "./player-profile.js";
-import {
-  createRateLimiter,
-  getClientIp,
-  RateLimitError,
-} from "./rate-limit.js";
-import { HttpError } from "./http-error.js";
-import { getSessionPlayerLogContext } from "./logger.js";
 import { createLog } from "./logger.js";
-import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
-import { logFrontendErrorReport } from "./client-error-reporting.js";
-export { logFrontendErrorReport } from "./client-error-reporting.js";
 import { createSignInRoutes } from "./sign-in-routes.js";
+import { createGameRoutes } from "./game-routes.js";
+import { createHistoryRoutes } from "./history-routes.js";
+import { getOrCreateUser, parseBody } from "./http-route-utils.js";
 import {
   LIVE_CASH_ROUTE,
   LIVE_SITNGO_ROUTE,
@@ -27,194 +14,20 @@ import {
   LIVE_MTT_TABLE_ROUTE,
 } from "../shared/routes.js";
 
+export {
+  parseBody,
+  parseCookies,
+  getOrCreateUser,
+} from "./http-route-utils.js";
+export { logFrontendErrorReport } from "./client-error-reporting.js";
+
 /**
- * @typedef {import('./user.js').User} UserType
- * @typedef {import('./poker/game.js').Game} Game
- * @typedef {import('./id.js').Id} Id
+ * @typedef {import('./http-route-utils.js').UserType} UserType
+ * @typedef {import('./http-route-utils.js').Game} Game
+ * @typedef {import('./http-route-utils.js').Id} Id
  * @typedef {import('http').IncomingMessage} Request
  * @typedef {import('http').ServerResponse} Response
  */
-
-const USER_CREATION_LIMIT_MAX_ACTIONS = 10;
-const USER_CREATION_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const userCreationRateLimiter = createRateLimiter({
-  maxActions: USER_CREATION_LIMIT_MAX_ACTIONS,
-  blockDurationMs: USER_CREATION_BLOCK_DURATION_MS,
-});
-
-/**
- * @param {Request} req
- * @param {import('./logger.js').Log} log
- */
-function throwIfUserCreateRateLimited(req, log) {
-  const clientIp = getClientIp(req);
-  try {
-    const creationRateLimit = userCreationRateLimiter.check(`ip:${clientIp}`, {
-      source: "user-create",
-    });
-    log.context.userCreateRateLimit = creationRateLimit.context;
-  } catch (err) {
-    if (err instanceof RateLimitError) {
-      log.context.userCreateRateLimit = err.rateLimit;
-    }
-    throw new HttpError(429, "Too many requests", {
-      body: { error: "Too many requests", status: 429 },
-      headers: {
-        "retry-after": String(
-          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
-        ),
-      },
-    });
-  }
-}
-
-/**
- * @param {Response} res
- * @param {Record<string, UserType>} users
- * @returns {UserType}
- */
-function createAndPersistUser(res, users) {
-  const user = User.create();
-  users[user.id] = user;
-  Store.saveUser(user);
-  const cookieDomain = process.env.DOMAIN
-    ? ` Domain=${process.env.DOMAIN};`
-    : "";
-  const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `phg=${user.id};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
-  );
-  return user;
-}
-
-/**
- * Parses the request body as JSON
- * @param {Request} req
- * @returns {Promise<unknown>}
- */
-export function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk;
-    });
-    req.on("end", () => {
-      if (!body) {
-        resolve(null);
-        return;
-      }
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        reject(
-          new HttpError(400, "Invalid JSON payload", {
-            body: { error: "Invalid JSON payload", status: 400 },
-          }),
-        );
-      }
-    });
-    req.on("error", reject);
-  });
-}
-
-/**
- * @param {string} rawCookies
- * @returns {Record<string, string>}
- */
-export function parseCookies(rawCookies) {
-  /** @type {Record<string, string>} */
-  const cookies = {};
-  for (const rawCookie of rawCookies.split("; ")) {
-    const [key, value] = rawCookie.split("=");
-    if (key !== undefined) cookies[key] = value ?? "";
-  }
-  return cookies;
-}
-
-/**
- * @param {Request} req
- * @param {Response} res
- * @param {Record<string, UserType>} users
- * @param {import('./logger.js').Log} log
- * @returns {UserType}
- */
-export function getOrCreateUser(req, res, users, log) {
-  const cookies = parseCookies(req.headers.cookie ?? "");
-  const cookieId = cookies.phg ?? "";
-  const existingUser = users[cookieId];
-  if (existingUser) {
-    Object.assign(log.context, getSessionPlayerLogContext(existingUser));
-    return existingUser;
-  }
-
-  const loadedUser = Store.loadUser(cookieId);
-  if (loadedUser) {
-    users[loadedUser.id] = loadedUser;
-    Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
-    return loadedUser;
-  }
-
-  throwIfUserCreateRateLimited(req, log);
-  const user = createAndPersistUser(res, users);
-  Object.assign(log.context, getSessionPlayerLogContext(user));
-  return user;
-}
-
-/**
- * Sends a JSON response
- * @param {import('http').ServerResponse} res
- * @param {unknown} data
- */
-function respondWithJson(res, data) {
-  res.writeHead(200, { "content-type": "application/json" });
-  res.end(JSON.stringify(data));
-}
-
-/**
- * @param {Request} req
- * @returns {string}
- */
-/**
- * Syncs user changes to all game seats where the user is seated
- * @param {UserType} user
- * @param {Map<Id, Game>} games
- * @param {(gameId: Id) => void} broadcast
- */
-function syncUserToGames(user, games, broadcast) {
-  for (const [gameId, game] of games) {
-    let changed = false;
-    for (const seat of game.seats) {
-      if (!seat.empty && seat.player.id === user.id) {
-        seat.player.name = user.name;
-        changed = true;
-      }
-    }
-    if (changed) broadcast(gameId);
-  }
-}
-
-/**
- * @param {unknown} err
- * @throws {HttpError}
- */
-function rethrowTournamentError(err) {
-  if (err instanceof HttpError) {
-    throw err;
-  }
-
-  const message =
-    err instanceof Error ? err.message : "Unable to process tournament request";
-  if (message === "tournament not found") {
-    throw new HttpError(404, message, {
-      body: { error: message, status: 404 },
-    });
-  }
-
-  throw new HttpError(400, message, {
-    body: { error: message, status: 400 },
-  });
-}
 
 /**
  * @typedef {object} RouteContext
@@ -235,6 +48,23 @@ function rethrowTournamentError(err) {
  */
 
 /**
+ * Creates a SPA page route that serves index.html
+ * @param {string|RegExp} path
+ * @param {Record<string, UserType>} users
+ * @returns {Route}
+ */
+function spaPageRoute(path, users) {
+  return {
+    method: "GET",
+    path,
+    handler: ({ req, res, log }) => {
+      getOrCreateUser(req, res, users, log);
+      respondWithFile(req, res, "src/frontend/index.html");
+    },
+  };
+}
+
+/**
  * Creates the routes array
  * @param {Record<string, UserType>} users
  * @param {Map<Id, Game>} games
@@ -251,73 +81,8 @@ export function createRoutes(users, games, broadcast, services = {}) {
         res.end("OK");
       },
     },
-    {
-      method: "GET",
-      path: "/",
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: "/api/users/me",
-      handler: ({ req, res, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        respondWithJson(res, {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          settings: user.settings,
-        });
-      },
-    },
-    {
-      method: "PUT",
-      path: "/api/users/me",
-      handler: async ({ req, res, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const data = await parseBody(req);
-
-        if (data && typeof data === "object") {
-          if ("name" in data) {
-            user.name = /** @type {string|null|undefined} */ (data.name)
-              ?.trim()
-              .substring(0, 20);
-            if (user.name === "") user.name = undefined;
-          }
-          if (
-            "settings" in data &&
-            typeof data.settings === "object" &&
-            data.settings !== null
-          ) {
-            user.settings = { ...user.settings, ...data.settings };
-          }
-        }
-
-        Store.saveUser(user);
-        syncUserToGames(user, games, broadcast);
-        services.mttManager?.syncUser(user);
-
-        respondWithJson(res, {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          settings: user.settings,
-        });
-      },
-    },
-    {
-      method: "POST",
-      path: "/api/client-errors",
-      handler: async ({ req, res, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const data = await parseBody(req);
-        logFrontendErrorReport(req, user, data);
-        res.writeHead(204);
-        res.end();
-      },
-    },
+    spaPageRoute("/", users),
+    ...createGameRoutes(users, games, broadcast, services),
     ...createSignInRoutes({
       sendSignInEmail: services.sendSignInEmail,
       clientConnections: services.clientConnections,
@@ -330,350 +95,17 @@ export function createRoutes(users, games, broadcast, services = {}) {
           parseBody,
         }),
     })),
-    {
-      method: "POST",
-      path: "/cash",
-      handler: async ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        const data = await parseBody(req);
-        const seats = parseSeats(data, 9);
-        const blinds = parseBlinds(data);
-        const game = PokerGame.create({ blinds, seats, kind: "cash" });
-        games.set(game.id, game);
-        Object.assign(log.context, {
-          game: {
-            type: "cash",
-            id: game.id,
-            blinds: `${blinds.small}/${blinds.big}`,
-            seats,
-          },
-        });
-        respondWithJson(res, { id: game.id, type: "cash" });
-      },
-    },
-    {
-      method: "POST",
-      path: "/sitngo",
-      handler: async ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        const data = await parseBody(req);
-        const seats = parseSeats(data, 6);
-        const buyIn = parseBuyIn(data);
-        const game = PokerGame.createTournament({ seats, buyIn });
-        games.set(game.id, game);
-        Object.assign(log.context, {
-          game: {
-            type: "sitngo",
-            id: game.id,
-            seats,
-            buyIn,
-            initialStack: game.tournament?.initialStack,
-          },
-        });
-        respondWithJson(res, { id: game.id, type: "sitngo" });
-      },
-    },
-    {
-      method: "POST",
-      path: "/mtt",
-      handler: async ({ req, res, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const data = await parseBody(req);
-        const tableSize = parseSeats(data, 6);
-        const buyIn = parseBuyIn(data);
-        try {
-          const id = services.mttManager?.createTournament({
-            owner: user,
-            buyIn,
-            tableSize,
-          });
-          if (!id) {
-            throw new Error("tournament service unavailable");
-          }
-          Object.assign(log.context, {
-            tournament: {
-              type: "mtt",
-              id,
-              ownerId: user.id,
-              buyIn,
-              tableSize,
-            },
-          });
-          respondWithJson(res, { id, type: "mtt" });
-        } catch (err) {
-          rethrowTournamentError(err);
-        }
-      },
-    },
-    {
-      method: "GET",
-      path: LIVE_CASH_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: LIVE_SITNGO_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: LIVE_MTT_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: LIVE_MTT_TABLE_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: HISTORY_CASH_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: HISTORY_SITNGO_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: HISTORY_MTT_TABLE_ROUTE,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/players\/([a-z0-9]+)$/,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: "/release-notes",
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/auth\/email-sign-in\/callback(?:\?.*)?$/,
-      handler: ({ req, res, log }) => {
-        getOrCreateUser(req, res, users, log);
-        respondWithFile(req, res, "src/frontend/index.html");
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/mtt\/([a-z0-9]+)$/,
-      handler: ({ req, res, match, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const tournamentId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        try {
-          const tournament = services.mttManager?.getTournamentView(
-            tournamentId,
-            user.id,
-          );
-          if (!tournament) {
-            throw new Error("tournament service unavailable");
-          }
-          respondWithJson(res, tournament);
-        } catch (err) {
-          rethrowTournamentError(err);
-        }
-      },
-    },
-    {
-      method: "POST",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/register$/,
-      handler: ({ req, res, match, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const tournamentId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        try {
-          const tournament = services.mttManager?.registerPlayer(
-            tournamentId,
-            user,
-          );
-          if (!tournament) {
-            throw new Error("tournament service unavailable");
-          }
-          respondWithJson(res, tournament);
-        } catch (err) {
-          rethrowTournamentError(err);
-        }
-      },
-    },
-    {
-      method: "POST",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/unregister$/,
-      handler: ({ req, res, match, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const tournamentId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        try {
-          const tournament = services.mttManager?.unregisterPlayer(
-            tournamentId,
-            user.id,
-            user.id,
-          );
-          if (!tournament) {
-            throw new Error("tournament service unavailable");
-          }
-          respondWithJson(res, tournament);
-        } catch (err) {
-          rethrowTournamentError(err);
-        }
-      },
-    },
-    {
-      method: "POST",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/start$/,
-      handler: ({ req, res, match, log }) => {
-        const user = getOrCreateUser(req, res, users, log);
-        const tournamentId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        try {
-          const tournament = services.mttManager?.startTournament(
-            tournamentId,
-            user.id,
-          );
-          if (!tournament) {
-            throw new Error("tournament service unavailable");
-          }
-          respondWithJson(res, tournament);
-        } catch (err) {
-          rethrowTournamentError(err);
-        }
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history$/,
-      handler: async ({ req, res, match, log }) => {
-        const gameId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hands = await HandHistory.getAllHands(gameId);
-        const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, user.id),
-        );
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries, playerId: user.id }));
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history\/(\d+)$/,
-      handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const gameId = /** @type {string} */ (m[1]);
-        const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hand = await HandHistory.getHand(gameId, handNumber);
-        if (!hand) {
-          throw new HttpError(404, "Hand not found", {
-            body: { error: "Hand not found", status: 404 },
-          });
-        }
-
-        const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
-        const view = HandHistory.getHandView(filteredHand, user.id);
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(
-          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
-        );
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history$/,
-      handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const tableId = /** @type {string} */ (m[2]);
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hands = await HandHistory.getAllHands(tableId);
-        const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, user.id),
-        );
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries, playerId: user.id }));
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history\/(\d+)$/,
-      handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const tableId = /** @type {string} */ (m[2]);
-        const handNumber = parseInt(/** @type {string} */ (m[3]), 10);
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hand = await HandHistory.getHand(tableId, handNumber);
-        if (!hand) {
-          throw new HttpError(404, "Hand not found", {
-            body: { error: "Hand not found", status: 404 },
-          });
-        }
-
-        const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
-        const view = HandHistory.getHandView(filteredHand, user.id);
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(
-          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
-        );
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/players\/([a-z0-9]+)$/,
-      handler: async ({ req, res, match, log }) => {
-        getOrCreateUser(req, res, users, log);
-        const playerId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
-        const profile = await getPlayerProfile(games, playerId);
-
-        if (!profile) {
-          throw new HttpError(404, "Player not found", {
-            body: { error: "Player not found", status: 404 },
-          });
-        }
-
-        respondWithJson(res, profile);
-      },
-    },
+    spaPageRoute(LIVE_CASH_ROUTE, users),
+    spaPageRoute(LIVE_SITNGO_ROUTE, users),
+    spaPageRoute(LIVE_MTT_ROUTE, users),
+    spaPageRoute(LIVE_MTT_TABLE_ROUTE, users),
+    spaPageRoute(HISTORY_CASH_ROUTE, users),
+    spaPageRoute(HISTORY_SITNGO_ROUTE, users),
+    spaPageRoute(HISTORY_MTT_TABLE_ROUTE, users),
+    spaPageRoute(/^\/players\/([a-z0-9]+)$/, users),
+    spaPageRoute("/release-notes", users),
+    spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/, users),
+    ...createHistoryRoutes(users),
   ];
 }
 

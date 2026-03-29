@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import { css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import { designTokens, baseStyles } from "./styles.js";
@@ -29,17 +28,16 @@ import {
   renderAuthStatusView,
   renderShellView,
 } from "./app-render.js";
-import { createFrontendErrorReport } from "./error-reporting.js";
-import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import {
   getHistoryApiBase,
   getHistoryPath,
   getLivePathFromHistory,
   isConnectableLiveRoute,
-  isHistoryRouteForLivePath,
   parseAppPath,
   syncAppHistoryState,
 } from "./app-route-state.js";
+import * as ws from "./app-websocket.js";
+import * as mttRouting from "./app-mtt-routing.js";
 
 class App extends LitElement {
   static get styles() {
@@ -145,10 +143,7 @@ class App extends LitElement {
 
     const token = url.searchParams.get("token") ?? "";
     if (!token) {
-      this.toast = {
-        message: "Unable to sign in",
-        variant: "error",
-      };
+      this.toast = { message: "Unable to sign in", variant: "error" };
       history.replaceState({}, "", "/");
       this.path = "/";
       return;
@@ -161,21 +156,13 @@ class App extends LitElement {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-      if (!res.ok) {
-        throw new Error("Invalid or expired sign-in link");
-      }
+      if (!res.ok) throw new Error("Invalid or expired sign-in link");
       const data = await res.json();
       returnTo = this._normalizeCallbackReturnPath(data?.returnPath ?? "/");
-      this.toast = {
-        message: "Signed in successfully",
-        variant: "success",
-      };
+      this.toast = { message: "Signed in successfully", variant: "success" };
       await this._fetchUser();
     } catch {
-      this.toast = {
-        message: "Unable to sign in",
-        variant: "error",
-      };
+      this.toast = { message: "Unable to sign in", variant: "error" };
     }
 
     const nextUrl = new URL(returnTo, window.location.origin);
@@ -188,7 +175,6 @@ class App extends LitElement {
 
   // Getters for backward compatibility with tests
   get historyHandList() {
-    // Return null if task hasn't completed, otherwise return hands array (or empty array)
     if (this._historyListTask.status !== TaskStatus.COMPLETE) return null;
     return this._historyListTask.value?.hands ?? [];
   }
@@ -270,163 +256,27 @@ class App extends LitElement {
   // --- Game WebSocket Management ---
 
   connectToGame(path) {
-    const liveRoute = matchLiveRoute(path);
-    if (!liveRoute) {
-      return;
-    }
-
-    // Already connected to this game
-    if (this._activeGamePath === path && this._socket) {
-      return;
-    }
-
-    // Disconnect from previous game if different
-    if (this._activeGamePath && this._activeGamePath !== path) {
-      this.disconnectFromGame();
-    }
-
-    this._activeGameId =
-      liveRoute.kind === "mtt" ? liveRoute.tournamentId : liveRoute.tableId;
-    this._activeGamePath = path;
-    this.game = null;
-    this.socialAction = null;
-    this.gameConnectionStatus = "connecting";
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
-    this._socket = socket;
-
-    socket.onopen = () => {
-      if (this._socket !== socket) return;
-      this.gameConnectionStatus = "connected";
-    };
-
-    socket.onmessage = (event) => {
-      if (this._socket !== socket) return;
-      const data = JSON.parse(event.data);
-      if (data.error) {
-        this.toast = { message: data.error.message, variant: "error" };
-        return;
-      }
-
-      if (data.type === "social") {
-        if (!matchLiveRoute(this.path)) return;
-        this.socialAction = data;
-        return;
-      }
-
-      if (data.type === "history") {
-        if (
-          data.event === "handRecorded" &&
-          isHistoryRouteForLivePath(this.path, this._activeGamePath)
-        ) {
-          this._historyListRefreshNonce += 1;
-        }
-        return;
-      }
-
-      if (data.type === "tournamentState") {
-        this._mttView = data.tournament;
-        this._mttLoading = false;
-        this._mttError = "";
-        this._maybeRedirectMttRoute();
-        return;
-      }
-
-      // Ignore any typed envelope that is not a direct player-view payload.
-      if (data.type) return;
-
-      this.game = data;
-    };
-
-    socket.onerror = () => {
-      if (this._socket !== socket) return;
-      this.handleGameNotFound();
-    };
-
-    socket.onclose = (event) => {
-      const intentionallyClosed =
-        this._intentionalSocketCloses.has(socket) || this._socket !== socket;
-      this._intentionalSocketCloses.delete(socket);
-
-      if (this._socket !== socket) {
-        return;
-      }
-
-      this._socket = null;
-      this.gameConnectionStatus = "disconnected";
-      // Code 1006 = abnormal closure (connection rejected before game loaded)
-      if (!this.game && !this._mttView && event.code === 1006) {
-        this.handleGameNotFound();
-        return;
-      }
-      // Reconnect automatically unless we closed intentionally
-      if (!intentionallyClosed && this._activeGamePath === path) {
-        setTimeout(() => {
-          if (!this._socket && this._activeGamePath === path) {
-            this._reconnectIfNeeded();
-          }
-        }, 1000);
-      }
-    };
+    ws.connectToGame(this, path);
   }
 
   _reconnectIfNeeded() {
-    if (
-      this._activeGamePath &&
-      (!this._socket || this._socket.readyState === WebSocket.CLOSED)
-    ) {
-      const path = this._activeGamePath;
-      this._activeGameId = null;
-      this._activeGamePath = null;
-      this.connectToGame(path);
-    }
+    ws.reconnectIfNeeded(this);
   }
 
   disconnectFromGame() {
-    if (this._socket) {
-      this._intentionalSocketCloses.add(this._socket);
-      this._socket.close();
-      this._socket = null;
-    }
-    this._activeGameId = null;
-    this._activeGamePath = null;
-    this.game = null;
-    this.socialAction = null;
-    this.gameConnectionStatus = "disconnected";
+    ws.disconnectFromGame(this);
   }
 
   sendToGame(message) {
-    if (this._socket?.readyState === WebSocket.OPEN) {
-      this._socket.send(JSON.stringify(message));
-    }
+    ws.sendToGame(this, message);
   }
 
   reportFrontendError(error) {
-    const payload = createFrontendErrorReport(
-      error,
-      window.location.pathname,
-      this._activeGameId,
-      this.gameConnectionStatus,
-    );
-
-    void fetch("/api/client-errors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    }).catch(() => {});
+    ws.reportFrontendError(this, error);
   }
 
   handleGameNotFound() {
-    const liveRoute = matchLiveRoute(this.path);
-    this.toast = {
-      message:
-        liveRoute?.kind === "mtt" ? "Tournament not found" : "Game not found",
-      variant: "error",
-    };
-    this.disconnectFromGame();
-    history.replaceState({}, "", "/");
-    this.path = "/";
+    ws.handleGameNotFound(this);
   }
 
   dismissToast() {
@@ -487,10 +337,7 @@ class App extends LitElement {
       settings: { volume: this._settingsVolume },
     });
     this._showProfileSettings = false;
-    this.toast = {
-      message: "Settings saved",
-      variant: "success",
-    };
+    this.toast = { message: "Settings saved", variant: "success" };
   }
 
   handleHandSelect(handNumber) {
@@ -498,17 +345,6 @@ class App extends LitElement {
     const nextPath = this._getHistoryPath(handNumber);
     history.replaceState({}, "", nextPath);
     this.path = nextPath;
-  }
-
-  _manageConnection(path) {
-    if (path) {
-      if (this._activeGamePath === path && !this._socket) {
-        return;
-      }
-      this.connectToGame(path);
-    } else if (this._activeGamePath) {
-      this.disconnectFromGame();
-    }
   }
 
   _clearHistoryState() {
@@ -543,96 +379,22 @@ class App extends LitElement {
     );
   }
 
-  _syncMttRoute(liveRoute) {
-    const tournamentId =
-      liveRoute?.kind === "mtt" || liveRoute?.kind === "mtt_table"
-        ? liveRoute.tournamentId
-        : null;
-    if (tournamentId === this._mttTournamentId) return;
+  // --- MTT Routing ---
 
-    this._mttTournamentId = tournamentId;
-    this._mttView = null;
-    this._mttLoading = tournamentId !== null;
-    this._mttError = "";
-    this._mttActionPending = false;
+  _syncMttRoute(liveRoute) {
+    mttRouting.syncMttRoute(this, liveRoute);
   }
 
   _setMttLobbyOverride(allowMttLobby) {
-    this._allowMttLobby = allowMttLobby;
-  }
-
-  _shouldStayOnMttLobby(liveRoute) {
-    return liveRoute?.kind === "mtt" && this._allowMttLobby;
-  }
-
-  // eslint-disable-next-line complexity
-  _resolveMttRedirectPath(liveRoute) {
-    if (!liveRoute || !this._mttTournamentId || !this._mttView) {
-      return null;
-    }
-
-    const nextTableId = this._mttView.currentPlayer?.tableId;
-    if (this._mttView.status !== "running" || !nextTableId) {
-      return null;
-    }
-
-    if (this._shouldStayOnMttLobby(liveRoute)) {
-      return null;
-    }
-
-    if (liveRoute.kind === "mtt") {
-      return getTablePath("mtt", nextTableId, this._mttTournamentId);
-    }
-
-    if (liveRoute.kind === "mtt_table" && liveRoute.tableId !== nextTableId) {
-      return getTablePath("mtt", nextTableId, this._mttTournamentId);
-    }
-
-    return null;
+    mttRouting.setMttLobbyOverride(this, allowMttLobby);
   }
 
   _maybeRedirectMttRoute() {
-    const { liveRoute } = parseAppPath(this.path);
-    const nextPath = this._resolveMttRedirectPath(liveRoute);
-    if (!nextPath || nextPath === this.path) return;
-
-    if (liveRoute?.kind === "mtt_table") {
-      const tableName =
-        this._mttView?.tables.find(
-          (table) => table.tableId === this._mttView?.currentPlayer?.tableId,
-        )?.tableName || "your new table";
-      this.toast = {
-        message: `Moved to ${tableName}`,
-        variant: "info",
-      };
-    }
-
-    history.replaceState({}, "", nextPath);
-    this._setMttLobbyOverride(false);
-    this.path = nextPath;
+    mttRouting.maybeRedirectMttRoute(this);
   }
 
   async performMttAction(action) {
-    if (!this._mttTournamentId || this._mttActionPending) return;
-
-    this._mttActionPending = true;
-    try {
-      const res = await fetch(`/api/mtt/${this._mttTournamentId}/${action}`, {
-        method: "POST",
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error(data?.error || `Failed to ${action}`);
-      }
-      this._mttView = data;
-      this._mttError = "";
-      this._maybeRedirectMttRoute();
-    } catch (err) {
-      const error = /** @type {Error} */ (err);
-      this.toast = { message: error.message, variant: "error" };
-    } finally {
-      this._mttActionPending = false;
-    }
+    return mttRouting.performMttAction(this, action);
   }
 
   willUpdate(changedProperties) {
@@ -661,7 +423,6 @@ class App extends LitElement {
       const listData = this._historyListTask.value;
       const hands = listData?.hands || [];
 
-      // Redirect if on list route (no hand number) and hands exist
       if (
         this._historyHandNumber === null &&
         hands.length > 0 &&
@@ -677,10 +438,7 @@ class App extends LitElement {
     // Handle task errors
     if (this._historyListTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyListTask.error);
-      this.toast = {
-        message: error.message,
-        variant: "error",
-      };
+      this.toast = { message: error.message, variant: "error" };
       const livePath = this._getLivePathFromHistory();
       history.replaceState({}, "", livePath);
       this.path = livePath;
@@ -688,10 +446,7 @@ class App extends LitElement {
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyHandTask.error);
-      this.toast = {
-        message: error.message,
-        variant: "error",
-      };
+      this.toast = { message: error.message, variant: "error" };
       const livePath = this._getLivePathFromHistory();
       history.replaceState({}, "", livePath);
       this.path = livePath;
@@ -699,10 +454,7 @@ class App extends LitElement {
 
     if (this._playerProfileTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._playerProfileTask.error);
-      this.toast = {
-        message: error.message,
-        variant: "error",
-      };
+      this.toast = { message: error.message, variant: "error" };
       history.replaceState({}, "", "/");
       this.path = "/";
     }
@@ -716,7 +468,7 @@ class App extends LitElement {
       parseAppPath(this.path);
     const releaseNotesMatch = this.path === "/release-notes";
 
-    this._manageConnection(resourcePath);
+    ws.manageConnection(this, resourcePath);
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);

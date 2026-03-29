@@ -1,6 +1,5 @@
-/* eslint-disable max-lines */
 import { html, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { designTokens, baseStyles } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
 import {
@@ -29,8 +28,9 @@ import {
   renderChatModal,
 } from "./game-modals.js";
 import { gameModalActions } from "./game-modal-actions.js";
+import { renderInfoBar } from "./game-info-bar.js";
+import { renderActionPanel } from "./game-action-panel.js";
 
-const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 /** @typedef {HTMLElement & { showEmote: (emoji: string) => void, showChat: (message: string) => void }} SeatElement */
 
 class Game extends LitElement {
@@ -397,114 +397,6 @@ class Game extends LitElement {
       ?.winningCards;
   }
 
-  _formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }
-
-  _getTypeLabel() {
-    if (this.gameKind === "mtt") return "Tournament";
-    if (this.gameKind === "sitngo" || this.game?.tournament) {
-      return "Sit & Go";
-    }
-    return "Cash";
-  }
-
-  _getTournamentTimerCell() {
-    const tournament = this.game?.tournament;
-    if (!tournament || tournament.timeToNextLevel == null) {
-      return null;
-    }
-
-    const timerText = tournament.onBreak
-      ? `Break ${this._formatTime(tournament.timeToNextLevel)}`
-      : `Level ${tournament.level}: ${this._formatTime(
-          tournament.timeToNextLevel,
-        )}`;
-    return html`<span class="info-cell info-timer">${timerText}</span>`;
-  }
-
-  _renderInfoBar() {
-    if (!this.game) return "";
-    const sizeLabel = TABLE_SIZE_LABELS[this.game.seats.length] || "";
-
-    const cells = [
-      html`<span class="info-cell info-type">${this._getTypeLabel()}</span>`,
-      html`<span class="info-cell info-size">${sizeLabel}</span>`,
-    ].filter(Boolean);
-
-    if (this.game.blinds) {
-      cells.push(
-        html`<span class="info-cell info-blinds"
-          >${formatCurrency(this.game.blinds.small)}/${formatCurrency(
-            this.game.blinds.big,
-          )}</span
-        >`,
-      );
-    }
-
-    if (this.game.handNumber > 0) {
-      cells.push(
-        html`<span class="info-cell info-hand">#${this.game.handNumber}</span>`,
-      );
-    }
-
-    const tournamentTimerCell = this._getTournamentTimerCell();
-    if (tournamentTimerCell) {
-      cells.push(tournamentTimerCell);
-    }
-
-    return html`<div id="info-bar">${cells}</div>`;
-  }
-
-  _isInHand(seatIndex) {
-    if (seatIndex === -1) return false;
-    const seat = this.game.seats[seatIndex];
-    if (!seat || seat.empty) return false;
-    if (seat.folded || seat.allIn || seat.sittingOut) return false;
-    return ["preflop", "flop", "turn", "river"].includes(this.game.hand?.phase);
-  }
-
-  _getPreActionProps(seatIndex) {
-    const seat = seatIndex !== -1 ? this.game.seats[seatIndex] : {};
-    const hand = this.game.hand || {};
-    return {
-      preAction: seat.preAction,
-      currentBet: hand.currentBet || 0,
-      myBet: seat.bet || 0,
-      myStack: seat.stack || 0,
-      isActing: hand.actingSeat === seatIndex,
-      inHand: this._isInHand(seatIndex),
-    };
-  }
-
-  _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
-    const pre = this._getPreActionProps(seatIndex);
-    return html`<phg-action-panel
-      .actions=${this.connectionStatus === "connected" ? actions : []}
-      .seatIndex=${seatIndex}
-      .smallBlind=${this.game.blinds?.small || 1}
-      .bigBlind=${this.game.blinds?.big || 1}
-      .pot=${this.game.hand?.pot ?? 0}
-      .seatedCount=${this.game.seats.filter((s) => !s.empty).length}
-      .canSit=${canSit}
-      .buyIn=${this.game.tournament?.buyIn ?? 0}
-      .bustedPosition=${bustedPosition}
-      .isWinner=${isWinner}
-      .preAction=${pre.preAction}
-      .currentBet=${pre.currentBet}
-      .myBet=${pre.myBet}
-      .myStack=${pre.myStack}
-      .isActing=${pre.isActing}
-      .inHand=${pre.inHand}
-      .connectionStatus=${this.connectionStatus}
-      @game-action=${this.handleGameAction}
-      @open-emote-picker=${this.openEmotePicker}
-      @open-chat=${this.openChat}
-    ></phg-action-panel>`;
-  }
-
   render() {
     if (!this.game) return html`<p>Loading ...</p>`;
 
@@ -547,14 +439,15 @@ class Game extends LitElement {
             )}
           </div>
         </div>
-        ${this._renderActionPanel(
+        ${renderActionPanel(
+          this,
           actions,
           seatIndex,
           canSit,
           bustedPosition,
           isWinner,
         )}
-        ${this._renderInfoBar()} ${renderRankingModal(this)}
+        ${renderInfoBar(this.game, this.gameKind)} ${renderRankingModal(this)}
         ${renderSettingsModal(this)} ${renderSignInModal(this)}
         ${renderEmoteModal(this)} ${renderChatModal(this)}
       </div>
