@@ -449,4 +449,59 @@ describe("mtt-manager", () => {
       countActivePlayers(tableA) + countActivePlayers(tableB);
     assert.equal(totalRemaining, 5);
   });
+
+  it("freezes other waiting tables when hand finalization arrives after the busted table already restarted", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 7; i++) {
+      manager.registerPlayer(tournamentId, createUser(`p${i}`, `Player ${i}`));
+    }
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+
+    const tableA = games.get(tournament.tables[0].tableId);
+    const tableB = games.get(tournament.tables[1].tableId);
+    assert.ok(tableA);
+    assert.ok(tableB);
+    assert.equal(countActivePlayers(tableA), 4);
+    assert.equal(countActivePlayers(tableB), 3);
+
+    let busted = 0;
+    for (const seat of tableA.seats) {
+      if (!seat.empty && seat.player.id !== "owner" && busted < 1) {
+        seat.stack = 0;
+        seat.sittingOut = true;
+        busted++;
+      }
+    }
+    assert.equal(busted, 1);
+    assert.equal(countActivePlayers(tableA) + countActivePlayers(tableB), 6);
+
+    // Simulate the real async path: the busted table has already restarted,
+    // while the other table is still waiting and must be frozen immediately.
+    tableA.hand.phase = "preflop";
+    tableA.countdown = null;
+    tableB.hand.phase = "waiting";
+    tableB.countdown = 2;
+
+    manager.handleHandFinalized(tableA);
+
+    assert.equal(tournament.pendingCollapse, true);
+    assert.equal(tableB.countdown, null);
+
+    tableA.hand.phase = "waiting";
+    manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.pendingCollapse, false);
+    const closedCount = tournament.tables.filter((t) => t.closedAt).length;
+    assert.equal(closedCount, 1);
+    const totalRemaining =
+      countActivePlayers(tableA) + countActivePlayers(tableB);
+    assert.equal(totalRemaining, 6);
+  });
 });

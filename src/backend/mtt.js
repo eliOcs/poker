@@ -636,6 +636,9 @@ function collapseExtraTables(tournament, games, changedTables, now) {
     );
     if (!breakCandidate) {
       tournament.pendingCollapse = true;
+      for (const entry of activeTables) {
+        changedTables.add(entry.game.id);
+      }
       break;
     }
 
@@ -661,6 +664,9 @@ function collapseExtraTables(tournament, games, changedTables, now) {
       )[0];
       if (!destination) {
         tournament.pendingCollapse = true;
+        for (const entry of activeTables) {
+          changedTables.add(entry.game.id);
+        }
         blocked = true;
         break;
       }
