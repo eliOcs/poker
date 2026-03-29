@@ -5,6 +5,8 @@ import * as Store from "../../src/backend/store.js";
 import { createMttManager } from "../../src/backend/mtt.js";
 import * as Tournament from "../../src/shared/tournament.js";
 
+const FINAL_TABLE_NAME = "Final Table";
+
 /**
  * @param {string} id
  * @param {string} [name]
@@ -24,6 +26,30 @@ function createUser(id, name = id) {
  */
 function countActivePlayers(game) {
   return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
+}
+
+/**
+ * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt: string|null }> }} tournament
+ * @param {Map<string, import("../../src/backend/poker/game.js").Game>} games
+ * @returns {number}
+ */
+function countTournamentActivePlayers(tournament, games) {
+  return tournament.tables.reduce((count, table) => {
+    const game = games.get(table.tableId);
+    return count + (game ? countActivePlayers(game) : 0);
+  }, 0);
+}
+
+/**
+ * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt: string|null }> }} tournament
+ * @param {Map<string, import("../../src/backend/poker/game.js").Game>} games
+ * @returns {import("../../src/backend/poker/game.js").Game|null}
+ */
+function getOpenFinalTable(tournament, games) {
+  const finalTable = tournament.tables.find(
+    (table) => table.tableName === FINAL_TABLE_NAME && table.closedAt === null,
+  );
+  return finalTable ? games.get(finalTable.tableId) || null : null;
 }
 
 describe("mtt-manager", () => {
@@ -181,6 +207,33 @@ describe("mtt-manager", () => {
     assert.equal(tournament.onBreak, true);
   });
 
+  it("restarts waiting-table countdowns when a break ends", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const table = games.get(tournament.tables[0].tableId);
+    assert.ok(table);
+
+    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.onBreak = true;
+    tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
+    table.hand.phase = "waiting";
+    table.countdown = null;
+
+    manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.onBreak, false);
+    assert.equal(tournament.level, Tournament.BREAK_AFTER_LEVEL + 1);
+    assert.equal(table.countdown, 5);
+  });
+
   it("breaks small tables, moves players deterministically, and detects the winner", () => {
     const tournamentId = manager.createTournament({
       owner: createUser("owner", "Owner"),
@@ -213,26 +266,35 @@ describe("mtt-manager", () => {
     assert.equal(bustedEntrant?.status, "eliminated");
     assert.equal(bustedEntrant?.finishPosition, 3);
     assert.ok(tournament.tables[0].closedAt);
-    assert.equal(sourceTable.tournament?.redirects?.owner, destinationTable.id);
+    assert.ok(tournament.tables[1].closedAt);
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
+    assert.equal(finalTable.tableName, FINAL_TABLE_NAME);
+    assert.equal(sourceTable.tournament?.redirects?.owner, finalTable.id);
     assert.equal(sourceTable.hand.phase, "waiting");
     assert.equal(sourceTable.hand.actingSeat, -1);
     assert.equal(sourceTable.countdown, null);
     assert.equal(countActivePlayers(sourceTable), 0);
     assert.ok(sourceTable.seats.every((seat) => seat.empty));
-    assert.equal(countActivePlayers(destinationTable), 2);
+    assert.equal(countActivePlayers(destinationTable), 0);
+    assert.equal(countActivePlayers(finalTable), 2);
 
     tableBroadcasts = [];
     manager.tickTournament(tournamentId);
-    assert.deepStrictEqual(tableBroadcasts, [destinationTable.id]);
+    assert.deepStrictEqual(tableBroadcasts, [finalTable.id]);
 
+    const finalBustSeatIndex = finalTable.seats.findIndex(
+      (seat) => !seat.empty && seat.player.id !== "owner",
+    );
+    assert.notEqual(finalBustSeatIndex, -1);
     const finalBustSeat =
       /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
-        destinationTable.seats[0]
+        finalTable.seats[finalBustSeatIndex]
       );
     finalBustSeat.stack = 0;
     finalBustSeat.sittingOut = true;
 
-    manager.handleHandFinalized(destinationTable);
+    manager.handleHandFinalized(finalTable);
 
     const winner = tournament.entrants.get("owner");
     const runnerUp = tournament.entrants.get(finalBustSeat.player.id);
@@ -240,9 +302,10 @@ describe("mtt-manager", () => {
     assert.equal(winner?.status, "winner");
     assert.equal(winner?.finishPosition, 1);
     assert.equal(runnerUp?.finishPosition, 2);
-    assert.equal(destinationTable.tournament?.winner, winner?.seatIndex);
+    assert.equal(finalTable.tournament?.winner, winner?.seatIndex);
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
+    assert.ok(tournament.tables[2].closedAt);
   });
 
   it("retries table collapse on tick when destination was mid-hand during handleHandFinalized", () => {
@@ -287,10 +350,15 @@ describe("mtt-manager", () => {
     // Tournament tick should now retry the collapse
     manager.tickTournament(tournamentId);
 
-    // Source table is now collapsed, player moved to destination
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
+    assert.equal(finalTable.tableName, FINAL_TABLE_NAME);
+    // Both original tables are now collapsed, player moved to the new final table
     assert.ok(tournament.tables[0].closedAt);
+    assert.ok(tournament.tables[1].closedAt);
     assert.equal(countActivePlayers(sourceTable), 0);
-    assert.equal(countActivePlayers(destTable), 2);
+    assert.equal(countActivePlayers(destTable), 0);
+    assert.equal(countActivePlayers(finalTable), 2);
   });
 
   it("matches sitngo disconnect behavior when only one contender remains", () => {
@@ -400,7 +468,7 @@ describe("mtt-manager", () => {
     assert.equal(countActivePlayers(tableA), 2);
     assert.equal(countActivePlayers(tableB), 1);
 
-    // Bust p2 on table A — should collapse table B into table A
+    // Bust p2 on table A — should create the final table
     const bustedSeat =
       /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
         tableA.seats[1]
@@ -421,8 +489,12 @@ describe("mtt-manager", () => {
     assert.equal(tournament.pendingCollapse, false);
     assert.equal(tableB.pendingHandHistory, null);
     assert.ok(tournament.tables[0].closedAt);
+    assert.ok(tournament.tables[1].closedAt);
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
     assert.equal(countActivePlayers(tableA), 0);
-    assert.equal(countActivePlayers(tableB), 2);
+    assert.equal(countActivePlayers(tableB), 0);
+    assert.equal(countActivePlayers(finalTable), 2);
   });
 
   it("suppresses countdowns on waiting tables until pending collapse completes", () => {
@@ -480,12 +552,13 @@ describe("mtt-manager", () => {
 
     // Now the collapse should have completed
     assert.equal(tournament.pendingCollapse, false);
-    // One table should be closed, the other should have all remaining players
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
+    // Both original tables should be closed, with all remaining players on the final table
     const closedCount = tournament.tables.filter((t) => t.closedAt).length;
-    assert.equal(closedCount, 1);
-    const totalRemaining =
-      countActivePlayers(tableA) + countActivePlayers(tableB);
-    assert.equal(totalRemaining, 5);
+    assert.equal(closedCount, 2);
+    assert.equal(countTournamentActivePlayers(tournament, games), 5);
+    assert.equal(countActivePlayers(finalTable), 5);
   });
 
   it("freezes other waiting tables when hand finalization arrives after the busted table already restarted", () => {
@@ -536,11 +609,12 @@ describe("mtt-manager", () => {
     manager.tickTournament(tournamentId);
 
     assert.equal(tournament.pendingCollapse, false);
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
     const closedCount = tournament.tables.filter((t) => t.closedAt).length;
-    assert.equal(closedCount, 1);
-    const totalRemaining =
-      countActivePlayers(tableA) + countActivePlayers(tableB);
-    assert.equal(totalRemaining, 6);
+    assert.equal(closedCount, 2);
+    assert.equal(countTournamentActivePlayers(tournament, games), 6);
+    assert.equal(countActivePlayers(finalTable), 6);
   });
 
   it("finalizes a busted table's waiting hand on tick so final-table collapse can happen before restart", () => {
@@ -587,13 +661,14 @@ describe("mtt-manager", () => {
 
     assert.equal(tableA.pendingHandHistory, null);
     assert.equal(tournament.pendingCollapse, false);
+    const finalTable = getOpenFinalTable(tournament, games);
+    assert.ok(finalTable);
     const closedCount = tournament.tables.filter(
       (table) => table.closedAt,
     ).length;
-    assert.equal(closedCount, 1);
-    const totalRemaining =
-      countActivePlayers(tableA) + countActivePlayers(tableB);
-    assert.equal(totalRemaining, 6);
+    assert.equal(closedCount, 2);
+    assert.equal(countTournamentActivePlayers(tournament, games), 6);
+    assert.equal(countActivePlayers(finalTable), 6);
   });
 
   it("reuses newly-eliminated seats before balancing waiting tables", () => {

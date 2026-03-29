@@ -89,6 +89,7 @@ async function collectGameSnapshots(players, activePlayers) {
   let winnerName = null;
   let removedCount = 0;
   let maxHandNumber = null;
+  const eliminatedPlayerIndexes = [];
 
   const snapshotEntries = await Promise.all(
     [...activePlayers].map(async (idx) => ({
@@ -107,6 +108,7 @@ async function collectGameSnapshots(players, activePlayers) {
       console.log(`Seat ${idx + 1} eliminated`);
       activePlayers.delete(idx);
       removedCount++;
+      eliminatedPlayerIndexes.push(idx);
     }
     if (snapshot.handNumber != null) {
       maxHandNumber =
@@ -114,6 +116,10 @@ async function collectGameSnapshots(players, activePlayers) {
           ? snapshot.handNumber
           : Math.max(maxHandNumber, snapshot.handNumber);
     }
+  }
+
+  for (const idx of eliminatedPlayerIndexes) {
+    await players[idx].close();
   }
 
   return { winnerName, removedCount, maxHandNumber };
@@ -399,15 +405,27 @@ async function runTournamentLoop(players, activePlayers, state) {
           `seat-${clockResult.seatIdx + 1}-callClock-hand-${state.handCount}`,
         );
       } else {
-        // During tournament breaks no actions are possible — check if any
-        // active player sees the break overlay and count that as progress
-        // so the stall detector doesn't fire.
-        const firstPlayer = players[[...activePlayers][0]];
-        const onBreak = firstPlayer
-          ? await firstPlayer.isOnBreak().catch(() => false)
-          : false;
-        if (onBreak) {
+        const activePlayerIndexes = [...activePlayers];
+        const onBreakStates = await Promise.all(
+          activePlayerIndexes.map((idx) =>
+            players[idx].isOnBreak().catch(() => false),
+          ),
+        );
+        if (onBreakStates.some(Boolean)) {
           markProgress(state, `break-hand-${state.handCount}`);
+          await delay(250);
+          continue;
+        }
+
+        const connectionStates = await Promise.all(
+          activePlayerIndexes.map((idx) =>
+            players[idx].isConnected().catch(() => false),
+          ),
+        );
+        if (connectionStates.some((isConnected) => !isConnected)) {
+          markProgress(state, `reconnecting-hand-${state.handCount}`);
+          await delay(250);
+          continue;
         }
         await waitForAnyTurn(players, activePlayers);
       }

@@ -491,6 +491,14 @@ export function renderActionPanel(panel) {
   const tournamentResult = renderTournamentResult(panel);
   if (tournamentResult) return tournamentResult;
 
+  if (panel.connectionStatus !== "connected") {
+    return html`<span class="waiting"
+      >${panel.connectionStatus === "connecting"
+        ? "Reconnecting..."
+        : "Disconnected"}</span
+    >`;
+  }
+
   if (!panel.actions || panel.actions.length === 0) {
     if (panel.seatedCount < 2) return renderWaitingForPlayers(panel);
     if (panel.seatIndex === -1) return html``;

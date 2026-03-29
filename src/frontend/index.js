@@ -39,6 +39,7 @@ class Game extends LitElement {
       gameKind: { type: String },
       tournamentId: { type: String },
       tournamentFinishPosition: { type: Number },
+      connectionStatus: { type: String },
       game: { type: Object },
       socialAction: { type: Object },
       user: { type: Object },
@@ -60,6 +61,7 @@ class Game extends LitElement {
     this.gameKind = "cash";
     this.tournamentId = null;
     this.tournamentFinishPosition = null;
+    this.connectionStatus = "connected";
     this.game = null;
     this.socialAction = null;
     this.user = null;
@@ -459,7 +461,7 @@ class Game extends LitElement {
   _renderActionPanel(actions, seatIndex, canSit, bustedPosition, isWinner) {
     const pre = this._getPreActionProps(seatIndex);
     return html`<phg-action-panel
-      .actions=${actions}
+      .actions=${this.connectionStatus === "connected" ? actions : []}
       .seatIndex=${seatIndex}
       .smallBlind=${this.game.blinds?.small || 1}
       .bigBlind=${this.game.blinds?.big || 1}
@@ -475,6 +477,7 @@ class Game extends LitElement {
       .myStack=${pre.myStack}
       .isActing=${pre.isActing}
       .inHand=${pre.inHand}
+      .connectionStatus=${this.connectionStatus}
       @game-action=${this.handleGameAction}
       @open-emote-picker=${this.openEmotePicker}
       @open-chat=${this.openChat}

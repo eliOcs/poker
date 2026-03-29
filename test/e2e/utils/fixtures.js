@@ -27,8 +27,10 @@ function createPlayerFixture(name, contextOptions = {}) {
 
     const player = new PokerPlayer(context, page, name);
     await use(player);
-    await stopCoverage(page);
-    await context.close();
+    if (!page.isClosed()) {
+      await stopCoverage(page);
+    }
+    await context.close().catch(() => {});
   };
 }
 

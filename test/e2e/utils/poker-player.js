@@ -25,6 +25,16 @@ export class PokerPlayer {
     this.name = name;
   }
 
+  /**
+   * Close the player's page/context early. Safe to call more than once.
+   */
+  async close() {
+    if (!this.page.isClosed()) {
+      await this.page.close().catch(() => {});
+    }
+    await this.context.close().catch(() => {});
+  }
+
   get game() {
     return this.page.locator("phg-game");
   }
@@ -43,6 +53,16 @@ export class PokerPlayer {
 
   get actionPanel() {
     return this.game.locator("phg-action-panel");
+  }
+
+  /**
+   * Whether the page considers its table connection live
+   * @returns {Promise<boolean>}
+   */
+  async isConnected() {
+    return await this.game
+      .evaluate((el) => el.connectionStatus === "connected")
+      .catch(() => false);
   }
 
   /**
@@ -217,6 +237,7 @@ export class PokerPlayer {
    * @returns {Promise<boolean>}
    */
   async isMyTurn() {
+    if (!(await this.isConnected())) return false;
     return await this.turnButtons
       .first()
       .isVisible()
@@ -239,6 +260,7 @@ export class PokerPlayer {
    * @returns {Promise<boolean>}
    */
   async hasAction(actionName) {
+    if (!(await this.isConnected())) return false;
     if (actionName === "call") {
       return await this.actionPanel
         .getByRole("button", { name: /^Call\s+\$/ })
@@ -707,7 +729,7 @@ export class PokerPlayer {
   /**
    * Read game snapshot for stress test: winner, hand number, and bust status
    * in a single evaluate call to minimize cross-browser round-trips
-   * @returns {Promise<{tournamentWinner: string|null, handNumber: number|null, bustedPosition: number|null}|null>}
+   * @returns {Promise<{tournamentWinner: string|null, handNumber: number|null, bustedPosition: number|null, connected: boolean}|null>}
    */
   async getGameSnapshot() {
     return await this.game
@@ -728,6 +750,7 @@ export class PokerPlayer {
           handNumber: g.handNumber ?? null,
           bustedPosition:
             mySeat?.bustedPosition ?? el.tournamentFinishPosition ?? null,
+          connected: el.connectionStatus === "connected",
         };
       })
       .catch(() => null);
@@ -795,10 +818,8 @@ export class PokerPlayer {
    * @returns {Promise<boolean>}
    */
   async isOnBreak() {
-    // Break overlay has "BREAK" text
-    return await this.board
-      .locator(".break-overlay, :text('BREAK')")
-      .isVisible()
+    return await this.game
+      .evaluate((el) => el.game?.tournament?.onBreak === true)
       .catch(() => false);
   }
 

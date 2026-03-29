@@ -6,6 +6,8 @@ import * as Tournament from "../shared/tournament.js";
 import { TIMER_INTERVAL } from "./poker/game-constants.js";
 import { tickClock } from "./poker/tournament-clock.js";
 
+const FINAL_TABLE_NAME = "Final Table";
+
 /**
  * @typedef {import('./user.js').User} User
  * @typedef {import('./poker/game.js').Game} Game
@@ -512,6 +514,14 @@ function resetClosedTable(game) {
 }
 
 /**
+ * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
+ * @returns {boolean}
+ */
+function areAllTablesWaiting(activeTables) {
+  return activeTables.every((entry) => isTableWaiting(entry.game));
+}
+
+/**
  * @param {ManagedTournament} tournament
  * @param {Game} sourceGame
  * @param {number} sourceSeatIndex
@@ -693,11 +703,31 @@ function collapseTableIntoDestinations(
 
 /**
  * @param {ManagedTournament} tournament
+ * @returns {number}
+ */
+function getNextTableCreatedOrder(tournament) {
+  return (
+    tournament.tables.reduce(
+      (maxCreatedOrder, table) => Math.max(maxCreatedOrder, table.createdOrder),
+      -1,
+    ) + 1
+  );
+}
+
+/**
+ * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
  * @param {() => string} now
+ * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>) => void} mergeIntoFinalTable
  */
-function collapseExtraTables(tournament, games, changedTables, now) {
+function collapseExtraTables(
+  tournament,
+  games,
+  changedTables,
+  now,
+  mergeIntoFinalTable,
+) {
   for (;;) {
     const activeTables = getActiveTables(tournament, games);
     const totalPlayers = activeTables.reduce(
@@ -710,6 +740,17 @@ function collapseExtraTables(tournament, games, changedTables, now) {
     );
 
     if (activeTables.length <= targetTableCount) {
+      tournament.pendingCollapse = false;
+      return;
+    }
+
+    if (targetTableCount === 1) {
+      if (!areAllTablesWaiting(activeTables)) {
+        markPendingCollapse(tournament, activeTables, changedTables);
+        return;
+      }
+
+      mergeIntoFinalTable(activeTables, changedTables);
       tournament.pendingCollapse = false;
       return;
     }
@@ -787,13 +828,26 @@ function balanceWaitingTables(tournament, games, changedTables) {
  * @param {Map<string, Game>} games
  * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
+ * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>) => void} mergeIntoFinalTable
  * @returns {Set<string>}
  */
-function rebalanceTournament(tournament, games, ensureTableTick, now) {
+function rebalanceTournament(
+  tournament,
+  games,
+  ensureTableTick,
+  now,
+  mergeIntoFinalTable,
+) {
   /** @type {Set<string>} */
   const changedTables = new Set();
 
-  collapseExtraTables(tournament, games, changedTables, now);
+  collapseExtraTables(
+    tournament,
+    games,
+    changedTables,
+    now,
+    mergeIntoFinalTable,
+  );
   balanceWaitingTables(tournament, games, changedTables);
 
   for (const tableId of changedTables) {
@@ -985,6 +1039,67 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
+   * @param {string} tableName
+   * @returns {{ table: ManagedTable, game: Game }}
+   */
+  function createManagedTable(tournament, tableName) {
+    const game = PokerGame.createMttTable({
+      seats: tournament.tableSize,
+      buyIn: tournament.buyIn,
+      tournamentId: tournament.id,
+      tableName,
+      startTime: tournament.startedAt,
+      level: tournament.level,
+    });
+
+    applyTournamentStateToTable(tournament, game);
+    const table = {
+      tableId: game.id,
+      tableName,
+      createdOrder: getNextTableCreatedOrder(tournament),
+      createdAt: tournament.startedAt || now(),
+      closedAt: null,
+    };
+    tournament.tables.push(table);
+    games.set(game.id, game);
+    return { table, game };
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
+   * @param {Set<string>} changedTables
+   */
+  function mergeIntoFinalTable(tournament, activeTables, changedTables) {
+    const { game: finalGame } = createManagedTable(
+      tournament,
+      FINAL_TABLE_NAME,
+    );
+    changedTables.add(finalGame.id);
+
+    const tablesInMoveOrder = [...activeTables].sort(
+      (a, b) => a.table.createdOrder - b.table.createdOrder,
+    );
+
+    for (const entry of tablesInMoveOrder) {
+      const activeSeatIndexes = getActiveSeatIndexes(
+        tournament,
+        entry.game,
+      ).sort((a, b) => a - b);
+      for (const seatIndex of activeSeatIndexes) {
+        movePlayer(tournament, entry.game, seatIndex, finalGame);
+      }
+
+      changedTables.add(entry.game.id);
+      entry.table.closedAt = now();
+      clearTableWinner(entry.game);
+      resetClosedTable(entry.game);
+      applyTournamentStateToTable(tournament, entry.game);
+    }
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
    * @returns {string[]}
    */
   function startManagedTables(tournament) {
@@ -997,26 +1112,8 @@ export function createMttManager({
     let entrantIndex = 0;
 
     tableSizes.forEach((tableSize, index) => {
-      const tableName = `Table ${index + 1}`;
-      const game = PokerGame.createMttTable({
-        seats: tournament.tableSize,
-        buyIn: tournament.buyIn,
-        tournamentId: tournament.id,
-        tableName,
-        startTime: tournament.startedAt,
-        level: tournament.level,
-      });
-
-      applyTournamentStateToTable(tournament, game);
-      tournament.tables.push({
-        tableId: game.id,
-        tableName,
-        createdOrder: index,
-        createdAt: tournament.startedAt || now(),
-        closedAt: null,
-      });
+      const { game } = createManagedTable(tournament, `Table ${index + 1}`);
       createdTableIds.push(game.id);
-      games.set(game.id, game);
 
       for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
         const entrant = entrants[entrantIndex];
@@ -1055,6 +1152,9 @@ export function createMttManager({
       games,
       ensureTableTick,
       now,
+      (activeTables, changedTables) => {
+        mergeIntoFinalTable(tournament, activeTables, changedTables);
+      },
     );
     for (const tableId of balancedTables) {
       changedTableIds.add(tableId);
@@ -1393,6 +1493,9 @@ export function createMttManager({
         games,
         ensureTableTick,
         now,
+        (activeTables, changedTableIds) => {
+          mergeIntoFinalTable(tournament, activeTables, changedTableIds);
+        },
       );
       for (const tableId of balancedTables) {
         changedTableIds.add(tableId);
