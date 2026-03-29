@@ -79,13 +79,47 @@ async function initializeGuestSessions(players) {
  */
 
 /**
+ * @typedef {{ bustedPosition: number, confirmations: number }} EliminationCandidate
+ */
+
+/**
+ * @param {Map<number, EliminationCandidate>} eliminationCandidates
+ * @param {number} idx
+ * @param {number|null} bustedPosition
+ * @returns {number|null}
+ */
+function confirmEliminationCandidate(
+  eliminationCandidates,
+  idx,
+  bustedPosition,
+) {
+  if (bustedPosition == null) {
+    eliminationCandidates.delete(idx);
+    return null;
+  }
+
+  const previousCandidate = eliminationCandidates.get(idx);
+  const confirmations =
+    previousCandidate?.bustedPosition === bustedPosition
+      ? previousCandidate.confirmations + 1
+      : 1;
+  eliminationCandidates.set(idx, { bustedPosition, confirmations });
+  return confirmations >= 2 ? bustedPosition : null;
+}
+
+/**
  * Single pass over active players: check winner, remove busted, track hand number.
  * Uses one evaluate call per player instead of separate loops.
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
+ * @param {Map<number, EliminationCandidate>} eliminationCandidates
  * @returns {Promise<SnapshotResult>}
  */
-async function collectGameSnapshots(players, activePlayers) {
+async function collectGameSnapshots(
+  players,
+  activePlayers,
+  eliminationCandidates,
+) {
   let winnerName = null;
   let removedCount = 0;
   let maxHandNumber = null;
@@ -99,16 +133,27 @@ async function collectGameSnapshots(players, activePlayers) {
   );
 
   for (const { idx, snapshot } of snapshotEntries) {
-    if (!snapshot) continue;
+    if (!snapshot) {
+      eliminationCandidates.delete(idx);
+      continue;
+    }
 
     if (snapshot.tournamentWinner) {
       winnerName = snapshot.tournamentWinner;
     }
-    if (snapshot.bustedPosition != null) {
-      console.log(`Seat ${idx + 1} eliminated`);
+    const confirmedBustedPosition = confirmEliminationCandidate(
+      eliminationCandidates,
+      idx,
+      snapshot.bustedPosition,
+    );
+    if (confirmedBustedPosition != null) {
+      console.log(
+        `Seat ${idx + 1} eliminated in position ${confirmedBustedPosition}`,
+      );
       activePlayers.delete(idx);
       removedCount++;
       eliminatedPlayerIndexes.push(idx);
+      eliminationCandidates.delete(idx);
     }
     if (snapshot.handNumber != null) {
       maxHandNumber =
@@ -376,12 +421,18 @@ async function assertNotStalled(players, activePlayers, state) {
  */
 async function runTournamentLoop(players, activePlayers, state) {
   const maxActions = 16000;
+  /** @type {Map<number, EliminationCandidate>} */
+  const eliminationCandidates = new Map();
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
     await assertNotStalled(players, activePlayers, state);
 
     // Single pass: winner check + bust detection + hand number tracking
-    const snapshots = await collectGameSnapshots(players, activePlayers);
+    const snapshots = await collectGameSnapshots(
+      players,
+      activePlayers,
+      eliminationCandidates,
+    );
     if (snapshots.winnerName) return snapshots.winnerName;
     if (snapshots.removedCount > 0) {
       markProgress(state, `removed-${snapshots.removedCount}-busted`);
