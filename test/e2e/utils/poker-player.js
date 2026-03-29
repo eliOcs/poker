@@ -726,7 +726,8 @@ export class PokerPlayer {
         return {
           tournamentWinner: winnerName,
           handNumber: g.handNumber ?? null,
-          bustedPosition: mySeat ? mySeat.bustedPosition : null,
+          bustedPosition:
+            mySeat?.bustedPosition ?? el.tournamentFinishPosition ?? null,
         };
       })
       .catch(() => null);
@@ -744,8 +745,14 @@ export class PokerPlayer {
    * @returns {Promise<boolean>}
    */
   async isEliminated() {
-    return await this.mySeat
-      .evaluate((el) => el.classList.contains("busted"))
+    return await this.game
+      .evaluate(
+        (el) =>
+          el.tournamentFinishPosition != null ||
+          !!el.shadowRoot
+            ?.querySelector("phg-seat.current-player")
+            ?.classList.contains("busted"),
+      )
       .catch(() => false);
   }
 

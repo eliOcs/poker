@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { beforeEach, afterEach, describe, it } from "node:test";
 import assert from "node:assert";
 import * as Store from "../../src/backend/store.js";
@@ -52,6 +53,13 @@ describe("mtt-manager", () => {
         tournamentBroadcasts.push(tournamentId);
       },
       ensureTableTick: () => {},
+      finalizePendingTableHand: (game) => {
+        if (!game.pendingHandHistory) {
+          return false;
+        }
+        game.pendingHandHistory = null;
+        return true;
+      },
       now: () =>
         `2026-03-14T00:00:${String(tickCount++).padStart(2, "0")}.000Z`,
       setIntervalFn: () => ({ unref() {} }),
@@ -331,7 +339,48 @@ describe("mtt-manager", () => {
     assert.equal(mainTable.tournament?.winner, winner?.seatIndex);
   });
 
-  it("does not move players from a table with pending hand history", () => {
+  it("empties busted MTT seats while preserving the player's finish position", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 11; i++) {
+      manager.registerPlayer(tournamentId, createUser(`p${i}`, `Player ${i}`));
+    }
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+
+    const table = games.get(tournament.tables[0].tableId);
+    assert.ok(table);
+
+    const bustedSeatIndex = table.seats.findIndex(
+      (seat) => !seat.empty && seat.player.id !== "owner",
+    );
+    assert.notEqual(bustedSeatIndex, -1);
+
+    const bustedSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        table.seats[bustedSeatIndex]
+      );
+    bustedSeat.stack = 0;
+    bustedSeat.sittingOut = true;
+
+    manager.handleHandFinalized(table);
+
+    assert.equal(table.seats[bustedSeatIndex].empty, true);
+
+    const bustedView = manager.getTournamentView(
+      tournamentId,
+      bustedSeat.player.id,
+    );
+    assert.equal(bustedView.currentPlayer.status, "eliminated");
+    assert.equal(bustedView.currentPlayer.finishPosition, 11);
+  });
+
+  it("finalizes waiting destination history before collapsing tables", () => {
     const tournamentId = manager.createTournament({
       owner: createUser("owner", "Owner"),
       buyIn: 500,
@@ -359,29 +408,18 @@ describe("mtt-manager", () => {
     bustedSeat.stack = 0;
     bustedSeat.sittingOut = true;
 
-    // Table B has pending hand history (between hand end and next hand start).
-    // The rebalancer must not move its player until the history is finalized.
+    // Table B has a finished hand that is waiting to be flushed.
+    // The rebalancer should finalize it first, then collapse immediately.
     tableB.pendingHandHistory = [
       { potAmount: 100, awards: [{ seat: 0, amount: 100 }] },
     ];
+    tableB.hand.phase = "waiting";
+    tableB.countdown = 4;
 
     manager.handleHandFinalized(tableA);
 
-    // Table A (the smaller/break candidate) cannot collapse into table B
-    // because table B has pending history — no valid destination
-    assert.equal(tournament.pendingCollapse, true);
-    assert.equal(tournament.tables[0].closedAt, null);
-    assert.equal(tournament.tables[1].closedAt, null);
-    assert.equal(countActivePlayers(tableA), 1);
-    assert.equal(countActivePlayers(tableB), 1);
-
-    // Clear pending history (as startHand would)
-    tableB.pendingHandHistory = null;
-
-    // Now a tick should retry and collapse table A into table B
-    manager.tickTournament(tournamentId);
-
     assert.equal(tournament.pendingCollapse, false);
+    assert.equal(tableB.pendingHandHistory, null);
     assert.ok(tournament.tables[0].closedAt);
     assert.equal(countActivePlayers(tableA), 0);
     assert.equal(countActivePlayers(tableB), 2);
@@ -503,5 +541,104 @@ describe("mtt-manager", () => {
     const totalRemaining =
       countActivePlayers(tableA) + countActivePlayers(tableB);
     assert.equal(totalRemaining, 6);
+  });
+
+  it("finalizes a busted table's waiting hand on tick so final-table collapse can happen before restart", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 7; i++) {
+      manager.registerPlayer(tournamentId, createUser(`p${i}`, `Player ${i}`));
+    }
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+
+    const tableA = games.get(tournament.tables[0].tableId);
+    const tableB = games.get(tournament.tables[1].tableId);
+    assert.ok(tableA);
+    assert.ok(tableB);
+    assert.equal(countActivePlayers(tableA), 4);
+    assert.equal(countActivePlayers(tableB), 3);
+
+    let busted = 0;
+    for (const seat of tableA.seats) {
+      if (!seat.empty && seat.player.id !== "owner" && busted < 1) {
+        seat.stack = 0;
+        seat.sittingOut = true;
+        busted++;
+      }
+    }
+    assert.equal(busted, 1);
+    assert.equal(countActivePlayers(tableA) + countActivePlayers(tableB), 6);
+
+    tableA.hand.phase = "waiting";
+    tableA.countdown = 4;
+    tableA.pendingHandHistory = [
+      { potAmount: 100, awards: [{ seat: 0, amount: 100 }] },
+    ];
+    tableB.hand.phase = "waiting";
+    tableB.countdown = 2;
+
+    manager.tickTournament(tournamentId);
+
+    assert.equal(tableA.pendingHandHistory, null);
+    assert.equal(tournament.pendingCollapse, false);
+    const closedCount = tournament.tables.filter(
+      (table) => table.closedAt,
+    ).length;
+    assert.equal(closedCount, 1);
+    const totalRemaining =
+      countActivePlayers(tableA) + countActivePlayers(tableB);
+    assert.equal(totalRemaining, 6);
+  });
+
+  it("reuses newly-eliminated seats before balancing waiting tables", () => {
+    const tournamentId = manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 12; i++) {
+      manager.registerPlayer(tournamentId, createUser(`p${i}`, `Player ${i}`));
+    }
+    manager.startTournament(tournamentId, "owner");
+
+    const tournament = manager.getTournament(tournamentId);
+    assert.ok(tournament);
+
+    const tableA = games.get(tournament.tables[0].tableId);
+    const tableB = games.get(tournament.tables[1].tableId);
+    assert.ok(tableA);
+    assert.ok(tableB);
+    assert.equal(countActivePlayers(tableA), 6);
+    assert.equal(countActivePlayers(tableB), 6);
+
+    let busted = 0;
+    for (const seat of tableA.seats) {
+      if (!seat.empty && seat.player.id !== "owner" && busted < 2) {
+        seat.stack = 0;
+        seat.sittingOut = true;
+        busted++;
+      }
+    }
+    assert.equal(busted, 2);
+
+    tableA.hand.phase = "waiting";
+    tableA.countdown = 4;
+    tableA.pendingHandHistory = [
+      { potAmount: 100, awards: [{ seat: 0, amount: 100 }] },
+    ];
+    tableB.hand.phase = "waiting";
+    tableB.countdown = 2;
+
+    manager.tickTournament(tournamentId);
+
+    assert.equal(tableA.pendingHandHistory, null);
+    assert.equal(countActivePlayers(tableA), 5);
+    assert.equal(countActivePlayers(tableB), 5);
   });
 });

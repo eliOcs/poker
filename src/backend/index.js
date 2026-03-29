@@ -20,6 +20,7 @@ import { createWebSocketServer } from "./ws-server.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
 import { createMttManager } from "./mtt.js";
+import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -55,57 +56,67 @@ const {
 
 let mttManager = null;
 
+/**
+ * @param {Game} game
+ * @param {{ handNumber: number, potResults: import("./poker/showdown.js").PotResult[], historyHand?: import("./poker/hand-history/index.js").OHHHand }} handData
+ * @param {{ notifyMttManager?: boolean }} [options]
+ */
+function recordFinalizedHand(game, handData, { notifyMttManager = true } = {}) {
+  const handPromise = handData.historyHand
+    ? HandHistory.persistHand(game.id, handData.historyHand)
+    : HandHistory.finalizeHand(game, handData.potResults, handData.handNumber);
+
+  handPromise
+    .then((hand) => {
+      Store.recordPlayerTableActivity(
+        hand.players.map((player) => ({
+          playerId: player.id,
+          tableId: game.id,
+          tournamentId: game.kind === "mtt" ? game.tournamentId : null,
+          lastHandNumber: handData.handNumber,
+          lastPlayedAt: hand.start_date_utc,
+        })),
+      );
+      const tournamentId = game.tournamentId;
+      if (game.kind === "mtt" && tournamentId) {
+        Store.recordPlayerTournamentActivity(
+          hand.players.map((player) => ({
+            playerId: player.id,
+            tournamentId,
+            lastTableId: game.id,
+            lastHandNumber: handData.handNumber,
+            lastPlayedAt: hand.start_date_utc,
+          })),
+        );
+      }
+      if (notifyMttManager && game.kind === "mtt" && mttManager) {
+        mttManager.handleHandFinalized(game);
+      }
+      rawBroadcastGameMessage({
+        type: "history",
+        gameId: game.id,
+        event: "handRecorded",
+        handNumber: handData.handNumber,
+      });
+    })
+    .catch((err) => {
+      logger.error("hand finalization failed", {
+        err,
+        game: { tableId: game.id },
+      });
+    });
+}
+
 /** @param {import('./poker/game.js').BroadcastMessage} message */
 function broadcastGameMessage(message) {
   if (message.type === "handEnded") {
     const game = games.get(message.gameId);
     if (game) {
-      const handPromise = message.historyHand
-        ? HandHistory.persistHand(message.gameId, message.historyHand)
-        : HandHistory.finalizeHand(
-            game,
-            message.potResults,
-            message.handNumber,
-          );
-      handPromise
-        .then((hand) => {
-          Store.recordPlayerTableActivity(
-            hand.players.map((player) => ({
-              playerId: player.id,
-              tableId: message.gameId,
-              tournamentId: game.kind === "mtt" ? game.tournamentId : null,
-              lastHandNumber: message.handNumber,
-              lastPlayedAt: hand.start_date_utc,
-            })),
-          );
-          const tournamentId = game.tournamentId;
-          if (game.kind === "mtt" && tournamentId) {
-            Store.recordPlayerTournamentActivity(
-              hand.players.map((player) => ({
-                playerId: player.id,
-                tournamentId,
-                lastTableId: message.gameId,
-                lastHandNumber: message.handNumber,
-                lastPlayedAt: hand.start_date_utc,
-              })),
-            );
-          }
-          if (game.kind === "mtt" && mttManager) {
-            mttManager.handleHandFinalized(game);
-          }
-          rawBroadcastGameMessage({
-            type: "history",
-            gameId: message.gameId,
-            event: "handRecorded",
-            handNumber: message.handNumber,
-          });
-        })
-        .catch((err) => {
-          logger.error("hand finalization failed", {
-            err,
-            game: { tableId: message.gameId },
-          });
-        });
+      recordFinalizedHand(game, {
+        handNumber: message.handNumber,
+        potResults: message.potResults,
+        historyHand: message.historyHand,
+      });
     }
     return { recipients: 0, maxPayloadBytes: 0 };
   }
@@ -117,6 +128,15 @@ mttManager = createMttManager({
   broadcastTournamentState: broadcastTournamentStateMessage,
   ensureTableTick: (game) => {
     PokerGame.ensureGameTick(game, broadcastGameMessage);
+  },
+  finalizePendingTableHand: (game) => {
+    if (!game.pendingHandHistory) {
+      return false;
+    }
+    recordFinalizedHand(game, finalizePendingHandHistory(game), {
+      notifyMttManager: false,
+    });
+    return true;
   },
 });
 const routes = createRoutes(users, games, broadcastGameStateMessage, {

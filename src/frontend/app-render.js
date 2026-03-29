@@ -30,6 +30,8 @@ export function renderGameView(app, liveRoute) {
       .tournamentId=${"tournamentId" in liveRoute
         ? liveRoute.tournamentId
         : null}
+      .tournamentFinishPosition=${app._mttView?.currentPlayer?.finishPosition ??
+      null}
       .game=${app.game}
       .socialAction=${app.socialAction}
       .user=${app.user}

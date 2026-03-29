@@ -38,6 +38,7 @@ class Game extends LitElement {
       gameId: { type: String, attribute: "game-id" },
       gameKind: { type: String },
       tournamentId: { type: String },
+      tournamentFinishPosition: { type: Number },
       game: { type: Object },
       socialAction: { type: Object },
       user: { type: Object },
@@ -58,6 +59,7 @@ class Game extends LitElement {
     this.gameId = null;
     this.gameKind = "cash";
     this.tournamentId = null;
+    this.tournamentFinishPosition = null;
     this.game = null;
     this.socialAction = null;
     this.user = null;
@@ -273,7 +275,7 @@ class Game extends LitElement {
       return {
         seatIndex: -1,
         actions: [],
-        bustedPosition: undefined,
+        bustedPosition: this.tournamentFinishPosition,
         isWinner: false,
       };
     }

@@ -89,7 +89,7 @@ import { tickClock } from "./poker/tournament-clock.js";
  * @property {ManagedTournamentViewEntrant[]} entrants
  * @property {ManagedTournamentViewEntrant[]} standings
  * @property {ManagedTournamentViewTable[]} tables
- * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId: string|null, seatIndex: number|null }} currentPlayer
+ * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId: string|null, seatIndex: number|null, finishPosition: number|null }} currentPlayer
  * @property {{ canRegister: boolean, canUnregister: boolean, canStart: boolean }} actions
  */
 
@@ -128,6 +128,19 @@ function isTableWaiting(game) {
     game.collectingBets === null &&
     game.runout?.active !== true &&
     game.pendingHandHistory === null
+  );
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function hasSettledWaitingHand(game) {
+  return (
+    game.hand.phase === "waiting" &&
+    game.collectingBets === null &&
+    game.runout?.active !== true &&
+    game.pendingHandHistory !== null
   );
 }
 
@@ -345,6 +358,7 @@ function buildCurrentPlayerView(tournament, entrant, playerId) {
     status: entrant?.status || "not_registered",
     tableId: entrant?.tableId ?? null,
     seatIndex: entrant?.seatIndex ?? null,
+    finishPosition: entrant?.finishPosition ?? null,
   };
 }
 
@@ -879,6 +893,7 @@ function canStartPendingBreak(tournament, games) {
  *   broadcastTableState?: (tableId: string) => void,
  *   broadcastTournamentState?: (tournamentId: string) => void,
  *   ensureTableTick?: (game: Game) => void,
+ *   finalizePendingTableHand?: (game: Game) => boolean,
  *   now?: () => string,
  *   setIntervalFn?: typeof setInterval,
  *   clearIntervalFn?: typeof clearInterval,
@@ -889,6 +904,7 @@ export function createMttManager({
   broadcastTableState = () => {},
   broadcastTournamentState = () => {},
   ensureTableTick = () => {},
+  finalizePendingTableHand = () => false,
   now = () => new Date().toISOString(),
   setIntervalFn = setInterval,
   clearIntervalFn = clearInterval,
@@ -1025,12 +1041,24 @@ export function createMttManager({
       return;
     }
 
+    /** @type {Set<string>} */
+    const changedTableIds = new Set();
+    finalizeSettledWaitingTables(tournament, changedTableIds);
+
     const canStartBreak = getActiveTables(tournament, games).every((entry) =>
       isTableWaiting(entry.game),
     );
     tickClock(tournament, canStartBreak);
 
-    rebalanceTournament(tournament, games, ensureTableTick, now);
+    const balancedTables = rebalanceTournament(
+      tournament,
+      games,
+      ensureTableTick,
+      now,
+    );
+    for (const tableId of balancedTables) {
+      changedTableIds.add(tableId);
+    }
 
     for (const table of tournament.tables) {
       const game = games.get(table.tableId);
@@ -1115,13 +1143,14 @@ export function createMttManager({
   }
 
   /**
+   * @param {Game} game
    * @param {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>} bustedEntrants
    * @param {number} activeBefore
    */
-  function markBustedEntrants(bustedEntrants, activeBefore) {
+  function markBustedEntrants(game, bustedEntrants, activeBefore) {
     bustedEntrants
       .sort((a, b) => a.seatIndex - b.seatIndex)
-      .forEach(({ seat, entrant }, index) => {
+      .forEach(({ seat, entrant, seatIndex }, index) => {
         const finishPosition = activeBefore - index;
         seat.bustedPosition = finishPosition;
         seat.stack = 0;
@@ -1133,6 +1162,7 @@ export function createMttManager({
         entrant.seatIndex = null;
         entrant.finishPosition = finishPosition;
         entrant.eliminatedAt = now();
+        game.seats[seatIndex] = Seat.empty();
       });
   }
 
@@ -1151,6 +1181,16 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
+   * @param {Game} game
+   */
+  function processTableAfterHand(tournament, game) {
+    const activeBefore = countActiveEntrants(tournament);
+    const bustedEntrants = getBustedEntrantsForTable(tournament, game);
+    markBustedEntrants(game, bustedEntrants, activeBefore);
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
    * @param {Set<string>} changedTableIds
    */
   function maybeStartPendingBreak(tournament, changedTableIds) {
@@ -1163,6 +1203,22 @@ export function createMttManager({
     tournament.breakTicks = 0;
     for (const table of tournament.tables) {
       changedTableIds.add(table.tableId);
+    }
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   */
+  function finalizeSettledWaitingTables(tournament, changedTableIds) {
+    for (const entry of getActiveTables(tournament, games)) {
+      if (!hasSettledWaitingHand(entry.game)) {
+        continue;
+      }
+      if (finalizePendingTableHand(entry.game)) {
+        processTableAfterHand(tournament, entry.game);
+        changedTableIds.add(entry.game.id);
+      }
     }
   }
 
@@ -1311,10 +1367,8 @@ export function createMttManager({
 
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
-      const activeBefore = countActiveEntrants(tournament);
-      const bustedEntrants = getBustedEntrantsForTable(tournament, game);
-
-      markBustedEntrants(bustedEntrants, activeBefore);
+      finalizeSettledWaitingTables(tournament, changedTableIds);
+      processTableAfterHand(tournament, game);
       maybeStartPendingBreak(tournament, changedTableIds);
 
       const contenders = getContendingEntrants(tournament, games);
