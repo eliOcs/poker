@@ -38,13 +38,6 @@
   Full House
   Straight
 
-## Tournaments
-
-- multi table tournaments
-- tournament lobby
-- then multiple games/tables generated
-- players moved when tables get too small
-
 # Not right now
 
 - Posicion en la mesa fija
