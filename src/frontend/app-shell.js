@@ -28,6 +28,7 @@ class AppShell extends LitElement {
     return {
       user: { type: Object },
       path: { type: String },
+      navigationRenderer: { attribute: false },
       drawerOpen: { state: true },
     };
   }
@@ -36,6 +37,7 @@ class AppShell extends LitElement {
     super();
     this.user = null;
     this.path = "/";
+    this.navigationRenderer = null;
     this.drawerOpen = false;
     this._onMediaChange = (event) => {
       this.drawerOpen = event.matches;
@@ -87,15 +89,18 @@ class AppShell extends LitElement {
     const releaseNotesActive = this.path === "/release-notes";
     const accountActive =
       !!this.user?.id && this.path === `/players/${this.user.id}`;
-
-    return html`
-      <div class="layout">
-        ${renderAppNavigationDrawer({
+    const navigation = this.navigationRenderer
+      ? this.navigationRenderer(this)
+      : renderAppNavigationDrawer({
           view: this,
           playActive,
           releaseNotesActive,
           accountActive,
-        })}
+        });
+
+    return html`
+      <div class="layout">
+        ${navigation}
         <slot></slot>
       </div>
     `;

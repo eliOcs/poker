@@ -12,6 +12,7 @@ import {
   getTableHistoryPath,
 } from "../shared/routes.js";
 import { calculatePrizes } from "../shared/tournament.js";
+import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
 import "./button.js";
 
 function ordinal(n) {
@@ -27,6 +28,16 @@ class MttLobby extends LitElement {
       baseStyles,
       shellPageStyles,
       css`
+        :host {
+          height: 100%;
+        }
+
+        @media (width >= 800px) {
+          :host {
+            flex-direction: row;
+          }
+        }
+
         .panel {
           width: min(1120px, 100%);
           display: grid;
@@ -282,6 +293,12 @@ class MttLobby extends LitElement {
             justify-content: center;
           }
         }
+
+        @media (width >= 800px) {
+          .main {
+            overflow-y: auto;
+          }
+        }
       `,
     ];
   }
@@ -290,10 +307,12 @@ class MttLobby extends LitElement {
     return {
       tournamentId: { type: String, attribute: "tournament-id" },
       tournament: { type: Object },
+      user: { type: Object },
       loading: { type: Boolean },
       error: { type: String },
       actionPending: { type: Boolean, attribute: "action-pending" },
       _copied: { type: Boolean, state: true },
+      _drawerOpen: { type: Boolean, state: true },
     };
   }
 
@@ -301,10 +320,49 @@ class MttLobby extends LitElement {
     super();
     this.tournamentId = null;
     this.tournament = null;
+    this.user = null;
     this.loading = false;
     this.error = "";
     this.actionPending = false;
     this._copied = false;
+    this._drawerOpen = false;
+    this._onMediaChange = (event) => {
+      this._drawerOpen = event.matches;
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._mql = window.matchMedia("(min-width: 800px)");
+    this._mql.addEventListener("change", this._onMediaChange);
+    this._drawerOpen = this._mql.matches;
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._mql?.removeEventListener("change", this._onMediaChange);
+  }
+
+  toggleDrawer() {
+    this._drawerOpen = !this._drawerOpen;
+  }
+
+  openSettings() {
+    this.dispatchEvent(
+      new CustomEvent("open-settings", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  openSignIn() {
+    this.dispatchEvent(
+      new CustomEvent("open-sign-in", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   _dispatchMttAction(action) {
@@ -396,6 +454,32 @@ class MttLobby extends LitElement {
 
   _tournamentUrl() {
     return `${window.location.origin}${getMttPath(this.tournamentId)}`;
+  }
+
+  _getCurrentTable() {
+    const tableId = this.tournament?.currentPlayer?.tableId;
+    if (!tableId) return null;
+    return this.tournament?.tables.find((table) => table.tableId === tableId);
+  }
+
+  _openCurrentTableTarget() {
+    const table = this._getCurrentTable();
+    if (!table || !this.tournamentId) return;
+    if (table.closed) {
+      this._navigate(
+        getTableHistoryPath("mtt", table.tableId, null, this.tournamentId),
+      );
+      return;
+    }
+    this.openTable(table.tableId);
+  }
+
+  _openCurrentTableHistory() {
+    const table = this._getCurrentTable();
+    if (!table || !this.tournamentId || table.handNumber <= 0) return;
+    this._navigate(
+      getTableHistoryPath("mtt", table.tableId, null, this.tournamentId),
+    );
   }
 
   async _copyLink() {
@@ -667,10 +751,64 @@ class MttLobby extends LitElement {
     `;
   }
 
+  // eslint-disable-next-line complexity
   render() {
     const tournament = this.tournament;
+    const currentTable = this._getCurrentTable();
+    const currentTableLabel = currentTable?.closed
+      ? "My Table History"
+      : "Open My Table";
+    const hasCurrentTableHistory = (currentTable?.handNumber || 0) > 0;
+    const toggleDrawer = () => {
+      this.toggleDrawer();
+    };
+    const openLobby = () => {
+      this.openLobby();
+    };
+    const openCurrentTable = currentTable
+      ? () => {
+          this._openCurrentTableTarget();
+        }
+      : null;
+    const openCurrentHistory = hasCurrentTableHistory
+      ? () => {
+          this._openCurrentTableHistory();
+        }
+      : null;
+    const copyLink = () => {
+      void this._copyLink();
+    };
+    const share =
+      "share" in navigator
+        ? () => {
+            this._share();
+          }
+        : null;
+    const openSettings = () => {
+      this.openSettings();
+    };
+    const openSignIn = () => {
+      this.openSignIn();
+    };
 
     return html`
+      ${renderMttNavigationDrawer({
+        open: this._drawerOpen,
+        onToggle: toggleDrawer,
+        user: this.user,
+        lobbyActive: true,
+        onOpenLobby: openLobby,
+        tableLabel: currentTableLabel,
+        onOpenTable: openCurrentTable,
+        tableDisabled: !currentTable,
+        onOpenHistory: openCurrentHistory,
+        historyDisabled: !hasCurrentTableHistory,
+        onCopyLink: copyLink,
+        copied: this._copied,
+        onShare: share,
+        onOpenSettings: openSettings,
+        onOpenSignIn: openSignIn,
+      })}
       <main class="main">
         <section class="panel">
           ${this.loading && !tournament

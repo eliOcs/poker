@@ -725,7 +725,9 @@ class App extends LitElement {
           ? renderReleaseNotesView()
           : renderHomeView();
 
-    return renderShellView(this, shellContent);
+    return renderShellView(this, shellContent, {
+      navigationRenderer: liveRoute?.kind === "mtt" ? () => "" : undefined,
+    });
   }
 }
 

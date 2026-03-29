@@ -74,6 +74,8 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Current Table");
     expect(element.shadowRoot.textContent).to.include("Table 1");
     expect(element.shadowRoot.textContent).to.include("Standings");
+    expect(element.shadowRoot.textContent).to.include("Lobby");
+    expect(element.shadowRoot.textContent).to.include("Open My Table");
   });
 
   it("dispatches navigation when opening a table", async () => {

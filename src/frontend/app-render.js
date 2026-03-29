@@ -84,6 +84,7 @@ export function renderMttLobbyView(app) {
   return html`<phg-mtt-lobby
     .tournamentId=${app._mttTournamentId}
     .tournament=${app._mttView}
+    .user=${app.user}
     .loading=${app._mttLoading}
     .error=${app._mttError}
     .actionPending=${app._mttActionPending}
@@ -99,11 +100,13 @@ export function renderReleaseNotesView() {
 /**
  * @param {any} app
  * @param {import("lit").TemplateResult} content
+ * @param {{ navigationRenderer?: ((shell: any) => import("lit").TemplateResult|string) }} [options]
  */
-export function renderShellView(app, content) {
+export function renderShellView(app, content, options = {}) {
   return html`${renderToast(app)}<phg-app-shell
       .user=${app.user}
       .path=${app.path}
+      .navigationRenderer=${options.navigationRenderer ?? null}
       >${content}</phg-app-shell
     >${renderProfileSettingsModal(app)}${renderProfileSignInModal(app)}`;
 }

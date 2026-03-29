@@ -179,4 +179,15 @@ describe("phg-app-shell", () => {
     const event = await oneEvent(element, "open-settings");
     expect(event).to.exist;
   });
+
+  it("can replace the shell drawer with a custom navigation renderer", async () => {
+    const element = await fixture(html`
+      <phg-app-shell path="/" .navigationRenderer=${() => ""}></phg-app-shell>
+    `);
+
+    await element.updateComplete;
+
+    expect(element.shadowRoot.querySelector("phg-navigation-drawer")).to.not
+      .exist;
+  });
 });
