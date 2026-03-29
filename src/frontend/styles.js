@@ -87,10 +87,12 @@ export const shellPageStyles = css`
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
     padding: clamp(12px, 3vw, 32px);
     background: var(--color-bg-medium);
+    overflow-y: auto;
   }
 `;
 

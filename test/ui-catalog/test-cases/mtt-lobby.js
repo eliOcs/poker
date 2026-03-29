@@ -5,7 +5,7 @@ const BASE_CREATED_AT = "2026-01-15T10:00:00.000Z";
 
 function mttLobbyView({ tournament = null, loading = false, error = "" } = {}) {
   return html`
-    <div style="min-height: 100vh; width: 100%;">
+    <div style="height: 100%; width: 100%;">
       <phg-mtt-lobby
         tournament-id="t1abc123"
         .tournament=${tournament}
@@ -178,8 +178,29 @@ export const MTT_LOBBY_TEST_CASES = {
         tableId: "table1",
         seatIndex: 4,
       }),
+      makeEntrant("player4", "Dana", {
+        status: "seated",
+        stack: 1200,
+        tableId: "table2",
+        seatIndex: 1,
+      }),
+      makeEntrant("player5", "Eve", {
+        status: "seated",
+        stack: 950,
+        tableId: "table2",
+        seatIndex: 3,
+      }),
+      makeEntrant("player6", "Frank", {
+        status: "seated",
+        stack: 850,
+        tableId: "table2",
+        seatIndex: 5,
+      }),
     ];
-    const tables = [makeTable("table1", "Table 1")];
+    const tables = [
+      makeTable("table1", "Table 1", { playerCount: 3, handNumber: 8 }),
+      makeTable("table2", "Table 2", { playerCount: 3, handNumber: 6 }),
+    ];
     return mttLobbyView({
       tournament: makeBaseTournament({
         status: "running",

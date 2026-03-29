@@ -12,7 +12,6 @@ import {
   formatLevel,
   formatPayoutTier,
   renderActions,
-  renderAssignment,
   renderTables,
   renderEntrantsTable,
   renderStandingsTable,
@@ -288,16 +287,13 @@ class MttLobby extends LitElement {
 
                   ${renderActions({
                     tournament,
+                    tournamentId: this.tournamentId,
                     actionPending: this.actionPending,
                     onMttAction,
+                    onNavigate,
                     onCopyLink: copyLink,
                     copied: this._copied,
                     onShare: share,
-                  })}
-                  ${renderAssignment({
-                    tournament,
-                    tournamentId: this.tournamentId,
-                    onNavigate,
                   })}
                 </section>
 

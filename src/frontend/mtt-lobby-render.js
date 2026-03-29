@@ -66,16 +66,107 @@ function getTableName(tournament, tableId) {
 /**
  * @param {object} params
  * @param {object} params.tournament
+ * @param {string} params.tournamentId
+ * @param {(path: string) => void} params.onNavigate
+ */
+function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
+  const tableId = tournament.currentPlayer?.tableId;
+  if (!tableId) return "";
+
+  const isClosed =
+    tournament.tables.find((t) => t.tableId === tableId)?.closed ?? false;
+
+  if (isClosed) {
+    return html`<phg-button
+      variant="primary"
+      @click=${() => {
+        onNavigate(getTableHistoryPath("mtt", tableId, null, tournamentId));
+      }}
+    >
+      Show My Last Table
+    </phg-button>`;
+  }
+
+  return html`<phg-button
+    variant="primary"
+    @click=${() => {
+      onNavigate(getTablePath("mtt", tableId, tournamentId));
+    }}
+  >
+    Open My Table
+  </phg-button>`;
+}
+
+/**
+ * @param {object} params
+ * @param {object} params.actions
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
+ */
+function renderRegistrationActions({ actions, actionPending, onMttAction }) {
+  return html`
+    ${actions.canRegister
+      ? html`<phg-button
+          variant="primary"
+          ?disabled=${actionPending}
+          @click=${() => {
+            onMttAction("register");
+          }}
+        >
+          Register
+        </phg-button>`
+      : ""}
+    ${actions.canUnregister
+      ? html`<phg-button
+          variant="muted"
+          ?disabled=${actionPending}
+          @click=${() => {
+            onMttAction("unregister");
+          }}
+        >
+          Unregister
+        </phg-button>`
+      : ""}
+  `;
+}
+
+/**
+ * @param {object} params
+ * @param {object} params.actions
+ * @param {boolean} params.actionPending
+ * @param {(action: string) => void} params.onMttAction
+ */
+function renderTournamentActions({ actions, actionPending, onMttAction }) {
+  if (!actions.canStart) return "";
+
+  return html`<phg-button
+    variant="success"
+    ?disabled=${actionPending}
+    @click=${() => {
+      onMttAction("start");
+    }}
+  >
+    Start Tournament
+  </phg-button>`;
+}
+
+/**
+ * @param {object} params
+ * @param {object} params.tournament
+ * @param {string} params.tournamentId
+ * @param {boolean} params.actionPending
+ * @param {(action: string) => void} params.onMttAction
+ * @param {(path: string) => void} params.onNavigate
  * @param {() => void} params.onCopyLink
  * @param {boolean} params.copied
  * @param {(() => void)|null} params.onShare
  */
 export function renderActions({
   tournament,
+  tournamentId,
   actionPending,
   onMttAction,
+  onNavigate,
   onCopyLink,
   copied,
   onShare,
@@ -85,39 +176,9 @@ export function renderActions({
 
   return html`
     <div class="action-row">
-      ${actions.canRegister
-        ? html`<phg-button
-            variant="primary"
-            ?disabled=${actionPending}
-            @click=${() => {
-              onMttAction("register");
-            }}
-          >
-            Register
-          </phg-button>`
-        : ""}
-      ${actions.canUnregister
-        ? html`<phg-button
-            variant="muted"
-            ?disabled=${actionPending}
-            @click=${() => {
-              onMttAction("unregister");
-            }}
-          >
-            Unregister
-          </phg-button>`
-        : ""}
-      ${actions.canStart
-        ? html`<phg-button
-            variant="success"
-            ?disabled=${actionPending}
-            @click=${() => {
-              onMttAction("start");
-            }}
-          >
-            Start Tournament
-          </phg-button>`
-        : ""}
+      ${renderMyTableAction({ tournament, tournamentId, onNavigate })}
+      ${renderRegistrationActions({ actions, actionPending, onMttAction })}
+      ${renderTournamentActions({ actions, actionPending, onMttAction })}
       <phg-button variant="secondary" @click=${onCopyLink}>
         ${copied ? "Copied!" : "Copy Link"}
       </phg-button>
@@ -126,55 +187,6 @@ export function renderActions({
             Share
           </phg-button>`
         : ""}
-    </div>
-  `;
-}
-
-/**
- * @param {object} params
- * @param {object} params.tournament
- * @param {string} params.tournamentId
- * @param {(path: string) => void} params.onNavigate
- */
-export function renderAssignment({ tournament, tournamentId, onNavigate }) {
-  if (!tournament?.currentPlayer?.tableId) return "";
-
-  const tableId = tournament.currentPlayer.tableId;
-  const tableName = getTableName(tournament, tableId);
-  const isRunning = tournament.status === "running";
-  const isClosed =
-    tournament.tables.find((t) => t.tableId === tableId)?.closed ?? false;
-
-  return html`
-    <div class="assignment">
-      <strong>${isRunning ? "Current Table" : "Final Table"}</strong>
-      <p>
-        ${tableName}
-        ${tournament.currentPlayer.seatIndex != null
-          ? html` • Seat ${tournament.currentPlayer.seatIndex + 1}`
-          : ""}
-      </p>
-      <div class="table-actions">
-        ${isClosed
-          ? html`<phg-button
-              variant="secondary"
-              @click=${() => {
-                onNavigate(
-                  getTableHistoryPath("mtt", tableId, null, tournamentId),
-                );
-              }}
-            >
-              Show History
-            </phg-button>`
-          : html`<phg-button
-              variant="primary"
-              @click=${() => {
-                onNavigate(getTablePath("mtt", tableId, tournamentId));
-              }}
-            >
-              Open Table
-            </phg-button>`}
-      </div>
     </div>
   `;
 }

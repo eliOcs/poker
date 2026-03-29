@@ -42,7 +42,7 @@ const GAME_TEST_CASES = {
   `,
 
   "player-profile-summary": () => html`
-    <div style="min-height: 100vh; width: 100%;">
+    <div style="height: 100%; width: 100%;">
       <phg-player-profile
         .profile=${{
           id: "lz1abc12x9k2",

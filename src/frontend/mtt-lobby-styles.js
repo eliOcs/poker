@@ -277,11 +277,5 @@ export const mttLobbyStyles = [
         justify-content: center;
       }
     }
-
-    @media (width >= 800px) {
-      .main {
-        overflow-y: auto;
-      }
-    }
   `,
 ];
