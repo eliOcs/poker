@@ -149,23 +149,32 @@ export class PokerPlayer extends PokerPlayerActions {
    */
   async getGameSnapshot() {
     return await this.game
-      // eslint-disable-next-line complexity
       .evaluate((el) => {
+        /** @param {number|null|undefined} winnerIndex @param {any[]} seats */
+        function resolveWinnerName(winnerIndex, seats) {
+          if (winnerIndex == null) return null;
+          const seat = seats[winnerIndex];
+          if (!seat) return null;
+          return seat.player && seat.player.name
+            ? seat.player.name
+            : `Seat ${winnerIndex + 1}`;
+        }
         const g = el.game;
         if (!g) return null;
-        const t = g.tournament;
-        const w = t ? t.winner : null;
-        const winnerSeat = w != null && g.seats ? g.seats[w] : null;
-        const winnerName = winnerSeat
-          ? winnerSeat.player?.name || `Seat ${w + 1}`
-          : null;
         const seats = g.seats || [];
-        const mySeat = seats.find((s) => s && s.isCurrentPlayer);
+        const tournament = g.tournament || null;
+        const winnerName = resolveWinnerName(
+          tournament ? tournament.winner : null,
+          seats,
+        );
+        const mySeat = seats.find((s) => s && s.isCurrentPlayer) || null;
         return {
           tournamentWinner: winnerName,
-          handNumber: g.handNumber ?? null,
+          handNumber: g.handNumber !== undefined ? g.handNumber : null,
           bustedPosition:
-            mySeat?.bustedPosition ?? el.tournamentFinishPosition ?? null,
+            (mySeat && mySeat.bustedPosition != null
+              ? mySeat.bustedPosition
+              : el.tournamentFinishPosition) ?? null,
           connected: el.connectionStatus === "connected",
         };
       })

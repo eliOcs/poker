@@ -410,32 +410,31 @@ class App extends LitElement {
     }
   }
 
-  // eslint-disable-next-line complexity
-  updated() {
-    if (parseAppPath(this.path).liveRoute) {
-      this._syncMttRoute(parseAppPath(this.path).liveRoute);
+  _syncMttRouteFromPath() {
+    const { liveRoute } = parseAppPath(this.path);
+    if (liveRoute) {
+      this._syncMttRoute(liveRoute);
     } else if (this._mttTournamentId) {
       this._syncMttRoute(null);
     }
+  }
 
-    // Handle redirect to latest hand when list loads
-    if (this._historyListTask.status === TaskStatus.COMPLETE) {
-      const listData = this._historyListTask.value;
-      const hands = listData?.hands || [];
-
-      if (
-        this._historyHandNumber === null &&
-        hands.length > 0 &&
-        this.path === this._getHistoryPath()
-      ) {
-        const latest = hands[hands.length - 1].hand_number;
-        const nextPath = this._getHistoryPath(latest);
-        history.replaceState({}, "", nextPath);
-        this.path = nextPath;
-      }
+  _redirectToLatestHandIfNeeded() {
+    if (this._historyListTask.status !== TaskStatus.COMPLETE) return;
+    const hands = this._historyListTask.value?.hands || [];
+    if (
+      this._historyHandNumber === null &&
+      hands.length > 0 &&
+      this.path === this._getHistoryPath()
+    ) {
+      const latest = hands[hands.length - 1].hand_number;
+      const nextPath = this._getHistoryPath(latest);
+      history.replaceState({}, "", nextPath);
+      this.path = nextPath;
     }
+  }
 
-    // Handle task errors
+  _handleTaskErrors() {
     if (this._historyListTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyListTask.error);
       this.toast = { message: error.message, variant: "error" };
@@ -458,43 +457,52 @@ class App extends LitElement {
       history.replaceState({}, "", "/");
       this.path = "/";
     }
+  }
 
+  updated() {
+    this._syncMttRouteFromPath();
+    this._redirectToLatestHandIfNeeded();
+    this._handleTaskErrors();
     this._maybeRedirectMttRoute();
   }
 
-  // eslint-disable-next-line complexity
+  _resolveShellContent(liveRoute, playerProfileId, releaseNotesMatch) {
+    if (playerProfileId) return renderPlayerProfileView(this);
+    if (liveRoute?.kind === "mtt") return renderMttLobbyView(this);
+    if (releaseNotesMatch) return renderReleaseNotesView();
+    return renderHomeView();
+  }
+
+  _isTableRoute(liveRoute) {
+    const tableKinds = ["cash", "sitngo", "mtt_table"];
+    return liveRoute != null && tableKinds.includes(liveRoute.kind);
+  }
+
+  _renderParsedPath(liveRoute, historyRoute, playerProfileId) {
+    if (historyRoute) return renderHistoryView(this, historyRoute);
+    if (this._isTableRoute(liveRoute)) return renderGameView(this, liveRoute);
+    const releaseNotesMatch = this.path === "/release-notes";
+    const shellContent = this._resolveShellContent(
+      liveRoute,
+      playerProfileId,
+      releaseNotesMatch,
+    );
+    return renderShellView(this, shellContent, {
+      navigationRenderer: liveRoute?.kind === "mtt" ? () => "" : undefined,
+    });
+  }
+
   render() {
     const { liveRoute, historyRoute, playerProfileId, resourcePath } =
       parseAppPath(this.path);
-    const releaseNotesMatch = this.path === "/release-notes";
 
     ws.manageConnection(this, resourcePath);
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);
     }
-    if (
-      liveRoute &&
-      (liveRoute.kind === "cash" ||
-        liveRoute.kind === "sitngo" ||
-        liveRoute.kind === "mtt_table")
-    ) {
-      return renderGameView(this, liveRoute);
-    }
-    if (historyRoute) return renderHistoryView(this, historyRoute);
 
-    // All shell routes use the same template so phg-app-shell stays alive
-    const shellContent = playerProfileId
-      ? renderPlayerProfileView(this)
-      : liveRoute?.kind === "mtt"
-        ? renderMttLobbyView(this)
-        : releaseNotesMatch
-          ? renderReleaseNotesView()
-          : renderHomeView();
-
-    return renderShellView(this, shellContent, {
-      navigationRenderer: liveRoute?.kind === "mtt" ? () => "" : undefined,
-    });
+    return this._renderParsedPath(liveRoute, historyRoute, playerProfileId);
   }
 }
 

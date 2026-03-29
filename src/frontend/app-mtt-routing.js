@@ -39,12 +39,22 @@ function shouldStayOnMttLobby(app, liveRoute) {
 }
 
 /**
+ * Returns true if the player should be redirected to the given next table.
+ * @param {{ kind: string, tableId?: string }} liveRoute
+ * @param {string} nextTableId
+ * @returns {boolean}
+ */
+function shouldRedirectToTable(liveRoute, nextTableId) {
+  if (liveRoute.kind === "mtt") return true;
+  return liveRoute.kind === "mtt_table" && liveRoute.tableId !== nextTableId;
+}
+
+/**
  * Resolves the MTT redirect path if the player should be moved
  * @param {any} app
  * @param {{ kind: string, tableId?: string, tournamentId?: string }|null} liveRoute
  * @returns {string|null}
  */
-// eslint-disable-next-line complexity
 export function resolveMttRedirectPath(app, liveRoute) {
   if (!liveRoute || !app._mttTournamentId || !app._mttView) {
     return null;
@@ -59,11 +69,7 @@ export function resolveMttRedirectPath(app, liveRoute) {
     return null;
   }
 
-  if (liveRoute.kind === "mtt") {
-    return getTablePath("mtt", nextTableId, app._mttTournamentId);
-  }
-
-  if (liveRoute.kind === "mtt_table" && liveRoute.tableId !== nextTableId) {
+  if (shouldRedirectToTable(liveRoute, nextTableId)) {
     return getTablePath("mtt", nextTableId, app._mttTournamentId);
   }
 

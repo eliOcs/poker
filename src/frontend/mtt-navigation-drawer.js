@@ -72,42 +72,107 @@ function handleAction(fn) {
 }
 
 /**
- * @param {object} params
- * @param {boolean} params.open
- * @param {() => void} params.onToggle
- * @param {any} params.user
- * @param {boolean} [params.lobbyActive]
- * @param {(() => void)|null} [params.onOpenLobby]
- * @param {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [params.tableItems]
- * @param {(() => void)|null} [params.onOpenHistory]
- * @param {boolean} [params.historyDisabled]
- * @param {(() => void)|null} [params.onCopyLink]
- * @param {boolean} [params.copied]
- * @param {(() => void)|null} [params.onShare]
- * @param {Array<import("lit").TemplateResult|string>} [params.extraMainItems]
- * @param {() => void} params.onOpenSettings
- * @param {() => void} params.onOpenSignIn
+ * @param {any} user
+ * @param {() => void} onOpenSignIn
  * @returns {import("lit").TemplateResult}
  */
-// eslint-disable-next-line complexity
-export function renderMttNavigationDrawer({
-  open,
-  onToggle,
-  user,
-  lobbyActive = false,
-  onOpenLobby = null,
-  tableItems = [],
-  onOpenHistory = null,
-  historyDisabled = false,
-  onCopyLink = null,
-  copied = false,
-  onShare = null,
-  extraMainItems = [],
-  onOpenSettings,
-  onOpenSignIn,
-}) {
+function renderAccountFooterItem(user, onOpenSignIn) {
   const accountLabel = formatPlayerLabel(user?.name, user?.id, "Sign in");
-  const isSignedIn = !!user?.email;
+  if (user?.email) {
+    return html`<a
+      slot="footer"
+      class="drawer-account"
+      href=${`/players/${user.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      ${ICONS.signIn}
+      <span>${accountLabel}</span>
+    </a>`;
+  }
+  return html`<button
+    slot="footer"
+    class="drawer-sign-in"
+    @click=${handleAction(onOpenSignIn)}
+  >
+    ${ICONS.signIn}
+    <span>Sign in</span>
+  </button>`;
+}
+
+/**
+ * @param {(() => void)|null} onShare
+ * @returns {import("lit").TemplateResult|string}
+ */
+function renderShareButton(onShare) {
+  if (!onShare) return "";
+  return html`<button slot="main" @click=${handleAction(onShare)}>
+    ${iconShare}
+    <span>Share</span>
+  </button>`;
+}
+
+/**
+ * @param {{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }} table
+ * @returns {import("lit").TemplateResult}
+ */
+function renderTableItem(table) {
+  return html`<button
+    slot="main"
+    class=${drawerItemClass(table.active)}
+    @click=${handleAction(table.onOpen)}
+  >
+    ${iconTable}
+    <span>${table.label}</span>
+    ${table.isCurrentPlayerTable
+      ? html`<span
+          aria-hidden="true"
+          style="width: 8px; height: 8px; border-radius: 999px; background: var(--color-secondary); flex: none;"
+        ></span>`
+      : ""}
+  </button>`;
+}
+
+/**
+ * @typedef {object} MttNavigationDrawerParams
+ * @property {boolean} open
+ * @property {() => void} onToggle
+ * @property {any} user
+ * @property {boolean} [lobbyActive]
+ * @property {(() => void)|null} [onOpenLobby]
+ * @property {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [tableItems]
+ * @property {(() => void)|null} [onOpenHistory]
+ * @property {boolean} [historyDisabled]
+ * @property {(() => void)|null} [onCopyLink]
+ * @property {boolean} [copied]
+ * @property {(() => void)|null} [onShare]
+ * @property {Array<import("lit").TemplateResult|string>} [extraMainItems]
+ * @property {() => void} onOpenSettings
+ * @property {() => void} onOpenSignIn
+ */
+
+/**
+ * @param {Required<MttNavigationDrawerParams>} params
+ * @returns {import("lit").TemplateResult}
+ */
+function renderDrawerTemplate(params) {
+  const {
+    open,
+    onToggle,
+    user,
+    lobbyActive,
+    onOpenLobby,
+    tableItems,
+    onOpenHistory,
+    historyDisabled,
+    onCopyLink,
+    onShare,
+    extraMainItems,
+    onOpenSettings,
+    onOpenSignIn,
+  } = params;
+  const copyLabel = params.copied ? "Copied!" : "Copy Link";
+  const historyDisabledAttr = historyDisabled || !onOpenHistory;
 
   return html`
     <phg-navigation-drawer ?open=${open} @drawer-toggle=${onToggle}>
@@ -120,26 +185,10 @@ export function renderMttNavigationDrawer({
         ${iconLobby}
         <span>Lobby</span>
       </button>
-      ${tableItems.map(
-        (table) =>
-          html`<button
-            slot="main"
-            class=${drawerItemClass(table.active)}
-            @click=${handleAction(table.onOpen)}
-          >
-            ${iconTable}
-            <span>${table.label}</span>
-            ${table.isCurrentPlayerTable
-              ? html`<span
-                  aria-hidden="true"
-                  style="width: 8px; height: 8px; border-radius: 999px; background: var(--color-secondary); flex: none;"
-                ></span>`
-              : ""}
-          </button>`,
-      )}
+      ${tableItems.map(renderTableItem)}
       <button
         slot="main"
-        ?disabled=${historyDisabled || !onOpenHistory}
+        ?disabled=${historyDisabledAttr}
         @click=${handleAction(onOpenHistory)}
       >
         ${iconHistory}
@@ -152,37 +201,33 @@ export function renderMttNavigationDrawer({
         @click=${handleAction(onCopyLink)}
       >
         ${iconCopyLink}
-        <span>${copied ? "Copied!" : "Copy Link"}</span>
+        <span>${copyLabel}</span>
       </button>
-      ${onShare
-        ? html`<button slot="main" @click=${handleAction(onShare)}>
-            ${iconShare}
-            <span>Share</span>
-          </button>`
-        : ""}
-      ${isSignedIn
-        ? html`<a
-            slot="footer"
-            class="drawer-account"
-            href=${`/players/${user.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            ${ICONS.signIn}
-            <span>${accountLabel}</span>
-          </a>`
-        : html`<button
-            slot="footer"
-            class="drawer-sign-in"
-            @click=${handleAction(onOpenSignIn)}
-          >
-            ${ICONS.signIn}
-            <span>Sign in</span>
-          </button>`}
+      ${renderShareButton(onShare)}
+      ${renderAccountFooterItem(user, onOpenSignIn)}
       <button slot="footer" @click=${handleAction(onOpenSettings)}>
         ${ICONS.settings}
         <span>Settings</span>
       </button>
     </phg-navigation-drawer>
   `;
+}
+
+/**
+ * @param {MttNavigationDrawerParams} params
+ * @returns {import("lit").TemplateResult}
+ */
+export function renderMttNavigationDrawer(params) {
+  return renderDrawerTemplate({
+    lobbyActive: false,
+    onOpenLobby: null,
+    tableItems: [],
+    onOpenHistory: null,
+    historyDisabled: false,
+    onCopyLink: null,
+    copied: false,
+    onShare: null,
+    extraMainItems: [],
+    ...params,
+  });
 }

@@ -158,38 +158,34 @@ class MttLobby extends LitElement {
     });
   }
 
-  // eslint-disable-next-line complexity
-  render() {
-    const tournament = this.tournament;
+  _buildDrawerParams(tournament, currentTable) {
     const activeTables =
       tournament?.tables.filter((table) => !table.closed) ?? [];
-    const currentTable = this._getCurrentTable();
     const hasCurrentTableHistory = (currentTable?.handNumber || 0) > 0;
-    const toggleDrawer = () => {
-      this.toggleDrawer();
+    return {
+      activeTables,
+      hasCurrentTableHistory,
+      openCurrentHistory: hasCurrentTableHistory
+        ? () => {
+            this._openCurrentTableHistory();
+          }
+        : null,
+      share:
+        "share" in navigator
+          ? () => {
+              this._share();
+            }
+          : null,
     };
-    const openLobby = () => {
-      this.openLobby();
-    };
-    const openCurrentHistory = hasCurrentTableHistory
-      ? () => {
-          this._openCurrentTableHistory();
-        }
-      : null;
+  }
+
+  render() {
+    const tournament = this.tournament;
+    const currentTable = this._getCurrentTable();
+    const { activeTables, hasCurrentTableHistory, openCurrentHistory, share } =
+      this._buildDrawerParams(tournament, currentTable);
     const copyLink = () => {
       void this._copyLink();
-    };
-    const share =
-      "share" in navigator
-        ? () => {
-            this._share();
-          }
-        : null;
-    const openSettings = () => {
-      this.openSettings();
-    };
-    const openSignIn = () => {
-      this.openSignIn();
     };
     const onNavigate = (path) => {
       this._navigate(path);
@@ -201,10 +197,14 @@ class MttLobby extends LitElement {
     return html`
       ${renderMttNavigationDrawer({
         open: this._drawerOpen,
-        onToggle: toggleDrawer,
+        onToggle: () => {
+          this.toggleDrawer();
+        },
         user: this.user,
         lobbyActive: true,
-        onOpenLobby: openLobby,
+        onOpenLobby: () => {
+          this.openLobby();
+        },
         tableItems: activeTables.map((table) => ({
           label: table.tableName,
           isCurrentPlayerTable: table.tableId === currentTable?.tableId,
@@ -217,8 +217,12 @@ class MttLobby extends LitElement {
         onCopyLink: copyLink,
         copied: this._copied,
         onShare: share,
-        onOpenSettings: openSettings,
-        onOpenSignIn: openSignIn,
+        onOpenSettings: () => {
+          this.openSettings();
+        },
+        onOpenSignIn: () => {
+          this.openSignIn();
+        },
       })}
       <main class="main">
         <section class="panel">
