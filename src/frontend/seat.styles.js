@@ -54,14 +54,13 @@ export const seatStyles = css`
     border-style: dashed;
   }
 
-  :host(.busted)::before {
-    border-style: dashed;
+  :host(.folded),
+  :host(.busted) {
     opacity: 0.6;
   }
 
-  :host(.busted) .player-name,
-  :host(.busted) .status-label {
-    opacity: 0.8;
+  :host(.busted)::before {
+    border-style: dashed;
   }
 
   :host(.disconnected)::before {
@@ -160,10 +159,6 @@ export const seatStyles = css`
     .hole-cards.revealed {
       top: -65px;
     }
-  }
-
-  :host(.folded) .hole-cards {
-    opacity: 0.5;
   }
 
   .status-label {
