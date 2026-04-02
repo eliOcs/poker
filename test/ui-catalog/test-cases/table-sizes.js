@@ -46,24 +46,10 @@ export const TABLE_SIZE_TEST_CASES = {
   "table-6max": () =>
     gameView(
       createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 600, currentBet: 200, actingSeat: 0 },
-        board: { cards: ["Jh", "Td", "5c"] },
+        button: 3,
+        hand: { phase: "river", pot: 600, currentBet: 200, actingSeat: 5 },
+        board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
         seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4800,
-            bet: 50,
-            cards: ["Qh", "Jd"],
-            actions: [
-              { action: "fold" },
-              { action: "call", amount: 150 },
-              { action: "raise", min: 350, max: 4800 },
-            ],
-            handRank: "Pair of Jacks",
-            lastAction: "BB $50",
-          }),
           createPlayer("UTG", {
             stack: 4800,
             bet: 200,
@@ -82,16 +68,28 @@ export const TABLE_SIZE_TEST_CASES = {
             cards: [],
           }),
           createPlayer("BTN", {
+            stack: 5000,
+            cards: ["??", "??"],
+          }),
+          createPlayer("SB", {
             stack: 4975,
             bet: 25,
             cards: ["??", "??"],
             lastAction: "SB $25",
           }),
-          createPlayer("SB", {
-            stack: 4950,
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            isActing: true,
+            stack: 4800,
             bet: 50,
-            cards: ["??", "??"],
-            lastAction: "Call $50",
+            cards: ["Qh", "Jd"],
+            actions: [
+              { action: "fold" },
+              { action: "call", amount: 150 },
+              { action: "raise", min: 350, max: 4800 },
+            ],
+            handRank: "Pair of Jacks",
+            lastAction: "BB $50",
           }),
         ],
       }),

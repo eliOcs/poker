@@ -70,8 +70,13 @@ export const gameStyles = [
       phg-board {
         top: 50%;
         left: 50%;
-        width: 78%;
-        height: 70%;
+        width: 76%;
+        height: 68%;
+      }
+
+      phg-board[data-table-size="6"] {
+        width: 72%;
+        height: 64%;
       }
     }
 

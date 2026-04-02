@@ -422,6 +422,7 @@ class Game extends LitElement {
       <div id="wrapper">
         <div id="container">
           <phg-board
+            data-table-size="${this.game.seats.length}"
             .board=${this.game.board}
             .hand=${this.game.hand}
             .countdown=${this.game.countdown}

@@ -70,33 +70,33 @@ export const seatPositions = css`
 
     /* === 6-MAX (6 seats) === */
     #seats[data-table-size="6"] phg-seat[data-seat="0"] {
-      top: 22%;
-      left: 3%;
+      top: 25%;
+      left: 8%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="1"] {
-      top: 12%;
+      top: 15%;
       left: 50%;
       transform: translateX(-50%);
     }
     #seats[data-table-size="6"] phg-seat[data-seat="2"] {
-      top: 22%;
-      right: 3%;
+      top: 25%;
+      right: 8%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="3"] {
       top: auto;
-      bottom: 18%;
-      right: 3%;
+      bottom: 16%;
+      right: 8%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="4"] {
       top: auto;
-      bottom: 3%;
+      bottom: 4%;
       left: 50%;
       transform: translateX(-50%);
     }
     #seats[data-table-size="6"] phg-seat[data-seat="5"] {
       top: auto;
-      bottom: 18%;
-      left: 3%;
+      bottom: 16%;
+      left: 8%;
     }
   }
 
@@ -161,7 +161,7 @@ export const seatPositions = css`
     /* === 6-MAX (6 seats) === */
     #seats[data-table-size="6"] phg-seat[data-seat="0"] {
       top: 30%;
-      left: 0;
+      left: 2%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="1"] {
       top: 10%;
@@ -170,23 +170,23 @@ export const seatPositions = css`
     }
     #seats[data-table-size="6"] phg-seat[data-seat="2"] {
       top: 30%;
-      right: 0;
+      right: 2%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="3"] {
       top: auto;
-      bottom: 30%;
-      right: 0;
+      bottom: 24%;
+      right: 2%;
     }
     #seats[data-table-size="6"] phg-seat[data-seat="4"] {
       top: auto;
-      bottom: 3%;
+      bottom: 1%;
       left: 50%;
       transform: translateX(-50%);
     }
     #seats[data-table-size="6"] phg-seat[data-seat="5"] {
       top: auto;
-      bottom: 30%;
-      left: 0;
+      bottom: 24%;
+      left: 2%;
     }
   }
 `;
