@@ -24,7 +24,7 @@ describe("http-routes", () => {
     const user = {
       id: "user-1",
       name: "Alice",
-      settings: { volume: 0.75 },
+      settings: { volume: 0.75, vibration: true },
     };
     const users = { [user.id]: user };
     const req = { headers: { cookie: "phg=user-1" } };
@@ -79,7 +79,7 @@ describe("http-routes", () => {
       {
         id: "user-1",
         name: "Alice",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       },
       {
         type: "unhandledrejection",
@@ -111,7 +111,7 @@ describe("http-routes", () => {
           {
             id: "user-1",
             name: "Alice",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           },
           { type: "error" },
         ),

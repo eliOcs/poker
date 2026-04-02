@@ -81,6 +81,7 @@ class App extends LitElement {
       _showProfileSettings: { state: true },
       _showProfileSignIn: { state: true },
       _settingsVolume: { state: true },
+      _settingsVibration: { state: true },
       _profileSignInInvalid: { state: true },
     };
   }
@@ -115,6 +116,7 @@ class App extends LitElement {
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
     this._settingsVolume = 0.75;
+    this._settingsVibration = true;
     this._profileSignInInvalid = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
@@ -230,7 +232,8 @@ class App extends LitElement {
       const res = await fetch("/api/users/me");
       if (res.ok) {
         this.user = await res.json();
-        this._settingsVolume = this.user?.settings?.volume ?? 0.75;
+        this._settingsVolume = this.user.settings.volume;
+        this._settingsVibration = this.user.settings.vibration;
       }
     } catch {
       // Ignore fetch errors - user will be created on next request
@@ -246,7 +249,8 @@ class App extends LitElement {
       });
       if (res.ok) {
         this.user = await res.json();
-        this._settingsVolume = this.user?.settings?.volume ?? 0.75;
+        this._settingsVolume = this.user.settings.volume;
+        this._settingsVibration = this.user.settings.vibration;
       }
     } catch {
       // Ignore update errors
@@ -284,7 +288,8 @@ class App extends LitElement {
   }
 
   openProfileSettings() {
-    this._settingsVolume = this.user?.settings?.volume ?? 0.75;
+    this._settingsVolume = this.user.settings.volume;
+    this._settingsVibration = this.user.settings.vibration;
     this._showProfileSettings = true;
   }
 
@@ -334,7 +339,10 @@ class App extends LitElement {
     const name = input?.value.trim() || "";
     await this._updateUser({
       name,
-      settings: { volume: this._settingsVolume },
+      settings: {
+        volume: this._settingsVolume,
+        vibration: this._settingsVibration,
+      },
     });
     this._showProfileSettings = false;
     this.toast = { message: "Settings saved", variant: "success" };

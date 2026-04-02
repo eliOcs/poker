@@ -7,7 +7,11 @@ describe("phg-app profile settings", () => {
     globalThis.fetch = OriginalFetch;
   });
 
-  async function openOwnProfileSettings(updatedName = "Test") {
+  async function openOwnProfileSettings(
+    updatedName = "Test",
+    updatedVibration = true,
+    onUpdateRequest = null,
+  ) {
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
         return {
@@ -16,7 +20,7 @@ describe("phg-app profile settings", () => {
             id: "user1",
             name: "Test",
             email: "test@example.com",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -36,13 +40,17 @@ describe("phg-app profile settings", () => {
         };
       }
       if (url.match(/\/api\/users\/me$/) && options.method === "PUT") {
+        onUpdateRequest?.(JSON.parse(String(options.body)));
         return {
           ok: true,
           json: async () => ({
             id: "user1",
             name: updatedName,
             email: "test@example.com",
-            settings: { volume: 0.75 },
+            settings: {
+              volume: 0.75,
+              vibration: updatedVibration,
+            },
           }),
         };
       }
@@ -109,5 +117,33 @@ describe("phg-app profile settings", () => {
       message: "Settings saved",
       variant: "success",
     });
+  });
+
+  it("persists the vibration toggle from profile settings", async () => {
+    /** @type {any} */
+    let requestBody = null;
+    const element = await openOwnProfileSettings("Test", false, (body) => {
+      requestBody = body;
+    });
+    const vibrationOffButton = element.shadowRoot
+      .querySelectorAll(".volume-slider")[1]
+      ?.querySelector("button");
+
+    expect(vibrationOffButton).to.exist;
+    vibrationOffButton.click();
+
+    const saveBtn = element.shadowRoot.querySelector(
+      'phg-button[variant="action"]',
+    );
+    saveBtn.click();
+    await waitUntil(() => element.toast?.message === "Settings saved", {
+      timeout: 2000,
+    });
+
+    expect(requestBody).to.deep.equal({
+      name: "Test",
+      settings: { volume: 0.75, vibration: false },
+    });
+    expect(element.user.settings.vibration).to.equal(false);
   });
 });

@@ -62,6 +62,43 @@ describe("store", function () {
       assert.match(profile.createdAt, /^\d{4}-\d{2}-\d{2} /);
       assert.match(profile.updatedAt, /^\d{4}-\d{2}-\d{2} /);
     });
+
+    it("backfills missing vibration settings for existing users", function () {
+      mkdirSync(testDataDir, { recursive: true });
+      const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
+      legacyDb.exec(`
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          email TEXT,
+          settings TEXT DEFAULT '{}',
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+      `);
+      legacyDb
+        .prepare("INSERT INTO users (id, name, settings) VALUES (?, ?, ?)")
+        .run("legacy-user", "Legacy", JSON.stringify({ volume: 0.5 }));
+      legacyDb.close();
+
+      Store.initialize();
+      Store.close();
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      const row = db
+        .prepare("SELECT settings FROM users WHERE id = ?")
+        .get("legacy-user");
+      const meta = db
+        .prepare("SELECT value FROM store_meta WHERE key = ?")
+        .get("user_settings_backfilled_at");
+      db.close();
+
+      assert.deepStrictEqual(JSON.parse(row.settings), {
+        volume: 0.5,
+        vibration: true,
+      });
+      assert.ok(meta?.value);
+    });
   });
 
   describe("saveUser and loadUser", function () {
@@ -72,7 +109,7 @@ describe("store", function () {
         id: "abc123",
         name: "Alice",
         email: "alice@example.com",
-        settings: { volume: 0.5 },
+        settings: { volume: 0.5, vibration: true },
       };
       Store.saveUser(user);
 
@@ -81,6 +118,7 @@ describe("store", function () {
       assert.strictEqual(loaded.name, "Alice");
       assert.strictEqual(loaded.email, "alice@example.com");
       assert.strictEqual(loaded.settings.volume, 0.5);
+      assert.strictEqual(loaded.settings.vibration, DEFAULT_SETTINGS.vibration);
     });
 
     it("loads user profile with non-empty joined and last seen dates", function () {
@@ -89,7 +127,7 @@ describe("store", function () {
       Store.saveUser({
         id: "abc123",
         name: "Alice",
-        settings: { volume: 0.5 },
+        settings: { volume: 0.5, vibration: true },
       });
 
       const loaded = Store.loadUserProfile("abc123");
@@ -101,7 +139,11 @@ describe("store", function () {
     it("updates existing user", function () {
       Store.initialize();
 
-      const user = { id: "abc123", name: "Alice", settings: { volume: 0.75 } };
+      const user = {
+        id: "abc123",
+        name: "Alice",
+        settings: { volume: 0.75, vibration: true },
+      };
       Store.saveUser(user);
 
       user.name = "Alicia";
@@ -132,7 +174,7 @@ describe("store", function () {
         id: "abc123",
         name: "Alice",
         email: "alice@example.com",
-        settings: { volume: 0.5 },
+        settings: { volume: 0.5, vibration: true },
       });
 
       const loaded = Store.loadUserByEmail("alice@example.com");
@@ -143,13 +185,16 @@ describe("store", function () {
     it("normalizes null name from DB to undefined", function () {
       Store.initialize();
 
-      const user = {
-        id: "abc123",
-        name: null,
-        email: null,
-        settings: { volume: 0.75 },
-      };
-      Store.saveUser(user);
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      db.prepare(
+        "INSERT INTO users (id, name, email, settings, created_at, updated_at) VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))",
+      ).run(
+        "abc123",
+        null,
+        null,
+        JSON.stringify({ volume: 0.75, vibration: true }),
+      );
+      db.close();
 
       const loaded = Store.loadUser("abc123");
       assert.strictEqual(loaded.name, undefined);
@@ -159,23 +204,15 @@ describe("store", function () {
     it("persists user settings", function () {
       Store.initialize();
 
-      const user = { id: "abc123", name: "Alice", settings: { volume: 0.5 } };
+      const user = {
+        id: "abc123",
+        name: "Alice",
+        settings: { volume: 0.5, vibration: true },
+      };
       Store.saveUser(user);
 
       const loaded = Store.loadUser("abc123");
       assert.strictEqual(loaded.settings.volume, 0.5);
-    });
-
-    it("merges loaded settings with defaults", function () {
-      Store.initialize();
-
-      // Save user with partial settings (simulates old user or partial save)
-      const user = { id: "abc123", name: "Bob", settings: {} };
-      Store.saveUser(user);
-
-      const loaded = Store.loadUser("abc123");
-      // Should have default volume merged in
-      assert.strictEqual(loaded.settings.volume, DEFAULT_SETTINGS.volume);
     });
 
     it("preserves custom settings when merging with defaults", function () {
@@ -184,25 +221,31 @@ describe("store", function () {
       const user = {
         id: "abc123",
         name: "Carol",
-        settings: { volume: 0.25, customSetting: "test" },
+        settings: {
+          volume: 0.25,
+          vibration: true,
+          customSetting: "test",
+        },
       };
       Store.saveUser(user);
 
       const loaded = Store.loadUser("abc123");
       assert.strictEqual(loaded.settings.volume, 0.25);
+      assert.strictEqual(loaded.settings.vibration, true);
       assert.strictEqual(loaded.settings.customSetting, "test");
     });
 
-    it("handles user without settings field", function () {
+    it("preserves a saved vibration setting", function () {
       Store.initialize();
 
-      // Save user without settings (simulates legacy user)
-      const user = { id: "abc123", name: "Dave" };
-      Store.saveUser(user);
+      Store.saveUser({
+        id: "abc123",
+        name: "Alice",
+        settings: { volume: 0.75, vibration: false },
+      });
 
       const loaded = Store.loadUser("abc123");
-      // Should have defaults applied
-      assert.deepStrictEqual(loaded.settings, DEFAULT_SETTINGS);
+      assert.strictEqual(loaded.settings.vibration, false);
     });
   });
 
@@ -212,10 +255,18 @@ describe("store", function () {
 
       assert.strictEqual(Store.count(), 0);
 
-      Store.saveUser({ id: "user1", name: "One", settings: { volume: 0.75 } });
+      Store.saveUser({
+        id: "user1",
+        name: "One",
+        settings: { volume: 0.75, vibration: true },
+      });
       assert.strictEqual(Store.count(), 1);
 
-      Store.saveUser({ id: "user2", name: "Two", settings: { volume: 0.75 } });
+      Store.saveUser({
+        id: "user2",
+        name: "Two",
+        settings: { volume: 0.75, vibration: true },
+      });
       assert.strictEqual(Store.count(), 2);
     });
   });
@@ -266,7 +317,7 @@ describe("store", function () {
       Store.saveUser({
         id: "abc123",
         name: "Alice",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       });
       Store.deleteUser("abc123");
 
@@ -288,7 +339,7 @@ describe("store", function () {
           Store.saveUser({
             id: "abc123",
             name: "Alice",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         /not initialized/,
       );
@@ -310,7 +361,7 @@ describe("store", function () {
       const user = {
         id: "test-id",
         name: "MemoryUser",
-        settings: { volume: 1 },
+        settings: { volume: 1, vibration: true },
       };
       Store.saveUser(user);
 
@@ -322,7 +373,11 @@ describe("store", function () {
     it("supports multiple save/load cycles", function () {
       Store.initialize(":memory:");
 
-      const user = { id: "u1", name: "One", settings: { volume: 0.25 } };
+      const user = {
+        id: "u1",
+        name: "One",
+        settings: { volume: 0.25, vibration: true },
+      };
       Store.saveUser(user);
 
       user.settings.volume = 0.75;

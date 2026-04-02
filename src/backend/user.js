@@ -7,6 +7,7 @@ import * as Id from "./id.js";
 /**
  * @typedef {object} UserSettings
  * @property {number} volume - Sound volume (0, 0.25, 0.75, or 1)
+ * @property {boolean} vibration - Whether the device should vibrate
  */
 
 /**
@@ -20,6 +21,7 @@ import * as Id from "./id.js";
 /** @type {UserSettings} */
 export const DEFAULT_SETTINGS = {
   volume: 0.75,
+  vibration: true,
 };
 
 /**

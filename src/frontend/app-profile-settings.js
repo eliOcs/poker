@@ -2,6 +2,10 @@ import { html } from "lit";
 
 const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
 const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
+const SETTINGS_TURN_VIBRATION_OPTIONS = [
+  { label: "Off", value: false },
+  { label: "On", value: true },
+];
 
 /**
  * @param {any} app
@@ -35,6 +39,21 @@ export function renderProfileSettingsModal(app) {
               }}
             >
               ${SETTINGS_VOLUME_LABELS[index]}
+            </button>
+          `,
+        )}
+      </div>
+      <label>Vibration</label>
+      <div class="volume-slider">
+        ${SETTINGS_TURN_VIBRATION_OPTIONS.map(
+          ({ label, value }) => html`
+            <button
+              class=${app._settingsVibration === value ? "active" : ""}
+              @click=${() => {
+                app._settingsVibration = value;
+              }}
+            >
+              ${label}
             </button>
           `,
         )}

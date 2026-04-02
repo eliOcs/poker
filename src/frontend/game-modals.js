@@ -34,6 +34,10 @@ export function renderSettingsModal(game) {
   if (!game.showSettings) return "";
   const labels = ["Off", "25%", "75%", "100%"];
   const volumeSteps = [0, 0.25, 0.75, 1];
+  const vibrationOptions = [
+    { label: "Off", value: false },
+    { label: "On", value: true },
+  ];
   return html`
     <phg-modal .title=${"Settings"} @close=${game.closeSettings}>
       <div class="settings-content">
@@ -55,6 +59,19 @@ export function renderSettingsModal(game) {
                 @click=${() => game.setVolume(v)}
               >
                 ${labels[i]}
+              </button>
+            `,
+          )}
+        </div>
+        <label>Vibration</label>
+        <div class="volume-slider">
+          ${vibrationOptions.map(
+            ({ label, value }) => html`
+              <button
+                class=${game.vibration === value ? "active" : ""}
+                @click=${() => game.setVibration(value)}
+              >
+                ${label}
               </button>
             `,
           )}

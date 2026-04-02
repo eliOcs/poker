@@ -12,7 +12,7 @@ export function createUser(id, name = id) {
   return {
     id,
     name,
-    settings: { volume: 0.75 },
+    settings: { volume: 0.75, vibration: true },
   };
 }
 

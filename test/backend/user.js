@@ -34,6 +34,7 @@ describe("user", function () {
 
       assert.deepStrictEqual(u.settings, User.DEFAULT_SETTINGS);
       assert.strictEqual(u.settings.volume, 0.75);
+      assert.strictEqual(u.settings.vibration, true);
     });
   });
 });

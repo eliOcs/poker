@@ -32,6 +32,7 @@ import { renderInfoBar } from "./game-info-bar.js";
 import { renderActionPanel } from "./game-action-panel.js";
 
 /** @typedef {HTMLElement & { showEmote: (emoji: string) => void, showChat: (message: string) => void }} SeatElement */
+/** @typedef {import("../backend/user.js").User} User */
 
 class Game extends LitElement {
   static get styles() {
@@ -55,6 +56,7 @@ class Game extends LitElement {
       showEmotePicker: { type: Boolean },
       showChat: { type: Boolean },
       volume: { type: Number },
+      vibration: { type: Boolean },
       _drawerOpen: { type: Boolean, state: true },
       _copied: { type: Boolean, state: true },
       _signInInvalid: { type: Boolean, state: true },
@@ -71,6 +73,7 @@ class Game extends LitElement {
     this.connectionStatus = "connected";
     this.game = null;
     this.socialAction = null;
+    /** @type {User | null} */
     this.user = null;
     this.showSettings = false;
     this.showSignIn = false;
@@ -78,14 +81,15 @@ class Game extends LitElement {
     this.showEmotePicker = false;
     this.showChat = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
+    this.vibration = true;
     this._drawerOpen = false;
     this._copied = false;
     this._signInInvalid = false;
-    this._settingsInitialized = false;
     this._onMediaChange = (e) => {
       this._drawerOpen = e.matches;
     };
     Audio.setVolume(this.volume);
+    Audio.setVibrationEnabled(this.vibration);
   }
 
   connectedCallback() {
@@ -127,26 +131,31 @@ class Game extends LitElement {
     }
   }
 
-  _initializeVolumeFromSettings() {
-    if (this._settingsInitialized || !this.user?.settings) return;
-    this._settingsInitialized = true;
-    const userVolume = this.user.settings.volume;
-    if (userVolume !== undefined && userVolume !== this.volume) {
+  _syncSettingsFromUser() {
+    if (!this.user) return;
+
+    const user = this.user;
+    const userVolume = user.settings.volume;
+    if (userVolume !== this.volume) {
       this.volume = userVolume;
       Audio.setVolume(this.volume);
+    }
+
+    const userVibration = user.settings.vibration;
+    if (userVibration !== this.vibration) {
+      this.vibration = userVibration;
+      Audio.setVibrationEnabled(this.vibration);
     }
   }
 
   setVolume(v) {
     this.volume = v;
     Audio.setVolume(v);
-    this.dispatchEvent(
-      new CustomEvent("update-user", {
-        detail: { settings: { volume: v } },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+  }
+
+  setVibration(enabled) {
+    this.vibration = enabled;
+    Audio.setVibrationEnabled(enabled);
   }
 
   send(message) {
@@ -316,8 +325,11 @@ class Game extends LitElement {
     return this.game.seats.some((s) => s.isCurrentPlayer && !s.empty);
   }
 
-  _checkTurnSounds(prev, curr) {
-    if (curr.actingSeat !== prev.actingSeat) Audio.playTurnSound();
+  _checkTurnAlerts(prev, curr) {
+    if (curr.actingSeat !== prev.actingSeat) {
+      Audio.playTurnSound();
+      Audio.playTurnVibration();
+    }
     if (prev.clockRemaining == null && curr.clockRemaining != null)
       Audio.playClockSound();
   }
@@ -363,9 +375,9 @@ class Game extends LitElement {
     }
   }
 
-  _handleVolumeUpdate(changedProperties) {
+  _handleUserSettingsUpdate(changedProperties) {
     if (changedProperties.has("user") && this.user) {
-      this._initializeVolumeFromSettings();
+      this._syncSettingsFromUser();
     }
   }
 
@@ -381,13 +393,13 @@ class Game extends LitElement {
     const prev = changedProperties.get("game")?.hand ?? {};
     const curr = this.game.hand ?? {};
     if (seatIndex !== -1 && curr.actingSeat === seatIndex) {
-      this._checkTurnSounds(prev, curr);
+      this._checkTurnAlerts(prev, curr);
     }
     this._flushPendingCollection();
   }
 
   updated(changedProperties) {
-    this._handleVolumeUpdate(changedProperties);
+    this._handleUserSettingsUpdate(changedProperties);
     this._handleSocialActionUpdate(changedProperties);
     this._handleGameUpdate(changedProperties);
   }

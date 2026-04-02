@@ -188,7 +188,7 @@ describe("http-routes sign in", () => {
       id: "registered-user",
       name: "Registered",
       email: "player@example.com",
-      settings: { volume: 0.25 },
+      settings: { volume: 0.25, vibration: true },
     });
 
     const routes = createRoutes(
@@ -297,7 +297,7 @@ describe("http-routes sign in", () => {
       id: "registered-user",
       name: "Registered",
       email: "player@example.com",
-      settings: { volume: 0.25 },
+      settings: { volume: 0.25, vibration: true },
     });
 
     await writeFile(

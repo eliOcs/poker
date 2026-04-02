@@ -8,7 +8,7 @@ import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js
  * @typedef {import('./user.js').User} User
  * @typedef {import('./id.js').Id} Id
  * @typedef {import('./user.js').UserSettings} UserSettings
- * @typedef {{ id: Id, name?: string|null, email?: string|null, settings?: UserSettings }} SaveUserInput
+ * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings }} SaveUserInput
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
  * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
@@ -82,7 +82,7 @@ export function initialize(dbPath = undefined) {
 export function saveUser(user) {
   if (!db) throw new Error("Store not initialized");
 
-  const settingsJson = JSON.stringify(user.settings ?? {});
+  const settingsJson = JSON.stringify(user.settings);
   const nameForDb = user.name === undefined ? null : user.name;
   const emailForDb = user.email === undefined ? null : user.email;
   const stmt = db.prepare(`
@@ -388,15 +388,11 @@ export function deleteUser(id) {
 function hydrateUserRow(row) {
   if (!row) return null;
 
-  const savedSettings = row.settings
-    ? JSON.parse(/** @type {string} */ (row.settings))
-    : {};
-
   return {
     id: /** @type {Id} */ (row.id),
     name: row.name === null ? undefined : /** @type {string} */ (row.name),
     email: row.email === null ? undefined : /** @type {string} */ (row.email),
-    settings: { ...DEFAULT_SETTINGS, ...savedSettings },
+    settings: JSON.parse(/** @type {string} */ (row.settings)),
   };
 }
 
@@ -568,4 +564,31 @@ function migrateUserSchema() {
   if (!columnExists("users", "email")) {
     database.exec("ALTER TABLE users ADD COLUMN email TEXT");
   }
+  runBackfill("user_settings_backfilled_at", () => {
+    const selectStmt = database.prepare("SELECT id, settings FROM users");
+    const updateStmt = database.prepare(
+      "UPDATE users SET settings = ? WHERE id = ?",
+    );
+
+    for (const row of selectStmt.all()) {
+      const savedSettings = row.settings
+        ? JSON.parse(/** @type {string} */ (row.settings))
+        : {};
+      const normalizedSettings = {
+        ...DEFAULT_SETTINGS,
+        ...savedSettings,
+      };
+
+      if (
+        JSON.stringify(savedSettings) === JSON.stringify(normalizedSettings)
+      ) {
+        continue;
+      }
+
+      updateStmt.run(
+        JSON.stringify(normalizedSettings),
+        /** @type {Id} */ (row.id),
+      );
+    }
+  });
 }

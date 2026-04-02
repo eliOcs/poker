@@ -35,7 +35,7 @@ describe("player-profile", function () {
     Store.saveUser({
       id: "player1",
       name: "Alice",
-      settings: { volume: 0.75 },
+      settings: { volume: 0.75, vibration: true },
     });
 
     const hand1 = createHand(

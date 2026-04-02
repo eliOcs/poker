@@ -21,10 +21,12 @@ export const gameModalActions = {
   },
 
   openSettings() {
+    this._syncSettingsFromUser();
     this.showSettings = true;
   },
 
   closeSettings() {
+    this._syncSettingsFromUser();
     this.showSettings = false;
   },
 
@@ -58,7 +60,13 @@ export const gameModalActions = {
     const name = input?.value.trim() || "";
     this.dispatchEvent(
       new CustomEvent("update-user", {
-        detail: { name },
+        detail: {
+          name,
+          settings: {
+            volume: this.volume,
+            vibration: this.vibration,
+          },
+        },
         bubbles: true,
         composed: true,
       }),

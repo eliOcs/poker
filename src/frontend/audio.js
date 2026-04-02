@@ -1,5 +1,6 @@
 let audioContext = null;
 let volume = 0.75;
+let vibrationEnabled = true;
 
 export function getVolume() {
   return volume;
@@ -7,6 +8,10 @@ export function getVolume() {
 
 export function setVolume(v) {
   volume = v;
+}
+
+export function setVibrationEnabled(enabled) {
+  vibrationEnabled = enabled;
 }
 
 function getContext() {
@@ -46,6 +51,16 @@ export function playTurnSound() {
   // Two-tone ping: A5 (880Hz) → C6 (1047Hz)
   playBeep(ctx, 880, now, 0.07);
   playBeep(ctx, 1047, now + 0.08, 0.07);
+}
+
+export function playTurnVibration() {
+  if (!vibrationEnabled) return;
+
+  try {
+    navigator.vibrate(120);
+  } catch {
+    // Ignore vibration API failures on unsupported or restricted devices.
+  }
 }
 
 export function playClockSound() {

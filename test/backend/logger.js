@@ -259,7 +259,7 @@ describe("logger", function () {
           id: "user-1",
           name: "Alice",
           email: "alice@example.com",
-          settings: { volume: 0.75 },
+          settings: { volume: 0.75, vibration: true },
         }),
         {
           session: {

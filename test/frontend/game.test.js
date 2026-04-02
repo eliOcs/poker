@@ -224,7 +224,7 @@ describe("phg-game", () => {
         id: "player123",
         email: "player@example.com",
         name: "Elio",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       };
       await element.updateComplete;
 
@@ -246,7 +246,7 @@ describe("phg-game", () => {
         id: "player123",
         email: "player@example.com",
         name: "Elio",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       };
       await element.updateComplete;
 
@@ -265,7 +265,7 @@ describe("phg-game", () => {
         id: "player123",
         email: "player@example.com",
         name: "",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       };
       await element.updateComplete;
 
@@ -392,6 +392,10 @@ describe("phg-game", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.name).to.equal("TestPlayer");
+      expect(sentMessage.settings).to.deep.equal({
+        volume: 0.75,
+        vibration: true,
+      });
     });
 
     it("closes modal after saving", async () => {
@@ -440,6 +444,18 @@ describe("phg-game", () => {
       expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
     });
 
+    it("shows the vibration toggle in settings", async () => {
+      element.game = createMockGameState();
+      element.showSettings = true;
+      await element.updateComplete;
+
+      const modalText = element.shadowRoot
+        .querySelector("phg-modal")
+        .textContent.replace(/\s+/g, " ");
+
+      expect(modalText).to.include("Vibration");
+    });
+
     it("marks sign-in email invalid and focuses it when submitted empty", async () => {
       element.game = createMockGameState();
       element.showSignIn = true;
@@ -463,13 +479,118 @@ describe("phg-game", () => {
       element.user = {
         id: "test",
         name: "CurrentName",
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       };
       element.showSettings = true;
       await element.updateComplete;
 
       const input = element.shadowRoot.querySelector("#name-input");
       expect(input.value).to.equal("CurrentName");
+    });
+  });
+
+  describe("turn alerts", () => {
+    it("vibrates on turn changes when vibration is enabled", async () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(
+        navigator,
+        "vibrate",
+      );
+      /** @type {number[]} */
+      const vibrationCalls = [];
+      Object.defineProperty(navigator, "vibrate", {
+        configurable: true,
+        value: (pattern) => {
+          vibrationCalls.push(Number(pattern));
+          return true;
+        },
+      });
+
+      try {
+        element.user = {
+          id: "player123",
+          name: "Elio",
+          settings: { volume: 0.75, vibration: true },
+        };
+
+        const previousGame = createMockGameAtFlop();
+        previousGame.hand = {
+          phase: "flop",
+          pot: 20000,
+          currentBet: 0,
+          actingSeat: 1,
+        };
+        element.game = previousGame;
+        await element.updateComplete;
+
+        const currentGame = createMockGameAtFlop();
+        currentGame.hand = {
+          phase: "flop",
+          pot: 20000,
+          currentBet: 0,
+          actingSeat: 0,
+        };
+        element.game = currentGame;
+        await element.updateComplete;
+
+        expect(vibrationCalls).to.deep.equal([120]);
+      } finally {
+        if (originalDescriptor) {
+          Object.defineProperty(navigator, "vibrate", originalDescriptor);
+        } else {
+          delete navigator.vibrate;
+        }
+      }
+    });
+
+    it("does not vibrate when vibration is disabled", async () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(
+        navigator,
+        "vibrate",
+      );
+      let vibrationCount = 0;
+      Object.defineProperty(navigator, "vibrate", {
+        configurable: true,
+        value: () => {
+          vibrationCount++;
+          return true;
+        },
+      });
+
+      try {
+        element.user = {
+          id: "player123",
+          name: "Elio",
+          settings: { volume: 0.75, vibration: false },
+        };
+
+        const previousGame = createMockGameAtFlop();
+        previousGame.hand = {
+          phase: "flop",
+          pot: 20000,
+          currentBet: 0,
+          actingSeat: 1,
+        };
+        element.game = previousGame;
+        await element.updateComplete;
+
+        const currentGame = createMockGameAtFlop();
+        currentGame.hand = {
+          phase: "flop",
+          pot: 20000,
+          currentBet: 0,
+          actingSeat: 0,
+        };
+        element.game = currentGame;
+        await element.updateComplete;
+
+        expect(vibrationCount).to.equal(0);
+      } finally {
+        if (originalDescriptor) {
+          Object.defineProperty(navigator, "vibrate", originalDescriptor);
+        } else {
+          delete navigator.vibrate;
+        }
+      }
     });
   });
 });

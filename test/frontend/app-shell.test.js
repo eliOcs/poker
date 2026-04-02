@@ -41,7 +41,7 @@ describe("phg-app-shell", () => {
           id: "player2",
           name: "Elio",
           email: "elio@example.com",
-          settings: { volume: 0.75 },
+          settings: { volume: 0.75, vibration: true },
         }}
       ></phg-app-shell>
     `);
@@ -64,7 +64,7 @@ describe("phg-app-shell", () => {
           id: "player2",
           name: "Elio",
           email: "elio@example.com",
-          settings: { volume: 0.75 },
+          settings: { volume: 0.75, vibration: true },
         }}
       ></phg-app-shell>
     `);
@@ -124,7 +124,7 @@ describe("phg-app-shell", () => {
           id: "player2",
           name: "Elio",
           email: "elio@example.com",
-          settings: { volume: 0.75 },
+          settings: { volume: 0.75, vibration: true },
         }}
       ></phg-app-shell>
     `);

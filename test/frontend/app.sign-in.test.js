@@ -19,7 +19,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -64,7 +64,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -108,7 +108,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -150,7 +150,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -188,7 +188,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -216,7 +216,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }
@@ -274,7 +274,7 @@ describe("phg-app sign in", () => {
           json: async () => ({
             id: "user1",
             name: "Test",
-            settings: { volume: 0.75 },
+            settings: { volume: 0.75, vibration: true },
           }),
         };
       }

@@ -8,7 +8,7 @@ describe("player", function () {
       const user = {
         id: "user-123",
         name: "Alice",
-        settings: { volume: 0.5 },
+        settings: { volume: 0.5, vibration: true },
       };
 
       const player = Player.fromUser(user);
@@ -21,7 +21,7 @@ describe("player", function () {
       const user = {
         id: "user-456",
         name: "Bob",
-        settings: { volume: 1 },
+        settings: { volume: 1, vibration: true },
       };
 
       const player = Player.fromUser(user);
@@ -36,7 +36,7 @@ describe("player", function () {
       const user = {
         id: "user-789",
         name: undefined,
-        settings: { volume: 0.75 },
+        settings: { volume: 0.75, vibration: true },
       };
 
       const player = Player.fromUser(user);
