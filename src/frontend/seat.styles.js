@@ -59,13 +59,13 @@ export const seatStyles = css`
     opacity: 0.6;
   }
 
-  :host(.busted)::before {
+  :host(.busted)::before,
+  :host(.disconnected)::before {
     border-style: dashed;
   }
 
   :host(.disconnected)::before {
     border-color: var(--color-error);
-    border-style: dotted;
   }
 
   :host(.all-in)::before {
