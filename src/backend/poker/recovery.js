@@ -393,10 +393,10 @@ function getWinnerSeatIndex(game, summary) {
   )?.player_name;
 
   if (winnerName) {
-    const byName = game.seats.findIndex(
-      (seat) => !seat.empty && seat.player.name === winnerName,
+    const byId = game.seats.findIndex(
+      (seat) => !seat.empty && seat.player.id === winnerName,
     );
-    if (byName !== -1) return byName;
+    if (byId !== -1) return byId;
   }
 
   const playersWithChips = game.seats.reduce((indices, seat, index) => {

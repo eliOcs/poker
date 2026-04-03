@@ -34,6 +34,7 @@
     "validate": "npm run format && npm run lint && npm run typecheck && npm run duplicates && npm run deps:check && npm run test && npm run test:ui-catalog",
     "fix": "npm run format:fix && npm run lint:fix",
     "debug:prod:game": "bash scripts/download-prod-game-debug.sh",
+    "repair:ots-format": "node scripts/repair-ots-format.js",
     "prepare": "git config core.hooksPath .githooks",
     "deps": "dependency-cruiser --config .dependency-cruiser.cjs --output-type dot --include-only '^src/backend' src/backend/index.js | dot -T svg > doc/deps-backend.svg && dependency-cruiser --config .dependency-cruiser.cjs --output-type dot --include-only '^src/frontend' src/frontend/app.js | dot -T svg > doc/deps-frontend.svg",
     "deps:check": "dependency-cruiser --config .dependency-cruiser.cjs src/ test/"

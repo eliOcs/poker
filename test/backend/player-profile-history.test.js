@@ -46,8 +46,8 @@ describe("player-profile history", function () {
       big_blind_amount: 0.5,
       ante_amount: 0,
       players: [
-        { id: "player1", seat: 1, name: null, starting_stack: 50 },
-        { id: "player2", seat: 2, name: null, starting_stack: 50 },
+        { id: "player1", seat: 1, name: "Elio", starting_stack: 50 },
+        { id: "player2", seat: 2, name: "Sara", starting_stack: 50 },
       ],
       rounds: [{ id: 1, street: "Preflop", actions: [] }],
       pots: [

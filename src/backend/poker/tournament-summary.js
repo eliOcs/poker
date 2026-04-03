@@ -144,9 +144,8 @@ export function recordElimination(game, seat, position) {
  */
 function buildEliminatedFinishes(recorder, prizeByPosition) {
   return recorder.eliminations.map((elimination) => {
-    const player = recorder.players.find((p) => p.id === elimination.playerId);
     return {
-      player_name: player?.name || elimination.playerId,
+      player_name: elimination.playerId,
       finish_position: elimination.position,
       still_playing: false,
       prize: prizeByPosition.get(elimination.position) ?? 0,
@@ -167,7 +166,7 @@ function buildWinnerFinish(game, prizeByPosition) {
   }
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winnerSeatIndex]);
   return {
-    player_name: winnerSeat.player.name || winnerSeat.player.id,
+    player_name: winnerSeat.player.id,
     finish_position: 1,
     still_playing: false,
     prize: prizeByPosition.get(1) ?? 0,

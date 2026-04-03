@@ -195,13 +195,13 @@ describe("tournament-summary", () => {
 
       // Should be sorted by position
       assert.equal(finishes[0].finish_position, 1);
-      assert.equal(finishes[0].player_name, "Alice"); // Winner
+      assert.equal(finishes[0].player_name, "player1"); // Winner
       assert.equal(finishes[0].prize, toDollars(500 * 3)); // 2-4 players: winner takes all
       assert.equal(finishes[1].finish_position, 2);
-      assert.equal(finishes[1].player_name, "Bob");
+      assert.equal(finishes[1].player_name, "player2");
       assert.equal(finishes[1].prize, 0);
       assert.equal(finishes[2].finish_position, 3);
-      assert.equal(finishes[2].player_name, "Charlie");
+      assert.equal(finishes[2].player_name, "player3");
       assert.equal(finishes[2].prize, 0);
     });
   });

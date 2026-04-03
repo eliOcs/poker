@@ -273,8 +273,11 @@ describe("game recovery", () => {
             initial_stack: 5000,
             start_date_utc: "2026-02-07T08:00:00.000Z",
             tournament_finishes_and_winnings: [
-              { player_name: "Alice", finish_position: 1 },
-              { player_name: "Bob", finish_position: 2 },
+              {
+                player_name: "p1",
+                finish_position: 1,
+              },
+              { player_name: "p2", finish_position: 2 },
             ],
           },
         },
