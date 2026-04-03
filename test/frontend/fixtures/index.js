@@ -270,10 +270,14 @@ export function createMockGameWithRankings() {
  */
 export class MockWebSocket {
   static instances = [];
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
 
   constructor(url) {
     this.url = url;
-    this.readyState = 1; // WebSocket.OPEN
+    this.readyState = MockWebSocket.OPEN;
     this.sent = [];
     this.onmessage = null;
     this.onopen = null;
@@ -287,7 +291,7 @@ export class MockWebSocket {
   }
 
   close() {
-    this.readyState = 3; // WebSocket.CLOSED
+    this.readyState = MockWebSocket.CLOSED;
   }
 
   // Helper to simulate receiving a message
@@ -299,7 +303,7 @@ export class MockWebSocket {
 
   // Helper to simulate an unexpected close (e.g. network drop, mobile suspend)
   simulateClose(code = 1006) {
-    this.readyState = 3; // WebSocket.CLOSED
+    this.readyState = MockWebSocket.CLOSED;
     if (this.onclose) {
       this.onclose({ code });
     }

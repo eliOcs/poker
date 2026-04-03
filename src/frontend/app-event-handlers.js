@@ -20,7 +20,7 @@ export function initAppEventHandlers(app) {
   };
   app._handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
-      app._reconnectIfNeeded();
+      app._resumeConnectionIfNeeded();
     }
   };
   app._handleNavigate = (e) => {

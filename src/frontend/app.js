@@ -99,6 +99,7 @@ class App extends LitElement {
     this._activeGameId = null;
     this._activeGamePath = null;
     this._socket = null;
+    this._socketHealthCheck = null;
     this._intentionalSocketCloses = new WeakSet();
     // History route params
     this._historyKind = null;
@@ -265,6 +266,10 @@ class App extends LitElement {
 
   _reconnectIfNeeded() {
     ws.reconnectIfNeeded(this);
+  }
+
+  _resumeConnectionIfNeeded() {
+    ws.resumeConnectionIfNeeded(this);
   }
 
   disconnectFromGame() {

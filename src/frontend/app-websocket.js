@@ -2,6 +2,91 @@ import { matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 import { isHistoryRouteForLivePath } from "./app-route-state.js";
 
+const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
+
+function clearSocketHealthCheck(app, socket = app._socket) {
+  if (app._socketHealthCheck?.socket !== socket) return;
+  clearTimeout(app._socketHealthCheck.timeoutId);
+  app._socketHealthCheck = null;
+}
+
+function restartConnection(app) {
+  if (!app._activeGamePath) return;
+  const path = app._activeGamePath;
+
+  if (app._socket) {
+    clearSocketHealthCheck(app, app._socket);
+    app._intentionalSocketCloses.add(app._socket);
+    app._socket.close();
+    app._socket = null;
+  }
+
+  app._activeGameId = null;
+  app._activeGamePath = null;
+  app.gameConnectionStatus = "disconnected";
+  connectToGame(app, path);
+}
+
+function runSocketHealthCheck(app) {
+  if (
+    !app._socket ||
+    app._socket.readyState !== WebSocket.OPEN ||
+    !app._activeGamePath
+  ) {
+    return;
+  }
+
+  clearSocketHealthCheck(app, app._socket);
+  const socket = app._socket;
+  const path = app._activeGamePath;
+  const timeoutId = setTimeout(() => {
+    if (app._socket !== socket || app._activeGamePath !== path) {
+      return;
+    }
+    restartConnection(app);
+  }, RESUME_SOCKET_HEALTH_TIMEOUT_MS);
+
+  app._socketHealthCheck = { socket, timeoutId };
+  try {
+    socket.send(JSON.stringify({ action: "ping" }));
+  } catch {
+    clearSocketHealthCheck(app, socket);
+    restartConnection(app);
+  }
+}
+
+function handleTypedSocketMessage(app, data) {
+  if (data.type === "pong") {
+    return true;
+  }
+
+  if (data.type === "social") {
+    if (!matchLiveRoute(app.path)) return true;
+    app.socialAction = data;
+    return true;
+  }
+
+  if (data.type === "history") {
+    if (
+      data.event === "handRecorded" &&
+      isHistoryRouteForLivePath(app.path, app._activeGamePath)
+    ) {
+      app._historyListRefreshNonce += 1;
+    }
+    return true;
+  }
+
+  if (data.type === "tournamentState") {
+    app._mttView = data.tournament;
+    app._mttLoading = false;
+    app._mttError = "";
+    app._maybeRedirectMttRoute();
+    return true;
+  }
+
+  return Boolean(data.type);
+}
+
 /**
  * Connects to a game via WebSocket
  * @param {any} app
@@ -40,38 +125,16 @@ export function connectToGame(app, path) {
 
   socket.onmessage = (event) => {
     if (app._socket !== socket) return;
+    clearSocketHealthCheck(app, socket);
     const data = JSON.parse(event.data);
     if (data.error) {
       app.toast = { message: data.error.message, variant: "error" };
       return;
     }
 
-    if (data.type === "social") {
-      if (!matchLiveRoute(app.path)) return;
-      app.socialAction = data;
+    if (handleTypedSocketMessage(app, data)) {
       return;
     }
-
-    if (data.type === "history") {
-      if (
-        data.event === "handRecorded" &&
-        isHistoryRouteForLivePath(app.path, app._activeGamePath)
-      ) {
-        app._historyListRefreshNonce += 1;
-      }
-      return;
-    }
-
-    if (data.type === "tournamentState") {
-      app._mttView = data.tournament;
-      app._mttLoading = false;
-      app._mttError = "";
-      app._maybeRedirectMttRoute();
-      return;
-    }
-
-    // Ignore any typed envelope that is not a direct player-view payload.
-    if (data.type) return;
 
     app.game = data;
   };
@@ -90,6 +153,7 @@ export function connectToGame(app, path) {
       return;
     }
 
+    clearSocketHealthCheck(app, socket);
     app._socket = null;
     app.gameConnectionStatus = "disconnected";
     // Code 1006 = abnormal closure (connection rejected before game loaded)
@@ -125,17 +189,34 @@ export function reconnectIfNeeded(app) {
 }
 
 /**
+ * Refreshes the current game connection when the page becomes visible again.
+ * @param {any} app
+ */
+export function resumeConnectionIfNeeded(app) {
+  if (!app._activeGamePath) return;
+  if (!app._socket || app._socket.readyState === WebSocket.CLOSED) {
+    reconnectIfNeeded(app);
+    return;
+  }
+  if (app._socket.readyState === WebSocket.OPEN) {
+    runSocketHealthCheck(app);
+  }
+}
+
+/**
  * Disconnects from the current game
  * @param {any} app
  */
 export function disconnectFromGame(app) {
   if (app._socket) {
+    clearSocketHealthCheck(app, app._socket);
     app._intentionalSocketCloses.add(app._socket);
     app._socket.close();
     app._socket = null;
   }
   app._activeGameId = null;
   app._activeGamePath = null;
+  app._socketHealthCheck = null;
   app.game = null;
   app.socialAction = null;
   app.gameConnectionStatus = "disconnected";

@@ -269,6 +269,7 @@ function createConnectionHandler({
       handlePlayerDisconnected(
         conn,
         games,
+        clientConnections,
         broadcastGameMessage,
         broadcastGameStateMessage,
       );

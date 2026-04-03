@@ -36,12 +36,14 @@ export function markPlayerConnected(
  * Handles the disconnection of a player from a game seat.
  * @param {{ gameId: string|null, user: UserType }} conn
  * @param {WebSocketServerParams["games"]} games
+ * @param {WebSocketServerParams["clientConnections"]} clientConnections
  * @param {WebSocketServerParams["broadcastGameMessage"]} broadcastGameMessage
  * @param {WebSocketServerParams["broadcastGameStateMessage"]} broadcastGameStateMessage
  */
 export function handlePlayerDisconnected(
   conn,
   games,
+  clientConnections,
   broadcastGameMessage,
   broadcastGameStateMessage,
 ) {
@@ -50,6 +52,16 @@ export function handlePlayerDisconnected(
   const closedPlayer = Player.fromUser(conn.user);
   const closedGame = games.get(conn.gameId);
   if (!closedGame) return;
+
+  for (const [ws, activeConn] of clientConnections) {
+    if (
+      ws.readyState === 1 &&
+      activeConn.gameId === conn.gameId &&
+      activeConn.user.id === conn.user.id
+    ) {
+      return;
+    }
+  }
 
   const closedSeatIndex = PokerGame.findPlayerSeatIndex(
     closedGame,

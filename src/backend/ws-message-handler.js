@@ -263,24 +263,12 @@ export function createMessageHandler({
   broadcastGameStateMessage,
 }) {
   return (rawMessage) => {
-    if (!game || !gameId) {
-      ws.send(
-        JSON.stringify(
-          {
-            error: {
-              message:
-                "game actions are unavailable on tournament lobby connections",
-            },
-          },
-          null,
-          2,
-        ),
-      );
-      return;
-    }
-
     const log = createLog("ws_action");
-    assignWsSessionContext(log, game, user);
+    if (game) {
+      assignWsSessionContext(log, game, user);
+    } else {
+      Object.assign(log.context, getSessionPlayerLogContext(user));
+    }
 
     try {
       const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
@@ -292,6 +280,27 @@ export function createMessageHandler({
       const messageData = JSON.parse(getRawMessageText(rawMessage));
       const { action, ...args } = messageData;
       log.context.action = { name: action, ...args };
+
+      if (action === "ping") {
+        ws.send(JSON.stringify({ type: "pong" }, null, 2));
+        return;
+      }
+
+      if (!game || !gameId) {
+        ws.send(
+          JSON.stringify(
+            {
+              error: {
+                message:
+                  "game actions are unavailable on tournament lobby connections",
+              },
+            },
+            null,
+            2,
+          ),
+        );
+        return;
+      }
 
       dispatchGameAction({
         game,
