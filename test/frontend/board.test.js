@@ -67,6 +67,18 @@ describe("phg-board", () => {
     expect(pot.textContent).to.include("200");
   });
 
+  it("hides pot amount when pot is 0", async () => {
+    element.game = createMockGameState({
+      hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+    });
+    await element.updateComplete;
+
+    const board = element.shadowRoot.querySelector("phg-board");
+    await board.updateComplete;
+    const pot = board.shadowRoot.querySelector(".pot");
+    expect(pot).to.be.null;
+  });
+
   describe("winner message", () => {
     it("displays winner name when winnerMessage is set", async () => {
       element.game = createMockGameWithWinner({
