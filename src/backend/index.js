@@ -77,8 +77,8 @@ function recordFinalizedHand(game, handData, { notifyMttManager = true } = {}) {
           lastPlayedAt: hand.start_date_utc,
         })),
       );
-      const tournamentId = game.tournamentId;
-      if (game.kind === "mtt" && tournamentId) {
+      if (game.kind === "mtt") {
+        const tournamentId = game.tournamentId;
         Store.recordPlayerTournamentActivity(
           hand.players.map((player) => ({
             playerId: player.id,

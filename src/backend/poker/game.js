@@ -66,7 +66,7 @@ export {
  * @typedef {object} TournamentState
  * @property {boolean} active - Whether this is a tournament game
  * @property {"sitngo"|"mtt"} kind - Tournament mode
- * @property {string} competitionId - Sit & Go id or parent MTT id
+ * @property {import('../id.js').Id} competitionId - Sit & Go id or parent MTT id
  * @property {number} level - Current blind level (1-7)
  * @property {number} levelTicks - Ticks elapsed in current level
  * @property {boolean} onBreak - Currently in break period
@@ -86,13 +86,11 @@ export {
  */
 
 /**
- * @typedef {object} Game
+ * @typedef {object} GameBase
  * @property {import('../id.js').Id} id - Game unique identifier
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
  * @property {Blinds} blinds - Blind structure
- * @property {"cash"|"sitngo"|"mtt"} kind - Table resource kind
- * @property {string|null} tournamentId - Parent tournament id for MTT tables
  * @property {string|null} tableName - Human-readable table name for history/UX
  * @property {Seat[]} seats - Array of seats
  * @property {Card[]} deck - Current deck
@@ -112,12 +110,20 @@ export {
  */
 
 /**
- * @typedef {object} GameOptions
+ * @typedef {GameBase & { kind: "cash" }} CashGame
+ * @typedef {GameBase & { kind: "sitngo" }} SitAndGoGame
+ * @typedef {GameBase & { kind: "mtt", tournamentId: import('../id.js').Id }} MttGame
+ * @typedef {CashGame|SitAndGoGame|MttGame} Game
+ *
+ * @typedef {object} BaseGameOptions
  * @property {number} [seats] - Number of seats
  * @property {Blinds} [blinds] - Blind structure
- * @property {"cash"|"sitngo"|"mtt"} [kind] - Table kind
- * @property {string|null} [tournamentId] - Parent tournament id for MTT tables
  * @property {string|null} [tableName] - Human-readable table name
+ *
+ * @typedef {BaseGameOptions & { kind?: "cash" }} CashGameOptions
+ * @typedef {BaseGameOptions & { kind: "sitngo" }} SitAndGoGameOptions
+ * @typedef {BaseGameOptions & { kind: "mtt", tournamentId: import('../id.js').Id }} MttGameOptions
+ * @typedef {CashGameOptions|SitAndGoGameOptions|MttGameOptions} GameOptions
  */
 
 /**
@@ -140,26 +146,28 @@ export function createHand() {
  * @param {GameOptions} [options] - Game options
  * @returns {Game}
  */
-export function create({
-  seats: numberOfSeats = 9,
-  blinds = { ante: 5, small: 25, big: 50 },
-  kind = "cash",
-  tournamentId = null,
-  tableName = null,
-} = {}) {
+export function create(options = {}) {
+  const {
+    seats: numberOfSeats = 9,
+    blinds = { ante: 5, small: 25, big: 50 },
+    kind = "cash",
+    tableName = null,
+  } = options;
   const id = Id.generate();
   /** @type {Seat[]} */
   const seats = [];
   for (let i = 0; i < numberOfSeats; i += 1) {
     seats.push(Seat.empty());
   }
-  return {
+  return /** @type {Game} */ ({
     id,
     running: true,
     button: 0,
     blinds,
     kind,
-    tournamentId,
+    ...(kind === "mtt"
+      ? { tournamentId: /** @type {MttGameOptions} */ (options).tournamentId }
+      : {}),
     tableName,
     seats,
     deck: Deck.create(),
@@ -176,7 +184,7 @@ export function create({
     pendingHandHistory: null,
     collectingBets: null,
     handLog: null,
-  };
+  });
 }
 
 /**
@@ -228,7 +236,7 @@ export function createTournament({
 
 /**
  * Creates a new multi-table tournament table
- * @param {{ seats?: number, buyIn?: Cents, tournamentId: string, tableName: string, startTime: string|null, level?: number }} options
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tableName: string, startTime: string|null, level?: number }} options
  * @returns {Game}
  */
 export function createMttTable({

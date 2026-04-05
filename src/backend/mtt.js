@@ -712,7 +712,7 @@ export function createMttManager({
      * @param {Game} game
      */
     handleHandFinalized(game) {
-      if (game.kind !== "mtt" || !game.tournamentId) {
+      if (game.kind !== "mtt") {
         return;
       }
 

@@ -20,7 +20,7 @@ import { RateLimitError } from "./rate-limit.js";
 export function assignWsSessionContext(log, game, user) {
   /** @type {{ tableId: string, tournamentId?: string }} */
   const gameContext = { tableId: game.id };
-  if (game.tournamentId) gameContext.tournamentId = game.tournamentId;
+  if (game.kind === "mtt") gameContext.tournamentId = game.tournamentId;
   Object.assign(log.context, {
     game: gameContext,
     ...getSessionPlayerLogContext(user),

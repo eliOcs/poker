@@ -1,5 +1,23 @@
 import { createMockHandList, mockOhhHand, mockOhhHandView } from "./setup.js";
 
+export function createMockUser(overrides = {}) {
+  const { settings: overrideSettings = {}, ...restOverrides } = overrides;
+  const settings = {
+    volume: 0.75,
+    vibration: true,
+    ...overrideSettings,
+  };
+
+  return {
+    id: "user1",
+    name: "Test",
+    email: undefined,
+    activeGamePath: null,
+    ...restOverrides,
+    settings,
+  };
+}
+
 /**
  * Creates a mock fetch function that returns predefined responses
  * @param {object} options
@@ -13,7 +31,7 @@ export function createMockFetch(options = {}) {
     if (debug) console.log("[createMockFetch]", url);
     if (onFetch) onFetch(url);
     if (url.match(/\/api\/users\/me$/)) {
-      return { ok: true, json: async () => ({ id: "user1", name: "Test" }) };
+      return { ok: true, json: async () => createMockUser() };
     }
     if (url.match(/\/api\/(?:cash|sitngo)\/[^/]+\/history$/)) {
       return {

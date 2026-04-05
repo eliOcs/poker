@@ -6,7 +6,7 @@ import {
   mockOhhHand,
   mockOhhHandView,
 } from "./setup.js";
-import { createMockFetch } from "./app-test-helpers.js";
+import { createMockFetch, createMockUser } from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
 
 describe("phg-app history data fetching", () => {
@@ -110,7 +110,7 @@ describe("phg-app history data fetching", () => {
       if (url.match(/\/api\/users\/me$/)) {
         return {
           ok: true,
-          json: async () => ({ id: "user1", name: "Test" }),
+          json: async () => createMockUser(),
         };
       }
       if (url.match(/\/api\/cash\/[^/]+\/history$/)) {
@@ -202,7 +202,7 @@ describe("phg-app history data fetching", () => {
       if (url.match(/\/api\/users\/me$/)) {
         return {
           ok: true,
-          json: async () => ({ id: "user1", name: "Test" }),
+          json: async () => createMockUser(),
         };
       }
       if (url.match(/\/api\/cash\/[^/]+\/history$/)) {

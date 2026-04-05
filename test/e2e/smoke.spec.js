@@ -189,13 +189,16 @@ test.describe("Poker Game Smoke Test", () => {
     // preventing a race where P3 reconnects before being sat out.
     await player1.waitForHandStart();
 
-    // P3 reconnects — open a new page in the same browser context (same cookies)
+    // P3 reconnects via the landing page and is redirected back to the active table
     const gameId = player1.page
       .url()
       .match(/\/(?:cash|sitngo)\/([a-z0-9]+)/)?.[1];
     const p3Page = await player3.context.newPage();
     player3.page = p3Page;
-    await player3.joinGame(gameId);
+    await player3.page.goto("/");
+    await expect(player3.page).toHaveURL(new RegExp(`/cash/${gameId}$`));
+    await player3.game.waitFor();
+    await player3.board.waitFor();
 
     // P3 sees they are sitting out (sat out automatically when disconnected)
     expect(await player3.isSittingOut()).toBeTruthy();

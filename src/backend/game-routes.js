@@ -4,6 +4,7 @@ import { getPlayerProfile } from "./player-profile.js";
 import { HttpError } from "./http-error.js";
 import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
+import { getTablePath } from "../shared/routes.js";
 import {
   getOrCreateUser,
   parseBody,
@@ -17,6 +18,33 @@ import {
  * @typedef {import('./http-route-utils.js').Game} Game
  * @typedef {import('./id.js').Id} Id
  */
+
+/**
+ * @param {Map<Id, Game>} games
+ * @param {Id} userId
+ * @returns {string|null}
+ */
+export function findActiveGamePath(games, userId) {
+  const liveGames = [...games.values()];
+  for (let i = liveGames.length - 1; i >= 0; i -= 1) {
+    const game = liveGames[i];
+    if (!game) continue;
+    if (
+      !game.running ||
+      !game.seats.some((seat) => !seat.empty && seat.player.id === userId)
+    ) {
+      continue;
+    }
+
+    if (game.kind === "mtt") {
+      return getTablePath("mtt", game.id, game.tournamentId);
+    }
+
+    return getTablePath(game.kind, game.id);
+  }
+
+  return null;
+}
 
 /**
  * Creates game-related routes (user, cash, sitngo, mtt, player profiles)
@@ -33,11 +61,13 @@ export function createGameRoutes(users, games, broadcast, services) {
       path: "/api/users/me",
       handler: ({ req, res, log }) => {
         const user = getOrCreateUser(req, res, users, log);
+        const activeGamePath = findActiveGamePath(games, user.id);
         respondWithJson(res, {
           id: user.id,
           name: user.name,
           email: user.email,
           settings: user.settings,
+          activeGamePath,
         });
       },
     },
@@ -67,12 +97,14 @@ export function createGameRoutes(users, games, broadcast, services) {
         Store.saveUser(user);
         syncUserToGames(user, games, broadcast);
         services.mttManager?.syncUser(user);
+        const activeGamePath = findActiveGamePath(games, user.id);
 
         respondWithJson(res, {
           id: user.id,
           name: user.name,
           email: user.email,
           settings: user.settings,
+          activeGamePath,
         });
       },
     },

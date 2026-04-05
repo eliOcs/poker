@@ -241,6 +241,22 @@ class App extends LitElement {
     }
   }
 
+  _getHomeRedirectPath() {
+    if (this.path !== "/") return null;
+
+    const nextPath = this._activeGamePath || this.user?.activeGamePath || null;
+    return nextPath && nextPath !== "/" ? nextPath : null;
+  }
+
+  _maybeRedirectHomeRoute() {
+    const nextPath = this._getHomeRedirectPath();
+    if (!nextPath || nextPath === this.path) return false;
+
+    history.replaceState({}, "", nextPath);
+    this.path = nextPath;
+    return true;
+  }
+
   async _updateUser(updates) {
     try {
       const res = await fetch("/api/users/me", {
@@ -473,16 +489,19 @@ class App extends LitElement {
   }
 
   updated() {
+    if (this._maybeRedirectHomeRoute()) {
+      return;
+    }
     this._syncMttRouteFromPath();
     this._redirectToLatestHandIfNeeded();
     this._handleTaskErrors();
     this._maybeRedirectMttRoute();
   }
 
-  _resolveShellContent(liveRoute, playerProfileId, releaseNotesMatch) {
+  _resolveShellContent(currentPath, liveRoute, playerProfileId) {
     if (playerProfileId) return renderPlayerProfileView(this);
     if (liveRoute?.kind === "mtt") return renderMttLobbyView(this);
-    if (releaseNotesMatch) return renderReleaseNotesView();
+    if (currentPath === "/release-notes") return renderReleaseNotesView();
     return renderHomeView();
   }
 
@@ -491,14 +510,13 @@ class App extends LitElement {
     return liveRoute != null && tableKinds.includes(liveRoute.kind);
   }
 
-  _renderParsedPath(liveRoute, historyRoute, playerProfileId) {
+  _renderParsedPath(currentPath, liveRoute, historyRoute, playerProfileId) {
     if (historyRoute) return renderHistoryView(this, historyRoute);
     if (this._isTableRoute(liveRoute)) return renderGameView(this, liveRoute);
-    const releaseNotesMatch = this.path === "/release-notes";
     const shellContent = this._resolveShellContent(
+      currentPath,
       liveRoute,
       playerProfileId,
-      releaseNotesMatch,
     );
     return renderShellView(this, shellContent, {
       navigationRenderer: liveRoute?.kind === "mtt" ? () => "" : undefined,
@@ -506,8 +524,9 @@ class App extends LitElement {
   }
 
   render() {
+    const currentPath = this._getHomeRedirectPath() || this.path;
     const { liveRoute, historyRoute, playerProfileId, resourcePath } =
-      parseAppPath(this.path);
+      parseAppPath(currentPath);
 
     ws.manageConnection(this, resourcePath);
 
@@ -515,7 +534,12 @@ class App extends LitElement {
       return renderAuthStatusView(this);
     }
 
-    return this._renderParsedPath(liveRoute, historyRoute, playerProfileId);
+    return this._renderParsedPath(
+      currentPath,
+      liveRoute,
+      historyRoute,
+      playerProfileId,
+    );
   }
 }
 

@@ -87,7 +87,7 @@ export function startGameTick(game, onBroadcast) {
         ),
       ),
     };
-    if (game.tournamentId) gameContext.tournamentId = game.tournamentId;
+    if (game.kind === "mtt") gameContext.tournamentId = game.tournamentId;
     Object.assign(timerLog.context, { game: gameContext });
 
     if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));

@@ -1,18 +1,53 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import { OriginalFetch, MockWebSocket, createMockGameState } from "./setup.js";
-import { createMockTournamentView } from "./app-test-helpers.js";
+import {
+  createMockTournamentView,
+  createMockUser,
+} from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
 
 describe("phg-app", () => {
   afterEach(() => {
     globalThis.fetch = OriginalFetch;
+    history.replaceState({}, "", "/");
+    MockWebSocket.instances = [];
   });
 
   describe("SPA routes", () => {
+    it("redirects from the landing page into the active game from the user payload", async () => {
+      MockWebSocket.instances = [];
+      globalThis.fetch = async (url) => {
+        if (url === "/api/users/me") {
+          return {
+            ok: true,
+            json: async () =>
+              createMockUser({
+                id: "u1",
+                name: "Test",
+                activeGamePath: "/cash/testgame",
+              }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+
+      await waitUntil(() => element.path === "/cash/testgame", {
+        timeout: 2000,
+      });
+
+      expect(MockWebSocket.instances).to.have.length(1);
+      expect(MockWebSocket.instances[0].url).to.include("/cash/testgame");
+    });
+
     it("renders release notes on the app route", async () => {
       globalThis.fetch = async (url) => {
         if (url.match(/\/api\/users\/me$/)) {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false };
       };
@@ -32,7 +67,10 @@ describe("phg-app", () => {
       globalThis.fetch = async (url) => {
         fetchedUrls.push(url);
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
@@ -66,7 +104,10 @@ describe("phg-app", () => {
       MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
@@ -115,7 +156,10 @@ describe("phg-app", () => {
     it("keeps the user on the lobby after an explicit lobby navigation", async () => {
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
@@ -167,7 +211,10 @@ describe("phg-app", () => {
     it("redirects to a new table when the player is reseated", async () => {
       globalThis.fetch = async (url) => {
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false, json: async () => ({ error: "not found" }) };
       };
@@ -222,7 +269,10 @@ describe("phg-app", () => {
       history.replaceState({}, "", "/");
       globalThis.fetch = async (url) => {
         if (url.match(/\/api\/users\/me$/))
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         return { ok: false };
       };
       element = await fixture(html`<phg-app></phg-app>`);
@@ -266,11 +316,11 @@ describe("phg-app", () => {
       expect(MockWebSocket.instances.at(-1).url).to.include("testgame");
     });
 
-    it("does not reconnect after navigating away", async () => {
+    it("does not reconnect after navigating to a non-home route", async () => {
       const ws = MockWebSocket.instances.at(-1);
       ws.simulateClose(1001);
 
-      element.path = "/";
+      element.path = "/release-notes";
       await element.updateComplete;
 
       const countAfterNav = MockWebSocket.instances.length;
@@ -279,11 +329,24 @@ describe("phg-app", () => {
       expect(MockWebSocket.instances.length).to.equal(countAfterNav);
     });
 
+    it("redirects back into the current game when navigating to the landing page", async () => {
+      element.path = "/";
+      await waitUntil(() => element.path === "/cash/testgame", {
+        timeout: 2000,
+      });
+
+      expect(element.path).to.equal("/cash/testgame");
+      expect(element._activeGamePath).to.equal("/cash/testgame");
+    });
+
     it("ignores a stale lobby close after redirecting into an MTT table", async () => {
       MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {
         if (url.match(/\/api\/users\/me$/)) {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         return { ok: false };
       };
@@ -344,7 +407,10 @@ describe("phg-app", () => {
       MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {
         if (url.match(/\/api\/users\/me$/))
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         return { ok: false };
       };
 
@@ -378,7 +444,10 @@ describe("phg-app", () => {
       globalThis.fetch = async (url, options) => {
         requests.push({ url, options });
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         if (url === "/api/client-errors") {
           return { ok: true, json: async () => ({}) };
@@ -418,7 +487,10 @@ describe("phg-app", () => {
       globalThis.fetch = async (url, options) => {
         requests.push({ url, options });
         if (url === "/api/users/me") {
-          return { ok: true, json: async () => ({ id: "u1", name: "Test" }) };
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
         }
         if (url === "/api/client-errors") {
           return { ok: true, json: async () => ({}) };
