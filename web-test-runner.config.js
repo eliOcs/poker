@@ -7,6 +7,17 @@ const FONT_ASSET = /^\/fonts\/[^/]+\.[a-z0-9]+$/i;
 
 export default {
   files: "test/frontend/**/*.test.js",
+  testRunnerHtml: (testFrameworkImport) => `
+    <!doctype html>
+    <html>
+      <head>
+        <link rel="stylesheet" href="/theme.css" />
+      </head>
+      <body>
+        <script type="module" src="${testFrameworkImport}"></script>
+      </body>
+    </html>
+  `,
   nodeResolve: {
     exportConditions: ["production", "default"],
   },
