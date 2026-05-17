@@ -67,6 +67,8 @@ export const mttLobbyStyles = [
     .status-pill {
       display: inline-flex;
       align-items: center;
+      justify-self: start;
+      width: fit-content;
       padding: 10px 12px;
       border: 2px solid var(--color-fg-muted);
       background: var(--color-bg-medium);
@@ -273,7 +275,6 @@ export const mttLobbyStyles = [
       }
 
       .status-pill {
-        width: 100%;
         justify-content: center;
       }
     }
