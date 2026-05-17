@@ -53,7 +53,7 @@ class EditLabel extends LitElement {
 
         .view:hover .label-button,
         .view:focus-within .label-button {
-          border-bottom-color: var(--color-secondary);
+          border-bottom-color: var(--color-primary);
         }
 
         .icon-button {
@@ -75,7 +75,7 @@ class EditLabel extends LitElement {
 
         .view:hover .icon-button,
         .view:focus-within .icon-button {
-          color: var(--color-secondary);
+          color: var(--color-primary);
         }
 
         .submit:hover,

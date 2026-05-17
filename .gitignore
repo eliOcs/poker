@@ -2,6 +2,7 @@ test-results
 test-data
 node_modules
 .claude/
+.clawpatch/
 tags
 .nyc_output
 coverage

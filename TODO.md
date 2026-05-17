@@ -1,5 +1,8 @@
 # To do
 
+- Late Registration
+- Rebuy option: (1 rebuy)
+- Bounty option: (+10% buyin)
 - graph of the evolution
 - background on pot numbers
 - allow sit in in the middle of the hand
@@ -10,7 +13,6 @@
 - Vibrate API if availble to announce turn
 - Ready button to skip the break
 - Larger suit icon
-- Bounties
 - Announcements chat
 - Ready button and then start
 - history in a new tab (in desktop)
@@ -20,14 +22,13 @@
 - Avatar creator: wii style but pixel art
 - show past games on home page, hands played and net win/loss
 - In cash games add option to refill/top up
-- Rebuy option for sit n gos (1 rebuy)
-- Bounty option in sit n gos (+10% buyin)
 - Poker club: invite members, members notified of events.
 - Seasons: allow grouping games into a seasson to get aggregate results
 - Inspiration Chess.com - "Learn poker"
 - Inspiration Chess.com - "Hand review"
 - Inspiration Chess.com - "Play coach"
 - Inspiration Chess.com - "Ranked Poker"
+- OLAP db to store logs (DuckDB)
 
 ## Hand Rank modal [WIP]
 
