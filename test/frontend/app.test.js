@@ -61,6 +61,25 @@ describe("phg-app", () => {
       expect(releaseNotes).to.exist;
     });
 
+    it("renders tournaments on the app route", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/mtt";
+      await element.updateComplete;
+
+      const tournaments = element.shadowRoot?.querySelector("phg-tournaments");
+      expect(tournaments).to.exist;
+    });
+
     it("renders the MTT lobby on tournament routes", async () => {
       MockWebSocket.instances = [];
       const fetchedUrls = [];

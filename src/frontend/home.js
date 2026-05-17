@@ -1,108 +1,26 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
 import "./button.js";
 import {
   PRESETS as STAKES_PRESETS,
   DEFAULT as DEFAULT_STAKES,
 } from "../shared/stakes.js";
 import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
-import { getMttPath, getTablePath } from "../shared/routes.js";
-
-const TABLE_SIZES = [
-  { seats: 2, label: "Heads-Up" },
-  { seats: 6, label: "6-Max" },
-  { seats: 9, label: "Full Ring" },
-];
-const DEFAULT_TABLE_SIZE = 6;
+import { getTablePath } from "../shared/routes.js";
+import {
+  DEFAULT_TABLE_SIZE,
+  dispatchNavigate,
+  gameCreateStyles,
+  postCreate,
+  renderCreatePage,
+  renderPresetSelect,
+  renderTableSizeSelect,
+} from "./game-create-form.js";
 
 class Home extends LitElement {
   static get styles() {
     return [
-      designTokens,
-      baseStyles,
+      gameCreateStyles,
       css`
-        :host {
-          display: flex;
-          flex-direction: column;
-          background-color: var(--color-bg-medium);
-          color: var(--color-fg-medium);
-          box-sizing: border-box;
-        }
-
-        :host * {
-          box-sizing: inherit;
-        }
-
-        .main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: clamp(16px, 3vw, 32px);
-          background: var(--color-bg-medium);
-        }
-
-        .panel {
-          width: min(720px, 100%);
-          display: grid;
-          justify-items: center;
-          padding: clamp(24px, 5vw, 40px);
-        }
-
-        .logo {
-          width: 80%;
-          max-width: 450px;
-          margin-bottom: 1.5em;
-          image-rendering: pixelated;
-        }
-
-        p {
-          font-size: var(--font-md);
-          line-height: 2;
-          color: var(--color-fg-medium);
-          margin-bottom: 2em;
-          text-align: center;
-          padding: 0 1em;
-          max-width: 500px;
-        }
-
-        .stakes-selector {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-sm);
-          margin-bottom: 2em;
-        }
-
-        .stakes-label {
-          font-size: var(--font-sm);
-          color: var(--color-fg-muted);
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        select {
-          font-family: inherit;
-          font-size: var(--font-md);
-          padding: var(--space-md);
-          background: var(--color-bg-light);
-          color: var(--color-fg-white);
-          border: 2px solid var(--color-bg-disabled);
-          cursor: pointer;
-          accent-color: var(--color-secondary);
-          outline: none;
-        }
-
-        select:focus {
-          border-color: var(--color-secondary);
-        }
-
-        option {
-          color: var(--color-fg-white);
-          background: var(--color-bg-light);
-        }
-
         .game-type-selector {
           display: flex;
           flex-direction: column;
@@ -146,35 +64,13 @@ class Home extends LitElement {
           background: var(--color-secondary);
         }
 
-        .create-button-row {
-          width: min(100%, 320px);
-          display: flex;
-          justify-self: center;
-          justify-content: center;
-        }
-
-        @media (width >= 600px) {
-          .logo {
-            width: 60%;
-          }
-        }
-
         @media (width < 800px) {
-          .main {
-            padding: 56px var(--space-md) var(--space-md);
-          }
-
-          .panel {
-            width: 100%;
-          }
-
           .radio-group {
             flex-direction: column;
             width: 100%;
           }
 
-          .radio-group label,
-          .create-button-row {
+          .radio-group label {
             width: 100%;
           }
         }
@@ -227,7 +123,9 @@ class Home extends LitElement {
   async createGame() {
     this.creating = true;
     try {
-      const body =
+      const endpoint = this.selectedGameType === "cash" ? "/cash" : "/sitngo";
+      const { id, type } = await postCreate(
+        endpoint,
         this.selectedGameType === "cash"
           ? {
               type: "cash",
@@ -236,33 +134,14 @@ class Home extends LitElement {
               seats: this.selectedTableSize,
             }
           : {
-              type: this.selectedGameType,
+              type: "sitngo",
               seats: this.selectedTableSize,
               buyIn: this.selectedBuyIn.amount,
-            };
-
-      const endpoint =
-        this.selectedGameType === "cash"
-          ? "/cash"
-          : `/${this.selectedGameType}`;
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) throw new Error(`${response.status}`);
-      const { id, type } = await response.json();
-      this.dispatchEvent(
-        new CustomEvent("navigate", {
-          detail: {
-            path:
-              type === "mtt"
-                ? getMttPath(id)
-                : getTablePath(type === "sitngo" ? "sitngo" : "cash", id),
-          },
-          bubbles: true,
-          composed: true,
-        }),
+            },
+      );
+      dispatchNavigate(
+        this,
+        getTablePath(type === "sitngo" ? "sitngo" : "cash", id),
       );
     } catch (err) {
       console.error("Failed to create game:", err);
@@ -276,116 +155,68 @@ class Home extends LitElement {
         stakes.small === this.selectedStakes.small &&
         stakes.big === this.selectedStakes.big,
     );
-    const isTournament = this.selectedGameType !== "cash";
+    const buyInIndex = BUYIN_PRESETS.findIndex(
+      (preset) => preset.amount === this.selectedBuyIn.amount,
+    );
+    const isCash = this.selectedGameType === "cash";
 
-    return html`
-      <main class="main">
-        <section class="panel">
-          <img src="logo.webp" alt="Pluton Poker" class="logo" />
-          <p>Create a new game and invite your friends to play</p>
-          <div class="game-type-selector">
-            <span class="stakes-label">Game Type</span>
-            <div class="radio-group">
-              <label>
-                <input
-                  type="radio"
-                  name="gameType"
-                  value="cash"
-                  ?checked=${!isTournament}
-                  @change=${this.handleGameTypeChange}
-                />
-                Cash
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="gameType"
-                  value="sitngo"
-                  ?checked=${this.selectedGameType === "sitngo"}
-                  @change=${this.handleGameTypeChange}
-                />
-                Sit & Go
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="gameType"
-                  value="mtt"
-                  ?checked=${this.selectedGameType === "mtt"}
-                  @change=${this.handleGameTypeChange}
-                />
-                Tournament
-              </label>
-            </div>
+    return renderCreatePage(
+      "Invite your friends to play a poker game, no sign up required.",
+      html`
+        <div class="game-type-selector">
+          <span class="stakes-label">Game Type</span>
+          <div class="radio-group">
+            <label>
+              <input
+                type="radio"
+                name="gameType"
+                value="cash"
+                ?checked=${isCash}
+                @change=${this.handleGameTypeChange}
+              />
+              Cash
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="gameType"
+                value="sitngo"
+                ?checked=${this.selectedGameType === "sitngo"}
+                @change=${this.handleGameTypeChange}
+              />
+              Sit & Go
+            </label>
           </div>
-          ${!isTournament
-            ? html`
-                <div class="stakes-selector">
-                  <span class="stakes-label">Stakes</span>
-                  <select @change=${this.handleStakesChange}>
-                    ${STAKES_PRESETS.map(
-                      (stakes, index) => html`
-                        <option
-                          value=${index}
-                          ?selected=${index === selectedIndex}
-                        >
-                          ${stakes.label}
-                        </option>
-                      `,
-                    )}
-                  </select>
-                </div>
-              `
-            : html`
-                <div class="stakes-selector">
-                  <span class="stakes-label">Buy-In</span>
-                  <select @change=${this.handleBuyInChange}>
-                    ${BUYIN_PRESETS.map(
-                      (preset, index) => html`
-                        <option
-                          value=${index}
-                          ?selected=${preset.amount ===
-                          this.selectedBuyIn.amount}
-                        >
-                          ${preset.label}
-                        </option>
-                      `,
-                    )}
-                  </select>
-                </div>
-              `}
-          <div class="stakes-selector">
-            <span class="stakes-label">Table Size</span>
-            <select @change=${this.handleTableSizeChange}>
-              ${TABLE_SIZES.map(
-                (size) => html`
-                  <option
-                    value=${size.seats}
-                    ?selected=${size.seats === this.selectedTableSize}
-                  >
-                    ${size.label}
-                  </option>
-                `,
-              )}
-            </select>
-          </div>
-          <div class="create-button-row">
-            <phg-button
-              variant="primary"
-              size="large"
-              ?disabled=${this.creating}
-              @click=${this.createGame}
-            >
-              ${this.creating
-                ? "Creating..."
-                : this.selectedGameType === "mtt"
-                  ? "Create Tournament"
-                  : "Create Game"}
-            </phg-button>
-          </div>
-        </section>
-      </main>
-    `;
+        </div>
+        ${isCash
+          ? renderPresetSelect({
+              label: "Stakes",
+              options: STAKES_PRESETS,
+              selectedIndex,
+              onChange: this.handleStakesChange,
+            })
+          : renderPresetSelect({
+              label: "Buy-In",
+              options: BUYIN_PRESETS,
+              selectedIndex: buyInIndex,
+              onChange: this.handleBuyInChange,
+            })}
+        ${renderTableSizeSelect({
+          selectedTableSize: this.selectedTableSize,
+          onChange: this.handleTableSizeChange,
+        })}
+        <div class="create-button-row">
+          <phg-button
+            variant="primary"
+            size="large"
+            ?disabled=${this.creating}
+            @click=${this.createGame}
+          >
+            ${this.creating ? "Creating..." : "Create Game"}
+          </phg-button>
+        </div>
+      `,
+    );
   }
 }
 

@@ -4,6 +4,7 @@ import { designTokens, baseStyles } from "./styles.js";
 import { appModalStyles } from "./app-modal-styles.js";
 import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
+import "./tournaments.js";
 import "./index.js";
 import "./history.js";
 import "./mtt-lobby.js";
@@ -23,6 +24,7 @@ import {
   renderHistoryView,
   renderPlayerProfileView,
   renderHomeView,
+  renderTournamentsView,
   renderMttLobbyView,
   renderReleaseNotesView,
   renderAuthStatusView,
@@ -505,6 +507,7 @@ class App extends LitElement {
   _resolveShellContent(currentPath, liveRoute, playerProfileId) {
     if (playerProfileId) return renderPlayerProfileView(this);
     if (liveRoute?.kind === "mtt") return renderMttLobbyView(this);
+    if (currentPath === "/mtt") return renderTournamentsView();
     if (currentPath === "/release-notes") return renderReleaseNotesView();
     return renderHomeView();
   }

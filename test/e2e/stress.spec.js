@@ -56,7 +56,7 @@ async function delay(ms) {
 }
 
 /**
- * Pre-create guest sessions on the home route so later tournament-lobby
+ * Pre-create guest sessions on the quick-play route so later tournament-lobby
  * navigations reuse an existing player cookie instead of hitting the shared
  * pre-cookie IP limiter.
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players

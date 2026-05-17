@@ -1,0 +1,94 @@
+import { html, LitElement } from "lit";
+import "./button.js";
+import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
+import { getMttPath } from "../shared/routes.js";
+import {
+  DEFAULT_TABLE_SIZE,
+  dispatchNavigate,
+  gameCreateStyles,
+  postCreate,
+  renderCreatePage,
+  renderPresetSelect,
+  renderTableSizeSelect,
+} from "./game-create-form.js";
+
+class Tournaments extends LitElement {
+  static get styles() {
+    return gameCreateStyles;
+  }
+
+  static get properties() {
+    return {
+      creating: { type: Boolean },
+      selectedBuyIn: { type: Object },
+      selectedTableSize: { type: Number },
+    };
+  }
+
+  constructor() {
+    super();
+    this.creating = false;
+    this.selectedBuyIn = DEFAULT_BUYIN;
+    this.selectedTableSize = DEFAULT_TABLE_SIZE;
+  }
+
+  handleBuyInChange(e) {
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    const index = parseInt(target.value, 10);
+    this.selectedBuyIn = BUYIN_PRESETS[index] ?? this.selectedBuyIn;
+  }
+
+  handleTableSizeChange(e) {
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    this.selectedTableSize = parseInt(target.value, 10);
+  }
+
+  async createTournament() {
+    this.creating = true;
+    try {
+      const { id } = await postCreate("/mtt", {
+        type: "mtt",
+        seats: this.selectedTableSize,
+        buyIn: this.selectedBuyIn.amount,
+      });
+      dispatchNavigate(this, getMttPath(id));
+    } catch (err) {
+      console.error("Failed to create tournament:", err);
+      this.creating = false;
+    }
+  }
+
+  render() {
+    const buyInIndex = BUYIN_PRESETS.findIndex(
+      (preset) => preset.amount === this.selectedBuyIn.amount,
+    );
+
+    return renderCreatePage(
+      "Create a multi-table tournament and invite your friends to play",
+      html`
+        ${renderPresetSelect({
+          label: "Buy-In",
+          options: BUYIN_PRESETS,
+          selectedIndex: buyInIndex,
+          onChange: this.handleBuyInChange,
+        })}
+        ${renderTableSizeSelect({
+          selectedTableSize: this.selectedTableSize,
+          onChange: this.handleTableSizeChange,
+        })}
+        <div class="create-button-row">
+          <phg-button
+            variant="primary"
+            size="large"
+            ?disabled=${this.creating}
+            @click=${this.createTournament}
+          >
+            ${this.creating ? "Creating..." : "Create Tournament"}
+          </phg-button>
+        </div>
+      `,
+    );
+  }
+}
+
+customElements.define("phg-tournaments", Tournaments);

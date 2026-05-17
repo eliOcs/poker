@@ -8,20 +8,25 @@ describe("phg-home", () => {
     expect(element.shadowRoot.querySelector("phg-button")).to.exist;
   });
 
-  it("creates an MTT and navigates to the lobby", async () => {
+  it("does not show multi-table tournaments as a game type", async () => {
+    const element = await fixture(html`<phg-home></phg-home>`);
+    expect(element.shadowRoot.querySelector('input[value="mtt"]')).to.not.exist;
+  });
+
+  it("creates a Sit & Go and navigates to the table", async () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
-      expect(url).to.equal("/mtt");
-      expect(JSON.parse(options.body)).to.not.have.property("name");
+      expect(url).to.equal("/sitngo");
+      expect(JSON.parse(options.body)).to.include({ type: "sitngo" });
       return {
         ok: true,
-        json: async () => ({ id: "mtt123", type: "mtt" }),
+        json: async () => ({ id: "sitngo123", type: "sitngo" }),
       };
     };
 
     const element = await fixture(html`<phg-home></phg-home>`);
     const radio = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector('input[value="mtt"]')
+      element.shadowRoot.querySelector('input[value="sitngo"]')
     );
     radio.click();
     await element.updateComplete;
@@ -31,7 +36,7 @@ describe("phg-home", () => {
     });
 
     const event = await oneEvent(element, "navigate");
-    expect(event.detail).to.deep.equal({ path: "/mtt/mtt123" });
+    expect(event.detail).to.deep.equal({ path: "/sitngo/sitngo123" });
 
     globalThis.fetch = originalFetch;
   });

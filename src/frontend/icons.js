@@ -252,4 +252,16 @@ export const ICONS = {
     <rect x="7" y="8" width="2" height="4" fill="currentColor" />
     <rect x="15" y="8" width="2" height="4" fill="currentColor" />
   </svg>`,
+  tournament: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M9 5h7v6h6v2h-6v6H9v4H2v-2h5v-6H2v-2h7v4h5V7H9v4H2V9h5V3H2V1h7v4Z"
+    />
+  </svg>`,
 };

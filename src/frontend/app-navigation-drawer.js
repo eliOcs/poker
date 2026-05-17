@@ -22,6 +22,7 @@ const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
  * @param {object} params
  * @param {any} params.view
  * @param {boolean} params.playActive
+ * @param {boolean} [params.tournamentsActive]
  * @param {boolean} [params.releaseNotesActive]
  * @param {boolean} [params.accountActive]
  * @returns {import("lit").TemplateResult}
@@ -46,9 +47,17 @@ function navClick(el, path) {
   };
 }
 
+/**
+ * @param {boolean} active
+ */
+function drawerItemClass(active) {
+  return active ? "drawer-item active" : "drawer-item";
+}
+
 export function renderAppNavigationDrawer({
   view,
   playActive,
+  tournamentsActive = false,
   releaseNotesActive = false,
   accountActive = false,
 }) {
@@ -67,16 +76,25 @@ export function renderAppNavigationDrawer({
     >
       <a
         slot="main"
-        class=${playActive ? "drawer-item active" : "drawer-item"}
+        class=${drawerItemClass(playActive)}
         href="/"
         @click=${navClick(view, "/")}
       >
         ${ICONS.play}
-        <span>Play</span>
+        <span>Quick play</span>
       </a>
       <a
         slot="main"
-        class=${releaseNotesActive ? "drawer-item active" : "drawer-item"}
+        class=${drawerItemClass(tournamentsActive)}
+        href="/mtt"
+        @click=${navClick(view, "/mtt")}
+      >
+        ${ICONS.tournament}
+        <span>Tournaments</span>
+      </a>
+      <a
+        slot="main"
+        class=${drawerItemClass(releaseNotesActive)}
         href="/release-notes"
         @click=${navClick(view, "/release-notes")}
       >

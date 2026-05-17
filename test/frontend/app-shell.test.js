@@ -2,7 +2,7 @@ import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import "../../src/frontend/app-shell.js";
 
 describe("phg-app-shell", () => {
-  it("shows an active play link when path is /", async () => {
+  it("shows an active quick play link when path is /", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/"></phg-app-shell>`,
     );
@@ -11,7 +11,7 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     const playLink = Array.from(element.shadowRoot.querySelectorAll("a")).find(
-      (link) => link.textContent.includes("Play"),
+      (link) => link.textContent.includes("Quick play"),
     );
     expect(playLink).to.exist;
     expect(playLink.getAttribute("href")).to.equal("/");
@@ -31,6 +31,22 @@ describe("phg-app-shell", () => {
     ).find((link) => link.textContent.includes("Release Notes"));
     expect(releaseNotesLink).to.exist;
     expect(releaseNotesLink.classList.contains("active")).to.equal(true);
+  });
+
+  it("shows an active tournaments link when path is /mtt", async () => {
+    const element = await fixture(
+      html`<phg-app-shell path="/mtt"></phg-app-shell>`,
+    );
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    const tournamentsLink = Array.from(
+      element.shadowRoot.querySelectorAll("a"),
+    ).find((link) => link.textContent.includes("Tournaments"));
+    expect(tournamentsLink).to.exist;
+    expect(tournamentsLink.getAttribute("href")).to.equal("/mtt");
+    expect(tournamentsLink.classList.contains("active")).to.equal(true);
   });
 
   it("shows an account link for signed-in users", async () => {
@@ -80,7 +96,7 @@ describe("phg-app-shell", () => {
     expect(accountLink.classList.contains("active")).to.equal(true);
   });
 
-  it("dispatches navigate when the play link is clicked", async () => {
+  it("dispatches navigate when the quick play link is clicked", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/"></phg-app-shell>`,
     );
@@ -90,7 +106,7 @@ describe("phg-app-shell", () => {
 
     setTimeout(() => {
       Array.from(element.shadowRoot.querySelectorAll("a"))
-        .find((a) => a.textContent.includes("Play"))
+        .find((a) => a.textContent.includes("Quick play"))
         .click();
     });
 
@@ -114,6 +130,24 @@ describe("phg-app-shell", () => {
 
     const event = await oneEvent(element, "navigate");
     expect(event.detail.path).to.equal("/release-notes");
+  });
+
+  it("dispatches navigate when the tournaments link is clicked", async () => {
+    const element = await fixture(
+      html`<phg-app-shell path="/"></phg-app-shell>`,
+    );
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    setTimeout(() => {
+      Array.from(element.shadowRoot.querySelectorAll("a"))
+        .find((a) => a.textContent.includes("Tournaments"))
+        .click();
+    });
+
+    const event = await oneEvent(element, "navigate");
+    expect(event.detail.path).to.equal("/mtt");
   });
 
   it("dispatches navigate when the account link is clicked", async () => {

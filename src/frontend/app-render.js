@@ -79,6 +79,12 @@ export function renderHomeView() {
 }
 
 /**
+ */
+export function renderTournamentsView() {
+  return html`<phg-tournaments></phg-tournaments>`;
+}
+
+/**
  * @param {any} app
  */
 export function renderMttLobbyView(app) {

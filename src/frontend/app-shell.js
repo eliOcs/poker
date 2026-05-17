@@ -86,6 +86,7 @@ class AppShell extends LitElement {
 
   render() {
     const playActive = this.path === "/";
+    const tournamentsActive = this.path === "/mtt";
     const releaseNotesActive = this.path === "/release-notes";
     const accountActive =
       !!this.user?.id && this.path === `/players/${this.user.id}`;
@@ -94,6 +95,7 @@ class AppShell extends LitElement {
       : renderAppNavigationDrawer({
           view: this,
           playActive,
+          tournamentsActive,
           releaseNotesActive,
           accountActive,
         });

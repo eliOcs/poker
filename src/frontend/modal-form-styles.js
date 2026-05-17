@@ -20,10 +20,16 @@ export const modalFormStyles = css`
     justify-content: flex-end;
   }
 
-  .settings-content label,
-  .sign-in-content label {
+  .settings-content label {
     display: block;
     margin-bottom: var(--space-md);
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+  }
+
+  .sign-in-content label {
+    display: block;
+    margin-bottom: 0;
     color: var(--color-fg-medium);
     font-size: var(--font-sm);
   }

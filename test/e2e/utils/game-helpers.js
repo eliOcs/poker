@@ -13,6 +13,15 @@ function normalizeGameType(type) {
  * @param {number|undefined} buyInIndex
  */
 async function configureGameType(page, type, stakesIndex, buyInIndex) {
+  if (type === "mtt") {
+    await page.goto("/mtt");
+    await page.locator("phg-tournaments").waitFor();
+    if (buyInIndex !== undefined) {
+      await page.locator("select").first().selectOption(String(buyInIndex));
+    }
+    return;
+  }
+
   if (type === "cash") {
     if (stakesIndex !== undefined) {
       await page.locator("select").first().selectOption(String(stakesIndex));
@@ -20,7 +29,7 @@ async function configureGameType(page, type, stakesIndex, buyInIndex) {
     return;
   }
 
-  await page.getByLabel(type === "sitngo" ? "Sit & Go" : "Tournament").click();
+  await page.getByLabel("Sit & Go").click();
   if (buyInIndex !== undefined) {
     await page.locator("select").first().selectOption(String(buyInIndex));
   }
@@ -35,7 +44,7 @@ export async function renameTournamentInLobby(page, tournamentName) {
   await editLabel
     .getByRole("button", { name: /Multi-Table Tournament/ })
     .click();
-  await editLabel.getByLabel("Label").fill(tournamentName);
+  await editLabel.getByRole("textbox", { name: "Label" }).fill(tournamentName);
   await editLabel.getByRole("button", { name: "Save label" }).click();
   await page.getByText(tournamentName).waitFor();
 }
@@ -75,7 +84,10 @@ export async function createGame(player, options = {}) {
   const type = normalizeGameType(options.type);
   const page = player.page;
 
-  await page.goto("/");
+  if (type !== "mtt") {
+    await page.goto("/");
+    await page.locator("phg-home").waitFor();
+  }
   await configureGameType(page, type, stakesIndex, buyInIndex);
 
   if (tableSize !== undefined) {

@@ -9,6 +9,7 @@
 import { html, render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
+import "/src/frontend/tournaments.js";
 import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
@@ -38,6 +39,12 @@ const GAME_TEST_CASES = {
   "landing-page": () => html`
     <div style="height: 100vh; width: 100%;">
       <phg-home></phg-home>
+    </div>
+  `,
+
+  "tournaments-page": () => html`
+    <div style="height: 100vh; width: 100%;">
+      <phg-tournaments></phg-tournaments>
     </div>
   `,
 

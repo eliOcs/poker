@@ -6,6 +6,7 @@ test.describe.configure({ mode: "parallel" });
 const TEST_CASES = [
   // Landing page
   "landing-page",
+  "tournaments-page",
   "player-profile-summary",
 
   // Lobby states
@@ -98,6 +99,7 @@ const TEST_CASES = [
 function getComponentSelector(testCase) {
   if (testCase.startsWith("email-")) return ".email-preview";
   if (testCase === "landing-page") return "phg-home";
+  if (testCase === "tournaments-page") return "phg-tournaments";
   if (testCase.startsWith("history-")) return "phg-history";
   if (testCase.startsWith("player-profile-")) return "phg-player-profile";
   if (testCase.startsWith("mtt-lobby-")) return "phg-mtt-lobby";
