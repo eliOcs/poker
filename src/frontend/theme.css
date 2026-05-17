@@ -1,8 +1,10 @@
 :root {
+  --font-xs: 8px;
   --font-sm: 10px;
   --font-md: 12px;
   --font-lg: 14px;
 
+  --space-xs: 2px;
   --space-sm: 4px;
   --space-md: 8px;
   --space-lg: 16px;
@@ -33,10 +35,12 @@
 
 @media (width < 800px) {
   :root {
+    --font-xs: 7px;
     --font-sm: 9px;
     --font-md: 10px;
     --font-lg: 12px;
 
+    --space-xs: 2px;
     --space-sm: 3px;
     --space-md: 6px;
     --space-lg: 12px;

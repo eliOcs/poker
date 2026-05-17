@@ -1,10 +1,12 @@
 export const FONT_SIZES = {
   desktop: {
+    xs: "8px",
     sm: "10px",
     md: "12px",
     lg: "14px",
   },
   mobile: {
+    xs: "7px",
     sm: "9px",
     md: "10px",
     lg: "12px",
@@ -13,11 +15,13 @@ export const FONT_SIZES = {
 
 export const SPACING = {
   desktop: {
+    xs: "2px",
     sm: "4px",
     md: "8px",
     lg: "16px",
   },
   mobile: {
+    xs: "2px",
     sm: "3px",
     md: "6px",
     lg: "12px",
