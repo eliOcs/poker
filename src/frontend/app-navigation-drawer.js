@@ -136,11 +136,14 @@ function renderAccountEntry(
   }
 
   return html`<button
-    slot="footer"
-    class="drawer-item drawer-sign-in"
-    @click=${view.openSignIn}
-  >
-    ${ICONS.signIn}
-    <span>Sign in</span>
-  </button>`;
+      slot="footer"
+      class="drawer-item drawer-primary"
+      @click=${view.openSignUp}
+    >
+      ${ICONS.signUp}
+      <span>Sign up</span></button
+    ><button slot="footer" class="drawer-item" @click=${view.openSignIn}>
+      ${ICONS.signIn}
+      <span>Sign in</span>
+    </button>`;
 }

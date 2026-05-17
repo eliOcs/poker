@@ -329,7 +329,7 @@ describe("phg-game", () => {
 
       expect(input).to.exist;
       expect(input.getAttribute("type")).to.equal("email");
-      expect(modalText).to.include("one-time sign-in link");
+      expect(modalText).to.include("complete the sign in");
       expect(modalText).to.not.include("Keep your setup");
       expect(modalText).to.not.include("Review previous games");
     });

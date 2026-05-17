@@ -74,9 +74,10 @@ function handleAction(fn) {
 /**
  * @param {any} user
  * @param {() => void} onOpenSignIn
+ * @param {() => void} onOpenSignUp
  * @returns {import("lit").TemplateResult}
  */
-function renderAccountFooterItem(user, onOpenSignIn) {
+function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
   const accountLabel = formatPlayerLabel(user?.name, user?.id, "Sign in");
   if (user?.email) {
     return html`<a
@@ -91,13 +92,20 @@ function renderAccountFooterItem(user, onOpenSignIn) {
     </a>`;
   }
   return html`<button
-    slot="footer"
-    class="drawer-sign-in"
-    @click=${handleAction(onOpenSignIn)}
-  >
-    ${ICONS.signIn}
-    <span>Sign in</span>
-  </button>`;
+      slot="footer"
+      class="drawer-primary"
+      @click=${handleAction(onOpenSignUp)}
+    >
+      ${ICONS.signUp}
+      <span>Sign up</span></button
+    ><button
+      slot="footer"
+      class="drawer-entry"
+      @click=${handleAction(onOpenSignIn)}
+    >
+      ${ICONS.signIn}
+      <span>Sign in</span>
+    </button>`;
 }
 
 /**
@@ -149,6 +157,7 @@ function renderTableItem(table) {
  * @property {Array<import("lit").TemplateResult|string>} [extraMainItems]
  * @property {() => void} onOpenSettings
  * @property {() => void} onOpenSignIn
+ * @property {() => void} onOpenSignUp
  */
 
 /**
@@ -170,6 +179,7 @@ function renderDrawerTemplate(params) {
     extraMainItems,
     onOpenSettings,
     onOpenSignIn,
+    onOpenSignUp,
   } = params;
   const copyLabel = params.copied ? "Copied!" : "Copy Link";
   const historyDisabledAttr = historyDisabled || !onOpenHistory;
@@ -204,7 +214,7 @@ function renderDrawerTemplate(params) {
         <span>${copyLabel}</span>
       </button>
       ${renderShareButton(onShare)}
-      ${renderAccountFooterItem(user, onOpenSignIn)}
+      ${renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp)}
       <button slot="footer" @click=${handleAction(onOpenSettings)}>
         ${ICONS.settings}
         <span>Settings</span>

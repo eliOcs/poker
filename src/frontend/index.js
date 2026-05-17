@@ -24,6 +24,7 @@ import {
   renderRankingModal,
   renderSettingsModal,
   renderSignInModal,
+  renderSignUpModal,
   renderEmoteModal,
   renderChatModal,
 } from "./game-modals.js";
@@ -52,6 +53,7 @@ class Game extends LitElement {
       user: { type: Object },
       showSettings: { type: Boolean },
       showSignIn: { type: Boolean },
+      showSignUp: { type: Boolean },
       showRanking: { type: Boolean },
       showEmotePicker: { type: Boolean },
       showChat: { type: Boolean },
@@ -60,6 +62,8 @@ class Game extends LitElement {
       _drawerOpen: { type: Boolean, state: true },
       _copied: { type: Boolean, state: true },
       _signInInvalid: { type: Boolean, state: true },
+      _signUpEmailInvalid: { type: Boolean, state: true },
+      _signUpNameInvalid: { type: Boolean, state: true },
     };
   }
 
@@ -77,6 +81,7 @@ class Game extends LitElement {
     this.user = null;
     this.showSettings = false;
     this.showSignIn = false;
+    this.showSignUp = false;
     this.showRanking = false;
     this.showEmotePicker = false;
     this.showChat = false;
@@ -85,6 +90,8 @@ class Game extends LitElement {
     this._drawerOpen = false;
     this._copied = false;
     this._signInInvalid = false;
+    this._signUpEmailInvalid = false;
+    this._signUpNameInvalid = false;
     this._onMediaChange = (e) => {
       this._drawerOpen = e.matches;
     };
@@ -464,7 +471,8 @@ class Game extends LitElement {
         )}
         ${renderInfoBar(this.game, this.gameKind)} ${renderRankingModal(this)}
         ${renderSettingsModal(this)} ${renderSignInModal(this)}
-        ${renderEmoteModal(this)} ${renderChatModal(this)}
+        ${renderSignUpModal(this)} ${renderEmoteModal(this)}
+        ${renderChatModal(this)}
       </div>
     `;
   }

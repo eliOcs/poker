@@ -57,7 +57,9 @@ export class PokerPlayer extends PokerPlayerActions {
    */
   async openSignIn() {
     await this.openDrawer();
-    const signInButton = this.game.locator(".drawer-sign-in");
+    const signInButton = this.game
+      .locator("phg-navigation-drawer")
+      .getByRole("button", { name: "Sign in", exact: true });
     await signInButton.waitFor();
     await signInButton.evaluate((button) => button.click());
     await this.game.locator("#sign-in-email").waitFor();

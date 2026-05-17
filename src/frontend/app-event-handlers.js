@@ -46,8 +46,12 @@ export function initAppEventHandlers(app) {
   app._handleUpdateUser = (e) => {
     app._updateUser(/** @type {CustomEvent<object>} */ (e).detail);
   };
-  app._handleRequestSignIn = (e) => {
-    const detail = /** @type {CustomEvent<{ email: string }>} */ (e).detail;
+  app._handleRequestSignIn = async (e) => {
+    const detail =
+      /** @type {CustomEvent<{ email: string, name?: string }>} */ (e).detail;
+    if (detail.name !== undefined) {
+      await app._updateUser({ name: detail.name });
+    }
     requestSignIn(app, detail.email, getCurrentReturnPath());
   };
   app._handleOpenSettings = () => {
@@ -55,6 +59,9 @@ export function initAppEventHandlers(app) {
   };
   app._handleOpenSignIn = () => {
     app.openProfileSignIn();
+  };
+  app._handleOpenSignUp = () => {
+    app.openProfileSignUp();
   };
   app._handleMttAction = (e) => {
     const detail = /** @type {CustomEvent<{ action: string }>} */ (e).detail;
@@ -89,6 +96,7 @@ export function connectAppEventHandlers(app) {
   app.addEventListener("request-sign-in", app._handleRequestSignIn);
   app.addEventListener("open-settings", app._handleOpenSettings);
   app.addEventListener("open-sign-in", app._handleOpenSignIn);
+  app.addEventListener("open-sign-up", app._handleOpenSignUp);
   app.addEventListener("mtt-action", app._handleMttAction);
   app.addEventListener("mtt-rename", app._handleMttRename);
 }
@@ -113,6 +121,7 @@ export function disconnectAppEventHandlers(app) {
   app.removeEventListener("request-sign-in", app._handleRequestSignIn);
   app.removeEventListener("open-settings", app._handleOpenSettings);
   app.removeEventListener("open-sign-in", app._handleOpenSignIn);
+  app.removeEventListener("open-sign-up", app._handleOpenSignUp);
   app.removeEventListener("mtt-action", app._handleMttAction);
   app.removeEventListener("mtt-rename", app._handleMttRename);
 }

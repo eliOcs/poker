@@ -100,7 +100,7 @@ export function renderSignInModal(game) {
         }}
       >
         <p class="sign-in-intro">
-          Enter your email and we&apos;ll send you a one-time sign-in link.
+          You will receive an email to complete the sign in.
         </p>
         <label for="sign-in-email">Email</label>
         <input
@@ -121,6 +121,76 @@ export function renderSignInModal(game) {
             >Send sign-in link</phg-button
           >
         </div>
+        <p class="sign-in-switch">
+          New?
+          <button
+            type="button"
+            class="sign-in-switch-link"
+            @click=${game.switchToSignUp}
+          >
+            Sign up
+          </button>
+        </p>
+      </form>
+    </phg-modal>
+  `;
+}
+
+export function renderSignUpModal(game) {
+  if (!game.showSignUp) return "";
+  return html`
+    <phg-modal .title=${"Sign up"} @close=${game.closeSignUp}>
+      <form
+        class="sign-in-content"
+        @submit=${(e) => {
+          e.preventDefault();
+          game.requestSignUp();
+        }}
+      >
+        <p class="sign-in-intro">
+          You will receive an email to complete the sign up.
+        </p>
+        <label for="sign-up-name">Name</label>
+        <input
+          id="sign-up-name"
+          type="text"
+          autocomplete="name"
+          placeholder="Enter your name"
+          maxlength="20"
+          ?required=${true}
+          aria-invalid=${game._signUpNameInvalid ? "true" : "false"}
+          autofocus
+          .value=${game.getCurrentPlayerName()}
+          @input=${game.clearSignUpValidation}
+        />
+        <label for="sign-up-email">Email</label>
+        <input
+          id="sign-up-email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          ?required=${true}
+          aria-invalid=${game._signUpEmailInvalid ? "true" : "false"}
+          @input=${game.clearSignUpValidation}
+        />
+        <div class="buttons">
+          <phg-button variant="muted" @click=${game.closeSignUp}
+            >Cancel</phg-button
+          >
+          <phg-button variant="action" @click=${game.requestSignUp}
+            >Send sign-up link</phg-button
+          >
+        </div>
+        <p class="sign-in-switch">
+          Have an account?
+          <button
+            type="button"
+            class="sign-in-switch-link"
+            @click=${game.switchToSignIn}
+          >
+            Sign in
+          </button>
+        </p>
       </form>
     </phg-modal>
   `;

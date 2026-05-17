@@ -40,6 +40,8 @@ import {
 } from "./app-route-state.js";
 import * as ws from "./app-websocket.js";
 import * as mttRouting from "./app-mtt-routing.js";
+import { appSignInActions } from "./app-sign-in-actions.js";
+import { appProfileActions } from "./app-profile-actions.js";
 
 class App extends LitElement {
   static get styles() {
@@ -82,9 +84,9 @@ class App extends LitElement {
       _playerProfileId: { state: true },
       _showProfileSettings: { state: true },
       _showProfileSignIn: { state: true },
+      _showProfileSignUp: { state: true },
       _settingsVolume: { state: true },
       _settingsVibration: { state: true },
-      _profileSignInInvalid: { state: true },
     };
   }
 
@@ -118,9 +120,9 @@ class App extends LitElement {
     this._playerProfileId = null;
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
+    this._showProfileSignUp = false;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
-    this._profileSignInInvalid = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -310,67 +312,6 @@ class App extends LitElement {
     this.toast = null;
   }
 
-  openProfileSettings() {
-    this._settingsVolume = this.user.settings.volume;
-    this._settingsVibration = this.user.settings.vibration;
-    this._showProfileSettings = true;
-  }
-
-  closeProfileSettings() {
-    this._showProfileSettings = false;
-  }
-
-  openProfileSignIn() {
-    this._profileSignInInvalid = false;
-    this._showProfileSignIn = true;
-  }
-
-  closeProfileSignIn() {
-    this._profileSignInInvalid = false;
-    this._showProfileSignIn = false;
-  }
-
-  clearProfileSignInValidation() {
-    this._profileSignInInvalid = false;
-  }
-
-  requestProfileSignIn() {
-    const input = /** @type {HTMLInputElement|null} */ (
-      this.shadowRoot?.querySelector("#profile-sign-in-email")
-    );
-    const email = input?.value.trim() || "";
-    if (!email || !input?.checkValidity()) {
-      this._profileSignInInvalid = true;
-      input?.focus();
-      return;
-    }
-    this._profileSignInInvalid = false;
-    this.dispatchEvent(
-      new CustomEvent("request-sign-in", {
-        detail: { email },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-    this._showProfileSignIn = false;
-  }
-
-  async saveProfileSettings() {
-    const input = /** @type {HTMLInputElement|null} */ (
-      this.shadowRoot?.querySelector("#profile-settings-name-input")
-    );
-    const name = input?.value.trim() || "";
-    await this._updateUser({
-      name,
-      settings: {
-        volume: this._settingsVolume,
-        vibration: this._settingsVibration,
-      },
-    });
-    this._showProfileSettings = false;
-    this.toast = { message: "Settings saved", variant: "success" };
-  }
-
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
     const nextPath = this._getHistoryPath(handNumber);
@@ -549,5 +490,8 @@ class App extends LitElement {
     );
   }
 }
+
+Object.assign(App.prototype, appProfileActions);
+Object.assign(App.prototype, appSignInActions);
 
 customElements.define("phg-app", App);

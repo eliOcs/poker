@@ -86,6 +86,15 @@ class MttLobby extends LitElement {
     );
   }
 
+  openSignUp() {
+    this.dispatchEvent(
+      new CustomEvent("open-sign-up", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   _dispatchMttAction(action) {
     this.dispatchEvent(
       new CustomEvent("mtt-action", {
@@ -244,6 +253,9 @@ class MttLobby extends LitElement {
         },
         onOpenSignIn: () => {
           this.openSignIn();
+        },
+        onOpenSignUp: () => {
+          this.openSignUp();
         },
       })}
       <main class="main">

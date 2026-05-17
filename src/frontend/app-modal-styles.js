@@ -20,7 +20,7 @@ export const appModalStyles = [
     }
 
     .sign-in-intro {
-      margin: 0;
+      margin: 0 0 var(--space-md);
       font-size: var(--font-sm);
       line-height: 1.8;
       color: var(--color-fg-medium);

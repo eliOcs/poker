@@ -8,6 +8,22 @@ function dispatchToast(host, detail) {
   );
 }
 
+function readInput(root, selector) {
+  return /** @type {HTMLInputElement|null} */ (root?.querySelector(selector));
+}
+
+function validateRequiredInput(input) {
+  if (input?.value.trim()) return true;
+  input?.focus();
+  return false;
+}
+
+function validateEmailInput(input) {
+  if (input?.value.trim() && input.checkValidity()) return true;
+  input?.focus();
+  return false;
+}
+
 export const gameModalActions = {
   openAccount() {
     if (!this.user?.id) return;
@@ -40,8 +56,35 @@ export const gameModalActions = {
     this.showSignIn = false;
   },
 
+  switchToSignUp() {
+    this.closeSignIn();
+    this.openSignUp();
+  },
+
   clearSignInValidation() {
     this._signInInvalid = false;
+  },
+
+  openSignUp() {
+    this._signUpEmailInvalid = false;
+    this._signUpNameInvalid = false;
+    this.showSignUp = true;
+  },
+
+  closeSignUp() {
+    this._signUpEmailInvalid = false;
+    this._signUpNameInvalid = false;
+    this.showSignUp = false;
+  },
+
+  switchToSignIn() {
+    this.closeSignUp();
+    this.openSignIn();
+  },
+
+  clearSignUpValidation() {
+    this._signUpEmailInvalid = false;
+    this._signUpNameInvalid = false;
   },
 
   openRanking() {
@@ -76,13 +119,10 @@ export const gameModalActions = {
   },
 
   requestSignIn() {
-    const input = /** @type {HTMLInputElement|null} */ (
-      this.shadowRoot?.querySelector("#sign-in-email")
-    );
+    const input = readInput(this.shadowRoot, "#sign-in-email");
     const email = input?.value.trim() || "";
-    if (!email || !input?.checkValidity()) {
+    if (!validateEmailInput(input)) {
       this._signInInvalid = true;
-      input?.focus();
       return;
     }
     this._signInInvalid = false;
@@ -94,5 +134,27 @@ export const gameModalActions = {
       }),
     );
     this.showSignIn = false;
+  },
+
+  requestSignUp() {
+    const nameInput = readInput(this.shadowRoot, "#sign-up-name");
+    const emailInput = readInput(this.shadowRoot, "#sign-up-email");
+    const name = nameInput?.value.trim() || "";
+    const email = emailInput?.value.trim() || "";
+
+    this._signUpNameInvalid = !validateRequiredInput(nameInput);
+    if (this._signUpNameInvalid) return;
+
+    this._signUpEmailInvalid = !validateEmailInput(emailInput);
+    if (this._signUpEmailInvalid) return;
+
+    this.dispatchEvent(
+      new CustomEvent("request-sign-in", {
+        detail: { email, name },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    this.showSignUp = false;
   },
 };

@@ -17,7 +17,7 @@ export const modalFormStyles = css`
   .sign-in-content .buttons {
     display: flex;
     gap: var(--space-md);
-    justify-content: flex-end;
+    justify-content: center;
   }
 
   .settings-content label {
@@ -32,6 +32,28 @@ export const modalFormStyles = css`
     margin-bottom: 0;
     color: var(--color-fg-medium);
     font-size: var(--font-sm);
+  }
+
+  .sign-in-switch {
+    margin: var(--space-md) 0 0;
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+    text-align: center;
+  }
+
+  .sign-in-switch-link {
+    appearance: none;
+    padding: 0;
+    font: inherit;
+    color: var(--color-fg-white);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .sign-in-switch-link:hover {
+    color: var(--color-primary);
   }
 
   .volume-slider {

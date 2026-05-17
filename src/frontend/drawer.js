@@ -117,6 +117,7 @@ function renderMttDrawer(game) {
     extraMainItems: [renderSitOutButton(game)],
     onOpenSettings: () => game.openSettings(),
     onOpenSignIn: () => game.openSignIn(),
+    onOpenSignUp: () => game.openSignUp(),
   });
 }
 
@@ -168,12 +169,18 @@ function renderCashDrawer(game) {
             ${ICONS.signIn} ${accountLabel}
           </a>`
         : html`<button
-            slot="footer"
-            class="drawer-sign-in"
-            @click=${game.openSignIn}
-          >
-            ${ICONS.signIn} Sign in
-          </button>`}
+              slot="footer"
+              class="drawer-primary"
+              @click=${game.openSignUp}
+            >
+              ${ICONS.signUp} Sign up</button
+            ><button
+              slot="footer"
+              class="drawer-entry"
+              @click=${game.openSignIn}
+            >
+              ${ICONS.signIn} Sign in
+            </button>`}
       <button slot="footer" @click=${game.openSettings}>
         ${ICONS.settings} Settings
       </button>

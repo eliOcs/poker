@@ -84,6 +84,18 @@ class AppShell extends LitElement {
     );
   }
 
+  openSignUp() {
+    if (!this._mql?.matches) {
+      this.drawerOpen = false;
+    }
+    this.dispatchEvent(
+      new CustomEvent("open-sign-up", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   render() {
     const playActive = this.path === "/";
     const tournamentsActive = this.path === "/mtt";

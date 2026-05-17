@@ -195,6 +195,42 @@ describe("phg-app-shell", () => {
     expect(event).to.exist;
   });
 
+  it("dispatches open-sign-up when sign-up button is clicked (signed out)", async () => {
+    const element = await fixture(
+      html`<phg-app-shell path="/"></phg-app-shell>`,
+    );
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    setTimeout(() => {
+      const signUpBtn = Array.from(
+        element.shadowRoot.querySelectorAll("button"),
+      ).find((button) => button.textContent.includes("Sign up"));
+      signUpBtn.click();
+    });
+
+    const event = await oneEvent(element, "open-sign-up");
+    expect(event).to.exist;
+  });
+
+  it("renders sign up above sign in for signed-out users", async () => {
+    const element = await fixture(
+      html`<phg-app-shell path="/"></phg-app-shell>`,
+    );
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    const buttonLabels = Array.from(
+      element.shadowRoot.querySelectorAll("button"),
+    ).map((button) => button.textContent.trim());
+
+    expect(buttonLabels.indexOf("Sign up")).to.be.lessThan(
+      buttonLabels.indexOf("Sign in"),
+    );
+  });
+
   it("dispatches open-settings when settings button is clicked", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/"></phg-app-shell>`,

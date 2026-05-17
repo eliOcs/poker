@@ -56,6 +56,70 @@ describe("phg-app sign in", () => {
     });
   });
 
+  it("updates the display name before requesting a sign-up link", async () => {
+    let signInRequestBody = null;
+    let userUpdateBody = null;
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Guest Name",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      if (url.match(/\/api\/users\/me$/) && options.method === "PUT") {
+        userUpdateBody = JSON.parse(String(options.body));
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: userUpdateBody.name,
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      if (url === "/api/sign-in-links" && options.method === "POST") {
+        signInRequestBody = JSON.parse(String(options.body));
+        return {
+          ok: true,
+          json: async () => ({}),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    await waitUntil(() => element.user?.name === "Guest Name", {
+      timeout: 2000,
+    });
+    element.openProfileSignUp();
+    await element.updateComplete;
+
+    const modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    await modal.updateComplete;
+    const nameInput = modal.querySelector("#profile-sign-up-name");
+    const emailInput = modal.querySelector("#profile-sign-in-email");
+    expect(nameInput.value).to.equal("Guest Name");
+    emailInput.value = "player@example.com";
+
+    modal.submit();
+
+    await waitUntil(() => element.toast?.message === "Sign-in link sent", {
+      timeout: 2000,
+    });
+
+    expect(userUpdateBody).to.deep.equal({
+      name: "Guest Name",
+    });
+    expect(signInRequestBody).to.deep.equal({
+      email: "player@example.com",
+      returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    });
+  });
+
   it("shows an error toast when sign-in link delivery fails", async () => {
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
@@ -300,6 +364,79 @@ describe("phg-app sign in", () => {
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Sign in",
+    );
+  });
+
+  it("opens the sign-up modal from the app event", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Test",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    element.dispatchEvent(
+      new CustomEvent("open-sign-up", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    await element.updateComplete;
+
+    const modal = element.shadowRoot.querySelector("phg-modal");
+    expect(modal).to.exist;
+    await modal.updateComplete;
+    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
+      "Sign up",
+    );
+  });
+
+  it("switches between sign-in and sign-up modals from the footer links", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Test",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    element.openProfileSignIn();
+    await element.updateComplete;
+
+    let modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    await modal.updateComplete;
+    modal.querySelector(".sign-in-switch-link").click();
+    await element.updateComplete;
+
+    modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    await modal.updateComplete;
+    expect(modal.mode).to.equal("sign-up");
+    expect(modal.querySelector(".sign-in-switch").textContent).to.include(
+      "Have an account?",
+    );
+
+    modal.querySelector(".sign-in-switch-link").click();
+    await element.updateComplete;
+
+    modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    expect(modal.mode).to.equal("sign-in");
+    expect(modal.querySelector(".sign-in-switch").textContent).to.include(
+      "New?",
     );
   });
 });

@@ -207,11 +207,11 @@ class NavigationDrawer extends LitElement {
           color: var(--color-primary);
         }
 
-        ::slotted(.drawer-sign-in) {
+        ::slotted(.drawer-primary) {
           color: var(--color-primary);
         }
 
-        ::slotted(.drawer-sign-in:hover) {
+        ::slotted(.drawer-primary:hover) {
           color: var(--color-primary);
         }
 

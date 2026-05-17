@@ -1,7 +1,10 @@
 import { html } from "lit";
 import { renderAuthStatus } from "./app-auth-status.js";
 import { renderProfileSettingsModal } from "./app-profile-settings.js";
-import { renderProfileSignInModal } from "./app-sign-in-modal.js";
+import {
+  renderProfileSignInModal,
+  renderProfileSignUpModal,
+} from "./app-sign-in-modal.js";
 
 /**
  * @param {any} app
@@ -115,7 +118,9 @@ export function renderShellView(app, content, options = {}) {
       .path=${app.path}
       .navigationRenderer=${options.navigationRenderer ?? null}
       >${content}</phg-app-shell
-    >${renderProfileSettingsModal(app)}${renderProfileSignInModal(app)}`;
+    >${renderProfileSettingsModal(app)}${renderProfileSignInModal(
+      app,
+    )}${renderProfileSignUpModal(app)}`;
 }
 
 /**
