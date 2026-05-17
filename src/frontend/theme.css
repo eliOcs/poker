@@ -1,0 +1,44 @@
+:root {
+  --font-sm: 10px;
+  --font-md: 12px;
+  --font-lg: 14px;
+
+  --space-sm: 4px;
+  --space-md: 8px;
+  --space-lg: 16px;
+
+  --color-primary: #f4a020;
+  --color-secondary: #84a;
+  --color-accent: #36c;
+  --color-success: #3a5;
+  --color-error: #c33;
+  --color-warning: #e07020;
+  --color-highlight: #c4a;
+  --color-bg-dark: #0f0f1a;
+  --color-bg-medium: #1a1a2e;
+  --color-bg-light: #2d2d44;
+  --color-bg-disabled: #4a4a5e;
+  --color-table: #2d5a27;
+  --color-table-history: #622028;
+  --color-fg-muted: #88a;
+  --color-fg-medium: #c0c0d0;
+  --color-fg-light: #e0e0e8;
+  --color-fg-white: #f0f0f0;
+
+  color: var(--color-fg-medium);
+  background: var(--color-bg-dark);
+  font-family: "Press Start 2P", monospace;
+  image-rendering: pixelated;
+}
+
+@media (width < 800px) {
+  :root {
+    --font-sm: 9px;
+    --font-md: 10px;
+    --font-lg: 12px;
+
+    --space-sm: 3px;
+    --space-md: 6px;
+    --space-lg: 12px;
+  }
+}

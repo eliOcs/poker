@@ -9,6 +9,6 @@ html,
 body {
   margin: 0px;
   height: 100%;
-  background-color: #0f0f1a;
+  background-color: var(--color-bg-dark, #0f0f1a);
   overscroll-behavior: none;
 }
