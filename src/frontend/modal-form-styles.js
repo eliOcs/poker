@@ -60,43 +60,4 @@ export const modalFormStyles = css`
     color: var(--color-fg-white);
     border-color: var(--modal-slider-active-color);
   }
-
-  .sign-in-benefits {
-    display: grid;
-    gap: var(--space-md);
-    margin-bottom: var(--sign-in-benefits-margin-bottom, 0);
-  }
-
-  .sign-in-benefit {
-    display: grid;
-    gap: var(--sign-in-benefit-gap, 0);
-    padding: var(--space-md);
-    border: 2px solid var(--color-bg-dark);
-    background: var(--color-bg-medium);
-  }
-
-  .sign-in-benefit h4 {
-    display: flex;
-    align-items: center;
-    gap: var(--sign-in-benefit-title-gap, 10px);
-    margin: var(--sign-in-benefit-title-margin, 0);
-    font-size: var(--font-sm);
-    color: var(--color-fg-white);
-  }
-
-  .sign-in-benefit h4 svg {
-    flex: none;
-    width: 16px;
-    height: 16px;
-    min-width: 16px;
-    color: var(--color-success);
-    fill: currentcolor;
-  }
-
-  .sign-in-benefit p {
-    margin: 0;
-    font-size: var(--font-sm);
-    line-height: var(--sign-in-benefit-copy-line-height, 1.8);
-    color: var(--color-fg-medium);
-  }
 `;

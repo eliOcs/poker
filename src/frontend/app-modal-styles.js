@@ -7,10 +7,6 @@ export const appModalStyles = [
     .settings-content,
     .sign-in-content {
       --modal-slider-active-color: var(--color-secondary);
-      --sign-in-benefit-gap: var(--space-sm);
-      --sign-in-benefit-title-gap: 10px;
-      --sign-in-benefit-title-margin: 0;
-      --sign-in-benefit-copy-line-height: 1.7;
     }
 
     .settings-content input {

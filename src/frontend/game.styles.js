@@ -6,10 +6,6 @@ export const gameStyles = [
   css`
     :host {
       --modal-slider-active-color: var(--color-secondary);
-      --sign-in-benefits-margin-bottom: var(--space-lg);
-      --sign-in-benefit-title-gap: var(--space-md);
-      --sign-in-benefit-title-margin: 0 0 var(--space-sm);
-      --sign-in-benefit-copy-line-height: 1.8;
 
       height: 100%;
       display: block;

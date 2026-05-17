@@ -317,7 +317,7 @@ describe("phg-game", () => {
       expect(input.getAttribute("placeholder")).to.include("name");
     });
 
-    it("sign-in modal contains email input and benefit copy", async () => {
+    it("sign-in modal contains email input and intro copy", async () => {
       element.game = createMockGameState();
       element.showSignIn = true;
       await element.updateComplete;
@@ -330,8 +330,8 @@ describe("phg-game", () => {
       expect(input).to.exist;
       expect(input.getAttribute("type")).to.equal("email");
       expect(modalText).to.include("one-time sign-in link");
-      expect(modalText).to.include("Keep your setup");
-      expect(modalText).to.include("Review previous games");
+      expect(modalText).to.not.include("Keep your setup");
+      expect(modalText).to.not.include("Review previous games");
     });
 
     it("closes modal when cancel button clicked", async () => {

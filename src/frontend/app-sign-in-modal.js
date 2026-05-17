@@ -1,5 +1,4 @@
 import { html } from "lit";
-import { ICONS } from "./icons.js";
 
 /**
  * @param {any} app
@@ -30,16 +29,6 @@ export function renderProfileSignInModal(app) {
           autofocus
           @input=${app.clearProfileSignInValidation}
         />
-        <div class="sign-in-benefits">
-          <div class="sign-in-benefit">
-            <h4>${ICONS.check} Keep your setup</h4>
-            <p>Use your name and settings across multiple devices.</p>
-          </div>
-          <div class="sign-in-benefit">
-            <h4>${ICONS.check} Review previous games</h4>
-            <p>See your recent tables and come back to past sessions faster.</p>
-          </div>
-        </div>
         <div class="buttons">
           <phg-button variant="muted" @click=${app.closeProfileSignIn}
             >Cancel</phg-button
