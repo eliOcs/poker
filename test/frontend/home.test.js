@@ -10,8 +10,9 @@ describe("phg-home", () => {
 
   it("creates an MTT and navigates to the lobby", async () => {
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = async (url) => {
+    globalThis.fetch = async (url, options) => {
       expect(url).to.equal("/mtt");
+      expect(JSON.parse(options.body)).to.not.have.property("name");
       return {
         ok: true,
         json: async () => ({ id: "mtt123", type: "mtt" }),

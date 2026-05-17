@@ -181,7 +181,12 @@ function buildWinnerFinish(game, prizeByPosition) {
  */
 function buildOTSSummary(recorder, game) {
   const endTime = new Date().toISOString();
-  const buyIn = game.tournament?.buyIn ?? 0;
+  const tournament = game.tournament;
+  if (!tournament) {
+    throw new Error("tournament summary requires tournament state");
+  }
+
+  const buyIn = tournament.buyIn;
   const playerCount = recorder.players.length;
   const prizePool = buyIn * playerCount;
 
@@ -203,7 +208,7 @@ function buildOTSSummary(recorder, game) {
     spec_version: "1.1.5",
     site_name: "Pluton Poker",
     tournament_number: recorder.gameId,
-    tournament_name: "Sit & Go",
+    tournament_name: tournament.name,
     start_date_utc: recorder.startTime || endTime,
     end_date_utc: endTime,
     currency: "USD",

@@ -21,6 +21,7 @@ describe("mtt-manager", () => {
 
     let view = ctx.manager.getTournamentView(tournamentId, "owner");
     assert.equal(view.status, "registration");
+    assert.equal(view.name, "Multi-Table Tournament");
     assert.equal(view.entrants.length, 1);
     assert.equal(view.currentPlayer.status, "registered");
     assert.equal(view.actions.canStart, false);
@@ -34,6 +35,30 @@ describe("mtt-manager", () => {
     view = ctx.manager.getTournamentView(tournamentId, "owner");
     assert.equal(view.entrants.length, 1);
     assert.equal(view.actions.canStart, false);
+  });
+
+  it("renames tournaments and propagates the name to table history metadata", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+
+    let view = ctx.manager.renameTournament(
+      tournamentId,
+      "Renamed Championship",
+      "owner",
+    );
+    assert.equal(view.name, "Renamed Championship");
+    assert.equal(ctx.manager.getTournament(tournamentId).name, view.name);
+
+    view = ctx.manager.startTournament(tournamentId, "owner");
+    const tournament = ctx.manager.getTournament(tournamentId);
+    const table = ctx.games.get(tournament.tables[0].tableId);
+
+    assert.equal(view.name, "Renamed Championship");
+    assert.equal(table.tournament.name, "Renamed Championship");
   });
 
   it("requires the owner to start and enforces the minimum player count", () => {

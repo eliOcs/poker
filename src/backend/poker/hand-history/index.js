@@ -83,6 +83,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {boolean} active
  * @property {"sitngo"|"mtt"} kind
  * @property {string} tournamentId
+ * @property {string} name
  * @property {string|null} startTime
  * @property {number} initialStack
  * @property {number} level
@@ -161,6 +162,7 @@ export function startHand(game) {
       active: true,
       kind: game.tournament.kind,
       tournamentId: game.tournament.competitionId,
+      name: game.tournament.name,
       startTime: game.tournament.startTime,
       initialStack: game.tournament.initialStack,
       level: game.tournament.level,
@@ -372,7 +374,7 @@ function buildTournamentInfo(tournament, fallbackStartTime) {
 
   return {
     tournament_number: tournament.tournamentId,
-    name: tournament.kind === "mtt" ? "Multi-Table Tournament" : "Sit & Go",
+    name: tournament.name,
     start_date_utc:
       tournament.startTime || fallbackStartTime || new Date().toISOString(),
     currency: "USD",

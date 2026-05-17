@@ -1,6 +1,6 @@
 /* eslint-disable playwright/no-conditional-in-test */
 import { test, expect } from "./utils/fixtures.js";
-import { createGame } from "./utils/game-helpers.js";
+import { createGame, renameTournamentInLobby } from "./utils/game-helpers.js";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
 test.setTimeout(15 * 60 * 1000);
@@ -518,6 +518,10 @@ test.describe("Tournament E2E", () => {
       type: "mtt",
       tableSize: 6,
     });
+    await renameTournamentInLobby(player1.page, "Stress Test Championship");
+    await expect(
+      player1.page.getByText("Stress Test Championship"),
+    ).toBeVisible();
     console.log(`Tournament created at ${tournamentUrl}`);
 
     const joiningPlayers = players.slice(1);

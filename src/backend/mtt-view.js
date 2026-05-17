@@ -135,6 +135,7 @@ function buildTournamentActions(tournament, entrant, playerId) {
       tournament.status === "registration" &&
       tournament.ownerId === playerId &&
       tournament.entrants.size >= 2,
+    canRename: tournament.ownerId === playerId,
   };
 }
 
@@ -151,6 +152,7 @@ export function buildTournamentView(tournament, games, playerId) {
   const tables = buildTables(tournament, games);
   return {
     id: tournament.id,
+    name: tournament.name,
     status: tournament.status,
     ownerId: tournament.ownerId,
     buyIn: tournament.buyIn,

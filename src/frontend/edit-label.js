@@ -87,18 +87,19 @@ class EditLabel extends LitElement {
           flex: 1 1 auto;
           min-width: 0;
           padding: var(--space-md);
-          border: 3px solid var(--color-primary);
           font: inherit;
           font-size: var(--font-md);
           line-height: 1.5;
-          color: var(--color-bg-dark);
-          background: var(--color-fg-white);
-          box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.18);
+          color: var(--color-fg-white);
+          background: var(--color-bg-medium);
+          border: 3px solid var(--color-bg-dark);
           box-sizing: border-box;
         }
 
         input:focus {
           outline: none;
+          border-color: var(--color-secondary);
+          box-shadow: 0 0 0 1px var(--color-secondary);
         }
       `,
     ];

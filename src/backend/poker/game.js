@@ -67,6 +67,7 @@ export {
  * @property {boolean} active - Whether this is a tournament game
  * @property {"sitngo"|"mtt"} kind - Tournament mode
  * @property {import('../id.js').Id} competitionId - Sit & Go id or parent MTT id
+ * @property {string} name - Human-readable tournament name
  * @property {number} level - Current blind level (1-7)
  * @property {number} levelTicks - Ticks elapsed in current level
  * @property {boolean} onBreak - Currently in break period
@@ -220,6 +221,7 @@ export function createTournament({
     active: true,
     kind: "sitngo",
     competitionId: game.id,
+    name: "Sit & Go",
     level: 1,
     levelTicks: 0,
     onBreak: false,
@@ -236,13 +238,14 @@ export function createTournament({
 
 /**
  * Creates a new multi-table tournament table
- * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tableName: string, startTime: string|null, level?: number }} options
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|null, level?: number }} options
  * @returns {Game}
  */
 export function createMttTable({
   seats: numberOfSeats = Tournament.DEFAULT_SEATS,
   buyIn = Tournament.DEFAULT_BUYIN.amount,
   tournamentId,
+  tournamentName = "Multi-Table Tournament",
   tableName,
   startTime,
   level = 1,
@@ -266,6 +269,7 @@ export function createMttTable({
     active: true,
     kind: "mtt",
     competitionId: tournamentId,
+    name: tournamentName,
     level,
     levelTicks: 0,
     onBreak: false,

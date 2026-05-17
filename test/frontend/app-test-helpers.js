@@ -52,6 +52,7 @@ export function createMockFetch(options = {}) {
 export function createMockTournamentView(overrides = {}) {
   const base = {
     id: "mtt123",
+    name: "Friday Deepstack",
     status: "registration",
     ownerId: "u1",
     buyIn: 500,
@@ -76,6 +77,7 @@ export function createMockTournamentView(overrides = {}) {
       canRegister: false,
       canUnregister: true,
       canStart: false,
+      canRename: true,
     },
   };
 

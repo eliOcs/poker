@@ -60,6 +60,10 @@ export function initAppEventHandlers(app) {
     const detail = /** @type {CustomEvent<{ action: string }>} */ (e).detail;
     app.performMttAction(detail.action);
   };
+  app._handleMttRename = (e) => {
+    const detail = /** @type {CustomEvent<{ name: string }>} */ (e).detail;
+    app.renameMttTournament(detail.name);
+  };
   app._handleWindowError = (event) => {
     app.reportFrontendError(getWindowErrorDetails(event));
   };
@@ -86,6 +90,7 @@ export function connectAppEventHandlers(app) {
   app.addEventListener("open-settings", app._handleOpenSettings);
   app.addEventListener("open-sign-in", app._handleOpenSignIn);
   app.addEventListener("mtt-action", app._handleMttAction);
+  app.addEventListener("mtt-rename", app._handleMttRename);
 }
 
 /**
@@ -109,4 +114,5 @@ export function disconnectAppEventHandlers(app) {
   app.removeEventListener("open-settings", app._handleOpenSettings);
   app.removeEventListener("open-sign-in", app._handleOpenSignIn);
   app.removeEventListener("mtt-action", app._handleMttAction);
+  app.removeEventListener("mtt-rename", app._handleMttRename);
 }

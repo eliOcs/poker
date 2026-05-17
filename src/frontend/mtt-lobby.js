@@ -17,6 +17,7 @@ import {
   renderStandingsTable,
 } from "./mtt-lobby-render.js";
 import "./button.js";
+import "./edit-label.js";
 
 class MttLobby extends LitElement {
   static get styles() {
@@ -89,6 +90,16 @@ class MttLobby extends LitElement {
     this.dispatchEvent(
       new CustomEvent("mtt-action", {
         detail: { action },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  _dispatchRename(event) {
+    this.dispatchEvent(
+      new CustomEvent("mtt-rename", {
+        detail: { name: event.detail.value },
         bubbles: true,
         composed: true,
       }),
@@ -178,6 +189,18 @@ class MttLobby extends LitElement {
     };
   }
 
+  _renderTitle(tournament) {
+    const tournamentName =
+      tournament?.name || `Tournament #${tournament?.id || this.tournamentId}`;
+    if (!tournament?.actions?.canRename) return tournamentName;
+
+    return html`<phg-edit-label
+      .value=${tournamentName}
+      placeholder="Tournament name"
+      @value-changed=${this._dispatchRename}
+    ></phg-edit-label>`;
+  }
+
   render() {
     const tournament = this.tournament;
     const currentTable = this._getCurrentTable();
@@ -241,8 +264,9 @@ class MttLobby extends LitElement {
                     <div class="eyebrow">Multi-Table Tournament</div>
                     <div class="title-row">
                       <div>
-                        <h1>Tournament #${tournament.id}</h1>
+                        <h1>${this._renderTitle(tournament)}</h1>
                         <div class="meta">
+                          <span>#${tournament.id}</span>
                           <span>Owner: ${tournament.ownerId}</span>
                           <span
                             >Created

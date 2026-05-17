@@ -26,6 +26,7 @@ export function applyTournamentStateToTable(tournament, game) {
   game.tournament.pendingBreak = tournament.pendingBreak;
   game.tournament.breakTicks = tournament.breakTicks;
   game.tournament.startTime = tournament.startedAt;
+  game.tournament.name = tournament.name;
   game.tournament.buyIn = tournament.buyIn;
   game.tournament.initialStack = tournament.initialStack;
   game.tournament.competitionId = tournament.id;

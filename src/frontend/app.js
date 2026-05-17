@@ -426,6 +426,10 @@ class App extends LitElement {
     return mttRouting.performMttAction(this, action);
   }
 
+  async renameMttTournament(name) {
+    return mttRouting.renameMttTournament(this, name);
+  }
+
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
       const { liveRoute, historyRoute, playerProfileId } = parseAppPath(

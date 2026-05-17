@@ -128,3 +128,32 @@ export async function performMttAction(app, action) {
     app._mttActionPending = false;
   }
 }
+
+/**
+ * Renames the current MTT.
+ * @param {any} app
+ * @param {string} name
+ */
+export async function renameMttTournament(app, name) {
+  if (!app._mttTournamentId || app._mttActionPending) return;
+
+  app._mttActionPending = true;
+  try {
+    const res = await fetch(`/api/mtt/${app._mttTournamentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(data?.error || "Failed to rename tournament");
+    }
+    app._mttView = data;
+    app._mttError = "";
+  } catch (err) {
+    const error = /** @type {Error} */ (err);
+    app.toast = { message: error.message, variant: "error" };
+  } finally {
+    app._mttActionPending = false;
+  }
+}

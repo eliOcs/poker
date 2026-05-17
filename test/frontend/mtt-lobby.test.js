@@ -4,6 +4,7 @@ import "../../src/frontend/mtt-lobby.js";
 function createTournamentView() {
   return {
     id: "mtt123",
+    name: "Friday Deepstack",
     status: "running",
     ownerId: "owner",
     buyIn: 500,
@@ -57,6 +58,7 @@ function createTournamentView() {
       canRegister: false,
       canUnregister: false,
       canStart: false,
+      canRename: true,
     },
   };
 }
@@ -70,7 +72,10 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Tournament #mtt123");
+    expect(element.shadowRoot.querySelector("phg-edit-label").value).to.equal(
+      "Friday Deepstack",
+    );
+    expect(element.shadowRoot.textContent).to.include("#mtt123");
     expect(element.shadowRoot.textContent).to.include("Open My Table");
     expect(element.shadowRoot.textContent).to.include("Table 1");
     expect(element.shadowRoot.textContent).to.include("Standings");
@@ -114,6 +119,7 @@ describe("phg-mtt-lobby", () => {
       canRegister: false,
       canUnregister: true,
       canStart: true,
+      canRename: true,
     };
 
     const element = await fixture(html`
@@ -129,5 +135,27 @@ describe("phg-mtt-lobby", () => {
 
     const event = await oneEvent(element, "mtt-action");
     expect(event.detail).to.deep.equal({ action: "unregister" });
+  });
+
+  it("dispatches rename requests from the editable title", async () => {
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${createTournamentView()}
+      ></phg-mtt-lobby>
+    `);
+
+    setTimeout(() => {
+      element.shadowRoot.querySelector("phg-edit-label").dispatchEvent(
+        new CustomEvent("value-changed", {
+          detail: { value: "Saturday Major" },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    });
+
+    const event = await oneEvent(element, "mtt-rename");
+    expect(event.detail).to.deep.equal({ name: "Saturday Major" });
   });
 });

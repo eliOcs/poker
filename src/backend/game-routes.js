@@ -47,6 +47,19 @@ export function findActiveGamePath(games, userId) {
 }
 
 /**
+ * @param {unknown} data
+ * @returns {string|undefined}
+ */
+function parseTournamentName(data) {
+  if (!data || typeof data !== "object" || !("name" in data)) {
+    return undefined;
+  }
+
+  const { name } = /** @type {{ name?: unknown }} */ (data);
+  return typeof name === "string" ? name : undefined;
+}
+
+/**
  * Creates game-related routes (user, cash, sitngo, mtt, player profiles)
  * @param {Record<string, UserType>} users
  * @param {Map<Id, Game>} games
@@ -189,6 +202,34 @@ export function createGameRoutes(users, games, broadcast, services) {
             },
           });
           respondWithJson(res, { id, type: "mtt" });
+        } catch (err) {
+          rethrowTournamentError(err);
+        }
+      },
+    },
+    {
+      method: "PUT",
+      path: /^\/api\/mtt\/([a-z0-9]+)$/,
+      handler: async ({ req, res, match, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        const tournamentId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        const data = await parseBody(req);
+        const name = parseTournamentName(data);
+        try {
+          const tournament = services.mttManager?.renameTournament(
+            tournamentId,
+            name,
+            user.id,
+          );
+          if (!tournament) {
+            throw new Error("tournament service unavailable");
+          }
+          Object.assign(log.context, {
+            tournament: { id: tournamentId, name: tournament.name },
+          });
+          respondWithJson(res, tournament);
         } catch (err) {
           rethrowTournamentError(err);
         }

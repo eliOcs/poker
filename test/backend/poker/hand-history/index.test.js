@@ -113,6 +113,7 @@ describe("hand-history", function () {
       const players = [createPlayer(), createPlayer()];
       const game = Game.createMttTable({
         tournamentId: "mtt123",
+        tournamentName: "Friday Deepstack",
         tableName: "Table 1",
         startTime: "2026-03-14T12:00:00.000Z",
         level: 2,
@@ -126,6 +127,7 @@ describe("hand-history", function () {
 
       assert.equal(hand.table_name, "Table 1");
       assert.equal(hand.tournament_info?.tournament_number, "mtt123");
+      assert.equal(hand.tournament_info?.name, "Friday Deepstack");
       assert.equal(hand.tournament_info?.type, "MTT");
     });
   });

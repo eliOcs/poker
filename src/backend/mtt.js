@@ -5,6 +5,10 @@ import * as Tournament from "../shared/tournament.js";
 import { TIMER_INTERVAL } from "./poker/game-constants.js";
 import { tickClock } from "./poker/tournament-clock.js";
 import {
+  DEFAULT_TOURNAMENT_NAME,
+  normalizeTournamentName,
+} from "./mtt-metadata.js";
+import {
   applyTournamentStateToTable,
   isTableWaiting,
   countActiveEntrants,
@@ -15,13 +19,12 @@ import {
   resetClosedTable,
   canStartPendingBreak,
 } from "./mtt-table-state.js";
+import { finishTournament } from "./mtt-finish.js";
 import { buildTournamentView } from "./mtt-view.js";
 import {
   seatEntrantAtTable,
   getActiveSeatIndexes,
-  getEntrantSeatContext,
   getContendingEntrants,
-  compareForcedFinishEntrants,
   movePlayer,
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-collapse.js";
@@ -56,6 +59,7 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} ManagedTournament
  * @property {string} id
+ * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
  * @property {number} buyIn
@@ -97,6 +101,7 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} ManagedTournamentView
  * @property {string} id
+ * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
  * @property {number} buyIn
@@ -112,77 +117,8 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {ManagedTournamentViewEntrant[]} standings
  * @property {ManagedTournamentViewTable[]} tables
  * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId: string|null, seatIndex: number|null, finishPosition: number|null }} currentPlayer
- * @property {{ canRegister: boolean, canUnregister: boolean, canStart: boolean }} actions
+ * @property {{ canRegister: boolean, canUnregister: boolean, canStart: boolean, canRename: boolean }} actions
  */
-
-/**
- * @param {ManagedTournament} tournament
- * @param {Map<string, Game>} games
- * @param {(game: Game) => void} ensureTableTick
- * @param {() => string} now
- * @param {TournamentEntrant | null} [winnerEntrant]
- */
-function finishTournament(
-  tournament,
-  games,
-  ensureTableTick,
-  now,
-  winnerEntrant = null,
-) {
-  const activeEntrants = [...tournament.entrants.values()].filter(
-    (entrant) => entrant.status === "seated",
-  );
-  const resolvedWinner = winnerEntrant ?? activeEntrants[0];
-  if (!resolvedWinner) return;
-
-  const forcedEliminations = activeEntrants
-    .filter((entrant) => entrant.playerId !== resolvedWinner.playerId)
-    .sort((a, b) => compareForcedFinishEntrants(tournament, a, b));
-
-  forcedEliminations.forEach((entrant, index) => {
-    const finishPosition = index + 2;
-    const seatContext = getEntrantSeatContext(games, entrant);
-    if (seatContext) {
-      seatContext.seat.bustedPosition = finishPosition;
-      seatContext.seat.stack = 0;
-      seatContext.seat.bet = 0;
-      seatContext.seat.sittingOut = true;
-    }
-    entrant.status = "eliminated";
-    entrant.stack = 0;
-    entrant.tableId = null;
-    entrant.seatIndex = null;
-    entrant.finishPosition = finishPosition;
-    entrant.eliminatedAt = now();
-  });
-
-  const winnerSeatContext = getEntrantSeatContext(games, resolvedWinner);
-  if (!winnerSeatContext) return;
-
-  const winnerEndedAt = now();
-  resolvedWinner.status = "winner";
-  resolvedWinner.finishPosition = 1;
-  resolvedWinner.tableId = winnerSeatContext.game.id;
-  tournament.status = "finished";
-  tournament.endedAt = winnerEndedAt;
-
-  for (const table of tournament.tables) {
-    table.closedAt = tournament.endedAt;
-    const game = games.get(table.tableId);
-    if (!game) continue;
-    clearTableWinner(game);
-    applyTournamentStateToTable(tournament, game);
-    if (
-      game.tournament &&
-      resolvedWinner.tableId === table.tableId &&
-      resolvedWinner.seatIndex !== null
-    ) {
-      game.tournament.winner = resolvedWinner.seatIndex;
-    }
-    game.countdown = null;
-    ensureTableTick(game);
-  }
-}
 
 /**
  * @param {ManagedTournament} tournament
@@ -303,6 +239,7 @@ export function createMttManager({
       seats: tournament.tableSize,
       buyIn: tournament.buyIn,
       tournamentId: tournament.id,
+      tournamentName: tournament.name,
       tableName,
       startTime: tournament.startedAt,
       level: tournament.level,
@@ -591,6 +528,7 @@ export function createMttManager({
       /** @type {ManagedTournament} */
       const tournament = {
         id: Id.generate(),
+        name: DEFAULT_TOURNAMENT_NAME,
         status: "registration",
         ownerId: owner.id,
         buyIn,
@@ -625,6 +563,29 @@ export function createMttManager({
     },
 
     registerPlayer,
+
+    /**
+     * @param {string} tournamentId
+     * @param {unknown} name
+     * @param {string} actorId
+     * @returns {ManagedTournamentView}
+     */
+    renameTournament(tournamentId, name, actorId) {
+      const tournament = requireTournament(tournamentId);
+      if (tournament.ownerId !== actorId) {
+        throw new Error("only the tournament owner can rename");
+      }
+
+      tournament.name = normalizeTournamentName(name);
+      for (const table of tournament.tables) {
+        const game = games.get(table.tableId);
+        if (game?.tournament) {
+          game.tournament.name = tournament.name;
+        }
+      }
+      broadcastTournament(tournament);
+      return buildTournamentView(tournament, games, actorId);
+    },
 
     /**
      * @param {string} tournamentId

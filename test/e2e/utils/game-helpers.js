@@ -27,6 +27,20 @@ async function configureGameType(page, type, stakesIndex, buyInIndex) {
 }
 
 /**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} tournamentName
+ */
+export async function renameTournamentInLobby(page, tournamentName) {
+  const editLabel = page.locator("phg-edit-label").first();
+  await editLabel
+    .getByRole("button", { name: /Multi-Table Tournament/ })
+    .click();
+  await editLabel.getByLabel("Label").fill(tournamentName);
+  await editLabel.getByRole("button", { name: "Save label" }).click();
+  await page.getByText(tournamentName).waitFor();
+}
+
+/**
  * @param {'cash' | 'sitngo' | 'mtt'} type
  * @returns {RegExp}
  */
