@@ -1,4 +1,4 @@
-import { fixture, expect, html } from "@open-wc/testing";
+import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import {
   MockWebSocket,
   createMockGameState,
@@ -63,10 +63,58 @@ describe("phg-seat", () => {
     expect(foundOccupied).to.be.true;
   });
 
+  it("opens settings modal when current player seat is clicked", async () => {
+    element.game = createMockGameWithPlayers();
+    await element.updateComplete;
+
+    const seat = element.shadowRoot.querySelector("phg-seat.current-player");
+    await seat.updateComplete;
+    seat.click();
+    await element.updateComplete;
+
+    const input = element.shadowRoot.querySelector("#name-input");
+    expect(input).to.exist;
+  });
+
+  it("opens settings from keyboard on current player seat", async () => {
+    element.game = createMockGameWithPlayers();
+    await element.updateComplete;
+
+    const seat = element.shadowRoot.querySelector("phg-seat.current-player");
+    await seat.updateComplete;
+    const eventPromise = oneEvent(seat, "seat-settings");
+
+    seat.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+
+    const event = await eventPromise;
+    expect(event.type).to.equal("seat-settings");
+  });
+
+  it("displays 'Seat N' fallback for opponents with no name", async () => {
+    element.game = createMockGameWithPlayers();
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    let foundOpponent = false;
+    for (const seat of seats) {
+      await seat.updateComplete;
+      if (
+        !seat.classList.contains("empty") &&
+        !seat.classList.contains("current-player")
+      ) {
+        foundOpponent = true;
+        const playerName = seat.shadowRoot.querySelector(".player-name");
+        expect(playerName.textContent).to.include("Seat 2");
+        break;
+      }
+    }
+    expect(foundOpponent).to.be.true;
+  });
+
   it("displays player name when set", async () => {
     element.game = createMockGameState({
       seats: [
-        mockOccupiedSeatWithName,
+        { ...mockOccupiedSeatWithName, isCurrentPlayer: false },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
         { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },

@@ -76,6 +76,14 @@ export const seatStyles = css`
     border-color: var(--color-highlight);
   }
 
+  :host(.current-player) {
+    cursor: pointer;
+  }
+
+  :host(:focus) {
+    outline: none;
+  }
+
   :host(.winner)::before {
     border-color: var(--color-primary);
     box-shadow:

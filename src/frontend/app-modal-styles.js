@@ -6,7 +6,7 @@ export const appModalStyles = [
   css`
     .settings-content,
     .sign-in-content {
-      --modal-slider-active-color: var(--color-primary);
+      --modal-slider-active-color: var(--color-secondary);
       --sign-in-benefit-gap: var(--space-sm);
       --sign-in-benefit-title-gap: 10px;
       --sign-in-benefit-title-margin: 0;
@@ -30,10 +30,12 @@ export const appModalStyles = [
       color: var(--color-fg-medium);
     }
 
+    .settings-content input,
     .sign-in-content input {
       outline: none;
     }
 
+    .settings-content input:focus,
     .sign-in-content input:focus {
       border-color: var(--color-secondary);
       box-shadow: 0 0 0 1px var(--color-secondary);

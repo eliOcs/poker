@@ -447,6 +447,9 @@ class Game extends LitElement {
                       ? this.game.hand?.clockRemaining
                       : null}
                     @seat-action=${this.handleSeatAction}
+                    @seat-settings=${() => {
+                      gameModalActions.openSettings.call(this);
+                    }}
                   ></phg-seat>`,
             )}
           </div>

@@ -49,10 +49,33 @@ class Seat extends LitElement {
     this._emoteTimer = null;
     this._activeChat = null;
     this._chatTimer = null;
+    this._handleSeatClick = () => {
+      if (!this.seat?.isCurrentPlayer) return;
+      this.dispatchEvent(
+        new CustomEvent("seat-settings", {
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    };
+    this._handleSeatKeydown = (event) => {
+      if (!this.seat?.isCurrentPlayer) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      this._handleSeatClick();
+    };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener("click", this._handleSeatClick);
+    this.addEventListener("keydown", this._handleSeatKeydown);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.removeEventListener("click", this._handleSeatClick);
+    this.removeEventListener("keydown", this._handleSeatKeydown);
     clearTimeout(this._emoteTimer);
     clearTimeout(this._chatTimer);
   }
@@ -78,6 +101,15 @@ class Seat extends LitElement {
         cls,
         cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
+    }
+    if (!isEmpty && this.seat?.isCurrentPlayer) {
+      this.setAttribute("role", "button");
+      this.setAttribute("tabindex", "0");
+      this.setAttribute("aria-label", "Open settings");
+    } else {
+      this.removeAttribute("role");
+      this.removeAttribute("tabindex");
+      this.removeAttribute("aria-label");
     }
   }
 
