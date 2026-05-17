@@ -1,6 +1,7 @@
 /* eslint-disable playwright/no-conditional-in-test */
 import { test, expect } from "./utils/fixtures.js";
 import { createGame, renameTournamentInLobby } from "./utils/game-helpers.js";
+import { waitForLatestEmail } from "./utils/email.js";
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
 test.setTimeout(15 * 60 * 1000);
@@ -69,6 +70,25 @@ async function initializeGuestSessions(players) {
     await player.page.goto("/");
     await player.page.locator("phg-home").waitFor();
   });
+}
+
+/**
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ * @param {string} email
+ */
+async function signUpTournamentCreator(player, email) {
+  await player.page.goto("/mtt");
+  await player.page.locator("phg-tournaments").waitFor();
+  await player.page.locator("#profile-sign-up-name").fill("Stress Creator");
+  await player.page.locator("#profile-sign-in-email").fill(email);
+
+  const [signInEmail] = await Promise.all([
+    waitForLatestEmail(email),
+    player.page.getByRole("button", { name: "Send sign-up link" }).click(),
+  ]);
+
+  await player.completeSignInFromEmail(signInEmail.html);
+  await player.page.locator("phg-tournaments").waitFor();
 }
 
 /**
@@ -513,6 +533,10 @@ test.describe("Tournament E2E", () => {
       player10,
       player11,
     ];
+
+    const creatorEmail = `stress-creator-${Date.now()}@example.com`;
+    await signUpTournamentCreator(player1, creatorEmail);
+    console.log(`Tournament creator signed up as ${creatorEmail}`);
 
     const tournamentUrl = await createGame(player1, {
       type: "mtt",

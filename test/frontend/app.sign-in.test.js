@@ -399,6 +399,48 @@ describe("phg-app sign in", () => {
     );
   });
 
+  it("opens sign-up for guests on the tournament route and again on create", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "u1",
+            name: "Guest",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      return { ok: false };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    await waitUntil(() => element.user?.name === "Guest", {
+      timeout: 2000,
+    });
+
+    element.path = "/mtt";
+    await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
+    expect(
+      element.shadowRoot?.querySelector("phg-app-sign-in-modal")?.mode,
+    ).to.equal("sign-up");
+
+    element.closeProfileSignUp();
+    await element.updateComplete;
+    expect(element.shadowRoot?.querySelector("phg-app-sign-in-modal")).to.not
+      .exist;
+
+    element.shadowRoot
+      ?.querySelector("phg-tournaments")
+      ?.shadowRoot?.querySelector("phg-button")
+      ?.click();
+    await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
+
+    expect(
+      element.shadowRoot?.querySelector("phg-app-sign-in-modal")?.mode,
+    ).to.equal("sign-up");
+  });
+
   it("switches between sign-in and sign-up modals from the footer links", async () => {
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {

@@ -121,6 +121,7 @@ class App extends LitElement {
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
     this._showProfileSignUp = false;
+    this._tournamentSignUpPrompted = false;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
     this._signInCallbackHandled = false;
@@ -435,6 +436,19 @@ class App extends LitElement {
     }
   }
 
+  _maybePromptTournamentSignUp() {
+    if (this.path !== "/mtt") {
+      this._tournamentSignUpPrompted = false;
+      return;
+    }
+    if (!this.user || this.user.email || this._tournamentSignUpPrompted) {
+      return;
+    }
+
+    this._tournamentSignUpPrompted = true;
+    this._showProfileSignUp = true;
+  }
+
   updated() {
     if (this._maybeRedirectHomeRoute()) {
       return;
@@ -443,12 +457,13 @@ class App extends LitElement {
     this._redirectToLatestHandIfNeeded();
     this._handleTaskErrors();
     this._maybeRedirectMttRoute();
+    this._maybePromptTournamentSignUp();
   }
 
   _resolveShellContent(currentPath, liveRoute, playerProfileId) {
     if (playerProfileId) return renderPlayerProfileView(this);
     if (liveRoute?.kind === "mtt") return renderMttLobbyView(this);
-    if (currentPath === "/mtt") return renderTournamentsView();
+    if (currentPath === "/mtt") return renderTournamentsView(this);
     if (currentPath === "/release-notes") return renderReleaseNotesView();
     return renderHomeView();
   }

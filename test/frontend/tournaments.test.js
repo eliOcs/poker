@@ -25,6 +25,8 @@ describe("phg-tournaments", () => {
     };
 
     const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
+    element.user = { email: "player@example.com" };
+    await element.updateComplete;
 
     setTimeout(() => {
       element.shadowRoot.querySelector("phg-button").click();
@@ -32,6 +34,30 @@ describe("phg-tournaments", () => {
 
     const event = await oneEvent(element, "navigate");
     expect(event.detail).to.deep.equal({ path: "/mtt/mtt123" });
+
+    globalThis.fetch = originalFetch;
+  });
+
+  it("opens sign-up instead of creating when the user has no email", async () => {
+    const originalFetch = globalThis.fetch;
+    let fetchCalled = false;
+    globalThis.fetch = async () => {
+      fetchCalled = true;
+      return { ok: false };
+    };
+
+    const element = await fixture(
+      html`<phg-tournaments .user=${{ name: "Guest" }}></phg-tournaments>`,
+    );
+
+    setTimeout(() => {
+      element.shadowRoot.querySelector("phg-button").click();
+    });
+
+    const event = await oneEvent(element, "open-sign-up");
+    expect(event).to.exist;
+    expect(fetchCalled).to.equal(false);
+    expect(element.creating).to.equal(false);
 
     globalThis.fetch = originalFetch;
   });

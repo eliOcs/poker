@@ -26,9 +26,8 @@ test.describe("Poker Game Smoke Test", () => {
 
     const player1Email = "player1@example.com";
     const player1StackBeforeSignIn = await player1.getStack();
-    const emailWaitStartedAt = Date.now();
     const [signInEmail] = await Promise.all([
-      waitForLatestEmail(player1Email, emailWaitStartedAt),
+      waitForLatestEmail(player1Email),
       player1.requestSignIn(player1Email),
     ]);
     await player1.completeSignInFromEmail(signInEmail.html);

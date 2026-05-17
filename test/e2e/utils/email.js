@@ -20,13 +20,13 @@ export async function ensureEmailSinkDir() {
 
 /**
  * @param {string} toEmail
- * @param {number} startedAt
+ * @param {number} [startedAt]
  * @param {number} [timeoutMs]
  * @returns {Promise<{ toEmail: string, appOrigin: string, signInUrl: string, expiresInMinutes: number, subject: string, html: string, text: string }>}
  */
 export async function waitForLatestEmail(
   toEmail,
-  startedAt,
+  startedAt = Date.now(),
   timeoutMs = 10_000,
 ) {
   const emailDir = getEmailDir();

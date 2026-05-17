@@ -82,9 +82,10 @@ export function renderHomeView() {
 }
 
 /**
+ * @param {any} app
  */
-export function renderTournamentsView() {
-  return html`<phg-tournaments></phg-tournaments>`;
+export function renderTournamentsView(app) {
+  return html`<phg-tournaments .user=${app.user}></phg-tournaments>`;
 }
 
 /**

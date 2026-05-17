@@ -20,6 +20,7 @@ class Tournaments extends LitElement {
   static get properties() {
     return {
       creating: { type: Boolean },
+      user: { type: Object },
       selectedBuyIn: { type: Object },
       selectedTableSize: { type: Number },
     };
@@ -28,8 +29,22 @@ class Tournaments extends LitElement {
   constructor() {
     super();
     this.creating = false;
+    this.user = null;
     this.selectedBuyIn = DEFAULT_BUYIN;
     this.selectedTableSize = DEFAULT_TABLE_SIZE;
+  }
+
+  isSignedUp() {
+    return Boolean(this.user?.email);
+  }
+
+  requestSignUp() {
+    this.dispatchEvent(
+      new CustomEvent("open-sign-up", {
+        bubbles: true,
+        composed: true,
+      }),
+    );
   }
 
   handleBuyInChange(e) {
@@ -44,6 +59,11 @@ class Tournaments extends LitElement {
   }
 
   async createTournament() {
+    if (!this.isSignedUp()) {
+      this.requestSignUp();
+      return;
+    }
+
     this.creating = true;
     try {
       const { id } = await postCreate("/mtt", {
@@ -81,7 +101,7 @@ class Tournaments extends LitElement {
             variant="primary"
             size="large"
             ?disabled=${this.creating}
-            @click=${this.createTournament}
+            @click=${() => this.createTournament()}
           >
             ${this.creating ? "Creating..." : "Create Tournament"}
           </phg-button>
