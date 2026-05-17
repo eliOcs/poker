@@ -493,6 +493,9 @@ export function createMttManager({
     if (tournament.status !== "registration") {
       throw new Error("registration is closed");
     }
+    if (!user.email) {
+      throw new Error("sign up required to register");
+    }
     if (tournament.entrants.has(user.id)) {
       throw new Error("player already registered");
     }

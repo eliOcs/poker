@@ -75,11 +75,10 @@ async function initializeGuestSessions(players) {
 /**
  * @param {import('./utils/poker-player.js').PokerPlayer} player
  * @param {string} email
+ * @param {string} name
  */
-async function signUpTournamentCreator(player, email) {
-  await player.page.goto("/mtt");
-  await player.page.locator("phg-tournaments").waitFor();
-  await player.page.locator("#profile-sign-up-name").fill("Stress Creator");
+async function completeSignUp(player, email, name) {
+  await player.page.locator("#profile-sign-up-name").fill(name);
   await player.page.locator("#profile-sign-in-email").fill(email);
 
   const [signInEmail] = await Promise.all([
@@ -88,7 +87,27 @@ async function signUpTournamentCreator(player, email) {
   ]);
 
   await player.completeSignInFromEmail(signInEmail.html);
+}
+
+/**
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ * @param {string} email
+ */
+async function signUpTournamentCreator(player, email) {
+  await player.page.goto("/mtt");
   await player.page.locator("phg-tournaments").waitFor();
+  await completeSignUp(player, email, "Stress Creator");
+  await player.page.locator("phg-tournaments").waitFor();
+}
+
+/**
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ * @param {string} email
+ */
+async function signUpTournamentRegistrant(player, email) {
+  await player.mttLobby.getByRole("button", { name: "Register" }).click();
+  await completeSignUp(player, email, player.name);
+  await player.mttLobby.waitFor();
 }
 
 /**
@@ -556,6 +575,14 @@ test.describe("Tournament E2E", () => {
       await player.joinTournamentLobbyByUrl(tournamentUrl);
     });
     console.log("All players reached the MTT lobby");
+
+    await runSequentially(joiningPlayers, async (player, index) => {
+      await signUpTournamentRegistrant(
+        player,
+        `stress-player-${index + 2}-${Date.now()}@example.com`,
+      );
+    });
+    console.log("All joining players signed up");
 
     await runSequentially(players.slice(1), async (player) => {
       await player.registerForTournament();

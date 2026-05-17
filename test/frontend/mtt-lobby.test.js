@@ -158,6 +158,70 @@ describe("phg-mtt-lobby", () => {
     expect(event.detail).to.deep.equal({ action: "unregister" });
   });
 
+  it("opens sign-up instead of registering when the user has no email", async () => {
+    const view = createTournamentView();
+    view.status = "registration";
+    view.currentPlayer = {
+      isOwner: false,
+      status: "not_registered",
+      tableId: null,
+      seatIndex: null,
+    };
+    view.actions = {
+      canRegister: true,
+      canUnregister: false,
+      canStart: false,
+      canRename: false,
+    };
+
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${view}
+        .user=${{ name: "Guest" }}
+      ></phg-mtt-lobby>
+    `);
+
+    setTimeout(() => {
+      element.shadowRoot.querySelector(".action-row phg-button").click();
+    });
+
+    const event = await oneEvent(element, "open-sign-up");
+    expect(event).to.exist;
+  });
+
+  it("allows signed-up users to register from the lobby controls", async () => {
+    const view = createTournamentView();
+    view.status = "registration";
+    view.currentPlayer = {
+      isOwner: false,
+      status: "not_registered",
+      tableId: null,
+      seatIndex: null,
+    };
+    view.actions = {
+      canRegister: true,
+      canUnregister: false,
+      canStart: false,
+      canRename: false,
+    };
+
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${view}
+        .user=${{ email: "player@example.com" }}
+      ></phg-mtt-lobby>
+    `);
+
+    setTimeout(() => {
+      element.shadowRoot.querySelector(".action-row phg-button").click();
+    });
+
+    const event = await oneEvent(element, "mtt-action");
+    expect(event.detail).to.deep.equal({ action: "register" });
+  });
+
   it("dispatches rename requests from the editable title", async () => {
     const element = await fixture(html`
       <phg-mtt-lobby

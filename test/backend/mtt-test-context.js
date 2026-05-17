@@ -12,6 +12,7 @@ export function createUser(id, name = id) {
   return {
     id,
     name,
+    email: `${id}@example.com`,
     settings: { volume: 0.75, vibration: true },
   };
 }

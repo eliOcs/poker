@@ -37,6 +37,21 @@ describe("mtt-manager", () => {
     assert.equal(view.actions.canStart, false);
   });
 
+  it("requires sign up before tournament registration", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+
+    const guest = createUser("guest", "Guest");
+    delete guest.email;
+
+    assert.throws(() => {
+      ctx.manager.registerPlayer(tournamentId, guest);
+    }, /sign up required to register/);
+  });
+
   it("renames tournaments and propagates the name to table history metadata", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner", "Owner"),

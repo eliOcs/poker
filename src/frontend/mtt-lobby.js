@@ -96,6 +96,11 @@ class MttLobby extends LitElement {
   }
 
   _dispatchMttAction(action) {
+    if (action === "register" && !this.user?.email) {
+      this.openSignUp();
+      return;
+    }
+
     this.dispatchEvent(
       new CustomEvent("mtt-action", {
         detail: { action },
