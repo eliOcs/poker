@@ -63,6 +63,12 @@ function getTableName(tournament, tableId) {
   );
 }
 
+function formatEntrantName(entrant) {
+  return entrant.name && entrant.name !== entrant.playerId
+    ? entrant.name
+    : `#${entrant.playerId}`;
+}
+
 /**
  * @param {object} params
  * @param {object} params.tournament
@@ -284,7 +290,7 @@ export function renderEntrantsTable(tournament) {
           ${tournament.entrants.map(
             (entrant) => html`
               <tr>
-                <td><strong>${entrant.name}</strong></td>
+                <td><strong>${formatEntrantName(entrant)}</strong></td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
@@ -327,7 +333,7 @@ export function renderStandingsTable(tournament) {
           ${tournament.standings.map(
             (entrant) => html`
               <tr>
-                <td><strong>${entrant.name}</strong></td>
+                <td><strong>${formatEntrantName(entrant)}</strong></td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>

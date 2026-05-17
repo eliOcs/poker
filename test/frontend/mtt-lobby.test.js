@@ -82,6 +82,27 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Lobby");
   });
 
+  it("prefixes fallback player ids with #", async () => {
+    const view = createTournamentView();
+    view.standings = [
+      {
+        playerId: "mp9hladed7d1",
+        name: "mp9hladed7d1",
+        status: "seated",
+        stack: 1500,
+        tableId: "table1",
+        seatIndex: 0,
+        finishPosition: null,
+      },
+    ];
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("#mp9hladed7d1");
+  });
+
   it("dispatches navigation when opening a table", async () => {
     const element = await fixture(html`
       <phg-mtt-lobby

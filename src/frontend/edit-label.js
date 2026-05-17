@@ -48,12 +48,12 @@ class EditLabel extends LitElement {
           line-height: 1.5;
           text-overflow: ellipsis;
           white-space: nowrap;
-          border-bottom: 2px dotted currentcolor;
+          border-bottom: 2px dotted var(--color-fg-muted);
         }
 
-        .label-button:hover,
-        .label-button:focus-visible {
-          color: var(--color-primary);
+        .view:hover .label-button,
+        .view:focus-within .label-button {
+          border-bottom-color: var(--color-secondary);
         }
 
         .icon-button {
@@ -73,9 +73,14 @@ class EditLabel extends LitElement {
           image-rendering: pixelated;
         }
 
-        .icon-button:hover,
-        .icon-button:focus-visible {
-          color: var(--color-primary);
+        .view:hover .icon-button,
+        .view:focus-within .icon-button {
+          color: var(--color-secondary);
+        }
+
+        .submit:hover,
+        .submit:focus-visible {
+          color: var(--color-success);
         }
 
         .cancel:hover,
