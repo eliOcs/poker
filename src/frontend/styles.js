@@ -236,50 +236,6 @@ export const actionPanelStyles = css`
     width: 100%;
   }
 
-  .slider-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-md);
-  }
-
-  .slider-row input[type="number"] {
-    width: 80px;
-    padding: var(--space-sm);
-    font-family: inherit;
-    font-size: var(--font-sm);
-    text-align: center;
-    border: 2px solid var(--color-bg-dark);
-    background: var(--color-bg-disabled);
-    color: var(--color-fg-white);
-    line-height: 2;
-    appearance: textfield;
-  }
-
-  .slider-row input[type="number"]::-webkit-inner-spin-button,
-  .slider-row input[type="number"]::-webkit-outer-spin-button {
-    appearance: none;
-    margin: 0;
-  }
-
-  .slider-row input[type="range"] {
-    flex: 1;
-    height: var(--space-md);
-    appearance: none;
-    background: var(--color-bg-disabled);
-    border: 2px solid var(--color-bg-dark);
-    min-width: 80px;
-  }
-
-  .slider-row input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    width: var(--space-lg);
-    height: var(--space-lg);
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-dark);
-    cursor: pointer;
-  }
-
   .action-row {
     display: grid;
     grid-auto-columns: 1fr;
