@@ -1,5 +1,8 @@
 import { fixture, expect, html } from "@open-wc/testing";
-import { BLIND_LEVELS } from "../../src/shared/tournament.js";
+import {
+  BLIND_LEVELS,
+  BREAK_AFTER_LEVEL,
+} from "../../src/shared/tournament.js";
 import { createMockTournamentGameState } from "./setup.js";
 import "../../src/frontend/tournament-levels-panel.js";
 
@@ -45,7 +48,7 @@ describe("tournament levels modal", () => {
     expect(panel).to.exist;
     await panel.updateComplete;
     expect(panel.shadowRoot.querySelectorAll("tbody tr").length).to.equal(
-      BLIND_LEVELS.length,
+      BLIND_LEVELS.length + 1,
     );
   });
 
@@ -134,6 +137,23 @@ describe("phg-tournament-levels-panel", () => {
     expect(headers).to.not.include("Ante");
   });
 
+  it("renders the scheduled break after the configured level", async () => {
+    const panel = await fixture(html`
+      <phg-tournament-levels-panel
+        .tournament=${{ level: 3 }}
+      ></phg-tournament-levels-panel>
+    `);
+
+    const rows = [...panel.shadowRoot.querySelectorAll("tbody tr")].map((row) =>
+      [...row.querySelectorAll("td")].map((td) => td.textContent.trim()),
+    );
+    const breakIndex = rows.findIndex((cells) => cells[0] === "Break");
+
+    expect(breakIndex).to.be.greaterThan(0);
+    expect(rows[breakIndex - 1][0]).to.equal(String(BREAK_AFTER_LEVEL));
+    expect(rows[breakIndex]).to.deep.equal(["Break", "-", "5 min"]);
+  });
+
   it("marks past, current, and next levels", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
@@ -146,5 +166,32 @@ describe("phg-tournament-levels-panel", () => {
     expect(rows[1].classList.contains("past")).to.be.true;
     expect(rows[2].classList.contains("current")).to.be.true;
     expect(rows[3].classList.contains("next")).to.be.true;
+  });
+
+  it("marks the break as current while the tournament is on break", async () => {
+    const panel = await fixture(html`
+      <phg-tournament-levels-panel
+        .tournament=${{ level: BREAK_AFTER_LEVEL, onBreak: true }}
+      ></phg-tournament-levels-panel>
+    `);
+
+    const rows = [...panel.shadowRoot.querySelectorAll("tbody tr")];
+    const breakRow = rows.find((row) =>
+      row.querySelector("td").textContent.includes("Break"),
+    );
+    const levelBeforeBreakRow = rows.find(
+      (row) =>
+        row.querySelector("td").textContent.trim() ===
+        String(BREAK_AFTER_LEVEL),
+    );
+    const levelAfterBreakRow = rows.find(
+      (row) =>
+        row.querySelector("td").textContent.trim() ===
+        String(BREAK_AFTER_LEVEL + 1),
+    );
+
+    expect(levelBeforeBreakRow.classList.contains("past")).to.be.true;
+    expect(breakRow.classList.contains("current")).to.be.true;
+    expect(levelAfterBreakRow.classList.contains("next")).to.be.true;
   });
 });
