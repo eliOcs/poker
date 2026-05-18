@@ -2,6 +2,7 @@ import { html, css, LitElement } from "lit";
 import {
   baseStyles,
   dataTableStyles,
+  feedbackStateStyles,
   shellContentStyles,
   shellPageStyles,
   formatCurrency,
@@ -16,6 +17,7 @@ class PlayerProfile extends LitElement {
       shellPageStyles,
       shellContentStyles,
       dataTableStyles,
+      feedbackStateStyles,
       css`
         :host {
           --data-table-min-width: 720px;
@@ -123,13 +125,6 @@ class PlayerProfile extends LitElement {
         .game-type {
           white-space: nowrap;
           color: var(--color-fg-white);
-        }
-
-        .empty {
-          padding: 18px;
-          border: 2px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          color: var(--color-fg-muted);
         }
 
         @media (width < 800px) {

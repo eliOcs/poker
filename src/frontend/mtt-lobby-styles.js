@@ -2,6 +2,7 @@ import { css } from "lit";
 import {
   baseStyles,
   dataTableStyles,
+  feedbackStateStyles,
   shellContentStyles,
   shellPageStyles,
 } from "./styles.js";
@@ -11,6 +12,7 @@ export const mttLobbyStyles = [
   shellPageStyles,
   shellContentStyles,
   dataTableStyles,
+  feedbackStateStyles,
   css`
     :host {
       --data-table-cell-padding: 10px 12px;
@@ -124,9 +126,7 @@ export const mttLobbyStyles = [
     }
 
     .assignment p,
-    .empty,
-    .loading,
-    .error {
+    .loading {
       margin: 0;
       font-size: var(--font-sm);
       line-height: 1.8;
@@ -182,17 +182,11 @@ export const mttLobbyStyles = [
       color: var(--color-fg-white);
     }
 
-    .empty,
-    .loading,
-    .error {
+    .loading {
       padding: 18px;
       border: 2px solid var(--color-bg-dark);
       background: var(--color-bg-medium);
       color: var(--color-fg-muted);
-    }
-
-    .error {
-      color: var(--color-error);
     }
 
     @media (width < 900px) {
