@@ -11,6 +11,29 @@ export const modalFormStyles = css`
     background: var(--color-bg-medium);
     color: var(--color-fg-white);
     box-sizing: border-box;
+    outline: none;
+  }
+
+  .settings-content input:focus,
+  .sign-in-content input:focus {
+    border-color: var(--modal-input-focus-color, var(--color-secondary));
+    box-shadow: var(
+      --modal-input-focus-shadow,
+      0 0 0 1px var(--modal-input-focus-color, var(--color-secondary))
+    );
+  }
+
+  .sign-in-content input[aria-invalid="true"] {
+    border-color: var(--color-error);
+    box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
+  }
+
+  .sign-in-content input[aria-invalid="true"]:focus {
+    border-color: var(--color-error);
+    box-shadow: var(
+      --modal-input-error-focus-shadow,
+      var(--modal-input-error-shadow, 0 0 0 1px var(--color-error))
+    );
   }
 
   .settings-content .buttons,

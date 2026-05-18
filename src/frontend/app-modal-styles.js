@@ -25,21 +25,5 @@ export const appModalStyles = [
       line-height: 1.8;
       color: var(--color-fg-medium);
     }
-
-    .settings-content input,
-    .sign-in-content input {
-      outline: none;
-    }
-
-    .settings-content input:focus,
-    .sign-in-content input:focus {
-      border-color: var(--color-secondary);
-      box-shadow: 0 0 0 1px var(--color-secondary);
-    }
-
-    .sign-in-content input[aria-invalid="true"] {
-      border-color: var(--color-error);
-      box-shadow: 0 0 0 1px var(--color-error);
-    }
   `,
 ];

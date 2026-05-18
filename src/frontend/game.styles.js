@@ -5,6 +5,9 @@ export const gameStyles = [
   modalFormStyles,
   css`
     :host {
+      --modal-input-error-focus-shadow: 0 0 0 2px rgb(204 51 51 / 22%);
+      --modal-input-error-shadow: 0 0 0 2px rgb(204 51 51 / 18%);
+      --modal-input-focus-shadow: 0 0 0 2px rgb(136 68 170 / 20%);
       --modal-slider-active-color: var(--color-secondary);
 
       height: 100%;
@@ -139,22 +142,6 @@ export const gameStyles = [
     .settings-content input,
     .sign-in-content input {
       margin-bottom: var(--space-lg);
-      outline: none;
-    }
-
-    .sign-in-content input:focus {
-      border-color: var(--color-secondary);
-      box-shadow: 0 0 0 2px rgb(136 68 170 / 20%);
-    }
-
-    .sign-in-content input[aria-invalid="true"] {
-      border-color: var(--color-error);
-      box-shadow: 0 0 0 2px rgb(204 51 51 / 18%);
-    }
-
-    .sign-in-content input[aria-invalid="true"]:focus {
-      border-color: var(--color-error);
-      box-shadow: 0 0 0 2px rgb(204 51 51 / 22%);
     }
 
     .sign-in-intro {
