@@ -15,6 +15,7 @@ import "./action-panel.js";
 import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
+import "./tournament-levels-panel.js";
 import {
   snapshotBetPositions,
   animateBetCollection,
@@ -22,6 +23,7 @@ import {
 import { renderDrawer } from "./drawer.js";
 import {
   renderRankingModal,
+  renderTournamentLevelsModal,
   renderSettingsModal,
   renderSignInModal,
   renderSignUpModal,
@@ -55,6 +57,7 @@ class Game extends LitElement {
       showSignIn: { type: Boolean },
       showSignUp: { type: Boolean },
       showRanking: { type: Boolean },
+      showTournamentLevels: { type: Boolean },
       showEmotePicker: { type: Boolean },
       showChat: { type: Boolean },
       volume: { type: Number },
@@ -83,6 +86,7 @@ class Game extends LitElement {
     this.showSignIn = false;
     this.showSignUp = false;
     this.showRanking = false;
+    this.showTournamentLevels = false;
     this.showEmotePicker = false;
     this.showChat = false;
     this.volume = 0.75; // Default, will be overwritten by user settings
@@ -302,6 +306,10 @@ class Game extends LitElement {
     );
   }
 
+  openTournamentLevels() {
+    gameModalActions.openTournamentLevels.call(this);
+  }
+
   getCurrentPlayerName() {
     return this.user?.name || "";
   }
@@ -469,7 +477,10 @@ class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${renderInfoBar(this.game, this.gameKind)} ${renderRankingModal(this)}
+        ${renderInfoBar(this.game, this.gameKind, () => {
+          this.openTournamentLevels();
+        })}
+        ${renderRankingModal(this)} ${renderTournamentLevelsModal(this)}
         ${renderSettingsModal(this)} ${renderSignInModal(this)}
         ${renderSignUpModal(this)} ${renderEmoteModal(this)}
         ${renderChatModal(this)}

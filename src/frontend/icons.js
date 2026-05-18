@@ -276,4 +276,16 @@ export const ICONS = {
       d="M9 5h7v6h6v2h-6v6H9v4H2v-2h5v-6H2v-2h7v4h5V7H9v4H2V9h5V3H2V1h7v4Z"
     />
   </svg>`,
+  levels: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M3 20h2v-2h2v4H1v-4h2v2Zm8 0h2V10h4v2h-2v10H9V12H7v-2h4v10Zm8 0h2v-4h2v6h-6v-6h2v4ZM5 18H3v-2h2v2Zm16-2h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2ZM9 8H7V6h2v2Zm8 0h-2V6h2v2Zm-6-2H9V4h2v2Zm4 0h-2V4h2v2Zm-2-2h-2V2h2v2Z"
+    />
+  </svg>`,
 };

@@ -452,6 +452,25 @@ export const RANKING_MODAL_TEST_CASES = {
       }),
       { showRanking: true },
     ),
+
+  "game-tournament-levels-modal": () =>
+    gameView(
+      createGame({
+        handNumber: 12,
+        blinds: { ante: 0, small: 10000, big: 20000 },
+        tournament: { level: 3, timeToNextLevel: 180, onBreak: false },
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 8500,
+          }),
+          createPlayer("Alice", { stack: 6200 }),
+          createPlayer("Bob", { stack: 3100 }),
+          ...emptySeats(6),
+        ],
+      }),
+      { showTournamentLevels: true },
+    ),
 };
 
 export const RANKING_MODAL_IDS = Object.keys(RANKING_MODAL_TEST_CASES);

@@ -69,6 +69,7 @@ const TEST_CASES = [
   // Modal states
   "game-rankings-modal",
   "game-rankings-modal-tournament",
+  "game-tournament-levels-modal",
   "game-settings-modal",
 
   // Email states

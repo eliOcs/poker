@@ -151,6 +151,7 @@ function renderTableItem(table) {
  * @property {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [tableItems]
  * @property {(() => void)|null} [onOpenHistory]
  * @property {boolean} [historyDisabled]
+ * @property {(() => void)|null} [onOpenLevels]
  * @property {(() => void)|null} [onCopyLink]
  * @property {boolean} [copied]
  * @property {(() => void)|null} [onShare]
@@ -174,6 +175,7 @@ function renderDrawerTemplate(params) {
     tableItems,
     onOpenHistory,
     historyDisabled,
+    onOpenLevels,
     onCopyLink,
     onShare,
     extraMainItems,
@@ -204,6 +206,12 @@ function renderDrawerTemplate(params) {
         ${iconHistory}
         <span>History</span>
       </button>
+      ${onOpenLevels
+        ? html`<button slot="main" @click=${handleAction(onOpenLevels)}>
+            ${ICONS.levels}
+            <span>Levels</span>
+          </button>`
+        : ""}
       ${extraMainItems}
       <button
         slot="main"
@@ -234,6 +242,7 @@ export function renderMttNavigationDrawer(params) {
     tableItems: [],
     onOpenHistory: null,
     historyDisabled: false,
+    onOpenLevels: null,
     onCopyLink: null,
     copied: false,
     onShare: null,

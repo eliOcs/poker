@@ -96,6 +96,15 @@ export const gameModalActions = {
     this.showRanking = false;
   },
 
+  openTournamentLevels() {
+    if (!this.game?.tournament) return;
+    this.showTournamentLevels = true;
+  },
+
+  closeTournamentLevels() {
+    this.showTournamentLevels = false;
+  },
+
   saveSettings() {
     const input = /** @type {HTMLInputElement|null} */ (
       this.shadowRoot?.querySelector("#name-input")

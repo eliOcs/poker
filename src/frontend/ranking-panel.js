@@ -1,38 +1,14 @@
 import { html, css, LitElement } from "lit";
-import { baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles, formatCurrency, modalTableStyles } from "./styles.js";
 
 class RankingPanel extends LitElement {
   static get styles() {
     return [
       baseStyles,
+      modalTableStyles,
       css`
         :host {
           display: block;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        th,
-        td {
-          padding: var(--space-md) var(--space-lg);
-          text-align: left;
-        }
-
-        @media (width < 800px) {
-          th,
-          td {
-            padding: var(--space-sm) var(--space-md);
-            font-size: var(--font-sm);
-          }
-        }
-
-        th {
-          color: var(--color-fg-muted);
-          font-size: var(--font-sm);
-          border-bottom: 2px solid var(--color-fg-muted);
         }
 
         th .tooltip {
@@ -41,11 +17,6 @@ class RankingPanel extends LitElement {
           display: block;
           font-weight: normal;
           margin-top: var(--space-sm);
-        }
-
-        td {
-          color: var(--color-fg-medium);
-          font-size: var(--font-sm);
         }
 
         .player-name {

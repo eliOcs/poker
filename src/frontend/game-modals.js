@@ -29,6 +29,20 @@ export function renderRankingModal(game) {
   ></phg-modal>`;
 }
 
+export function renderTournamentLevelsModal(game) {
+  if (!game.showTournamentLevels) return "";
+  return html`
+    <phg-modal
+      .title=${"Tournament Levels"}
+      @close=${() => game.closeTournamentLevels()}
+    >
+      <phg-tournament-levels-panel
+        .tournament=${game.game?.tournament}
+      ></phg-tournament-levels-panel>
+    </phg-modal>
+  `;
+}
+
 export function renderSettingsModal(game) {
   if (!game.showSettings) return "";
   const labels = ["Off", "25%", "75%", "100%"];

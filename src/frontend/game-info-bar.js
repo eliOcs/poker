@@ -44,9 +44,10 @@ function getTournamentTimerCell(tournament) {
 /**
  * @param {object} game - The game state object
  * @param {string} gameKind - The game kind (cash, sitngo, mtt)
+ * @param {() => void} [onOpenTournamentLevels]
  * @returns {import("lit").TemplateResult|string}
  */
-export function renderInfoBar(game, gameKind) {
+export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
   if (!game) return "";
   const sizeLabel = TABLE_SIZE_LABELS[game.seats.length] || "";
 
@@ -78,5 +79,24 @@ export function renderInfoBar(game, gameKind) {
     cells.push(tournamentTimerCell);
   }
 
-  return html`<div id="info-bar">${cells}</div>`;
+  if (!tournamentTimerCell) {
+    return html`<div id="info-bar">${cells}</div>`;
+  }
+
+  return html`<div
+    id="info-bar"
+    class="clickable"
+    role="button"
+    tabindex="0"
+    title="Show tournament levels"
+    @click=${onOpenTournamentLevels}
+    @keydown=${(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onOpenTournamentLevels?.();
+      }
+    }}
+  >
+    ${cells}
+  </div>`;
 }

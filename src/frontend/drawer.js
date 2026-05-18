@@ -111,6 +111,7 @@ function renderMttDrawer(game) {
     })),
     onOpenHistory: game.hasRecordedHands() ? () => game.openHistory() : null,
     historyDisabled: !game.hasRecordedHands(),
+    onOpenLevels: () => game.openTournamentLevels(),
     onCopyLink: () => game.copyGameLink(),
     copied: game._copied,
     onShare: canShare ? () => game.shareGameLink() : null,
@@ -149,6 +150,11 @@ function renderCashDrawer(game) {
       >
         ${iconHistory} History
       </button>
+      ${game.game?.tournament
+        ? html`<button slot="main" @click=${game.openTournamentLevels}>
+            ${ICONS.levels} Levels
+          </button>`
+        : ""}
       ${renderSitOutButton(game)}
       <button slot="main" @click=${game.copyGameLink}>
         ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}

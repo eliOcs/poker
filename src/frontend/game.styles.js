@@ -109,19 +109,17 @@ export const gameStyles = [
       white-space: nowrap;
     }
 
-    .info-link {
-      padding: 0;
-      border: 0;
-      background: transparent;
-      color: var(--color-primary);
-      font-family: inherit;
-      font-size: inherit;
+    #info-bar.clickable {
       cursor: pointer;
-      white-space: nowrap;
     }
 
-    .info-link:hover {
-      color: var(--color-fg-white);
+    #info-bar.clickable:hover {
+      color: var(--color-fg-light);
+    }
+
+    #info-bar.clickable:focus-visible {
+      outline: 2px solid var(--color-fg-muted);
+      outline-offset: var(--space-sm);
     }
 
     @media (width < 800px) {
@@ -130,10 +128,7 @@ export const gameStyles = [
       }
     }
 
-    .info-cell + .info-cell::before,
-    .info-link + .info-cell::before,
-    .info-cell + .info-link::before,
-    .info-link + .info-link::before {
+    .info-cell + .info-cell::before {
       content: "|";
       margin-right: var(--space-sm);
       color: var(--color-bg-disabled);
