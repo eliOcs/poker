@@ -87,6 +87,54 @@ export const shellContentStyles = css`
 `;
 
 /**
+ * Shared table chrome for data-heavy component views.
+ */
+export const dataTableStyles = css`
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    min-width: var(--data-table-min-width, 0);
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: var(--data-table-cell-padding, var(--space-md) var(--space-lg));
+    text-align: left;
+    font-size: var(--font-sm);
+  }
+
+  th {
+    color: var(--color-fg-muted);
+    border-bottom: 2px solid
+      var(--data-table-header-border-color, var(--color-fg-muted));
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--color-fg-medium);
+    border-bottom: 1px solid var(--color-bg-dark);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  @media (width < 800px) {
+    th,
+    td {
+      padding: var(
+        --data-table-mobile-cell-padding,
+        var(--space-sm) var(--space-md)
+      );
+    }
+  }
+`;
+
+/**
  * Check if an amount in cents has decimal cents
  * @param {Cents} amount
  * @returns {boolean} - True if there are cents (not a whole dollar)

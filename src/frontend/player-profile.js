@@ -1,6 +1,7 @@
 import { html, css, LitElement } from "lit";
 import {
   baseStyles,
+  dataTableStyles,
   shellContentStyles,
   shellPageStyles,
   formatCurrency,
@@ -14,7 +15,12 @@ class PlayerProfile extends LitElement {
       baseStyles,
       shellPageStyles,
       shellContentStyles,
+      dataTableStyles,
       css`
+        :host {
+          --data-table-min-width: 720px;
+        }
+
         .eyebrow {
           font-size: var(--font-sm);
           color: var(--color-primary);
@@ -101,43 +107,6 @@ class PlayerProfile extends LitElement {
           color: var(--color-fg-white);
         }
 
-        .table-wrap {
-          overflow-x: auto;
-        }
-
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          min-width: 720px;
-        }
-
-        th,
-        td {
-          padding: var(--space-md) var(--space-lg);
-          text-align: left;
-        }
-
-        @media (width < 800px) {
-          th,
-          td {
-            padding: var(--space-sm) var(--space-md);
-            font-size: var(--font-sm);
-          }
-        }
-
-        th {
-          color: var(--color-fg-muted);
-          font-size: var(--font-sm);
-          border-bottom: 2px solid var(--color-fg-muted);
-          white-space: nowrap;
-        }
-
-        td {
-          color: var(--color-fg-medium);
-          border-bottom: 1px solid var(--color-bg-dark);
-          font-size: var(--font-sm);
-        }
-
         tbody tr {
           cursor: pointer;
         }
@@ -149,10 +118,6 @@ class PlayerProfile extends LitElement {
             var(--color-bg-medium) 70%,
             var(--color-bg-light)
           );
-        }
-
-        tbody tr:last-child td {
-          border-bottom: 0;
         }
 
         .game-type {

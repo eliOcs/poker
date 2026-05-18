@@ -1,12 +1,21 @@
 import { css } from "lit";
-import { baseStyles, shellContentStyles, shellPageStyles } from "./styles.js";
+import {
+  baseStyles,
+  dataTableStyles,
+  shellContentStyles,
+  shellPageStyles,
+} from "./styles.js";
 
 export const mttLobbyStyles = [
   baseStyles,
   shellPageStyles,
   shellContentStyles,
+  dataTableStyles,
   css`
     :host {
+      --data-table-cell-padding: 10px 12px;
+      --data-table-header-border-color: var(--color-bg-dark);
+      --data-table-min-width: 620px;
       --shell-content-width: 1120px;
 
       height: 100%;
@@ -161,34 +170,6 @@ export const mttLobbyStyles = [
       display: flex;
     }
 
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      min-width: 620px;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--color-bg-dark);
-      font-size: var(--font-sm);
-    }
-
-    th {
-      color: var(--color-fg-muted);
-      border-bottom-width: 2px;
-      white-space: nowrap;
-    }
-
-    td {
-      color: var(--color-fg-medium);
-    }
-
     .positive {
       color: var(--color-success);
     }
@@ -199,10 +180,6 @@ export const mttLobbyStyles = [
 
     td strong {
       color: var(--color-fg-white);
-    }
-
-    tbody tr:last-child td {
-      border-bottom: 0;
     }
 
     .empty,
