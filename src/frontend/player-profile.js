@@ -1,17 +1,11 @@
 import { html, css, LitElement } from "lit";
-import {
-  designTokens,
-  baseStyles,
-  shellPageStyles,
-  formatCurrency,
-} from "./styles.js";
+import { baseStyles, shellPageStyles, formatCurrency } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
 import { getTableHistoryPath, getMttPath } from "../shared/routes.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       shellPageStyles,
       css`

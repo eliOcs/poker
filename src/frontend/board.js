@@ -1,12 +1,11 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles, formatCurrency } from "./styles.js";
 import "./card.js";
 import "./chips.js";
 
 class Board extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

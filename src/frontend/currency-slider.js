@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatDollars } from "./styles.js";
+import { baseStyles, formatDollars } from "./styles.js";
 import "./button.js";
 
 /**
@@ -11,7 +11,6 @@ import "./button.js";
 class CurrencySlider extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

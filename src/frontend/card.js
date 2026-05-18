@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 
 const SUIT_SYMBOLS = {
   h: "♥",
@@ -27,7 +27,6 @@ const RANK_DISPLAY = {
 class Card extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

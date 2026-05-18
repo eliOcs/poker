@@ -1,5 +1,5 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 /** @typedef {import("../backend/poker/types.js").Cents} Cents */
 
 const MAX_PER_COLUMN = 8;
@@ -115,7 +115,6 @@ function getChipInlineStyle(denom) {
 class Chips extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

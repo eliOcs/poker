@@ -1,5 +1,5 @@
 import { html, css } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 
 export const TABLE_SIZES = [
   { seats: 2, label: "Heads-Up" },
@@ -9,7 +9,6 @@ export const TABLE_SIZES = [
 export const DEFAULT_TABLE_SIZE = 6;
 
 export const gameCreateStyles = [
-  designTokens,
   baseStyles,
   css`
     :host {

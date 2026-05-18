@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
 import {
@@ -37,7 +37,7 @@ import { renderActionPanel } from "./game-action-panel.js";
 
 class Game extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, seatPositions, gameStyles];
+    return [baseStyles, seatPositions, gameStyles];
   }
 
   static get properties() {

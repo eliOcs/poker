@@ -1,8 +1,7 @@
 import { css } from "lit";
-import { designTokens, baseStyles, shellPageStyles } from "./styles.js";
+import { baseStyles, shellPageStyles } from "./styles.js";
 
 export const mttLobbyStyles = [
-  designTokens,
   baseStyles,
   shellPageStyles,
   css`

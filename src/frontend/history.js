@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
 import { seatPositions } from "./game-layout.js";
 import { getTablePath } from "../shared/routes.js";
@@ -10,7 +10,7 @@ import "./board.js";
 
 class History extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, historyStyles, seatPositions];
+    return [baseStyles, historyStyles, seatPositions];
   }
 
   static get properties() {

@@ -1,19 +1,16 @@
-import {
-  COLORS,
-  FONT_SIZES,
-  FONT_STACKS,
-  SPACING,
-} from "../shared/design-tokens.js";
-
-const EMAIL_BG = COLORS.bgMedium;
+const EMAIL_BG = "#1a1a2e";
 const PANEL_BG = "#232344";
 const BORDER = "#4d4d78";
-const TEXT = COLORS.fgWhite;
-const MUTED = COLORS.fgMedium;
-const FOOTER_MUTED = COLORS.fgMuted;
-const ACTION = COLORS.primary;
-const BUTTON_TEXT = COLORS.fgWhite;
-const BUTTON_SHADOW = COLORS.bgDark;
+const TEXT = "#f0f0f0";
+const MUTED = "#c0c0d0";
+const FOOTER_MUTED = "#88a";
+const ACTION = "#f4a020";
+const BUTTON_TEXT = "#f0f0f0";
+const BUTTON_SHADOW = "#0f0f1a";
+const FONT_SM = "10px";
+const FONT_LG = "14px";
+const EMAIL_FONT = "'Courier New', Courier, monospace";
+const SPACE_LG = "16px";
 
 /**
  * @param {string} value
@@ -50,7 +47,7 @@ export function renderSignInEmail({ appOrigin, signInUrl, expiresInMinutes }) {
     html: `
       <!doctype html>
       <html lang="en">
-        <body style="margin:0;padding:32px 16px;background:${EMAIL_BG};font-family:${FONT_STACKS.emailMono};color:${TEXT};">
+        <body style="margin:0;padding:32px 16px;background:${EMAIL_BG};font-family:${EMAIL_FONT};color:${TEXT};">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
             <tr>
               <td align="center">
@@ -61,19 +58,19 @@ export function renderSignInEmail({ appOrigin, signInUrl, expiresInMinutes }) {
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:0 32px 24px;text-align:center;font-size:${FONT_SIZES.desktop.lg};line-height:2;color:${MUTED};">
+                    <td style="padding:0 32px 24px;text-align:center;font-size:${FONT_LG};line-height:2;color:${MUTED};">
                       Click the button below to sign in. This link expires in ${expiresInMinutes} minutes and can only be used once.
                     </td>
                   </tr>
                   <tr>
                     <td align="center" style="padding:0 32px 24px;">
-                      <a href="${safeUrl}" style="display:inline-block;padding:${SPACING.desktop.lg} 40px;background:${ACTION};border:3px solid #000;box-shadow:4px 4px 0 ${BUTTON_SHADOW}, inset 2px 2px 0 rgba(255,255,255,0.18), inset -2px -2px 0 rgba(0,0,0,0.22);color:${BUTTON_TEXT};text-decoration:none;font-family:${FONT_STACKS.emailMono};font-size:${FONT_SIZES.desktop.lg};line-height:1;font-weight:700;">
+                      <a href="${safeUrl}" style="display:inline-block;padding:${SPACE_LG} 40px;background:${ACTION};border:3px solid #000;box-shadow:4px 4px 0 ${BUTTON_SHADOW}, inset 2px 2px 0 rgba(255,255,255,0.18), inset -2px -2px 0 rgba(0,0,0,0.22);color:${BUTTON_TEXT};text-decoration:none;font-family:${EMAIL_FONT};font-size:${FONT_LG};line-height:1;font-weight:700;">
                         Sign in
                       </a>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:0 32px 32px;text-align:center;font-size:${FONT_SIZES.desktop.sm};line-height:1.8;color:${FOOTER_MUTED};">
+                    <td style="padding:0 32px 32px;text-align:center;font-size:${FONT_SM};line-height:1.8;color:${FOOTER_MUTED};">
                       If you did not request this email, you can safely ignore it.
                     </td>
                   </tr>

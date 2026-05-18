@@ -1,6 +1,6 @@
 import { css, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 import { appModalStyles } from "./app-modal-styles.js";
 import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
@@ -46,7 +46,6 @@ import { appProfileActions } from "./app-profile-actions.js";
 class App extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       appModalStyles,
       appAuthStatusStyles,

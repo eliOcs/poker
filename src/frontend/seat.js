@@ -1,10 +1,5 @@
 import { html, LitElement } from "lit";
-import {
-  designTokens,
-  baseStyles,
-  formatCurrency,
-  seatBetStyles,
-} from "./styles.js";
+import { baseStyles, formatCurrency, seatBetStyles } from "./styles.js";
 import { ICONS } from "./icons.js";
 import { seatStyles } from "./seat.styles.js";
 import {
@@ -19,7 +14,7 @@ import "./chips.js";
 
 class Seat extends LitElement {
   static get styles() {
-    return [designTokens, baseStyles, seatStyles, seatBetStyles];
+    return [baseStyles, seatStyles, seatBetStyles];
   }
 
   static get properties() {

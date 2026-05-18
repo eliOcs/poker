@@ -1,10 +1,9 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles, formatCurrency } from "./styles.js";
 
 class RankingPanel extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

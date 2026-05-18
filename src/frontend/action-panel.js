@@ -1,5 +1,5 @@
 import { LitElement } from "lit";
-import { designTokens, baseStyles, actionPanelStyles } from "./styles.js";
+import { baseStyles, actionPanelStyles } from "./styles.js";
 import { getChipDenomination } from "../shared/stakes.js";
 import { actionPanelExtraStyles } from "./action-panel-local.styles.js";
 import { renderActionPanel } from "./action-panel-render.js";
@@ -9,12 +9,7 @@ import "./card.js";
 
 class ActionPanel extends LitElement {
   static get styles() {
-    return [
-      designTokens,
-      baseStyles,
-      actionPanelStyles,
-      actionPanelExtraStyles,
-    ];
+    return [baseStyles, actionPanelStyles, actionPanelExtraStyles];
   }
 
   static get properties() {

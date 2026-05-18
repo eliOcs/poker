@@ -1,11 +1,10 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 import { ICONS } from "./icons.js";
 
 class NavigationDrawer extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         :host {

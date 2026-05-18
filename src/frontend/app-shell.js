@@ -1,12 +1,11 @@
 import { html, css, LitElement } from "lit";
-import { designTokens, baseStyles } from "./styles.js";
+import { baseStyles } from "./styles.js";
 import { renderAppNavigationDrawer } from "./app-navigation-drawer.js";
 import "./navigation-drawer.js";
 
 class AppShell extends LitElement {
   static get styles() {
     return [
-      designTokens,
       baseStyles,
       css`
         .layout {

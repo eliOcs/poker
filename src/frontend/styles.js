@@ -1,60 +1,6 @@
-import { css, unsafeCSS } from "lit";
-import { COLORS, FONT_SIZES, SPACING } from "../shared/design-tokens.js";
+import { css } from "lit";
 
 /** @typedef {import('../backend/poker/types.js').Cents} Cents */
-
-/**
- * @param {string} value
- * @returns {string}
- */
-function camelToKebab(value) {
-  return value.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`);
-}
-
-/**
- * @param {string} prefix
- * @param {Record<string, string>} values
- * @returns {string}
- */
-function cssVariables(prefix, values) {
-  return Object.entries(values)
-    .map(([key, value]) => `--${prefix}-${camelToKebab(key)}: ${value};`)
-    .join("\n");
-}
-
-const desktopFontVariables = cssVariables("font", FONT_SIZES.desktop);
-const mobileFontVariables = cssVariables("font", FONT_SIZES.mobile);
-const desktopSpacingVariables = cssVariables("space", SPACING.desktop);
-const mobileSpacingVariables = cssVariables("space", SPACING.mobile);
-const colorVariables = cssVariables("color", COLORS);
-
-/**
- * Design Tokens
- *
- * Constrained design system with:
- * - 3 font sizes (sm, md, lg)
- * - 3 spacing sizes (sm, md, lg)
- * - Semantic colors
- *
- * Tokens are responsive - values change at mobile breakpoint (<800px)
- */
-export const designTokens = css`
-  :host {
-    ${unsafeCSS(desktopFontVariables)}
-
-    ${unsafeCSS(desktopSpacingVariables)}
-
-    ${unsafeCSS(colorVariables)}
-  }
-
-  @media (width < 800px) {
-    :host {
-      ${unsafeCSS(mobileFontVariables)}
-
-      ${unsafeCSS(mobileSpacingVariables)}
-    }
-  }
-`;
 
 /**
  * Base styles shared by all components
