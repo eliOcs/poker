@@ -43,6 +43,50 @@ export const shellPageStyles = css`
 `;
 
 /**
+ * Shared content blocks for shell-style pages.
+ */
+export const shellContentStyles = css`
+  .content {
+    width: min(var(--shell-content-width, 1080px), 100%);
+    max-width: 100%;
+    display: grid;
+    gap: 16px;
+  }
+
+  .panel {
+    width: 100%;
+    max-width: 100%;
+    display: grid;
+    gap: 16px;
+    padding: clamp(18px, 4vw, 28px);
+    box-sizing: border-box;
+    border: var(--space-sm) solid var(--color-fg-muted);
+    background: var(--color-bg-light);
+    box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+  }
+
+  .section {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stat {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    padding: 14px;
+    border: 2px solid var(--color-bg-dark);
+    background: var(--color-bg-medium);
+  }
+
+  .label {
+    font-size: var(--font-sm);
+    color: var(--color-fg-muted);
+    line-height: 1.6;
+  }
+`;
+
+/**
  * Check if an amount in cents has decimal cents
  * @param {Cents} amount
  * @returns {boolean} - True if there are cents (not a whole dollar)

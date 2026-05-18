@@ -1,11 +1,14 @@
 import { css } from "lit";
-import { baseStyles, shellPageStyles } from "./styles.js";
+import { baseStyles, shellContentStyles, shellPageStyles } from "./styles.js";
 
 export const mttLobbyStyles = [
   baseStyles,
   shellPageStyles,
+  shellContentStyles,
   css`
     :host {
+      --shell-content-width: 1120px;
+
       height: 100%;
     }
 
@@ -13,22 +16,6 @@ export const mttLobbyStyles = [
       :host {
         flex-direction: row;
       }
-    }
-
-    .panel {
-      width: 100%;
-      display: grid;
-      gap: 16px;
-      padding: clamp(18px, 4vw, 28px);
-      border: var(--space-sm) solid var(--color-fg-muted);
-      background: var(--color-bg-light);
-      box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
-    }
-
-    .content {
-      width: min(1120px, 100%);
-      display: grid;
-      gap: 16px;
     }
 
     .header {
@@ -103,29 +90,10 @@ export const mttLobbyStyles = [
       gap: 12px;
     }
 
-    .stat {
-      display: grid;
-      gap: 8px;
-      padding: 14px;
-      border: 2px solid var(--color-bg-dark);
-      background: var(--color-bg-medium);
-    }
-
-    .label {
-      font-size: var(--font-sm);
-      color: var(--color-fg-muted);
-      line-height: 1.6;
-    }
-
     .value {
       font-size: var(--font-md);
       color: var(--color-fg-white);
       line-height: 1.7;
-    }
-
-    .section {
-      display: grid;
-      gap: 12px;
     }
 
     .action-row {

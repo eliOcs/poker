@@ -1,5 +1,10 @@
 import { html, css, LitElement } from "lit";
-import { baseStyles, shellPageStyles, formatCurrency } from "./styles.js";
+import {
+  baseStyles,
+  shellContentStyles,
+  shellPageStyles,
+  formatCurrency,
+} from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
 import { getTableHistoryPath, getMttPath } from "../shared/routes.js";
 
@@ -8,26 +13,8 @@ class PlayerProfile extends LitElement {
     return [
       baseStyles,
       shellPageStyles,
+      shellContentStyles,
       css`
-        .panel {
-          width: min(1080px, 100%);
-          max-width: 100%;
-          display: grid;
-          gap: 16px;
-          padding: clamp(18px, 4vw, 28px);
-          box-sizing: border-box;
-          border: var(--space-sm) solid var(--color-fg-muted);
-          background: var(--color-bg-light);
-          box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
-        }
-
-        .content {
-          width: min(1080px, 100%);
-          max-width: 100%;
-          display: grid;
-          gap: 16px;
-        }
-
         .eyebrow {
           font-size: var(--font-sm);
           color: var(--color-primary);
@@ -88,21 +75,6 @@ class PlayerProfile extends LitElement {
           gap: 12px;
         }
 
-        .stat {
-          display: grid;
-          gap: 8px;
-          padding: 14px;
-          border: 2px solid var(--color-bg-dark);
-          background: var(--color-bg-medium);
-          align-content: start;
-        }
-
-        .label {
-          font-size: var(--font-sm);
-          color: var(--color-fg-muted);
-          line-height: 1.6;
-        }
-
         .value {
           font-size: var(--font-lg);
           line-height: 1.7;
@@ -121,11 +93,6 @@ class PlayerProfile extends LitElement {
           text-align: center;
           font-size: var(--font-md);
           color: var(--color-fg-medium);
-        }
-
-        .section {
-          display: grid;
-          gap: 12px;
         }
 
         h2 {
