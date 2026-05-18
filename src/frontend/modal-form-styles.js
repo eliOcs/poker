@@ -1,8 +1,7 @@
 import { css } from "lit";
 
 export const modalFormStyles = css`
-  .settings-content input,
-  .sign-in-content input {
+  input {
     width: 100%;
     padding: var(--space-md);
     font-family: inherit;
@@ -14,8 +13,7 @@ export const modalFormStyles = css`
     outline: none;
   }
 
-  .settings-content input:focus,
-  .sign-in-content input:focus {
+  input:focus {
     border-color: var(--modal-input-focus-color, var(--color-secondary));
     box-shadow: var(
       --modal-input-focus-shadow,
@@ -23,12 +21,12 @@ export const modalFormStyles = css`
     );
   }
 
-  .sign-in-content input[aria-invalid="true"] {
+  input[aria-invalid="true"] {
     border-color: var(--color-error);
     box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
   }
 
-  .sign-in-content input[aria-invalid="true"]:focus {
+  input[aria-invalid="true"]:focus {
     border-color: var(--color-error);
     box-shadow: var(
       --modal-input-error-focus-shadow,
