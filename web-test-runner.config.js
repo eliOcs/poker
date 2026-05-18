@@ -11,7 +11,7 @@ export default {
     <!doctype html>
     <html>
       <head>
-        <link rel="stylesheet" href="/theme.css" />
+        <link rel="stylesheet" href="/base.css" />
       </head>
       <body>
         <script type="module" src="${testFrameworkImport}"></script>
