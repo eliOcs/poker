@@ -5,6 +5,7 @@ import {
   feedbackStateStyles,
   shellContentStyles,
   shellPageStyles,
+  statusBadgeStyles,
   formatCurrency,
 } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
@@ -18,6 +19,7 @@ class PlayerProfile extends LitElement {
       shellContentStyles,
       dataTableStyles,
       feedbackStateStyles,
+      statusBadgeStyles,
       css`
         :host {
           --data-table-min-width: 720px;
@@ -61,16 +63,8 @@ class PlayerProfile extends LitElement {
         }
 
         .status {
-          display: inline-flex;
-          align-items: center;
           gap: 8px;
-          padding: 10px 12px;
-          box-sizing: border-box;
-          border: 2px solid var(--color-fg-muted);
-          background: var(--color-bg-medium);
           color: var(--color-success);
-          font-size: var(--font-sm);
-          white-space: nowrap;
         }
 
         .status.offline {

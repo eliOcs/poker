@@ -155,6 +155,25 @@ export const feedbackStateStyles = css`
 `;
 
 /**
+ * Compact status badges for shell pages and data summaries.
+ */
+export const statusBadgeStyles = css`
+  .status,
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    width: fit-content;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    border: 2px solid var(--color-fg-muted);
+    background: var(--color-bg-medium);
+    font-size: var(--font-sm);
+    white-space: nowrap;
+  }
+`;
+
+/**
  * Check if an amount in cents has decimal cents
  * @param {Cents} amount
  * @returns {boolean} - True if there are cents (not a whole dollar)

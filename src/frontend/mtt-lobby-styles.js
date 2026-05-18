@@ -5,6 +5,7 @@ import {
   feedbackStateStyles,
   shellContentStyles,
   shellPageStyles,
+  statusBadgeStyles,
 } from "./styles.js";
 
 export const mttLobbyStyles = [
@@ -13,6 +14,7 @@ export const mttLobbyStyles = [
   shellContentStyles,
   dataTableStyles,
   feedbackStateStyles,
+  statusBadgeStyles,
   css`
     :host {
       --data-table-cell-padding: 10px 12px;
@@ -62,16 +64,7 @@ export const mttLobbyStyles = [
     }
 
     .status-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-self: start;
-      width: fit-content;
-      padding: 10px 12px;
-      border: 2px solid var(--color-fg-muted);
-      background: var(--color-bg-medium);
       color: var(--color-fg-white);
-      font-size: var(--font-sm);
-      white-space: nowrap;
     }
 
     .status-pill.registration {
