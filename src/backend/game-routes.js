@@ -28,13 +28,7 @@ export function findActiveGamePath(games, userId) {
   const liveGames = [...games.values()];
   for (let i = liveGames.length - 1; i >= 0; i -= 1) {
     const game = liveGames[i];
-    if (!game) continue;
-    if (
-      !game.running ||
-      !game.seats.some((seat) => !seat.empty && seat.player.id === userId)
-    ) {
-      continue;
-    }
+    if (!game || !isActiveGameForUser(game, userId)) continue;
 
     if (game.kind === "mtt") {
       return getTablePath("mtt", game.id, game.tournamentId);
@@ -43,6 +37,28 @@ export function findActiveGamePath(games, userId) {
     return getTablePath(game.kind, game.id);
   }
 
+  return null;
+}
+
+/**
+ * @param {Game} game
+ * @param {Id} userId
+ * @returns {boolean}
+ */
+function isActiveGameForUser(game, userId) {
+  const seat = findOccupiedSeatForUser(game, userId);
+  return game.running && !!seat;
+}
+
+/**
+ * @param {Game} game
+ * @param {Id} userId
+ * @returns {import('./poker/seat.js').OccupiedSeat|null}
+ */
+function findOccupiedSeatForUser(game, userId) {
+  for (const seat of game.seats) {
+    if (!seat.empty && seat.player.id === userId) return seat;
+  }
   return null;
 }
 

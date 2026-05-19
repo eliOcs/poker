@@ -271,6 +271,12 @@ describe("tournament-summary", () => {
       // Simulate endHand processing the elimination
       Actions.endHand(game);
 
+      assert.equal(
+        game.seats[1].sittingOut,
+        true,
+        "losing player should be sitting out after the final hand",
+      );
+
       // Verify position 2 was recorded BEFORE autoStartNextHand finalizes
       const recorder = TournamentSummary.getRecorderForTest(game.id);
       assert.ok(recorder, "recorder should still exist before finalization");
@@ -327,6 +333,34 @@ describe("tournament-summary", () => {
 
       // After autoStartNextHand, winner should be set
       assert.equal(game.tournament.winner, 0, "should detect seat 0 as winner");
+    });
+
+    it("autoStartNextHand should sit out the winner when the sitngo finishes", () => {
+      TournamentSummary.startTournament(game);
+
+      game.seats[1].stack = 0;
+      game.seats[1].sittingOut = true;
+      game.seats[2].stack = 0;
+      game.seats[2].sittingOut = true;
+      game.hand.phase = "waiting";
+
+      Game.autoStartNextHand(game);
+
+      assert.equal(game.seats[0].sittingOut, true);
+    });
+
+    it("autoStartNextHand should stop the game when the sitngo finishes", () => {
+      TournamentSummary.startTournament(game);
+
+      game.seats[1].stack = 0;
+      game.seats[1].sittingOut = true;
+      game.seats[2].stack = 0;
+      game.seats[2].sittingOut = true;
+      game.hand.phase = "waiting";
+
+      Game.autoStartNextHand(game);
+
+      assert.equal(game.running, false);
     });
   });
 });

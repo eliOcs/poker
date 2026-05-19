@@ -55,6 +55,12 @@ export function autoStartNextHand(game) {
       (seat) => !seat.empty && seat.stack > 0 && !seat.sittingOut,
     );
     game.tournament.winner = winnerIndex;
+    game.running = false;
+    const winnerSeat = game.seats[winnerIndex];
+    if (winnerSeat && !winnerSeat.empty) {
+      winnerSeat.sittingOut = true;
+      winnerSeat.pendingSitOut = false;
+    }
     TournamentSummary.finalizeTournament(game);
     return handData;
   }

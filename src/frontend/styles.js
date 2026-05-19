@@ -306,6 +306,10 @@ export const actionPanelStyles = css`
   }
 
   .tournament-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
     color: var(--color-fg);
     font-size: var(--font-lg);
     font-weight: bold;

@@ -404,7 +404,7 @@ function calculateHandRank(holeCards, boardCards) {
  * @returns {PlayerAction[]}
  */
 function getSittingOutActions(seat, game, isTournament, showActions) {
-  if (game.tournament?.kind === "mtt") {
+  if (isTournamentSeatLocked(game)) {
     return showActions;
   }
   // Cash game player who sat but hasn't bought in yet
@@ -629,9 +629,20 @@ function canCallClock(game, playerSeatIndex) {
  * @returns {boolean}
  */
 function isRegistrationOpen(game) {
-  if (game.tournament?.kind === "mtt") return false;
+  if (isTournamentSeatLocked(game)) return false;
   if (game.tournament?.active && game.tournament.level > 1) return false;
   return true;
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function isTournamentSeatLocked(game) {
+  return (
+    game.tournament?.kind === "mtt" ||
+    (game.tournament?.kind === "sitngo" && game.tournament.winner !== null)
+  );
 }
 
 /**

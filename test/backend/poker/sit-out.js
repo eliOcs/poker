@@ -140,6 +140,17 @@ describe("sit out", () => {
       assert.throws(() => Actions.sitIn(game, { seat: 0 }), /not sitting out/);
     });
 
+    it("should throw after a sitngo has finished", () => {
+      const tournamentGame = Game.createTournament();
+      tournamentGame.seats[0] = Seat.occupied({ id: "player1" }, 1000, true);
+      tournamentGame.tournament.winner = 0;
+
+      assert.throws(
+        () => Actions.sitIn(tournamentGame, { seat: 0 }),
+        /tournament is finished/,
+      );
+    });
+
     it("should post big blind if missedBigBlind is true", () => {
       game.seats[0].missedBigBlind = true;
       const stackBefore = game.seats[0].stack;
