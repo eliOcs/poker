@@ -133,10 +133,6 @@ class NavigationDrawer extends LitElement {
           text-decoration: none;
         }
 
-        .home-link:hover {
-          background: var(--color-bg-light);
-        }
-
         .home-logo {
           width: 100%;
           max-width: 140px;
