@@ -86,7 +86,13 @@ A shared pre-commit hook runs `npm run validate` before each commit. It is confi
 ```
 DOMAIN=localhost
 PORT=3000
+APP_ORIGIN=http://localhost:3000
+EMAIL_SINK_DIR=./data/emails
 ```
+
+Local sign-in emails are written as JSON files in `EMAIL_SINK_DIR` when running
+`npm start`. Remove that setting when you intentionally want to send through
+AWS SES.
 
 ## Deployment
 
