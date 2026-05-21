@@ -1,5 +1,6 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import { OriginalFetch } from "./setup.js";
+import { createMockTournamentView } from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
 
 describe("phg-app sign in", () => {
@@ -199,6 +200,52 @@ describe("phg-app sign in", () => {
     });
     expect(window.location.pathname).to.equal("/cash/test-game");
     expect(window.location.search).to.equal("?buyin=50");
+  });
+
+  it("registers for an MTT after sign-in when the return path has a register action", async () => {
+    history.replaceState({}, "", "/auth/email-sign-in/callback?token=test123");
+    let registerRequested = false;
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Test",
+            email: "player@example.com",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      if (url === "/api/sign-in-links/verify" && options.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            returnPath: "/mtt/mtt123?action=register",
+          }),
+        };
+      }
+      if (url === "/api/mtt/mtt123/register" && options.method === "POST") {
+        registerRequested = true;
+        return {
+          ok: true,
+          json: async () =>
+            createMockTournamentView({
+              currentPlayer: { status: "registered" },
+              actions: { canRegister: false, canUnregister: true },
+            }),
+        };
+      }
+      return { ok: false, json: async () => ({ error: "not found" }) };
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+
+    await waitUntil(() => registerRequested, { timeout: 2000 });
+
+    expect(element._mttView.currentPlayer.status).to.equal("registered");
+    expect(window.location.pathname).to.equal("/mtt/mtt123");
+    expect(window.location.search).to.equal("");
   });
 
   it("shows an error toast when email sign-in verification fails", async () => {

@@ -108,6 +108,7 @@ async function signUpTournamentRegistrant(player, email) {
   await player.mttLobby.getByRole("button", { name: "Register" }).click();
   await completeSignUp(player, email, player.name);
   await player.mttLobby.waitFor();
+  await player.mttLobby.getByRole("button", { name: "Unregister" }).waitFor();
 }
 
 /**
@@ -584,10 +585,7 @@ test.describe("Tournament E2E", () => {
     });
     console.log("All joining players signed up");
 
-    await runSequentially(players.slice(1), async (player) => {
-      await player.registerForTournament();
-    });
-    console.log("All lobby registrations completed");
+    console.log("All joining players signed up and registered");
 
     await player1.startTournament();
     await Promise.all(players.map((player) => player.waitForTournamentTable()));

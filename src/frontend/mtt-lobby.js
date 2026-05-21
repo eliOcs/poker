@@ -97,6 +97,14 @@ class MttLobby extends LitElement {
 
   _dispatchMttAction(action) {
     if (action === "register" && !this.user?.email) {
+      if (this.tournamentId) {
+        const url = new URL(
+          getMttPath(this.tournamentId),
+          window.location.href,
+        );
+        url.searchParams.set("action", "register");
+        history.replaceState(history.state, "", url);
+      }
       this.openSignUp();
       return;
     }
@@ -108,6 +116,34 @@ class MttLobby extends LitElement {
         composed: true,
       }),
     );
+  }
+
+  _clearUrlActionParam() {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("action");
+    const nextPath = `${url.pathname}${url.search}${url.hash}`;
+    history.replaceState(history.state, "", nextPath);
+  }
+
+  _maybePerformUrlAction() {
+    if (!this.tournamentId || this.actionPending) return;
+
+    const url = new URL(window.location.href);
+    if (url.pathname !== getMttPath(this.tournamentId)) return;
+    if (url.searchParams.get("action") !== "register") return;
+    if (!this.user?.email) return;
+
+    if (this.tournament?.currentPlayer?.status === "registered") {
+      this._clearUrlActionParam();
+      return;
+    }
+
+    this._clearUrlActionParam();
+    this._dispatchMttAction("register");
+  }
+
+  updated() {
+    this._maybePerformUrlAction();
   }
 
   _dispatchRename(event) {

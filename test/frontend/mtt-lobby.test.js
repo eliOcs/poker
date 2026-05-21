@@ -64,6 +64,12 @@ function createTournamentView() {
 }
 
 describe("phg-mtt-lobby", () => {
+  const originalLocation = window.location.href;
+
+  afterEach(() => {
+    history.replaceState({}, "", originalLocation);
+  });
+
   it("renders tournament details and current table assignment", async () => {
     const element = await fixture(html`
       <phg-mtt-lobby
@@ -188,6 +194,8 @@ describe("phg-mtt-lobby", () => {
 
     const event = await oneEvent(element, "open-sign-up");
     expect(event).to.exist;
+    expect(window.location.pathname).to.equal("/mtt/mtt123");
+    expect(window.location.search).to.equal("?action=register");
   });
 
   it("allows signed-up users to register from the lobby controls", async () => {
