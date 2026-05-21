@@ -5,55 +5,112 @@ import {
   matchLiveRoute,
 } from "../shared/routes.js";
 
+const CONNECTABLE_LIVE_KINDS = new Set(["cash", "sitngo", "mtt", "mtt_table"]);
+const TABLE_LIVE_KINDS = new Set(["cash", "sitngo", "mtt_table"]);
+const PLAYER_PROFILE_ROUTE = /^\/players\/([a-z0-9]+)$/;
+const STATIC_PAGE_BY_PATH = new Map([
+  ["/mtt", "tournaments"],
+  ["/release-notes", "release_notes"],
+]);
+
+function appRoute(page, overrides = {}) {
+  return {
+    page,
+    ...overrides,
+  };
+}
+
+function routeTournamentId(route) {
+  return route?.kind === "mtt_table" ? route.tournamentId : undefined;
+}
+
+function tableRouteKey(route) {
+  if (!route?.tableId) return;
+  return `${route.kind}:${route.tableId}:${routeTournamentId(route) ?? ""}`;
+}
+
+function tablePathKind(kind) {
+  return /** @type {"cash"|"sitngo"|"mtt"} */ (
+    kind === "mtt_table" ? "mtt" : kind
+  );
+}
+
 /**
- * @param {{ kind: string }|null} liveRoute
+ * @param {{ kind: string }|undefined} liveRoute
  * @returns {boolean}
  */
 export function isConnectableLiveRoute(liveRoute) {
-  return !!(
-    liveRoute &&
-    (liveRoute.kind === "mtt" ||
-      liveRoute.kind === "cash" ||
-      liveRoute.kind === "sitngo" ||
-      liveRoute.kind === "mtt_table")
-  );
+  return !!liveRoute && CONNECTABLE_LIVE_KINDS.has(liveRoute.kind);
+}
+
+/**
+ * @param {{ kind: string }|undefined} liveRoute
+ * @returns {boolean}
+ */
+export function isTableLiveRoute(liveRoute) {
+  return !!liveRoute && TABLE_LIVE_KINDS.has(liveRoute.kind);
 }
 
 /**
  * @param {string} path
  * @returns {{
- *   liveRoute: ReturnType<typeof matchLiveRoute>,
- *   historyRoute: ReturnType<typeof matchHistoryRoute>,
- *   playerProfileId: string|null,
- *   resourcePath: string|null,
+ *   page: string,
+ *   liveRoute?: NonNullable<ReturnType<typeof matchLiveRoute>>,
+ *   historyRoute?: NonNullable<ReturnType<typeof matchHistoryRoute>>,
+ *   playerProfileId?: string,
+ *   resourcePath?: string,
  * }}
  */
 export function parseAppPath(path) {
   const liveRoute = matchLiveRoute(path);
-  const historyRoute = matchHistoryRoute(path);
-  const playerProfileId = path.match(/^\/players\/([a-z0-9]+)$/)?.[1] || null;
+  if (liveRoute) {
+    return appRoute(liveRoute.kind === "mtt" ? "mtt_lobby" : "game", {
+      liveRoute,
+      resourcePath: path,
+    });
+  }
 
-  return {
-    liveRoute,
-    historyRoute,
-    playerProfileId,
-    resourcePath: isConnectableLiveRoute(liveRoute)
-      ? path
-      : historyRoute
-        ? getLivePathFromHistory(
-            historyRoute.kind,
-            historyRoute.tableId,
-            historyRoute.kind === "mtt_table"
-              ? historyRoute.tournamentId
-              : null,
-          )
-        : null,
-  };
+  const historyRoute = matchHistoryRoute(path);
+  if (historyRoute) {
+    const normalizedHistoryRoute = {
+      ...historyRoute,
+      handNumber: historyRoute.handNumber ?? undefined,
+    };
+    return appRoute("history", {
+      historyRoute: normalizedHistoryRoute,
+      resourcePath: getLivePathFromHistory(
+        normalizedHistoryRoute.kind,
+        normalizedHistoryRoute.tableId,
+        routeTournamentId(normalizedHistoryRoute),
+      ),
+    });
+  }
+
+  const playerProfileId = path.match(PLAYER_PROFILE_ROUTE)?.[1];
+  if (playerProfileId) {
+    return appRoute("player_profile", {
+      playerProfileId,
+    });
+  }
+
+  return appRoute(STATIC_PAGE_BY_PATH.get(path) ?? "home");
 }
 
 /**
  * @param {any} app
- * @param {ReturnType<typeof matchHistoryRoute>} historyRoute
+ * @param {ReturnType<typeof parseAppPath>} route
+ */
+export function syncAppRouteState(app, route) {
+  if (!isConnectableLiveRoute(route.liveRoute)) {
+    app.socialAction = null;
+  }
+  syncAppHistoryState(app, route.historyRoute);
+  app._playerProfileId = route.playerProfileId;
+}
+
+/**
+ * @param {any} app
+ * @param {ReturnType<typeof parseAppPath>["historyRoute"]} historyRoute
  */
 export function syncAppHistoryState(app, historyRoute) {
   if (!historyRoute) {
@@ -63,8 +120,7 @@ export function syncAppHistoryState(app, historyRoute) {
 
   const tableId = historyRoute.tableId;
   const historyKind = historyRoute.kind;
-  const tournamentId =
-    historyRoute.kind === "mtt_table" ? historyRoute.tournamentId : null;
+  const tournamentId = routeTournamentId(historyRoute);
 
   if (
     tableId !== app._historyTableId ||
@@ -74,29 +130,26 @@ export function syncAppHistoryState(app, historyRoute) {
     app._historyKind = historyKind;
     app._historyTableId = tableId;
     app._historyTournamentId = tournamentId;
-    app._historyHandNumber = null;
+    app._historyHandNumber = undefined;
   }
 
-  if (
-    historyRoute.handNumber !== null &&
-    historyRoute.handNumber !== app._historyHandNumber
-  ) {
-    app._historyHandNumber = historyRoute.handNumber;
+  const handNumber = historyRoute.handNumber ?? undefined;
+  if (handNumber !== undefined && handNumber !== app._historyHandNumber) {
+    app._historyHandNumber = handNumber;
   }
 }
 
 /**
- * @param {string|null} historyKind
- * @param {string|null} historyTableId
- * @param {string|null} historyTournamentId
- * @returns {string|null}
+ * @param {string} historyKind
+ * @param {string} historyTableId
+ * @param {string|undefined} historyTournamentId
+ * @returns {string}
  */
 export function getHistoryApiBase(
   historyKind,
   historyTableId,
   historyTournamentId,
 ) {
-  if (!historyKind || !historyTableId) return null;
   if (historyKind === "mtt_table" && historyTournamentId) {
     return `/api/mtt/${historyTournamentId}/tables/${historyTableId}/history`;
   }
@@ -104,10 +157,10 @@ export function getHistoryApiBase(
 }
 
 /**
- * @param {string|null} historyKind
- * @param {string|null} historyTableId
- * @param {number|null|undefined} handNumber
- * @param {string|null} historyTournamentId
+ * @param {string} historyKind
+ * @param {string} historyTableId
+ * @param {number|undefined} handNumber
+ * @param {string|undefined} historyTournamentId
  * @returns {string}
  */
 export function getHistoryPath(
@@ -116,12 +169,8 @@ export function getHistoryPath(
   handNumber,
   historyTournamentId,
 ) {
-  if (!historyKind || !historyTableId) return "/";
-  const kind = /** @type {"cash"|"sitngo"|"mtt"} */ (
-    historyKind === "mtt_table" ? "mtt" : historyKind
-  );
   return getTableHistoryPath(
-    kind,
+    tablePathKind(historyKind),
     historyTableId,
     handNumber,
     historyTournamentId,
@@ -129,9 +178,9 @@ export function getHistoryPath(
 }
 
 /**
- * @param {string|null} historyKind
- * @param {string|null} historyTableId
- * @param {string|null} historyTournamentId
+ * @param {string} historyKind
+ * @param {string} historyTableId
+ * @param {string|undefined} historyTournamentId
  * @returns {string}
  */
 export function getLivePathFromHistory(
@@ -139,16 +188,16 @@ export function getLivePathFromHistory(
   historyTableId,
   historyTournamentId,
 ) {
-  if (!historyKind || !historyTableId) return "/";
-  const kind = /** @type {"cash"|"sitngo"|"mtt"} */ (
-    historyKind === "mtt_table" ? "mtt" : historyKind
+  return getTablePath(
+    tablePathKind(historyKind),
+    historyTableId,
+    historyTournamentId,
   );
-  return getTablePath(kind, historyTableId, historyTournamentId);
 }
 
 /**
  * @param {string} currentPath
- * @param {string|null} livePath
+ * @param {string|undefined} livePath
  * @returns {boolean}
  */
 export function isHistoryRouteForLivePath(currentPath, livePath) {
@@ -158,17 +207,5 @@ export function isHistoryRouteForLivePath(currentPath, livePath) {
   const liveRoute = matchLiveRoute(livePath);
   if (!liveRoute) return false;
 
-  if (
-    (liveRoute.kind === "cash" || liveRoute.kind === "sitngo") &&
-    historyRoute.kind === liveRoute.kind
-  ) {
-    return historyRoute.tableId === liveRoute.tableId;
-  }
-
-  return (
-    liveRoute.kind === "mtt_table" &&
-    historyRoute.kind === "mtt_table" &&
-    historyRoute.tableId === liveRoute.tableId &&
-    historyRoute.tournamentId === liveRoute.tournamentId
-  );
+  return tableRouteKey(historyRoute) === tableRouteKey(liveRoute);
 }

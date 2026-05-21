@@ -34,9 +34,9 @@ import {
   getHistoryApiBase,
   getHistoryPath,
   getLivePathFromHistory,
-  isConnectableLiveRoute,
+  isTableLiveRoute,
   parseAppPath,
-  syncAppHistoryState,
+  syncAppRouteState,
 } from "./app-route-state.js";
 import * as ws from "./app-websocket.js";
 import * as mttRouting from "./app-mtt-routing.js";
@@ -105,10 +105,10 @@ class App extends LitElement {
     this._socketHealthCheck = null;
     this._intentionalSocketCloses = new WeakSet();
     // History route params
-    this._historyKind = null;
-    this._historyTableId = null;
-    this._historyTournamentId = null;
-    this._historyHandNumber = null;
+    this._historyKind = undefined;
+    this._historyTableId = undefined;
+    this._historyTournamentId = undefined;
+    this._historyHandNumber = undefined;
     this._historyListRefreshNonce = 0;
     this._mttTournamentId = null;
     this._mttView = null;
@@ -116,7 +116,7 @@ class App extends LitElement {
     this._mttError = "";
     this._mttActionPending = false;
     this._allowMttLobby = false;
-    this._playerProfileId = null;
+    this._playerProfileId = undefined;
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
     this._showProfileSignUp = false;
@@ -193,7 +193,7 @@ class App extends LitElement {
       if (!res.ok) throw new Error("Failed to load hand history");
       return res.json();
     },
-    args: () => [this._getHistoryApiBase(), this._historyListRefreshNonce],
+    args: () => [this._historyApiBase(), this._historyListRefreshNonce],
   });
 
   _historyHandTask = new Task(this, {
@@ -203,7 +203,7 @@ class App extends LitElement {
       if (!res.ok) throw new Error("Hand not found");
       return res.json();
     },
-    args: () => [this._getHistoryApiBase(), this._historyHandNumber],
+    args: () => [this._historyApiBase(), this._historyHandNumber],
   });
 
   _playerProfileTask = new Task(this, {
@@ -320,13 +320,28 @@ class App extends LitElement {
   }
 
   _clearHistoryState() {
-    this._historyKind = null;
-    this._historyTableId = null;
-    this._historyTournamentId = null;
-    this._historyHandNumber = null;
+    this._historyKind = undefined;
+    this._historyTableId = undefined;
+    this._historyTournamentId = undefined;
+    this._historyHandNumber = undefined;
+  }
+
+  _hasHistoryRoute() {
+    return !!this._historyKind && !!this._historyTableId;
+  }
+
+  _historyApiBase() {
+    return this._hasHistoryRoute() ? this._getHistoryApiBase() : undefined;
+  }
+
+  _assertHistoryRouteState() {
+    if (!this._historyKind || !this._historyTableId) {
+      throw new Error("Expected active history route state");
+    }
   }
 
   _getHistoryApiBase() {
+    this._assertHistoryRouteState();
     return getHistoryApiBase(
       this._historyKind,
       this._historyTableId,
@@ -334,7 +349,8 @@ class App extends LitElement {
     );
   }
 
-  _getHistoryPath(handNumber = null) {
+  _getHistoryPath(handNumber = undefined) {
+    this._assertHistoryRouteState();
     return getHistoryPath(
       this._historyKind,
       this._historyTableId,
@@ -344,6 +360,7 @@ class App extends LitElement {
   }
 
   _getLivePathFromHistory() {
+    this._assertHistoryRouteState();
     return getLivePathFromHistory(
       this._historyKind,
       this._historyTableId,
@@ -375,14 +392,7 @@ class App extends LitElement {
 
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
-      const { liveRoute, historyRoute, playerProfileId } = parseAppPath(
-        this.path,
-      );
-      if (!isConnectableLiveRoute(liveRoute)) {
-        this.socialAction = null;
-      }
-      syncAppHistoryState(this, historyRoute);
-      this._playerProfileId = playerProfileId;
+      syncAppRouteState(this, parseAppPath(this.path));
     }
   }
 
@@ -396,10 +406,11 @@ class App extends LitElement {
   }
 
   _redirectToLatestHandIfNeeded() {
+    if (!this._hasHistoryRoute()) return;
     if (this._historyListTask.status !== TaskStatus.COMPLETE) return;
     const hands = this._historyListTask.value?.hands || [];
     if (
-      this._historyHandNumber === null &&
+      this._historyHandNumber === undefined &&
       hands.length > 0 &&
       this.path === this._getHistoryPath()
     ) {
@@ -459,49 +470,41 @@ class App extends LitElement {
     this._maybePromptTournamentSignUp();
   }
 
-  _resolveShellContent(currentPath, liveRoute, playerProfileId) {
-    if (playerProfileId) return renderPlayerProfileView(this);
-    if (liveRoute?.kind === "mtt") return renderMttLobbyView(this);
-    if (currentPath === "/mtt") return renderTournamentsView(this);
-    if (currentPath === "/release-notes") return renderReleaseNotesView();
-    return renderHomeView();
-  }
-
-  _isTableRoute(liveRoute) {
-    const tableKinds = ["cash", "sitngo", "mtt_table"];
-    return liveRoute != null && tableKinds.includes(liveRoute.kind);
-  }
-
-  _renderParsedPath(currentPath, liveRoute, historyRoute, playerProfileId) {
-    if (historyRoute) return renderHistoryView(this, historyRoute);
-    if (this._isTableRoute(liveRoute)) return renderGameView(this, liveRoute);
-    const shellContent = this._resolveShellContent(
-      currentPath,
-      liveRoute,
-      playerProfileId,
-    );
+  _renderShellPage(route) {
+    const shellViews = {
+      home: () => renderHomeView(),
+      mtt_lobby: () => renderMttLobbyView(this),
+      player_profile: () => renderPlayerProfileView(this),
+      release_notes: () => renderReleaseNotesView(),
+      tournaments: () => renderTournamentsView(this),
+    };
+    const shellContent = (shellViews[route.page] ?? shellViews.home)();
     return renderShellView(this, shellContent, {
-      navigationRenderer: liveRoute?.kind === "mtt" ? () => "" : undefined,
+      navigationRenderer: route.page === "mtt_lobby" ? () => "" : undefined,
     });
+  }
+
+  _renderRoute(route) {
+    if (route.page === "history") {
+      return renderHistoryView(this, route.historyRoute);
+    }
+    if (route.page === "game" && isTableLiveRoute(route.liveRoute)) {
+      return renderGameView(this, route.liveRoute);
+    }
+    return this._renderShellPage(route);
   }
 
   render() {
     const currentPath = this._getHomeRedirectPath() || this.path;
-    const { liveRoute, historyRoute, playerProfileId, resourcePath } =
-      parseAppPath(currentPath);
+    const route = parseAppPath(currentPath);
 
-    ws.manageConnection(this, resourcePath);
+    ws.manageConnection(this, route.resourcePath);
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);
     }
 
-    return this._renderParsedPath(
-      currentPath,
-      liveRoute,
-      historyRoute,
-      playerProfileId,
-    );
+    return this._renderRoute(route);
   }
 }
 

@@ -31,11 +31,11 @@ export function setMttLobbyOverride(app, allowMttLobby) {
 
 /**
  * @param {any} app
- * @param {{ kind: string }|null} liveRoute
+ * @param {{ kind: string }} liveRoute
  * @returns {boolean}
  */
 function shouldStayOnMttLobby(app, liveRoute) {
-  return liveRoute?.kind === "mtt" && app._allowMttLobby;
+  return liveRoute.kind === "mtt" && app._allowMttLobby;
 }
 
 /**
@@ -50,30 +50,42 @@ function shouldRedirectToTable(liveRoute, nextTableId) {
 }
 
 /**
+ * @param {ReturnType<typeof parseAppPath>["liveRoute"]} liveRoute
+ * @returns {liveRoute is { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string }}
+ */
+function isMttLiveRoute(liveRoute) {
+  return liveRoute?.kind === "mtt" || liveRoute?.kind === "mtt_table";
+}
+
+/**
+ * @param {any} app
+ * @returns {boolean}
+ */
+function hasLoadedMttRouteState(app) {
+  return !!app._mttTournamentId && !!app._mttView;
+}
+
+/**
  * Resolves the MTT redirect path if the player should be moved
  * @param {any} app
- * @param {{ kind: string, tableId?: string, tournamentId?: string }|null} liveRoute
- * @returns {string|null}
+ * @param {{ kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string }} liveRoute
+ * @returns {string|undefined}
  */
 export function resolveMttRedirectPath(app, liveRoute) {
-  if (!liveRoute || !app._mttTournamentId || !app._mttView) {
-    return null;
-  }
-
   const nextTableId = app._mttView.currentPlayer?.tableId;
   if (app._mttView.status !== "running" || !nextTableId) {
-    return null;
+    return;
   }
 
   if (shouldStayOnMttLobby(app, liveRoute)) {
-    return null;
+    return;
   }
 
   if (shouldRedirectToTable(liveRoute, nextTableId)) {
     return getTablePath("mtt", nextTableId, app._mttTournamentId);
   }
 
-  return null;
+  return;
 }
 
 /**
@@ -82,10 +94,12 @@ export function resolveMttRedirectPath(app, liveRoute) {
  */
 export function maybeRedirectMttRoute(app) {
   const { liveRoute } = parseAppPath(app.path);
+  if (!isMttLiveRoute(liveRoute) || !hasLoadedMttRouteState(app)) return;
+
   const nextPath = resolveMttRedirectPath(app, liveRoute);
   if (!nextPath || nextPath === app.path) return;
 
-  if (liveRoute?.kind === "mtt_table") {
+  if (liveRoute.kind === "mtt_table") {
     const tableName =
       app._mttView?.tables.find(
         (table) => table.tableId === app._mttView?.currentPlayer?.tableId,

@@ -273,7 +273,7 @@ export function handleGameNotFound(app) {
 /**
  * Manages WebSocket connection based on current path
  * @param {any} app
- * @param {string|null} path
+ * @param {string|undefined} path
  */
 export function manageConnection(app, path) {
   if (path) {
