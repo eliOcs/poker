@@ -126,6 +126,7 @@ describe("mtt recovery", () => {
     assert.equal(view.name, "Recovered MTT");
     assert.equal(view.buyIn, 500);
     assert.equal(view.currentPlayer.status, "eliminated");
+    assert.equal(view.currentPlayer.tableId, "table123");
     assert.equal(view.currentPlayer.finishPosition, 2);
     assert.deepEqual(view.actions, {
       canRegister: false,
@@ -144,8 +145,10 @@ describe("mtt recovery", () => {
       },
     ]);
     assert.equal(view.standings[0].playerId, "p1");
+    assert.equal(view.standings[0].tableId, "table123");
     assert.equal(view.standings[0].netWinnings, 500);
     assert.equal(view.standings[1].playerId, "p2");
+    assert.equal(view.standings[1].tableId, "table123");
     assert.equal(view.standings[1].netWinnings, -500);
     assert.ok(manager.getTournament("mtt123"));
 

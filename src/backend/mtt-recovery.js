@@ -157,29 +157,48 @@ function recoverTableSize(summary, tables) {
 
 /**
  * @param {RecoveredTable[]} tables
- * @returns {string|null}
+ * @returns {Map<string, RecoveredTable>}
  */
-function findLatestTableId(tables) {
-  return (
-    tables
-      .slice()
-      .sort((a, b) => b.lastPlayedAt.localeCompare(a.lastPlayedAt))[0]
-      ?.tableId ?? null
-  );
+function buildTableById(tables) {
+  return new Map(tables.map((table) => [table.tableId, table]));
+}
+
+/**
+ * @param {string} tournamentId
+ * @param {string} playerId
+ * @param {Map<string, RecoveredTable>} tableById
+ * @returns {RecoveredTable|null}
+ */
+function findPlayerLatestTable(tournamentId, playerId, tableById) {
+  try {
+    const latestLink = Store.listPlayerTablesForTournament(
+      playerId,
+      tournamentId,
+    ).find((link) => tableById.has(link.tableId));
+    return latestLink ? tableById.get(latestLink.tableId) || null : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * @param {OTSSummary} summary
  * @param {RecoveredTable[]} tables
+ * @param {string} tournamentId
  * @returns {TournamentEntrant[]}
  */
-function recoverEntrants(summary, tables) {
-  const winnerTableId = findLatestTableId(tables);
+function recoverEntrants(summary, tables, tournamentId) {
+  const tableById = buildTableById(tables);
   return summary.tournament_finishes_and_winnings
     .slice()
     .sort((a, b) => a.finish_position - b.finish_position)
     .map((finish, index) => {
       const isWinner = finish.finish_position === 1;
+      const latestTable = findPlayerLatestTable(
+        tournamentId,
+        finish.player_name,
+        tableById,
+      );
       return {
         playerId: finish.player_name,
         name: getPlayerName(finish.player_name),
@@ -187,10 +206,10 @@ function recoverEntrants(summary, tables) {
         stack: isWinner
           ? toCents(summary.initial_stack || 0) * (summary.player_count || 1)
           : 0,
-        tableId: isWinner ? winnerTableId : null,
+        tableId: latestTable?.tableId ?? null,
         seatIndex: null,
         finishPosition: finish.finish_position,
-        handsPlayed: 0,
+        handsPlayed: latestTable?.handNumber ?? 0,
         registrationOrder: index,
         registeredAt: summary.start_date_utc,
         eliminatedAt: isWinner ? null : summary.end_date_utc,
@@ -227,7 +246,7 @@ export function recoverFinishedMttFromSummary(tournamentId) {
   if (!summary || summary.type !== "MTT") return null;
 
   const tables = recoverTables(tournamentId);
-  const entrants = recoverEntrants(summary, tables);
+  const entrants = recoverEntrants(summary, tables, tournamentId);
   return {
     id: tournamentId,
     name: summary.tournament_name || tournamentId,
