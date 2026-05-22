@@ -185,6 +185,82 @@ describe("mtt-manager", () => {
     assert.equal(tournament.onBreak, true);
   });
 
+  it("starts pending breaks on tick for a single-table tournament", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+    ctx.manager.startTournament(tournamentId, "owner");
+
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const table = ctx.games.get(tournament.tables[0].tableId);
+    assert.ok(table);
+
+    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+    table.hand.phase = "turn";
+
+    ctx.manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.pendingBreak, true);
+    assert.equal(tournament.onBreak, false);
+    assert.equal(tournament.levelTicks, 0);
+
+    table.hand.phase = "waiting";
+
+    ctx.manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.pendingBreak, false);
+    assert.equal(tournament.onBreak, true);
+    assert.equal(tournament.levelTicks, 0);
+    assert.equal(tournament.breakTicks, 0);
+  });
+
+  it("starts pending breaks on tick once all tables are between hands", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (const id of ["p2", "p3", "p4", "p5", "p6", "p7"]) {
+      ctx.manager.registerPlayer(
+        tournamentId,
+        createUser(id, id.toUpperCase()),
+      );
+    }
+    ctx.manager.startTournament(tournamentId, "owner");
+
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const firstTable = ctx.games.get(tournament.tables[0].tableId);
+    const secondTable = ctx.games.get(tournament.tables[1].tableId);
+    assert.ok(firstTable);
+    assert.ok(secondTable);
+
+    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+    firstTable.hand.phase = "turn";
+    secondTable.hand.phase = "waiting";
+
+    ctx.manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.pendingBreak, true);
+    assert.equal(tournament.onBreak, false);
+    assert.equal(tournament.levelTicks, 0);
+
+    firstTable.hand.phase = "waiting";
+
+    ctx.manager.tickTournament(tournamentId);
+
+    assert.equal(tournament.pendingBreak, false);
+    assert.equal(tournament.onBreak, true);
+    assert.equal(tournament.levelTicks, 0);
+    assert.equal(tournament.breakTicks, 0);
+  });
+
   it("restarts waiting-table countdowns when a break ends", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner", "Owner"),

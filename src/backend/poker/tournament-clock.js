@@ -62,6 +62,17 @@ function tickBreak(clock) {
  */
 function tickLevel(clock, canStartBreak) {
   const result = emptyResult();
+
+  if (clock.pendingBreak) {
+    if (canStartBreak) {
+      clock.onBreak = true;
+      clock.breakTicks = 0;
+      clock.pendingBreak = false;
+      result.breakStarted = true;
+    }
+    return result;
+  }
+
   clock.levelTicks += 1;
 
   if (clock.levelTicks < Tournament.LEVEL_DURATION_TICKS) {
