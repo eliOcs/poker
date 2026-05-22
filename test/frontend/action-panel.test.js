@@ -169,6 +169,51 @@ describe("phg-action-panel", () => {
       expect(callButton.textContent).to.include("$25"); // $25 from 2500 cents
     });
 
+    it("renders standalone All-In alongside Call when full raise is unavailable", async () => {
+      element.game = createMockGameState({
+        hand: {
+          phase: "turn",
+          pot: 300000,
+          currentBet: 300000,
+          actingSeat: 0,
+        },
+        board: { cards: ["9c", "8s", "5h", "4s"] },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            stack: 595000,
+            bet: 0,
+            actions: [
+              { action: "call", amount: 300000 },
+              { action: "allIn", amount: 595000 },
+              { action: "fold" },
+            ],
+          },
+          {
+            ...mockOpponentSeat,
+            stack: 797500,
+            bet: 300000,
+          },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      const callButton = findButtonByText(actionPanel.shadowRoot, "Call");
+      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
+
+      expect(callButton).to.exist;
+      expect(callButton.textContent).to.include("$3,000");
+      expect(allInButton).to.exist;
+      expect(allInButton.textContent).to.include("$5,950");
+    });
+
     it("renders Fold button", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;

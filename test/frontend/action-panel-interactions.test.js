@@ -226,6 +226,50 @@ describe("phg-action-panel", () => {
       expect(sentMessage.seat).to.be.a("number");
     });
 
+    it("calls send() with allIn action when standalone All-In is clicked", async () => {
+      element.game = createMockGameState({
+        hand: {
+          phase: "turn",
+          pot: 300000,
+          currentBet: 300000,
+          actingSeat: 0,
+        },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            stack: 595000,
+            bet: 0,
+            actions: [
+              { action: "call", amount: 300000 },
+              { action: "allIn", amount: 595000 },
+              { action: "fold" },
+            ],
+          },
+          { ...mockOpponentSeat, bet: 300000 },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      let sentMessage = null;
+      element.addEventListener("game-action", (e) => {
+        sentMessage = e.detail;
+      });
+
+      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
+      allInButton.click();
+
+      expect(sentMessage).to.exist;
+      expect(sentMessage.action).to.equal("allIn");
+      expect(sentMessage.seat).to.be.a("number");
+    });
+
     it("updates betAmount when slider changed", async () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;

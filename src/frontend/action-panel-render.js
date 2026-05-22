@@ -255,6 +255,19 @@ function renderSimpleActions(panel, actionMap) {
       >`,
     );
   }
+  if (actionMap.allIn && !actionMap.call?.allIn) {
+    buttons.push(
+      html`<phg-button
+        variant="primary"
+        full-width
+        @click=${() =>
+          panel.sendAction({ action: "allIn", seat: panel.seatIndex })}
+        ><span class="stacked"
+          >All-In ${formatCurrency(actionMap.allIn.amount)}</span
+        ></phg-button
+      >`,
+    );
+  }
   return buttons.length > 0
     ? html`<div class="action-row game-action-row">${buttons}</div>`
     : null;
