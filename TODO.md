@@ -1,8 +1,11 @@
 # To do
 
+- History down panel allow resize
+- History new tab
 - Late Registration
 - Rebuy option: (1 rebuy)
 - Bounty option: (+10% buyin)
+- Show owner name in tournament lobby
 - graph of the evolution
 - background on pot numbers
 - allow sit in in the middle of the hand
