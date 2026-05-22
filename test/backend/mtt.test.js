@@ -2,6 +2,7 @@ import { beforeEach, afterEach, describe, it } from "node:test";
 import assert from "node:assert";
 import * as Tournament from "../../src/shared/tournament.js";
 import {
+  FINAL_TABLE_NAME,
   createUser,
   countActivePlayers,
   createMttContext,
@@ -91,6 +92,26 @@ describe("mtt-manager", () => {
     assert.throws(() => {
       ctx.manager.startTournament(tournamentId, "p2");
     }, /only the tournament owner can start/);
+  });
+
+  it("names a single starting table as the final table", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+
+    const view = ctx.manager.startTournament(tournamentId, "owner");
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const table = tournament.tables[0];
+    const game = ctx.games.get(table.tableId);
+
+    assert.equal(view.tables.length, 1);
+    assert.equal(view.tables[0].tableName, FINAL_TABLE_NAME);
+    assert.equal(table.tableName, FINAL_TABLE_NAME);
+    assert.equal(game.tableName, FINAL_TABLE_NAME);
   });
 
   it("creates balanced tables and propagates global blind levels", () => {

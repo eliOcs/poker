@@ -1,5 +1,8 @@
 import * as Betting from "./betting.js";
-import { countPlayersWithChips } from "./actions.js";
+import {
+  countAlivePlayersWithChips,
+  countPlayersWithChips,
+} from "./actions.js";
 import { isClockCallable, CLOCK_DURATION_TICKS } from "./game-tick.js";
 import * as TournamentTick from "./tournament-tick.js";
 import HandRankings from "./hand-rankings.js";
@@ -404,9 +407,6 @@ function calculateHandRank(holeCards, boardCards) {
  * @returns {PlayerAction[]}
  */
 function getSittingOutActions(seat, game, isTournament, showActions) {
-  if (isTournamentSeatLocked(game)) {
-    return showActions;
-  }
   // Cash game player who sat but hasn't bought in yet
   if (!isTournament && seat.stack === 0) {
     return [
@@ -448,10 +448,13 @@ function getEmptyStackWaitingActions(game, isTournament, showActions) {
  * @returns {boolean}
  */
 function canStartWaitingHand(game) {
+  const playersWithChips = game.tournament?.active
+    ? countAlivePlayersWithChips(game)
+    : countPlayersWithChips(game);
   return (
     game.tournament?.kind !== "mtt" &&
     game.countdown === null &&
-    countPlayersWithChips(game) >= 2 &&
+    playersWithChips >= 2 &&
     !game.tournament?.onBreak
   );
 }
@@ -664,7 +667,7 @@ function addFoldedActions(game, seat, actions) {
 }
 
 function getNotActingActions(game, seat, actions) {
-  if (seat.sittingOut && game.tournament?.kind !== "mtt") {
+  if (seat.sittingOut) {
     const cost = seat.missedBigBlind
       ? Math.min(game.blinds.big, seat.stack)
       : 0;

@@ -1,6 +1,8 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import playerView from "../../../src/backend/poker/player-view.js";
+import * as Game from "../../../src/backend/poker/game.js";
+import * as Seat from "../../../src/backend/poker/seat.js";
 import { createHeadsUpGame } from "./test-helpers.js";
 
 describe("disconnection handling", () => {
@@ -65,12 +67,7 @@ describe("disconnection handling", () => {
       game.seats[0].disconnected = true;
       game.seats[2].disconnected = false;
 
-      // Simulate what sitOutDisconnectedPlayers does
-      for (const seat of game.seats) {
-        if (!seat.empty && seat.disconnected && !seat.sittingOut) {
-          seat.sittingOut = true;
-        }
-      }
+      Game.sitOutDisconnectedPlayers(game);
 
       assert.equal(game.seats[0].sittingOut, true);
       assert.equal(game.seats[2].sittingOut, false);
@@ -80,12 +77,7 @@ describe("disconnection handling", () => {
       game.seats[0].disconnected = true;
       game.seats[0].sittingOut = true;
 
-      // Simulate what sitOutDisconnectedPlayers does
-      for (const seat of game.seats) {
-        if (!seat.empty && seat.disconnected && !seat.sittingOut) {
-          seat.sittingOut = true;
-        }
-      }
+      Game.sitOutDisconnectedPlayers(game);
 
       assert.equal(game.seats[0].sittingOut, true);
     });
@@ -94,15 +86,37 @@ describe("disconnection handling", () => {
       game.seats[0].disconnected = false;
       game.seats[2].disconnected = false;
 
-      // Simulate what sitOutDisconnectedPlayers does
-      for (const seat of game.seats) {
-        if (!seat.empty && seat.disconnected && !seat.sittingOut) {
-          seat.sittingOut = true;
-        }
-      }
+      Game.sitOutDisconnectedPlayers(game);
 
       assert.equal(game.seats[0].sittingOut, false);
       assert.equal(game.seats[2].sittingOut, false);
+    });
+
+    it("should sit out disconnected MTT players", () => {
+      const mttGame = Game.createMttTable({
+        tournamentId: "mtt-1",
+        tableName: "Table 1",
+        startTime: "2026-05-22T20:00:00.000Z",
+      });
+      mttGame.seats[0] = Seat.occupied({ id: "player1" }, 1000);
+      mttGame.seats[1] = Seat.occupied({ id: "player2" }, 1000);
+      mttGame.seats[0].disconnected = true;
+
+      Game.sitOutDisconnectedPlayers(mttGame);
+
+      assert.equal(mttGame.seats[0].sittingOut, true);
+      assert.equal(mttGame.seats[1].sittingOut, false);
+    });
+
+    it("should not finish a tournament while a sitting out player still has chips", () => {
+      const tournamentGame = Game.createTournament();
+      tournamentGame.seats[0] = Seat.occupied({ id: "player1" }, 1000);
+      tournamentGame.seats[1] = Seat.occupied({ id: "player2" }, 1000, true);
+
+      Game.autoStartNextHand(tournamentGame);
+
+      assert.equal(tournamentGame.tournament.winner, null);
+      assert.equal(tournamentGame.countdown, 5);
     });
   });
 });

@@ -53,14 +53,14 @@ function countBlindEligiblePlayers(game) {
  */
 export function getSmallBlindSeat(game) {
   const blindEligiblePlayers = countBlindEligiblePlayers(game);
+  const predicate = getBlindPredicate(game);
 
   // Heads-up: button is small blind.
   if (blindEligiblePlayers === 2) {
-    return findIndex(game.seats, Seat.isActive, game.button);
+    return findIndex(game.seats, predicate, game.button);
   }
 
   // Normal: first eligible player after button (includes sitting out in tournaments)
-  const predicate = getBlindPredicate(game);
   return findIndex(game.seats, predicate, nextIndex(game.seats, game.button));
 }
 
@@ -73,7 +73,9 @@ export function getBigBlindSeat(game) {
   const smallBlind = getSmallBlindSeat(game);
   const blindEligiblePlayers = countBlindEligiblePlayers(game);
   const predicate =
-    blindEligiblePlayers === 2 ? Seat.isActive : getBlindPredicate(game);
+    blindEligiblePlayers === 2 && !game.tournament?.active
+      ? Seat.isActive
+      : getBlindPredicate(game);
   return findIndex(game.seats, predicate, nextIndex(game.seats, smallBlind));
 }
 

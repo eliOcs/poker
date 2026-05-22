@@ -51,11 +51,7 @@ export function getContendingEntrants(tournament, games) {
       return false;
     }
     const seatContext = getEntrantSeatContext(games, entrant);
-    return (
-      seatContext !== null &&
-      seatContext.seat.stack > 0 &&
-      !seatContext.seat.sittingOut
-    );
+    return seatContext !== null && seatContext.seat.stack > 0;
   });
 }
 

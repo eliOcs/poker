@@ -134,7 +134,7 @@ describe("mtt-manager table collapse", () => {
     assert.equal(countActivePlayers(finalTable), 2);
   });
 
-  it("matches sitngo disconnect behavior when only one contender remains", () => {
+  it("keeps chip-positive MTT entrants alive even if their seat is sitting out", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner", "Owner"),
       buyIn: 500,
@@ -167,17 +167,15 @@ describe("mtt-manager table collapse", () => {
     ctx.manager.handleHandFinalized(mainTable);
 
     const winner = tournament.entrants.get("owner");
-    const disconnected = tournament.entrants.get(disconnectedSeat.player.id);
+    const disconnected = tournament.entrants.get("p3");
     const busted = tournament.entrants.get(bustedSeat.player.id);
-    assert.equal(tournament.status, "finished");
-    assert.equal(winner?.status, "winner");
-    assert.equal(winner?.finishPosition, 1);
-    assert.equal(disconnected?.status, "eliminated");
-    assert.equal(disconnected?.finishPosition, 2);
-    assert.equal(disconnected?.stack, 0);
+    assert.equal(tournament.status, "running");
+    assert.equal(winner?.status, "seated");
+    assert.equal(winner?.finishPosition, null);
+    assert.equal(disconnected?.status, "seated");
+    assert.equal(disconnected?.finishPosition, null);
+    assert.equal(disconnected?.stack, disconnectedSeat.stack);
     assert.equal(busted?.finishPosition, 3);
-    assert.equal(sideTable.tournament?.winner, null);
-    assert.equal(mainTable.tournament?.winner, winner?.seatIndex);
   });
 
   it("empties busted MTT seats while preserving the player's finish position", () => {

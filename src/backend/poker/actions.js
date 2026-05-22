@@ -35,6 +35,15 @@ export function countPlayersWithChips(game) {
 }
 
 /**
+ * Counts players with chips who are still alive in the game.
+ * @param {Game} game
+ * @returns {number}
+ */
+export function countAlivePlayersWithChips(game) {
+  return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
+}
+
+/**
  * Starts countdown to begin a new hand
  * @param {Game} game
  */
@@ -446,7 +455,10 @@ export function allIn(game, { seat }) {
  * @param {Game} game
  */
 export function startHand(game) {
-  if (countPlayersWithChips(game) < 2) {
+  const playersWithChips = game.tournament?.active
+    ? countAlivePlayersWithChips(game)
+    : countPlayersWithChips(game);
+  if (playersWithChips < 2) {
     throw new Error("need at least 2 players with chips to start a hand");
   }
 
@@ -558,9 +570,6 @@ function applyPendingSitOuts(game) {
  * @param {{ seat: number }} options
  */
 export function sitOut(game, { seat }) {
-  if (game.tournament?.kind === "mtt") {
-    throw new Error("sit out is not available during multi-table tournaments");
-  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
@@ -586,9 +595,6 @@ export function sitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function cancelSitOut(game, { seat }) {
-  if (game.tournament?.kind === "mtt") {
-    throw new Error("sit out is not available during multi-table tournaments");
-  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {
@@ -607,10 +613,9 @@ export function cancelSitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function sitIn(game, { seat }) {
-  assertTableEntryOpen(
-    game,
-    "sit in is not available during multi-table tournaments",
-  );
+  if (game.tournament?.kind === "sitngo" && game.tournament.winner !== null) {
+    throw new Error("tournament is finished");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {

@@ -37,12 +37,22 @@ export function finalizePendingHandHistory(game) {
 
 /**
  * @param {Game} game
+ * @returns {number}
+ */
+function countPlayersAliveForNextHand(game) {
+  return game.tournament?.active
+    ? Actions.countAlivePlayersWithChips(game)
+    : Actions.countPlayersWithChips(game);
+}
+
+/**
+ * @param {Game} game
  * @returns {FinalizedHand | null}
  */
 export function autoStartNextHand(game) {
   sitOutDisconnectedPlayers(game);
 
-  const playersWithChips = Actions.countPlayersWithChips(game);
+  const playersWithChips = countPlayersAliveForNextHand(game);
   if (
     game.tournament?.kind === "sitngo" &&
     game.tournament.winner === null &&

@@ -7,6 +7,7 @@ import { RateLimitError } from "./rate-limit.js";
 import { matchLiveRoute } from "../shared/routes.js";
 import {
   markPlayerConnected,
+  markTournamentPlayerConnected,
   handlePlayerDisconnected,
   sendInitialTournamentPayload,
   sendInitialGameView,
@@ -251,6 +252,13 @@ function createConnectionHandler({
     const player = Player.fromUser(user);
     if (game && gameId) {
       markPlayerConnected(game, player, gameId, broadcastGameStateMessage);
+    } else if (tournamentId) {
+      markTournamentPlayerConnected(
+        games,
+        tournamentId,
+        player,
+        broadcastGameStateMessage,
+      );
     }
 
     ws.on("close", () => {

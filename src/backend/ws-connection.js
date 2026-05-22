@@ -33,8 +33,42 @@ export function markPlayerConnected(
 }
 
 /**
+ * Marks the player as connected at any live table in the tournament.
+ * @param {WebSocketServerParams["games"]} games
+ * @param {string} tournamentId
+ * @param {import("./poker/seat.js").Player} player
+ * @param {WebSocketServerParams["broadcastGameStateMessage"]} broadcastGameStateMessage
+ */
+export function markTournamentPlayerConnected(
+  games,
+  tournamentId,
+  player,
+  broadcastGameStateMessage,
+) {
+  for (const game of games.values()) {
+    if (game.kind !== "mtt" || game.tournamentId !== tournamentId) continue;
+    markPlayerConnected(game, player, game.id, broadcastGameStateMessage);
+  }
+}
+
+/**
+ * @param {{ user: UserType, gameId: string|null, tournamentId?: string|null }} activeConn
+ * @param {{ gameId: string|null, tournamentId?: string|null, user: UserType }} closedConn
+ * @param {Game} closedGame
+ * @returns {boolean}
+ */
+function isSamePlayerPresence(activeConn, closedConn, closedGame) {
+  if (activeConn.user.id !== closedConn.user.id) return false;
+  if (activeConn.gameId === closedConn.gameId) return true;
+  return (
+    closedGame.kind === "mtt" &&
+    activeConn.tournamentId === closedGame.tournamentId
+  );
+}
+
+/**
  * Handles the disconnection of a player from a game seat.
- * @param {{ gameId: string|null, user: UserType }} conn
+ * @param {{ gameId: string|null, tournamentId?: string|null, user: UserType }} conn
  * @param {WebSocketServerParams["games"]} games
  * @param {WebSocketServerParams["clientConnections"]} clientConnections
  * @param {WebSocketServerParams["broadcastGameMessage"]} broadcastGameMessage
@@ -56,8 +90,7 @@ export function handlePlayerDisconnected(
   for (const [ws, activeConn] of clientConnections) {
     if (
       ws.readyState === 1 &&
-      activeConn.gameId === conn.gameId &&
-      activeConn.user.id === conn.user.id
+      isSamePlayerPresence(activeConn, conn, closedGame)
     ) {
       return;
     }

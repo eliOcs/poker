@@ -181,6 +181,23 @@ describe("tournament blinds", function () {
     );
   });
 
+  it("should charge heads-up blinds when one player is sitting out with chips", function () {
+    game.seats[1].sittingOut = true;
+    game.seats[1].stack = 0;
+    game.seats[2].sittingOut = true;
+    game.seats[2].stack = 0;
+    game.seats[4].sittingOut = true;
+    game.button = 0;
+
+    const stackBefore = game.seats[4].stack;
+
+    drainGenerator(blinds(game));
+
+    assert.equal(game.seats[0].bet, game.blinds.small);
+    assert.equal(game.seats[4].bet, game.blinds.big);
+    assert.equal(game.seats[4].stack, stackBefore - game.blinds.big);
+  });
+
   it("should still charge blinds to sitting out players with chips when only 2 players are active", function () {
     // Active players: 0 and 2
     // Sitting out with chips: 1 and 4

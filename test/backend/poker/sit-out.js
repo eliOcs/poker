@@ -198,6 +198,12 @@ describe("sit out", () => {
       game.seats[0].stack = 0;
       assert.equal(Actions.countPlayersWithChips(game), 2);
     });
+
+    it("should count sitting out players as alive while they have chips", () => {
+      game.seats[0].sittingOut = true;
+
+      assert.equal(Actions.countAlivePlayersWithChips(game), 3);
+    });
   });
 
   describe("moveButton", () => {

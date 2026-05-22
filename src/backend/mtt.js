@@ -305,7 +305,9 @@ export function createMttManager({
     let entrantIndex = 0;
 
     tableSizes.forEach((tableSize, index) => {
-      const { game } = createManagedTable(tournament, `Table ${index + 1}`);
+      const tableName =
+        tableSizes.length === 1 ? FINAL_TABLE_NAME : `Table ${index + 1}`;
+      const { game } = createManagedTable(tournament, tableName);
       createdTableIds.push(game.id);
 
       for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
@@ -343,7 +345,7 @@ export function createMttManager({
       entrant.name = occupiedSeat.player.name || entrant.name;
       entrant.handsPlayed = occupiedSeat.handsPlayed;
 
-      if (occupiedSeat.stack > 0 && !occupiedSeat.sittingOut) {
+      if (occupiedSeat.stack > 0) {
         occupiedSeat.bustedPosition = null;
         entrant.status = "seated";
         entrant.stack = occupiedSeat.stack;
