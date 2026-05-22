@@ -225,7 +225,7 @@ describe("player-profile history", function () {
     ]);
   });
 
-  it("groups multi-table tournament history by tournament id and links to the latest table", async function () {
+  it("groups multi-table tournament history by tournament id and uses summary payout", async function () {
     const tableOneHand = createHand(
       "mtttable1",
       1,
@@ -307,19 +307,50 @@ describe("player-profile history", function () {
         lastPlayedAt: tableTwoHand.start_date_utc,
       },
     ]);
+    await writeTournamentSummary("mtt999", {
+      spec_version: "1.1.5",
+      site_name: "Pluton Poker",
+      tournament_number: "mtt999",
+      tournament_name: "Multi-Table Tournament",
+      start_date_utc: "2026-03-10T12:00:00.000Z",
+      end_date_utc: "2026-03-11T12:30:00.000Z",
+      currency: "USD",
+      buyin_amount: 5,
+      fee_amount: 0,
+      initial_stack: 50,
+      type: "MTT",
+      flags: ["MTT"],
+      speed: { type: "normal", round_time: 900 },
+      prize_pool: 10,
+      player_count: 2,
+      tournament_finishes_and_winnings: [
+        {
+          player_name: "player3",
+          finish_position: 1,
+          still_playing: false,
+          prize: 4,
+        },
+        {
+          player_name: "player1",
+          finish_position: 2,
+          still_playing: false,
+          prize: 6,
+        },
+      ],
+    });
 
     const profile = await getPlayerProfile(new Map(), "player1");
 
     assert.ok(profile);
     assert.equal(profile.totalHands, 2);
-    assert.equal(profile.totalNetWinnings, 0);
+    assert.equal(profile.totalNetWinnings, 100);
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "mtttable2",
         tableId: "mtttable2",
         tournamentId: "mtt999",
         gameType: "mtt",
-        netWinnings: 0,
+        netWinnings: 100,
         handsPlayed: 2,
         lastPlayedAt: "2026-03-11T12:00:00.000Z",
         lastHandNumber: 2,

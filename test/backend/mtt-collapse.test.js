@@ -1,5 +1,9 @@
 import { beforeEach, afterEach, describe, it } from "node:test";
 import assert from "node:assert";
+import { rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { setTimeout as delay } from "node:timers/promises";
+import { readTournamentSummary } from "../../src/backend/poker/hand-history/io.js";
 import {
   createUser,
   countActivePlayers,
@@ -8,6 +12,16 @@ import {
   FINAL_TABLE_NAME,
   createMttContext,
 } from "./mtt-test-context.js";
+import { createTempDataDir } from "./temp-data-dir.js";
+
+async function waitForTournamentSummary(tournamentId) {
+  for (let i = 0; i < 20; i += 1) {
+    const summary = await readTournamentSummary(tournamentId);
+    if (summary) return summary;
+    await delay(5);
+  }
+  return null;
+}
 
 describe("mtt-manager table collapse", () => {
   const ctx = createMttContext();
@@ -86,6 +100,62 @@ describe("mtt-manager table collapse", () => {
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
     assert.ok(tournament.tables[2].closedAt);
+  });
+
+  it("writes a tournament summary when an MTT finishes", async () => {
+    const dataDir = await createTempDataDir();
+    process.env.DATA_DIR = dataDir;
+    try {
+      const tournamentId = ctx.manager.createTournament({
+        owner: createUser("owner", "Owner"),
+        buyIn: 500,
+        tableSize: 6,
+      });
+      ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
+      ctx.manager.startTournament(tournamentId, "owner");
+
+      const tournament = ctx.manager.getTournament(tournamentId);
+      assert.ok(tournament);
+      const table = ctx.games.get(tournament.tables[0].tableId);
+      assert.ok(table);
+
+      const bustedSeat =
+        /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+          table.seats[1]
+        );
+      bustedSeat.stack = 0;
+      bustedSeat.sittingOut = true;
+
+      ctx.manager.handleHandFinalized(table);
+
+      const summary = await waitForTournamentSummary(tournamentId);
+      assert.ok(summary);
+      assert.equal(summary.tournament_number, tournamentId);
+      assert.equal(summary.tournament_name, "Multi-Table Tournament");
+      assert.equal(summary.type, "MTT");
+      assert.deepEqual(summary.flags, ["MTT"]);
+      assert.equal(summary.buyin_amount, 5);
+      assert.equal(summary.prize_pool, 10);
+      assert.deepEqual(summary.tournament_finishes_and_winnings, [
+        {
+          player_name: "owner",
+          finish_position: 1,
+          still_playing: false,
+          prize: 10,
+        },
+        {
+          player_name: "p2",
+          finish_position: 2,
+          still_playing: false,
+          prize: 0,
+        },
+      ]);
+    } finally {
+      delete process.env.DATA_DIR;
+      if (existsSync(dataDir)) {
+        await rm(dataDir, { recursive: true });
+      }
+    }
   });
 
   it("retries table collapse on tick when destination was mid-hand during handleHandFinalized", () => {

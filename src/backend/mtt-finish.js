@@ -6,6 +6,8 @@ import {
   compareForcedFinishEntrants,
   getEntrantSeatContext,
 } from "./mtt-seating.js";
+import * as TournamentSummary from "./poker/tournament-summary.js";
+import * as logger from "./logger.js";
 
 /**
  * @param {import('./mtt.js').ManagedTournament} tournament
@@ -74,4 +76,11 @@ export function finishTournament(
     game.countdown = null;
     ensureTableTick(game);
   }
+
+  void TournamentSummary.finalizeManagedTournament(tournament).catch((err) => {
+    logger.error("mtt summary write failed", {
+      tournamentId: tournament.id,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  });
 }

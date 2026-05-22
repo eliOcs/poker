@@ -381,7 +381,11 @@ async function summarizeMttHistory(tournamentLink, playerId) {
       tableId: tournamentLink.lastTableId,
       tournamentId: tournamentLink.tournamentId,
       gameType: "mtt",
-      netWinnings: 0,
+      netWinnings: await calculateTournamentNetResult(
+        tournamentLink.tournamentId,
+        playerId,
+        tournamentLink.lastTableId,
+      ),
       handsPlayed: playerHands.length,
       lastPlayedAt: tournamentLink.lastPlayedAt,
       lastHandNumber: tournamentLink.lastHandNumber,
