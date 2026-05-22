@@ -97,7 +97,7 @@ function buildTables(tournament, games) {
       tableId: table.tableId,
       tableName: table.tableName,
       playerCount: game ? countActivePlayers(game) : 0,
-      handNumber: game?.handNumber ?? 0,
+      handNumber: game?.handNumber ?? table.handNumber ?? 0,
       waiting: game ? isTableWaiting(game) : true,
       closed: table.closedAt !== null,
     };

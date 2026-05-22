@@ -14,6 +14,7 @@ import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
  * @typedef {{ tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableLink
  * @typedef {{ tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentLink
+ * @typedef {{ tableId: Id, lastHandNumber: number, lastPlayedAt: string }} TournamentTableLink
  */
 
 /** @type {DatabaseSync | null} */
@@ -294,6 +295,32 @@ export function listPlayerTablesForTournament(playerId, tournamentId) {
     tournamentId: row.tournament_id
       ? /** @type {Id} */ (row.tournament_id)
       : null,
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  }));
+}
+
+/**
+ * @param {Id} tournamentId
+ * @returns {TournamentTableLink[]}
+ */
+export function listTournamentTables(tournamentId) {
+  if (!db) throw new Error("Store not initialized");
+  if (!tournamentId) return [];
+
+  const stmt = db.prepare(`
+    SELECT
+      table_id,
+      MAX(last_hand_number) AS last_hand_number,
+      MAX(last_played_at) AS last_played_at
+    FROM player_tables
+    WHERE tournament_id = ?
+    GROUP BY table_id
+    ORDER BY last_played_at DESC, table_id DESC
+  `);
+
+  return stmt.all(tournamentId).map((row) => ({
+    tableId: /** @type {Id} */ (row.table_id),
     lastHandNumber: /** @type {number} */ (row.last_hand_number),
     lastPlayedAt: /** @type {string} */ (row.last_played_at),
   }));

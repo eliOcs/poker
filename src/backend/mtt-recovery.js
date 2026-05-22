@@ -1,0 +1,253 @@
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import {
+  getDataDir,
+  readTournamentSummarySync,
+  toCents,
+} from "./poker/hand-history/io.js";
+import * as Store from "./store.js";
+import * as Tournament from "../shared/tournament.js";
+
+/**
+ * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
+ * @typedef {import('./mtt.js').TournamentEntrant} TournamentEntrant
+ * @typedef {import('./mtt.js').ManagedTable} ManagedTable
+ * @typedef {import('./poker/hand-history/index.js').OHHHand} OHHHand
+ * @typedef {import('./poker/tournament-summary.js').OTSSummary} OTSSummary
+ */
+
+/**
+ * @typedef {object} RecoveredTable
+ * @property {string} tableId
+ * @property {string} tableName
+ * @property {number} tableSize
+ * @property {number} handNumber
+ * @property {string} lastPlayedAt
+ */
+
+const EPOCH_ISO = new Date(0).toISOString();
+
+/**
+ * @param {string} playerId
+ * @returns {string}
+ */
+function getPlayerName(playerId) {
+  try {
+    return Store.loadUser(playerId)?.name || playerId;
+  } catch {
+    return playerId;
+  }
+}
+
+/**
+ * @param {OHHHand} hand
+ * @param {string} tableId
+ * @returns {number}
+ */
+function readHandNumber(hand, tableId) {
+  const gameNumber =
+    typeof hand.game_number === "string" ? hand.game_number : `${tableId}-0`;
+  const suffix = gameNumber.slice(`${tableId}-`.length);
+  const parsed = Number.parseInt(suffix, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * @param {string} tableId
+ * @returns {OHHHand[]}
+ */
+function readTableHands(tableId) {
+  const filePath = `${getDataDir()}/${tableId}.ohh`;
+  if (!existsSync(filePath)) return [];
+
+  return readFileSync(filePath, "utf8")
+    .split("\n\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line).ohh)
+    .filter(Boolean);
+}
+
+/**
+ * @param {string} tableId
+ * @returns {RecoveredTable|null}
+ */
+function recoverTable(tableId) {
+  const hands = readTableHands(tableId);
+  if (hands.length === 0) return null;
+
+  const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
+  return {
+    tableId,
+    tableName: lastHand.table_name || tableId,
+    tableSize: lastHand.table_size || Tournament.DEFAULT_SEATS,
+    handNumber: readHandNumber(lastHand, tableId),
+    lastPlayedAt: lastHand.start_date_utc || EPOCH_ISO,
+  };
+}
+
+/**
+ * @param {string} tournamentId
+ * @returns {RecoveredTable[]}
+ */
+function scanTournamentTables(tournamentId) {
+  const dataDir = getDataDir();
+  if (!existsSync(dataDir)) return [];
+
+  /** @type {RecoveredTable[]} */
+  const tables = [];
+  for (const file of readdirSync(dataDir)) {
+    if (!file.endsWith(".ohh")) continue;
+    const tableId = file.slice(0, -4);
+    try {
+      const hands = readTableHands(tableId);
+      if (
+        hands.some(
+          (hand) =>
+            hand.tournament_info?.type === "MTT" &&
+            hand.tournament_info.tournament_number === tournamentId,
+        )
+      ) {
+        const table = recoverTable(tableId);
+        if (table) tables.push(table);
+      }
+    } catch {
+      // Ignore invalid history files while recovering a tournament archive.
+    }
+  }
+  return tables;
+}
+
+/**
+ * @param {string} tournamentId
+ * @returns {RecoveredTable[]}
+ */
+function recoverTables(tournamentId) {
+  try {
+    const tables = Store.listTournamentTables(tournamentId).flatMap((table) => {
+      try {
+        const recoveredTable = recoverTable(table.tableId);
+        return recoveredTable ? [recoveredTable] : [];
+      } catch {
+        return [];
+      }
+    });
+    if (tables.length > 0) {
+      return tables;
+    }
+  } catch {
+    // Fall back to scanning history files when the DB index is unavailable.
+  }
+
+  return scanTournamentTables(tournamentId);
+}
+
+/**
+ * @param {OTSSummary} summary
+ * @param {RecoveredTable[]} tables
+ * @returns {number}
+ */
+function recoverTableSize(summary, tables) {
+  return (
+    tables.reduce((max, table) => Math.max(max, table.tableSize), 0) ||
+    Math.min(
+      summary.player_count || Tournament.DEFAULT_SEATS,
+      Tournament.DEFAULT_SEATS,
+    )
+  );
+}
+
+/**
+ * @param {RecoveredTable[]} tables
+ * @returns {string|null}
+ */
+function findLatestTableId(tables) {
+  return (
+    tables
+      .slice()
+      .sort((a, b) => b.lastPlayedAt.localeCompare(a.lastPlayedAt))[0]
+      ?.tableId ?? null
+  );
+}
+
+/**
+ * @param {OTSSummary} summary
+ * @param {RecoveredTable[]} tables
+ * @returns {TournamentEntrant[]}
+ */
+function recoverEntrants(summary, tables) {
+  const winnerTableId = findLatestTableId(tables);
+  return summary.tournament_finishes_and_winnings
+    .slice()
+    .sort((a, b) => a.finish_position - b.finish_position)
+    .map((finish, index) => {
+      const isWinner = finish.finish_position === 1;
+      return {
+        playerId: finish.player_name,
+        name: getPlayerName(finish.player_name),
+        status: isWinner ? "winner" : "eliminated",
+        stack: isWinner
+          ? toCents(summary.initial_stack || 0) * (summary.player_count || 1)
+          : 0,
+        tableId: isWinner ? winnerTableId : null,
+        seatIndex: null,
+        finishPosition: finish.finish_position,
+        handsPlayed: 0,
+        registrationOrder: index,
+        registeredAt: summary.start_date_utc,
+        eliminatedAt: isWinner ? null : summary.end_date_utc,
+      };
+    });
+}
+
+/**
+ * @param {RecoveredTable[]} tables
+ * @param {string} endedAt
+ * @returns {ManagedTable[]}
+ */
+function recoverManagedTables(tables, endedAt) {
+  return tables
+    .slice()
+    .sort((a, b) => a.lastPlayedAt.localeCompare(b.lastPlayedAt))
+    .map((table, index) => ({
+      tableId: table.tableId,
+      tableName: table.tableName,
+      createdOrder: index,
+      createdAt: table.lastPlayedAt,
+      closedAt: endedAt,
+      handNumber: table.handNumber,
+    }));
+}
+
+/**
+ * Rebuilds a finished MTT from its OTS summary and indexed table histories.
+ * @param {string} tournamentId
+ * @returns {ManagedTournament|null}
+ */
+export function recoverFinishedMttFromSummary(tournamentId) {
+  const summary = readTournamentSummarySync(tournamentId);
+  if (!summary || summary.type !== "MTT") return null;
+
+  const tables = recoverTables(tournamentId);
+  const entrants = recoverEntrants(summary, tables);
+  return {
+    id: tournamentId,
+    name: summary.tournament_name || tournamentId,
+    status: "finished",
+    ownerId: "unknown",
+    buyIn: toCents(summary.buyin_amount || 0),
+    tableSize: recoverTableSize(summary, tables),
+    initialStack: toCents(summary.initial_stack || 0),
+    level: 1,
+    levelTicks: 0,
+    onBreak: false,
+    pendingBreak: false,
+    pendingCollapse: false,
+    breakTicks: 0,
+    createdAt: summary.start_date_utc,
+    startedAt: summary.start_date_utc,
+    endedAt: summary.end_date_utc,
+    entrants: new Map(entrants.map((entrant) => [entrant.playerId, entrant])),
+    tables: recoverManagedTables(tables, summary.end_date_utc),
+    nextRegistrationOrder: entrants.length,
+    tickTimer: null,
+  };
+}

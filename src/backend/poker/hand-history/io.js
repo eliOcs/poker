@@ -1,5 +1,5 @@
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 /**
  * @typedef {import('../types.js').Cents} Cents
@@ -279,6 +279,27 @@ export async function readTournamentSummary(gameId) {
 
   try {
     const content = await readFile(filePath, "utf8");
+    const parsed = JSON.parse(content);
+    return parsed?.ots ? parsed.ots : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Reads a tournament summary from the .ots file synchronously.
+ * @param {Id} gameId
+ * @returns {OTSSummary|null}
+ */
+export function readTournamentSummarySync(gameId) {
+  const filePath = `${getDataDir()}/${gameId}.ots`;
+
+  if (!existsSync(filePath)) {
+    return null;
+  }
+
+  try {
+    const content = readFileSync(filePath, "utf8");
     const parsed = JSON.parse(content);
     return parsed?.ots ? parsed.ots : null;
   } catch {

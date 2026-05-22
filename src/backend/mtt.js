@@ -20,6 +20,7 @@ import {
   canStartPendingBreak,
 } from "./mtt-table-state.js";
 import { finishTournament } from "./mtt-finish.js";
+import { recoverFinishedMttFromSummary } from "./mtt-recovery.js";
 import { buildTournamentView } from "./mtt-view.js";
 import {
   seatEntrantAtTable,
@@ -56,6 +57,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {number} createdOrder
  * @property {string} createdAt
  * @property {string|null} closedAt
+ * @property {number} [handNumber]
  *
  * @typedef {object} ManagedTournament
  * @property {string} id
@@ -168,6 +170,23 @@ export function createMttManager({
       throw new Error("tournament not found");
     }
     return tournament;
+  }
+
+  /**
+   * @param {string} tournamentId
+   * @returns {ManagedTournament}
+   */
+  function requireTournamentViewState(tournamentId) {
+    const tournament = tournaments.get(tournamentId);
+    if (tournament) return tournament;
+
+    const recoveredTournament = recoverFinishedMttFromSummary(tournamentId);
+    if (!recoveredTournament) {
+      throw new Error("tournament not found");
+    }
+
+    tournaments.set(tournamentId, recoveredTournament);
+    return recoveredTournament;
   }
 
   /**
@@ -647,7 +666,7 @@ export function createMttManager({
      * @returns {ManagedTournamentView}
      */
     getTournamentView(tournamentId, playerId) {
-      const tournament = requireTournament(tournamentId);
+      const tournament = requireTournamentViewState(tournamentId);
       return buildTournamentView(tournament, games, playerId);
     },
 
