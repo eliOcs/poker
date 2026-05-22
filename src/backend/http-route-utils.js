@@ -18,6 +18,7 @@ import { getSessionPlayerLogContext } from "./logger.js";
 
 const USER_CREATION_LIMIT_MAX_ACTIONS = 10;
 const USER_CREATION_BLOCK_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+const SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 const userCreationRateLimiter = createRateLimiter({
   maxActions: USER_CREATION_LIMIT_MAX_ACTIONS,
   blockDurationMs: USER_CREATION_BLOCK_DURATION_MS,
@@ -58,15 +59,23 @@ function createAndPersistUser(res, users) {
   const user = User.create();
   users[user.id] = user;
   Store.saveUser(user);
+  setSessionCookie(res, user.id);
+  return user;
+}
+
+/**
+ * @param {Response} res
+ * @param {Id} userId
+ */
+export function setSessionCookie(res, userId) {
   const cookieDomain = process.env.DOMAIN
     ? ` Domain=${process.env.DOMAIN};`
     : "";
   const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
   res.setHeader(
     "Set-Cookie",
-    `phg=${user.id};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
+    `phg=${userId}; Max-Age=${SESSION_COOKIE_MAX_AGE_SECONDS};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
   );
-  return user;
 }
 
 /**
@@ -125,6 +134,7 @@ export function getOrCreateUser(req, res, users, log) {
   const cookieId = cookies.phg ?? "";
   const existingUser = users[cookieId];
   if (existingUser) {
+    setSessionCookie(res, existingUser.id);
     Object.assign(log.context, getSessionPlayerLogContext(existingUser));
     return existingUser;
   }
@@ -132,6 +142,7 @@ export function getOrCreateUser(req, res, users, log) {
   const loadedUser = Store.loadUser(cookieId);
   if (loadedUser) {
     users[loadedUser.id] = loadedUser;
+    setSessionCookie(res, loadedUser.id);
     Object.assign(log.context, getSessionPlayerLogContext(loadedUser));
     return loadedUser;
   }

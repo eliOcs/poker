@@ -28,7 +28,13 @@ describe("http-routes", () => {
     };
     const users = { [user.id]: user };
     const req = { headers: { cookie: "phg=user-1" } };
-    const res = { setHeader() {} };
+    /** @type {Array<[string, string]>} */
+    const headers = [];
+    const res = {
+      setHeader(name, value) {
+        headers.push([name, value]);
+      },
+    };
     const log = { context: {} };
 
     const resolvedUser = getOrCreateUser(req, res, users, log);
@@ -41,6 +47,12 @@ describe("http-routes", () => {
         signedIn: false,
       },
     });
+    assert.deepStrictEqual(headers, [
+      [
+        "Set-Cookie",
+        "phg=user-1; Max-Age=2592000; HttpOnly; SameSite=Strict; Path=/",
+      ],
+    ]);
   });
 
   it("adds session player context to the request log when creating a new session user", () => {
@@ -64,6 +76,7 @@ describe("http-routes", () => {
     assert.strictEqual(log.context.session.signedIn, false);
     assert.ok(log.context.userCreateRateLimit);
     assert.strictEqual(headers[0][0], "Set-Cookie");
+    assert.match(headers[0][1], /Max-Age=2592000/);
   });
 
   it("logs frontend errors with session and client context", () => {

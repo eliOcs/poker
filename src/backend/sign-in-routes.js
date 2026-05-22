@@ -1,4 +1,5 @@
 import { HttpError } from "./http-error.js";
+import { setSessionCookie } from "./http-route-utils.js";
 import * as Store from "./store.js";
 import { sendSignInEmail as sendEmail } from "./email.js";
 import { rewritePlayerIdInHandHistory } from "./poker/hand-history/io.js";
@@ -25,21 +26,6 @@ function getAppOrigin() {
     throw new Error("APP_ORIGIN is required for email sign-in links");
   }
   return appOrigin;
-}
-
-/**
- * @param {import('./http-routes.js').Response} res
- * @param {Id} userId
- */
-function setSessionCookie(res, userId) {
-  const cookieDomain = process.env.DOMAIN
-    ? ` Domain=${process.env.DOMAIN};`
-    : "";
-  const secure = process.env.APP_ORIGIN?.startsWith("https") ? " Secure;" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `phg=${userId};${cookieDomain} HttpOnly;${secure} SameSite=Strict; Path=/`,
-  );
 }
 
 /**

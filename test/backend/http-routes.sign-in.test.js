@@ -173,6 +173,7 @@ describe("http-routes sign in", () => {
       String(verifyRes.headers["Set-Cookie"]),
       new RegExp(originalUserId),
     );
+    assert.match(String(verifyRes.headers["Set-Cookie"]), /Max-Age=2592000/);
     assert.equal(Store.loadUser(originalUserId)?.email, "player@example.com");
   });
 
