@@ -40,8 +40,8 @@ describe("phg-game", () => {
       element.game = null;
       await element.updateComplete;
 
-      const content = element.shadowRoot.textContent;
-      expect(content).to.include("Loading");
+      expect(element.shadowRoot.textContent).to.include("Loading");
+      expect(element.shadowRoot.querySelector("#wrapper")).to.exist;
     });
 
     it("updates UI when game property changes", async () => {

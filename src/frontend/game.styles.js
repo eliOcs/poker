@@ -87,6 +87,15 @@ export const gameStyles = [
       inset: 0;
     }
 
+    .loading-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--color-fg-muted);
+      font-size: var(--font-md);
+    }
+
     phg-action-panel {
       position: absolute;
       bottom: var(--space-md);

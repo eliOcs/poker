@@ -424,8 +424,19 @@ class Game extends LitElement {
       ?.winningCards;
   }
 
+  renderLoading() {
+    return html`
+      ${renderDrawer(this)}
+      <div id="wrapper">
+        <div id="container">
+          <div class="loading-state">Loading ...</div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
-    if (!this.game) return html`<p>Loading ...</p>`;
+    if (!this.game) return this.renderLoading();
 
     const { seatIndex, actions, bustedPosition, isWinner } =
       this.getMySeatInfo();
