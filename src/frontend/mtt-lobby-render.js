@@ -73,29 +73,9 @@ function getPlayerProfilePath(playerId) {
   return `/players/${playerId}`;
 }
 
-function handleNavigateClick(path, onNavigate) {
-  return (event) => {
-    if (
-      event.button !== 0 ||
-      event.ctrlKey ||
-      event.metaKey ||
-      event.shiftKey ||
-      event.altKey ||
-      !onNavigate
-    ) {
-      return;
-    }
-    event.preventDefault();
-    onNavigate(path);
-  };
-}
-
-function renderPlayerProfileLink(entrant, onNavigate) {
+function renderPlayerProfileLink(entrant) {
   const path = getPlayerProfilePath(entrant.playerId);
-  return html`<a
-    class="player-link"
-    href=${path}
-    @click=${handleNavigateClick(path, onNavigate)}
+  return html`<a class="player-link" href=${path}
     ><strong>${formatEntrantName(entrant)}</strong></a
   >`;
 }
@@ -299,7 +279,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
   `;
 }
 
-export function renderEntrantsTable(tournament, onNavigate) {
+export function renderEntrantsTable(tournament) {
   if (!tournament) return "";
   if (tournament.entrants.length === 0) {
     return html`<div class="empty">No entrants yet.</div>`;
@@ -321,7 +301,7 @@ export function renderEntrantsTable(tournament, onNavigate) {
           ${tournament.entrants.map(
             (entrant) => html`
               <tr>
-                <td>${renderPlayerProfileLink(entrant, onNavigate)}</td>
+                <td>${renderPlayerProfileLink(entrant)}</td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
@@ -339,7 +319,7 @@ export function renderEntrantsTable(tournament, onNavigate) {
   `;
 }
 
-export function renderStandingsTable(tournament, onNavigate) {
+export function renderStandingsTable(tournament) {
   if (!tournament) return "";
   if (tournament.standings.length === 0) {
     return html`<div class="empty">
@@ -364,7 +344,7 @@ export function renderStandingsTable(tournament, onNavigate) {
           ${tournament.standings.map(
             (entrant) => html`
               <tr>
-                <td>${renderPlayerProfileLink(entrant, onNavigate)}</td>
+                <td>${renderPlayerProfileLink(entrant)}</td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>

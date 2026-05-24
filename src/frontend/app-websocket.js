@@ -1,6 +1,7 @@
 import { matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 import { isHistoryRouteForLivePath } from "./app-route-state.js";
+import { navigateApp } from "./app-navigation.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
 
@@ -266,8 +267,7 @@ export function handleGameNotFound(app) {
     variant: "error",
   };
   disconnectFromGame(app);
-  history.replaceState({}, "", "/");
-  app.path = "/";
+  navigateApp(app, "/", { replace: true });
 }
 
 /**

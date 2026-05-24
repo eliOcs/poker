@@ -3,6 +3,13 @@ import {
   getWindowErrorDetails,
 } from "./error-reporting.js";
 import { requestSignIn } from "./app-auth.js";
+import {
+  applyAppRoute,
+  handleAppLinkClick,
+  interceptNavigation,
+  navigateApp,
+  supportsNavigationApi,
+} from "./app-navigation.js";
 
 function getCurrentReturnPath() {
   return `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -15,8 +22,13 @@ function getCurrentReturnPath() {
 export function initAppEventHandlers(app) {
   app._handlePopState = (event) => {
     const state = /** @type {PopStateEvent} */ (event).state;
-    app._setMttLobbyOverride(Boolean(state?.allowMttLobby));
-    app.path = window.location.pathname;
+    applyAppRoute(app, window.location.href, state);
+  };
+  app._handleNavigation = (event) => {
+    interceptNavigation(app, event);
+  };
+  app._handleAppLinkClick = (event) => {
+    handleAppLinkClick(app, /** @type {MouseEvent} */ (event));
   };
   app._handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
@@ -27,10 +39,9 @@ export function initAppEventHandlers(app) {
     const detail =
       /** @type {CustomEvent<{ path: string, allowMttLobby?: boolean }>} */ (e)
         .detail;
-    const allowMttLobby = detail.allowMttLobby === true;
-    history.pushState({ allowMttLobby }, "", detail.path);
-    app._setMttLobbyOverride(allowMttLobby);
-    app.path = detail.path;
+    navigateApp(app, detail.path, {
+      allowMttLobby: detail.allowMttLobby === true,
+    });
   };
   app._handleToast = (e) => {
     app.toast = /** @type {CustomEvent<object>} */ (e).detail;
@@ -84,10 +95,18 @@ export function initAppEventHandlers(app) {
  * @param {any} app
  */
 export function connectAppEventHandlers(app) {
-  window.addEventListener("popstate", app._handlePopState);
+  if (supportsNavigationApi()) {
+    /** @type {any} */ (globalThis).navigation.addEventListener(
+      "navigate",
+      app._handleNavigation,
+    );
+  } else {
+    window.addEventListener("popstate", app._handlePopState);
+  }
   window.addEventListener("error", app._handleWindowError);
   window.addEventListener("unhandledrejection", app._handleUnhandledRejection);
   document.addEventListener("visibilitychange", app._handleVisibilityChange);
+  app.addEventListener("click", app._handleAppLinkClick);
   app.addEventListener("navigate", app._handleNavigate);
   app.addEventListener("toast", app._handleToast);
   app.addEventListener("hand-select", app._handleHandSelect);
@@ -106,13 +125,21 @@ export function connectAppEventHandlers(app) {
  * @param {any} app
  */
 export function disconnectAppEventHandlers(app) {
-  window.removeEventListener("popstate", app._handlePopState);
+  if (supportsNavigationApi()) {
+    /** @type {any} */ (globalThis).navigation.removeEventListener(
+      "navigate",
+      app._handleNavigation,
+    );
+  } else {
+    window.removeEventListener("popstate", app._handlePopState);
+  }
   window.removeEventListener("error", app._handleWindowError);
   window.removeEventListener(
     "unhandledrejection",
     app._handleUnhandledRejection,
   );
   document.removeEventListener("visibilitychange", app._handleVisibilityChange);
+  app.removeEventListener("click", app._handleAppLinkClick);
   app.removeEventListener("navigate", app._handleNavigate);
   app.removeEventListener("toast", app._handleToast);
   app.removeEventListener("hand-select", app._handleHandSelect);

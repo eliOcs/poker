@@ -119,13 +119,6 @@ describe("phg-mtt-lobby", () => {
 
     const playerLink = element.shadowRoot.querySelector(".player-link");
     expect(playerLink.getAttribute("href")).to.equal("/players/owner");
-
-    setTimeout(() => {
-      playerLink.click();
-    });
-
-    const event = await oneEvent(element, "navigate");
-    expect(event.detail).to.deep.equal({ path: "/players/owner" });
   });
 
   it("dispatches navigation when opening a table", async () => {

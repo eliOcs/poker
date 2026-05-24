@@ -42,6 +42,7 @@ import * as ws from "./app-websocket.js";
 import * as mttRouting from "./app-mtt-routing.js";
 import { appSignInActions } from "./app-sign-in-actions.js";
 import { appProfileActions } from "./app-profile-actions.js";
+import { navigateApp } from "./app-navigation.js";
 
 class App extends LitElement {
   static get styles() {
@@ -151,8 +152,7 @@ class App extends LitElement {
     const token = url.searchParams.get("token") ?? "";
     if (!token) {
       this.toast = { message: "Unable to sign in", variant: "error" };
-      history.replaceState({}, "", "/");
-      this.path = "/";
+      navigateApp(this, "/", { replace: true });
       return;
     }
 
@@ -174,8 +174,7 @@ class App extends LitElement {
 
     const nextUrl = new URL(returnTo, window.location.origin);
     const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
-    history.replaceState({}, "", nextPath);
-    this.path = nextUrl.pathname;
+    navigateApp(this, nextPath, { replace: true });
   }
 
   // --- History Tasks ---
@@ -218,12 +217,12 @@ class App extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    connectAppEventHandlers(this);
     if (this._isSignInCallbackRoute()) {
       void this._handleSignInCallback();
     } else {
       this._fetchUser();
     }
-    connectAppEventHandlers(this);
   }
 
   disconnectedCallback() {
@@ -256,8 +255,7 @@ class App extends LitElement {
     const nextPath = this._getHomeRedirectPath();
     if (!nextPath || nextPath === this.path) return false;
 
-    history.replaceState({}, "", nextPath);
-    this.path = nextPath;
+    navigateApp(this, nextPath, { replace: true });
     return true;
   }
 
@@ -315,8 +313,7 @@ class App extends LitElement {
   handleHandSelect(handNumber) {
     if (handNumber === this._historyHandNumber) return;
     const nextPath = this._getHistoryPath(handNumber);
-    history.replaceState({}, "", nextPath);
-    this.path = nextPath;
+    navigateApp(this, nextPath, { replace: true });
   }
 
   _clearHistoryState() {
@@ -416,8 +413,7 @@ class App extends LitElement {
     ) {
       const latest = hands[hands.length - 1].hand_number;
       const nextPath = this._getHistoryPath(latest);
-      history.replaceState({}, "", nextPath);
-      this.path = nextPath;
+      navigateApp(this, nextPath, { replace: true });
     }
   }
 
@@ -426,23 +422,20 @@ class App extends LitElement {
       const error = /** @type {Error} */ (this._historyListTask.error);
       this.toast = { message: error.message, variant: "error" };
       const livePath = this._getLivePathFromHistory();
-      history.replaceState({}, "", livePath);
-      this.path = livePath;
+      navigateApp(this, livePath, { replace: true });
     }
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyHandTask.error);
       this.toast = { message: error.message, variant: "error" };
       const livePath = this._getLivePathFromHistory();
-      history.replaceState({}, "", livePath);
-      this.path = livePath;
+      navigateApp(this, livePath, { replace: true });
     }
 
     if (this._playerProfileTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._playerProfileTask.error);
       this.toast = { message: error.message, variant: "error" };
-      history.replaceState({}, "", "/");
-      this.path = "/";
+      navigateApp(this, "/", { replace: true });
     }
   }
 

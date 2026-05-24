@@ -80,6 +80,37 @@ describe("phg-app", () => {
       expect(tournaments).to.exist;
     });
 
+    it("handles normal app links without a document reload", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await element.updateComplete;
+
+      const shell = element.shadowRoot?.querySelector("phg-app-shell");
+      if (!shell) throw new Error("Expected app shell");
+      const releaseNotesLink = Array.from(
+        shell.shadowRoot.querySelectorAll("a"),
+      ).find((link) => link.textContent.includes("Release Notes"));
+      if (!releaseNotesLink) throw new Error("Expected release notes link");
+
+      releaseNotesLink.click();
+
+      await waitUntil(() => element.path === "/release-notes", {
+        timeout: 2000,
+      });
+
+      expect(window.location.pathname).to.equal("/release-notes");
+      expect(element.shadowRoot?.querySelector("phg-release-notes")).to.exist;
+    });
+
     it("renders the MTT lobby on tournament routes", async () => {
       MockWebSocket.instances = [];
       const fetchedUrls = [];

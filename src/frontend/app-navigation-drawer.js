@@ -19,35 +19,6 @@ const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
 </svg>`;
 
 /**
- * @param {object} params
- * @param {any} params.view
- * @param {boolean} params.playActive
- * @param {boolean} [params.tournamentsActive]
- * @param {boolean} [params.releaseNotesActive]
- * @param {boolean} [params.accountActive]
- * @returns {import("lit").TemplateResult}
- */
-/**
- * @param {Element} el
- * @param {string} path
- * @returns {(e: MouseEvent) => void}
- */
-function navClick(el, path) {
-  return (e) => {
-    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)
-      return;
-    e.preventDefault();
-    el.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  };
-}
-
-/**
  * @param {boolean} active
  */
 function drawerItemClass(active) {
@@ -74,21 +45,11 @@ export function renderAppNavigationDrawer({
       ?open=${view.drawerOpen}
       @drawer-toggle=${view.toggleDrawer}
     >
-      <a
-        slot="main"
-        class=${drawerItemClass(playActive)}
-        href="/"
-        @click=${navClick(view, "/")}
-      >
+      <a slot="main" class=${drawerItemClass(playActive)} href="/">
         ${ICONS.play}
         <span>Quick play</span>
       </a>
-      <a
-        slot="main"
-        class=${drawerItemClass(tournamentsActive)}
-        href="/mtt"
-        @click=${navClick(view, "/mtt")}
-      >
+      <a slot="main" class=${drawerItemClass(tournamentsActive)} href="/mtt">
         ${ICONS.tournament}
         <span>Tournaments</span>
       </a>
@@ -96,7 +57,6 @@ export function renderAppNavigationDrawer({
         slot="main"
         class=${drawerItemClass(releaseNotesActive)}
         href="/release-notes"
-        @click=${navClick(view, "/release-notes")}
       >
         ${iconReleaseNotes}
         <span>Release Notes</span>
@@ -128,7 +88,6 @@ function renderAccountEntry(
       slot="footer"
       class=${`drawer-item drawer-account${accountActive ? " active" : ""}`}
       href=${accountPath}
-      @click=${navClick(view, accountPath)}
     >
       ${ICONS.signIn}
       <span>${accountLabel}</span>

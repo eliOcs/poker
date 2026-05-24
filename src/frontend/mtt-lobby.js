@@ -397,8 +397,8 @@ class MttLobby extends LitElement {
                         : "Standings"}
                     </h2>
                     ${tournament.status === "registration"
-                      ? renderEntrantsTable(tournament, onNavigate)
-                      : renderStandingsTable(tournament, onNavigate)}
+                      ? renderEntrantsTable(tournament)
+                      : renderStandingsTable(tournament)}
                   </div>
                 </section>
               `

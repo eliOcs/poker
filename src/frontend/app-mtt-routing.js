@@ -1,4 +1,5 @@
 import { getTablePath } from "../shared/routes.js";
+import { navigateApp } from "./app-navigation.js";
 import { parseAppPath } from "./app-route-state.js";
 
 /**
@@ -110,9 +111,7 @@ export function maybeRedirectMttRoute(app) {
     };
   }
 
-  history.replaceState({}, "", nextPath);
-  setMttLobbyOverride(app, false);
-  app.path = nextPath;
+  navigateApp(app, nextPath, { replace: true });
 }
 
 /**
