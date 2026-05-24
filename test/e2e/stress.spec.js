@@ -7,9 +7,9 @@ import { waitForLatestEmail } from "./utils/email.js";
 test.setTimeout(15 * 60 * 1000);
 
 const WEIGHTED_ACTIONS = [
-  { threshold: 0.01, action: "allIn" },
-  { threshold: 0.15, action: "raise" },
-  { threshold: 0.15, action: "bet" },
+  { threshold: 0.02, action: "allIn" },
+  { threshold: 0.25, action: "raise" },
+  { threshold: 0.25, action: "bet" },
   { threshold: 0.6, action: "call" },
 ];
 
