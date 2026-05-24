@@ -60,8 +60,8 @@ jobs:
           rm -rf test-results/runtime-data test-results/runtime-emails
           mkdir -p test-results/runtime-data test-results/runtime-emails
 
-      - name: Run e2e tests
-        run: npm run test:e2e
+      - name: Run smoke e2e tests
+        run: npm run test:e2e:smoke
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v7

@@ -3,7 +3,7 @@ import path from "node:path";
 
 // Use a different port for e2e tests to avoid conflicts with dev server
 const E2E_PORT = 8444;
-const E2E_HOST = "127.0.0.1";
+const E2E_HOST = "localhost";
 const E2E_ORIGIN = `http://${E2E_HOST}:${E2E_PORT}`;
 const E2E_RESULTS_DIR = path.join(process.cwd(), "test-results");
 const E2E_DATA_DIR =
