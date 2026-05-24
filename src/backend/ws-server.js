@@ -9,7 +9,7 @@ import {
   markPlayerConnected,
   markTournamentPlayerConnected,
   handlePlayerDisconnected,
-  sendInitialTournamentPayload,
+  sendInitialTournamentMessage,
   sendInitialGameView,
 } from "./ws-connection.js";
 import { createMessageHandler } from "./ws-message-handler.js";
@@ -32,7 +32,7 @@ import { createMessageHandler } from "./ws-message-handler.js";
  * @property {(user: UserType|undefined, gameId: string|undefined) => Promise<Game|null>} resolveGameForUpgrade
  * @property {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
  * @property {(gameId: string) => void} broadcastGameStateMessage
- * @property {(tournamentId: string, user: UserType) => string|null} buildTournamentStatePayload
+ * @property {(tournamentId: string, user: UserType) => unknown|null} buildTournamentStateMessage
  */
 
 /**
@@ -115,7 +115,7 @@ function getUpgradeSession(users, request) {
  * @param {string|null|undefined} params.liveKind
  * @param {string|undefined} params.gameId
  * @param {Game|null} params.game
- * @param {string|null} params.initialTournamentPayload
+ * @param {unknown|null} params.initialTournamentMessage
  * @param {string|undefined} params.tournamentId
  * @returns {boolean}
  */
@@ -124,11 +124,11 @@ function isUpgradeSessionValid({
   liveKind,
   gameId,
   game,
-  initialTournamentPayload,
+  initialTournamentMessage,
 }) {
   if (!user || !liveKind) return false;
   if (gameId && !game) return false;
-  if (liveKind === "mtt" && !initialTournamentPayload) return false;
+  if (liveKind === "mtt" && !initialTournamentMessage) return false;
   return true;
 }
 
@@ -144,7 +144,7 @@ async function handleUpgrade(request, socket, head, params) {
     actionRateLimiter,
     getRequestRateLimitKey,
     resolveGameForUpgrade,
-    buildTournamentStatePayload,
+    buildTournamentStateMessage,
     wss,
   } = params;
 
@@ -164,9 +164,9 @@ async function handleUpgrade(request, socket, head, params) {
     request,
   );
   const game = gameId ? await resolveGameForUpgrade(user, gameId) : null;
-  const initialTournamentPayload =
+  const initialTournamentMessage =
     user && tournamentId
-      ? buildTournamentStatePayload(tournamentId, user)
+      ? buildTournamentStateMessage(tournamentId, user)
       : null;
 
   if (
@@ -175,7 +175,7 @@ async function handleUpgrade(request, socket, head, params) {
       liveKind,
       gameId,
       game,
-      initialTournamentPayload,
+      initialTournamentMessage,
       tournamentId,
     })
   ) {
@@ -185,7 +185,7 @@ async function handleUpgrade(request, socket, head, params) {
       game: { tableId: gameId ?? null, found: !!game },
       tournament: {
         id: tournamentId ?? null,
-        found: !!initialTournamentPayload,
+        found: !!initialTournamentMessage,
       },
     });
     socket.end("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -201,7 +201,7 @@ async function handleUpgrade(request, socket, head, params) {
       game,
       gameId ?? null,
       tournamentId ?? null,
-      initialTournamentPayload,
+      initialTournamentMessage,
     );
   });
 }
@@ -213,7 +213,6 @@ async function handleUpgrade(request, socket, head, params) {
  *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
  *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
  *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
- *   buildTournamentStatePayload: WebSocketServerParams["buildTournamentStatePayload"],
  * }} params
  * @returns {(
  *   ws: import("ws").WebSocket,
@@ -222,7 +221,7 @@ async function handleUpgrade(request, socket, head, params) {
  *   game: Game|null,
  *   gameId: string|null,
  *   tournamentId: string|null,
- *   initialTournamentPayload: string|null,
+ *   initialTournamentMessage: unknown|null,
  * ) => void}
  */
 function createConnectionHandler({
@@ -231,7 +230,6 @@ function createConnectionHandler({
   actionRateLimiter,
   broadcastGameMessage,
   broadcastGameStateMessage,
-  buildTournamentStatePayload,
 }) {
   function handleConnection(
     ws,
@@ -240,7 +238,7 @@ function createConnectionHandler({
     game,
     gameId,
     tournamentId,
-    initialTournamentPayload,
+    initialTournamentMessage,
   ) {
     const playerRateLimitKey = `player:${user.id}`;
     clientConnections.set(ws, { user, gameId, tournamentId });
@@ -298,13 +296,7 @@ function createConnectionHandler({
       }),
     );
 
-    sendInitialTournamentPayload(
-      ws,
-      tournamentId,
-      initialTournamentPayload,
-      user,
-      buildTournamentStatePayload,
-    );
+    sendInitialTournamentMessage(ws, initialTournamentMessage);
 
     if (game) {
       sendInitialGameView(ws, game, player, broadcastGameMessage);
@@ -326,7 +318,6 @@ export function createWebSocketServer(params) {
     actionRateLimiter,
     broadcastGameMessage,
     broadcastGameStateMessage,
-    buildTournamentStatePayload,
   } = params;
   const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
 
@@ -350,7 +341,6 @@ export function createWebSocketServer(params) {
       actionRateLimiter,
       broadcastGameMessage,
       broadcastGameStateMessage,
-      buildTournamentStatePayload,
     }),
   );
 

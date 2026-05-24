@@ -1,6 +1,7 @@
 import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
 import playerView from "./poker/player-view.js";
+import { sendWebSocketJson } from "./ws-json.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -118,25 +119,13 @@ export function handlePlayerDisconnected(
 }
 
 /**
- * Sends the initial tournament payload to the client.
+ * Sends the initial tournament state message to the client.
  * @param {import("ws").WebSocket} ws
- * @param {string|null} tournamentId
- * @param {string|null} initialTournamentPayload
- * @param {UserType} user
- * @param {WebSocketServerParams["buildTournamentStatePayload"]} buildTournamentStatePayload
+ * @param {unknown|null} initialTournamentMessage
  */
-export function sendInitialTournamentPayload(
-  ws,
-  tournamentId,
-  initialTournamentPayload,
-  user,
-  buildTournamentStatePayload,
-) {
-  if (initialTournamentPayload) {
-    ws.send(initialTournamentPayload);
-  } else if (tournamentId) {
-    const payload = buildTournamentStatePayload(tournamentId, user);
-    if (payload) ws.send(payload);
+export function sendInitialTournamentMessage(ws, initialTournamentMessage) {
+  if (initialTournamentMessage) {
+    sendWebSocketJson(ws, initialTournamentMessage);
   }
 }
 
@@ -148,6 +137,6 @@ export function sendInitialTournamentPayload(
  * @param {WebSocketServerParams["broadcastGameMessage"]} broadcastGameMessage
  */
 export function sendInitialGameView(ws, game, player, broadcastGameMessage) {
-  ws.send(JSON.stringify(playerView(game, player), null, 2));
+  sendWebSocketJson(ws, playerView(game, player));
   PokerGame.ensureGameTick(game, broadcastGameMessage);
 }

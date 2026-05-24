@@ -3,6 +3,7 @@ import * as PokerGame from "./poker/game.js";
 import { createLog, emitLog, getSessionPlayerLogContext } from "./logger.js";
 import { processPokerAction } from "./websocket-handler.js";
 import { RateLimitError } from "./rate-limit.js";
+import { sendWebSocketJson } from "./ws-json.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -282,23 +283,17 @@ export function createMessageHandler({
       log.context.action = { name: action, ...args };
 
       if (action === "ping") {
-        ws.send(JSON.stringify({ type: "pong" }, null, 2));
+        sendWebSocketJson(ws, { type: "pong" });
         return;
       }
 
       if (!game || !gameId) {
-        ws.send(
-          JSON.stringify(
-            {
-              error: {
-                message:
-                  "game actions are unavailable on tournament lobby connections",
-              },
-            },
-            null,
-            2,
-          ),
-        );
+        sendWebSocketJson(ws, {
+          error: {
+            message:
+              "game actions are unavailable on tournament lobby connections",
+          },
+        });
         return;
       }
 
@@ -318,7 +313,7 @@ export function createMessageHandler({
         log.context.rateLimit = err.rateLimit;
       }
       log.context.error = { message: err.message };
-      ws.send(JSON.stringify({ error: { message: err.message } }, null, 2));
+      sendWebSocketJson(ws, { error: { message: err.message } });
     } finally {
       emitLog(log);
     }

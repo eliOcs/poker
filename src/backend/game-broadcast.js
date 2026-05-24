@@ -1,5 +1,6 @@
 import playerView from "./poker/player-view.js";
 import * as Player from "./poker/player.js";
+import { sendWebSocketJson } from "./ws-json.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -8,11 +9,12 @@ import * as Player from "./poker/player.js";
  * @typedef {{ user: UserType, gameId: string|null, tournamentId: string|null }} ClientConn
  * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
  * @typedef {import('./mtt-seating.js').PlayerMovedEvent} PlayerMovedEvent
+ * @typedef {{ type: "tournamentState", tournament: unknown }} TournamentStateMessage
  * @typedef {{
  *   gameId: string,
  *   msgType: "gameState"|"history"|"social",
  *   context?: Record<string, unknown>,
- *   buildPayload: (conn: ClientConn) => string|null
+ *   buildMessage: (conn: ClientConn) => unknown|null
  * }} BroadcastDispatch
  */
 
@@ -50,18 +52,18 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
 
   /**
    * @param {string} gameId
-   * @param {(conn: ClientConn) => string|null} buildPayload
+   * @param {(conn: ClientConn) => unknown|null} buildMessage
    * @returns {BroadcastStats}
    */
-  function broadcastToGameClients(gameId, buildPayload) {
+  function broadcastToGameClients(gameId, buildMessage) {
     let recipients = 0;
     let maxPayloadBytes = 0;
     forEachGameClient(gameId, (ws, conn) => {
-      const payload = buildPayload(conn);
-      if (payload !== null) {
-        ws.send(payload);
+      const message = buildMessage(conn);
+      if (message !== null) {
+        const payloadBytes = sendWebSocketJson(ws, message);
         recipients += 1;
-        maxPayloadBytes = Math.max(maxPayloadBytes, Buffer.byteLength(payload));
+        maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
       }
     });
     return { recipients, maxPayloadBytes };
@@ -70,50 +72,12 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
   /**
    * @param {string} tournamentId
    * @param {UserType} user
-   * @returns {string|null}
+   * @returns {TournamentStateMessage|null}
    */
-  function buildTournamentStatePayload(tournamentId, user) {
+  function buildTournamentStateMessage(tournamentId, user) {
     const tournament = getTournamentView(tournamentId, user.id);
     if (!tournament) return null;
-    return JSON.stringify({ type: "tournamentState", tournament }, null, 2);
-  }
-
-  /**
-   * @param {string} tournamentId
-   * @param {ClientConn} conn
-   * @param {Map<string, PlayerMovedEvent>} playerMovesById
-   * @returns {{ movePayload: string|null, statePayload: string|null }}
-   */
-  function buildTournamentPayloads(tournamentId, conn, playerMovesById) {
-    const tournament = getTournamentView(tournamentId, conn.user.id);
-    if (!tournament) {
-      throw new Error(
-        `Cannot broadcast tournamentState: tournament ${tournamentId} not found`,
-      );
-    }
-
-    const playerMove = playerMovesById.get(conn.user.id);
-    const movePayload = playerMove
-      ? JSON.stringify(
-          {
-            type: "playerMoved",
-            tournamentId: playerMove.tournamentId,
-            tableId: playerMove.tableId,
-            tableName: playerMove.tableName,
-          },
-          null,
-          2,
-        )
-      : null;
-
-    return {
-      movePayload,
-      statePayload: JSON.stringify(
-        { type: "tournamentState", tournament },
-        null,
-        2,
-      ),
-    };
+    return { type: "tournamentState", tournament };
   }
 
   /**
@@ -132,9 +96,9 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
       gameId: message.gameId,
       msgType: "gameState",
       context: { handNumber: game.handNumber },
-      buildPayload: (conn) => {
+      buildMessage: (conn) => {
         const player = Player.fromUser(conn.user);
-        return JSON.stringify(playerView(game, player), null, 2);
+        return playerView(game, player);
       },
     };
   }
@@ -146,7 +110,6 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
   function broadcastSocialAction(message) {
     const { gameId, ...socialAction } = message;
     const handNumber = games.get(gameId)?.handNumber ?? null;
-    const payload = JSON.stringify(socialAction, null, 2);
     return {
       gameId,
       msgType: "social",
@@ -155,7 +118,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
         action: socialAction.action,
         seat: socialAction.seat,
       },
-      buildPayload: () => payload,
+      buildMessage: () => socialAction,
     };
   }
 
@@ -165,7 +128,6 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
    */
   function broadcastHistoryUpdate(message) {
     const { gameId, ...historyEvent } = message;
-    const payload = JSON.stringify(historyEvent, null, 2);
     return {
       gameId,
       msgType: "history",
@@ -173,7 +135,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
         event: message.event,
         handNumber: message.handNumber,
       },
-      buildPayload: () => payload,
+      buildMessage: () => historyEvent,
     };
   }
 
@@ -198,7 +160,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
         handlers[message.type]
       );
     const dispatch = handler(message);
-    return broadcastToGameClients(dispatch.gameId, dispatch.buildPayload);
+    return broadcastToGameClients(dispatch.gameId, dispatch.buildMessage);
   }
 
   /** @param {string} gameId */
@@ -220,29 +182,34 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
       let recipients = 0;
       let maxPayloadBytes = 0;
       forEachTournamentClient(tournamentId, (ws, conn) => {
-        const { movePayload, statePayload } = buildTournamentPayloads(
-          tournamentId,
-          conn,
-          playerMovesById,
-        );
-        if (movePayload) {
-          ws.send(movePayload);
-          maxPayloadBytes = Math.max(
-            maxPayloadBytes,
-            Buffer.byteLength(movePayload),
+        const tournament = getTournamentView(tournamentId, conn.user.id);
+        if (!tournament) {
+          throw new Error(
+            `Cannot broadcast tournamentState: tournament ${tournamentId} not found`,
           );
         }
-        if (statePayload) {
-          ws.send(statePayload);
-          recipients += 1;
+
+        const playerMove = playerMovesById.get(conn.user.id);
+        if (playerMove) {
           maxPayloadBytes = Math.max(
             maxPayloadBytes,
-            Buffer.byteLength(statePayload),
+            sendWebSocketJson(ws, {
+              type: "playerMoved",
+              tournamentId: playerMove.tournamentId,
+              tableId: playerMove.tableId,
+              tableName: playerMove.tableName,
+            }),
           );
         }
+        const payloadBytes = sendWebSocketJson(ws, {
+          type: "tournamentState",
+          tournament,
+        });
+        recipients += 1;
+        maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
       });
       return { recipients, maxPayloadBytes };
     },
-    buildTournamentStatePayload,
+    buildTournamentStateMessage,
   };
 }

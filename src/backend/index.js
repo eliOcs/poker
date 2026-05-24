@@ -43,7 +43,7 @@ const {
   broadcastGameMessage: rawBroadcastGameMessage,
   broadcastGameStateMessage,
   broadcastTournamentStateMessage,
-  buildTournamentStatePayload,
+  buildTournamentStateMessage,
 } = createGameBroadcaster(games, clientConnections, {
   getTournamentView: (tournamentId, playerId) => {
     try {
@@ -355,7 +355,7 @@ createWebSocketServer({
   resolveGameForUpgrade,
   broadcastGameMessage,
   broadcastGameStateMessage,
-  buildTournamentStatePayload,
+  buildTournamentStateMessage,
 });
 
 Store.initialize();
