@@ -109,6 +109,25 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("#mp9hladed7d1");
   });
 
+  it("links players in the MTT player table to their profile", async () => {
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${createTournamentView()}
+      ></phg-mtt-lobby>
+    `);
+
+    const playerLink = element.shadowRoot.querySelector(".player-link");
+    expect(playerLink.getAttribute("href")).to.equal("/players/owner");
+
+    setTimeout(() => {
+      playerLink.click();
+    });
+
+    const event = await oneEvent(element, "navigate");
+    expect(event.detail).to.deep.equal({ path: "/players/owner" });
+  });
+
   it("dispatches navigation when opening a table", async () => {
     const element = await fixture(html`
       <phg-mtt-lobby

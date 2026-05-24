@@ -175,6 +175,18 @@ export const mttLobbyStyles = [
       color: var(--color-fg-white);
     }
 
+    .player-link {
+      color: var(--color-fg-white);
+      text-decoration: none;
+    }
+
+    .player-link:hover,
+    .player-link:focus-visible {
+      color: var(--color-primary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     .loading {
       padding: 18px;
       border: 2px solid var(--color-bg-dark);

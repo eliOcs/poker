@@ -69,6 +69,37 @@ function formatEntrantName(entrant) {
     : `#${entrant.playerId}`;
 }
 
+function getPlayerProfilePath(playerId) {
+  return `/players/${playerId}`;
+}
+
+function handleNavigateClick(path, onNavigate) {
+  return (event) => {
+    if (
+      event.button !== 0 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.altKey ||
+      !onNavigate
+    ) {
+      return;
+    }
+    event.preventDefault();
+    onNavigate(path);
+  };
+}
+
+function renderPlayerProfileLink(entrant, onNavigate) {
+  const path = getPlayerProfilePath(entrant.playerId);
+  return html`<a
+    class="player-link"
+    href=${path}
+    @click=${handleNavigateClick(path, onNavigate)}
+    ><strong>${formatEntrantName(entrant)}</strong></a
+  >`;
+}
+
 /**
  * @param {object} params
  * @param {object} params.tournament
@@ -268,7 +299,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
   `;
 }
 
-export function renderEntrantsTable(tournament) {
+export function renderEntrantsTable(tournament, onNavigate) {
   if (!tournament) return "";
   if (tournament.entrants.length === 0) {
     return html`<div class="empty">No entrants yet.</div>`;
@@ -290,7 +321,7 @@ export function renderEntrantsTable(tournament) {
           ${tournament.entrants.map(
             (entrant) => html`
               <tr>
-                <td><strong>${formatEntrantName(entrant)}</strong></td>
+                <td>${renderPlayerProfileLink(entrant, onNavigate)}</td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
@@ -308,7 +339,7 @@ export function renderEntrantsTable(tournament) {
   `;
 }
 
-export function renderStandingsTable(tournament) {
+export function renderStandingsTable(tournament, onNavigate) {
   if (!tournament) return "";
   if (tournament.standings.length === 0) {
     return html`<div class="empty">
@@ -333,7 +364,7 @@ export function renderStandingsTable(tournament) {
           ${tournament.standings.map(
             (entrant) => html`
               <tr>
-                <td><strong>${formatEntrantName(entrant)}</strong></td>
+                <td>${renderPlayerProfileLink(entrant, onNavigate)}</td>
                 <td>${formatEntrantStatus(entrant.status)}</td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
