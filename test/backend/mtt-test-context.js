@@ -64,6 +64,8 @@ export function createMttContext() {
     tableBroadcasts: [],
     /** @type {string[]} */
     tournamentBroadcasts: [],
+    /** @type {import("../../src/backend/mtt-seating.js").PlayerMovedEvent[]} */
+    playerMoves: [],
     tickCount: 0,
     setup() {
       Store._reset();
@@ -71,12 +73,15 @@ export function createMttContext() {
       ctx.games = new Map();
       ctx.tableBroadcasts = [];
       ctx.tournamentBroadcasts = [];
+      ctx.playerMoves = [];
       ctx.tickCount = 0;
       ctx.manager = createMttManager({
         games: ctx.games,
         broadcastTableState: (tableId) => ctx.tableBroadcasts.push(tableId),
-        broadcastTournamentState: (tournamentId) =>
-          ctx.tournamentBroadcasts.push(tournamentId),
+        broadcastTournamentState: (tournamentId, playerMoves = []) => {
+          ctx.tournamentBroadcasts.push(tournamentId);
+          ctx.playerMoves.push(...playerMoves);
+        },
         ensureTableTick: () => {},
         finalizePendingTableHand: (game) => {
           if (!game.pendingHandHistory) return false;

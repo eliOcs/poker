@@ -19,6 +19,9 @@ function createApp(path = "/cash/testgame") {
     _mttView: null,
     _historyListRefreshNonce: 0,
     _intentionalSocketCloses: new WeakSet(),
+    _setMttLobbyOverride(allowMttLobby) {
+      this._allowMttLobby = allowMttLobby;
+    },
   };
 }
 
@@ -91,5 +94,23 @@ describe("app-websocket", () => {
       globalThis.setTimeout = originalSetTimeout;
       globalThis.clearTimeout = originalClearTimeout;
     }
+  });
+
+  it("redirects to the new tournament table when the backend sends a player move event", () => {
+    const app = createApp("/mtt/mtt123/tables/table1");
+    connectToGame(app, app.path);
+
+    MockWebSocket.instances.at(-1).simulateMessage({
+      type: "playerMoved",
+      tournamentId: "mtt123",
+      tableId: "table2",
+      tableName: "Table 2",
+    });
+
+    expect(app.path).to.equal("/mtt/mtt123/tables/table2");
+    expect(app.toast).to.deep.equal({
+      message: "Moved to Table 2",
+      variant: "info",
+    });
   });
 });

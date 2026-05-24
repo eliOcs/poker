@@ -4,6 +4,7 @@ import * as Seat from "./poker/seat.js";
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
  * @typedef {import('./mtt.js').TournamentEntrant} TournamentEntrant
+ * @typedef {{ playerId: string, tournamentId: string, tableId: string, tableName: string }} PlayerMovedEvent
  */
 
 /**
@@ -128,6 +129,7 @@ export function getActiveSeatIndexes(tournament, game) {
  * @param {Game} sourceGame
  * @param {number} sourceSeatIndex
  * @param {Game} destinationGame
+ * @returns {PlayerMovedEvent}
  */
 export function movePlayer(
   tournament,
@@ -159,15 +161,18 @@ export function movePlayer(
 
   destinationGame.seats[destinationSeatIndex] = movedSeat;
   sourceGame.seats[sourceSeatIndex] = Seat.empty();
-  if (sourceGame.tournament) {
-    sourceGame.tournament.redirects = sourceGame.tournament.redirects || {};
-    sourceGame.tournament.redirects[sourceSeat.player.id] = destinationGame.id;
-  }
 
   entrant.tableId = destinationGame.id;
   entrant.seatIndex = destinationSeatIndex;
   entrant.stack = movedSeat.stack;
   entrant.status = "seated";
+
+  return {
+    playerId: sourceSeat.player.id,
+    tournamentId: tournament.id,
+    tableId: destinationGame.id,
+    tableName: /** @type {string} */ (destinationGame.tableName),
+  };
 }
 
 /**

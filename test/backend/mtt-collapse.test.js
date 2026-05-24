@@ -64,7 +64,11 @@ describe("mtt-manager table collapse", () => {
     const finalTable = getOpenFinalTable(tournament, ctx.games);
     assert.ok(finalTable);
     assert.equal(finalTable.tableName, FINAL_TABLE_NAME);
-    assert.equal(sourceTable.tournament?.redirects?.owner, finalTable.id);
+    assert.ok(
+      ctx.playerMoves.some(
+        (move) => move.playerId === "owner" && move.tableId === finalTable.id,
+      ),
+    );
     assert.equal(sourceTable.hand.phase, "waiting");
     assert.equal(sourceTable.hand.actingSeat, -1);
     assert.equal(sourceTable.countdown, null);

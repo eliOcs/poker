@@ -42,12 +42,10 @@ function shouldStayOnMttLobby(app, liveRoute) {
 /**
  * Returns true if the player should be redirected to the given next table.
  * @param {{ kind: string, tableId?: string }} liveRoute
- * @param {string} nextTableId
  * @returns {boolean}
  */
-function shouldRedirectToTable(liveRoute, nextTableId) {
-  if (liveRoute.kind === "mtt") return true;
-  return liveRoute.kind === "mtt_table" && liveRoute.tableId !== nextTableId;
+function shouldRedirectToTable(liveRoute) {
+  return liveRoute.kind === "mtt";
 }
 
 /**
@@ -82,7 +80,7 @@ export function resolveMttRedirectPath(app, liveRoute) {
     return;
   }
 
-  if (shouldRedirectToTable(liveRoute, nextTableId)) {
+  if (shouldRedirectToTable(liveRoute)) {
     return getTablePath("mtt", nextTableId, app._mttTournamentId);
   }
 
@@ -99,17 +97,6 @@ export function maybeRedirectMttRoute(app) {
 
   const nextPath = resolveMttRedirectPath(app, liveRoute);
   if (!nextPath || nextPath === app.path) return;
-
-  if (liveRoute.kind === "mtt_table") {
-    const tableName =
-      app._mttView?.tables.find(
-        (table) => table.tableId === app._mttView?.currentPlayer?.tableId,
-      )?.tableName || "your new table";
-    app.toast = {
-      message: `Moved to ${tableName}`,
-      variant: "info",
-    };
-  }
 
   navigateApp(app, nextPath, { replace: true });
 }

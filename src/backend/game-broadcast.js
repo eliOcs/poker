@@ -7,6 +7,7 @@ import * as Player from "./poker/player.js";
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
  * @typedef {{ user: UserType, gameId: string|null, tournamentId: string|null }} ClientConn
  * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
+ * @typedef {import('./mtt-seating.js').PlayerMovedEvent} PlayerMovedEvent
  * @typedef {{
  *   gameId: string,
  *   msgType: "gameState"|"history"|"social",
@@ -68,25 +69,6 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
 
   /**
    * @param {string} tournamentId
-   * @param {(conn: ClientConn) => string|null} buildPayload
-   * @returns {BroadcastStats}
-   */
-  function broadcastToTournamentClients(tournamentId, buildPayload) {
-    let recipients = 0;
-    let maxPayloadBytes = 0;
-    forEachTournamentClient(tournamentId, (ws, conn) => {
-      const payload = buildPayload(conn);
-      if (payload !== null) {
-        ws.send(payload);
-        recipients += 1;
-        maxPayloadBytes = Math.max(maxPayloadBytes, Buffer.byteLength(payload));
-      }
-    });
-    return { recipients, maxPayloadBytes };
-  }
-
-  /**
-   * @param {string} tournamentId
    * @param {UserType} user
    * @returns {string|null}
    */
@@ -94,6 +76,44 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
     const tournament = getTournamentView(tournamentId, user.id);
     if (!tournament) return null;
     return JSON.stringify({ type: "tournamentState", tournament }, null, 2);
+  }
+
+  /**
+   * @param {string} tournamentId
+   * @param {ClientConn} conn
+   * @param {Map<string, PlayerMovedEvent>} playerMovesById
+   * @returns {{ movePayload: string|null, statePayload: string|null }}
+   */
+  function buildTournamentPayloads(tournamentId, conn, playerMovesById) {
+    const tournament = getTournamentView(tournamentId, conn.user.id);
+    if (!tournament) {
+      throw new Error(
+        `Cannot broadcast tournamentState: tournament ${tournamentId} not found`,
+      );
+    }
+
+    const playerMove = playerMovesById.get(conn.user.id);
+    const movePayload = playerMove
+      ? JSON.stringify(
+          {
+            type: "playerMoved",
+            tournamentId: playerMove.tournamentId,
+            tableId: playerMove.tableId,
+            tableName: playerMove.tableName,
+          },
+          null,
+          2,
+        )
+      : null;
+
+    return {
+      movePayload,
+      statePayload: JSON.stringify(
+        { type: "tournamentState", tournament },
+        null,
+        2,
+      ),
+    };
   }
 
   /**
@@ -189,10 +209,39 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
   return {
     broadcastGameMessage,
     broadcastGameStateMessage,
-    broadcastTournamentStateMessage(tournamentId) {
-      return broadcastToTournamentClients(tournamentId, (conn) =>
-        buildTournamentStatePayload(tournamentId, conn.user),
+    /**
+     * @param {string} tournamentId
+     * @param {PlayerMovedEvent[]} [playerMoves]
+     */
+    broadcastTournamentStateMessage(tournamentId, playerMoves = []) {
+      const playerMovesById = new Map(
+        playerMoves.map((move) => [move.playerId, move]),
       );
+      let recipients = 0;
+      let maxPayloadBytes = 0;
+      forEachTournamentClient(tournamentId, (ws, conn) => {
+        const { movePayload, statePayload } = buildTournamentPayloads(
+          tournamentId,
+          conn,
+          playerMovesById,
+        );
+        if (movePayload) {
+          ws.send(movePayload);
+          maxPayloadBytes = Math.max(
+            maxPayloadBytes,
+            Buffer.byteLength(movePayload),
+          );
+        }
+        if (statePayload) {
+          ws.send(statePayload);
+          recipients += 1;
+          maxPayloadBytes = Math.max(
+            maxPayloadBytes,
+            Buffer.byteLength(statePayload),
+          );
+        }
+      });
+      return { recipients, maxPayloadBytes };
     },
     buildTournamentStatePayload,
   };

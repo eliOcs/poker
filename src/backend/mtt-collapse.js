@@ -13,6 +13,7 @@ import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
  * @typedef {import('./mtt.js').ManagedTable} ManagedTable
+ * @typedef {import('./mtt-seating.js').PlayerMovedEvent} PlayerMovedEvent
  */
 
 /**
@@ -91,6 +92,7 @@ function getWaitingDestinationTable(destinationTables) {
  * @param {{ table: ManagedTable, game: Game, activePlayers: number }} breakCandidate
  * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} destinationTables
  * @param {Set<string>} changedTables
+ * @param {PlayerMovedEvent[]} playerMoves
  * @returns {boolean}
  */
 function collapseTableIntoDestinations(
@@ -98,6 +100,7 @@ function collapseTableIntoDestinations(
   breakCandidate,
   destinationTables,
   changedTables,
+  playerMoves,
 ) {
   const activeSeats = getActiveSeatIndexes(
     tournament,
@@ -110,7 +113,9 @@ function collapseTableIntoDestinations(
       return false;
     }
 
-    movePlayer(tournament, breakCandidate.game, seatIndex, destination.game);
+    playerMoves.push(
+      movePlayer(tournament, breakCandidate.game, seatIndex, destination.game),
+    );
     changedTables.add(breakCandidate.game.id);
     changedTables.add(destination.game.id);
   }
@@ -123,7 +128,8 @@ function collapseTableIntoDestinations(
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
  * @param {() => string} now
- * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>) => void} mergeIntoFinalTable
+ * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
+ * @param {PlayerMovedEvent[]} playerMoves
  */
 export function collapseExtraTables(
   tournament,
@@ -131,6 +137,7 @@ export function collapseExtraTables(
   changedTables,
   now,
   mergeIntoFinalTable,
+  playerMoves,
 ) {
   for (;;) {
     const activeTables = getActiveTables(tournament, games);
@@ -154,7 +161,7 @@ export function collapseExtraTables(
         return;
       }
 
-      mergeIntoFinalTable(activeTables, changedTables);
+      mergeIntoFinalTable(activeTables, changedTables, playerMoves);
       tournament.pendingCollapse = false;
       return;
     }
@@ -174,6 +181,7 @@ export function collapseExtraTables(
         breakCandidate,
         destinationTables,
         changedTables,
+        playerMoves,
       )
     ) {
       markPendingCollapse(tournament, activeTables, changedTables);
@@ -191,8 +199,14 @@ export function collapseExtraTables(
  * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
+ * @param {PlayerMovedEvent[]} playerMoves
  */
-export function balanceWaitingTables(tournament, games, changedTables) {
+export function balanceWaitingTables(
+  tournament,
+  games,
+  changedTables,
+  playerMoves,
+) {
   for (;;) {
     const waitingTables = getActiveTables(tournament, games).filter((entry) =>
       isTableWaiting(entry.game),
@@ -221,7 +235,9 @@ export function balanceWaitingTables(tournament, games, changedTables) {
       return;
     }
 
-    movePlayer(tournament, fullest.game, sourceSeatIndex, emptiest.game);
+    playerMoves.push(
+      movePlayer(tournament, fullest.game, sourceSeatIndex, emptiest.game),
+    );
     changedTables.add(fullest.game.id);
     changedTables.add(emptiest.game.id);
   }
@@ -232,7 +248,8 @@ export function balanceWaitingTables(tournament, games, changedTables) {
  * @param {Map<string, Game>} games
  * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
- * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>) => void} mergeIntoFinalTable
+ * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
+ * @param {PlayerMovedEvent[]} playerMoves
  * @returns {Set<string>}
  */
 export function rebalanceTournament(
@@ -241,6 +258,7 @@ export function rebalanceTournament(
   ensureTableTick,
   now,
   mergeIntoFinalTable,
+  playerMoves,
 ) {
   /** @type {Set<string>} */
   const changedTables = new Set();
@@ -251,8 +269,9 @@ export function rebalanceTournament(
     changedTables,
     now,
     mergeIntoFinalTable,
+    playerMoves,
   );
-  balanceWaitingTables(tournament, games, changedTables);
+  balanceWaitingTables(tournament, games, changedTables, playerMoves);
 
   for (const tableId of changedTables) {
     const game = games.get(tableId);

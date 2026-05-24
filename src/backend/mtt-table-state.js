@@ -30,7 +30,6 @@ export function applyTournamentStateToTable(tournament, game) {
   game.tournament.buyIn = tournament.buyIn;
   game.tournament.initialStack = tournament.initialStack;
   game.tournament.competitionId = tournament.id;
-  game.tournament.redirects = game.tournament.redirects || {};
 }
 
 /**

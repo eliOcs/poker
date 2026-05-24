@@ -1,4 +1,4 @@
-import { matchLiveRoute } from "../shared/routes.js";
+import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 import { isHistoryRouteForLivePath } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
@@ -82,6 +82,17 @@ function handleTypedSocketMessage(app, data) {
     app._mttLoading = false;
     app._mttError = "";
     app._maybeRedirectMttRoute();
+    return true;
+  }
+
+  if (data.type === "playerMoved") {
+    app.toast = {
+      message: `Moved to ${data.tableName}`,
+      variant: "info",
+    };
+    navigateApp(app, getTablePath("mtt", data.tableId, data.tournamentId), {
+      replace: true,
+    });
     return true;
   }
 

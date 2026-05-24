@@ -77,7 +77,6 @@ export {
  * @property {number} initialStack - Starting stack for each player
  * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
  * @property {Cents} buyIn - Buy-in amount in cents
- * @property {Record<string, string>} [redirects] - PlayerId -> assigned table id for managed MTT moves
  */
 
 /**
@@ -279,7 +278,6 @@ export function createMttTable({
     initialStack: Tournament.INITIAL_STACK,
     winner: null,
     buyIn,
-    redirects: {},
   };
 
   return game;
