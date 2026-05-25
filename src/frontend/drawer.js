@@ -100,6 +100,7 @@ function renderMttDrawer(game) {
         table.tableId === game.mttTournament?.currentPlayer?.tableId,
       onOpen: () => game.openTournamentTable(table.tableId),
     })),
+    showHistory: true,
     historyPath: hasRecordedHands ? historyPath : undefined,
     onOpenLevels: () => game.openTournamentLevels(),
     onCopyLink: () => game.copyGameLink(),

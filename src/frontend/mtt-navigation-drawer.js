@@ -167,6 +167,7 @@ export function renderHistoryItem(historyPath) {
  * @property {boolean} [lobbyActive]
  * @property {(() => void)|undefined} [onOpenLobby]
  * @property {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [tableItems]
+ * @property {boolean} [showHistory]
  * @property {string|undefined} [historyPath]
  * @property {(() => void)|undefined} [onOpenLevels]
  * @property {(() => void)|undefined} [onCopyLink]
@@ -190,6 +191,7 @@ function renderDrawerTemplate(params) {
     lobbyActive = false,
     onOpenLobby,
     tableItems = [],
+    showHistory = false,
     historyPath,
     onOpenLevels,
     onCopyLink,
@@ -212,7 +214,8 @@ function renderDrawerTemplate(params) {
         ${iconLobby}
         <span>Lobby</span>
       </button>
-      ${tableItems.map(renderTableItem)} ${renderHistoryItem(historyPath)}
+      ${tableItems.map(renderTableItem)}
+      ${showHistory ? renderHistoryItem(historyPath) : ""}
       ${onOpenLevels
         ? html`<button slot="main" @click=${handleAction(onOpenLevels)}>
             ${ICONS.levels}

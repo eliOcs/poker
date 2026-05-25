@@ -88,6 +88,24 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Lobby");
   });
 
+  it("does not show a history drawer item in the lobby", async () => {
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${createTournamentView()}
+      ></phg-mtt-lobby>
+    `);
+
+    const drawerItems = Array.from(
+      element.shadowRoot.querySelectorAll(
+        "phg-navigation-drawer [slot='main']",
+      ),
+    );
+    expect(
+      drawerItems.some((item) => item.textContent.includes("History")),
+    ).to.equal(false);
+  });
+
   it("prefixes fallback player ids with #", async () => {
     const view = createTournamentView();
     view.standings = [

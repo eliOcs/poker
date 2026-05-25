@@ -1,6 +1,6 @@
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./styles.js";
-import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
+import { getMttPath, getTablePath } from "../shared/routes.js";
 import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
 import { mttLobbyStyles } from "./mtt-lobby-styles.js";
 import {
@@ -206,16 +206,11 @@ class MttLobby extends LitElement {
     });
   }
 
-  _buildDrawerParams(tournament, currentTable) {
+  _buildDrawerParams(tournament) {
     const activeTables =
       tournament?.tables.filter((table) => !table.closed) ?? [];
-    const hasCurrentTableHistory = (currentTable?.handNumber ?? 0) > 0;
     return {
       activeTables,
-      currentTableHistoryPath:
-        hasCurrentTableHistory && currentTable
-          ? getHistoryPath(currentTable.tableId)
-          : undefined,
       share:
         "share" in navigator
           ? () => {
@@ -240,8 +235,7 @@ class MttLobby extends LitElement {
   render() {
     const tournament = this.tournament;
     const currentTable = this._getCurrentTable();
-    const { activeTables, currentTableHistoryPath, share } =
-      this._buildDrawerParams(tournament, currentTable);
+    const { activeTables, share } = this._buildDrawerParams(tournament);
     const copyLink = () => {
       void this._copyLink();
     };
@@ -270,7 +264,6 @@ class MttLobby extends LitElement {
             this.openTable(table.tableId);
           },
         })),
-        historyPath: currentTableHistoryPath,
         onCopyLink: copyLink,
         copied: this._copied,
         onShare: share,
