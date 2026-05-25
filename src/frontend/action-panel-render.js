@@ -34,9 +34,9 @@ function renderWaitingForPlayers(panel) {
 }
 
 function renderBuyIn(panel, action) {
-  const minBB = action.min || 20;
-  const maxBB = action.max || 100;
-  const bigBlind = action.bigBlind || panel.bigBlind;
+  const minBB = action.min ?? 20;
+  const maxBB = action.max ?? 100;
+  const bigBlind = action.bigBlind ?? panel.bigBlind;
   const minStack = minBB * bigBlind;
   const maxStack = maxBB * bigBlind;
   const defaultStack = Math.min(80, maxBB) * bigBlind;
@@ -142,7 +142,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
             panel.sendAction({ action: "fold", seat: panel.seatIndex })}
           >Fold</phg-button
         >`
-      : null}
+      : undefined}
     ${actionMap.check
       ? html`<phg-button
           variant="success"
@@ -151,7 +151,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
             panel.sendAction({ action: "check", seat: panel.seatIndex })}
           >Check</phg-button
         >`
-      : null}
+      : undefined}
     ${actionMap.call
       ? html`<phg-button
           variant="${actionMap.call.allIn ? "primary" : "success"}"
@@ -166,7 +166,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
             ${formatCurrency(actionMap.call.amount)}</span
           ></phg-button
         >`
-      : null}
+      : undefined}
     <phg-button
       variant="${isAllIn ? "primary" : "action"}"
       full-width
@@ -190,7 +190,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
 }
 
 function renderBettingSlider(panel, actionMap, betAction) {
-  const isBet = actionMap.bet != null;
+  const isBet = actionMap.bet != undefined;
   const min = betAction.min;
   const max = betAction.max;
   if (panel.betAmount < min) panel.betAmount = min;
@@ -270,7 +270,7 @@ function renderSimpleActions(panel, actionMap) {
   }
   return buttons.length > 0
     ? html`<div class="action-row game-action-row">${buttons}</div>`
-    : null;
+    : undefined;
 }
 
 function renderCallClockButton(panel) {
@@ -292,7 +292,7 @@ function renderShowButtons(panel, actionMap) {
     { key: "showBothCards", cards: actionMap.showBothCards?.cards },
   ].filter((entry) => entry.cards?.length);
 
-  if (showActions.length === 0) return null;
+  if (showActions.length === 0) return;
 
   return html`
     <div class="action-row game-action-row">
@@ -355,7 +355,7 @@ function renderSocialRow(panel, actionMap) {
   if (actionMap.chat) socialButtons.push(renderChatButton(panel));
   return socialButtons.length > 0
     ? html`<div class="action-row social-action-row">${socialButtons}</div>`
-    : null;
+    : undefined;
 }
 
 function preActionToggle(panel, isActive, setAction) {
@@ -436,7 +436,7 @@ function renderPreActionWithBet(panel, callClock) {
 }
 
 function renderPreActionButtons(panel, callClock) {
-  if (panel.isActing || !panel.inHand) return null;
+  if (panel.isActing || !panel.inHand) return;
   const toCall = panel.currentBet - panel.myBet;
   return toCall === 0
     ? renderPreActionNoBet(panel, callClock)
@@ -456,7 +456,7 @@ function renderWaitingActions(panel, actionMap) {
       ? html`<div class="action-row game-action-row">
           ${renderCallClockButton(panel)}
         </div>`
-      : null;
+      : undefined;
   return html`${preActions}${callClockOnlyRow}${showButtons}${socialRow}`;
 }
 
@@ -481,7 +481,7 @@ function renderForActionMap(panel, actionMap) {
   if (actionMap.sitIn || actionMap.leave)
     return renderSitInLeave(panel, actionMap);
   if (actionMap.start) return renderStart(panel, actionMap);
-  const betAction = actionMap.bet || actionMap.raise;
+  const betAction = actionMap.bet ?? actionMap.raise;
   if (betAction) return renderBettingSlider(panel, actionMap, betAction);
   return renderWaitingActions(panel, actionMap);
 }
@@ -492,12 +492,12 @@ function renderTournamentResult(panel) {
       >You've won!</span
     >`;
   }
-  if (panel.bustedPosition != null) {
+  if (panel.bustedPosition != undefined) {
     return html`<span class="waiting tournament-result"
       >You finished in ${formatPosition(panel.bustedPosition)} place</span
     >`;
   }
-  return null;
+  return;
 }
 
 export function renderActionPanel(panel) {

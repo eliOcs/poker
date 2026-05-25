@@ -61,7 +61,7 @@ function drawerItemClass(active = false) {
 }
 
 /**
- * @param {(() => any)|null|undefined} fn
+ * @param {(() => any)|undefined|undefined} fn
  * @returns {() => void}
  */
 function handleAction(fn) {
@@ -109,7 +109,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
 }
 
 /**
- * @param {(() => void)|null} onShare
+ * @param {(() => void)|undefined} onShare
  * @returns {import("lit").TemplateResult|string}
  */
 function renderShareButton(onShare) {
@@ -147,14 +147,14 @@ function renderTableItem(table) {
  * @property {() => void} onToggle
  * @property {any} user
  * @property {boolean} [lobbyActive]
- * @property {(() => void)|null} [onOpenLobby]
+ * @property {(() => void)|undefined} [onOpenLobby]
  * @property {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [tableItems]
- * @property {(() => void)|null} [onOpenHistory]
+ * @property {(() => void)|undefined} [onOpenHistory]
  * @property {boolean} [historyDisabled]
- * @property {(() => void)|null} [onOpenLevels]
- * @property {(() => void)|null} [onCopyLink]
+ * @property {(() => void)|undefined} [onOpenLevels]
+ * @property {(() => void)|undefined} [onCopyLink]
  * @property {boolean} [copied]
- * @property {(() => void)|null} [onShare]
+ * @property {(() => void)|undefined} [onShare]
  * @property {Array<import("lit").TemplateResult|string>} [extraMainItems]
  * @property {() => void} onOpenSettings
  * @property {() => void} onOpenSignIn
@@ -162,7 +162,7 @@ function renderTableItem(table) {
  */
 
 /**
- * @param {Required<MttNavigationDrawerParams>} params
+ * @param {MttNavigationDrawerParams} params
  * @returns {import("lit").TemplateResult}
  */
 function renderDrawerTemplate(params) {
@@ -170,15 +170,15 @@ function renderDrawerTemplate(params) {
     open,
     onToggle,
     user,
-    lobbyActive,
+    lobbyActive = false,
     onOpenLobby,
-    tableItems,
+    tableItems = [],
     onOpenHistory,
-    historyDisabled,
+    historyDisabled = false,
     onOpenLevels,
     onCopyLink,
     onShare,
-    extraMainItems,
+    extraMainItems = [],
     onOpenSettings,
     onOpenSignIn,
     onOpenSignUp,
@@ -236,17 +236,5 @@ function renderDrawerTemplate(params) {
  * @returns {import("lit").TemplateResult}
  */
 export function renderMttNavigationDrawer(params) {
-  return renderDrawerTemplate({
-    lobbyActive: false,
-    onOpenLobby: null,
-    tableItems: [],
-    onOpenHistory: null,
-    historyDisabled: false,
-    onOpenLevels: null,
-    onCopyLink: null,
-    copied: false,
-    onShare: null,
-    extraMainItems: [],
-    ...params,
-  });
+  return renderDrawerTemplate(params);
 }

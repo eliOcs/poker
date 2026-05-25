@@ -261,8 +261,8 @@ describe("websocket-handler", () => {
         historyEvent = { gameId: game.id, handNumber: handData.handNumber };
       }
 
-      assert.strictEqual(game.countdown, null);
-      assert.strictEqual(game.pendingHandHistory, null);
+      assert.strictEqual(game.countdown, undefined);
+      assert.strictEqual(game.pendingHandHistory, undefined);
       assert.strictEqual(HandHistory.getCacheSize(), 1);
       assert.deepStrictEqual(historyEvent, { gameId: game.id, handNumber: 1 });
 

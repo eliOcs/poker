@@ -6,11 +6,11 @@ import { calculatePrizes } from "../shared/tournament.js";
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
 }
 
 export function formatTimer(seconds) {
-  const safeSeconds = Math.max(0, seconds || 0);
+  const safeSeconds = Math.max(0, seconds ?? 0);
   const mins = Math.floor(safeSeconds / 60);
   const secs = safeSeconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -58,7 +58,7 @@ export function formatLevel(tournament) {
 
 function getTableName(tournament, tableId) {
   return (
-    tournament?.tables.find((table) => table.tableId === tableId)?.tableName ||
+    tournament?.tables.find((table) => table.tableId === tableId)?.tableName ??
     tableId
   );
 }
@@ -97,7 +97,9 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
     return html`<phg-button
       variant="primary"
       @click=${() => {
-        onNavigate(getTableHistoryPath("mtt", tableId, null, tournamentId));
+        onNavigate(
+          getTableHistoryPath("mtt", tableId, undefined, tournamentId),
+        );
       }}
     >
       Show My Last Table
@@ -176,7 +178,7 @@ function renderTournamentActions({ actions, actionPending, onMttAction }) {
  * @param {(path: string) => void} params.onNavigate
  * @param {() => void} params.onCopyLink
  * @param {boolean} params.copied
- * @param {(() => void)|null} params.onShare
+ * @param {(() => void)|undefined} params.onShare
  */
 export function renderActions({
   tournament,
@@ -241,7 +243,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
             <strong class="table-name">${table.tableName}</strong>
             <div class="table-meta">
               <span>Players: ${table.playerCount}</span>
-              <span>Hand: #${table.handNumber || 0}</span>
+              <span>Hand: #${table.handNumber ?? 0}</span>
               ${table.closed ? html`<span>Closed</span>` : ""}
             </div>
             <div class="table-actions">
@@ -253,7 +255,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
                         getTableHistoryPath(
                           "mtt",
                           table.tableId,
-                          null,
+                          undefined,
                           tournamentId,
                         ),
                       );
@@ -360,7 +362,7 @@ export function renderStandingsTable(tournament) {
                       ? "negative"
                       : ""}
                 >
-                  ${entrant.netWinnings != null
+                  ${entrant.netWinnings != undefined
                     ? formatNetWinnings(entrant.netWinnings)
                     : "\u2014"}
                 </td>

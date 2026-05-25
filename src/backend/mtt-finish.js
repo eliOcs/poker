@@ -14,14 +14,14 @@ import * as logger from "./logger.js";
  * @param {Map<string, import('./poker/game.js').Game>} games
  * @param {(game: import('./poker/game.js').Game) => void} ensureTableTick
  * @param {() => string} now
- * @param {import('./mtt.js').TournamentEntrant | null} [winnerEntrant]
+ * @param {import('./mtt.js').TournamentEntrant} [winnerEntrant]
  */
 export function finishTournament(
   tournament,
   games,
   ensureTableTick,
   now,
-  winnerEntrant = null,
+  winnerEntrant = undefined,
 ) {
   const activeEntrants = [...tournament.entrants.values()].filter(
     (entrant) => entrant.status === "seated",
@@ -44,8 +44,8 @@ export function finishTournament(
     }
     entrant.status = "eliminated";
     entrant.stack = 0;
-    entrant.tableId = null;
-    entrant.seatIndex = null;
+    delete entrant.tableId;
+    delete entrant.seatIndex;
     entrant.finishPosition = finishPosition;
     entrant.eliminatedAt = now();
   });
@@ -69,11 +69,11 @@ export function finishTournament(
     if (
       game.tournament &&
       resolvedWinner.tableId === table.tableId &&
-      resolvedWinner.seatIndex !== null
+      resolvedWinner.seatIndex !== undefined
     ) {
       game.tournament.winner = resolvedWinner.seatIndex;
     }
-    game.countdown = null;
+    delete game.countdown;
     ensureTableTick(game);
   }
 

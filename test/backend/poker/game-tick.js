@@ -38,7 +38,7 @@ describe("game-tick", () => {
         game.countdown = 1;
         const result = tick(game);
 
-        assert.strictEqual(game.countdown, null);
+        assert.strictEqual(game.countdown, undefined);
         assert.strictEqual(result.startHand, true);
         assert.strictEqual(result.shouldBroadcast, true);
       });
@@ -96,7 +96,7 @@ describe("game-tick", () => {
 
         const result = tick(game);
 
-        assert.strictEqual(result.autoActionSeat, null);
+        assert.strictEqual(result.autoActionSeat, undefined);
       });
 
       it("should not trigger auto-action if clock not called", () => {
@@ -104,7 +104,7 @@ describe("game-tick", () => {
 
         const result = tick(game);
 
-        assert.strictEqual(result.autoActionSeat, null);
+        assert.strictEqual(result.autoActionSeat, undefined);
       });
 
       it("should increment clockTicks when clock is active", () => {
@@ -250,9 +250,9 @@ describe("game-tick", () => {
       assert.strictEqual(newGame.clockTicks, 0);
     });
 
-    it("should initialize runout as null", () => {
+    it("should initialize runout as undefined", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.runout, null);
+      assert.strictEqual(newGame.runout, undefined);
     });
   });
 

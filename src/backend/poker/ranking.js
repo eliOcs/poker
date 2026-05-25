@@ -12,11 +12,11 @@ import { calculatePrizes } from "../../shared/tournament.js";
  * @property {string} playerId - Player ID
  * @property {string|undefined} playerName - Player display name
  * @property {Cents} stack - Current stack
- * @property {number|null} bustedPosition - Tournament finishing position (null if still alive)
+ * @property {number} [bustedPosition] - Tournament finishing position
  * @property {Cents} totalBuyIn - Total buy-ins
  * @property {Cents} netWinnings - Current stack minus total buy-ins
  * @property {number} handsPlayed - Number of hands played
- * @property {number|null} winRate - BB/100 win rate (null if < 10 hands)
+ * @property {number} [winRate] - BB/100 win rate when enough hands are available
  */
 
 /**
@@ -28,16 +28,16 @@ import { calculatePrizes } from "../../shared/tournament.js";
  * @returns {number}
  */
 function compareTournamentRankings(a, b) {
-  const aBusted = a.bustedPosition != null;
-  const bBusted = b.bustedPosition != null;
+  const aBusted = a.bustedPosition !== undefined;
+  const bBusted = b.bustedPosition !== undefined;
   const aPosition = a.bustedPosition;
   const bPosition = b.bustedPosition;
 
   if (
     aBusted &&
     bBusted &&
-    aPosition != null &&
-    bPosition != null &&
+    aPosition !== undefined &&
+    bPosition !== undefined &&
     aPosition !== bPosition
   ) {
     return aPosition - bPosition;
@@ -70,7 +70,7 @@ export function computeRankings(game) {
 
     // Calculate BB/100: (netWinnings / bigBlind) / (handsPlayed / 100)
     // Only calculate if >= 10 hands played (statistically meaningful)
-    let winRate = null;
+    let winRate;
     if (occupiedSeat.handsPlayed >= 10 && bigBlind > 0) {
       const bbWon = netWinnings / bigBlind;
       winRate = (bbWon / occupiedSeat.handsPlayed) * 100;

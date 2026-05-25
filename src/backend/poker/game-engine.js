@@ -44,14 +44,14 @@ export function gameStateSnapshot(game) {
 export function stopGameTick(game) {
   if (game.tickTimer) {
     clearInterval(game.tickTimer);
-    game.tickTimer = null;
+    delete game.tickTimer;
   }
 }
 
 /**
  * @param {Game} game
  * @param {BroadcastHandler} onBroadcast
- * @param {FinalizedHand | null} handData
+ * @param {FinalizedHand | undefined} handData
  */
 function emitHandEnded(game, onBroadcast, handData) {
   if (handData) {
@@ -82,16 +82,14 @@ export function startGameTick(game, onBroadcast) {
     const gameContext = {
       tableId: game.id,
       ...Object.fromEntries(
-        Object.entries(result).filter(
-          ([, value]) => value !== false && value !== null,
-        ),
+        Object.entries(result).filter(([, value]) => value !== false),
       ),
     };
     if (game.kind === "mtt") gameContext.tournamentId = game.tournamentId;
     Object.assign(timerLog.context, { game: gameContext });
 
     if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));
-    if (result.autoActionSeat !== null) {
+    if (result.autoActionSeat !== undefined) {
       emitHandEnded(
         game,
         onBroadcast,
@@ -116,7 +114,7 @@ export function startGameTick(game, onBroadcast) {
     }
 
     Object.assign(timerLog.context, {
-      game: { ...(timerLog.context.game || {}), ...gameStateSnapshot(game) },
+      game: { ...(timerLog.context.game ?? {}), ...gameStateSnapshot(game) },
       broadcast: broadcastStats,
     });
     emitLog(timerLog);
@@ -167,12 +165,12 @@ function recordDealtCards(game) {
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function startHand(game) {
   const handData = game.pendingHandHistory
     ? finalizePendingHandHistory(game)
-    : null;
+    : undefined;
 
   const playersWithChips = game.tournament?.active
     ? Actions.countAlivePlayersWithChips(game)
@@ -181,7 +179,7 @@ export function startHand(game) {
     return handData;
   }
 
-  game.winnerMessage = null;
+  delete game.winnerMessage;
   game.handNumber++;
   Actions.startHand(game);
 
@@ -223,11 +221,11 @@ export function startHand(game) {
 /**
  * @param {Game} game
  * @param {number} seatIndex
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function performAutoAction(game, seatIndex) {
   const seat = /** @type {import('./seat.js').Seat} */ (game.seats[seatIndex]);
-  if (seat.empty) return null;
+  if (seat.empty) return;
 
   const occupiedSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
   if (occupiedSeat.bet === game.hand.currentBet) {

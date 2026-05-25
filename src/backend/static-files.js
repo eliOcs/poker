@@ -97,7 +97,7 @@ export async function respondWithFile(req, res, filePath, options = {}) {
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext];
   const headers = {
-    "content-type": contentType || "application/octet-stream",
+    "content-type": contentType ?? "application/octet-stream",
   };
 
   const fh = await fs.promises.open(filePath, "r");
@@ -119,7 +119,7 @@ export async function respondWithFile(req, res, filePath, options = {}) {
     }
   }
 
-  const acceptEncoding = req.headers["accept-encoding"] || "";
+  const acceptEncoding = req.headers["accept-encoding"] ?? "";
   const useGzip = compressibleTypes.has(ext) && acceptEncoding.includes("gzip");
 
   if (useGzip) {
@@ -139,7 +139,7 @@ export async function respondWithFile(req, res, filePath, options = {}) {
           for (const [key, value] of Object.entries(replacements)) {
             content = content.replace(new RegExp(key, "g"), value);
           }
-          callback(null, content);
+          callback(undefined, content);
         },
       }),
     );

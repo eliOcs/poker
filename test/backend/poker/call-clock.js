@@ -171,9 +171,9 @@ describe("call the clock", () => {
       assert.strictEqual(newGame.clockTicks, 0);
     });
 
-    it("should initialize tickTimer as null", () => {
+    it("should initialize tickTimer as undefined", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.tickTimer, null);
+      assert.strictEqual(newGame.tickTimer, undefined);
     });
   });
 

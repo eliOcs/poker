@@ -56,8 +56,8 @@ export {
 
 /**
  * @typedef {object} WinnerMessage
- * @property {string|null} playerName - Winner's player name/ID (null for split pots)
- * @property {string|null} handRank - Winning hand description (null if won by fold)
+ * @property {string} [playerName] - Winner's player name/ID (absent for split pots)
+ * @property {string} [handRank] - Winning hand description (absent if won by fold)
  * @property {Cents} amount - Amount won
  * @property {boolean} isSplit - True when multiple players split the pot
  */
@@ -73,9 +73,9 @@ export {
  * @property {boolean} onBreak - Currently in break period
  * @property {boolean} pendingBreak - Break will start after current hand ends
  * @property {number} breakTicks - Ticks elapsed in current break
- * @property {string|null} startTime - Tournament start time (ISO string)
+ * @property {string|undefined} startTime - Tournament start time (ISO string)
  * @property {number} initialStack - Starting stack for each player
- * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ * @property {number|undefined} winner - Seat index of tournament winner (undefined if ongoing)
  * @property {Cents} buyIn - Buy-in amount in cents
  */
 
@@ -91,22 +91,22 @@ export {
  * @property {boolean} running - Whether game is running
  * @property {number} button - Dealer button position (seat index)
  * @property {Blinds} blinds - Blind structure
- * @property {string|null} tableName - Human-readable table name for history/UX
+ * @property {string|undefined} tableName - Human-readable table name for history/UX
  * @property {Seat[]} seats - Array of seats
  * @property {Card[]} deck - Current deck
  * @property {Board} board - Community cards
  * @property {Hand} hand - Current hand state
  * @property {number} handNumber - Current hand number (0 before first hand)
- * @property {number|null} countdown - Countdown ticks until hand starts (null if not counting)
- * @property {NodeJS.Timeout|null} tickTimer - Unified game tick timer (1 second interval)
- * @property {WinnerMessage|null} winnerMessage - Winner info to display after hand ends
+ * @property {number} [countdown] - Countdown ticks until hand starts
+ * @property {NodeJS.Timeout} [tickTimer] - Unified game tick timer (1 second interval)
+ * @property {WinnerMessage} [winnerMessage] - Winner info to display after hand ends
  * @property {number} actingTicks - Ticks the current player has been acting (for call clock availability)
  * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
- * @property {TournamentState|null} tournament - Tournament state (null for cash games)
- * @property {RunoutState|null} runout - Runout state for all-in scenarios (null if not running out)
- * @property {import('./showdown.js').PotResult[]|null} pendingHandHistory - Pot results to finalize after reveal window
- * @property {{ active: boolean, delayTicks: number }|null} collectingBets - Bet collection animation state
- * @property {import('../logger.js').Log|null} handLog - Deferred hand-level log record for the current hand
+ * @property {TournamentState} [tournament] - Tournament state
+ * @property {RunoutState} [runout] - Runout state for all-in scenarios
+ * @property {import('./showdown.js').PotResult[]} [pendingHandHistory] - Pot results to finalize after reveal window
+ * @property {{ active: boolean, delayTicks: number }} [collectingBets] - Bet collection animation state
+ * @property {import('../logger.js').Log} [handLog] - Deferred hand-level log record for the current hand
  */
 
 /**
@@ -118,7 +118,7 @@ export {
  * @typedef {object} BaseGameOptions
  * @property {number} [seats] - Number of seats
  * @property {Blinds} [blinds] - Blind structure
- * @property {string|null} [tableName] - Human-readable table name
+ * @property {string|undefined} [tableName] - Human-readable table name
  *
  * @typedef {BaseGameOptions & { kind?: "cash" }} CashGameOptions
  * @typedef {BaseGameOptions & { kind: "sitngo" }} SitAndGoGameOptions
@@ -151,7 +151,7 @@ export function create(options = {}) {
     seats: numberOfSeats = 9,
     blinds = { ante: 5, small: 25, big: 50 },
     kind = "cash",
-    tableName = null,
+    tableName = undefined,
   } = options;
   const id = Id.generate();
   /** @type {Seat[]} */
@@ -174,16 +174,8 @@ export function create(options = {}) {
     board: { cards: [] },
     hand: createHand(),
     handNumber: 0,
-    countdown: null,
-    tickTimer: null,
-    winnerMessage: null,
     actingTicks: 0,
     clockTicks: 0,
-    tournament: null,
-    runout: null,
-    pendingHandHistory: null,
-    collectingBets: null,
-    handLog: null,
   });
 }
 
@@ -226,9 +218,9 @@ export function createTournament({
     onBreak: false,
     pendingBreak: false,
     breakTicks: 0,
-    startTime: null,
+    startTime: undefined,
     initialStack: Tournament.INITIAL_STACK,
-    winner: null,
+    winner: undefined,
     buyIn,
   };
 
@@ -237,7 +229,7 @@ export function createTournament({
 
 /**
  * Creates a new multi-table tournament table
- * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|null, level?: number }} options
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|undefined, level?: number }} options
  * @returns {Game}
  */
 export function createMttTable({
@@ -276,7 +268,7 @@ export function createMttTable({
     breakTicks: 0,
     startTime,
     initialStack: Tournament.INITIAL_STACK,
-    winner: null,
+    winner: undefined,
     buyIn,
   };
 

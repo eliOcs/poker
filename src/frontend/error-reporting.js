@@ -2,7 +2,7 @@
  * Builds a normalized frontend error report payload
  * @param {object} error
  * @param {string} route
- * @param {string|null} gameId
+ * @param {string|undefined} gameId
  * @param {string} connectionStatus
  * @returns {Record<string, unknown>}
  */
@@ -14,14 +14,14 @@ export function createFrontendErrorReport(
 ) {
   return {
     level: error.level === "warn" ? "warn" : "error",
-    type: error.type || "error",
-    message: error.message || "Unknown frontend error",
-    stack: error.stack || null,
-    filename: error.filename || null,
-    line: typeof error.line === "number" ? error.line : null,
-    column: typeof error.column === "number" ? error.column : null,
-    source: error.source || null,
-    rejection: error.rejection || null,
+    type: error.type ?? "error",
+    message: error.message ?? "Unknown frontend error",
+    stack: error.stack ?? undefined,
+    filename: error.filename ?? undefined,
+    line: typeof error.line === "number" ? error.line : undefined,
+    column: typeof error.column === "number" ? error.column : undefined,
+    source: error.source ?? undefined,
+    rejection: error.rejection ?? undefined,
     route,
     gameId,
     connectionStatus,
@@ -37,7 +37,7 @@ export function createFrontendErrorReport(
 export function getWindowErrorDetails(event) {
   return {
     type: "error",
-    message: event.error?.message || event.message || "Unknown error",
+    message: event.error?.message ?? event.message ?? "Unknown error",
     stack: event.error?.stack,
     filename: event.filename,
     line: event.lineno,
@@ -60,8 +60,8 @@ export function getUnhandledRejectionDetails(event) {
           rejection: String(event.reason),
         }
       : {
-          message: String(event.reason || "Unhandled promise rejection"),
-          stack: null,
+          message: String(event.reason ?? "Unhandled promise rejection"),
+          stack: undefined,
           rejection: String(event.reason),
         };
 

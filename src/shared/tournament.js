@@ -46,7 +46,7 @@ export const DEFAULT_SEATS = 6;
 export function getBlindsForLevel(level) {
   const found = BLIND_LEVELS.find((l) => l.level === level);
   return (
-    found || /** @type {BlindLevel} */ (BLIND_LEVELS[BLIND_LEVELS.length - 1])
+    found ?? /** @type {BlindLevel} */ (BLIND_LEVELS[BLIND_LEVELS.length - 1])
   );
 }
 

@@ -9,7 +9,9 @@ function dispatchToast(host, detail) {
 }
 
 function readInput(root, selector) {
-  return /** @type {HTMLInputElement|null} */ (root?.querySelector(selector));
+  return /** @type {HTMLInputElement|undefined} */ (
+    root?.querySelector(selector)
+  );
 }
 
 function validateRequiredInput(input) {
@@ -106,10 +108,10 @@ export const gameModalActions = {
   },
 
   saveSettings() {
-    const input = /** @type {HTMLInputElement|null} */ (
+    const input = /** @type {HTMLInputElement|undefined} */ (
       this.shadowRoot?.querySelector("#name-input")
     );
-    const name = input?.value.trim() || "";
+    const name = input?.value.trim() ?? "";
     this.dispatchEvent(
       new CustomEvent("update-user", {
         detail: {
@@ -129,7 +131,7 @@ export const gameModalActions = {
 
   requestSignIn() {
     const input = readInput(this.shadowRoot, "#sign-in-email");
-    const email = input?.value.trim() || "";
+    const email = input?.value.trim() ?? "";
     if (!validateEmailInput(input)) {
       this._signInInvalid = true;
       return;
@@ -148,8 +150,8 @@ export const gameModalActions = {
   requestSignUp() {
     const nameInput = readInput(this.shadowRoot, "#sign-up-name");
     const emailInput = readInput(this.shadowRoot, "#sign-up-email");
-    const name = nameInput?.value.trim() || "";
-    const email = emailInput?.value.trim() || "";
+    const name = nameInput?.value.trim() ?? "";
+    const email = emailInput?.value.trim() ?? "";
 
     this._signUpNameInvalid = !validateRequiredInput(nameInput);
     if (this._signUpNameInvalid) return;

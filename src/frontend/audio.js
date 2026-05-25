@@ -1,4 +1,4 @@
-let audioContext = null;
+let audioContext = undefined;
 let volume = 0.75;
 let vibrationEnabled = true;
 
@@ -21,7 +21,7 @@ function getContext() {
     return audioContext;
   } catch (e) {
     console.warn("Web Audio API not supported:", e);
-    return null;
+    return;
   }
 }
 

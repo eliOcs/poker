@@ -5,15 +5,15 @@ import crypto from "node:crypto";
 import { renderSignInEmail } from "./sign-in-email.js";
 
 const sesClient = new SESClient({
-  region: process.env.AWS_REGION || "eu-central-1",
+  region: process.env.AWS_REGION ?? "eu-central-1",
 });
 
 function getFromEmail() {
-  return process.env.SES_FROM_EMAIL || "no-reply@plutonpoker.com";
+  return process.env.SES_FROM_EMAIL ?? "no-reply@plutonpoker.com";
 }
 
 function getEmailSinkDir() {
-  return process.env.EMAIL_SINK_DIR || "";
+  return process.env.EMAIL_SINK_DIR ?? "";
 }
 
 export async function cleanupEmailSink() {
@@ -39,7 +39,7 @@ async function writeEmailToSink(email) {
   const fileName = `${Date.now()}-${safeEmail}-${crypto.randomUUID()}.json`;
   await writeFile(
     `${sinkDir}/${fileName}`,
-    JSON.stringify(email, null, 2),
+    JSON.stringify(email, undefined, 2),
     "utf8",
   );
 

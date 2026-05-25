@@ -27,7 +27,7 @@ export function sitOutDisconnectedPlayers(game) {
 export function finalizePendingHandHistory(game) {
   const handNumber = game.handNumber;
   const potResults = /** @type {PotResult[]} */ (game.pendingHandHistory);
-  game.pendingHandHistory = null;
+  delete game.pendingHandHistory;
   return {
     handNumber,
     potResults,
@@ -47,7 +47,7 @@ function countPlayersAliveForNextHand(game) {
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function autoStartNextHand(game) {
   sitOutDisconnectedPlayers(game);
@@ -55,12 +55,12 @@ export function autoStartNextHand(game) {
   const playersWithChips = countPlayersAliveForNextHand(game);
   if (
     game.tournament?.kind === "sitngo" &&
-    game.tournament.winner === null &&
+    game.tournament.winner === undefined &&
     playersWithChips === 1
   ) {
     const handData = game.pendingHandHistory
       ? finalizePendingHandHistory(game)
-      : null;
+      : undefined;
     const winnerIndex = game.seats.findIndex(
       (seat) => !seat.empty && seat.stack > 0 && !seat.sittingOut,
     );
@@ -77,8 +77,8 @@ export function autoStartNextHand(game) {
 
   if (playersWithChips >= 2) {
     game.countdown = 5;
-    return null;
+    return;
   }
 
-  return game.pendingHandHistory ? finalizePendingHandHistory(game) : null;
+  return game.pendingHandHistory ? finalizePendingHandHistory(game) : undefined;
 }

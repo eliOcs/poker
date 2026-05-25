@@ -32,18 +32,18 @@ class Seat extends LitElement {
 
   constructor() {
     super();
-    this.seat = null;
+    this.seat = undefined;
     this.seatNumber = 0;
     this.isButton = false;
     this.noAnimation = false;
     this.showSitAction = true;
-    this.clockRemaining = null;
+    this.clockRemaining = undefined;
     this.buyIn = 0;
     this.hideBet = false;
-    this._activeEmote = null;
-    this._emoteTimer = null;
-    this._activeChat = null;
-    this._chatTimer = null;
+    this._activeEmote = undefined;
+    this._emoteTimer = undefined;
+    this._activeChat = undefined;
+    this._chatTimer = undefined;
     this._handleSeatClick = () => {
       if (!this.seat?.isCurrentPlayer) return;
       this.dispatchEvent(
@@ -81,11 +81,14 @@ class Seat extends LitElement {
     ["acting", (s) => s?.isActing],
     ["folded", (s) => s?.folded],
     ["all-in", (s) => s?.allIn],
-    ["sitting-out", (s) => s?.sittingOut && s?.bustedPosition == null],
-    ["busted", (s) => s?.bustedPosition != null],
+    ["sitting-out", (s) => s?.sittingOut && s?.bustedPosition == undefined],
+    ["busted", (s) => s?.bustedPosition != undefined],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
-    ["winner", (s) => s?.isWinner || (s?.netResult ?? s?.handResult) > 0],
+    [
+      "winner",
+      (s) => Boolean(s?.isWinner) || (s?.netResult ?? s?.handResult) > 0,
+    ],
   ];
 
   updated(changedProperties) {
@@ -111,16 +114,16 @@ class Seat extends LitElement {
   _showBubble(value, kind) {
     const timerKey = kind === "emote" ? "_emoteTimer" : "_chatTimer";
     const stateKey = kind === "emote" ? "_activeEmote" : "_activeChat";
-    const text = String(value || "").trim();
+    const text = String(value ?? "").trim();
     if (!text) return;
     clearTimeout(this[timerKey]);
-    this[stateKey] = null;
+    this[stateKey] = undefined;
     this.requestUpdate();
     requestAnimationFrame(() => {
       this[stateKey] = text;
       this.requestUpdate();
       this[timerKey] = setTimeout(() => {
-        this[stateKey] = null;
+        this[stateKey] = undefined;
         this.requestUpdate();
       }, 3000);
     });
@@ -149,14 +152,14 @@ class Seat extends LitElement {
   _getStatusLabel() {
     const s = this.seat;
     if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
-    if (s.bustedPosition != null) {
+    if (s.bustedPosition != undefined) {
       return { label: formatPosition(s.bustedPosition), isStatus: true };
     }
     if (s.sittingOut) return { label: "SITTING OUT", isStatus: true };
     if (s.folded) return { label: "FOLDED", isStatus: true };
     if (s.allIn) return { label: "ALL-IN", isStatus: true };
     if (s.lastAction) return { label: s.lastAction, isStatus: false };
-    return null;
+    return;
   }
 
   _renderEmptySeat() {
@@ -167,12 +170,12 @@ class Seat extends LitElement {
   }
 
   _renderStatusOrAction() {
-    if (this.seat.bustedPosition != null) {
+    if (this.seat.bustedPosition != undefined) {
       return html`<div class="status-label">
         ${formatPosition(this.seat.bustedPosition)}
       </div>`;
     }
-    if (this.seat.handResult != null) return "";
+    if (this.seat.handResult != undefined) return "";
     const status = this._getStatusLabel();
     if (!status) return "";
     return status.isStatus
@@ -181,7 +184,7 @@ class Seat extends LitElement {
   }
 
   _renderStackOrResult() {
-    if (this.seat.bustedPosition != null) {
+    if (this.seat.bustedPosition != undefined) {
       return "";
     }
     if (this.seat.netResult !== undefined) {
@@ -194,7 +197,7 @@ class Seat extends LitElement {
         </div>
       `;
     }
-    return this.seat.handResult != null
+    return this.seat.handResult != undefined
       ? html`<div class="hand-result ${getResultClass(this.seat.handResult)}">
           ${formatHandResult(this.seat.handResult)}
         </div>`
@@ -202,7 +205,7 @@ class Seat extends LitElement {
   }
 
   _renderClock() {
-    return this.clockRemaining !== null
+    return this.clockRemaining !== undefined
       ? html`<div
           class="clock-countdown ${this.clockRemaining <= 10 ? "urgent" : ""}"
         >
@@ -245,7 +248,7 @@ class Seat extends LitElement {
       ${this._renderDealerButton()}
       <div class="player-info">
         <span class="player-name"
-          >${this.seat.player?.name || `Seat ${this.seatNumber + 1}`}</span
+          >${this.seat.player?.name ?? `Seat ${this.seatNumber + 1}`}</span
         >
       </div>
       ${this._renderStackOrResult()} ${this._renderClock()}

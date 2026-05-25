@@ -6,12 +6,12 @@ import * as logger from "./logger.js";
  * Trims a string value to a safe loggable form
  * @param {unknown} value
  * @param {number} maxLength
- * @returns {string|null}
+ * @returns {string|void}
  */
 function trimLogString(value, maxLength) {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") return;
   const trimmed = value.trim();
-  if (!trimmed) return null;
+  if (!trimmed) return;
   return trimmed.slice(0, maxLength);
 }
 
@@ -37,8 +37,9 @@ export function logFrontendErrorReport(req, user, data) {
   }
 
   const level = payload.level === "warn" ? "warn" : "error";
+  const type = trimLogString(payload.type, 100);
   const clientError = {
-    type: trimLogString(payload.type, 100) ?? "error",
+    type: typeof type === "string" ? type : "error",
     message,
     stack: trimLogString(payload.stack, 4000),
     filename: trimLogString(payload.filename, 500),
@@ -47,8 +48,8 @@ export function logFrontendErrorReport(req, user, data) {
     gameId: trimLogString(payload.gameId, 100),
     userAgent: trimLogString(payload.userAgent, 500),
     rejection: trimLogString(payload.rejection, 2000),
-    line: typeof payload.line === "number" ? payload.line : null,
-    column: typeof payload.column === "number" ? payload.column : null,
+    line: typeof payload.line === "number" ? payload.line : undefined,
+    column: typeof payload.column === "number" ? payload.column : undefined,
     connectionStatus: trimLogString(payload.connectionStatus, 50),
   };
 

@@ -109,12 +109,14 @@ function renderMttDrawer(game) {
         table.tableId === game.mttTournament?.currentPlayer?.tableId,
       onOpen: () => game.openTournamentTable(table.tableId),
     })),
-    onOpenHistory: game.hasRecordedHands() ? () => game.openHistory() : null,
+    onOpenHistory: game.hasRecordedHands()
+      ? () => game.openHistory()
+      : undefined,
     historyDisabled: !game.hasRecordedHands(),
     onOpenLevels: () => game.openTournamentLevels(),
     onCopyLink: () => game.copyGameLink(),
     copied: game._copied,
-    onShare: canShare ? () => game.shareGameLink() : null,
+    onShare: canShare ? () => game.shareGameLink() : undefined,
     extraMainItems: [renderSitOutButton(game)],
     onOpenSettings: () => game.openSettings(),
     onOpenSignIn: () => game.openSignIn(),

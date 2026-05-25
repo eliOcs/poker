@@ -86,7 +86,6 @@ describe("game history timing", () => {
           hand.players.map((player) => ({
             playerId: player.id,
             tableId: game.id,
-            tournamentId: null,
             lastHandNumber: handData.handNumber,
             lastPlayedAt: hand.start_date_utc,
           })),
@@ -95,7 +94,7 @@ describe("game history timing", () => {
     }
     await waitForHandHistoryFlush();
 
-    assert.strictEqual(game.pendingHandHistory, null);
+    assert.strictEqual(game.pendingHandHistory, undefined);
     assert.strictEqual(game.handNumber, 2);
     assert.strictEqual(HandHistory.getCacheSize(), 1);
     assert.strictEqual(Store.listPlayerTables("player1").length, 1);

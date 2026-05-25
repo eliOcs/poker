@@ -18,9 +18,9 @@ export async function requestSignIn(app, email, returnPath) {
       return;
     }
 
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => undefined);
     app.toast = {
-      message: data?.error || "Unable to send sign-in link",
+      message: data?.error ?? "Unable to send sign-in link",
       variant: "error",
     };
   } catch {

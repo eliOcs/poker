@@ -91,7 +91,7 @@ export function parseBody(req) {
     });
     req.on("end", () => {
       if (!body) {
-        resolve(null);
+        resolve(undefined);
         return;
       }
       try {

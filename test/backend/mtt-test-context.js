@@ -26,7 +26,7 @@ export function countActivePlayers(game) {
 }
 
 /**
- * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt: string|null }> }} tournament
+ * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt?: string }> }} tournament
  * @param {Map<string, import("../../src/backend/poker/game.js").Game>} games
  * @returns {number}
  */
@@ -38,15 +38,16 @@ export function countTournamentActivePlayers(tournament, games) {
 }
 
 /**
- * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt: string|null }> }} tournament
+ * @param {{ tables: Array<{ tableId: string, tableName: string, closedAt?: string }> }} tournament
  * @param {Map<string, import("../../src/backend/poker/game.js").Game>} games
- * @returns {import("../../src/backend/poker/game.js").Game|null}
+ * @returns {import("../../src/backend/poker/game.js").Game|undefined}
  */
 export function getOpenFinalTable(tournament, games) {
   const finalTable = tournament.tables.find(
-    (table) => table.tableName === FINAL_TABLE_NAME && table.closedAt === null,
+    (table) =>
+      table.tableName === FINAL_TABLE_NAME && table.closedAt == undefined,
   );
-  return finalTable ? games.get(finalTable.tableId) || null : null;
+  return finalTable ? games.get(finalTable.tableId) : undefined;
 }
 
 /**
@@ -85,7 +86,7 @@ export function createMttContext() {
         ensureTableTick: () => {},
         finalizePendingTableHand: (game) => {
           if (!game.pendingHandHistory) return false;
-          game.pendingHandHistory = null;
+          delete game.pendingHandHistory;
           return true;
         },
         now: () =>

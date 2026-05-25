@@ -43,19 +43,19 @@ class ActionPanel extends LitElement {
     this.smallBlind = 1;
     this.bigBlind = 1;
     this.seatedCount = 0;
-    this.bustedPosition = null;
+    this.bustedPosition = undefined;
     this.isWinner = false;
     this.canSit = false;
     this.buyIn = 0;
     this.pot = 0;
-    this.preAction = null;
+    this.preAction = undefined;
     this.currentBet = 0;
     this.myBet = 0;
     this.myStack = 0;
     this.isActing = false;
     this.inHand = false;
     this.connectionStatus = "connected";
-    this._lastActionType = null;
+    this._lastActionType = undefined;
     this._lastActionTime = 0;
   }
 

@@ -123,27 +123,27 @@ class Board extends LitElement {
 
   constructor() {
     super();
-    this.board = null;
-    this.hand = null;
-    this.countdown = null;
-    this.winnerMessage = null;
-    this.winningCards = null;
+    this.board = undefined;
+    this.hand = undefined;
+    this.countdown = undefined;
+    this.winnerMessage = undefined;
+    this.winningCards = undefined;
     this.noAnimation = false;
-    this.tournament = null;
-    this.seats = null;
+    this.tournament = undefined;
+    this.seats = undefined;
   }
 
   getTournamentWinnerName() {
-    if (this.tournament?.winner === null || !this.seats) return null;
+    if (this.tournament?.winner == undefined || !this.seats) return;
     const winnerSeat = this.seats[this.tournament.winner];
     if (winnerSeat && !winnerSeat.empty) {
-      return winnerSeat.player?.name || `Seat ${this.tournament.winner + 1}`;
+      return winnerSeat.player?.name ?? `Seat ${this.tournament.winner + 1}`;
     }
     return `Seat ${this.tournament.winner + 1}`;
   }
 
   renderTournamentWinner() {
-    if (!this.tournament || this.tournament.winner === null) return "";
+    if (!this.tournament || this.tournament.winner == undefined) return "";
     const winnerName = this.getTournamentWinnerName();
     return html`
       <div class="tournament-winner-overlay">
@@ -186,13 +186,11 @@ class Board extends LitElement {
   }
 
   hasTournamentWinner() {
-    return (
-      this.tournament?.winner !== null && this.tournament?.winner !== undefined
-    );
+    return this.tournament?.winner != undefined;
   }
 
   hasCountdown() {
-    return this.countdown !== null && this.countdown !== undefined;
+    return this.countdown != undefined;
   }
 
   renderCountdownView() {
@@ -213,7 +211,7 @@ class Board extends LitElement {
   }
 
   renderDefaultView(cards) {
-    const phase = this.hand?.phase || "Waiting";
+    const phase = this.hand?.phase ?? "Waiting";
     return html`
       <div class="board-info">
         <div class="phase">${phase}</div>

@@ -279,7 +279,7 @@ describe("mtt-manager", () => {
     tournament.onBreak = true;
     tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
     table.hand.phase = "waiting";
-    table.countdown = null;
+    delete table.countdown;
 
     ctx.manager.tickTournament(tournamentId);
 

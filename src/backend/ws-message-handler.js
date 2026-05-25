@@ -101,7 +101,7 @@ function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
   );
 
   if (action === "clearPreAction") {
-    seat.preAction = null;
+    delete seat.preAction;
     broadcastGameState(gameId);
     return;
   }
@@ -113,7 +113,7 @@ function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
   const preType = /** @type {'checkFold'|'callAmount'} */ (args.type);
   seat.preAction =
     preType === "checkFold"
-      ? { type: /** @type {const} */ ("checkFold"), amount: null }
+      ? { type: /** @type {const} */ ("checkFold") }
       : {
           type: /** @type {const} */ ("callAmount"),
           amount: /** @type {number} */ (args.amount ?? 0),
@@ -202,7 +202,7 @@ function dispatchGameAction({
   if (action === "emote" || action === "chat") {
     handleSocialAction(game, user, action, args, broadcastGameMessage, gameId);
     log.context.game = {
-      ...(log.context.game || {}),
+      ...(log.context.game ?? {}),
       handNumber: game.handNumber,
     };
     return;
@@ -218,7 +218,7 @@ function dispatchGameAction({
       gameId,
     );
     log.context.game = {
-      ...(log.context.game || {}),
+      ...(log.context.game ?? {}),
       handNumber: game.handNumber,
     };
     return;
@@ -233,7 +233,7 @@ function dispatchGameAction({
     broadcastGameMessage,
   );
   Object.assign(log.context, {
-    game: { ...(log.context.game || {}), ...gameSnapshot },
+    game: { ...(log.context.game ?? {}), ...gameSnapshot },
     broadcast,
   });
 }
@@ -242,8 +242,8 @@ function dispatchGameAction({
  * @param {{
  *   ws: import("ws").WebSocket,
  *   user: UserType,
- *   game: Game|null,
- *   gameId: string|null,
+ *   game: Game|undefined,
+ *   gameId: string|undefined,
  *   player: import("./poker/seat.js").Player,
  *   playerRateLimitKey: string,
  *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],

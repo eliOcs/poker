@@ -114,7 +114,6 @@ describe("player-profile history", function () {
       {
         gameId: "tour456",
         tableId: "tour456",
-        tournamentId: null,
         gameType: "sitngo",
         netWinnings: 100,
         handsPlayed: 1,
@@ -215,7 +214,6 @@ describe("player-profile history", function () {
       {
         gameId: "gamec789",
         tableId: "gamec789",
-        tournamentId: null,
         gameType: "cash",
         netWinnings: 75,
         handsPlayed: 2,

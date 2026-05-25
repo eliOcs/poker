@@ -16,7 +16,6 @@ describe("pre-action", () => {
       setPreAction(seat, "checkFold");
       assert.deepStrictEqual(seat.preAction, {
         type: "checkFold",
-        amount: null,
       });
     });
 
@@ -35,7 +34,7 @@ describe("pre-action", () => {
       const seat = Seat.occupied({ id: "p1" }, 1000);
       setPreAction(seat, "checkFold");
       clearPreAction(seat);
-      assert.strictEqual(seat.preAction, null);
+      assert.strictEqual(seat.preAction, undefined);
     });
   });
 
@@ -50,7 +49,7 @@ describe("pre-action", () => {
     });
 
     describe("checkFold", () => {
-      const preAction = { type: "checkFold", amount: null };
+      const preAction = { type: "checkFold" };
 
       it("resolves to check when no bet to call", () => {
         game.hand.currentBet = 0;
@@ -108,22 +107,22 @@ describe("pre-action", () => {
         });
       });
 
-      it("returns null when amount does not match toCall", () => {
+      it("returns undefined when amount does not match toCall", () => {
         game.hand.currentBet = 400;
         game.seats[0].bet = 0;
         game.seats[0].stack = 1000;
         const preAction = { type: "callAmount", amount: 200 };
         const result = resolvePreAction(preAction, game, 0);
-        assert.strictEqual(result, null);
+        assert.strictEqual(result, undefined);
       });
 
-      it("returns null when no bet to call but amount set", () => {
+      it("returns undefined when no bet to call but amount set", () => {
         game.hand.currentBet = 0;
         game.seats[0].bet = 0;
         game.seats[0].stack = 1000;
         const preAction = { type: "callAmount", amount: 200 };
         const result = resolvePreAction(preAction, game, 0);
-        assert.strictEqual(result, null);
+        assert.strictEqual(result, undefined);
       });
     });
   });
@@ -132,17 +131,16 @@ describe("pre-action", () => {
     it("clears callAmount pre-actions from all seats", () => {
       const game = createGameWithPlayers();
       game.seats[0].preAction = { type: "callAmount", amount: 100 };
-      game.seats[2].preAction = { type: "checkFold", amount: null };
+      game.seats[2].preAction = { type: "checkFold" };
       game.seats[4].preAction = { type: "callAmount", amount: 200 };
 
       invalidateCallPreActions(game);
 
-      assert.strictEqual(game.seats[0].preAction, null);
+      assert.strictEqual(game.seats[0].preAction, undefined);
       assert.deepStrictEqual(game.seats[2].preAction, {
         type: "checkFold",
-        amount: null,
       });
-      assert.strictEqual(game.seats[4].preAction, null);
+      assert.strictEqual(game.seats[4].preAction, undefined);
     });
 
     it("does not affect empty seats", () => {
@@ -156,9 +154,9 @@ describe("pre-action", () => {
   describe("resetForNewHand clears preAction", () => {
     it("clears preAction when resetting for new hand", () => {
       const seat = Seat.occupied({ id: "p1" }, 1000);
-      seat.preAction = { type: "checkFold", amount: null };
+      seat.preAction = { type: "checkFold" };
       Seat.resetForNewHand(seat);
-      assert.strictEqual(seat.preAction, null);
+      assert.strictEqual(seat.preAction, undefined);
     });
   });
 });

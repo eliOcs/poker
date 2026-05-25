@@ -9,7 +9,7 @@ export function snapshotBetPositions(shadowRoot, bets) {
   const potEl = shadowRoot
     ?.querySelector("phg-board")
     ?.shadowRoot?.querySelector(".pot");
-  if (!container || !potEl) return null;
+  if (!container || !potEl) return;
 
   const cRect = container.getBoundingClientRect();
   const tRect = potEl.getBoundingClientRect();
@@ -21,7 +21,7 @@ export function snapshotBetPositions(shadowRoot, bets) {
       const betEl = shadowRoot
         .querySelector(`phg-seat[data-seat="${index}"]`)
         ?.shadowRoot?.querySelector(".bet-indicator");
-      if (!betEl) return null;
+      if (!betEl) return;
       const r = betEl.getBoundingClientRect();
       return {
         amount: bet,
@@ -33,7 +33,7 @@ export function snapshotBetPositions(shadowRoot, bets) {
     })
     .filter(Boolean);
 
-  return sources.length > 0 ? sources : null;
+  return sources.length > 0 ? sources : undefined;
 }
 
 /**

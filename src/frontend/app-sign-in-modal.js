@@ -40,7 +40,9 @@ class AppSignInModal extends LitElement {
   }
 
   _input(selector) {
-    return /** @type {HTMLInputElement|null} */ (this.querySelector(selector));
+    return /** @type {HTMLInputElement|undefined} */ (
+      this.querySelector(selector)
+    );
   }
 
   _validateEmail(input) {
@@ -59,9 +61,9 @@ class AppSignInModal extends LitElement {
 
   submit() {
     const emailInput = this._input("#profile-sign-in-email");
-    const email = emailInput?.value.trim() || "";
+    const email = emailInput?.value.trim() ?? "";
     const nameInput = this._input("#profile-sign-up-name");
-    const name = nameInput?.value.trim() || "";
+    const name = nameInput?.value.trim() ?? "";
 
     this.clearValidation();
     if (this.mode === "sign-up" && !this._validateName(nameInput)) return;
@@ -175,7 +177,7 @@ export function renderProfileSignUpModal(app) {
   if (!app._showProfileSignUp) return "";
   return html`<phg-app-sign-in-modal
     mode="sign-up"
-    .prefillName=${app.user?.name || ""}
+    .prefillName=${app.user?.name ?? ""}
     @close=${() => app.closeProfileSignUp()}
     @switch-mode=${() => {
       app.closeProfileSignUp();

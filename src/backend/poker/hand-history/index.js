@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax -- OHH requires explicit null for selected absent fields. */
 import HandRankings from "../hand-rankings.js";
 import { toDollars, writeHandToFile, addToCache } from "./io.js";
 
@@ -84,7 +85,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {"sitngo"|"mtt"} kind
  * @property {string} tournamentId
  * @property {string} name
- * @property {string|null} startTime
+ * @property {string} [startTime]
  * @property {number} initialStack
  * @property {number} level
  * @property {Cents} buyIn
@@ -96,14 +97,14 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @property {OHHAction[]} actions
  * @property {number} actionCounter
  * @property {string} currentStreet
- * @property {string|null} startTime
+ * @property {string} [startTime]
  * @property {string} tableName
  * @property {string} tableHandle
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: Cents }>} players
  * @property {number} dealerSeat
  * @property {{ ante: Cents, small: Cents, big: Cents }} blinds
  * @property {Map<string, string[]>} boardByStreet
- * @property {TournamentRecordInfo|null} tournament
+ * @property {TournamentRecordInfo} [tournament]
  */
 
 /** @type {Map<string, Recorder>} */
@@ -122,14 +123,12 @@ export function getRecorder(gameId) {
       actions: [],
       actionCounter: 0,
       currentStreet: "Preflop",
-      startTime: null,
       tableName: gameId,
       tableHandle: gameId,
       players: [],
       dealerSeat: 0,
       blinds: { ante: 0, small: 0, big: 0 },
       boardByStreet: new Map(),
-      tournament: null,
     };
     recorders.set(gameId, recorder);
   }
@@ -146,7 +145,7 @@ export function startHand(game) {
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
   recorder.startTime = new Date().toISOString();
-  recorder.tableName = game.tableName || game.id;
+  recorder.tableName = game.tableName ?? game.id;
   recorder.tableHandle = game.id;
   recorder.dealerSeat = game.button + 1; // OHH uses 1-indexed seats
   recorder.blinds = { ...game.blinds };
@@ -155,9 +154,7 @@ export function startHand(game) {
   // Capture tournament info if this is a tournament
   if (game.tournament?.active) {
     // Set tournament start time on first hand
-    if (!game.tournament.startTime) {
-      game.tournament.startTime = recorder.startTime;
-    }
+    game.tournament.startTime ??= /** @type {string} */ (recorder.startTime);
     recorder.tournament = {
       active: true,
       kind: game.tournament.kind,
@@ -169,7 +166,7 @@ export function startHand(game) {
       buyIn: game.tournament.buyIn,
     };
   } else {
-    recorder.tournament = null;
+    delete recorder.tournament;
   }
 
   // Capture players at hand start
@@ -278,7 +275,7 @@ export function recordStreet(gameId, street, boardCards) {
     river: "River",
     showdown: "Showdown",
   };
-  recorder.currentStreet = streetMap[street] || street;
+  recorder.currentStreet = streetMap[street] ?? street;
 
   if (boardCards && boardCards.length > 0) {
     // Store a copy to avoid mutation when more cards are dealt
@@ -294,13 +291,17 @@ export function recordStreet(gameId, street, boardCards) {
  */
 export function recordShowdown(gameId, playerId, cards, shows) {
   const recorder = getRecorder(gameId);
-  recorder.actions.push({
+  /** @type {OHHAction} */
+  const action = {
     action_number: ++recorder.actionCounter,
     player_id: playerId,
     action: shows ? "Shows Cards" : "Mucks Cards",
-    cards: shows ? cards : undefined,
     street: recorder.currentStreet,
-  });
+  };
+  if (shows) {
+    action.cards = cards;
+  }
+  recorder.actions.push(action);
 }
 
 /**
@@ -311,15 +312,15 @@ export function recordShowdown(gameId, playerId, cards, shows) {
 function buildRounds(recorder) {
   /** @type {OHHRound[]} */
   const rounds = [];
-  /** @type {OHHRound|null} */
-  let currentRound = null;
+  /** @type {OHHRound|undefined} */
+  let currentRound;
   let roundId = 0;
   /** @type {Set<string>} */
   const streetsWithRounds = new Set();
 
   for (const action of recorder.actions) {
     // Use the street stored with each action
-    const actionStreet = action.street || "Preflop";
+    const actionStreet = action.street ?? "Preflop";
 
     // Create new round if needed
     if (!currentRound || currentRound.street !== actionStreet) {
@@ -365,18 +366,18 @@ function buildRounds(recorder) {
 }
 
 /**
- * @param {TournamentRecordInfo|null} tournament
- * @param {string|null} fallbackStartTime
- * @returns {OHHTournamentInfo|null}
+ * @param {TournamentRecordInfo} [tournament]
+ * @param {string} [fallbackStartTime]
+ * @returns {OHHTournamentInfo|undefined}
  */
 function buildTournamentInfo(tournament, fallbackStartTime) {
-  if (!tournament?.active) return null;
+  if (!tournament?.active) return;
 
   return {
     tournament_number: tournament.tournamentId,
     name: tournament.name,
     start_date_utc:
-      tournament.startTime || fallbackStartTime || new Date().toISOString(),
+      tournament.startTime ?? fallbackStartTime ?? new Date().toISOString(),
     currency: "USD",
     buyin_amount: toDollars(tournament.buyIn),
     fee_amount: 0,
@@ -406,7 +407,7 @@ export function captureHand(
     winning_hand: pot.winningHand
       ? HandRankings.formatHand(pot.winningHand)
       : null,
-    winning_cards: pot.winningCards ? pot.winningCards : undefined,
+    ...(pot.winningCards ? { winning_cards: pot.winningCards } : {}),
     player_wins: pot.awards.map((award) => {
       const seat = /** @type {OccupiedSeat} */ (game.seats[award.seat]);
       return {
@@ -427,7 +428,7 @@ export function captureHand(
     spec_version: "1.4.7",
     site_name: "Pluton Poker",
     game_number: `${game.id}-${handNumber}`,
-    start_date_utc: recorder.startTime || new Date().toISOString(),
+    start_date_utc: recorder.startTime ?? new Date().toISOString(),
     game_type: "Holdem",
     bet_limit: { bet_type: "NL" },
     table_name: recorder.tableName,
@@ -460,8 +461,8 @@ export function captureHand(
   recorder.actions = [];
   recorder.actionCounter = 0;
   recorder.currentStreet = "Preflop";
-  recorder.startTime = null;
-  recorder.tableName = game.tableName || game.id;
+  delete recorder.startTime;
+  recorder.tableName = game.tableName ?? game.id;
   recorder.tableHandle = game.id;
   recorder.players = [];
   recorder.boardByStreet = new Map();

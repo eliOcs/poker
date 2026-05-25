@@ -9,7 +9,7 @@ import * as Seat from "./poker/seat.js";
 
 /**
  * @param {ManagedTournament} tournament
- * @param {string|null} tableId
+ * @param {string} [tableId]
  * @returns {number}
  */
 export function getTableCreatedOrder(tournament, tableId) {
@@ -21,19 +21,19 @@ export function getTableCreatedOrder(tournament, tableId) {
 /**
  * @param {Map<string, Game>} games
  * @param {TournamentEntrant} entrant
- * @returns {{ game: Game, seat: import("./poker/seat.js").OccupiedSeat } | null}
+ * @returns {{ game: Game, seat: import("./poker/seat.js").OccupiedSeat } | undefined}
  */
 export function getEntrantSeatContext(games, entrant) {
-  if (entrant.tableId === null || entrant.seatIndex === null) {
-    return null;
+  if (entrant.tableId === undefined || entrant.seatIndex === undefined) {
+    return;
   }
   const game = games.get(entrant.tableId);
   if (!game) {
-    return null;
+    return;
   }
   const seat = game.seats[entrant.seatIndex];
   if (!seat || seat.empty) {
-    return null;
+    return;
   }
   return {
     game,
@@ -52,7 +52,7 @@ export function getContendingEntrants(tournament, games) {
       return false;
     }
     const seatContext = getEntrantSeatContext(games, entrant);
-    return seatContext !== null && seatContext.seat.stack > 0;
+    return seatContext !== undefined && seatContext.seat.stack > 0;
   });
 }
 
@@ -192,8 +192,8 @@ export function compareForcedFinishEntrants(tournament, a, b) {
     return tableOrderCompare;
   }
   if (
-    a.seatIndex !== null &&
-    b.seatIndex !== null &&
+    a.seatIndex !== undefined &&
+    b.seatIndex !== undefined &&
     a.seatIndex !== b.seatIndex
   ) {
     return a.seatIndex - b.seatIndex;

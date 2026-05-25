@@ -1,6 +1,6 @@
 /**
- * @param {string|undefined|null} name
- * @param {string|undefined|null} id
+ * @param {string|undefined|undefined} name
+ * @param {string|undefined|undefined} id
  * @param {string} [fallback]
  * @returns {string}
  */

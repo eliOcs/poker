@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax -- OHH/OTS files require explicit null for selected absent fields. */
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync, readFileSync } from "node:fs";
 
@@ -57,10 +58,15 @@ const cache = new Map();
  */
 function normalizeFromFile(hand) {
   const pots = hand.pots.map((pot) => {
-    return {
-      ...pot,
-      winning_cards: pot.winning_cards === null ? undefined : pot.winning_cards,
+    const { winning_cards, ...rest } = pot;
+    /** @type {OHHHand['pots'][number]} */
+    const normalized = {
+      ...rest,
     };
+    if (winning_cards !== null) {
+      normalized.winning_cards = winning_cards;
+    }
+    return normalized;
   });
   return { ...hand, pots };
 }
@@ -73,7 +79,7 @@ function normalizeFromFile(hand) {
 function denormalizeForFile(hand) {
   const pots = hand.pots.map((pot) => ({
     ...pot,
-    winning_cards: pot.winning_cards === undefined ? null : pot.winning_cards,
+    winning_cards: pot.winning_cards ?? null,
   }));
   return { ...hand, pots };
 }
@@ -83,7 +89,7 @@ function denormalizeForFile(hand) {
  * @returns {string}
  */
 export function getDataDir() {
-  return process.env.DATA_DIR || "data";
+  return process.env.DATA_DIR ?? "data";
 }
 
 /**
@@ -268,41 +274,41 @@ export async function writeTournamentSummary(gameId, summary) {
 /**
  * Reads a tournament summary from the .ots file
  * @param {Id} gameId
- * @returns {Promise<OTSSummary|null>}
+ * @returns {Promise<OTSSummary|undefined>}
  */
 export async function readTournamentSummary(gameId) {
   const filePath = `${getDataDir()}/${gameId}.ots`;
 
   if (!existsSync(filePath)) {
-    return null;
+    return;
   }
 
   try {
     const content = await readFile(filePath, "utf8");
     const parsed = JSON.parse(content);
-    return parsed?.ots ? parsed.ots : null;
+    return parsed?.ots;
   } catch {
-    return null;
+    return;
   }
 }
 
 /**
  * Reads a tournament summary from the .ots file synchronously.
  * @param {Id} gameId
- * @returns {OTSSummary|null}
+ * @returns {OTSSummary|undefined}
  */
 export function readTournamentSummarySync(gameId) {
   const filePath = `${getDataDir()}/${gameId}.ots`;
 
   if (!existsSync(filePath)) {
-    return null;
+    return;
   }
 
   try {
     const content = readFileSync(filePath, "utf8");
     const parsed = JSON.parse(content);
-    return parsed?.ots ? parsed.ots : null;
+    return parsed?.ots;
   } catch {
-    return null;
+    return;
   }
 }

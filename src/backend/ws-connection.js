@@ -53,8 +53,8 @@ export function markTournamentPlayerConnected(
 }
 
 /**
- * @param {{ user: UserType, gameId: string|null, tournamentId?: string|null }} activeConn
- * @param {{ gameId: string|null, tournamentId?: string|null, user: UserType }} closedConn
+ * @param {{ user: UserType, gameId?: string, tournamentId?: string }} activeConn
+ * @param {{ gameId?: string, tournamentId?: string, user: UserType }} closedConn
  * @param {Game} closedGame
  * @returns {boolean}
  */
@@ -69,7 +69,7 @@ function isSamePlayerPresence(activeConn, closedConn, closedGame) {
 
 /**
  * Handles the disconnection of a player from a game seat.
- * @param {{ gameId: string|null, tournamentId?: string|null, user: UserType }} conn
+ * @param {{ gameId?: string, tournamentId?: string, user: UserType }} conn
  * @param {WebSocketServerParams["games"]} games
  * @param {WebSocketServerParams["clientConnections"]} clientConnections
  * @param {WebSocketServerParams["broadcastGameMessage"]} broadcastGameMessage
@@ -121,7 +121,7 @@ export function handlePlayerDisconnected(
 /**
  * Sends the initial tournament state message to the client.
  * @param {import("ws").WebSocket} ws
- * @param {unknown|null} initialTournamentMessage
+ * @param {unknown|undefined} initialTournamentMessage
  */
 export function sendInitialTournamentMessage(ws, initialTournamentMessage) {
   if (initialTournamentMessage) {

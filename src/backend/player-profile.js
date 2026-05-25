@@ -27,7 +27,7 @@ const contributionActions = new Set([
  * @typedef {object} RecentGame
  * @property {Id} gameId
  * @property {Id} tableId
- * @property {Id|null} tournamentId
+ * @property {Id} [tournamentId]
  * @property {"cash"|"sitngo"|"mtt"} gameType
  * @property {Cents} netWinnings
  * @property {number} handsPlayed
@@ -40,7 +40,7 @@ const contributionActions = new Set([
  * @property {Id} id
  * @property {string} name
  * @property {boolean} online
- * @property {string|null} lastSeenAt
+ * @property {string} [lastSeenAt]
  * @property {string} joinedAt
  * @property {Cents} totalNetWinnings
  * @property {number} totalHands
@@ -50,19 +50,19 @@ const contributionActions = new Set([
 /**
  * @param {Map<string, Game>} games
  * @param {string} playerId
- * @returns {Promise<PlayerProfile|null>}
+ * @returns {Promise<PlayerProfile|void>}
  */
 export async function getPlayerProfile(games, playerId) {
   const user = Store.loadUserProfile(playerId);
   const totals = await summarizePlayerHistory(playerId);
 
-  if (!user && totals.totalHands === 0) return null;
+  if (!user && totals.totalHands === 0) return;
 
   return {
     id: playerId,
     name: resolvePlayerName(user, totals.hands, playerId),
     online: isPlayerOnline(games, playerId),
-    lastSeenAt: user?.updatedAt || null,
+    lastSeenAt: user?.updatedAt,
     joinedAt: resolveJoinedAt(user, totals.hands),
     totalNetWinnings: totals.totalNetWinnings,
     totalHands: totals.totalHands,
@@ -71,22 +71,28 @@ export async function getPlayerProfile(games, playerId) {
 }
 
 /**
- * @param {Store.UserProfile|null} user
+ * @param {Store.UserProfile|void} user
  * @param {OHHHand[]} hands
  * @param {string} playerId
  * @returns {string}
  */
 function resolvePlayerName(user, hands, playerId) {
-  return user?.name || findLatestPlayerName(hands, playerId) || playerId;
+  if (user?.name) return user.name;
+  const historyName = findLatestPlayerName(hands, playerId);
+  if (historyName) return historyName;
+  return playerId;
 }
 
 /**
- * @param {Store.UserProfile|null} user
+ * @param {Store.UserProfile|void} user
  * @param {OHHHand[]} hands
  * @returns {string}
  */
 function resolveJoinedAt(user, hands) {
-  return user?.createdAt || findFirstSeenAt(hands) || new Date(0).toISOString();
+  if (user?.createdAt) return user.createdAt;
+  const firstSeenAt = findFirstSeenAt(hands);
+  if (firstSeenAt) return firstSeenAt;
+  return new Date(0).toISOString();
 }
 
 /**
@@ -149,8 +155,8 @@ async function summarizePlayerHistory(playerId) {
   recentGames.sort((a, b) => {
     const dateCompare = b.lastPlayedAt.localeCompare(a.lastPlayedAt);
     if (dateCompare !== 0) return dateCompare;
-    return (b.tournamentId || b.tableId).localeCompare(
-      a.tournamentId || a.tableId,
+    return (b.tournamentId ?? b.tableId).localeCompare(
+      a.tournamentId ?? a.tableId,
     );
   });
 
@@ -164,11 +170,11 @@ async function summarizePlayerHistory(playerId) {
 
 /**
  * @param {OHHHand[]} hands
- * @returns {OHHHand|null}
+ * @returns {OHHHand|void}
  */
 function findLatestHand(hands) {
   const [firstHand, ...remainingHands] = hands;
-  if (!firstHand) return null;
+  if (!firstHand) return;
 
   return remainingHands.reduce((latest, hand) => {
     const dateCompare = hand.start_date_utc.localeCompare(
@@ -185,13 +191,13 @@ function findLatestHand(hands) {
  * @returns {number}
  */
 function parseHandNumber(hand) {
-  return parseInt(hand.game_number.split("-").pop() || "0", 10);
+  return parseInt(hand.game_number.split("-").pop() ?? "0", 10);
 }
 
 /**
  * @param {OHHHand[]} hands
  * @param {string} playerId
- * @returns {string|null}
+ * @returns {string|void}
  */
 function findLatestPlayerName(hands, playerId) {
   for (let i = hands.length - 1; i >= 0; i -= 1) {
@@ -201,20 +207,20 @@ function findLatestPlayerName(hands, playerId) {
     if (player?.name) return player.name;
   }
 
-  return null;
+  return;
 }
 
 /**
  * @param {OHHHand[]} hands
- * @returns {string|null}
+ * @returns {string|void}
  */
 function findFirstSeenAt(hands) {
-  if (hands.length === 0) return null;
+  if (hands.length === 0) return;
 
   const sorted = [...hands].sort((a, b) =>
     a.start_date_utc.localeCompare(b.start_date_utc),
   );
-  return sorted[0]?.start_date_utc || null;
+  return sorted[0]?.start_date_utc;
 }
 
 /**
@@ -224,7 +230,7 @@ function findFirstSeenAt(hands) {
  */
 function calculateNetResult(hand, playerId) {
   const contributions =
-    buildContributionsByPlayer(hand.rounds).get(playerId) || 0;
+    buildContributionsByPlayer(hand.rounds).get(playerId) ?? 0;
   let winnings = 0;
 
   for (const pot of hand.pots) {
@@ -262,7 +268,7 @@ async function calculateTournamentNetResult(
   return (
     Ranking.computeRankings(game).find(
       (ranking) => ranking.playerId === playerId,
-    )?.netWinnings || 0
+    )?.netWinnings ?? 0
   );
 }
 
@@ -272,7 +278,7 @@ async function calculateTournamentNetResult(
  * @returns {Cents}
  */
 function calculateTournamentSummaryNetResult(summary, playerId) {
-  const buyIn = toCents(summary.buyin_amount || 0);
+  const buyIn = toCents(summary.buyin_amount);
   const finish = summary.tournament_finishes_and_winnings.find(
     (entry) => entry.player_name === playerId,
   );
@@ -281,7 +287,7 @@ function calculateTournamentSummaryNetResult(summary, playerId) {
     return 0;
   }
 
-  return toCents(finish.prize || 0) - buyIn;
+  return toCents(finish.prize) - buyIn;
 }
 
 /**
@@ -295,17 +301,17 @@ function listPlayerHistoryTables(playerId) {
 /**
  * @param {Store.PlayerTableLink} tableLink
  * @param {Id} playerId
- * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|null>}
+ * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|void>}
  */
 async function summarizeTableHistory(tableLink, playerId) {
   const hands = await readHandsFromFile(tableLink.tableId);
   const playerHands = hands.filter((hand) =>
     hand.players.some((player) => player.id === playerId),
   );
-  if (playerHands.length === 0) return null;
+  if (playerHands.length === 0) return;
 
   const lastPlayedHand = findLatestHand(playerHands);
-  if (!lastPlayedHand) return null;
+  if (!lastPlayedHand) return;
 
   const gameType = resolveGameType(playerHands);
   const netWinnings =
@@ -315,7 +321,7 @@ async function summarizeTableHistory(tableLink, playerId) {
           0,
         )
       : await calculateTournamentNetResult(
-          tableLink.tournamentId || tableLink.tableId,
+          tableLink.tournamentId ?? tableLink.tableId,
           playerId,
           tableLink.tableId,
         );
@@ -325,7 +331,9 @@ async function summarizeTableHistory(tableLink, playerId) {
     recentGame: {
       gameId: tableLink.tableId,
       tableId: tableLink.tableId,
-      tournamentId: gameType === "mtt" ? tableLink.tournamentId : null,
+      ...(gameType === "mtt" && tableLink.tournamentId
+        ? { tournamentId: tableLink.tournamentId }
+        : {}),
       gameType,
       netWinnings,
       handsPlayed: playerHands.length,
@@ -342,7 +350,7 @@ async function summarizeTableHistory(tableLink, playerId) {
 /**
  * @param {Store.PlayerTournamentLink} tournamentLink
  * @param {Id} playerId
- * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|null>}
+ * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|void>}
  */
 async function summarizeMttHistory(tournamentLink, playerId) {
   const tableLinks = Store.listPlayerTablesForTournament(
@@ -372,7 +380,7 @@ async function summarizeMttHistory(tournamentLink, playerId) {
     );
   }
 
-  if (playerHands.length === 0) return null;
+  if (playerHands.length === 0) return;
 
   return {
     hands: playerHands,
@@ -401,7 +409,12 @@ function resolveGameType(hands) {
   if (hands.some((hand) => hand.tournament_info?.type === "MTT")) {
     return "mtt";
   }
-  if (hands.some((hand) => hand.tournament || hand.tournament_info)) {
+  if (
+    hands.some(
+      (hand) =>
+        hand.tournament !== undefined || hand.tournament_info !== undefined,
+    )
+  ) {
     return "sitngo";
   }
   return "cash";
@@ -428,12 +441,12 @@ function buildContributionsByPlayer(rounds) {
       }
 
       const actionAmount = toCents(action.amount);
-      const previousTotal = roundTotals.get(action.player_id) || 0;
+      const previousTotal = roundTotals.get(action.player_id) ?? 0;
       const delta = Math.max(0, actionAmount - previousTotal);
       roundTotals.set(action.player_id, Math.max(previousTotal, actionAmount));
       contributions.set(
         action.player_id,
-        (contributions.get(action.player_id) || 0) + delta,
+        (contributions.get(action.player_id) ?? 0) + delta,
       );
     }
   }

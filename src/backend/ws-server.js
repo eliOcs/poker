@@ -26,13 +26,13 @@ import { createMessageHandler } from "./ws-message-handler.js";
  * @property {import('http').Server} server
  * @property {Record<string, UserType>} users
  * @property {Map<string, Game>} games
- * @property {Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>} clientConnections
+ * @property {Map<import('ws').WebSocket, { user: UserType, gameId?: string, tournamentId?: string }>} clientConnections
  * @property {ReturnType<import('./rate-limit.js').createRateLimiter>} actionRateLimiter
  * @property {(req: import('http').IncomingMessage) => string} getRequestRateLimitKey
- * @property {(user: UserType|undefined, gameId: string|undefined) => Promise<Game|null>} resolveGameForUpgrade
+ * @property {(user: UserType|undefined, gameId: string|undefined) => Promise<Game|void>} resolveGameForUpgrade
  * @property {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
  * @property {(gameId: string) => void} broadcastGameStateMessage
- * @property {(tournamentId: string, user: UserType) => unknown|null} buildTournamentStateMessage
+ * @property {(tournamentId: string, user: UserType) => unknown|void} buildTournamentStateMessage
  */
 
 /**
@@ -95,15 +95,15 @@ function resolveTournamentId(liveRoute) {
  *   user: UserType|undefined,
  *   gameId: string|undefined,
  *   tournamentId: string|undefined,
- *   liveKind: "cash"|"sitngo"|"mtt"|"mtt_table"|null,
+ *   liveKind: "cash"|"sitngo"|"mtt"|"mtt_table"|undefined,
  * }}
  */
 function getUpgradeSession(users, request) {
   const cookies = parseCookies(request.headers.cookie ?? "");
-  const liveRoute = request.url ? matchLiveRoute(request.url) : null;
+  const liveRoute = request.url ? matchLiveRoute(request.url) : undefined;
   return {
     user: users[cookies.phg ?? ""],
-    liveKind: liveRoute?.kind ?? null,
+    liveKind: liveRoute?.kind,
     gameId: resolveGameId(liveRoute),
     tournamentId: resolveTournamentId(liveRoute),
   };
@@ -112,10 +112,10 @@ function getUpgradeSession(users, request) {
 /**
  * @param {object} params
  * @param {UserType|undefined} params.user
- * @param {string|null|undefined} params.liveKind
+ * @param {string|undefined} params.liveKind
  * @param {string|undefined} params.gameId
- * @param {Game|null} params.game
- * @param {unknown|null} params.initialTournamentMessage
+ * @param {Game|undefined} params.game
+ * @param {unknown|undefined} params.initialTournamentMessage
  * @param {string|undefined} params.tournamentId
  * @returns {boolean}
  */
@@ -163,11 +163,16 @@ async function handleUpgrade(request, socket, head, params) {
     users,
     request,
   );
-  const game = gameId ? await resolveGameForUpgrade(user, gameId) : null;
+  const resolvedGame = gameId
+    ? await resolveGameForUpgrade(user, gameId)
+    : undefined;
+  const game = /** @type {import("./poker/game.js").Game|undefined} */ (
+    resolvedGame
+  );
   const initialTournamentMessage =
     user && tournamentId
       ? buildTournamentStateMessage(tournamentId, user)
-      : null;
+      : undefined;
 
   if (
     !isUpgradeSessionValid({
@@ -182,9 +187,9 @@ async function handleUpgrade(request, socket, head, params) {
     logger.warn("ws upgrade rejected", {
       request: { url: request.url },
       session: { hasPlayer: !!user },
-      game: { tableId: gameId ?? null, found: !!game },
+      game: { tableId: gameId, found: !!game },
       tournament: {
-        id: tournamentId ?? null,
+        id: tournamentId,
         found: !!initialTournamentMessage,
       },
     });
@@ -199,8 +204,8 @@ async function handleUpgrade(request, socket, head, params) {
       request,
       user,
       game,
-      gameId ?? null,
-      tournamentId ?? null,
+      gameId,
+      tournamentId,
       initialTournamentMessage,
     );
   });
@@ -218,10 +223,10 @@ async function handleUpgrade(request, socket, head, params) {
  *   ws: import("ws").WebSocket,
  *   request: import("http").IncomingMessage,
  *   user: UserType,
- *   game: Game|null,
- *   gameId: string|null,
- *   tournamentId: string|null,
- *   initialTournamentMessage: unknown|null,
+ *   game: Game|undefined,
+ *   gameId: string|undefined,
+ *   tournamentId: string|undefined,
+ *   initialTournamentMessage: unknown|undefined,
  * ) => void}
  */
 function createConnectionHandler({

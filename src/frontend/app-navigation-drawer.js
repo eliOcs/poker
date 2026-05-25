@@ -33,7 +33,7 @@ export function renderAppNavigationDrawer({
   accountActive = false,
 }) {
   const isSignedIn = !!view.user?.email;
-  const accountPath = view.user?.id ? `/players/${view.user.id}` : null;
+  const accountPath = view.user?.id ? `/players/${view.user.id}` : undefined;
   const accountLabel = formatPlayerLabel(
     view.user?.name,
     view.user?.id,

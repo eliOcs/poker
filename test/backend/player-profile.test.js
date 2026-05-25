@@ -107,7 +107,6 @@ describe("player-profile", function () {
       {
         gameId: "gameb456",
         tableId: "gameb456",
-        tournamentId: null,
         gameType: "cash",
         netWinnings: -25,
         handsPlayed: 1,
@@ -117,7 +116,6 @@ describe("player-profile", function () {
       {
         gameId: "gamea123",
         tableId: "gamea123",
-        tournamentId: null,
         gameType: "cash",
         netWinnings: 50,
         handsPlayed: 1,
@@ -129,9 +127,9 @@ describe("player-profile", function () {
     assert.match(profile.lastSeenAt, /^\d{4}-\d{2}-\d{2} /);
   });
 
-  it("returns null when player does not exist", async function () {
+  it("returns undefined when player does not exist", async function () {
     const profile = await getPlayerProfile(new Map(), "missing");
-    assert.strictEqual(profile, null);
+    assert.strictEqual(profile, undefined);
   });
 
   it("uses tournament ranking values instead of tournament chip swings", async function () {
@@ -228,7 +226,6 @@ describe("player-profile", function () {
       {
         gameId: "tour123",
         tableId: "tour123",
-        tournamentId: null,
         gameType: "sitngo",
         netWinnings: -500,
         handsPlayed: 1,

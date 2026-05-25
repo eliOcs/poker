@@ -8,7 +8,7 @@ const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
 function clearSocketHealthCheck(app, socket = app._socket) {
   if (app._socketHealthCheck?.socket !== socket) return;
   clearTimeout(app._socketHealthCheck.timeoutId);
-  app._socketHealthCheck = null;
+  app._socketHealthCheck = undefined;
 }
 
 function restartConnection(app) {
@@ -19,11 +19,11 @@ function restartConnection(app) {
     clearSocketHealthCheck(app, app._socket);
     app._intentionalSocketCloses.add(app._socket);
     app._socket.close();
-    app._socket = null;
+    app._socket = undefined;
   }
 
-  app._activeGameId = null;
-  app._activeGamePath = null;
+  app._activeGameId = undefined;
+  app._activeGamePath = undefined;
   app.gameConnectionStatus = "disconnected";
   connectToGame(app, path);
 }
@@ -123,8 +123,8 @@ export function connectToGame(app, path) {
   app._activeGameId =
     liveRoute.kind === "mtt" ? liveRoute.tournamentId : liveRoute.tableId;
   app._activeGamePath = path;
-  app.game = null;
-  app.socialAction = null;
+  app.game = undefined;
+  app.socialAction = undefined;
   app.gameConnectionStatus = "connecting";
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
@@ -158,7 +158,8 @@ export function connectToGame(app, path) {
 
   socket.onclose = (event) => {
     const intentionallyClosed =
-      app._intentionalSocketCloses.has(socket) || app._socket !== socket;
+      Boolean(app._intentionalSocketCloses.has(socket)) ||
+      app._socket !== socket;
     app._intentionalSocketCloses.delete(socket);
 
     if (app._socket !== socket) {
@@ -166,7 +167,7 @@ export function connectToGame(app, path) {
     }
 
     clearSocketHealthCheck(app, socket);
-    app._socket = null;
+    app._socket = undefined;
     app.gameConnectionStatus = "disconnected";
     // Code 1006 = abnormal closure (connection rejected before game loaded)
     if (!app.game && !app._mttView && event.code === 1006) {
@@ -194,8 +195,8 @@ export function reconnectIfNeeded(app) {
     (!app._socket || app._socket.readyState === WebSocket.CLOSED)
   ) {
     const path = app._activeGamePath;
-    app._activeGameId = null;
-    app._activeGamePath = null;
+    app._activeGameId = undefined;
+    app._activeGamePath = undefined;
     connectToGame(app, path);
   }
 }
@@ -224,13 +225,13 @@ export function disconnectFromGame(app) {
     clearSocketHealthCheck(app, app._socket);
     app._intentionalSocketCloses.add(app._socket);
     app._socket.close();
-    app._socket = null;
+    app._socket = undefined;
   }
-  app._activeGameId = null;
-  app._activeGamePath = null;
-  app._socketHealthCheck = null;
-  app.game = null;
-  app.socialAction = null;
+  app._activeGameId = undefined;
+  app._activeGamePath = undefined;
+  app._socketHealthCheck = undefined;
+  app.game = undefined;
+  app.socialAction = undefined;
   app.gameConnectionStatus = "disconnected";
 }
 

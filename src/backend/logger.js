@@ -8,7 +8,7 @@
  */
 
 // Default to text unless deployment config opts into JSON explicitly
-const format = process.env.LOG_FORMAT?.toLowerCase() || "text";
+const format = process.env.LOG_FORMAT?.toLowerCase() ?? "text";
 
 const ANSI = {
   reset: "\u001b[0m",
@@ -43,13 +43,13 @@ export function createLog(message) {
 /**
  * Builds session-scoped player context for structured logs.
  * @param {UserType} user
- * @returns {{ session: { playerId: string, playerName: string|null, signedIn: boolean } }}
+ * @returns {{ session: { playerId: string, playerName?: string, signedIn: boolean } }}
  */
 export function getSessionPlayerLogContext(user) {
   return {
     session: {
       playerId: user.id,
-      playerName: user.name ?? null,
+      playerName: user.name,
       signedIn: !!user.email,
     },
   };
@@ -65,7 +65,7 @@ function formatText({ timestamp, level, message, context }) {
   const contextStr = Object.entries(context)
     .map(
       ([k, v]) =>
-        `${colorizeContextKey(k)}=${typeof v === "object" && v !== null ? JSON.stringify(v) : String(v)}`,
+        `${colorizeContextKey(k)}=${typeof v === "object" && v ? JSON.stringify(v) : String(v)}`,
     )
     .join(" ");
   const prefix = `${colorizeTimestamp(timestamp)} ${colorizeLevel(levelLabel, level)}`;

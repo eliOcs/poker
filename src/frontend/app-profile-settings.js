@@ -25,7 +25,7 @@ export function renderProfileSettingsModal(app) {
         placeholder="Enter your name"
         maxlength="20"
         autofocus
-        .value=${app.user?.name || ""}
+        .value=${app.user?.name ?? ""}
         @keydown=${(e) => e.key === "Enter" && app.saveProfileSettings()}
       />
       <label>Sound Volume</label>

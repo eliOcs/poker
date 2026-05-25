@@ -67,8 +67,8 @@ import HandRankings from "../hand-rankings.js";
  * @property {string} game_number
  * @property {number} hand_number
  * @property {(Card | string)[]} hole_cards
- * @property {string|null} winner_name
- * @property {string|null} winner_id
+ * @property {string} [winner_name]
+ * @property {string} [winner_id]
  * @property {Cents} pot
  * @property {boolean} is_winner
  * @property {boolean} was_dealt - Whether the player was dealt cards in this hand
@@ -83,11 +83,11 @@ import HandRankings from "../hand-rankings.js";
  * @property {{ id: string, name: string }} [player]
  * @property {Cents} [stack]
  * @property {string[]} [cards]
- * @property {Cents|null} [handResult]
+ * @property {Cents} [handResult]
  * @property {Cents} [netResult] - Net gain/loss for this hand (winnings - contributions)
  * @property {Cents} [endingStack] - Stack after the hand completed
  * @property {boolean} [isWinner] - True if the player received any pot winnings
- * @property {string|null} [handRank]
+ * @property {string} [handRank]
  * @property {string[]} [winningCards]
  * @property {boolean} [isCurrentPlayer]
  * @property {boolean} [folded]
@@ -102,8 +102,8 @@ import HandRankings from "../hand-rankings.js";
  * @property {HistoryViewSeat[]} seats
  * @property {{ cards: string[], phase: string }} board
  * @property {Cents} pot
- * @property {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null} winnerMessage
- * @property {string[]|undefined} winningCards
+ * @property {{ playerName?: string, handRank?: string, amount: Cents, isSplit: boolean }} [winnerMessage]
+ * @property {string[]} [winningCards]
  * @property {number} button
  */
 
@@ -171,7 +171,7 @@ export function filterHandForPlayer(hand, playerId) {
         if (shownCards) {
           const visibleCards = action.cards?.map((card) =>
             shownCards.has(card) ? card : "??",
-          ) || ["??", "??"];
+          ) ?? ["??", "??"];
           return convertActionAmount({ ...action, cards: visibleCards });
         }
 
@@ -281,11 +281,11 @@ function buildContributionsByPlayer(rounds, normalizeAmount) {
       }
 
       const actionAmount = normalizeAmount(action.amount);
-      const previousTotal = roundTotals.get(action.player_id) || 0;
+      const previousTotal = roundTotals.get(action.player_id) ?? 0;
       const delta = Math.max(0, actionAmount - previousTotal);
       roundTotals.set(action.player_id, Math.max(previousTotal, actionAmount));
 
-      const current = contributions.get(action.player_id) || 0;
+      const current = contributions.get(action.player_id) ?? 0;
       contributions.set(action.player_id, current + delta);
     }
   }
@@ -303,7 +303,7 @@ function calculateNetResult(hand, playerId) {
   const contributions =
     buildContributionsByPlayer(hand.rounds, (amount) => toCents(amount)).get(
       playerId,
-    ) || 0;
+    ) ?? 0;
 
   let winnings = 0;
   for (const pot of hand.pots) {
@@ -322,7 +322,7 @@ function calculateNetResult(hand, playerId) {
  * @param {OHHHand} hand
  * @param {string} playerId
  * @param {string} actionType
- * @returns {string[]|null}
+ * @returns {string[]|undefined}
  */
 function findPlayerCards(hand, playerId, actionType) {
   for (const round of hand.rounds) {
@@ -336,13 +336,13 @@ function findPlayerCards(hand, playerId, actionType) {
       }
     }
   }
-  return null;
+  return;
 }
 
 /**
  * Gets winner's hole cards if shown at showdown
  * @param {OHHHand} hand
- * @param {string|null} winnerId
+ * @param {string} [winnerId]
  * @returns {string[]}
  */
 function getWinnerHoleCards(hand, winnerId) {
@@ -368,25 +368,25 @@ function getWinnerHoleCards(hand, winnerId) {
  * Gets winner info from hand pots
  * @param {OHHHand} hand
  * @param {string} playerId
- * @returns {{ winnerName: string|null, winnerId: string|null, totalPot: Cents, isWinner: boolean }}
+ * @returns {{ winnerName?: string, winnerId?: string, totalPot: Cents, isWinner: boolean }}
  */
 function getWinnerInfoFromPots(hand, playerId) {
   if (hand.pots.length === 0) {
-    return { winnerName: null, winnerId: null, totalPot: 0, isWinner: false };
+    return { totalPot: 0, isWinner: false };
   }
 
   const mainPot = /** @type {HandPot} */ (hand.pots[0]);
   const totalPot = toCents(mainPot.amount);
 
   if (mainPot.player_wins.length === 0) {
-    return { winnerName: null, winnerId: null, totalPot, isWinner: false };
+    return { totalPot, isWinner: false };
   }
 
   const winnerId = /** @type {HandPot['player_wins'][number]} */ (
     mainPot.player_wins[0]
   ).player_id;
   const winner = hand.players.find((p) => p.id === winnerId);
-  const winnerName = winner?.name || `Seat ${winner?.seat || "??"}`;
+  const winnerName = winner?.name ?? `Seat ${winner?.seat ?? "??"}`;
 
   return { winnerName, winnerId, totalPot, isWinner: winnerId === playerId };
 }
@@ -399,7 +399,7 @@ function getWinnerInfoFromPots(hand, playerId) {
  * @returns {HandSummary}
  */
 export function getHandSummary(hand, playerId) {
-  const handNumber = parseInt(hand.game_number.split("-").pop() || "0", 10);
+  const handNumber = parseInt(hand.game_number.split("-").pop() ?? "0", 10);
   const holeCards = findPlayerHoleCards(hand, playerId);
   const { winnerName, winnerId, totalPot, isWinner } = getWinnerInfoFromPots(
     hand,
@@ -414,8 +414,8 @@ export function getHandSummary(hand, playerId) {
     game_number: hand.game_number,
     hand_number: handNumber,
     hole_cards: holeCards,
-    winner_name: winnerName,
-    winner_id: winnerId,
+    ...(winnerName !== undefined ? { winner_name: winnerName } : {}),
+    ...(winnerId !== undefined ? { winner_id: winnerId } : {}),
     pot: totalPot,
     is_winner: isWinner,
     was_dealt: wasDealt,
@@ -453,7 +453,7 @@ function buildWinAmountsMap(hand) {
   const winAmounts = new Map();
   for (const pot of hand.pots) {
     for (const win of pot.player_wins) {
-      const current = winAmounts.get(win.player_id) || 0;
+      const current = winAmounts.get(win.player_id) ?? 0;
       winAmounts.set(win.player_id, current + win.win_amount);
     }
   }
@@ -490,7 +490,7 @@ function getSplitWinnerCards(
   boardCards,
   sharedWinningCards,
 ) {
-  const holeCards = (playerCards.get(winnerId) || []).filter(isKnownCard);
+  const holeCards = (playerCards.get(winnerId) ?? []).filter(isKnownCard);
   if (holeCards.length !== 2) return sharedWinningCards;
   const knownBoardCards = boardCards.filter(isKnownCard);
   if (knownBoardCards.length < 3) return sharedWinningCards;
@@ -509,7 +509,7 @@ function getSplitWinnerCards(
 function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
   /** @type {Map<string, string[]>} */
   const winnerCards = new Map();
-  const wins = mainPot?.player_wins || [];
+  const wins = mainPot?.player_wins ?? [];
   if (wins.length === 0) return winnerCards;
 
   const sharedWinningCards = mainPot?.winning_cards;
@@ -545,7 +545,7 @@ function buildWinnerWinningCardsMap(mainPot, playerCards, boardCards) {
  * @param {Map<string, string[]>} playerCards
  * @param {Map<string, Cents>} winAmounts
  * @param {Map<string, Cents>} contributions
- * @param {string|null|undefined} winningHand
+ * @param {string|void} winningHand
  * @param {Map<string, string[]>} winnerWinningCards
  * @param {string} playerId
  * @returns {HistoryViewSeat}
@@ -561,24 +561,22 @@ function buildOccupiedSeat(
 ) {
   const isCurrentPlayer = player.id === playerId;
   const isWinner = winAmounts.has(player.id);
-  const winAmount = winAmounts.get(player.id) || 0;
-  const contributed = contributions.get(player.id) || 0;
+  const winAmount = winAmounts.get(player.id) ?? 0;
+  const contributed = contributions.get(player.id) ?? 0;
   const startingStack = player.starting_stack;
   const netResult = winAmount - contributed;
   const endingStack = startingStack + netResult;
-  const playerName = player.name || `Seat ${player.seat}`;
+  const playerName = player.name ?? `Seat ${player.seat}`;
   const displayName = playerName;
 
-  return {
+  const seat = {
     empty: false,
     player: { id: player.id, name: displayName },
     stack: startingStack,
-    cards: playerCards.get(player.id) || [],
-    handResult: winAmount > 0 ? winAmount : null,
+    cards: playerCards.get(player.id) ?? [],
     netResult,
     endingStack,
     isWinner,
-    handRank: isWinner ? winningHand : null,
     winningCards: isWinner ? winnerWinningCards.get(player.id) : undefined,
     isCurrentPlayer,
     folded: false,
@@ -587,6 +585,13 @@ function buildOccupiedSeat(
     disconnected: false,
     isActing: false,
   };
+  if (winAmount > 0) {
+    seat.handResult = winAmount;
+  }
+  if (isWinner && winningHand) {
+    seat.handRank = winningHand;
+  }
+  return seat;
 }
 
 /**
@@ -611,7 +616,7 @@ function extractBoardInfo(hand) {
  * @returns {Cents}
  */
 function calculateTotalPot(hand) {
-  return hand.pots.reduce((sum, pot) => sum + (pot.amount || 0), 0);
+  return hand.pots.reduce((sum, pot) => sum + pot.amount, 0);
 }
 
 /**
@@ -621,23 +626,27 @@ function calculateTotalPot(hand) {
  */
 function getWinnerDisplayName(players, winnerId) {
   const winner = players.find((p) => p.id === winnerId);
-  return winner?.name || `Seat ${winner?.seat ?? "??"}`;
+  return winner?.name ?? `Seat ${winner?.seat ?? "??"}`;
 }
 
 /**
  * Builds winner message from main pot
  * @param {HandPot|undefined} mainPot - Pot data with amounts in Cents
  * @param {HandPlayer[]} players - Player data with amounts in Cents
- * @returns {{ playerName: string|null, handRank: string|null, amount: Cents, isSplit: boolean }|null}
+ * @returns {{ playerName?: string, handRank?: string, amount: Cents, isSplit: boolean }|undefined}
  */
 function buildViewWinnerMessage(mainPot, players) {
-  if (!mainPot?.player_wins.length) return null;
+  if (!mainPot?.player_wins.length) return;
 
   const handRank = mainPot.winning_hand;
   const isSplit = mainPot.player_wins.length > 1;
 
   if (isSplit) {
-    return { playerName: null, handRank, amount: mainPot.amount, isSplit };
+    return {
+      ...(handRank ? { handRank } : {}),
+      amount: mainPot.amount,
+      isSplit,
+    };
   }
 
   const firstWin = /** @type {HandPot['player_wins'][number]} */ (
@@ -646,7 +655,7 @@ function buildViewWinnerMessage(mainPot, players) {
   const playerName = getWinnerDisplayName(players, firstWin.player_id);
   return {
     playerName,
-    handRank,
+    ...(handRank ? { handRank } : {}),
     amount: firstWin.win_amount,
     isSplit,
   };
@@ -663,7 +672,7 @@ export function getHandView(hand, playerId) {
   const winAmounts = buildWinAmountsMap(hand);
   const contributions = buildContributionsMap(hand);
   const mainPot = hand.pots[0];
-  const winningHand = mainPot?.winning_hand;
+  const winningHand = mainPot?.winning_hand ?? undefined;
   const winningCards = mainPot?.winning_cards;
   const { boardCards, lastStreet } = extractBoardInfo(hand);
   const winnerWinningCards = buildWinnerWinningCardsMap(
@@ -692,12 +701,14 @@ export function getHandView(hand, playerId) {
     }
   }
 
+  const winnerMessage = buildViewWinnerMessage(mainPot, hand.players);
+
   return {
     seats,
     board: { cards: boardCards, phase: lastStreet },
     pot: calculateTotalPot(hand),
-    winnerMessage: buildViewWinnerMessage(mainPot, hand.players),
-    winningCards,
+    ...(winnerMessage ? { winnerMessage } : {}),
+    ...(winningCards ? { winningCards } : {}),
     button: hand.dealer_seat,
   };
 }

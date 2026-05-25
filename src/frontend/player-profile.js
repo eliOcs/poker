@@ -179,13 +179,13 @@ class PlayerProfile extends LitElement {
 
   constructor() {
     super();
-    this.profile = null;
-    this.user = null;
+    this.profile = undefined;
+    this.user = undefined;
   }
 
   navigateToGame(game) {
     const gameType = normalizeGameType(game.gameType);
-    const tournamentId = game.tournamentId || null;
+    const tournamentId = game.tournamentId ?? undefined;
 
     if (gameType === "mtt" && tournamentId) {
       this.dispatchEvent(
@@ -198,7 +198,7 @@ class PlayerProfile extends LitElement {
       return;
     }
 
-    const tableId = game.tableId || game.lastTableId || game.gameId;
+    const tableId = game.tableId ?? game.lastTableId ?? game.gameId;
     if (!tableId) return;
 
     this.dispatchEvent(
@@ -208,7 +208,7 @@ class PlayerProfile extends LitElement {
             gameType,
             tableId,
             game.lastHandNumber,
-            null,
+            undefined,
           ),
         },
         bubbles: true,
@@ -263,7 +263,7 @@ class PlayerProfile extends LitElement {
               <article class="stat">
                 <div class="label">Games Played</div>
                 <div class="value">
-                  ${formatNumber(this.profile.recentGames?.length || 0)}
+                  ${formatNumber(this.profile.recentGames?.length ?? 0)}
                 </div>
               </article>
             </div>
@@ -280,7 +280,7 @@ class PlayerProfile extends LitElement {
   }
 
   renderRecentGames() {
-    const games = this.profile?.recentGames || [];
+    const games = this.profile?.recentGames ?? [];
     if (games.length === 0) {
       return html`<div class="empty">No games recorded yet.</div>`;
     }
@@ -354,7 +354,7 @@ function formatNumber(value) {
 }
 
 /**
- * @param {string|null|undefined} value
+ * @param {string|undefined|undefined} value
  * @returns {string}
  */
 function formatDate(value) {
@@ -369,7 +369,7 @@ function formatDate(value) {
 }
 
 /**
- * @param {string|null|undefined} value
+ * @param {string|undefined|undefined} value
  * @returns {string}
  */
 function formatDateTime(value) {
@@ -386,7 +386,7 @@ function formatDateTime(value) {
 }
 
 /**
- * @param {string|null|undefined} value
+ * @param {string|undefined|undefined} value
  * @returns {string}
  */
 function formatRelativeDate(value) {

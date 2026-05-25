@@ -35,7 +35,7 @@ describe("game-routes", () => {
 
     const path = findActiveGamePath(new Map([[game.id, game]]), user.id);
 
-    assert.strictEqual(path, null);
+    assert.strictEqual(path, undefined);
   });
 
   it("returns the MTT table path for a seated player", () => {
@@ -58,6 +58,6 @@ describe("game-routes", () => {
 
     const path = findActiveGamePath(new Map([[game.id, game]]), user.id);
 
-    assert.strictEqual(path, null);
+    assert.strictEqual(path, undefined);
   });
 });

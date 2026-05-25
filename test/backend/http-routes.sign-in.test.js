@@ -232,7 +232,6 @@ describe("http-routes sign in", () => {
       {
         playerId: guestUserId,
         tableId: "test-game",
-        tournamentId: null,
         lastHandNumber: 1,
         lastPlayedAt: new Date().toISOString(),
       },
@@ -392,7 +391,6 @@ describe("http-routes sign in", () => {
       {
         playerId: guestUserId,
         tableId: "history-game",
-        tournamentId: null,
         lastHandNumber: 1,
         lastPlayedAt: new Date().toISOString(),
       },

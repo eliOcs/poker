@@ -153,18 +153,18 @@ describe("store", function () {
       assert.strictEqual(loaded.name, "Alicia");
     });
 
-    it("returns null for non-existent user", function () {
+    it("returns undefined for non-existent user", function () {
       Store.initialize();
 
       const loaded = Store.loadUser("nonexistent");
-      assert.strictEqual(loaded, null);
+      assert.strictEqual(loaded, undefined);
     });
 
-    it("returns null for undefined/null id", function () {
+    it("returns undefined for undefined/null id", function () {
       Store.initialize();
 
-      assert.strictEqual(Store.loadUser(undefined), null);
-      assert.strictEqual(Store.loadUser(null), null);
+      assert.strictEqual(Store.loadUser(undefined), undefined);
+      assert.strictEqual(Store.loadUser(null), undefined);
     });
 
     it("loads a user by verified email", function () {
@@ -279,14 +279,12 @@ describe("store", function () {
         {
           playerId: "guest",
           tableId: "t1",
-          tournamentId: null,
           lastHandNumber: 1,
           lastPlayedAt: "2026-01-01T00:00:00.000Z",
         },
         {
           playerId: "guest",
           tableId: "t2",
-          tournamentId: null,
           lastHandNumber: 2,
           lastPlayedAt: "2026-01-02T00:00:00.000Z",
         },
@@ -321,7 +319,7 @@ describe("store", function () {
       });
       Store.deleteUser("abc123");
 
-      assert.strictEqual(Store.loadUser("abc123"), null);
+      assert.strictEqual(Store.loadUser("abc123"), undefined);
     });
   });
 

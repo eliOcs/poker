@@ -102,7 +102,7 @@ export function parseAppPath(path) {
  */
 export function syncAppRouteState(app, route) {
   if (!isConnectableLiveRoute(route.liveRoute)) {
-    app.socialAction = null;
+    app.socialAction = undefined;
   }
   syncAppHistoryState(app, route.historyRoute);
   app._playerProfileId = route.playerProfileId;

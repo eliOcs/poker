@@ -69,7 +69,7 @@ class TournamentLevelsPanel extends LitElement {
 
   constructor() {
     super();
-    this.tournament = null;
+    this.tournament = undefined;
   }
 
   getLevelRowClass(level) {

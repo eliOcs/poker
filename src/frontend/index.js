@@ -72,16 +72,16 @@ class Game extends LitElement {
 
   constructor() {
     super();
-    this.gameId = null;
+    this.gameId = undefined;
     this.gameKind = "cash";
-    this.tournamentId = null;
-    this.mttTournament = null;
-    this.tournamentFinishPosition = null;
+    this.tournamentId = undefined;
+    this.mttTournament = undefined;
+    this.tournamentFinishPosition = undefined;
     this.connectionStatus = "connected";
-    this.game = null;
-    this.socialAction = null;
-    /** @type {User | null} */
-    this.user = null;
+    this.game = undefined;
+    this.socialAction = undefined;
+    /** @type {User | undefined} */
+    this.user = undefined;
     this.showSettings = false;
     this.showSignIn = false;
     this.showSignUp = false;
@@ -221,9 +221,9 @@ class Game extends LitElement {
   }
 
   _getSitOutState() {
-    if (!this.game) return null;
+    if (!this.game) return;
     const { seatIndex } = this.getMySeatInfo();
-    if (seatIndex === -1) return null;
+    if (seatIndex === -1) return;
     const seat = this.game.seats[seatIndex];
     if (seat.sittingOut) return "sittingOut";
     if (seat.pendingSitOut) return "pendingSitOut";
@@ -267,7 +267,7 @@ class Game extends LitElement {
           path: getTableHistoryPath(
             gameKind,
             this.gameId,
-            null,
+            undefined,
             this.tournamentId,
           ),
         },
@@ -278,7 +278,7 @@ class Game extends LitElement {
   }
 
   hasRecordedHands() {
-    return (this.game?.handNumber || 0) > 0;
+    return (this.game?.handNumber ?? 0) > 0;
   }
 
   openTournamentLobby() {
@@ -311,7 +311,7 @@ class Game extends LitElement {
   }
 
   getCurrentPlayerName() {
-    return this.user?.name || "";
+    return this.user?.name ?? "";
   }
 
   getMySeatInfo() {
@@ -330,7 +330,7 @@ class Game extends LitElement {
     const isWinner = this.game.tournament?.winner === seatIndex;
     return {
       seatIndex,
-      actions: seat.actions || [],
+      actions: seat.actions ?? [],
       bustedPosition: seat.bustedPosition,
       isWinner,
     };
@@ -345,7 +345,7 @@ class Game extends LitElement {
       Audio.playTurnSound();
       Audio.playTurnVibration();
     }
-    if (prev.clockRemaining == null && curr.clockRemaining != null)
+    if (prev.clockRemaining == undefined && curr.clockRemaining != undefined)
       Audio.playClockSound();
   }
 
@@ -353,7 +353,7 @@ class Game extends LitElement {
     if (!changedProperties.has("game") || !this.game) return;
     if (this.game.hand?.collectingBets) {
       const bets = this.game.seats
-        .map((s, i) => ({ index: i, bet: s.empty ? 0 : s.bet || 0 }))
+        .map((s, i) => ({ index: i, bet: s.empty ? 0 : (s.bet ?? 0) }))
         .filter((b) => b.bet > 0);
       if (bets.length > 0) {
         this._pendingCollection = snapshotBetPositions(this.shadowRoot, bets);
@@ -364,8 +364,8 @@ class Game extends LitElement {
   _flushPendingCollection() {
     const sources = this._pendingCollection;
     if (!sources) return;
-    this._pendingCollection = null;
-    const container = /** @type {HTMLElement|null} */ (
+    this._pendingCollection = undefined;
+    const container = /** @type {HTMLElement|undefined} */ (
       this.shadowRoot?.querySelector("#container")
     );
     if (container) animateBetCollection(container, sources);
@@ -376,7 +376,7 @@ class Game extends LitElement {
     const seatIndex = Number.parseInt(String(socialAction.seat), 10);
     if (!Number.isInteger(seatIndex)) return;
 
-    const seatEl = /** @type {SeatElement|null} */ (
+    const seatEl = /** @type {SeatElement|undefined} */ (
       this.shadowRoot?.querySelector(`phg-seat[data-seat="${seatIndex}"]`)
     );
     if (!seatEl) return;
@@ -471,7 +471,7 @@ class Game extends LitElement {
                     .hideBet=${!!this.game.hand?.collectingBets}
                     .clockRemaining=${this.game.hand?.actingSeat === i
                       ? this.game.hand?.clockRemaining
-                      : null}
+                      : undefined}
                     @seat-action=${this.handleSeatAction}
                     @seat-settings=${() => {
                       gameModalActions.openSettings.call(this);

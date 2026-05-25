@@ -29,16 +29,16 @@ class History extends LitElement {
 
   constructor() {
     super();
-    this.gameId = null;
+    this.gameId = undefined;
     this.gameKind = "cash";
-    this.tournamentId = null;
-    this.handNumber = null;
-    this.hand = null;
-    this.view = null;
-    this.handList = null;
-    this.error = null;
-    this.playerId = null;
-    this.touchStartX = null;
+    this.tournamentId = undefined;
+    this.handNumber = undefined;
+    this.hand = undefined;
+    this.view = undefined;
+    this.handList = undefined;
+    this.error = undefined;
+    this.playerId = undefined;
+    this.touchStartX = undefined;
     this.boundHandleKeydown = this.handleKeydown.bind(this);
     this.boundHandleTouchStart = this.handleTouchStart.bind(this);
     this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
@@ -73,7 +73,7 @@ class History extends LitElement {
   }
 
   handleTouchEnd(e) {
-    if (this.touchStartX === null) return;
+    if (this.touchStartX === undefined) return;
 
     const touchEndX = e.changedTouches[0].clientX;
     const diff = this.touchStartX - touchEndX;
@@ -89,7 +89,7 @@ class History extends LitElement {
       }
     }
 
-    this.touchStartX = null;
+    this.touchStartX = undefined;
   }
 
   navigateTo(handNumber) {
@@ -136,7 +136,7 @@ class History extends LitElement {
 
   getPlayerName(playerId) {
     const player = this.hand?.players.find((p) => p.id === playerId);
-    return player?.name || `Seat ${player?.seat || "?"}`;
+    return player?.name ?? `Seat ${player?.seat ?? "?"}`;
   }
 
   getCurrentHandSummary() {
@@ -154,7 +154,7 @@ class History extends LitElement {
     // Show player's hole cards if dealt, otherwise winner's hole cards
     const cards = summary.was_dealt
       ? summary.hole_cards
-      : summary.winner_hole_cards || [];
+      : (summary.winner_hole_cards ?? []);
     return cards.map(
       (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
     );
@@ -265,9 +265,9 @@ class History extends LitElement {
     return html`
       <div class="timeline">
         <div class="timeline-content">
-          ${(this.hand?.rounds || []).map((round) => {
+          ${(this.hand?.rounds ?? []).map((round) => {
             const streetName =
-              round.street || streetNames[round.id] || "Unknown";
+              round.street ?? streetNames[round.id] ?? "Unknown";
             const isShowdown = streetName === "Showdown";
 
             return html`
@@ -287,7 +287,7 @@ class History extends LitElement {
                     `
                   : ""}
                 <div class="action-list">
-                  ${(round.actions || [])
+                  ${(round.actions ?? [])
                     .filter((a) => a.action !== "Dealt Cards")
                     .map((action) => {
                       const isYou = action.player_id === this.playerId;
@@ -334,7 +334,7 @@ class History extends LitElement {
     const winningHand = mainPot.winning_hand;
     const winningCards = mainPot.winning_cards;
     const winnerIds = mainPot.player_wins.map((w) => w.player_id);
-    const winAmount = mainPot.player_wins[0]?.win_amount || mainPot.amount;
+    const winAmount = mainPot.player_wins[0]?.win_amount ?? mainPot.amount;
 
     return html`
       ${winnerIds.map((winnerId) => {
@@ -401,7 +401,7 @@ class History extends LitElement {
             // Show player's hole cards if dealt, otherwise winner's hole cards
             const cards = item.was_dealt
               ? item.hole_cards
-              : item.winner_hole_cards || [];
+              : (item.winner_hole_cards ?? []);
 
             return html`
               <li

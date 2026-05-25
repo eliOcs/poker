@@ -23,7 +23,7 @@ export function renderRankingModal(game) {
   if (!game.showRanking) return "";
   return html`<phg-modal .title=${"Table Ranking"} @close=${game.closeRanking}
     ><phg-ranking-panel
-      .rankings=${game.game?.rankings || []}
+      .rankings=${game.game?.rankings ?? []}
       .tournament=${game.game?.tournament}
     ></phg-ranking-panel
   ></phg-modal>`;
@@ -245,7 +245,7 @@ export function renderChatModal(game) {
         full-width
         @click=${() => {
           const input = game.shadowRoot.querySelector("#chat-input");
-          game.sendChat(input?.value || "");
+          game.sendChat(input?.value ?? "");
         }}
         >Send</phg-button
       >

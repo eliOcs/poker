@@ -5,7 +5,7 @@ const EPOCH_ISO = new Date(0).toISOString();
 
 /**
  * @typedef {import('./id.js').Id} Id
- * @typedef {{ playerId: Id, tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
+ * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
  */
 
@@ -118,7 +118,7 @@ function createPlayerTableEntries(hand, tableId) {
   return playerIds.map((playerId) => ({
     playerId,
     tableId,
-    tournamentId,
+    ...(tournamentId ? { tournamentId } : {}),
     lastHandNumber,
     lastPlayedAt,
   }));
@@ -136,7 +136,7 @@ function inferTableKindFromHand(hand) {
 
 /**
  * @param {any} hand
- * @returns {Id|null}
+ * @returns {Id|void}
  */
 function getTournamentIdFromHand(hand) {
   if (
@@ -145,7 +145,7 @@ function getTournamentIdFromHand(hand) {
   ) {
     return /** @type {Id} */ (hand.tournament_info.tournament_number);
   }
-  return null;
+  return;
 }
 
 /**

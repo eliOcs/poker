@@ -25,7 +25,7 @@ export function applyTournamentStateToTable(tournament, game) {
   game.tournament.onBreak = tournament.onBreak;
   game.tournament.pendingBreak = tournament.pendingBreak;
   game.tournament.breakTicks = tournament.breakTicks;
-  game.tournament.startTime = tournament.startedAt;
+  game.tournament.startTime = tournament.startedAt ?? undefined;
   game.tournament.name = tournament.name;
   game.tournament.buyIn = tournament.buyIn;
   game.tournament.initialStack = tournament.initialStack;
@@ -39,9 +39,9 @@ export function applyTournamentStateToTable(tournament, game) {
 export function isTableWaiting(game) {
   return (
     game.hand.phase === "waiting" &&
-    game.collectingBets === null &&
+    game.collectingBets === undefined &&
     game.runout?.active !== true &&
-    game.pendingHandHistory === null
+    game.pendingHandHistory === undefined
   );
 }
 
@@ -52,9 +52,9 @@ export function isTableWaiting(game) {
 export function hasSettledWaitingHand(game) {
   return (
     game.hand.phase === "waiting" &&
-    game.collectingBets === null &&
+    game.collectingBets === undefined &&
     game.runout?.active !== true &&
-    game.pendingHandHistory !== null
+    game.pendingHandHistory !== undefined
   );
 }
 
@@ -86,7 +86,7 @@ export function countActiveEntrants(tournament) {
  */
 export function clearTableWinner(game) {
   if (game.tournament) {
-    game.tournament.winner = null;
+    delete game.tournament.winner;
   }
 }
 
@@ -97,13 +97,13 @@ export function clearTableWinner(game) {
  */
 export function resetClosedTable(game) {
   PokerGame.stopGameTick(game);
-  game.countdown = null;
+  delete game.countdown;
   game.board.cards = [];
   game.hand = PokerGame.createHand();
-  game.collectingBets = null;
-  game.runout = null;
-  game.pendingHandHistory = null;
-  game.winnerMessage = null;
+  delete game.collectingBets;
+  delete game.runout;
+  delete game.pendingHandHistory;
+  delete game.winnerMessage;
   game.actingTicks = 0;
   game.clockTicks = 0;
   for (let i = 0; i < game.seats.length; i += 1) {
@@ -125,11 +125,11 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
   }
 
   if (tournament.onBreak || tournament.pendingCollapse) {
-    game.countdown = null;
-  } else if (countActivePlayers(game) >= 2 && game.countdown === null) {
+    delete game.countdown;
+  } else if (countActivePlayers(game) >= 2 && game.countdown == undefined) {
     game.countdown = 5;
   } else if (countActivePlayers(game) < 2) {
-    game.countdown = null;
+    delete game.countdown;
   }
 
   ensureTableTick(game);
@@ -142,15 +142,15 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
  */
 export function getActiveTables(tournament, games) {
   return tournament.tables
-    .map((table) => ({ table, game: games.get(table.tableId) || null }))
-    .filter((entry) => entry.game !== null)
+    .map((table) => ({ table, game: games.get(table.tableId) }))
+    .filter((entry) => entry.game !== undefined)
     .map((entry) => ({
       table: entry.table,
       game: /** @type {Game} */ (entry.game),
       activePlayers: countActivePlayers(/** @type {Game} */ (entry.game)),
     }))
     .filter(
-      (entry) => entry.activePlayers > 0 && entry.table.closedAt === null,
+      (entry) => entry.activePlayers > 0 && entry.table.closedAt === undefined,
     );
 }
 

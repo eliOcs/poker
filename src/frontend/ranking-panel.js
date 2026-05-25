@@ -67,7 +67,7 @@ class RankingPanel extends LitElement {
   constructor() {
     super();
     this.rankings = [];
-    this.tournament = null;
+    this.tournament = undefined;
   }
 
   formatNet(value) {
@@ -78,13 +78,13 @@ class RankingPanel extends LitElement {
   }
 
   formatWinRate(value) {
-    if (value === null) return "-";
+    if (value == undefined) return "-";
     const sign = value > 0 ? "+" : "";
     return `${sign}${value.toFixed(1)}`;
   }
 
   getValueClass(value) {
-    if (value === null) return "na";
+    if (value == undefined) return "na";
     if (value > 0) return "positive";
     if (value < 0) return "negative";
     return "neutral";
@@ -124,7 +124,7 @@ class RankingPanel extends LitElement {
               <tr>
                 <td class="rank-col">${i + 1}</td>
                 <td class="player-name">
-                  ${r.playerName || `Seat ${r.seatIndex + 1}`}
+                  ${r.playerName ?? `Seat ${r.seatIndex + 1}`}
                 </td>
                 ${isTournament
                   ? html`<td>${formatCurrency(r.stack)}</td>

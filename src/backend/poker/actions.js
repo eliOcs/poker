@@ -54,7 +54,7 @@ export function start(game) {
   if (game.hand.phase !== "waiting") {
     throw new Error("hand already in progress");
   }
-  if (game.countdown !== null) {
+  if (game.countdown !== undefined) {
     throw new Error("countdown already started");
   }
   if (countPlayersWithChips(game) < 2) {
@@ -74,10 +74,7 @@ export function start(game) {
  * @returns {number}
  */
 function resolveSeatForSit(game, requestedSeat) {
-  const seat =
-    requestedSeat == null
-      ? game.seats.findIndex((seat) => seat.empty)
-      : requestedSeat;
+  const seat = requestedSeat ?? game.seats.findIndex((seat) => seat.empty);
   if (seat === -1) throw new Error("no empty seats");
   if (!Number.isInteger(seat) || seat < 0 || seat >= game.seats.length) {
     throw new Error("invalid seat");
@@ -93,7 +90,10 @@ function assertTableEntryOpen(game, mttMessage) {
   if (game.tournament?.kind === "mtt") {
     throw new Error(mttMessage);
   }
-  if (game.tournament?.kind === "sitngo" && game.tournament.winner !== null) {
+  if (
+    game.tournament?.kind === "sitngo" &&
+    game.tournament.winner !== undefined
+  ) {
     throw new Error("tournament is finished");
   }
 }
@@ -495,7 +495,7 @@ export function endHand(game) {
   game.hand.lastRaiser = -1;
   game.hand.actingSeat = -1;
   game.hand.lastRaiseSize = 0;
-  game.runout = null;
+  delete game.runout;
 
   // Increment handsPlayed for all players who were dealt in (not sitting out)
   for (const seat of game.seats) {
@@ -613,7 +613,10 @@ export function cancelSitOut(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function sitIn(game, { seat }) {
-  if (game.tournament?.kind === "sitngo" && game.tournament.winner !== null) {
+  if (
+    game.tournament?.kind === "sitngo" &&
+    game.tournament.winner !== undefined
+  ) {
     throw new Error("tournament is finished");
   }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);

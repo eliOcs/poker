@@ -31,35 +31,38 @@ export { classifyAllInAction, recordBettingAction };
 /**
  * Handles sitOut/leave actions that may cancel countdown
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand|void}
  */
 function handleSitOutOrLeave(game) {
-  if (game.countdown !== null && PokerActions.countPlayersWithChips(game) < 2) {
-    game.countdown = null;
+  if (
+    game.countdown !== undefined &&
+    PokerActions.countPlayersWithChips(game) < 2
+  ) {
+    delete game.countdown;
     PokerGame.stopGameTick(game);
     if (game.pendingHandHistory) return finalizePendingHandHistory(game);
   }
-  return null;
+  return;
 }
 
 /**
  * Handles betting actions (processes game flow)
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand|void}
  */
 function handleBettingAction(game) {
   resetActingTicks(game);
   return PokerGame.processGameFlow(game);
 }
 
-/** @type {Record<string, (game: Game) => FinalizedHand | null>} */
+/** @type {Record<string, (game: Game) => FinalizedHand | void>} */
 export const POST_ACTION_HANDLERS = {
   sitOut: handleSitOutOrLeave,
   cancelSitOut: handleSitOutOrLeave,
   leave: handleSitOutOrLeave,
   callClock: (game) => {
     startClockTicks(game);
-    return null;
+    return;
   },
 };
 
@@ -67,7 +70,7 @@ export const POST_ACTION_HANDLERS = {
  * Handles post-action side effects for specific actions
  * @param {string} action
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand|void}
  */
 export function handlePostAction(action, game) {
   const handler = POST_ACTION_HANDLERS[action];
@@ -76,14 +79,14 @@ export function handlePostAction(action, game) {
   } else if (BETTING_ACTIONS.includes(action)) {
     return handleBettingAction(game);
   }
-  return null;
+  return;
 }
 
 /**
  * Gets the player's seat data before an action
  * @param {Game} game
  * @param {PlayerType} player
- * @returns {{ seatIndex: number, seatBefore: OccupiedSeat|null, betBefore: number, currentBetBefore: number }}
+ * @returns {{ seatIndex: number, seatBefore?: OccupiedSeat, betBefore: number, currentBetBefore: number }}
  */
 export function getSeatStateBefore(game, player) {
   const seatIndex = PokerGame.findPlayerSeatIndex(game, player);
@@ -94,11 +97,11 @@ export function getSeatStateBefore(game, player) {
         .empty
     )
       ? /** @type {OccupiedSeat} */ (game.seats[seatIndex])
-      : null;
+      : undefined;
   return {
     seatIndex,
     seatBefore,
-    betBefore: seatBefore?.bet || 0,
+    betBefore: seatBefore?.bet ?? 0,
     currentBetBefore: game.hand.currentBet,
   };
 }
@@ -109,7 +112,7 @@ export function getSeatStateBefore(game, player) {
  * @param {PlayerType} player
  * @param {string} action
  * @param {Record<string, unknown>} args
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand|void}
  */
 export function processPokerAction(game, player, action, args) {
   const { seatIndex, seatBefore, betBefore, currentBetBefore } =

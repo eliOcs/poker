@@ -22,7 +22,7 @@ import {
 /**
  * @param {Map<Id, Game>} games
  * @param {Id} userId
- * @returns {string|null}
+ * @returns {string|void}
  */
 export function findActiveGamePath(games, userId) {
   const liveGames = [...games.values()];
@@ -37,7 +37,7 @@ export function findActiveGamePath(games, userId) {
     return getTablePath(game.kind, game.id);
   }
 
-  return null;
+  return;
 }
 
 /**
@@ -53,13 +53,13 @@ function isActiveGameForUser(game, userId) {
 /**
  * @param {Game} game
  * @param {Id} userId
- * @returns {import('./poker/seat.js').OccupiedSeat|null}
+ * @returns {import('./poker/seat.js').OccupiedSeat|void}
  */
 function findOccupiedSeatForUser(game, userId) {
   for (const seat of game.seats) {
     if (!seat.empty && seat.player.id === userId) return seat;
   }
-  return null;
+  return;
 }
 
 /**
@@ -117,7 +117,7 @@ export function createGameRoutes(users, games, broadcast, services) {
           if (
             "settings" in data &&
             typeof data.settings === "object" &&
-            data.settings !== null
+            data.settings
           ) {
             user.settings = { ...user.settings, ...data.settings };
           }

@@ -24,15 +24,13 @@ import * as Tournament from "../shared/tournament.js";
  * @property {string} lastPlayedAt
  */
 
-const EPOCH_ISO = new Date(0).toISOString();
-
 /**
  * @param {string} playerId
  * @returns {string}
  */
 function getPlayerName(playerId) {
   try {
-    return Store.loadUser(playerId)?.name || playerId;
+    return Store.loadUser(playerId)?.name ?? playerId;
   } catch {
     return playerId;
   }
@@ -68,19 +66,19 @@ function readTableHands(tableId) {
 
 /**
  * @param {string} tableId
- * @returns {RecoveredTable|null}
+ * @returns {RecoveredTable|undefined}
  */
 function recoverTable(tableId) {
   const hands = readTableHands(tableId);
-  if (hands.length === 0) return null;
+  if (hands.length === 0) return;
 
   const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
   return {
     tableId,
-    tableName: lastHand.table_name || tableId,
-    tableSize: lastHand.table_size || Tournament.DEFAULT_SEATS,
+    tableName: lastHand.table_name ?? tableId,
+    tableSize: lastHand.table_size,
     handNumber: readHandNumber(lastHand, tableId),
-    lastPlayedAt: lastHand.start_date_utc || EPOCH_ISO,
+    lastPlayedAt: lastHand.start_date_utc,
   };
 }
 
@@ -167,7 +165,7 @@ function buildTableById(tables) {
  * @param {string} tournamentId
  * @param {string} playerId
  * @param {Map<string, RecoveredTable>} tableById
- * @returns {RecoveredTable|null}
+ * @returns {RecoveredTable|undefined}
  */
 function findPlayerLatestTable(tournamentId, playerId, tableById) {
   try {
@@ -175,9 +173,9 @@ function findPlayerLatestTable(tournamentId, playerId, tableById) {
       playerId,
       tournamentId,
     ).find((link) => tableById.has(link.tableId));
-    return latestLink ? tableById.get(latestLink.tableId) || null : null;
+    return latestLink ? tableById.get(latestLink.tableId) : undefined;
   } catch {
-    return null;
+    return;
   }
 }
 
@@ -206,13 +204,12 @@ function recoverEntrants(summary, tables, tournamentId) {
         stack: isWinner
           ? toCents(summary.initial_stack || 0) * (summary.player_count || 1)
           : 0,
-        tableId: latestTable?.tableId ?? null,
-        seatIndex: null,
+        tableId: latestTable?.tableId,
         finishPosition: finish.finish_position,
         handsPlayed: latestTable?.handNumber ?? 0,
         registrationOrder: index,
         registeredAt: summary.start_date_utc,
-        eliminatedAt: isWinner ? null : summary.end_date_utc,
+        ...(isWinner ? {} : { eliminatedAt: summary.end_date_utc }),
       };
     });
 }
@@ -239,11 +236,11 @@ function recoverManagedTables(tables, endedAt) {
 /**
  * Rebuilds a finished MTT from its OTS summary and indexed table histories.
  * @param {string} tournamentId
- * @returns {ManagedTournament|null}
+ * @returns {ManagedTournament|undefined}
  */
 export function recoverFinishedMttFromSummary(tournamentId) {
   const summary = readTournamentSummarySync(tournamentId);
-  if (!summary || summary.type !== "MTT") return null;
+  if (!summary || summary.type !== "MTT") return;
 
   const tables = recoverTables(tournamentId);
   const entrants = recoverEntrants(summary, tables, tournamentId);
@@ -267,6 +264,5 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     entrants: new Map(entrants.map((entrant) => [entrant.playerId, entrant])),
     tables: recoverManagedTables(tables, summary.end_date_utc),
     nextRegistrationOrder: entrants.length,
-    tickTimer: null,
   };
 }

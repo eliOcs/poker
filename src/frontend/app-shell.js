@@ -34,9 +34,9 @@ class AppShell extends LitElement {
 
   constructor() {
     super();
-    this.user = null;
+    this.user = undefined;
     this.path = "/";
-    this.navigationRenderer = null;
+    this.navigationRenderer = undefined;
     this.drawerOpen = false;
     this._onMediaChange = (event) => {
       this.drawerOpen = event.matches;

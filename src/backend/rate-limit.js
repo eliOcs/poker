@@ -54,7 +54,7 @@ function normalizeIp(ip) {
  * @returns {string[]}
  */
 export function getTrustedProxyCidrs() {
-  return (process.env.TRUSTED_PROXY_CIDRS || DEFAULT_TRUSTED_PROXY_CIDRS)
+  return (process.env.TRUSTED_PROXY_CIDRS ?? DEFAULT_TRUSTED_PROXY_CIDRS)
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
@@ -62,17 +62,17 @@ export function getTrustedProxyCidrs() {
 
 /**
  * @param {string} ip
- * @returns {number|null}
+ * @returns {number|undefined}
  */
 function ipv4ToInt(ip) {
   const parts = ip.split(".");
-  if (parts.length !== 4) return null;
+  if (parts.length !== 4) return;
 
   /** @type {number[]} */
   const octets = [];
   for (const part of parts) {
     const value = Number(part);
-    if (!Number.isInteger(value) || value < 0 || value > 255) return null;
+    if (!Number.isInteger(value) || value < 0 || value > 255) return;
     octets.push(value);
   }
 
@@ -95,7 +95,7 @@ function isIpv4InCidr(ip, cidr) {
 
   const ipInt = ipv4ToInt(ip);
   const networkInt = ipv4ToInt(/** @type {string} */ (network));
-  if (ipInt === null || networkInt === null) return false;
+  if (ipInt === undefined || networkInt === undefined) return false;
 
   if (prefix === 0) return true;
   const mask = (0xffffffff << (32 - prefix)) >>> 0;
@@ -155,7 +155,7 @@ export function isTrustedProxyIp(
  * @returns {string}
  */
 export function getClientIp(req) {
-  const remoteIp = normalizeIp(req.socket.remoteAddress || "");
+  const remoteIp = normalizeIp(req.socket.remoteAddress ?? "");
   const trustedCidrs = getTrustedProxyCidrs();
   if (!isTrustedProxyIp(remoteIp, trustedCidrs)) {
     return remoteIp;
@@ -285,7 +285,7 @@ export function createRateLimiter({
     if (typeof nowOrContext === "number") {
       return {
         now: nowOrContext,
-        source: sourceArg || "unknown",
+        source: sourceArg ?? "unknown",
       };
     }
 
@@ -302,7 +302,7 @@ export function createRateLimiter({
 
     return {
       now: Date.now(),
-      source: sourceArg || "unknown",
+      source: sourceArg ?? "unknown",
     };
   }
 

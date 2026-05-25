@@ -33,7 +33,7 @@ export { logFrontendErrorReport } from "./client-error-reporting.js";
  * @typedef {object} RouteContext
  * @property {Request} req
  * @property {Response} res
- * @property {RegExpMatchArray|null} match
+ * @property {RegExpMatchArray|undefined} match
  * @property {Record<string, UserType>} users
  * @property {Map<Id, Game>} games
  * @property {(gameId: Id) => void} broadcast
@@ -122,13 +122,14 @@ export async function handleRequest(req, res, routes) {
   for (const route of routes) {
     if (route.method !== method) continue;
 
-    /** @type {RegExpMatchArray|null} */
-    let match = null;
+    /** @type {RegExpMatchArray|undefined} */
+    let match;
     if (typeof route.path === "string") {
       if (route.path !== url) continue;
     } else {
-      match = url.match(route.path);
-      if (!match) continue;
+      const routeMatch = url.match(route.path);
+      if (!routeMatch) continue;
+      match = routeMatch;
     }
 
     await route.handler({

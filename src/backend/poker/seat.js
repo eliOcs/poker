@@ -31,13 +31,13 @@
  * @property {boolean} pendingSitOut - Will sit out after current hand ends
  * @property {boolean} missedBigBlind - Has missed big blind while sitting out (must post on return)
  * @property {boolean} disconnected - Whether player's WebSocket is disconnected
- * @property {string|null} lastAction - Last action taken (check, call, bet, raise, fold, allIn)
- * @property {Cents|null} handResult - Result of the hand (positive for win, negative for loss)
- * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
+ * @property {string} [lastAction] - Last action taken (check, call, bet, raise, fold, allIn)
+ * @property {Cents} [handResult] - Result of the hand (positive for win, negative for loss)
+ * @property {Card[]} [winningCards] - The 5 cards forming the winning hand (only for winners)
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
- * @property {number|null} bustedPosition - Tournament finishing position (e.g., 6 for 6th place)
- * @property {import('./pre-action.js').PreAction|null} preAction - Pre-selected action for when turn arrives
+ * @property {number} [bustedPosition] - Tournament finishing position (e.g., 6 for 6th place)
+ * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action for when turn arrives
  */
 
 /**
@@ -75,13 +75,8 @@ export function occupied(player, stack = 0, sittingOut = false) {
     pendingSitOut: false,
     missedBigBlind: false,
     disconnected: false,
-    lastAction: null,
-    handResult: null,
-    winningCards: null,
     cardsRevealed: false,
     shownCards: [false, false],
-    bustedPosition: null,
-    preAction: null,
   };
 }
 
@@ -95,12 +90,12 @@ export function resetForNewHand(seat) {
   seat.cards = [];
   seat.folded = false;
   seat.allIn = false;
-  seat.lastAction = null;
-  seat.handResult = null;
-  seat.winningCards = null;
+  delete seat.lastAction;
+  delete seat.handResult;
+  delete seat.winningCards;
   seat.cardsRevealed = false;
   seat.shownCards = [false, false];
-  seat.preAction = null;
+  delete seat.preAction;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
     seat.missedBigBlind = true;

@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax -- SQLite uses null for absent column values at the database boundary. */
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
@@ -10,19 +11,19 @@ import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js
  * @typedef {import('./user.js').UserSettings} UserSettings
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings }} SaveUserInput
  * @typedef {{ id: Id, name?: string, email?: string, settings: UserSettings, createdAt: string, updatedAt: string }} UserProfile
- * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
+ * @typedef {{ playerId: Id, tableId: Id, tournamentId?: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTableInput
  * @typedef {{ playerId: Id, tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentInput
- * @typedef {{ tableId: Id, tournamentId: Id|null, lastHandNumber: number, lastPlayedAt: string }} PlayerTableLink
+ * @typedef {{ tableId: Id, tournamentId?: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTableLink
  * @typedef {{ tournamentId: Id, lastTableId: Id, lastHandNumber: number, lastPlayedAt: string }} PlayerTournamentLink
  * @typedef {{ tableId: Id, lastHandNumber: number, lastPlayedAt: string }} TournamentTableLink
  */
 
-/** @type {DatabaseSync | null} */
-let db = null;
+/** @type {DatabaseSync|undefined} */
+let db;
 
 /** @returns {string} */
 function getDataDir() {
-  return process.env.DATA_DIR || "data";
+  return process.env.DATA_DIR ?? "data";
 }
 
 /**
@@ -41,14 +42,15 @@ function columnExists(table, column) {
 
 /**
  * @param {string} key
- * @returns {string|null}
+ * @returns {string|void}
  */
 function loadMetaValue(key) {
   const stmt = /** @type {DatabaseSync} */ (db).prepare(
     "SELECT value FROM store_meta WHERE key = ?",
   );
   const row = stmt.get(key);
-  return row ? /** @type {string} */ (row.value) : null;
+  if (!row) return;
+  return /** @type {string} */ (row.value);
 }
 
 /**
@@ -70,7 +72,7 @@ function saveMetaValue(key, value) {
 export function initialize(dbPath = undefined) {
   if (db) return;
   const isInMemory = dbPath === ":memory:";
-  dbPath = openDatabase(dbPath, isInMemory);
+  dbPath = openDatabase(isInMemory, dbPath);
   ensureUsersTable();
   ensureStoreTables();
   runHistoryBackfills(isInMemory);
@@ -84,8 +86,8 @@ export function saveUser(user) {
   if (!db) throw new Error("Store not initialized");
 
   const settingsJson = JSON.stringify(user.settings);
-  const nameForDb = user.name === undefined ? null : user.name;
-  const emailForDb = user.email === undefined ? null : user.email;
+  const nameForDb = user.name ?? null;
+  const emailForDb = user.email ?? null;
   const stmt = db.prepare(`
     INSERT INTO users (id, name, email, settings, updated_at)
     VALUES (?, ?, ?, ?, datetime('now'))
@@ -100,11 +102,11 @@ export function saveUser(user) {
 
 /**
  * @param {string} id
- * @returns {User | null}
+ * @returns {User|void}
  */
 export function loadUser(id) {
   if (!db) throw new Error("Store not initialized");
-  if (!id) return null;
+  if (!id) return;
 
   const stmt = db.prepare(
     "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE id = ?",
@@ -116,11 +118,11 @@ export function loadUser(id) {
 
 /**
  * @param {string} email
- * @returns {User | null}
+ * @returns {User|void}
  */
 export function loadUserByEmail(email) {
   if (!db) throw new Error("Store not initialized");
-  if (!email) return null;
+  if (!email) return;
 
   const stmt = db.prepare(
     "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE email = ? ORDER BY updated_at DESC, created_at DESC, id DESC LIMIT 1",
@@ -132,11 +134,11 @@ export function loadUserByEmail(email) {
 
 /**
  * @param {string} id
- * @returns {UserProfile | null}
+ * @returns {UserProfile|void}
  */
 export function loadUserProfile(id) {
   if (!db) throw new Error("Store not initialized");
-  if (!id) return null;
+  if (!id) return;
 
   const stmt = db.prepare(
     "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE id = ?",
@@ -144,7 +146,7 @@ export function loadUserProfile(id) {
   const row = stmt.get(id);
 
   const user = hydrateUserRow(row);
-  if (!user) return null;
+  if (!user) return;
   const userRow = /** @type {{ created_at: string, updated_at: string }} */ (
     row
   );
@@ -243,9 +245,9 @@ export function listPlayerTables(playerId) {
 
   return stmt.all(playerId).map((row) => ({
     tableId: /** @type {Id} */ (row.table_id),
-    tournamentId: row.tournament_id
-      ? /** @type {Id} */ (row.tournament_id)
-      : null,
+    ...(row.tournament_id
+      ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
+      : {}),
     lastHandNumber: /** @type {number} */ (row.last_hand_number),
     lastPlayedAt: /** @type {string} */ (row.last_played_at),
   }));
@@ -292,9 +294,9 @@ export function listPlayerTablesForTournament(playerId, tournamentId) {
 
   return stmt.all(playerId, tournamentId).map((row) => ({
     tableId: /** @type {Id} */ (row.table_id),
-    tournamentId: row.tournament_id
-      ? /** @type {Id} */ (row.tournament_id)
-      : null,
+    ...(row.tournament_id
+      ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
+      : {}),
     lastHandNumber: /** @type {number} */ (row.last_hand_number),
     lastPlayedAt: /** @type {string} */ (row.last_played_at),
   }));
@@ -349,9 +351,9 @@ export function migratePlayerData(fromPlayerId, toPlayerId) {
       .all(fromPlayerId)
       .map((row) => ({
         tableId: /** @type {Id} */ (row.table_id),
-        tournamentId: row.tournament_id
-          ? /** @type {Id} */ (row.tournament_id)
-          : null,
+        ...(row.tournament_id
+          ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
+          : {}),
         lastHandNumber: /** @type {number} */ (row.last_hand_number),
         lastPlayedAt: /** @type {string} */ (row.last_played_at),
       }))
@@ -410,15 +412,15 @@ export function deleteUser(id) {
 
 /**
  * @param {any} row
- * @returns {User | null}
+ * @returns {User|void}
  */
 function hydrateUserRow(row) {
-  if (!row) return null;
+  if (!row) return;
 
   return {
     id: /** @type {Id} */ (row.id),
-    name: row.name === null ? undefined : /** @type {string} */ (row.name),
-    email: row.email === null ? undefined : /** @type {string} */ (row.email),
+    name: /** @type {string|undefined} */ (row.name ?? undefined),
+    email: /** @type {string|undefined} */ (row.email ?? undefined),
     settings: JSON.parse(/** @type {string} */ (row.settings)),
   };
 }
@@ -452,7 +454,7 @@ function migrateUserTimestamps() {
 export function close() {
   if (db) {
     db.close();
-    db = null;
+    db = undefined;
     logger.info("store closed");
   }
 }
@@ -463,23 +465,23 @@ export function count() {
 
   const stmt = db.prepare("SELECT COUNT(*) as count FROM users");
   const row = stmt.get();
-  return /** @type {number} */ (row?.count) || 0;
+  return /** @type {number} */ (row?.count) ?? 0;
 }
 
 // For testing - allows resetting state
 export function _reset() {
   if (db) {
     db.close();
-    db = null;
+    db = undefined;
   }
 }
 
 /**
- * @param {string|undefined} dbPath
  * @param {boolean} isInMemory
+ * @param {string} [dbPath]
  * @returns {string|undefined}
  */
-function openDatabase(dbPath, isInMemory) {
+function openDatabase(isInMemory, dbPath) {
   if (isInMemory) {
     db = new DatabaseSync(":memory:");
     return dbPath;
@@ -577,7 +579,7 @@ function runHistoryBackfills(isInMemory) {
  * @param {() => void} callback
  */
 function runBackfill(key, callback) {
-  if (loadMetaValue(key) !== null) return;
+  if (loadMetaValue(key) !== undefined) return;
   callback();
   saveMetaValue(key, new Date().toISOString());
 }

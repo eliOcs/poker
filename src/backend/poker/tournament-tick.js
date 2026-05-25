@@ -57,7 +57,7 @@ export function tick(game) {
     return result;
   }
 
-  if (game.tournament.winner !== null) {
+  if (game.tournament.winner !== undefined) {
     result.tournamentEnded = true;
     return result;
   }
@@ -100,10 +100,10 @@ export function startPendingBreak(game) {
 /**
  * Get seconds remaining until next level or break end
  * @param {Game} game
- * @returns {number|null}
+ * @returns {number|undefined}
  */
 export function getTimeToNextLevel(game) {
-  if (!game.tournament?.active) return null;
+  if (!game.tournament?.active) return;
 
   if (game.tournament.onBreak) {
     return Tournament.BREAK_DURATION_TICKS - game.tournament.breakTicks;

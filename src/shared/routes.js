@@ -37,10 +37,10 @@ export const HISTORY_MTT_TABLE_ROUTE = new RegExp(
 /**
  * @param {LiveTableKind} kind
  * @param {string} tableId
- * @param {string|null} [tournamentId]
+ * @param {string|undefined} [tournamentId]
  * @returns {string}
  */
-export function getTablePath(kind, tableId, tournamentId = null) {
+export function getTablePath(kind, tableId, tournamentId = undefined) {
   if (kind === "cash") return `/cash/${tableId}`;
   if (kind === "sitngo") return `/sitngo/${tableId}`;
   if (!tournamentId) {
@@ -60,84 +60,85 @@ export function getMttPath(tournamentId) {
 /**
  * @param {LiveTableKind} kind
  * @param {string} tableId
- * @param {number|null|undefined} [handNumber]
- * @param {string|null} [tournamentId]
+ * @param {number|undefined} [handNumber]
+ * @param {string|undefined} [tournamentId]
  * @returns {string}
  */
 export function getTableHistoryPath(
   kind,
   tableId,
-  handNumber = null,
-  tournamentId = null,
+  handNumber = undefined,
+  tournamentId = undefined,
 ) {
   const base = `${getTablePath(kind, tableId, tournamentId)}/history`;
-  return handNumber == null ? base : `${base}/${handNumber}`;
+  return handNumber === undefined ? base : `${base}/${handNumber}`;
 }
 
 /**
  * @param {string} path
  * @param {RegExp} route
  * @param {"cash"|"sitngo"} kind
- * @returns {{ kind: "cash"|"sitngo", tableId: string }|null}
+ * @returns {{ kind: "cash"|"sitngo", tableId: string }|undefined}
  */
 function matchSingleTableRoute(path, route, kind) {
   const match = path.match(route);
   const tableId = match?.[1];
-  return tableId ? { kind, tableId } : null;
+  if (!tableId) return;
+  return { kind, tableId };
 }
 
 /**
  * @param {string} path
  * @param {RegExp} route
  * @param {"cash"|"sitngo"} kind
- * @returns {{ kind: "cash"|"sitngo", tableId: string, handNumber: number|null }|null}
+ * @returns {{ kind: "cash"|"sitngo", tableId: string, handNumber: number|undefined }|undefined}
  */
 function matchSingleTableHistoryRoute(path, route, kind) {
   const match = path.match(route);
   const tableId = match?.[1];
-  if (!tableId) return null;
+  if (!tableId) return;
 
   return {
     kind,
     tableId,
-    handNumber: match[2] ? parseInt(match[2], 10) : null,
+    handNumber: match[2] ? parseInt(match[2], 10) : undefined,
   };
 }
 
 /**
  * @param {string} path
  * @param {RegExp} route
- * @returns {{ kind: "mtt_table", tournamentId: string, tableId: string }|null}
+ * @returns {{ kind: "mtt_table", tournamentId: string, tableId: string }|undefined}
  */
 function matchTournamentTableRoute(path, route) {
   const match = path.match(route);
   const tournamentId = match?.[1];
   const tableId = match?.[2];
-  if (!tournamentId || !tableId) return null;
+  if (!tournamentId || !tableId) return;
   return { kind: "mtt_table", tournamentId, tableId };
 }
 
 /**
  * @param {string} path
- * @returns {{ kind: "mtt_table", tournamentId: string, tableId: string, handNumber: number|null }|null}
+ * @returns {{ kind: "mtt_table", tournamentId: string, tableId: string, handNumber: number|undefined }|undefined}
  */
 function matchTournamentTableHistoryRoute(path) {
   const match = path.match(HISTORY_MTT_TABLE_ROUTE);
   const tournamentId = match?.[1];
   const tableId = match?.[2];
-  if (!tournamentId || !tableId) return null;
+  if (!tournamentId || !tableId) return;
 
   return {
     kind: "mtt_table",
     tournamentId,
     tableId,
-    handNumber: match[3] ? parseInt(match[3], 10) : null,
+    handNumber: match[3] ? parseInt(match[3], 10) : undefined,
   };
 }
 
 /**
  * @param {string} path
- * @returns {{ kind: "cash"|"sitngo", tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string } | null}
+ * @returns {{ kind: "cash"|"sitngo", tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string } | undefined}
  */
 export function matchLiveRoute(path) {
   const cashRoute = matchSingleTableRoute(path, LIVE_CASH_ROUTE, "cash");
@@ -155,12 +156,12 @@ export function matchLiveRoute(path) {
     return { kind: "mtt", tournamentId };
   }
 
-  return null;
+  return;
 }
 
 /**
  * @param {string} path
- * @returns {{ kind: "cash"|"sitngo", tableId: string, handNumber: number|null } | { kind: "mtt_table", tournamentId: string, tableId: string, handNumber: number|null } | null}
+ * @returns {{ kind: "cash"|"sitngo", tableId: string, handNumber: number|undefined } | { kind: "mtt_table", tournamentId: string, tableId: string, handNumber: number|undefined } | undefined}
  */
 export function matchHistoryRoute(path) {
   const cashRoute = matchSingleTableHistoryRoute(
@@ -180,5 +181,5 @@ export function matchHistoryRoute(path) {
   const mttTableRoute = matchTournamentTableHistoryRoute(path);
   if (mttTableRoute) return mttTableRoute;
 
-  return null;
+  return;
 }

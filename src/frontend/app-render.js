@@ -13,8 +13,8 @@ export function renderToast(app) {
   if (!app.toast) return "";
   return html`
     <phg-toast
-      variant=${app.toast.variant || "info"}
-      .duration=${app.toast.duration || 3000}
+      variant=${app.toast.variant ?? "info"}
+      .duration=${app.toast.duration ?? 3000}
       .message=${app.toast.message}
       @dismiss=${app.dismissToast}
     ></phg-toast>
@@ -32,10 +32,12 @@ export function renderGameView(app, liveRoute) {
       .gameKind=${gameKind}
       .tournamentId=${"tournamentId" in liveRoute
         ? liveRoute.tournamentId
-        : null}
-      .mttTournament=${liveRoute.kind === "mtt_table" ? app._mttView : null}
+        : undefined}
+      .mttTournament=${liveRoute.kind === "mtt_table"
+        ? app._mttView
+        : undefined}
       .tournamentFinishPosition=${app._mttView?.currentPlayer?.finishPosition ??
-      null}
+      undefined}
       .connectionStatus=${app.gameConnectionStatus}
       .game=${app.game}
       .socialAction=${app.socialAction}
@@ -56,7 +58,7 @@ export function renderHistoryView(app, historyRoute) {
       .gameKind=${historyRoute.kind}
       .tournamentId=${historyRoute.kind === "mtt_table"
         ? historyRoute.tournamentId
-        : null}
+        : undefined}
       .handNumber=${app._historyHandNumber}
       .hand=${handData?.hand}
       .view=${handData?.view}
@@ -117,7 +119,7 @@ export function renderShellView(app, content, options = {}) {
   return html`${renderToast(app)}<phg-app-shell
       .user=${app.user}
       .path=${app.path}
-      .navigationRenderer=${options.navigationRenderer ?? null}
+      .navigationRenderer=${options.navigationRenderer ?? undefined}
       >${content}</phg-app-shell
     >${renderProfileSettingsModal(app)}${renderProfileSignInModal(
       app,

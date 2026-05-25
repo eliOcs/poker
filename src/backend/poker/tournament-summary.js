@@ -17,7 +17,7 @@ import * as Tournament from "../../shared/tournament.js";
 /**
  * @typedef {object} TournamentPlayer
  * @property {string} id - Player ID
- * @property {string|undefined} name - Player display name
+ * @property {string} [name] - Player display name
  * @property {number} seatIndex - Seat index (0-based)
  */
 
@@ -31,7 +31,7 @@ import * as Tournament from "../../shared/tournament.js";
 /**
  * @typedef {object} TournamentRecorder
  * @property {string} gameId
- * @property {string|null} startTime - ISO8601 start time
+ * @property {string} [startTime] - ISO8601 start time
  * @property {TournamentPlayer[]} players - All players who joined
  * @property {Elimination[]} eliminations - Elimination order
  */
@@ -91,7 +91,6 @@ function getRecorder(gameId) {
   if (!recorder) {
     recorder = {
       gameId,
-      startTime: null,
       players: [],
       eliminations: [],
     };
@@ -170,7 +169,7 @@ export function startTournament(game) {
   // Only initialize once (first hand)
   if (recorder.startTime) return;
 
-  recorder.startTime = game.tournament.startTime || new Date().toISOString();
+  recorder.startTime = game.tournament.startTime ?? new Date().toISOString();
 
   // Capture all players who are seated
   recorder.players = [];
@@ -228,12 +227,12 @@ function buildEliminatedFinishes(recorder, prizeByPosition) {
  * Builds finish entry for the winner
  * @param {Game} game
  * @param {Map<number, number>} prizeByPosition - Map of position -> prize in dollars
- * @returns {OTSFinish|null}
+ * @returns {OTSFinish|undefined}
  */
 function buildWinnerFinish(game, prizeByPosition) {
   const winnerSeatIndex = game.tournament?.winner;
-  if (winnerSeatIndex === null || winnerSeatIndex === undefined) {
-    return null;
+  if (winnerSeatIndex === undefined) {
+    return;
   }
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winnerSeatIndex]);
   return buildFinish(winnerSeat.player.id, 1, prizeByPosition);
@@ -265,7 +264,7 @@ function buildOTSSummary(recorder, game) {
   return buildSummary({
     tournamentNumber: recorder.gameId,
     tournamentName: tournament.name,
-    startDateUtc: recorder.startTime || endTime,
+    startDateUtc: recorder.startTime ?? endTime,
     endDateUtc: endTime,
     buyIn,
     initialStack: Tournament.INITIAL_STACK,
@@ -293,14 +292,14 @@ function buildManagedTournamentFinishes(tournament, prizeByPosition) {
  * @returns {OTSSummary}
  */
 function buildManagedTournamentSummary(tournament) {
-  const endTime = tournament.endedAt || new Date().toISOString();
+  const endTime = tournament.endedAt ?? new Date().toISOString();
   const playerCount = tournament.entrants.size;
   const prizeByPosition = buildPrizeByPosition(playerCount, tournament.buyIn);
 
   return buildSummary({
     tournamentNumber: tournament.id,
     tournamentName: tournament.name,
-    startDateUtc: tournament.startedAt || tournament.createdAt,
+    startDateUtc: tournament.startedAt ?? tournament.createdAt,
     endDateUtc: endTime,
     buyIn: tournament.buyIn,
     initialStack: tournament.initialStack,

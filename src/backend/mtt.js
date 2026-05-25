@@ -43,20 +43,20 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {EntrantStatus} status
  * @property {number} stack
- * @property {string|null} tableId
- * @property {number|null} seatIndex
- * @property {number|null} finishPosition
+ * @property {string} [tableId]
+ * @property {number} [seatIndex]
+ * @property {number} [finishPosition]
  * @property {number} handsPlayed
  * @property {number} registrationOrder
  * @property {string} registeredAt
- * @property {string|null} eliminatedAt
+ * @property {string} [eliminatedAt]
  *
  * @typedef {object} ManagedTable
  * @property {string} tableId
  * @property {string} tableName
  * @property {number} createdOrder
  * @property {string} createdAt
- * @property {string|null} closedAt
+ * @property {string} [closedAt]
  * @property {number} [handNumber]
  *
  * @typedef {object} ManagedTournament
@@ -74,12 +74,12 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {boolean} pendingCollapse
  * @property {number} breakTicks
  * @property {string} createdAt
- * @property {string|null} startedAt
- * @property {string|null} endedAt
+ * @property {string} [startedAt]
+ * @property {string} [endedAt]
  * @property {Map<string, TournamentEntrant>} entrants
  * @property {ManagedTable[]} tables
  * @property {number} nextRegistrationOrder
- * @property {NodeJS.Timeout|null} tickTimer
+ * @property {NodeJS.Timeout} [tickTimer]
  */
 
 /**
@@ -96,10 +96,10 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {EntrantStatus} status
  * @property {number} stack
- * @property {string|null} tableId
- * @property {number|null} seatIndex
- * @property {number|null} finishPosition
- * @property {number|null} netWinnings
+ * @property {string} [tableId]
+ * @property {number} [seatIndex]
+ * @property {number} [finishPosition]
+ * @property {number} [netWinnings]
  *
  * @typedef {object} ManagedTournamentView
  * @property {string} id
@@ -113,12 +113,12 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {boolean} onBreak
  * @property {boolean} pendingBreak
  * @property {string} createdAt
- * @property {string|null} startedAt
- * @property {string|null} endedAt
+ * @property {string} [startedAt]
+ * @property {string} [endedAt]
  * @property {ManagedTournamentViewEntrant[]} entrants
  * @property {ManagedTournamentViewEntrant[]} standings
  * @property {ManagedTournamentViewTable[]} tables
- * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId: string|null, seatIndex: number|null, finishPosition: number|null }} currentPlayer
+ * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId?: string, seatIndex?: number, finishPosition?: number }} currentPlayer
  * @property {{ canRegister: boolean, canUnregister: boolean, canStart: boolean, canRename: boolean }} actions
  */
 
@@ -215,7 +215,7 @@ export function createMttManager({
   function stopTicking(tournament) {
     if (tournament.tickTimer) {
       clearIntervalFn(tournament.tickTimer);
-      tournament.tickTimer = null;
+      delete tournament.tickTimer;
     }
   }
 
@@ -271,8 +271,7 @@ export function createMttManager({
       tableId: game.id,
       tableName,
       createdOrder: getNextTableCreatedOrder(tournament),
-      createdAt: tournament.startedAt || now(),
-      closedAt: null,
+      createdAt: tournament.startedAt ?? now(),
     };
     tournament.tables.push(table);
     games.set(game.id, game);
@@ -371,11 +370,11 @@ export function createMttManager({
 
       const entrant = tournament.entrants.get(occupiedSeat.player.id);
       if (!entrant) continue;
-      entrant.name = occupiedSeat.player.name || entrant.name;
+      entrant.name = occupiedSeat.player.name ?? entrant.name;
       entrant.handsPlayed = occupiedSeat.handsPlayed;
 
       if (occupiedSeat.stack > 0) {
-        occupiedSeat.bustedPosition = null;
+        delete occupiedSeat.bustedPosition;
         entrant.status = "seated";
         entrant.stack = occupiedSeat.stack;
         entrant.tableId = game.id;
@@ -407,8 +406,8 @@ export function createMttManager({
         seat.sittingOut = true;
         entrant.status = "eliminated";
         entrant.stack = 0;
-        entrant.tableId = null;
-        entrant.seatIndex = null;
+        delete entrant.tableId;
+        delete entrant.seatIndex;
         entrant.finishPosition = finishPosition;
         entrant.eliminatedAt = now();
         game.seats[seatIndex] = Seat.empty();
@@ -513,7 +512,7 @@ export function createMttManager({
     for (const table of tournament.tables) {
       const game = games.get(table.tableId);
       if (!game) continue;
-      if (table.closedAt !== null) {
+      if (table.closedAt !== undefined) {
         continue;
       }
       syncWaitingTableState(tournament, game, ensureTableTick);
@@ -541,16 +540,12 @@ export function createMttManager({
 
     tournament.entrants.set(user.id, {
       playerId: user.id,
-      name: user.name || user.id,
+      name: user.name ?? user.id,
       status: "registered",
       stack: tournament.initialStack,
-      tableId: null,
-      seatIndex: null,
-      finishPosition: null,
       handsPlayed: 0,
       registrationOrder: tournament.nextRegistrationOrder,
       registeredAt: now(),
-      eliminatedAt: null,
     });
     tournament.nextRegistrationOrder += 1;
     broadcastTournament(tournament);
@@ -583,12 +578,9 @@ export function createMttManager({
         pendingCollapse: false,
         breakTicks: 0,
         createdAt,
-        startedAt: null,
-        endedAt: null,
         entrants: new Map(),
         tables: [],
         nextRegistrationOrder: 0,
-        tickTimer: null,
       };
 
       tournaments.set(tournament.id, tournament);
@@ -598,10 +590,10 @@ export function createMttManager({
 
     /**
      * @param {string} tournamentId
-     * @returns {ManagedTournament|null}
+     * @returns {ManagedTournament|undefined}
      */
     getTournament(tournamentId) {
-      return tournaments.get(tournamentId) || null;
+      return tournaments.get(tournamentId);
     },
 
     registerPlayer,
@@ -695,13 +687,13 @@ export function createMttManager({
       for (const tournament of tournaments.values()) {
         const entrant = tournament.entrants.get(user.id);
         if (!entrant) continue;
-        entrant.name = user.name || user.id;
+        entrant.name = user.name ?? user.id;
         if (entrant.tableId) {
           const game = games.get(entrant.tableId);
           const seat =
-            game && entrant.seatIndex !== null
+            game && entrant.seatIndex !== undefined
               ? game.seats[entrant.seatIndex]
-              : null;
+              : undefined;
           if (game && seat && !seat.empty) {
             seat.player.name = entrant.name;
             broadcastTableState(game.id);

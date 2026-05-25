@@ -26,7 +26,7 @@ describe("disconnection handling", () => {
   });
 
   describe("game tick timer properties", () => {
-    it("should initialize tickTimer as null", () => {
+    it("should initialize tickTimer as undefined", () => {
       assert.equal(game.tickTimer, null);
     });
   });

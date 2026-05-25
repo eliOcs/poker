@@ -39,9 +39,9 @@ class MttLobby extends LitElement {
 
   constructor() {
     super();
-    this.tournamentId = null;
-    this.tournament = null;
-    this.user = null;
+    this.tournamentId = undefined;
+    this.tournament = undefined;
+    this.user = undefined;
     this.loading = false;
     this.error = "";
     this.actionPending = false;
@@ -191,7 +191,7 @@ class MttLobby extends LitElement {
 
   _getCurrentTable() {
     const tableId = this.tournament?.currentPlayer?.tableId;
-    if (!tableId) return null;
+    if (!tableId) return;
     return this.tournament?.tables.find((table) => table.tableId === tableId);
   }
 
@@ -199,7 +199,7 @@ class MttLobby extends LitElement {
     const table = this._getCurrentTable();
     if (!table || !this.tournamentId || table.handNumber <= 0) return;
     this._navigate(
-      getTableHistoryPath("mtt", table.tableId, null, this.tournamentId),
+      getTableHistoryPath("mtt", table.tableId, undefined, this.tournamentId),
     );
   }
 
@@ -221,7 +221,7 @@ class MttLobby extends LitElement {
   _buildDrawerParams(tournament, currentTable) {
     const activeTables =
       tournament?.tables.filter((table) => !table.closed) ?? [];
-    const hasCurrentTableHistory = (currentTable?.handNumber || 0) > 0;
+    const hasCurrentTableHistory = (currentTable?.handNumber ?? 0) > 0;
     return {
       activeTables,
       hasCurrentTableHistory,
@@ -229,19 +229,19 @@ class MttLobby extends LitElement {
         ? () => {
             this._openCurrentTableHistory();
           }
-        : null,
+        : undefined,
       share:
         "share" in navigator
           ? () => {
               this._share();
             }
-          : null,
+          : undefined,
     };
   }
 
   _renderTitle(tournament) {
     const tournamentName =
-      tournament?.name || `Tournament #${tournament?.id || this.tournamentId}`;
+      tournament?.name ?? `Tournament #${tournament?.id ?? this.tournamentId}`;
     if (!tournament?.actions?.canRename) return tournamentName;
 
     return html`<phg-edit-label

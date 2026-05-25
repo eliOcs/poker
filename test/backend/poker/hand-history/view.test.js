@@ -405,8 +405,8 @@ describe("hand-history-view", function () {
       ]);
 
       // Non-winner should not have handResult
-      assert.strictEqual(view.seats[1].handResult, null);
-      assert.strictEqual(view.seats[1].handRank, null);
+      assert.strictEqual(view.seats[1].handResult, undefined);
+      assert.strictEqual(view.seats[1].handRank, undefined);
     });
 
     it("returns isSplit=true and no playerName for split pots", function () {
@@ -438,7 +438,7 @@ describe("hand-history-view", function () {
       const view = HandHistory.getHandView(filtered, "player1");
 
       assert.strictEqual(view.winnerMessage.isSplit, true);
-      assert.strictEqual(view.winnerMessage.playerName, null);
+      assert.strictEqual(view.winnerMessage.playerName, undefined);
       assert.strictEqual(view.winnerMessage.handRank, "Straight, Q high");
       assert.strictEqual(view.winnerMessage.amount, 30000); // 300 cents total pot
 

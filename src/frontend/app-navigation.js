@@ -47,12 +47,11 @@ function consumeHandledNavigation(route) {
 /**
  * @param {any} app
  * @param {URL|string} url
- * @param {AppNavigationState|null} [state]
+ * @param {AppNavigationState|undefined} [state]
  */
 export function applyAppRoute(app, url, state = {}) {
   const nextUrl = typeof url === "string" ? normalizeUrl(url) : url;
-  const routeState = state || {};
-  app._setMttLobbyOverride(Boolean(routeState.allowMttLobby));
+  app._setMttLobbyOverride(Boolean(state.allowMttLobby));
   app.path = nextUrl.pathname;
 }
 
@@ -100,13 +99,13 @@ export function navigateApp(app, path, options = {}) {
 
 /**
  * @param {MouseEvent} event
- * @returns {HTMLAnchorElement|null}
+ * @returns {HTMLAnchorElement|undefined}
  */
 function findAnchor(event) {
   return (
     event
       .composedPath()
-      .find((target) => target instanceof HTMLAnchorElement) ?? null
+      .find((target) => target instanceof HTMLAnchorElement) ?? undefined
   );
 }
 

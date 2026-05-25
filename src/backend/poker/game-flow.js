@@ -23,15 +23,15 @@ import { emitLog } from "../logger.js";
 /**
  * @param {Game} game
  * @param {import('./showdown.js').PotResult[]} potResults
- * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank: string|null, isSplit: boolean } | null}
+ * @returns {{ winnerSeat: import('./seat.js').OccupiedSeat, seatIndex: number, amount: number, handRank?: string, isSplit: boolean } | undefined}
  */
 function getWinnerInfo(game, potResults) {
-  if (potResults.length === 0) return null;
+  if (potResults.length === 0) return;
 
   const mainPot = /** @type {import('./showdown.js').PotResult} */ (
     potResults[0]
   );
-  if (mainPot.winners.length === 0) return null;
+  if (mainPot.winners.length === 0) return;
 
   const isSplit = mainPot.winners.length > 1;
   const seatIndex = /** @type {number} */ (mainPot.winners[0]);
@@ -41,8 +41,10 @@ function getWinnerInfo(game, potResults) {
   const amount = mainPot.awards.reduce((sum, award) => sum + award.amount, 0);
   const handRank = mainPot.winningHand
     ? HandRankings.formatHand(mainPot.winningHand)
-    : null;
-  return { winnerSeat, seatIndex, amount, handRank, isSplit };
+    : undefined;
+  return handRank
+    ? { winnerSeat, seatIndex, amount, handRank, isSplit }
+    : { winnerSeat, seatIndex, amount, isSplit };
 }
 
 /**
@@ -58,12 +60,12 @@ function logHandEnded(game, winnerName, wonBy, amount) {
     winner: { name: winnerName, wonBy, amount },
   });
   emitLog(game.handLog);
-  game.handLog = null;
+  delete game.handLog;
 }
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 function handleFoldWin(game) {
   const result = Showdown.awardToLastPlayer(game);
@@ -71,11 +73,10 @@ function handleFoldWin(game) {
     const winnerSeat = /** @type {import('./seat.js').OccupiedSeat} */ (
       game.seats[result.winner]
     );
-    const winnerName = winnerSeat.player.name || `Seat ${result.winner + 1}`;
+    const winnerName = winnerSeat.player.name ?? `Seat ${result.winner + 1}`;
 
     game.winnerMessage = {
       playerName: winnerName,
-      handRank: null,
       amount: result.amount,
       isSplit: false,
     };
@@ -84,8 +85,8 @@ function handleFoldWin(game) {
       {
         potAmount: result.amount,
         winners: [result.winner],
-        winningHand: null,
-        winningCards: null,
+        winningHand: undefined,
+        winningCards: undefined,
         awards: [{ seat: result.winner, amount: result.amount }],
       },
     ];
@@ -115,7 +116,7 @@ function recordShowdownCards(game) {
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 function handleShowdown(game) {
   const gen = Showdown.showdown(game);
@@ -131,9 +132,9 @@ function handleShowdown(game) {
   const winnerInfo = getWinnerInfo(game, potResults);
   if (winnerInfo) {
     const winnerName =
-      winnerInfo.winnerSeat.player.name || `Seat ${winnerInfo.seatIndex + 1}`;
+      winnerInfo.winnerSeat.player.name ?? `Seat ${winnerInfo.seatIndex + 1}`;
     game.winnerMessage = {
-      playerName: winnerInfo.isSplit ? null : winnerName,
+      ...(winnerInfo.isSplit ? {} : { playerName: winnerName }),
       handRank: winnerInfo.handRank,
       amount: winnerInfo.amount,
       isSplit: winnerInfo.isSplit,
@@ -141,7 +142,7 @@ function handleShowdown(game) {
     logHandEnded(
       game,
       winnerName,
-      winnerInfo.handRank || "showdown",
+      winnerInfo.handRank ?? "showdown",
       winnerInfo.amount,
     );
   }
@@ -172,12 +173,12 @@ const STREET_HANDLERS = {
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function processGameFlow(game) {
   const phase = game.hand.phase;
   if (!["preflop", "flop", "turn", "river"].includes(phase)) {
-    return null;
+    return;
   }
 
   if (autoFoldSittingOutActingPlayers(game)) {
@@ -190,20 +191,20 @@ export function processGameFlow(game) {
   }
 
   if (game.hand.actingSeat !== -1) {
-    return null;
+    return;
   }
 
   game.collectingBets = { active: false, delayTicks: 1 };
-  return null;
+  return;
 }
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function finishCollectBets(game) {
   const phase = game.hand.phase;
-  game.collectingBets = null;
+  delete game.collectingBets;
 
   Betting.collectBets(game);
 
@@ -213,11 +214,11 @@ export function finishCollectBets(game) {
 
   if (Betting.countPlayersWhoCanAct(game) <= 1) {
     game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
-    return null;
+    return;
   }
 
   const handler = STREET_HANDLERS[phase];
-  if (!handler) return null;
+  if (!handler) return;
 
   runAll(handler.deal(game));
   HandHistory.recordStreet(game.id, handler.next, handler.getCards(game));
@@ -232,7 +233,7 @@ export function finishCollectBets(game) {
 
 /**
  * @param {Game} game
- * @returns {FinalizedHand | null}
+ * @returns {FinalizedHand | undefined}
  */
 export function dealRunoutStreet(game) {
   const phase = game.hand.phase;
@@ -248,5 +249,5 @@ export function dealRunoutStreet(game) {
   }
 
   game.runout = { active: true, delayTicks: RUNOUT_DELAY_TICKS };
-  return null;
+  return;
 }

@@ -3,7 +3,7 @@
  * @returns {string}
  */
 function serializeWebSocketJson(data) {
-  return JSON.stringify(data, null, 2);
+  return JSON.stringify(data, undefined, 2);
 }
 
 /**

@@ -29,7 +29,6 @@ function buildEntrants(tournament) {
       tableId: entrant.tableId,
       seatIndex: entrant.seatIndex,
       finishPosition: entrant.finishPosition,
-      netWinnings: null,
     }));
 }
 
@@ -54,8 +53,8 @@ function buildStandings(tournament) {
     if (bucketCompare !== 0) return bucketCompare;
 
     if (
-      a.finishPosition !== null &&
-      b.finishPosition !== null &&
+      a.finishPosition !== undefined &&
+      b.finishPosition !== undefined &&
       a.finishPosition !== b.finishPosition
     ) {
       return a.finishPosition - b.finishPosition;
@@ -99,36 +98,36 @@ function buildTables(tournament, games) {
       playerCount: game ? countActivePlayers(game) : 0,
       handNumber: game?.handNumber ?? table.handNumber ?? 0,
       waiting: game ? isTableWaiting(game) : true,
-      closed: table.closedAt !== null,
+      closed: table.closedAt !== undefined,
     };
   });
 }
 
 /**
  * @param {ManagedTournament} tournament
- * @param {TournamentEntrant|null} entrant
+ * @param {TournamentEntrant|void} entrant
  * @param {string} playerId
  * @returns {ManagedTournamentView["currentPlayer"]}
  */
 function buildCurrentPlayerView(tournament, entrant, playerId) {
   return {
     isOwner: tournament.ownerId === playerId,
-    status: entrant?.status || "not_registered",
-    tableId: entrant?.tableId ?? null,
-    seatIndex: entrant?.seatIndex ?? null,
-    finishPosition: entrant?.finishPosition ?? null,
+    status: entrant?.status ?? "not_registered",
+    tableId: entrant?.tableId,
+    seatIndex: entrant?.seatIndex,
+    finishPosition: entrant?.finishPosition,
   };
 }
 
 /**
  * @param {ManagedTournament} tournament
- * @param {TournamentEntrant|null} entrant
+ * @param {TournamentEntrant|void} entrant
  * @param {string} playerId
  * @returns {ManagedTournamentView["actions"]}
  */
 function buildTournamentActions(tournament, entrant, playerId) {
   return {
-    canRegister: tournament.status === "registration" && entrant === null,
+    canRegister: tournament.status === "registration" && entrant === undefined,
     canUnregister:
       tournament.status === "registration" && entrant?.status === "registered",
     canStart:
@@ -146,7 +145,7 @@ function buildTournamentActions(tournament, entrant, playerId) {
  * @returns {ManagedTournamentView}
  */
 export function buildTournamentView(tournament, games, playerId) {
-  const entrant = tournament.entrants.get(playerId) || null;
+  const entrant = tournament.entrants.get(playerId);
   const entrants = buildEntrants(tournament);
   const standings = buildStandings(tournament);
   const tables = buildTables(tournament, games);

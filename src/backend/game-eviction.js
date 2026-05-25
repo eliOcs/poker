@@ -38,7 +38,7 @@ export function getGameEvictionIntervalMs() {
 }
 
 /**
- * @param {Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: UserType, gameId?: string, tournamentId?: string }>} clientConnections
  * @param {string} gameId
  * @returns {boolean}
  */
@@ -74,7 +74,7 @@ function canEvictGame(game) {
  * @param {number} [defaultInactivityMs]
  * @returns {(options: {
  *   games: Map<string, Game>,
- *   clientConnections: Map<import('ws').WebSocket, { user: UserType, gameId: string|null, tournamentId: string|null }>,
+ *   clientConnections: Map<import('ws').WebSocket, { user: UserType, gameId?: string, tournamentId?: string }>,
  *   createLog: (message: string) => import('./logger.js').Log,
  *   emitLog: (log: import('./logger.js').Log) => void,
  *   now?: number,
@@ -149,7 +149,7 @@ export function createInactiveGameEvictor(
 
       if (game.tickTimer) {
         clearInterval(game.tickTimer);
-        game.tickTimer = null;
+        delete game.tickTimer;
       }
       games.delete(gameId);
       trackedByGameId.delete(gameId);

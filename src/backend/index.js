@@ -36,7 +36,7 @@ const users = {};
 /** @type {Map<Id, Game>} */
 const games = new Map();
 
-/** @type {Map<import('ws').WebSocket, { user: UserType, gameId: Id|null, tournamentId: Id|null }>} */
+/** @type {Map<import('ws').WebSocket, { user: UserType, gameId?: Id, tournamentId?: Id }>} */
 const clientConnections = new Map();
 
 const {
@@ -47,14 +47,14 @@ const {
 } = createGameBroadcaster(games, clientConnections, {
   getTournamentView: (tournamentId, playerId) => {
     try {
-      return mttManager?.getTournamentView(tournamentId, playerId) || null;
+      return mttManager?.getTournamentView(tournamentId, playerId);
     } catch {
-      return null;
+      return;
     }
   },
 });
 
-let mttManager = null;
+let mttManager;
 
 /**
  * @param {Game} game
@@ -72,7 +72,7 @@ function recordFinalizedHand(game, handData, { notifyMttManager = true } = {}) {
         hand.players.map((player) => ({
           playerId: player.id,
           tableId: game.id,
-          tournamentId: game.kind === "mtt" ? game.tournamentId : null,
+          ...(game.kind === "mtt" ? { tournamentId: game.tournamentId } : {}),
           lastHandNumber: handData.handNumber,
           lastPlayedAt: hand.start_date_utc,
         })),
@@ -170,11 +170,11 @@ function getRequestRateLimitKey(req) {
 /**
  * @param {UserType|undefined} user
  * @param {Id|undefined} gameId
- * @returns {Promise<Game|null>}
+ * @returns {Promise<Game|void>}
  */
 async function resolveGameForUpgrade(user, gameId) {
   if (!user || !gameId) {
-    return null;
+    return;
   }
 
   const existingGame = games.get(gameId);
@@ -187,13 +187,13 @@ async function resolveGameForUpgrade(user, gameId) {
       game: { tableId: gameId },
       error: { message: err.message },
     });
-    return null;
+    return;
   });
   if (!recoveredGame) {
-    return null;
+    return;
   }
   if (recoveredGame.kind === "mtt") {
-    return null;
+    return;
   }
 
   games.set(gameId, recoveredGame);
@@ -253,6 +253,20 @@ function throwIfRateLimitedHttpRequest(req, log) {
 }
 
 /**
+ * @param {import('./http-routes.js').Route["path"]} routePath
+ * @param {string} url
+ * @returns {{ matched: boolean, match?: RegExpMatchArray }}
+ */
+function matchRoutePath(routePath, url) {
+  if (typeof routePath === "string") {
+    return { matched: routePath === url };
+  }
+
+  const match = url.match(routePath);
+  return match ? { matched: true, match } : { matched: false };
+}
+
+/**
  * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
  * @param {import('./logger.js').Log} log
@@ -266,19 +280,13 @@ async function handleRequest(req, res, log) {
   for (const route of routes) {
     if (route.method !== method) continue;
 
-    /** @type {RegExpMatchArray|null} */
-    let match = null;
-    if (typeof route.path === "string") {
-      if (route.path !== url) continue;
-    } else {
-      match = url.match(route.path);
-      if (!match) continue;
-    }
+    const routeMatch = matchRoutePath(route.path, url);
+    if (!routeMatch.matched) continue;
 
     await route.handler({
       req,
       res,
-      match,
+      match: routeMatch.match,
       users,
       games,
       broadcast: broadcastGameStateMessage,
@@ -308,10 +316,10 @@ function handleRequestError(res, log, err) {
     if (!res.headersSent) {
       res.writeHead(err.status, {
         "content-type": "application/json",
-        ...(err.headers || {}),
+        ...(err.headers ?? {}),
       });
       res.end(
-        JSON.stringify(err.body || { error: err.message, status: err.status }),
+        JSON.stringify(err.body ?? { error: err.message, status: err.status }),
       );
     }
     return;
@@ -338,7 +346,7 @@ server.on("request", (req, res) => {
     })
     .finally(() => {
       log.context.request = {
-        ...(log.context.request || {}),
+        ...(log.context.request ?? {}),
         status: res.statusCode,
       };
       emitLog(log);

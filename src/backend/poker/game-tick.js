@@ -21,8 +21,8 @@ export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
  * @typedef {Object} TickResult
  * @property {boolean} shouldBroadcast - Whether to broadcast state to clients
  * @property {boolean} startHand - Whether to start a new hand
- * @property {number|null} autoActionSeat - Seat index to auto-action (check/fold), or null
- * @property {'clock'|null} autoActionReason - Why auto-action triggered
+ * @property {number} [autoActionSeat] - Seat index to auto-action (check/fold)
+ * @property {'clock'} [autoActionReason] - Why auto-action triggered
  * @property {boolean} tournamentLevelChanged - Whether tournament blind level changed
  * @property {boolean} tournamentBreakStarted - Whether tournament break started
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
@@ -37,13 +37,13 @@ export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
  * @param {TickResult} result
  */
 function handleCountdown(game, result) {
-  if (game.countdown === null) return;
+  if (game.countdown == undefined) return;
 
   game.countdown -= 1;
   result.shouldBroadcast = true;
 
   if (game.countdown <= 0) {
-    game.countdown = null;
+    delete game.countdown;
     result.startHand = true;
   }
 }
@@ -55,7 +55,7 @@ function handleCountdown(game, result) {
  * @param {TickResult} result
  */
 function handleClockExpiry(game, actingSeat, result) {
-  if (game.clockTicks === 0 || result.autoActionSeat !== null) return;
+  if (game.clockTicks === 0 || result.autoActionSeat !== undefined) return;
 
   game.clockTicks += 1;
   if (game.clockTicks >= CLOCK_DURATION_TICKS) {
@@ -72,8 +72,6 @@ function createTickResult() {
   return {
     shouldBroadcast: false,
     startHand: false,
-    autoActionSeat: null,
-    autoActionReason: null,
     tournamentLevelChanged: false,
     tournamentBreakStarted: false,
     tournamentBreakEnded: false,
@@ -200,11 +198,11 @@ export function tick(game) {
  * @returns {boolean}
  */
 export function shouldTickBeRunning(game) {
-  const hasCountdown = game.countdown !== null;
+  const hasCountdown = game.countdown != undefined;
   const hasActingPlayer = game.hand.actingSeat !== -1;
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
-  const isCollectingBets = game.collectingBets !== null;
+  const isCollectingBets = game.collectingBets != undefined;
   return (
     hasCountdown ||
     hasActingPlayer ||

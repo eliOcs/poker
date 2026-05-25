@@ -50,6 +50,7 @@ export default [
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/no-unnecessary-type-assertion": "error",
       "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/prefer-nullish-coalescing": "error",
       "@typescript-eslint/restrict-plus-operands": "error",
       "@typescript-eslint/restrict-template-expressions": [
         "error",
@@ -58,6 +59,14 @@ export default [
           allowNullish: false,
           allowNumber: true,
           allowRegExp: false,
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=null]",
+          message:
+            "Prefer undefined for absent values. Use null only when an external API, DOM API, database, or file format requires it.",
         },
       ],
     },

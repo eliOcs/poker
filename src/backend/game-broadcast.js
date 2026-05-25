@@ -6,7 +6,7 @@ import { sendWebSocketJson } from "./ws-json.js";
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
- * @typedef {{ user: UserType, gameId: string|null, tournamentId: string|null }} ClientConn
+ * @typedef {{ user: UserType, gameId?: string, tournamentId?: string }} ClientConn
  * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
  * @typedef {import('./mtt-seating.js').PlayerMovedEvent} PlayerMovedEvent
  * @typedef {{ type: "tournamentState", tournament: unknown }} TournamentStateMessage
@@ -14,17 +14,17 @@ import { sendWebSocketJson } from "./ws-json.js";
  *   gameId: string,
  *   msgType: "gameState"|"history"|"social",
  *   context?: Record<string, unknown>,
- *   buildMessage: (conn: ClientConn) => unknown|null
+ *   buildMessage: (conn: ClientConn) => unknown|void
  * }} BroadcastDispatch
  */
 
 /**
  * @param {Map<string, Game>} games
  * @param {Map<import('ws').WebSocket, ClientConn>} clientConnections
- * @param {{ getTournamentView?: (tournamentId: string, playerId: string) => unknown|null }} [options]
+ * @param {{ getTournamentView?: (tournamentId: string, playerId: string) => unknown|void }} [options]
  */
 export function createGameBroadcaster(games, clientConnections, options = {}) {
-  const { getTournamentView = () => null } = options;
+  const { getTournamentView = () => {} } = options;
 
   /**
    * @param {string} gameId
@@ -52,7 +52,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
 
   /**
    * @param {string} gameId
-   * @param {(conn: ClientConn) => unknown|null} buildMessage
+   * @param {(conn: ClientConn) => unknown|void} buildMessage
    * @returns {BroadcastStats}
    */
   function broadcastToGameClients(gameId, buildMessage) {
@@ -60,7 +60,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
     let maxPayloadBytes = 0;
     forEachGameClient(gameId, (ws, conn) => {
       const message = buildMessage(conn);
-      if (message !== null) {
+      if (message !== undefined) {
         const payloadBytes = sendWebSocketJson(ws, message);
         recipients += 1;
         maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
@@ -72,11 +72,11 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
   /**
    * @param {string} tournamentId
    * @param {UserType} user
-   * @returns {TournamentStateMessage|null}
+   * @returns {TournamentStateMessage|void}
    */
   function buildTournamentStateMessage(tournamentId, user) {
     const tournament = getTournamentView(tournamentId, user.id);
-    if (!tournament) return null;
+    if (!tournament) return;
     return { type: "tournamentState", tournament };
   }
 
@@ -109,7 +109,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
    */
   function broadcastSocialAction(message) {
     const { gameId, ...socialAction } = message;
-    const handNumber = games.get(gameId)?.handNumber ?? null;
+    const handNumber = games.get(gameId)?.handNumber;
     return {
       gameId,
       msgType: "social",

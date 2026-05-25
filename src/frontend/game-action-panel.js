@@ -20,12 +20,12 @@ function isInHand(game, seatIndex) {
  */
 function getPreActionProps(game, seatIndex) {
   const seat = seatIndex !== -1 ? game.seats[seatIndex] : {};
-  const hand = game.hand || {};
+  const hand = game.hand ?? {};
   return {
     preAction: seat.preAction,
-    currentBet: hand.currentBet || 0,
-    myBet: seat.bet || 0,
-    myStack: seat.stack || 0,
+    currentBet: hand.currentBet ?? 0,
+    myBet: seat.bet ?? 0,
+    myStack: seat.stack ?? 0,
     isActing: hand.actingSeat === seatIndex,
     inHand: isInHand(game, seatIndex),
   };
@@ -36,7 +36,7 @@ function getPreActionProps(game, seatIndex) {
  * @param {Array} actions
  * @param {number} seatIndex
  * @param {boolean} canSit
- * @param {number|null} bustedPosition
+ * @param {number|undefined} bustedPosition
  * @param {boolean} isWinner
  * @returns {import("lit").TemplateResult}
  */
@@ -52,8 +52,8 @@ export function renderActionPanel(
   return html`<phg-action-panel
     .actions=${host.connectionStatus === "connected" ? actions : []}
     .seatIndex=${seatIndex}
-    .smallBlind=${host.game.blinds?.small || 1}
-    .bigBlind=${host.game.blinds?.big || 1}
+    .smallBlind=${host.game.blinds?.small ?? 1}
+    .bigBlind=${host.game.blinds?.big ?? 1}
     .pot=${host.game.hand?.pot ?? 0}
     .seatedCount=${host.game.seats.filter((s) => !s.empty).length}
     .canSit=${canSit}

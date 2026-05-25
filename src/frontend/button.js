@@ -172,12 +172,14 @@ class Button extends LitElement {
   }
 
   render() {
-    const iconTemplate = this.icon ? buttonIcons[this.icon] : null;
+    const iconTemplate = this.icon ? buttonIcons[this.icon] : undefined;
     const hasIcon = Boolean(iconTemplate);
     return html`
       <button ?disabled=${this.disabled}>
         <span class="content ${hasIcon ? "with-icon" : "no-icon"}">
-          ${hasIcon ? html`<span class="icon">${iconTemplate}</span>` : null}
+          ${hasIcon
+            ? html`<span class="icon">${iconTemplate}</span>`
+            : undefined}
           <span class="label"><slot></slot></span>
         </span>
       </button>

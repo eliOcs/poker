@@ -158,12 +158,12 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {PlayerAction[]} actions
  * @property {boolean} isCurrentPlayer
  * @property {boolean} isActing
- * @property {string|null} lastAction
- * @property {Cents|null} handResult
- * @property {string|null} handRank
- * @property {Card[]|null} winningCards - The 5 cards forming the winning hand (only for winners)
- * @property {number|null} bustedPosition - Tournament finishing position (null if not busted)
- * @property {import('./pre-action.js').PreAction|null} [preAction] - Pre-selected action (own seat only)
+ * @property {string} [lastAction]
+ * @property {Cents} [handResult]
+ * @property {string} [handRank]
+ * @property {Card[]} [winningCards] - The 5 cards forming the winning hand (only for winners)
+ * @property {number} [bustedPosition] - Tournament finishing position
+ * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action (own seat only)
  * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
  */
 
@@ -178,14 +178,14 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {Cents} currentBet
  * @property {number} actingSeat
  * @property {number} actingTicks - Ticks the current player has been acting
- * @property {number|null} clockRemaining - Seconds remaining on clock (null if not called)
+ * @property {number} [clockRemaining] - Seconds remaining on clock
  * @property {boolean} collectingBets - Whether bets are being collected (animation cue)
  */
 
 /**
  * @typedef {object} WinnerMessage
- * @property {string|null} playerName - Winner's player name/ID (null for split pots)
- * @property {string|null} handRank - Winning hand description (null if won by fold)
+ * @property {string} [playerName] - Winner's player name/ID (absent for split pots)
+ * @property {string} [handRank] - Winning hand description
  * @property {Cents} amount - Amount won
  * @property {boolean} isSplit - True when multiple players split the pot
  */
@@ -196,7 +196,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} timeToNextLevel - Seconds until next level or break ends
  * @property {boolean} onBreak - Whether currently on break
  * @property {boolean} pendingBreak - Whether break will start after current hand
- * @property {number|null} winner - Seat index of tournament winner (null if ongoing)
+ * @property {number} [winner] - Seat index of tournament winner
  * @property {Cents} buyIn - Buy-in amount in cents
  */
 
@@ -206,13 +206,13 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} button
  * @property {Blinds} blinds
  * @property {Board} board
- * @property {ViewHand|null} hand
+ * @property {ViewHand} hand
  * @property {ViewSeat[]} seats
- * @property {number|null} countdown
- * @property {WinnerMessage|null} winnerMessage
+ * @property {number} [countdown]
+ * @property {WinnerMessage} [winnerMessage]
  * @property {number} handNumber
  * @property {Ranking.PlayerRanking[]} rankings
- * @property {TournamentView|null} tournament - Tournament state (null for cash games)
+ * @property {TournamentView} [tournament] - Tournament state
  */
 
 /**
@@ -361,11 +361,11 @@ function buildShowCardActions(cards, shownCards) {
 /**
  * @param {Card[]} holeCards
  * @param {Card[]} boardCards
- * @returns {string|null}
+ * @returns {string|undefined}
  */
 function calculateHandRank(holeCards, boardCards) {
   if (holeCards.length < 2) {
-    return null;
+    return;
   }
 
   const allCards = [...holeCards, ...boardCards];
@@ -395,7 +395,7 @@ function calculateHandRank(holeCards, boardCards) {
     return HandRankings.formatHand(hand);
   }
 
-  return null;
+  return;
 }
 
 /**
@@ -453,7 +453,7 @@ function canStartWaitingHand(game) {
     : countPlayersWithChips(game);
   return (
     game.tournament?.kind !== "mtt" &&
-    game.countdown === null &&
+    game.countdown === undefined &&
     playersWithChips >= 2 &&
     !game.tournament?.onBreak
   );
@@ -644,7 +644,7 @@ function isRegistrationOpen(game) {
 function isTournamentSeatLocked(game) {
   return (
     game.tournament?.kind === "mtt" ||
-    (game.tournament?.kind === "sitngo" && game.tournament.winner !== null)
+    (game.tournament?.kind === "sitngo" && game.tournament.winner !== undefined)
   );
 }
 
@@ -732,7 +732,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
   const handRank =
     revealAllCards && !seat.folded
       ? calculateHandRank(seat.cards, game.board.cards)
-      : null;
+      : undefined;
 
   return {
     empty: false,
@@ -774,7 +774,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
 export default function playerView(game, player) {
   const playerSeatIndex = findPlayerSeat(game, player.id);
 
-  /** @type {TournamentView|null} */
+  /** @type {TournamentView|undefined} */
   const tournament = game.tournament?.active
     ? {
         level: game.tournament.level,
@@ -784,7 +784,7 @@ export default function playerView(game, player) {
         winner: game.tournament.winner,
         buyIn: game.tournament.buyIn,
       }
-    : null;
+    : undefined;
 
   return {
     running: game.running,
@@ -804,7 +804,7 @@ export default function playerView(game, player) {
       clockRemaining:
         game.clockTicks > 0
           ? Math.max(0, CLOCK_DURATION_TICKS - game.clockTicks)
-          : null,
+          : undefined,
       collectingBets: !!game.collectingBets?.active,
     },
     countdown: game.countdown,

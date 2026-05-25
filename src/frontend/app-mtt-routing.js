@@ -5,18 +5,18 @@ import { parseAppPath } from "./app-route-state.js";
 /**
  * Syncs MTT route state when the live route changes
  * @param {any} app
- * @param {{ kind: string, tournamentId?: string }|null} liveRoute
+ * @param {{ kind: string, tournamentId?: string }|undefined} liveRoute
  */
 export function syncMttRoute(app, liveRoute) {
   const tournamentId =
     liveRoute?.kind === "mtt" || liveRoute?.kind === "mtt_table"
       ? liveRoute.tournamentId
-      : null;
+      : undefined;
   if (tournamentId === app._mttTournamentId) return;
 
   app._mttTournamentId = tournamentId;
-  app._mttView = null;
-  app._mttLoading = tournamentId !== null;
+  app._mttView = undefined;
+  app._mttLoading = tournamentId !== undefined;
   app._mttError = "";
   app._mttActionPending = false;
 }
@@ -114,9 +114,9 @@ export async function performMttAction(app, action) {
     const res = await fetch(`/api/mtt/${app._mttTournamentId}/${action}`, {
       method: "POST",
     });
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => undefined);
     if (!res.ok) {
-      throw new Error(data?.error || `Failed to ${action}`);
+      throw new Error(data?.error ?? `Failed to `);
     }
     app._mttView = data;
     app._mttError = "";
@@ -144,9 +144,9 @@ export async function renameMttTournament(app, name) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    const data = await res.json().catch(() => null);
+    const data = await res.json().catch(() => undefined);
     if (!res.ok) {
-      throw new Error(data?.error || "Failed to rename tournament");
+      throw new Error(data?.error ?? "Failed to rename tournament");
     }
     app._mttView = data;
     app._mttError = "";

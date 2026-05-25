@@ -56,7 +56,7 @@ function migrateGuestSeatsToRegisteredUser(games, guestUserId, targetUser) {
 }
 
 /**
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId?: Id, tournamentId?: Id }>} clientConnections
  * @param {Id} guestUserId
  * @param {import('./user.js').User} targetUser
  * @param {Set<Id>} changedGameIds
@@ -79,7 +79,7 @@ function migrateGuestConnectionsToRegisteredUser(
 
 /**
  * @param {Map<Id, import('./poker/game.js').Game>} games
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId?: Id, tournamentId?: Id }>} clientConnections
  * @param {(gameId: Id) => void} broadcast
  * @param {Id} guestUserId
  * @param {import('./user.js').User} targetUser
@@ -117,9 +117,20 @@ function setEmailDeliveryLogContext(log, delivery) {
 }
 
 /**
+ * @param {import('./user.js').User|void} storedGuestUser
+ * @param {Record<string, import('./user.js').User>} users
+ * @param {Id} userId
+ * @returns {import('./user.js').User|void}
+ */
+function resolveGuestUser(storedGuestUser, users, userId) {
+  if (storedGuestUser) return storedGuestUser;
+  return users[userId];
+}
+
+/**
  * @param {Record<string, any>} users
  * @param {Map<Id, import('./poker/game.js').Game>} games
- * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>} clientConnections
+ * @param {Map<import('ws').WebSocket, { user: import('./user.js').User, gameId?: Id, tournamentId?: Id }>} clientConnections
  * @param {(gameId: Id) => void} broadcast
  * @param {import('./http-routes.js').Response} res
  * @param {{ userId: Id, email: string, returnPath: string }} signIn
@@ -133,7 +144,8 @@ async function completeSignIn(
   res,
   signIn,
 ) {
-  const guestUser = Store.loadUser(signIn.userId) ?? users[signIn.userId];
+  const storedGuestUser = Store.loadUser(signIn.userId);
+  const guestUser = resolveGuestUser(storedGuestUser, users, signIn.userId);
   const existingUser = Store.loadUserByEmail(signIn.email);
 
   if (existingUser && existingUser.id !== signIn.userId) {
@@ -188,12 +200,12 @@ async function completeSignIn(
 /**
  * @param {{
  *   sendSignInEmail?: typeof sendEmail,
- *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId: Id|null, tournamentId: Id|null }>
+ *   clientConnections?: Map<import('ws').WebSocket, { user: import('./user.js').User, gameId?: Id, tournamentId?: Id }>
  * }} [services]
  */
 export function createSignInRoutes(services = {}) {
-  const sendSignInEmail = services.sendSignInEmail || sendEmail;
-  const clientConnections = services.clientConnections || new Map();
+  const sendSignInEmail = services.sendSignInEmail ?? sendEmail;
+  const clientConnections = services.clientConnections ?? new Map();
 
   return [
     {

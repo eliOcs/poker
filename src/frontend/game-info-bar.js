@@ -15,7 +15,7 @@ function formatTime(seconds) {
 
 /**
  * @param {string} gameKind
- * @param {object|null} game
+ * @param {object|undefined} game
  * @returns {string}
  */
 function getTypeLabel(gameKind, game) {
@@ -27,12 +27,12 @@ function getTypeLabel(gameKind, game) {
 }
 
 /**
- * @param {object|null} tournament
- * @returns {import("lit").TemplateResult<1>|null}
+ * @param {object|undefined} tournament
+ * @returns {import("lit").TemplateResult<1>|undefined}
  */
 function getTournamentTimerCell(tournament) {
-  if (!tournament || tournament.timeToNextLevel == null) {
-    return null;
+  if (!tournament || tournament.timeToNextLevel == undefined) {
+    return;
   }
 
   const timerText = tournament.onBreak
@@ -49,7 +49,7 @@ function getTournamentTimerCell(tournament) {
  */
 export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
   if (!game) return "";
-  const sizeLabel = TABLE_SIZE_LABELS[game.seats.length] || "";
+  const sizeLabel = TABLE_SIZE_LABELS[game.seats.length] ?? "";
 
   const cells = [
     html`<span class="info-cell info-type"

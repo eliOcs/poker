@@ -29,7 +29,7 @@ class Tournaments extends LitElement {
   constructor() {
     super();
     this.creating = false;
-    this.user = null;
+    this.user = undefined;
     this.selectedBuyIn = DEFAULT_BUYIN;
     this.selectedTableSize = DEFAULT_TABLE_SIZE;
   }

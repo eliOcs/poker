@@ -71,7 +71,7 @@ describe("mtt-manager table collapse", () => {
     );
     assert.equal(sourceTable.hand.phase, "waiting");
     assert.equal(sourceTable.hand.actingSeat, -1);
-    assert.equal(sourceTable.countdown, null);
+    assert.equal(sourceTable.countdown, undefined);
     assert.equal(countActivePlayers(sourceTable), 0);
     assert.ok(sourceTable.seats.every((seat) => seat.empty));
     assert.equal(countActivePlayers(destinationTable), 0);
@@ -192,7 +192,7 @@ describe("mtt-manager table collapse", () => {
     destTable.hand.phase = "flop";
     ctx.manager.handleHandFinalized(sourceTable);
 
-    assert.equal(tournament.tables[0].closedAt, null);
+    assert.equal(tournament.tables[0].closedAt, undefined);
     assert.equal(countActivePlayers(sourceTable), 1);
 
     destTable.hand.phase = "waiting";
@@ -245,9 +245,9 @@ describe("mtt-manager table collapse", () => {
     const busted = tournament.entrants.get(bustedSeat.player.id);
     assert.equal(tournament.status, "running");
     assert.equal(winner?.status, "seated");
-    assert.equal(winner?.finishPosition, null);
+    assert.equal(winner?.finishPosition, undefined);
     assert.equal(disconnected?.status, "seated");
-    assert.equal(disconnected?.finishPosition, null);
+    assert.equal(disconnected?.finishPosition, undefined);
     assert.equal(disconnected?.stack, disconnectedSeat.stack);
     assert.equal(busted?.finishPosition, 3);
   });
@@ -331,7 +331,7 @@ describe("mtt-manager table collapse", () => {
     ctx.manager.handleHandFinalized(tableA);
 
     assert.equal(tournament.pendingCollapse, false);
-    assert.equal(tableB.pendingHandHistory, null);
+    assert.equal(tableB.pendingHandHistory, undefined);
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
@@ -382,9 +382,9 @@ describe("mtt-manager table collapse", () => {
     ctx.manager.handleHandFinalized(tableA);
 
     assert.equal(tournament.pendingCollapse, true);
-    assert.equal(tableA.countdown, null);
-    assert.equal(tournament.tables[0].closedAt, null);
-    assert.equal(tournament.tables[1].closedAt, null);
+    assert.equal(tableA.countdown, undefined);
+    assert.equal(tournament.tables[0].closedAt, undefined);
+    assert.equal(tournament.tables[1].closedAt, undefined);
 
     tableB.hand.phase = "waiting";
     ctx.manager.handleHandFinalized(tableB);
@@ -434,14 +434,14 @@ describe("mtt-manager table collapse", () => {
     assert.equal(countActivePlayers(tableA) + countActivePlayers(tableB), 6);
 
     tableA.hand.phase = "preflop";
-    tableA.countdown = null;
+    delete tableA.countdown;
     tableB.hand.phase = "waiting";
     tableB.countdown = 2;
 
     ctx.manager.handleHandFinalized(tableA);
 
     assert.equal(tournament.pendingCollapse, true);
-    assert.equal(tableB.countdown, null);
+    assert.equal(tableB.countdown, undefined);
 
     tableA.hand.phase = "waiting";
     ctx.manager.tickTournament(tournamentId);
@@ -500,7 +500,7 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.tickTournament(tournamentId);
 
-    assert.equal(tableA.pendingHandHistory, null);
+    assert.equal(tableA.pendingHandHistory, undefined);
     assert.equal(tournament.pendingCollapse, false);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
     assert.ok(finalTable);
@@ -556,7 +556,7 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.tickTournament(tournamentId);
 
-    assert.equal(tableA.pendingHandHistory, null);
+    assert.equal(tableA.pendingHandHistory, undefined);
     assert.equal(countActivePlayers(tableA), 5);
     assert.equal(countActivePlayers(tableB), 5);
   });

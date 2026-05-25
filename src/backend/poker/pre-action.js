@@ -9,7 +9,6 @@ import * as Betting from "./betting.js";
 /**
  * @typedef {object} PreActionCheckFold
  * @property {'checkFold'} type
- * @property {null} amount
  */
 
 /**
@@ -26,13 +25,17 @@ import * as Betting from "./betting.js";
  * Sets a pre-action on a seat
  * @param {OccupiedSeat} seat
  * @param {'checkFold'|'callAmount'} type
- * @param {Cents|null} [amount]
+ * @param {Cents} [amount]
  */
-export function setPreAction(seat, type, amount = null) {
-  seat.preAction =
-    type === "checkFold"
-      ? /** @type {PreActionCheckFold} */ ({ type, amount: null })
-      : /** @type {PreActionCallAmount} */ ({ type, amount });
+export function setPreAction(seat, type, amount = undefined) {
+  if (type === "checkFold") {
+    seat.preAction = { type };
+    return;
+  }
+  if (amount === undefined) {
+    throw new Error("amount is required for callAmount pre-action");
+  }
+  seat.preAction = { type, amount };
 }
 
 /**
@@ -40,15 +43,15 @@ export function setPreAction(seat, type, amount = null) {
  * @param {OccupiedSeat} seat
  */
 export function clearPreAction(seat) {
-  seat.preAction = null;
+  delete seat.preAction;
 }
 
 /**
- * Resolves a pre-action to a concrete action or null if invalid
+ * Resolves a pre-action to a concrete action if valid.
  * @param {PreAction} preAction
  * @param {Game} game
  * @param {number} seatIndex
- * @returns {{ action: string, args: Record<string, unknown> } | null}
+ * @returns {{ action: string, args: Record<string, unknown> } | undefined}
  */
 export function resolvePreAction(preAction, game, seatIndex) {
   const seat = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);
@@ -62,7 +65,7 @@ export function resolvePreAction(preAction, game, seatIndex) {
   }
 
   if (preAction.amount !== toCall) {
-    return null;
+    return;
   }
 
   if (seat.stack <= toCall) {
@@ -78,7 +81,7 @@ export function resolvePreAction(preAction, game, seatIndex) {
 export function invalidateCallPreActions(game) {
   for (const seat of game.seats) {
     if (!seat.empty && seat.preAction?.type === "callAmount") {
-      seat.preAction = null;
+      delete seat.preAction;
     }
   }
 }

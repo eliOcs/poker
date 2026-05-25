@@ -33,7 +33,7 @@ import * as logger from "../logger.js";
 /**
  * @typedef {object} RecoveredSeatState
  * @property {string} playerId
- * @property {string|undefined} name
+ * @property {string} [name]
  * @property {number} stack
  * @property {number} totalBuyIn
  * @property {number} handsPlayed
@@ -60,7 +60,7 @@ function parseHandNumber(gameNumber) {
 }
 
 /**
- * @param {number|undefined|null} value
+ * @param {number} [value]
  * @returns {number}
  */
 function cents(value) {
@@ -73,7 +73,7 @@ function cents(value) {
  * @param {number} delta
  */
 function addToMapValue(map, key, delta) {
-  map.set(key, (map.get(key) || 0) + delta);
+  map.set(key, (map.get(key) ?? 0) + delta);
 }
 
 /**
@@ -104,7 +104,7 @@ function applyActionContribution(action, streetCommitted, contributions) {
   }
 
   const amountInCents = cents(amount);
-  const previousCommit = streetCommitted.get(playerId) || 0;
+  const previousCommit = streetCommitted.get(playerId) ?? 0;
 
   if (INCREMENTAL_ACTIONS.has(actionName)) {
     addToMapValue(contributions, playerId, amountInCents);
@@ -134,7 +134,7 @@ function collectContributions(rounds = []) {
   for (const round of rounds) {
     /** @type {Map<string, number>} */
     const streetCommitted = new Map();
-    for (const action of round.actions || []) {
+    for (const action of round.actions ?? []) {
       applyActionContribution(action, streetCommitted, contributions);
     }
   }
@@ -150,7 +150,7 @@ function collectWinnings(pots = []) {
   /** @type {Map<string, number>} */
   const winnings = new Map();
   for (const pot of pots) {
-    for (const win of pot.player_wins || []) {
+    for (const win of pot.player_wins ?? []) {
       if (typeof win.win_amount !== "number") {
         continue;
       }
@@ -172,8 +172,8 @@ function buildEndingStacks(startingStacks, contributions, winnings) {
   for (const [playerId, startingStack] of startingStacks) {
     const endingStack =
       startingStack -
-      (contributions.get(playerId) || 0) +
-      (winnings.get(playerId) || 0);
+      (contributions.get(playerId) ?? 0) +
+      (winnings.get(playerId) ?? 0);
     endingStacks.set(playerId, Math.max(0, endingStack));
   }
   return endingStacks;
@@ -222,7 +222,7 @@ function ensureInitialStack(tracker, playerId, startingStack) {
 function incrementHandsPlayed(tracker, playerId) {
   tracker.handsPlayedByPlayer.set(
     playerId,
-    (tracker.handsPlayedByPlayer.get(playerId) || 0) + 1,
+    (tracker.handsPlayedByPlayer.get(playerId) ?? 0) + 1,
   );
 }
 
@@ -265,13 +265,17 @@ function upsertRecoveredSeat(tracker, player, endingStacks) {
   ensureInitialStack(tracker, playerId, startingStack);
   incrementHandsPlayed(tracker, playerId);
 
-  tracker.seatsByIndex.set(seatIndex, {
+  const recovered = {
     playerId,
-    name: player.name === null ? undefined : player.name,
     stack: endingStacks.get(playerId) ?? startingStack,
-    totalBuyIn: tracker.initialStackByPlayer.get(playerId) || startingStack,
-    handsPlayed: tracker.handsPlayedByPlayer.get(playerId) || 0,
-  });
+    totalBuyIn: tracker.initialStackByPlayer.get(playerId) ?? startingStack,
+    handsPlayed: tracker.handsPlayedByPlayer.get(playerId) ?? 0,
+  };
+  const playerName = player.name ?? undefined;
+  if (playerName !== undefined) {
+    recovered.name = playerName;
+  }
+  tracker.seatsByIndex.set(seatIndex, recovered);
   tracker.seatByPlayerId.set(playerId, seatIndex);
 }
 
@@ -331,7 +335,7 @@ function getBlindsFromHand(hand) {
 
 /**
  * @param {OHHHand} lastHand
- * @param {OTSSummary|null} summary
+ * @param {OTSSummary|void} summary
  * @returns {number}
  */
 function getTournamentBuyIn(lastHand, summary) {
@@ -344,7 +348,7 @@ function getTournamentBuyIn(lastHand, summary) {
 
 /**
  * @param {OHHHand} lastHand
- * @param {OTSSummary|null} summary
+ * @param {OTSSummary|void} summary
  * @returns {number}
  */
 function getTournamentInitialStack(lastHand, summary) {
@@ -357,8 +361,8 @@ function getTournamentInitialStack(lastHand, summary) {
 
 /**
  * @param {OHHHand} lastHand
- * @param {OTSSummary|null} summary
- * @returns {string|null}
+ * @param {OTSSummary|void} summary
+ * @returns {string}
  */
 function getTournamentStartTime(lastHand, summary) {
   return (
@@ -379,13 +383,13 @@ function getTournamentLevelFromBlinds(blinds) {
       entry.small === blinds.small &&
       entry.big === blinds.big,
   );
-  return level?.level || 1;
+  return level?.level ?? 1;
 }
 
 /**
  * @param {PokerGame} game
- * @param {OTSSummary|null} summary
- * @returns {number|null}
+ * @param {OTSSummary|void} summary
+ * @returns {number|undefined}
  */
 function getWinnerSeatIndex(game, summary) {
   const winnerName = summary?.tournament_finishes_and_winnings?.find(
@@ -408,7 +412,7 @@ function getWinnerSeatIndex(game, summary) {
 
   return playersWithChips.length === 1
     ? /** @type {number} */ (playersWithChips[0])
-    : null;
+    : undefined;
 }
 
 /**
@@ -448,14 +452,14 @@ function applyRecoveredSeats(
 /**
  * @param {string} gameId
  * @param {OHHHand} lastHand
- * @param {OTSSummary|null} summary
+ * @param {OTSSummary|void} summary
  * @returns {{ game: PokerGame, isTournament: boolean, blinds: { ante: number, small: number, big: number }, tournamentInitialStack: number }}
  */
 function createGameShell(gameId, lastHand, summary) {
-  const tableSize = lastHand.table_size || 9;
+  const tableSize = lastHand.table_size;
   const blinds = getBlindsFromHand(lastHand);
   const isTournament = Boolean(
-    lastHand.tournament || lastHand.tournament_info || summary,
+    lastHand.tournament ?? lastHand.tournament_info ?? summary,
   );
   const tournamentInitialStack = getTournamentInitialStack(lastHand, summary);
 
@@ -476,20 +480,30 @@ function createGameShell(gameId, lastHand, summary) {
 /**
  * @param {PokerGame} game
  * @param {OHHHand} lastHand
- * @param {OTSSummary|null} summary
+ * @param {OTSSummary|void} summary
  * @param {{ ante: number, small: number, big: number }} blinds
  */
 function applyTournamentState(game, lastHand, summary, blinds) {
   if (!game.tournament) return;
 
-  game.tournament.startTime = getTournamentStartTime(lastHand, summary);
+  const startTime = getTournamentStartTime(lastHand, summary);
+  if (startTime) {
+    game.tournament.startTime = startTime;
+  } else {
+    delete game.tournament.startTime;
+  }
   game.tournament.initialStack = getTournamentInitialStack(lastHand, summary);
   game.tournament.level = getTournamentLevelFromBlinds(blinds);
   game.tournament.levelTicks = 0;
   game.tournament.onBreak = false;
   game.tournament.pendingBreak = false;
   game.tournament.breakTicks = 0;
-  game.tournament.winner = getWinnerSeatIndex(game, summary);
+  const winner = getWinnerSeatIndex(game, summary);
+  if (winner !== undefined) {
+    game.tournament.winner = winner;
+  } else {
+    delete game.tournament.winner;
+  }
 }
 
 /**
@@ -534,11 +548,11 @@ async function readHandsFromFile(gameId) {
  *
  * @param {string} gameId
  * @param {OHHHand[]} hands
- * @param {OTSSummary|null} summary
- * @returns {PokerGame|null}
+ * @param {OTSSummary} [summary]
+ * @returns {PokerGame|undefined}
  */
-export function rebuildGameFromHistory(gameId, hands, summary = null) {
-  if (hands.length === 0) return null;
+export function rebuildGameFromHistory(gameId, hands, summary) {
+  if (hands.length === 0) return;
 
   const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
   const recoveredSeats = buildRecoveredSeatStates(hands);
@@ -556,7 +570,7 @@ export function rebuildGameFromHistory(gameId, hands, summary = null) {
     tournamentInitialStack,
   );
 
-  const previousDealer = (lastHand.dealer_seat || 1) - 1;
+  const previousDealer = lastHand.dealer_seat - 1;
   game.button = getNextButton(game.seats, previousDealer);
   applyTournamentState(game, lastHand, summary, blinds);
 
@@ -567,13 +581,13 @@ export function rebuildGameFromHistory(gameId, hands, summary = null) {
  * Loads and rebuilds a missing game from hand history files.
  *
  * @param {string} gameId
- * @returns {Promise<PokerGame|null>}
+ * @returns {Promise<PokerGame|undefined>}
  */
 export async function recoverGameFromHistory(gameId) {
-  if (!gameId) return null;
+  if (!gameId) return;
 
   const hands = await readHandsFromFile(gameId);
-  if (hands.length === 0) return null;
+  if (hands.length === 0) return;
 
   const summary = await readTournamentSummary(gameId);
   return rebuildGameFromHistory(gameId, hands, summary);

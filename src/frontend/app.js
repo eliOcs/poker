@@ -93,17 +93,17 @@ class App extends LitElement {
   constructor() {
     super();
     this.path = window.location.pathname;
-    this.toast = null;
+    this.toast = undefined;
     // User state
-    this.user = null;
+    this.user = undefined;
     // Game state
-    this.game = null;
-    this.socialAction = null;
+    this.game = undefined;
+    this.socialAction = undefined;
     this.gameConnectionStatus = "disconnected";
-    this._activeGameId = null;
-    this._activeGamePath = null;
-    this._socket = null;
-    this._socketHealthCheck = null;
+    this._activeGameId = undefined;
+    this._activeGamePath = undefined;
+    this._socket = undefined;
+    this._socketHealthCheck = undefined;
     this._intentionalSocketCloses = new WeakSet();
     // History route params
     this._historyKind = undefined;
@@ -111,8 +111,8 @@ class App extends LitElement {
     this._historyTournamentId = undefined;
     this._historyHandNumber = undefined;
     this._historyListRefreshNonce = 0;
-    this._mttTournamentId = null;
-    this._mttView = null;
+    this._mttTournamentId = undefined;
+    this._mttView = undefined;
     this._mttLoading = false;
     this._mttError = "";
     this._mttActionPending = false;
@@ -181,13 +181,13 @@ class App extends LitElement {
 
   // Getters for backward compatibility with tests
   get historyHandList() {
-    if (this._historyListTask.status !== TaskStatus.COMPLETE) return null;
+    if (this._historyListTask.status !== TaskStatus.COMPLETE) return [];
     return this._historyListTask.value?.hands ?? [];
   }
 
   _historyListTask = new Task(this, {
     task: async ([historyApiBase], { signal }) => {
-      if (!historyApiBase) return null;
+      if (!historyApiBase) return;
       const res = await fetch(historyApiBase, { signal });
       if (!res.ok) throw new Error("Failed to load hand history");
       return res.json();
@@ -197,7 +197,7 @@ class App extends LitElement {
 
   _historyHandTask = new Task(this, {
     task: async ([historyApiBase, handNumber], { signal }) => {
-      if (!historyApiBase || !handNumber) return null;
+      if (!historyApiBase || !handNumber) return;
       const res = await fetch(`${historyApiBase}/${handNumber}`, { signal });
       if (!res.ok) throw new Error("Hand not found");
       return res.json();
@@ -207,7 +207,7 @@ class App extends LitElement {
 
   _playerProfileTask = new Task(this, {
     task: async ([playerId], { signal }) => {
-      if (!playerId) return null;
+      if (!playerId) return;
       const res = await fetch(`/api/players/${playerId}`, { signal });
       if (!res.ok) throw new Error("Player not found");
       return res.json();
@@ -245,10 +245,10 @@ class App extends LitElement {
   }
 
   _getHomeRedirectPath() {
-    if (this.path !== "/") return null;
+    if (this.path !== "/") return;
 
-    const nextPath = this._activeGamePath || this.user?.activeGamePath || null;
-    return nextPath && nextPath !== "/" ? nextPath : null;
+    const nextPath = this._activeGamePath ?? this.user?.activeGamePath;
+    return nextPath && nextPath !== "/" ? nextPath : undefined;
   }
 
   _maybeRedirectHomeRoute() {
@@ -307,7 +307,7 @@ class App extends LitElement {
   }
 
   dismissToast() {
-    this.toast = null;
+    this.toast = undefined;
   }
 
   handleHandSelect(handNumber) {
@@ -398,14 +398,14 @@ class App extends LitElement {
     if (liveRoute) {
       this._syncMttRoute(liveRoute);
     } else if (this._mttTournamentId) {
-      this._syncMttRoute(null);
+      this._syncMttRoute(undefined);
     }
   }
 
   _redirectToLatestHandIfNeeded() {
     if (!this._hasHistoryRoute()) return;
     if (this._historyListTask.status !== TaskStatus.COMPLETE) return;
-    const hands = this._historyListTask.value?.hands || [];
+    const hands = this._historyListTask.value?.hands ?? [];
     if (
       this._historyHandNumber === undefined &&
       hands.length > 0 &&
@@ -488,7 +488,7 @@ class App extends LitElement {
   }
 
   render() {
-    const currentPath = this._getHomeRedirectPath() || this.path;
+    const currentPath = this._getHomeRedirectPath() ?? this.path;
     const route = parseAppPath(currentPath);
 
     ws.manageConnection(this, route.resourcePath);

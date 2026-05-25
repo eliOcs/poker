@@ -311,7 +311,7 @@ describe("game recovery", () => {
     assert.equal(seat2.disconnected, true);
   });
 
-  it("returns null when no hand history exists", async () => {
+  it("returns undefined when no hand history exists", async () => {
     const game = await recoverGameFromHistory("doesnotexist");
     assert.equal(game, null);
   });

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 export const EMAIL_SIGN_IN_TTL_MINUTES = Number.parseInt(
-  process.env.EMAIL_SIGN_IN_TTL_MINUTES || "30",
+  process.env.EMAIL_SIGN_IN_TTL_MINUTES ?? "30",
   10,
 );
 
@@ -104,11 +104,11 @@ export function saveEmailSignInToken({
 
 /**
  * @param {string} token
- * @returns {{ userId: string, email: string, returnPath: string }|null}
+ * @returns {{ userId: string, email: string, returnPath: string }|void}
  */
 export function consumeEmailSignInToken(token) {
   const entry = tokensByValue.get(token);
-  if (!entry) return null;
+  if (!entry) return;
 
   tokensByValue.delete(token);
   const current = tokensByUserId.get(entry.userId);
@@ -117,7 +117,7 @@ export function consumeEmailSignInToken(token) {
   }
 
   if (entry.expiresAt <= Date.now()) {
-    return null;
+    return;
   }
 
   return {

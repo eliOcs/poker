@@ -206,7 +206,7 @@ export function startBettingRound(game, phase) {
     for (const seat of game.seats) {
       if (!seat.empty) {
         seat.bet = 0;
-        seat.lastAction = null;
+        delete seat.lastAction;
       }
     }
     game.hand.currentBet = 0;

@@ -49,7 +49,6 @@ describe("ws-connection", () => {
         otherSocket,
         {
           gameId: game.id,
-          tournamentId: null,
           user: { id: "player-1", name: "Player 1" },
         },
       ],
