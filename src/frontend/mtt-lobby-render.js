@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { formatCurrency } from "./styles.js";
-import { getTablePath, getTableHistoryPath } from "../shared/routes.js";
+import { getHistoryPath, getTablePath } from "../shared/routes.js";
 import { calculatePrizes } from "../shared/tournament.js";
 
 function ordinal(n) {
@@ -97,9 +97,7 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
     return html`<phg-button
       variant="primary"
       @click=${() => {
-        onNavigate(
-          getTableHistoryPath("mtt", tableId, undefined, tournamentId),
-        );
+        onNavigate(getHistoryPath(tableId));
       }}
     >
       Show My Last Table
@@ -251,14 +249,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
                 ? html`<phg-button
                     variant="secondary"
                     @click=${() => {
-                      onNavigate(
-                        getTableHistoryPath(
-                          "mtt",
-                          table.tableId,
-                          undefined,
-                          tournamentId,
-                        ),
-                      );
+                      onNavigate(getHistoryPath(table.tableId));
                     }}
                   >
                     Show History

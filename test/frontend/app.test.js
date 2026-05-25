@@ -125,19 +125,19 @@ describe("phg-app", () => {
       const element = await fixture(html`<phg-app></phg-app>`);
       await element.updateComplete;
       history.pushState({}, "", "/replace-start");
-      history.pushState({}, "", "/cash/testgame/history/1");
-      element.path = "/cash/testgame/history/1";
+      history.pushState({}, "", "/history/testgame/1");
+      element.path = "/history/testgame/1";
       await element.updateComplete;
 
       const link = document.createElement("a");
-      link.href = "/cash/testgame/history/2";
+      link.href = "/history/testgame/2";
       link.dataset.appHistory = "replace";
       link.textContent = "Hand 2";
       element.shadowRoot?.append(link);
 
       link.click();
 
-      await waitUntil(() => element.path === "/cash/testgame/history/2", {
+      await waitUntil(() => element.path === "/history/testgame/2", {
         timeout: 2000,
       });
 

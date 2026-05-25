@@ -9,7 +9,7 @@ import {
   formatCurrency,
 } from "./styles.js";
 import { formatPlayerLabel } from "./player-label.js";
-import { getTableHistoryPath, getMttPath } from "../shared/routes.js";
+import { getHistoryPath, getMttPath } from "../shared/routes.js";
 
 class PlayerProfile extends LitElement {
   static get styles() {
@@ -204,12 +204,7 @@ class PlayerProfile extends LitElement {
     this.dispatchEvent(
       new CustomEvent("navigate", {
         detail: {
-          path: getTableHistoryPath(
-            gameType,
-            tableId,
-            game.lastHandNumber,
-            undefined,
-          ),
+          path: getHistoryPath(tableId, game.lastHandNumber),
         },
         bubbles: true,
         composed: true,

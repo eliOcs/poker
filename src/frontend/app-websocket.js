@@ -1,6 +1,6 @@
 import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
-import { isHistoryRouteForLivePath } from "./app-route-state.js";
+import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
@@ -70,7 +70,7 @@ function handleTypedSocketMessage(app, data) {
   if (data.type === "history") {
     if (
       data.event === "handRecorded" &&
-      isHistoryRouteForLivePath(app.path, app._activeGamePath)
+      isHistoryRouteForTableId(app.path, app._activeGameId)
     ) {
       app._historyListRefreshNonce += 1;
     }

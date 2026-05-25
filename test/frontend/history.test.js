@@ -351,9 +351,7 @@ describe("phg-history", () => {
     it("renders hand items as replace navigation links", async () => {
       // List is reversed (latest first), so first item is hand 3
       const handItems = element.shadowRoot.querySelectorAll(".hand-item");
-      expect(handItems[0].getAttribute("href")).to.equal(
-        "/cash/test123/history/3",
-      );
+      expect(handItems[0].getAttribute("href")).to.equal("/history/test123/3");
       expect(handItems[0].dataset.appHistory).to.equal("replace");
     });
 

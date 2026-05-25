@@ -21,7 +21,7 @@ export function createMockUser(overrides = {}) {
 /**
  * Creates a mock fetch function that returns predefined responses
  * @param {object} options
- * @param {Array} [options.hands] - Hand list to return from /api/<kind>/:tableId/history
+ * @param {Array} [options.hands] - Hand list to return from /api/history/:tableId
  * @param {(url: string) => void} [options.onFetch] - Callback invoked with URL on each fetch
  * @param {boolean} [options.debug] - Log each fetch request to console
  */
@@ -33,13 +33,13 @@ export function createMockFetch(options = {}) {
     if (url.match(/\/api\/users\/me$/)) {
       return { ok: true, json: async () => createMockUser() };
     }
-    if (url.match(/\/api\/(?:cash|sitngo)\/[^/]+\/history$/)) {
+    if (url.match(/\/api\/history\/[^/]+$/)) {
       return {
         ok: true,
         json: async () => ({ hands, playerId: "player1" }),
       };
     }
-    if (url.match(/\/api\/(?:cash|sitngo)\/[^/]+\/history\/\d+$/)) {
+    if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
       return {
         ok: true,
         json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),

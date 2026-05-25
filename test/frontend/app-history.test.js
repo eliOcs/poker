@@ -27,7 +27,7 @@ describe("phg-app history data fetching", () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url) => {
       fetchedUrls.push(url);
-      if (url.match(/\/api\/cash\/[^/]+\/history$/)) {
+      if (url.match(/\/api\/history\/[^/]+$/)) {
         return {
           ok: true,
           json: async () => ({ hands: handsToReturn, playerId: "player1" }),
@@ -39,7 +39,7 @@ describe("phg-app history data fetching", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
     await element.updateComplete;
 
     await waitUntil(() => element.historyHandList !== null, {
@@ -53,12 +53,11 @@ describe("phg-app history data fetching", () => {
 
     handsToReturn = createMockHandList();
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
     await element.updateComplete;
 
     await waitUntil(
-      () =>
-        fetchedUrls.some((u) => u.includes("/api/cash/testgame123/history/3")),
+      () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
       { timeout: 2000 },
     );
 
@@ -74,27 +73,25 @@ describe("phg-app history data fetching", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
 
     await waitUntil(
-      () =>
-        fetchedUrls.some((u) => u.includes("/api/cash/testgame123/history/3")),
+      () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
       { timeout: 2000 },
     );
 
-    expect(fetchedUrls).to.include("/api/cash/testgame123/history");
-    expect(fetchedUrls).to.include("/api/cash/testgame123/history/3");
+    expect(fetchedUrls).to.include("/api/history/testgame123");
+    expect(fetchedUrls).to.include("/api/history/testgame123/3");
     const afterFirstFetch = fetchedUrls.length;
 
     element.path = "/cash/testgame123";
     await element.updateComplete;
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
 
     await waitUntil(
       () =>
-        fetchedUrls.filter((u) => u === "/api/cash/testgame123/history")
-          .length >= 2,
+        fetchedUrls.filter((u) => u === "/api/history/testgame123").length >= 2,
       { timeout: 2000 },
     );
 
@@ -113,13 +110,13 @@ describe("phg-app history data fetching", () => {
           json: async () => createMockUser(),
         };
       }
-      if (url.match(/\/api\/cash\/[^/]+\/history$/)) {
+      if (url.match(/\/api\/history\/[^/]+$/)) {
         return {
           ok: true,
           json: async () => ({ hands: handsToReturn, playerId: "player1" }),
         };
       }
-      if (url.match(/\/api\/cash\/[^/]+\/history\/\d+$/)) {
+      if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
         return {
           ok: true,
           json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
@@ -131,7 +128,7 @@ describe("phg-app history data fetching", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
     await element.updateComplete;
 
     await waitUntil(() => element.historyHandList !== null, {
@@ -145,7 +142,7 @@ describe("phg-app history data fetching", () => {
 
     handsToReturn = createMockHandList();
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
     await element.updateComplete;
 
     await waitUntil(
@@ -168,25 +165,23 @@ describe("phg-app history data fetching", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-    element.path = "/cash/testgame123/history";
+    element.path = "/history/testgame123";
 
     await waitUntil(
-      () =>
-        fetchedUrls.some((u) => u.includes("/api/cash/testgame123/history/3")),
+      () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/3")),
       { timeout: 2000 },
     );
 
-    element.path = "/cash/testgame123/history/2";
+    element.path = "/history/testgame123/2";
     await element.updateComplete;
 
     await waitUntil(
-      () =>
-        fetchedUrls.some((u) => u.includes("/api/cash/testgame123/history/2")),
+      () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/2")),
       { timeout: 2000 },
     );
 
     const listFetches = fetchedUrls.filter(
-      (u) => u === "/api/cash/testgame123/history",
+      (u) => u === "/api/history/testgame123",
     ).length;
     expect(listFetches).to.equal(1);
   });
@@ -205,13 +200,13 @@ describe("phg-app history data fetching", () => {
           json: async () => createMockUser(),
         };
       }
-      if (url.match(/\/api\/cash\/[^/]+\/history$/)) {
+      if (url.match(/\/api\/history\/[^/]+$/)) {
         return {
           ok: true,
           json: async () => ({ hands: handsToReturn, playerId: "player1" }),
         };
       }
-      if (url.match(/\/api\/cash\/[^/]+\/history\/\d+$/)) {
+      if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
         return {
           ok: true,
           json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
@@ -223,17 +218,21 @@ describe("phg-app history data fetching", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() => fetchedUrls.length >= 1, { timeout: 2000 });
 
-    element.path = "/cash/testgame123/history/2";
+    element.path = "/cash/testgame123";
+    await waitUntil(() => MockWebSocket.instances.length > 0, {
+      timeout: 2000,
+    });
+
+    element.path = "/history/testgame123/2";
     await element.updateComplete;
 
     await waitUntil(
-      () =>
-        fetchedUrls.some((u) => u.includes("/api/cash/testgame123/history/2")),
+      () => fetchedUrls.some((u) => u.includes("/api/history/testgame123/2")),
       { timeout: 2000 },
     );
 
     const initialListFetches = fetchedUrls.filter(
-      (u) => u === "/api/cash/testgame123/history",
+      (u) => u === "/api/history/testgame123",
     ).length;
 
     handsToReturn = [
@@ -254,12 +253,12 @@ describe("phg-app history data fetching", () => {
 
     await waitUntil(
       () =>
-        fetchedUrls.filter((u) => u === "/api/cash/testgame123/history")
-          .length > initialListFetches,
+        fetchedUrls.filter((u) => u === "/api/history/testgame123").length >
+        initialListFetches,
       { timeout: 2000 },
     );
 
-    expect(element.path).to.equal("/cash/testgame123/history/2");
+    expect(element.path).to.equal("/history/testgame123/2");
     expect(element.historyHandList.map((h) => h.hand_number)).to.include(4);
   });
 });

@@ -2,13 +2,11 @@ import { html, LitElement } from "lit";
 import { baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
 import { seatPositions } from "./game-layout.js";
-import { getTableHistoryPath, getTablePath } from "../shared/routes.js";
+import { getHistoryPath } from "../shared/routes.js";
 import "./card.js";
 import "./button.js";
 import "./seat.js";
 import "./board.js";
-
-/** @typedef {"cash"|"sitngo"|"mtt_table"} HistoryGameKind */
 
 class History extends LitElement {
   static get styles() {
@@ -18,8 +16,6 @@ class History extends LitElement {
   static get properties() {
     return {
       gameId: { type: String },
-      gameKind: { type: String },
-      tournamentId: { type: String },
       handNumber: { type: Number },
       hand: { type: Object },
       view: { type: Object },
@@ -32,9 +28,6 @@ class History extends LitElement {
   constructor() {
     super();
     this.gameId = undefined;
-    /** @type {HistoryGameKind} */
-    this.gameKind = "cash";
-    this.tournamentId = undefined;
     this.handNumber = undefined;
     this.hand = undefined;
     this.view = undefined;
@@ -146,27 +139,15 @@ class History extends LitElement {
     return this.handList?.find((h) => h.hand_number === this.handNumber);
   }
 
-  getLivePath() {
-    const gameKind = this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
-    return getTablePath(gameKind, this.gameId, this.tournamentId);
-  }
-
   renderHandNavLink(label, title, handNumber) {
     if (handNumber === undefined) {
       return html`<button class="nav-btn" disabled title=${title}>
         ${label}
       </button>`;
     }
-    const gameKind = this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
-
     return html`<a
       class="nav-btn"
-      href=${getTableHistoryPath(
-        gameKind,
-        this.gameId,
-        handNumber,
-        this.tournamentId,
-      )}
+      href=${getHistoryPath(this.gameId, handNumber)}
       data-app-history="replace"
       title=${title}
     >
@@ -418,8 +399,6 @@ class History extends LitElement {
             const cards = item.was_dealt
               ? item.hole_cards
               : (item.winner_hole_cards ?? []);
-            const gameKind =
-              this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
 
             return html`
               <li>
@@ -427,12 +406,7 @@ class History extends LitElement {
                   class="hand-item ${isActive ? "active" : ""} ${isWinner
                     ? "winner"
                     : ""}"
-                  href=${getTableHistoryPath(
-                    gameKind,
-                    this.gameId,
-                    item.hand_number,
-                    this.tournamentId,
-                  )}
+                  href=${getHistoryPath(this.gameId, item.hand_number)}
                   data-app-history="replace"
                 >
                   <span class="hand-number">#${item.hand_number}</span>
@@ -459,7 +433,7 @@ class History extends LitElement {
           ${this.error}
           <a
             class="back-link"
-            href=${this.getLivePath()}
+            href="/"
             @click=${(e) => {
               e.preventDefault();
               this.goBack();
@@ -482,7 +456,7 @@ class History extends LitElement {
           No hands recorded yet
           <a
             class="back-link"
-            href=${this.getLivePath()}
+            href="/"
             @click=${(e) => {
               e.preventDefault();
               this.goBack();

@@ -16,51 +16,11 @@ export function createHistoryRoutes(users) {
   return [
     {
       method: "GET",
-      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history$/,
+      path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match, log }) => {
-        const gameId = /** @type {string} */ (
+        const tableId = /** @type {string} */ (
           /** @type {RegExpMatchArray} */ (match)[1]
         );
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hands = await HandHistory.getAllHands(gameId);
-        const summaries = hands.map((hand) =>
-          HandHistory.getHandSummary(hand, user.id),
-        );
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(JSON.stringify({ hands: summaries, playerId: user.id }));
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/(?:cash|sitngo)\/([a-z0-9]+)\/history\/(\d+)$/,
-      handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const gameId = /** @type {string} */ (m[1]);
-        const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
-        const user = getOrCreateUser(req, res, users, log);
-
-        const hand = await HandHistory.getHand(gameId, handNumber);
-        if (!hand) {
-          throw new HttpError(404, "Hand not found", {
-            body: { error: "Hand not found", status: 404 },
-          });
-        }
-
-        const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
-        const view = HandHistory.getHandView(filteredHand, user.id);
-        res.writeHead(200, { "content-type": "application/json" });
-        res.end(
-          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
-        );
-      },
-    },
-    {
-      method: "GET",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history$/,
-      handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const tableId = /** @type {string} */ (m[2]);
         const user = getOrCreateUser(req, res, users, log);
 
         const hands = await HandHistory.getAllHands(tableId);
@@ -73,11 +33,11 @@ export function createHistoryRoutes(users) {
     },
     {
       method: "GET",
-      path: /^\/api\/mtt\/([a-z0-9]+)\/tables\/([a-z0-9]+)\/history\/(\d+)$/,
+      path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
       handler: async ({ req, res, match, log }) => {
         const m = /** @type {RegExpMatchArray} */ (match);
-        const tableId = /** @type {string} */ (m[2]);
-        const handNumber = parseInt(/** @type {string} */ (m[3]), 10);
+        const tableId = /** @type {string} */ (m[1]);
+        const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
         const user = getOrCreateUser(req, res, users, log);
 
         const hand = await HandHistory.getHand(tableId, handNumber);

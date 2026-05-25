@@ -73,6 +73,6 @@ describe("phg-player-profile", () => {
     });
 
     const event = await oneEvent(element, "navigate");
-    expect(event.detail).to.deep.equal({ path: "/sitngo/tour123/history/12" });
+    expect(event.detail).to.deep.equal({ path: "/history/tour123/12" });
   });
 });

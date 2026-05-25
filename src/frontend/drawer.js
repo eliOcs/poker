@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { getTableHistoryPath } from "../shared/routes.js";
+import { getHistoryPath } from "../shared/routes.js";
 import { ICONS } from "./icons.js";
 import { formatPlayerLabel } from "./player-label.js";
 import {
@@ -87,12 +87,7 @@ function renderMttDrawer(game) {
   const activeTables =
     game.mttTournament?.tables.filter((table) => !table.closed) ?? [];
   const hasRecordedHands = game.hasRecordedHands();
-  const historyPath = getTableHistoryPath(
-    game.gameKind,
-    game.gameId,
-    undefined,
-    game.tournamentId,
-  );
+  const historyPath = getHistoryPath(game.gameId);
   return renderMttNavigationDrawer({
     open: game._drawerOpen,
     onToggle: game.toggleDrawer,
@@ -119,12 +114,7 @@ function renderMttDrawer(game) {
 
 function renderCashDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
-  const historyPath = getTableHistoryPath(
-    game.gameKind,
-    game.gameId,
-    undefined,
-    game.tournamentId,
-  );
+  const historyPath = getHistoryPath(game.gameId);
   const accountLabel = formatPlayerLabel(
     game.user?.name,
     game.user?.id,

@@ -33,7 +33,7 @@ import {
 import {
   getHistoryApiBase,
   getHistoryPath,
-  getLivePathFromHistory,
+  isHistoryRouteForTableId,
   isTableLiveRoute,
   parseAppPath,
   syncAppRouteState,
@@ -71,9 +71,7 @@ class App extends LitElement {
       socialAction: { type: Object },
       gameConnectionStatus: { type: String },
       // History route params (triggers tasks)
-      _historyKind: { state: true },
       _historyTableId: { state: true },
-      _historyTournamentId: { state: true },
       _historyHandNumber: { state: true },
       _historyListRefreshNonce: { state: true },
       _mttTournamentId: { state: true },
@@ -106,9 +104,7 @@ class App extends LitElement {
     this._socketHealthCheck = undefined;
     this._intentionalSocketCloses = new WeakSet();
     // History route params
-    this._historyKind = undefined;
     this._historyTableId = undefined;
-    this._historyTournamentId = undefined;
     this._historyHandNumber = undefined;
     this._historyListRefreshNonce = 0;
     this._mttTournamentId = undefined;
@@ -317,14 +313,12 @@ class App extends LitElement {
   }
 
   _clearHistoryState() {
-    this._historyKind = undefined;
     this._historyTableId = undefined;
-    this._historyTournamentId = undefined;
     this._historyHandNumber = undefined;
   }
 
   _hasHistoryRoute() {
-    return !!this._historyKind && !!this._historyTableId;
+    return !!this._historyTableId;
   }
 
   _historyApiBase() {
@@ -332,37 +326,19 @@ class App extends LitElement {
   }
 
   _assertHistoryRouteState() {
-    if (!this._historyKind || !this._historyTableId) {
+    if (!this._historyTableId) {
       throw new Error("Expected active history route state");
     }
   }
 
   _getHistoryApiBase() {
     this._assertHistoryRouteState();
-    return getHistoryApiBase(
-      this._historyKind,
-      this._historyTableId,
-      this._historyTournamentId,
-    );
+    return getHistoryApiBase(this._historyTableId);
   }
 
   _getHistoryPath(handNumber = undefined) {
     this._assertHistoryRouteState();
-    return getHistoryPath(
-      this._historyKind,
-      this._historyTableId,
-      handNumber,
-      this._historyTournamentId,
-    );
-  }
-
-  _getLivePathFromHistory() {
-    this._assertHistoryRouteState();
-    return getLivePathFromHistory(
-      this._historyKind,
-      this._historyTableId,
-      this._historyTournamentId,
-    );
+    return getHistoryPath(this._historyTableId, handNumber);
   }
 
   // --- MTT Routing ---
@@ -421,15 +397,13 @@ class App extends LitElement {
     if (this._historyListTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyListTask.error);
       this.toast = { message: error.message, variant: "error" };
-      const livePath = this._getLivePathFromHistory();
-      navigateApp(this, livePath, { replace: true });
+      navigateApp(this, this._activeGamePath ?? "/", { replace: true });
     }
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyHandTask.error);
       this.toast = { message: error.message, variant: "error" };
-      const livePath = this._getLivePathFromHistory();
-      navigateApp(this, livePath, { replace: true });
+      navigateApp(this, this._activeGamePath ?? "/", { replace: true });
     }
 
     if (this._playerProfileTask.status === TaskStatus.ERROR) {
@@ -487,11 +461,19 @@ class App extends LitElement {
     return this._renderShellPage(route);
   }
 
+  _getConnectionResourcePath(route) {
+    if (route.resourcePath) return route.resourcePath;
+    if (isHistoryRouteForTableId(this.path, this._activeGameId)) {
+      return this._activeGamePath;
+    }
+    return undefined;
+  }
+
   render() {
     const currentPath = this._getHomeRedirectPath() ?? this.path;
     const route = parseAppPath(currentPath);
 
-    ws.manageConnection(this, route.resourcePath);
+    ws.manageConnection(this, this._getConnectionResourcePath(route));
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);

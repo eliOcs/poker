@@ -47,7 +47,7 @@ export function renderGameView(app, liveRoute) {
 
 /**
  * @param {any} app
- * @param {{ kind: string, tableId: string, tournamentId?: string }} historyRoute
+ * @param {{ tableId: string }} historyRoute
  */
 export function renderHistoryView(app, historyRoute) {
   const listData = app._historyListTask.value;
@@ -55,10 +55,6 @@ export function renderHistoryView(app, historyRoute) {
 
   return html`${renderToast(app)}<phg-history
       .gameId=${historyRoute.tableId}
-      .gameKind=${historyRoute.kind}
-      .tournamentId=${historyRoute.kind === "mtt_table"
-        ? historyRoute.tournamentId
-        : undefined}
       .handNumber=${app._historyHandNumber}
       .hand=${handData?.hand}
       .view=${handData?.view}

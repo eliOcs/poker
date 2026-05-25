@@ -288,22 +288,16 @@ export class PokerPlayer extends PokerPlayerActions {
   async openHistory() {
     await this.openDrawer();
     await this.game.getByRole("link", { name: "History" }).click();
-    await this.page.waitForURL(/\/(?:cash|sitngo)\/[a-z0-9]+\/history/);
+    await this.page.waitForURL(/\/history\/[a-z0-9]+/);
     await this.page.locator("phg-history").waitFor();
   }
 
   /**
    * Navigate to history page for a game via URL (for testing URL-based routing)
    * @param {string} gameId
-   * @param {"cash"|"sitngo"|"mtt"} [kind]
-   * @param {string|null} [tournamentId]
    */
-  async goToHistory(gameId, kind = "cash", tournamentId = null) {
-    const path =
-      kind === "mtt"
-        ? `/mtt/${tournamentId}/tables/${gameId}/history`
-        : `/${kind}/${gameId}/history`;
-    await this.page.goto(path);
+  async goToHistory(gameId) {
+    await this.page.goto(`/history/${gameId}`);
     await this.page.locator("phg-history").waitFor();
   }
 

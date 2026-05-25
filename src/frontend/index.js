@@ -2,11 +2,7 @@ import { html, LitElement } from "lit";
 import { baseStyles } from "./styles.js";
 import { seatPositions } from "./game-layout.js";
 import { gameStyles } from "./game.styles.js";
-import {
-  getMttPath,
-  getTableHistoryPath,
-  getTablePath,
-} from "../shared/routes.js";
+import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
@@ -265,12 +261,7 @@ export class Game extends LitElement {
     this.dispatchEvent(
       new CustomEvent("navigate", {
         detail: {
-          path: getTableHistoryPath(
-            this.gameKind,
-            this.gameId,
-            undefined,
-            this.tournamentId,
-          ),
+          path: getHistoryPath(this.gameId),
         },
         bubbles: true,
         composed: true,

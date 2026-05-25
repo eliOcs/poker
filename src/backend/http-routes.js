@@ -5,11 +5,9 @@ import { createGameRoutes } from "./game-routes.js";
 import { createHistoryRoutes } from "./history-routes.js";
 import { getOrCreateUser, parseBody } from "./http-route-utils.js";
 import {
+  HISTORY_ROUTE,
   LIVE_CASH_ROUTE,
   LIVE_SITNGO_ROUTE,
-  HISTORY_CASH_ROUTE,
-  HISTORY_SITNGO_ROUTE,
-  HISTORY_MTT_TABLE_ROUTE,
   LIVE_MTT_ROUTE,
   LIVE_MTT_TABLE_ROUTE,
 } from "../shared/routes.js";
@@ -99,9 +97,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute(LIVE_SITNGO_ROUTE, users),
     spaPageRoute(LIVE_MTT_ROUTE, users),
     spaPageRoute(LIVE_MTT_TABLE_ROUTE, users),
-    spaPageRoute(HISTORY_CASH_ROUTE, users),
-    spaPageRoute(HISTORY_SITNGO_ROUTE, users),
-    spaPageRoute(HISTORY_MTT_TABLE_ROUTE, users),
+    spaPageRoute(HISTORY_ROUTE, users),
     spaPageRoute(/^\/players\/([a-z0-9]+)$/, users),
     spaPageRoute("/mtt", users),
     spaPageRoute("/release-notes", users),

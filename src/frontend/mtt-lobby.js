@@ -1,10 +1,6 @@
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./styles.js";
-import {
-  getMttPath,
-  getTablePath,
-  getTableHistoryPath,
-} from "../shared/routes.js";
+import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
 import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
 import { mttLobbyStyles } from "./mtt-lobby-styles.js";
 import {
@@ -217,13 +213,8 @@ class MttLobby extends LitElement {
     return {
       activeTables,
       currentTableHistoryPath:
-        hasCurrentTableHistory && currentTable && this.tournamentId
-          ? getTableHistoryPath(
-              "mtt",
-              currentTable.tableId,
-              undefined,
-              this.tournamentId,
-            )
+        hasCurrentTableHistory && currentTable
+          ? getHistoryPath(currentTable.tableId)
           : undefined,
       share:
         "share" in navigator
