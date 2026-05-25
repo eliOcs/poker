@@ -111,6 +111,43 @@ describe("phg-app", () => {
       expect(element.shadowRoot?.querySelector("phg-release-notes")).to.exist;
     });
 
+    it("uses replace history for app links marked as replace", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await element.updateComplete;
+      history.pushState({}, "", "/replace-start");
+      history.pushState({}, "", "/cash/testgame/history/1");
+      element.path = "/cash/testgame/history/1";
+      await element.updateComplete;
+
+      const link = document.createElement("a");
+      link.href = "/cash/testgame/history/2";
+      link.dataset.appHistory = "replace";
+      link.textContent = "Hand 2";
+      element.shadowRoot?.append(link);
+
+      link.click();
+
+      await waitUntil(() => element.path === "/cash/testgame/history/2", {
+        timeout: 2000,
+      });
+
+      history.back();
+
+      await waitUntil(() => window.location.pathname === "/replace-start", {
+        timeout: 2000,
+      });
+    });
+
     it("renders the MTT lobby on tournament routes", async () => {
       MockWebSocket.instances = [];
       const fetchedUrls = [];

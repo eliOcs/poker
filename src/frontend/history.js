@@ -2,11 +2,13 @@ import { html, LitElement } from "lit";
 import { baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
 import { seatPositions } from "./game-layout.js";
-import { getTablePath } from "../shared/routes.js";
+import { getTableHistoryPath, getTablePath } from "../shared/routes.js";
 import "./card.js";
 import "./button.js";
 import "./seat.js";
 import "./board.js";
+
+/** @typedef {"cash"|"sitngo"|"mtt_table"} HistoryGameKind */
 
 class History extends LitElement {
   static get styles() {
@@ -30,6 +32,7 @@ class History extends LitElement {
   constructor() {
     super();
     this.gameId = undefined;
+    /** @type {HistoryGameKind} */
     this.gameKind = "cash";
     this.tournamentId = undefined;
     this.handNumber = undefined;
@@ -144,10 +147,31 @@ class History extends LitElement {
   }
 
   getLivePath() {
-    const gameKind = /** @type {"cash"|"sitngo"|"mtt"} */ (
-      this.gameKind === "mtt_table" ? "mtt" : this.gameKind
-    );
+    const gameKind = this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
     return getTablePath(gameKind, this.gameId, this.tournamentId);
+  }
+
+  renderHandNavLink(label, title, handNumber) {
+    if (handNumber === undefined) {
+      return html`<button class="nav-btn" disabled title=${title}>
+        ${label}
+      </button>`;
+    }
+    const gameKind = this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
+
+    return html`<a
+      class="nav-btn"
+      href=${getTableHistoryPath(
+        gameKind,
+        this.gameId,
+        handNumber,
+        this.tournamentId,
+      )}
+      data-app-history="replace"
+      title=${title}
+    >
+      ${label}
+    </a>`;
   }
 
   renderHandSummaryCards(summary) {
@@ -188,35 +212,27 @@ class History extends LitElement {
     const currentIndex = this.handList.findIndex(
       (h) => h.hand_number === this.handNumber,
     );
-    const hasPrev = currentIndex > 0;
-    const hasNext = currentIndex < this.handList.length - 1;
+    const prevHandNumber =
+      currentIndex > 0
+        ? this.handList[currentIndex - 1].hand_number
+        : undefined;
+    const nextHandNumber =
+      currentIndex < this.handList.length - 1
+        ? this.handList[currentIndex + 1].hand_number
+        : undefined;
 
     return html`
       <div class="nav-bar">
         <button class="nav-btn" @click=${this.goBack} title="Back to game">
           ✕
         </button>
-        <button
-          class="nav-btn"
-          @click=${this.navigatePrev}
-          ?disabled=${!hasPrev}
-          title="Previous hand"
-        >
-          ←
-        </button>
+        ${this.renderHandNavLink("←", "Previous hand", prevHandNumber)}
         <div class="nav-info">
           <span class="nav-number">#${summary.hand_number}</span>
           <div class="nav-cards">${this.renderHandSummaryCards(summary)}</div>
           ${this.renderHandSummaryResult(summary)}
         </div>
-        <button
-          class="nav-btn"
-          @click=${this.navigateNext}
-          ?disabled=${!hasNext}
-          title="Next hand"
-        >
-          →
-        </button>
+        ${this.renderHandNavLink("→", "Next hand", nextHandNumber)}
       </div>
     `;
   }
@@ -402,24 +418,32 @@ class History extends LitElement {
             const cards = item.was_dealt
               ? item.hole_cards
               : (item.winner_hole_cards ?? []);
+            const gameKind =
+              this.gameKind === "mtt_table" ? "mtt" : this.gameKind;
 
             return html`
-              <li
-                class="hand-item ${isActive ? "active" : ""} ${isWinner
-                  ? "winner"
-                  : ""}"
-                @click=${() => {
-                  this.navigateTo(item.hand_number);
-                }}
-              >
-                <span class="hand-number">#${item.hand_number}</span>
-                <div class="hand-cards">
-                  ${cards.map(
-                    (card) =>
-                      html`<phg-card .card=${card} noAnimation></phg-card>`,
+              <li>
+                <a
+                  class="hand-item ${isActive ? "active" : ""} ${isWinner
+                    ? "winner"
+                    : ""}"
+                  href=${getTableHistoryPath(
+                    gameKind,
+                    this.gameId,
+                    item.hand_number,
+                    this.tournamentId,
                   )}
-                </div>
-                ${this.renderHandListResult(item)}
+                  data-app-history="replace"
+                >
+                  <span class="hand-number">#${item.hand_number}</span>
+                  <div class="hand-cards">
+                    ${cards.map(
+                      (card) =>
+                        html`<phg-card .card=${card} noAnimation></phg-card>`,
+                    )}
+                  </div>
+                  ${this.renderHandListResult(item)}
+                </a>
               </li>
             `;
           })}

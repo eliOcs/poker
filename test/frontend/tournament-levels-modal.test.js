@@ -72,14 +72,14 @@ describe("tournament levels modal", () => {
     game.game = createMockTournamentGameState();
     await game.updateComplete;
 
-    const buttons = game.shadowRoot.querySelectorAll("button");
-    const historyIndex = [...buttons].findIndex((button) =>
-      button.textContent.includes("History"),
+    const entries = game.shadowRoot.querySelectorAll("a, button");
+    const historyIndex = [...entries].findIndex((entry) =>
+      entry.textContent.includes("History"),
     );
     const levelsButton = findButtonByText(game.shadowRoot, "Levels");
 
     expect(levelsButton).to.exist;
-    expect([...buttons].indexOf(levelsButton)).to.equal(historyIndex + 1);
+    expect([...entries].indexOf(levelsButton)).to.equal(historyIndex + 1);
 
     levelsButton.click();
     await game.updateComplete;

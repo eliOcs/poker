@@ -142,6 +142,24 @@ function renderTableItem(table) {
 }
 
 /**
+ * @param {string|undefined} historyPath
+ * @returns {import("lit").TemplateResult}
+ */
+export function renderHistoryItem(historyPath) {
+  if (historyPath) {
+    return html`<a slot="main" href=${historyPath}>
+      ${iconHistory}
+      <span>History</span>
+    </a>`;
+  }
+
+  return html`<button slot="main" disabled>
+    ${iconHistory}
+    <span>History</span>
+  </button>`;
+}
+
+/**
  * @typedef {object} MttNavigationDrawerParams
  * @property {boolean} open
  * @property {() => void} onToggle
@@ -149,8 +167,7 @@ function renderTableItem(table) {
  * @property {boolean} [lobbyActive]
  * @property {(() => void)|undefined} [onOpenLobby]
  * @property {Array<{ label: string, active?: boolean, isCurrentPlayerTable?: boolean, onOpen: () => void }>} [tableItems]
- * @property {(() => void)|undefined} [onOpenHistory]
- * @property {boolean} [historyDisabled]
+ * @property {string|undefined} [historyPath]
  * @property {(() => void)|undefined} [onOpenLevels]
  * @property {(() => void)|undefined} [onCopyLink]
  * @property {boolean} [copied]
@@ -173,8 +190,7 @@ function renderDrawerTemplate(params) {
     lobbyActive = false,
     onOpenLobby,
     tableItems = [],
-    onOpenHistory,
-    historyDisabled = false,
+    historyPath,
     onOpenLevels,
     onCopyLink,
     onShare,
@@ -184,7 +200,6 @@ function renderDrawerTemplate(params) {
     onOpenSignUp,
   } = params;
   const copyLabel = params.copied ? "Copied!" : "Copy Link";
-  const historyDisabledAttr = historyDisabled || !onOpenHistory;
 
   return html`
     <phg-navigation-drawer ?open=${open} @drawer-toggle=${onToggle}>
@@ -197,15 +212,7 @@ function renderDrawerTemplate(params) {
         ${iconLobby}
         <span>Lobby</span>
       </button>
-      ${tableItems.map(renderTableItem)}
-      <button
-        slot="main"
-        ?disabled=${historyDisabledAttr}
-        @click=${handleAction(onOpenHistory)}
-      >
-        ${iconHistory}
-        <span>History</span>
-      </button>
+      ${tableItems.map(renderTableItem)} ${renderHistoryItem(historyPath)}
       ${onOpenLevels
         ? html`<button slot="main" @click=${handleAction(onOpenLevels)}>
             ${ICONS.levels}

@@ -1,7 +1,11 @@
 import { html } from "lit";
+import { getTableHistoryPath } from "../shared/routes.js";
 import { ICONS } from "./icons.js";
 import { formatPlayerLabel } from "./player-label.js";
-import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
+import {
+  renderHistoryItem,
+  renderMttNavigationDrawer,
+} from "./mtt-navigation-drawer.js";
 import "./navigation-drawer.js";
 
 const iconRankings = html`<svg viewBox="0 0 24 24">
@@ -17,21 +21,6 @@ const iconRankings = html`<svg viewBox="0 0 24 24">
   <rect x="8" y="15" width="8" height="2" />
   <rect x="11" y="17" width="2" height="4" />
   <rect x="9" y="19" width="6" height="2" />
-</svg>`;
-
-const iconHistory = html`<svg viewBox="0 0 24 24">
-  <rect x="17" y="5" width="2" height="2" />
-  <rect x="5" y="17" width="2" height="2" />
-  <rect x="11" y="3" width="2" height="6" />
-  <rect x="9" y="1" width="2" height="8" />
-  <rect x="9" y="9" width="2" height="2" />
-  <rect x="9" y="17" width="10" height="2" />
-  <rect x="3" y="7" width="2" height="10" />
-  <rect x="11" y="15" width="2" height="6" />
-  <rect x="13" y="13" width="2" height="8" />
-  <rect x="13" y="21" width="2" height="2" />
-  <rect x="5" y="5" width="10" height="2" />
-  <rect x="19" y="7" width="2" height="10" />
 </svg>`;
 
 const iconCopyLink = html`<svg viewBox="0 0 24 24">
@@ -97,6 +86,13 @@ function renderSitOutButton(game) {
 function renderMttDrawer(game) {
   const activeTables =
     game.mttTournament?.tables.filter((table) => !table.closed) ?? [];
+  const hasRecordedHands = game.hasRecordedHands();
+  const historyPath = getTableHistoryPath(
+    game.gameKind,
+    game.gameId,
+    undefined,
+    game.tournamentId,
+  );
   return renderMttNavigationDrawer({
     open: game._drawerOpen,
     onToggle: game.toggleDrawer,
@@ -109,10 +105,7 @@ function renderMttDrawer(game) {
         table.tableId === game.mttTournament?.currentPlayer?.tableId,
       onOpen: () => game.openTournamentTable(table.tableId),
     })),
-    onOpenHistory: game.hasRecordedHands()
-      ? () => game.openHistory()
-      : undefined,
-    historyDisabled: !game.hasRecordedHands(),
+    historyPath: hasRecordedHands ? historyPath : undefined,
     onOpenLevels: () => game.openTournamentLevels(),
     onCopyLink: () => game.copyGameLink(),
     copied: game._copied,
@@ -126,6 +119,12 @@ function renderMttDrawer(game) {
 
 function renderCashDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
+  const historyPath = getTableHistoryPath(
+    game.gameKind,
+    game.gameId,
+    undefined,
+    game.tournamentId,
+  );
   const accountLabel = formatPlayerLabel(
     game.user?.name,
     game.user?.id,
@@ -145,13 +144,7 @@ function renderCashDrawer(game) {
       >
         ${iconRankings} Rankings
       </button>
-      <button
-        slot="main"
-        ?disabled=${!hasRecordedHands}
-        @click=${game.openHistory}
-      >
-        ${iconHistory} History
-      </button>
+      ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
       ${game.game?.tournament
         ? html`<button slot="main" @click=${game.openTournamentLevels}>
             ${ICONS.levels} Levels

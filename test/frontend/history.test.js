@@ -348,18 +348,13 @@ describe("phg-history", () => {
       await element.updateComplete;
     });
 
-    it("emits hand-select event when clicking hand item", async () => {
-      let selectEvent = null;
-      element.addEventListener("hand-select", (e) => {
-        selectEvent = e;
-      });
-
+    it("renders hand items as replace navigation links", async () => {
       // List is reversed (latest first), so first item is hand 3
       const handItems = element.shadowRoot.querySelectorAll(".hand-item");
-      handItems[0].click();
-
-      expect(selectEvent).to.exist;
-      expect(selectEvent.detail.handNumber).to.equal(3);
+      expect(handItems[0].getAttribute("href")).to.equal(
+        "/cash/test123/history/3",
+      );
+      expect(handItems[0].dataset.appHistory).to.equal("replace");
     });
 
     it("dispatches close event and calls history.back on goBack", async () => {

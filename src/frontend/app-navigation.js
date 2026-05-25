@@ -194,5 +194,7 @@ export function handleAppLinkClick(app, event) {
   if (!anchor || !shouldHandleAnchorClick(event, anchor)) return;
 
   event.preventDefault();
-  navigateApp(app, anchor.href);
+  navigateApp(app, anchor.href, {
+    replace: anchor.dataset.appHistory === "replace",
+  });
 }

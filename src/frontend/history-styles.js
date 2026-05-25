@@ -36,12 +36,16 @@ export const historyStyles = css`
   }
 
   .nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     color: var(--color-fg-medium);
     font-size: var(--font-lg);
     cursor: pointer;
     padding: var(--space-md);
+    text-decoration: none;
   }
 
   .nav-btn:hover:not(:disabled) {
@@ -343,6 +347,8 @@ export const historyStyles = css`
     padding: var(--space-md) var(--space-lg);
     cursor: pointer;
     border-bottom: 1px solid var(--color-bg-light);
+    color: inherit;
+    text-decoration: none;
   }
 
   .hand-item:hover {

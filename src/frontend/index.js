@@ -36,8 +36,9 @@ import { renderActionPanel } from "./game-action-panel.js";
 
 /** @typedef {HTMLElement & { showEmote: (emoji: string) => void, showChat: (message: string) => void }} SeatElement */
 /** @typedef {import("../backend/user.js").User} User */
+/** @typedef {import("../shared/routes.js").LiveTableKind} GameKind */
 
-class Game extends LitElement {
+export class Game extends LitElement {
   static get styles() {
     return [baseStyles, seatPositions, gameStyles];
   }
@@ -73,6 +74,7 @@ class Game extends LitElement {
   constructor() {
     super();
     this.gameId = undefined;
+    /** @type {GameKind} */
     this.gameKind = "cash";
     this.tournamentId = undefined;
     this.mttTournament = undefined;
@@ -260,12 +262,11 @@ class Game extends LitElement {
 
   openHistory() {
     if (!this.hasRecordedHands()) return;
-    const gameKind = /** @type {"cash"|"sitngo"|"mtt"} */ (this.gameKind);
     this.dispatchEvent(
       new CustomEvent("navigate", {
         detail: {
           path: getTableHistoryPath(
-            gameKind,
+            this.gameKind,
             this.gameId,
             undefined,
             this.tournamentId,

@@ -195,14 +195,6 @@ class MttLobby extends LitElement {
     return this.tournament?.tables.find((table) => table.tableId === tableId);
   }
 
-  _openCurrentTableHistory() {
-    const table = this._getCurrentTable();
-    if (!table || !this.tournamentId || table.handNumber <= 0) return;
-    this._navigate(
-      getTableHistoryPath("mtt", table.tableId, undefined, this.tournamentId),
-    );
-  }
-
   async _copyLink() {
     await navigator.clipboard.writeText(this._tournamentUrl());
     this._copied = true;
@@ -224,12 +216,15 @@ class MttLobby extends LitElement {
     const hasCurrentTableHistory = (currentTable?.handNumber ?? 0) > 0;
     return {
       activeTables,
-      hasCurrentTableHistory,
-      openCurrentHistory: hasCurrentTableHistory
-        ? () => {
-            this._openCurrentTableHistory();
-          }
-        : undefined,
+      currentTableHistoryPath:
+        hasCurrentTableHistory && currentTable && this.tournamentId
+          ? getTableHistoryPath(
+              "mtt",
+              currentTable.tableId,
+              undefined,
+              this.tournamentId,
+            )
+          : undefined,
       share:
         "share" in navigator
           ? () => {
@@ -254,7 +249,7 @@ class MttLobby extends LitElement {
   render() {
     const tournament = this.tournament;
     const currentTable = this._getCurrentTable();
-    const { activeTables, hasCurrentTableHistory, openCurrentHistory, share } =
+    const { activeTables, currentTableHistoryPath, share } =
       this._buildDrawerParams(tournament, currentTable);
     const copyLink = () => {
       void this._copyLink();
@@ -284,8 +279,7 @@ class MttLobby extends LitElement {
             this.openTable(table.tableId);
           },
         })),
-        onOpenHistory: openCurrentHistory,
-        historyDisabled: !hasCurrentTableHistory,
+        historyPath: currentTableHistoryPath,
         onCopyLink: copyLink,
         copied: this._copied,
         onShare: share,

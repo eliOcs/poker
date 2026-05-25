@@ -287,7 +287,7 @@ export class PokerPlayer extends PokerPlayerActions {
    */
   async openHistory() {
     await this.openDrawer();
-    await this.game.getByRole("button", { name: "History" }).click();
+    await this.game.getByRole("link", { name: "History" }).click();
     await this.page.waitForURL(/\/(?:cash|sitngo)\/[a-z0-9]+\/history/);
     await this.page.locator("phg-history").waitFor();
   }
