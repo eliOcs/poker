@@ -134,7 +134,8 @@ class Board extends LitElement {
   }
 
   getTournamentWinnerName() {
-    if (this.tournament?.winner == undefined || !this.seats) return;
+    if ((this.tournament?.winner ?? undefined) === undefined || !this.seats)
+      return;
     const winnerSeat = this.seats[this.tournament.winner];
     if (winnerSeat && !winnerSeat.empty) {
       return winnerSeat.player?.name ?? `Seat ${this.tournament.winner + 1}`;
@@ -143,7 +144,8 @@ class Board extends LitElement {
   }
 
   renderTournamentWinner() {
-    if (!this.tournament || this.tournament.winner == undefined) return "";
+    if (!this.tournament || (this.tournament.winner ?? undefined) === undefined)
+      return "";
     const winnerName = this.getTournamentWinnerName();
     return html`
       <div class="tournament-winner-overlay">
@@ -186,11 +188,11 @@ class Board extends LitElement {
   }
 
   hasTournamentWinner() {
-    return this.tournament?.winner != undefined;
+    return (this.tournament?.winner ?? undefined) !== undefined;
   }
 
   hasCountdown() {
-    return this.countdown != undefined;
+    return (this.countdown ?? undefined) !== undefined;
   }
 
   renderCountdownView() {

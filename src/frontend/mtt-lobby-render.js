@@ -362,7 +362,7 @@ export function renderStandingsTable(tournament) {
                       ? "negative"
                       : ""}
                 >
-                  ${entrant.netWinnings != undefined
+                  ${(entrant.netWinnings ?? undefined) !== undefined
                     ? formatNetWinnings(entrant.netWinnings)
                     : "\u2014"}
                 </td>

@@ -190,7 +190,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
 }
 
 function renderBettingSlider(panel, actionMap, betAction) {
-  const isBet = actionMap.bet != undefined;
+  const isBet = (actionMap.bet ?? undefined) !== undefined;
   const min = betAction.min;
   const max = betAction.max;
   if (panel.betAmount < min) panel.betAmount = min;
@@ -492,7 +492,7 @@ function renderTournamentResult(panel) {
       >You've won!</span
     >`;
   }
-  if (panel.bustedPosition != undefined) {
+  if ((panel.bustedPosition ?? undefined) !== undefined) {
     return html`<span class="waiting tournament-result"
       >You finished in ${formatPosition(panel.bustedPosition)} place</span
     >`;

@@ -126,7 +126,10 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
 
   if (tournament.onBreak || tournament.pendingCollapse) {
     delete game.countdown;
-  } else if (countActivePlayers(game) >= 2 && game.countdown == undefined) {
+  } else if (
+    countActivePlayers(game) >= 2 &&
+    typeof game.countdown !== "number"
+  ) {
     game.countdown = 5;
   } else if (countActivePlayers(game) < 2) {
     delete game.countdown;

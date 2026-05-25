@@ -25,6 +25,7 @@ export default [
     },
     rules: {
       complexity: ["error", 10],
+      eqeqeq: ["error", "smart"],
       "max-lines": [
         "error",
         { max: 500, skipBlankLines: true, skipComments: true },

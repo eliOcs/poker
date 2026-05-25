@@ -44,8 +44,7 @@ export function countTournamentActivePlayers(tournament, games) {
  */
 export function getOpenFinalTable(tournament, games) {
   const finalTable = tournament.tables.find(
-    (table) =>
-      table.tableName === FINAL_TABLE_NAME && table.closedAt == undefined,
+    (table) => table.tableName === FINAL_TABLE_NAME && table.closedAt == null,
   );
   return finalTable ? games.get(finalTable.tableId) : undefined;
 }

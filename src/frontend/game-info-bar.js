@@ -31,7 +31,7 @@ function getTypeLabel(gameKind, game) {
  * @returns {import("lit").TemplateResult<1>|undefined}
  */
 function getTournamentTimerCell(tournament) {
-  if (!tournament || tournament.timeToNextLevel == undefined) {
+  if (!tournament || (tournament.timeToNextLevel ?? undefined) === undefined) {
     return;
   }
 

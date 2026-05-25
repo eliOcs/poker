@@ -78,13 +78,13 @@ class RankingPanel extends LitElement {
   }
 
   formatWinRate(value) {
-    if (value == undefined) return "-";
+    if ((value ?? undefined) === undefined) return "-";
     const sign = value > 0 ? "+" : "";
     return `${sign}${value.toFixed(1)}`;
   }
 
   getValueClass(value) {
-    if (value == undefined) return "na";
+    if ((value ?? undefined) === undefined) return "na";
     if (value > 0) return "positive";
     if (value < 0) return "negative";
     return "neutral";

@@ -345,7 +345,10 @@ class Game extends LitElement {
       Audio.playTurnSound();
       Audio.playTurnVibration();
     }
-    if (prev.clockRemaining == undefined && curr.clockRemaining != undefined)
+    if (
+      (prev.clockRemaining ?? undefined) === undefined &&
+      (curr.clockRemaining ?? undefined) !== undefined
+    )
       Audio.playClockSound();
   }
 

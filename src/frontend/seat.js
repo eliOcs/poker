@@ -81,8 +81,11 @@ class Seat extends LitElement {
     ["acting", (s) => s?.isActing],
     ["folded", (s) => s?.folded],
     ["all-in", (s) => s?.allIn],
-    ["sitting-out", (s) => s?.sittingOut && s?.bustedPosition == undefined],
-    ["busted", (s) => s?.bustedPosition != undefined],
+    [
+      "sitting-out",
+      (s) => s?.sittingOut && (s?.bustedPosition ?? undefined) === undefined,
+    ],
+    ["busted", (s) => (s?.bustedPosition ?? undefined) !== undefined],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
     [
@@ -152,7 +155,7 @@ class Seat extends LitElement {
   _getStatusLabel() {
     const s = this.seat;
     if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
-    if (s.bustedPosition != undefined) {
+    if ((s.bustedPosition ?? undefined) !== undefined) {
       return { label: formatPosition(s.bustedPosition), isStatus: true };
     }
     if (s.sittingOut) return { label: "SITTING OUT", isStatus: true };
@@ -170,12 +173,12 @@ class Seat extends LitElement {
   }
 
   _renderStatusOrAction() {
-    if (this.seat.bustedPosition != undefined) {
+    if ((this.seat.bustedPosition ?? undefined) !== undefined) {
       return html`<div class="status-label">
         ${formatPosition(this.seat.bustedPosition)}
       </div>`;
     }
-    if (this.seat.handResult != undefined) return "";
+    if ((this.seat.handResult ?? undefined) !== undefined) return "";
     const status = this._getStatusLabel();
     if (!status) return "";
     return status.isStatus
@@ -184,10 +187,10 @@ class Seat extends LitElement {
   }
 
   _renderStackOrResult() {
-    if (this.seat.bustedPosition != undefined) {
+    if ((this.seat.bustedPosition ?? undefined) !== undefined) {
       return "";
     }
-    if (this.seat.netResult !== undefined) {
+    if ((this.seat.netResult ?? undefined) !== undefined) {
       return html`
         <div class="hand-result ${getResultClass(this.seat.netResult)}">
           ${formatHandResult(this.seat.netResult)}
@@ -197,7 +200,7 @@ class Seat extends LitElement {
         </div>
       `;
     }
-    return this.seat.handResult != undefined
+    return (this.seat.handResult ?? undefined) !== undefined
       ? html`<div class="hand-result ${getResultClass(this.seat.handResult)}">
           ${formatHandResult(this.seat.handResult)}
         </div>`

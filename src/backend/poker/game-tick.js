@@ -37,7 +37,7 @@ export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
  * @param {TickResult} result
  */
 function handleCountdown(game, result) {
-  if (game.countdown == undefined) return;
+  if (typeof game.countdown !== "number") return;
 
   game.countdown -= 1;
   result.shouldBroadcast = true;
@@ -198,11 +198,11 @@ export function tick(game) {
  * @returns {boolean}
  */
 export function shouldTickBeRunning(game) {
-  const hasCountdown = game.countdown != undefined;
+  const hasCountdown = typeof game.countdown === "number";
   const hasActingPlayer = game.hand.actingSeat !== -1;
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
-  const isCollectingBets = game.collectingBets != undefined;
+  const isCollectingBets = Boolean(game.collectingBets);
   return (
     hasCountdown ||
     hasActingPlayer ||
