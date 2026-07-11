@@ -32,6 +32,7 @@
 - Inspiration Chess.com - "Hand review"
 - Inspiration Chess.com - "Play coach"
 - Inspiration Chess.com - "Ranked Poker"
+- use SSE instead of websockets when we are only communicating updates from the backend to the frontend (eg: hand history)
 - OLAP db to store logs (DuckDB)
 
 ## Hand Rank modal [WIP]
