@@ -1,6 +1,5 @@
 # To do
 
-- Allow clicking users in tournament lobby to view their profile
 - History down panel allow resize
 - History new tab
 - Late Registration

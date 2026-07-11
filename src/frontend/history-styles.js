@@ -123,8 +123,13 @@ export const historyStyles = css`
   }
 
   @media (width >= 800px) {
+    .table-area {
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .table-state {
-      min-height: 450px;
+      min-height: 0;
     }
   }
 
@@ -156,19 +161,80 @@ export const historyStyles = css`
   }
 
   /* Action timeline */
+  .timeline-panel {
+    flex-shrink: 0;
+    position: relative;
+  }
+
   .timeline {
     padding: var(--space-lg);
     background-color: var(--color-bg-dark);
     border-top: 3px solid var(--color-bg-light);
     overflow-x: auto;
-    flex-shrink: 0;
+  }
+
+  .timeline-resize-handle {
+    display: none;
   }
 
   /* Desktop: horizontal layout */
   @media (width >= 800px) {
+    .timeline-panel {
+      height: var(--timeline-height, auto);
+      max-height: min(
+        var(--timeline-height, 220px),
+        max(0px, calc(100% - 160px))
+      );
+    }
+
     .timeline {
-      max-height: 220px;
+      height: 100%;
       overflow: hidden auto;
+    }
+
+    .timeline-resize-handle {
+      display: block;
+      position: absolute;
+      top: -7px;
+      right: 0;
+      left: 0;
+      height: 12px;
+      cursor: ns-resize;
+      touch-action: none;
+      z-index: 1;
+    }
+
+    .timeline-resize-grip {
+      --timeline-resize-grip-color: var(--color-fg-muted);
+
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      width: 24px;
+      height: 6px;
+      transform: translateX(-50%);
+      background: repeating-linear-gradient(
+        to bottom,
+        var(--timeline-resize-grip-color) 0 2px,
+        transparent 2px 4px
+      );
+      box-shadow:
+        -2px 0 var(--color-bg-dark),
+        2px 0 var(--color-bg-dark);
+    }
+
+    .timeline-resize-handle:hover .timeline-resize-grip,
+    .timeline-resize-handle:focus-visible .timeline-resize-grip {
+      --timeline-resize-grip-color: var(--color-primary);
+    }
+
+    .timeline-resize-handle:focus-visible {
+      outline: none;
+    }
+
+    .timeline-resize-handle:focus-visible .timeline-resize-grip {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
     }
 
     .timeline-content {

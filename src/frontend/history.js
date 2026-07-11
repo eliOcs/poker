@@ -1,6 +1,7 @@
 import { html, LitElement } from "lit";
 import { baseStyles, formatCurrency } from "./styles.js";
 import { historyStyles } from "./history-styles.js";
+import { renderHistoryTimeline } from "./history-timeline.js";
 import { seatPositions } from "./game-layout.js";
 import { getHistoryPath } from "../shared/routes.js";
 import "./card.js";
@@ -8,7 +9,22 @@ import "./button.js";
 import "./seat.js";
 import "./board.js";
 
-class History extends LitElement {
+const TIMELINE_MIN_HEIGHT = 120;
+const TABLE_MIN_HEIGHT = 160;
+const TIMELINE_KEYBOARD_STEP = 16;
+
+function getTimelineHeightBounds(mainHeight) {
+  const maxHeight = Math.max(0, mainHeight - TABLE_MIN_HEIGHT);
+  const minHeight = Math.min(TIMELINE_MIN_HEIGHT, maxHeight);
+  return { minHeight, maxHeight };
+}
+
+function clampTimelineHeight(height, mainHeight) {
+  const { minHeight, maxHeight } = getTimelineHeightBounds(mainHeight);
+  return Math.min(maxHeight, Math.max(minHeight, height));
+}
+
+export class History extends LitElement {
   static get styles() {
     return [baseStyles, historyStyles, seatPositions];
   }
@@ -22,6 +38,7 @@ class History extends LitElement {
       handList: { type: Array },
       error: { type: String },
       playerId: { type: String },
+      timelineHeight: { state: true },
     };
   }
 
@@ -34,10 +51,15 @@ class History extends LitElement {
     this.handList = undefined;
     this.error = undefined;
     this.playerId = undefined;
+    this.timelineHeight = undefined;
     this.touchStartX = undefined;
+    this.timelineResizeStartY = undefined;
+    this.timelineResizeStartHeight = undefined;
     this.boundHandleKeydown = this.handleKeydown.bind(this);
     this.boundHandleTouchStart = this.handleTouchStart.bind(this);
     this.boundHandleTouchEnd = this.handleTouchEnd.bind(this);
+    this.boundHandleTimelineResize = this.handleTimelineResize.bind(this);
+    this.boundStopTimelineResize = this.stopTimelineResize.bind(this);
   }
 
   connectedCallback() {
@@ -52,6 +74,7 @@ class History extends LitElement {
     window.removeEventListener("keydown", this.boundHandleKeydown);
     this.removeEventListener("touchstart", this.boundHandleTouchStart);
     this.removeEventListener("touchend", this.boundHandleTouchEnd);
+    this.stopTimelineResize();
   }
 
   handleKeydown(e) {
@@ -65,10 +88,12 @@ class History extends LitElement {
   }
 
   handleTouchStart(e) {
+    if (this.isTimelineResizeEvent(e)) return;
     this.touchStartX = e.touches[0].clientX;
   }
 
   handleTouchEnd(e) {
+    if (this.isTimelineResizeEvent(e)) return;
     if (this.touchStartX === undefined) return;
 
     const touchEndX = e.changedTouches[0].clientX;
@@ -86,6 +111,72 @@ class History extends LitElement {
     }
 
     this.touchStartX = undefined;
+  }
+
+  isTimelineResizeEvent(event) {
+    return event
+      .composedPath()
+      .some((element) => element.classList?.contains("timeline-resize-handle"));
+  }
+
+  handleTimelineResizeStart(event) {
+    const timeline = this.renderRoot.querySelector(".timeline-panel");
+    if (!timeline) return;
+
+    event.preventDefault();
+    this.touchStartX = undefined;
+    this.timelineResizeStartY = event.clientY;
+    this.timelineResizeStartHeight = timeline.getBoundingClientRect().height;
+    window.addEventListener("pointermove", this.boundHandleTimelineResize);
+    window.addEventListener("pointerup", this.boundStopTimelineResize);
+    window.addEventListener("pointercancel", this.boundStopTimelineResize);
+    window.addEventListener("blur", this.boundStopTimelineResize);
+  }
+
+  handleTimelineResize(event) {
+    if (
+      this.timelineResizeStartHeight === undefined ||
+      this.timelineResizeStartY === undefined
+    ) {
+      return;
+    }
+
+    const main = this.renderRoot.querySelector(".main");
+    if (!main) return;
+
+    const height =
+      this.timelineResizeStartHeight -
+      (event.clientY - this.timelineResizeStartY);
+    this.timelineHeight = clampTimelineHeight(
+      height,
+      main.getBoundingClientRect().height,
+    );
+  }
+
+  handleTimelineResizeKeydown(event) {
+    const direction =
+      event.key === "ArrowUp" ? 1 : event.key === "ArrowDown" ? -1 : 0;
+    if (!direction) return;
+
+    const timeline = this.renderRoot.querySelector(".timeline-panel");
+    const main = this.renderRoot.querySelector(".main");
+    if (!timeline || !main) return;
+
+    event.preventDefault();
+    this.timelineHeight = clampTimelineHeight(
+      timeline.getBoundingClientRect().height +
+        direction * TIMELINE_KEYBOARD_STEP,
+      main.getBoundingClientRect().height,
+    );
+  }
+
+  stopTimelineResize() {
+    this.timelineResizeStartY = undefined;
+    this.timelineResizeStartHeight = undefined;
+    window.removeEventListener("pointermove", this.boundHandleTimelineResize);
+    window.removeEventListener("pointerup", this.boundStopTimelineResize);
+    window.removeEventListener("pointercancel", this.boundStopTimelineResize);
+    window.removeEventListener("blur", this.boundStopTimelineResize);
   }
 
   navigateTo(handNumber) {
@@ -257,71 +348,18 @@ class History extends LitElement {
   }
 
   renderTimeline() {
-    const streetNames = ["Preflop", "Flop", "Turn", "River"];
-
-    return html`
-      <div class="timeline">
-        <div class="timeline-content">
-          ${(this.hand?.rounds ?? []).map((round) => {
-            const streetName =
-              round.street ?? streetNames[round.id] ?? "Unknown";
-            const isShowdown = streetName === "Showdown";
-
-            return html`
-              <div class="street">
-                <div class="street-header">${streetName}</div>
-                ${round.cards
-                  ? html`
-                      <div class="street-cards">
-                        ${round.cards.map(
-                          (card) =>
-                            html`<phg-card
-                              .card=${card}
-                              noAnimation
-                            ></phg-card>`,
-                        )}
-                      </div>
-                    `
-                  : ""}
-                <div class="action-list">
-                  ${(round.actions ?? [])
-                    .filter((a) => a.action !== "Dealt Cards")
-                    .map((action) => {
-                      const isYou = action.player_id === this.playerId;
-                      const playerName = this.getPlayerName(action.player_id);
-                      return html`
-                        <div class="action-item">
-                          <span class="action-player ${isYou ? "you" : ""}"
-                            >${playerName}</span
-                          >
-                          ${action.action}
-                          ${action.cards?.length
-                            ? html`<span class="action-cards"
-                                >${action.cards.map(
-                                  (card) =>
-                                    html`<phg-card
-                                      .card=${card}
-                                      noAnimation
-                                    ></phg-card>`,
-                                )}</span
-                              >`
-                            : ""}
-                          ${action.amount
-                            ? html`<span class="action-amount"
-                                >${formatCurrency(action.amount)}</span
-                              >`
-                            : ""}
-                        </div>
-                      `;
-                    })}
-                  ${isShowdown ? this.renderShowdownResult() : ""}
-                </div>
-              </div>
-            `;
-          })}
-        </div>
-      </div>
-    `;
+    const { minHeight: ariaMinHeight, maxHeight: ariaMaxHeight } =
+      getTimelineHeightBounds(this.clientHeight);
+    return renderHistoryTimeline(this, {
+      minHeight: ariaMinHeight,
+      maxHeight: ariaMaxHeight,
+      height: Math.round(
+        Math.min(
+          ariaMaxHeight,
+          Math.max(ariaMinHeight, this.timelineHeight ?? 220),
+        ),
+      ),
+    });
   }
 
   renderShowdownResult() {
