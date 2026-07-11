@@ -7,6 +7,7 @@ function createTournamentView() {
     name: "Friday Deepstack",
     status: "running",
     ownerId: "owner",
+    owner: { id: "owner", name: "Owner" },
     buyIn: 500,
     tableSize: 6,
     level: 2,
@@ -125,6 +126,68 @@ describe("phg-mtt-lobby", () => {
     `);
 
     expect(element.shadowRoot.textContent).to.include("#mp9hladed7d1");
+  });
+
+  it("shows the owner name in the lobby header when available", async () => {
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${createTournamentView()}
+      ></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("Owner: Owner");
+    expect(element.shadowRoot.textContent).not.to.include("Owner: owner");
+  });
+
+  it("prefixes the owner id in the lobby header when no name is available", async () => {
+    const view = createTournamentView();
+    view.ownerId = "mp9hladed7d1";
+    view.owner = { id: "mp9hladed7d1", name: undefined };
+    view.entrants = [
+      {
+        playerId: "mp9hladed7d1",
+        name: "mp9hladed7d1",
+        status: "seated",
+        stack: 1500,
+        tableId: "table1",
+        seatIndex: 0,
+        finishPosition: null,
+      },
+    ];
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("Owner: #mp9hladed7d1");
+  });
+
+  it("uses the backend-provided owner name when available", async () => {
+    const view = createTournamentView();
+    view.ownerId = "mp9hladed7d1";
+    view.owner = { id: "mp9hladed7d1", name: "Mika" };
+    view.entrants = [
+      {
+        playerId: "mp9hladed7d1",
+        name: "mp9hladed7d1",
+        status: "seated",
+        stack: 1500,
+        tableId: "table1",
+        seatIndex: 0,
+        finishPosition: null,
+      },
+    ];
+
+    const element = await fixture(html`
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${view}
+        .user=${{ id: "someone-else", name: "Current User" }}
+      ></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("Owner: Mika");
   });
 
   it("links players in the MTT player table to their profile", async () => {

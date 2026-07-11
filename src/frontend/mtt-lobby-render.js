@@ -63,7 +63,7 @@ function getTableName(tournament, tableId) {
   );
 }
 
-function formatEntrantName(entrant) {
+export function formatEntrantName(entrant) {
   return entrant.name && entrant.name !== entrant.playerId
     ? entrant.name
     : `#${entrant.playerId}`;

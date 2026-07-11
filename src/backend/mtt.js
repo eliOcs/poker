@@ -40,7 +40,7 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} TournamentEntrant
  * @property {string} playerId
- * @property {string} name
+ * @property {string} [name]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
@@ -64,6 +64,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
+ * @property {string} [ownerName]
  * @property {number} buyIn
  * @property {number} tableSize
  * @property {number} initialStack
@@ -93,7 +94,7 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} ManagedTournamentViewEntrant
  * @property {string} playerId
- * @property {string} name
+ * @property {string} [name]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
@@ -106,6 +107,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
+ * @property {{ id: string, name?: string }} owner
  * @property {number} buyIn
  * @property {number} tableSize
  * @property {number} level
@@ -195,6 +197,22 @@ export function createMttManager({
    */
   function broadcastTournament(tournament, playerMoves = []) {
     broadcastTournamentState(tournament.id, playerMoves);
+  }
+
+  /**
+   * @param {TournamentEntrant} entrant
+   */
+  function syncEntrantNameToTable(entrant) {
+    if (!entrant.tableId || entrant.seatIndex === undefined) return;
+
+    const game = games.get(entrant.tableId);
+    if (!game) return;
+
+    const seat = game.seats[entrant.seatIndex];
+    if (!seat || seat.empty) return;
+
+    seat.player.name = entrant.name;
+    broadcastTableState(game.id);
   }
 
   /**
@@ -540,7 +558,7 @@ export function createMttManager({
 
     tournament.entrants.set(user.id, {
       playerId: user.id,
-      name: user.name ?? user.id,
+      name: user.name,
       status: "registered",
       stack: tournament.initialStack,
       handsPlayed: 0,
@@ -568,6 +586,7 @@ export function createMttManager({
         name: DEFAULT_TOURNAMENT_NAME,
         status: "registration",
         ownerId: owner.id,
+        ownerName: owner.name,
         buyIn,
         tableSize,
         initialStack: Tournament.INITIAL_STACK,
@@ -685,19 +704,16 @@ export function createMttManager({
      */
     syncUser(user) {
       for (const tournament of tournaments.values()) {
+        const isOwner = tournament.ownerId === user.id;
         const entrant = tournament.entrants.get(user.id);
-        if (!entrant) continue;
-        entrant.name = user.name ?? user.id;
-        if (entrant.tableId) {
-          const game = games.get(entrant.tableId);
-          const seat =
-            game && entrant.seatIndex !== undefined
-              ? game.seats[entrant.seatIndex]
-              : undefined;
-          if (game && seat && !seat.empty) {
-            seat.player.name = entrant.name;
-            broadcastTableState(game.id);
-          }
+        if (!isOwner && !entrant) continue;
+
+        if (isOwner) {
+          tournament.ownerName = user.name;
+        }
+        if (entrant) {
+          entrant.name = user.name;
+          syncEntrantNameToTable(entrant);
         }
         broadcastTournament(tournament);
       }

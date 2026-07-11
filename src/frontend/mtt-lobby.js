@@ -7,6 +7,7 @@ import {
   formatStatus,
   formatLevel,
   formatPayoutTier,
+  formatEntrantName,
   renderActions,
   renderTables,
   renderEntrantsTable,
@@ -232,6 +233,20 @@ class MttLobby extends LitElement {
     ></phg-edit-label>`;
   }
 
+  _renderOwner(tournament) {
+    if (tournament.owner) {
+      return formatEntrantName({
+        playerId: tournament.owner.id,
+        name: tournament.owner.name,
+      });
+    }
+
+    const owner = tournament?.entrants.find(
+      (entrant) => entrant.playerId === tournament.ownerId,
+    );
+    return owner ? formatEntrantName(owner) : `#${tournament.ownerId}`;
+  }
+
   render() {
     const tournament = this.tournament;
     const currentTable = this._getCurrentTable();
@@ -298,7 +313,7 @@ class MttLobby extends LitElement {
                         <h1>${this._renderTitle(tournament)}</h1>
                         <div class="meta">
                           <span>#${tournament.id}</span>
-                          <span>Owner: ${tournament.ownerId}</span>
+                          <span>Owner: ${this._renderOwner(tournament)}</span>
                           <span
                             >Created
                             ${new Date(

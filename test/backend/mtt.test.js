@@ -38,6 +38,65 @@ describe("mtt-manager", () => {
     assert.equal(view.actions.canStart, false);
   });
 
+  it("syncs owner and entrant names in memory", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner At Registration"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(
+      tournamentId,
+      createUser("p2", "Bob At Registration"),
+    );
+
+    ctx.manager.syncUser(createUser("owner", "Owner From Sync"));
+    ctx.manager.syncUser(createUser("p2", "Bob From Sync"));
+
+    const view = ctx.manager.getTournamentView(tournamentId, "owner");
+
+    assert.deepEqual(view.owner, {
+      id: "owner",
+      name: "Owner From Sync",
+    });
+    assert.deepEqual(
+      view.entrants.map((entrant) => ({
+        playerId: entrant.playerId,
+        name: entrant.name,
+      })),
+      [
+        { playerId: "owner", name: "Owner From Sync" },
+        { playerId: "p2", name: "Bob From Sync" },
+      ],
+    );
+  });
+
+  it("keeps unset owner and entrant names undefined", () => {
+    const owner = createUser("owner");
+    const player = createUser("p2");
+    owner.name = undefined;
+    player.name = undefined;
+    const tournamentId = ctx.manager.createTournament({
+      owner,
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(tournamentId, player);
+
+    const view = ctx.manager.getTournamentView(tournamentId, owner.id);
+
+    assert.deepEqual(view.owner, { id: owner.id, name: undefined });
+    assert.deepEqual(
+      view.entrants.map((entrant) => ({
+        playerId: entrant.playerId,
+        name: entrant.name,
+      })),
+      [
+        { playerId: owner.id, name: undefined },
+        { playerId: player.id, name: undefined },
+      ],
+    );
+  });
+
   it("requires sign up before tournament registration", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner", "Owner"),

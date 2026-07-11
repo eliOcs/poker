@@ -154,6 +154,10 @@ export function buildTournamentView(tournament, games, playerId) {
     name: tournament.name,
     status: tournament.status,
     ownerId: tournament.ownerId,
+    owner: {
+      id: tournament.ownerId,
+      name: tournament.ownerName,
+    },
     buyIn: tournament.buyIn,
     tableSize: tournament.tableSize,
     level: tournament.level,
