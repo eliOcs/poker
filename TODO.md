@@ -1,7 +1,5 @@
 # To do
 
-- History down panel allow resize
-- History new tab
 - Late Registration
 - Rebuy option: (1 rebuy)
 - Bounty option: (+10% buyin)
