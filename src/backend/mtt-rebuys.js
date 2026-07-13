@@ -72,21 +72,6 @@ export function hasUnresolvedRebuyDecisions(decision) {
 }
 
 /**
- * @param {ManagedTournament} tournament
- * @param {Game} game
- * @param {RebuyDecisionEntry} entry
- */
-function getDecisionContext(tournament, game, entry) {
-  const entrant = tournament.entrants.get(entry.playerId);
-  const seat = game.seats[entry.seatIndex];
-  if (!entrant || !seat || seat.empty) return;
-  if (seat.player.id !== entry.playerId) return;
-  if (entrant.status !== "seated" || entrant.tableId !== game.id) return;
-  if (entrant.seatIndex !== entry.seatIndex) return;
-  return { entrant, seat };
-}
-
-/**
  * Accepts one authenticated player's pending decision. The rebuy-period check
  * intentionally happens when the batch opens: decisions that were already
  * offered remain valid after the cutoff.
@@ -104,12 +89,13 @@ export function resolveRebuyDecision(tournament, game, playerId, resolution) {
   );
   if (!entry || entry.resolution !== undefined) return false;
 
-  const context = getDecisionContext(tournament, game, entry);
-  if (!context) return false;
-  const { entrant, seat } = context;
-
   if (resolution === "rebuy") {
-    if (!isRebuyEligibleByCount(tournament, entrant)) return false;
+    const entrant = /** @type {import('./mtt.js').TournamentEntrant} */ (
+      tournament.entrants.get(playerId)
+    );
+    const seat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+      game.seats[entry.seatIndex]
+    );
 
     entrant.rebuysUsed += 1;
     entrant.stack = tournament.initialStack;
@@ -157,23 +143,15 @@ export function finalizeRebuyDecision(tournament, game, now) {
 
   const eliminatedEntrants = decision.entries
     .filter((entry) => entry.resolution === "leave")
-    .map((entry) => {
-      const entrant = tournament.entrants.get(entry.playerId);
-      const seat = game.seats[entry.seatIndex];
-      if (
-        !entrant ||
-        !seat ||
-        seat.empty ||
-        seat.player.id !== entry.playerId
-      ) {
-        throw new Error("invalid rebuy decision seat");
-      }
-      return {
-        entrant,
-        seat,
-        seatIndex: entry.seatIndex,
-      };
-    });
+    .map((entry) => ({
+      entrant: /** @type {import('./mtt.js').TournamentEntrant} */ (
+        tournament.entrants.get(entry.playerId)
+      ),
+      seat: /** @type {import('./poker/seat.js').OccupiedSeat} */ (
+        game.seats[entry.seatIndex]
+      ),
+      seatIndex: entry.seatIndex,
+    }));
 
   eliminateBustedEntrants(
     game,
