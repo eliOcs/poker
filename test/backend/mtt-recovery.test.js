@@ -125,6 +125,7 @@ describe("mtt recovery", () => {
     assert.equal(view.status, "finished");
     assert.equal(view.name, "Recovered MTT");
     assert.equal(view.buyIn, 500);
+    assert.equal(view.prizePool, 1000);
     assert.equal(view.currentPlayer.status, "eliminated");
     assert.equal(view.currentPlayer.tableId, "table123");
     assert.equal(view.currentPlayer.finishPosition, 2);

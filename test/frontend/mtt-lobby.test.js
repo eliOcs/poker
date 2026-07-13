@@ -9,6 +9,7 @@ function createTournamentView() {
     ownerId: "owner",
     owner: { id: "owner", name: "Owner" },
     buyIn: 500,
+    prizePool: 500,
     tableSize: 6,
     level: 2,
     timeToNextLevel: 90,
@@ -87,6 +88,20 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Table 1");
     expect(element.shadowRoot.textContent).to.include("Standings");
     expect(element.shadowRoot.textContent).to.include("Lobby");
+  });
+
+  it("renders payouts from the backend-provided prize pool", async () => {
+    const view = createTournamentView();
+    view.entrants = Array.from({ length: 5 }, (_, index) => ({
+      playerId: `p${index + 1}`,
+    }));
+    view.prizePool = 3000;
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("1st: $24, 2nd: $6");
   });
 
   it("does not show a history drawer item in the lobby", async () => {

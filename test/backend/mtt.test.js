@@ -24,17 +24,20 @@ describe("mtt-manager", () => {
     assert.equal(view.status, "registration");
     assert.equal(view.name, "Multi-Table Tournament");
     assert.equal(view.entrants.length, 1);
+    assert.equal(view.prizePool, 500);
     assert.equal(view.currentPlayer.status, "registered");
     assert.equal(view.actions.canStart, false);
 
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     view = ctx.manager.getTournamentView(tournamentId, "owner");
     assert.equal(view.entrants.length, 2);
+    assert.equal(view.prizePool, 1000);
     assert.equal(view.actions.canStart, true);
 
     ctx.manager.unregisterPlayer(tournamentId, "p2", "p2");
     view = ctx.manager.getTournamentView(tournamentId, "owner");
     assert.equal(view.entrants.length, 1);
+    assert.equal(view.prizePool, 500);
     assert.equal(view.actions.canStart, false);
   });
 

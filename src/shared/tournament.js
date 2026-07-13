@@ -112,14 +112,13 @@ const PAYOUT_TIERS = [
 ];
 
 /**
- * Calculates prize distribution based on player count and buy-in
+ * Calculates prize distribution based on player count and prize pool.
+ * The player count selects the payout tier independently of the pool size.
  * @param {number} playerCount - Number of players
- * @param {Cents} buyinAmount - Buy-in amount per player in cents
+ * @param {Cents} prizePool - Total prize pool in cents
  * @returns {Prize[]}
  */
-export function calculatePrizes(playerCount, buyinAmount) {
-  const pool = playerCount * buyinAmount;
-
+export function calculatePrizesFromPool(playerCount, prizePool) {
   if (playerCount <= 1) {
     return [];
   }
@@ -135,6 +134,16 @@ export function calculatePrizes(playerCount, buyinAmount) {
 
   return percentages.map((pct, i) => ({
     position: i + 1,
-    amount: Math.round(pool * pct),
+    amount: Math.round(prizePool * pct),
   }));
+}
+
+/**
+ * Calculates prize distribution based on player count and buy-in.
+ * @param {number} playerCount - Number of players
+ * @param {Cents} buyinAmount - Buy-in amount per player in cents
+ * @returns {Prize[]}
+ */
+export function calculatePrizes(playerCount, buyinAmount) {
+  return calculatePrizesFromPool(playerCount, playerCount * buyinAmount);
 }

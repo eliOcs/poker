@@ -45,9 +45,10 @@ function getStandingBucket(entrant) {
 
 /**
  * @param {ManagedTournament} tournament
+ * @param {number} prizePool
  * @returns {ManagedTournamentViewEntrant[]}
  */
-function buildStandings(tournament) {
+function buildStandings(tournament, prizePool) {
   const standings = buildEntrants(tournament).sort((a, b) => {
     const bucketCompare = getStandingBucket(a) - getStandingBucket(b);
     if (bucketCompare !== 0) return bucketCompare;
@@ -69,7 +70,7 @@ function buildStandings(tournament) {
 
   if (tournament.status !== "registration") {
     const playerCount = tournament.entrants.size;
-    const prizes = Tournament.calculatePrizes(playerCount, tournament.buyIn);
+    const prizes = Tournament.calculatePrizesFromPool(playerCount, prizePool);
     const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
 
     for (let i = 0; i < standings.length; i++) {
@@ -147,7 +148,8 @@ function buildTournamentActions(tournament, entrant, playerId) {
 export function buildTournamentView(tournament, games, playerId) {
   const entrant = tournament.entrants.get(playerId);
   const entrants = buildEntrants(tournament);
-  const standings = buildStandings(tournament);
+  const prizePool = tournament.entrants.size * tournament.buyIn;
+  const standings = buildStandings(tournament, prizePool);
   const tables = buildTables(tournament, games);
   return {
     id: tournament.id,
@@ -159,6 +161,7 @@ export function buildTournamentView(tournament, games, playerId) {
       name: tournament.ownerName,
     },
     buyIn: tournament.buyIn,
+    prizePool,
     tableSize: tournament.tableSize,
     level: tournament.level,
     timeToNextLevel: getTimeToNextLevel(tournament),

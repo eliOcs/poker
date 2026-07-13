@@ -1,7 +1,7 @@
 import { html } from "lit";
 import { formatCurrency } from "./styles.js";
 import { getHistoryPath, getTablePath } from "../shared/routes.js";
-import { calculatePrizes } from "../shared/tournament.js";
+import { calculatePrizesFromPool } from "../shared/tournament.js";
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -36,7 +36,10 @@ export function formatNetWinnings(cents) {
 }
 
 export function formatPayoutTier(tournament) {
-  const prizes = calculatePrizes(tournament.entrants.length, tournament.buyIn);
+  const prizes = calculatePrizesFromPool(
+    tournament.entrants.length,
+    tournament.prizePool,
+  );
   if (prizes.length === 0) return "\u2014";
   return prizes
     .map((p) => `${ordinal(p.position)}: ${formatCurrency(p.amount)}`)
