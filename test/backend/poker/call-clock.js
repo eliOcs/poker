@@ -2,14 +2,11 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
+import * as ActionClock from "../../../src/backend/poker/action-clock.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
 import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import playerView from "../../../src/backend/poker/player-view.js";
-import {
-  CLOCK_WAIT_TICKS,
-  CLOCK_DURATION_TICKS,
-} from "../../../src/backend/poker/game-tick.js";
 import { drainGenerator } from "./test-helpers.js";
 
 /** Helper to create a test player */
@@ -37,9 +34,9 @@ describe("call the clock", () => {
     Actions.buyIn(game, { seat: 1, amount: 50 });
   });
 
-  describe("actingTicks tracking", () => {
-    it("should initialize actingTicks when game is created", () => {
-      assert.strictEqual(game.actingTicks, 0);
+  describe("action wait tracking", () => {
+    it("should initialize wait ticks when game is created", () => {
+      assert.strictEqual(game.actionClock.waitTicks, 0);
     });
 
     it("should have actingTicks at 0 after betting round starts", () => {
@@ -51,8 +48,8 @@ describe("call the clock", () => {
       drainGenerator(dealGen);
       Betting.startBettingRound(game, "preflop");
 
-      // actingTicks is managed by the tick system, not betting
-      assert.strictEqual(game.actingTicks, 0);
+      // Wait ticks are managed by the tick system, not betting.
+      assert.strictEqual(game.actionClock.waitTicks, 0);
     });
   });
 
@@ -92,7 +89,7 @@ describe("call the clock", () => {
 
       const actingSeat = game.hand.actingSeat;
       // Force enough ticks to have passed
-      game.actingTicks = CLOCK_WAIT_TICKS;
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
 
       assert.throws(() => Actions.callClock(game, { seat: actingSeat }), {
         message: "cannot call clock on yourself",
@@ -109,7 +106,7 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // actingTicks is 0, less than CLOCK_WAIT_TICKS
+      // No wait ticks have elapsed yet.
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
 
       assert.throws(() => Actions.callClock(game, { seat: nonActingSeat }), {
@@ -128,8 +125,8 @@ describe("call the clock", () => {
       game.hand.currentBet = game.blinds.big;
 
       // Force enough ticks to have passed
-      game.actingTicks = CLOCK_WAIT_TICKS;
-      game.clockTicks = 1; // Already called
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
+      ActionClock.start(game.actionClock);
 
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
 
@@ -149,7 +146,7 @@ describe("call the clock", () => {
       game.hand.currentBet = game.blinds.big;
 
       // Force enough ticks to have passed
-      game.actingTicks = CLOCK_WAIT_TICKS;
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
 
       const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
 
@@ -161,14 +158,12 @@ describe("call the clock", () => {
   });
 
   describe("game state initialization", () => {
-    it("should initialize actingTicks as 0", () => {
+    it("should initialize an empty action clock", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.actingTicks, 0);
-    });
-
-    it("should initialize clockTicks as 0", () => {
-      const newGame = Game.create();
-      assert.strictEqual(newGame.clockTicks, 0);
+      assert.deepStrictEqual(newGame.actionClock, {
+        waitTicks: 0,
+        countdownTicks: 0,
+      });
     });
 
     it("should initialize tickTimer as undefined", () => {
@@ -177,18 +172,8 @@ describe("call the clock", () => {
     });
   });
 
-  describe("tick constants", () => {
-    it("CLOCK_WAIT_TICKS should be 15 ticks", () => {
-      assert.strictEqual(CLOCK_WAIT_TICKS, 15);
-    });
-
-    it("CLOCK_DURATION_TICKS should be 60 ticks", () => {
-      assert.strictEqual(CLOCK_DURATION_TICKS, 60);
-    });
-  });
-
   describe("callClock in player view", () => {
-    it("should show callClock action to waiting player after 60 ticks", () => {
+    it("should show callClock action at the wait boundary", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -198,8 +183,8 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Force 60+ ticks to have passed
-      game.actingTicks = CLOCK_WAIT_TICKS;
+      // Reach the manual call boundary.
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
 
       // Get view for the non-acting player
       const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
@@ -222,8 +207,8 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Only 59 ticks have passed
-      game.actingTicks = CLOCK_WAIT_TICKS - 1;
+      // Stop one tick short of the manual call boundary.
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS - 1;
 
       // Get view for the non-acting player
       const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
@@ -246,15 +231,15 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Force 60+ ticks to have passed
-      game.actingTicks = CLOCK_WAIT_TICKS;
+      // Reach the manual call boundary.
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
 
       // Call the clock
       const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
       Actions.callClock(game, { seat: nonActingSeatIndex });
 
-      // Simulate clock being started (index.js would call startClockTicks)
-      game.clockTicks = 1;
+      // Simulate the post-action handler starting the clock.
+      ActionClock.start(game.actionClock);
 
       // Get view for the non-acting player
       const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
@@ -266,7 +251,7 @@ describe("call the clock", () => {
       assert.strictEqual(hasCallClock, false);
     });
 
-    it("should include clockRemaining in hand state for all players", () => {
+    it("should preserve the serialized player-view clock fields", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
       blindsGen.next();
@@ -276,20 +261,35 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Force 60+ ticks and call clock
-      game.actingTicks = CLOCK_WAIT_TICKS;
+      // Reach the wait boundary and call the clock.
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
       const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
       Actions.callClock(game, { seat: nonActingSeatIndex });
 
-      // Simulate clock being started
-      game.clockTicks = 1;
+      const beforeStart = playerView(game, player1);
+      assert.strictEqual(
+        JSON.stringify({
+          actingTicks: beforeStart.hand.actingTicks,
+          clockRemaining: beforeStart.hand.clockRemaining,
+        }),
+        `{"actingTicks":${ActionClock.CLOCK_WAIT_TICKS}}`,
+      );
 
-      // Both players should see clockRemaining in their view
+      ActionClock.start(game.actionClock);
+
       const view1 = playerView(game, player1);
       const view2 = playerView(game, player2);
+      const expected = `{"actingTicks":${ActionClock.CLOCK_WAIT_TICKS},"clockRemaining":59}`;
 
-      assert.strictEqual(view1.hand.clockRemaining, 59);
-      assert.strictEqual(view2.hand.clockRemaining, 59);
+      for (const view of [view1, view2]) {
+        assert.strictEqual(
+          JSON.stringify({
+            actingTicks: view.hand.actingTicks,
+            clockRemaining: view.hand.clockRemaining,
+          }),
+          expected,
+        );
+      }
     });
 
     it("should include actingTicks in hand state for all players", () => {
@@ -302,10 +302,10 @@ describe("call the clock", () => {
       Betting.startBettingRound(game, "preflop");
       game.hand.currentBet = game.blinds.big;
 
-      // Set actingTicks
-      game.actingTicks = 45;
+      // Set the internal wait state.
+      game.actionClock.waitTicks = 45;
 
-      // Both players should see actingTicks in their view
+      // Both players should see the existing protocol field.
       const view1 = playerView(game, player1);
       const view2 = playerView(game, player2);
 

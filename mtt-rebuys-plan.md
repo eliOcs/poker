@@ -25,7 +25,7 @@ Update this checklist in the same commit that completes each remaining stage.
 
 - [x] Stage 0 — Baseline validation and documentation (`fe76abd`)
 - [x] Stage 1 — Advance the button at hand start for every game type
-- [ ] Stage 2 — Extract reusable action-clock state
+- [x] Stage 2 — Extract reusable action-clock state
 - [ ] Stage 3 — Separate payout structure from prize-pool calculation
 - [ ] Stage 4 — Add a managed table-action dispatch seam
 - [ ] Stage 5 — Split hand-settled and table-ready concepts

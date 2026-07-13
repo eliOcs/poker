@@ -1,8 +1,9 @@
 import * as Betting from "./betting.js";
 import * as Actions from "./actions.js";
+import * as ActionClock from "./action-clock.js";
 import * as HandHistory from "./hand-history/index.js";
 import * as TournamentSummary from "./tournament-summary.js";
-import { tick, shouldTickBeRunning, resetActingTicks } from "./game-tick.js";
+import { tick, shouldTickBeRunning } from "./game-tick.js";
 import { createLog, emitLog } from "../logger.js";
 import { TIMER_INTERVAL } from "./game-constants.js";
 import {
@@ -217,7 +218,7 @@ export function startHand(game) {
   Betting.startBettingRound(game, "preflop");
   autoFoldSittingOutActingPlayers(game);
   game.hand.currentBet = game.blinds.big;
-  resetActingTicks(game);
+  ActionClock.reset(game.actionClock);
   executePreActions(game);
   return handData;
 }
@@ -240,6 +241,6 @@ export function performAutoAction(game, seatIndex) {
     HandHistory.recordAction(game.id, occupiedSeat.player.id, "fold");
   }
 
-  resetActingTicks(game);
+  ActionClock.reset(game.actionClock);
   return processGameFlow(game);
 }

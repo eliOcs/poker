@@ -2,7 +2,7 @@ import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
 import { invalidateCallPreActions } from "./pre-action.js";
-import { isClockCallable } from "./game-tick.js";
+import * as ActionClock from "./action-clock.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
 
@@ -694,8 +694,8 @@ export function callClock(game, { seat }) {
     throw new Error("cannot call clock on yourself");
   }
 
-  if (!isClockCallable(game)) {
-    if (game.clockTicks > 0) {
+  if (!ActionClock.canStart(game.actionClock)) {
+    if (ActionClock.isActive(game.actionClock)) {
       throw new Error("clock already called");
     }
     throw new Error("must wait 60 seconds before calling clock");

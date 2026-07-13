@@ -1,4 +1,5 @@
 import * as PokerGame from "./poker/game.js";
+import * as ActionClock from "./poker/action-clock.js";
 import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
 
@@ -104,8 +105,7 @@ export function resetClosedTable(game) {
   delete game.runout;
   delete game.pendingHandHistory;
   delete game.winnerMessage;
-  game.actingTicks = 0;
-  game.clockTicks = 0;
+  ActionClock.reset(game.actionClock);
   for (let i = 0; i < game.seats.length; i += 1) {
     game.seats[i] = Seat.empty();
   }

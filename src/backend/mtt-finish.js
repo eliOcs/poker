@@ -2,6 +2,7 @@ import {
   applyTournamentStateToTable,
   clearTableWinner,
 } from "./mtt-table-state.js";
+import * as ActionClock from "./poker/action-clock.js";
 import {
   compareForcedFinishEntrants,
   getEntrantSeatContext,
@@ -74,6 +75,7 @@ export function finishTournament(
       game.tournament.winner = resolvedWinner.seatIndex;
     }
     delete game.countdown;
+    ActionClock.reset(game.actionClock);
     ensureTableTick(game);
   }
 

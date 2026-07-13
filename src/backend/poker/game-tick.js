@@ -7,15 +7,12 @@
  * TIMER_SPEED to affect all time-based actions uniformly.
  */
 
+import * as ActionClock from "./action-clock.js";
 import * as TournamentTick from "./tournament-tick.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
  */
-
-// Tick thresholds (in number of ticks, typically 1 tick = 1 second)
-export const CLOCK_WAIT_TICKS = 15; // "Call Clock" available after 15 ticks
-export const CLOCK_DURATION_TICKS = 60; // Clock expires after 60 ticks
 
 /**
  * @typedef {Object} TickResult
@@ -55,10 +52,10 @@ function handleCountdown(game, result) {
  * @param {TickResult} result
  */
 function handleClockExpiry(game, actingSeat, result) {
-  if (game.clockTicks === 0 || result.autoActionSeat !== undefined) return;
-
-  game.clockTicks += 1;
-  if (game.clockTicks >= CLOCK_DURATION_TICKS) {
+  if (
+    result.autoActionSeat === undefined &&
+    ActionClock.tick(game.actionClock)
+  ) {
     result.autoActionSeat = actingSeat;
     result.autoActionReason = "clock";
   }
@@ -125,7 +122,7 @@ function handleActingTick(game, result) {
   const isActing = actingSeat !== -1;
 
   if (isActing) {
-    game.actingTicks += 1;
+    ActionClock.tickWait(game.actionClock);
     handleClockExpiry(game, actingSeat, result);
     result.shouldBroadcast = true;
   }
@@ -210,35 +207,4 @@ export function shouldTickBeRunning(game) {
     isRunningOut ||
     isCollectingBets
   );
-}
-
-/**
- * Resets tick counters when action changes to a new player
- * Call this when:
- * - Action advances to a new player
- * - A betting round starts
- * - A player takes an action
- *
- * @param {Game} game
- */
-export function resetActingTicks(game) {
-  game.actingTicks = 0;
-  game.clockTicks = 0;
-}
-
-/**
- * Starts the clock countdown (called when someone calls the clock)
- * @param {Game} game
- */
-export function startClockTicks(game) {
-  game.clockTicks = 1; // Start at 1, will be incremented each tick
-}
-
-/**
- * Checks if the "Call Clock" option should be available
- * @param {Game} game
- * @returns {boolean}
- */
-export function isClockCallable(game) {
-  return game.actingTicks >= CLOCK_WAIT_TICKS && game.clockTicks === 0;
 }

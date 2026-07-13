@@ -91,6 +91,8 @@ describe("mtt-manager table collapse", () => {
       );
     finalBustSeat.stack = 0;
     finalBustSeat.sittingOut = true;
+    finalTable.actionClock.waitTicks = 15;
+    finalTable.actionClock.countdownTicks = 59;
 
     ctx.manager.handleHandFinalized(finalTable);
 
@@ -104,6 +106,10 @@ describe("mtt-manager table collapse", () => {
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
     assert.ok(tournament.tables[2].closedAt);
+    assert.deepStrictEqual(finalTable.actionClock, {
+      waitTicks: 0,
+      countdownTicks: 0,
+    });
   });
 
   it("writes a tournament summary when an MTT finishes", async () => {
