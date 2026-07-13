@@ -721,6 +721,14 @@ export function createMttManager({
     },
 
     /**
+     * Managed table actions are added by later rebuy stages.
+     * @returns {false}
+     */
+    handleTableAction() {
+      return false;
+    },
+
+    /**
      * @param {Game} game
      */
     handleHandFinalized(game) {

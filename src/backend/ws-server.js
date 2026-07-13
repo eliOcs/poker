@@ -19,6 +19,7 @@ import { createMessageHandler } from "./ws-message-handler.js";
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
  * @typedef {import('./logger.js').Log} Log
+ * @typedef {(player: import('./poker/seat.js').Player, game: Game, action: string, args: Record<string, unknown>) => boolean} ManagedTableActionHandler
  */
 
 /**
@@ -33,6 +34,7 @@ import { createMessageHandler } from "./ws-message-handler.js";
  * @property {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
  * @property {(gameId: string) => void} broadcastGameStateMessage
  * @property {(tournamentId: string, user: UserType) => unknown|void} buildTournamentStateMessage
+ * @property {ManagedTableActionHandler} [handleManagedTableAction]
  */
 
 /**
@@ -218,6 +220,7 @@ async function handleUpgrade(request, socket, head, params) {
  *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
  *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
  *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
+ *   handleManagedTableAction?: WebSocketServerParams["handleManagedTableAction"],
  * }} params
  * @returns {(
  *   ws: import("ws").WebSocket,
@@ -235,6 +238,7 @@ function createConnectionHandler({
   actionRateLimiter,
   broadcastGameMessage,
   broadcastGameStateMessage,
+  handleManagedTableAction,
 }) {
   function handleConnection(
     ws,
@@ -298,6 +302,7 @@ function createConnectionHandler({
         actionRateLimiter,
         broadcastGameMessage,
         broadcastGameStateMessage,
+        handleManagedTableAction,
       }),
     );
 
@@ -323,6 +328,7 @@ export function createWebSocketServer(params) {
     actionRateLimiter,
     broadcastGameMessage,
     broadcastGameStateMessage,
+    handleManagedTableAction,
   } = params;
   const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
 
@@ -346,6 +352,7 @@ export function createWebSocketServer(params) {
       actionRateLimiter,
       broadcastGameMessage,
       broadcastGameStateMessage,
+      handleManagedTableAction,
     }),
   );
 

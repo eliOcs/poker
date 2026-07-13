@@ -186,6 +186,7 @@ function getRawMessageText(rawMessage) {
  *   log: Log,
  *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
  *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
+ *   handleManagedTableAction: NonNullable<WebSocketServerParams["handleManagedTableAction"]>,
  * }} params
  */
 function dispatchGameAction({
@@ -198,6 +199,7 @@ function dispatchGameAction({
   log,
   broadcastGameMessage,
   broadcastGameStateMessage,
+  handleManagedTableAction,
 }) {
   if (action === "emote" || action === "chat") {
     handleSocialAction(game, user, action, args, broadcastGameMessage, gameId);
@@ -220,6 +222,14 @@ function dispatchGameAction({
     log.context.game = {
       ...(log.context.game ?? {}),
       handNumber: game.handNumber,
+    };
+    return;
+  }
+
+  if (handleManagedTableAction(player, game, action, args)) {
+    log.context.game = {
+      ...(log.context.game ?? {}),
+      ...PokerGame.gameStateSnapshot(game),
     };
     return;
   }
@@ -249,6 +259,7 @@ function dispatchGameAction({
  *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
  *   broadcastGameMessage: WebSocketServerParams["broadcastGameMessage"],
  *   broadcastGameStateMessage: WebSocketServerParams["broadcastGameStateMessage"],
+ *   handleManagedTableAction?: WebSocketServerParams["handleManagedTableAction"],
  * }} params
  * @returns {(rawMessage: import("ws").RawData) => void}
  */
@@ -262,6 +273,7 @@ export function createMessageHandler({
   actionRateLimiter,
   broadcastGameMessage,
   broadcastGameStateMessage,
+  handleManagedTableAction = () => false,
 }) {
   return (rawMessage) => {
     const log = createLog("ws_action");
@@ -307,6 +319,7 @@ export function createMessageHandler({
         log,
         broadcastGameMessage,
         broadcastGameStateMessage,
+        handleManagedTableAction,
       });
     } catch (err) {
       if (err instanceof RateLimitError) {

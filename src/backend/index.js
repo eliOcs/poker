@@ -364,6 +364,7 @@ createWebSocketServer({
   broadcastGameMessage,
   broadcastGameStateMessage,
   buildTournamentStateMessage,
+  handleManagedTableAction: mttManager.handleTableAction,
 });
 
 Store.initialize();
