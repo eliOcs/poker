@@ -1,6 +1,5 @@
 import * as Id from "./id.js";
 import * as PokerGame from "./poker/game.js";
-import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
 import { TIMER_INTERVAL } from "./poker/game-constants.js";
 import { tickClock } from "./poker/tournament-clock.js";
@@ -11,7 +10,6 @@ import {
 import {
   applyTournamentStateToTable,
   isHandSettled,
-  countActiveEntrants,
   syncWaitingTableState,
   getActiveTables,
   hasSettledWaitingHand,
@@ -29,6 +27,7 @@ import {
   movePlayer,
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-collapse.js";
+import { processTableAfterHand } from "./mtt-player-lifecycle.js";
 
 const FINAL_TABLE_NAME = "Final Table";
 
@@ -373,68 +372,6 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @param {Game} game
-   * @returns {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>}
-   */
-  function getBustedEntrantsForTable(tournament, game) {
-    /** @type {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>} */
-    const bustedEntrants = [];
-
-    for (let i = 0; i < game.seats.length; i += 1) {
-      const seat = game.seats[i];
-      if (!seat || seat.empty) continue;
-
-      const occupiedSeat =
-        /** @type {import("./poker/seat.js").OccupiedSeat} */ (seat);
-
-      const entrant = tournament.entrants.get(occupiedSeat.player.id);
-      if (!entrant) continue;
-      entrant.name = occupiedSeat.player.name ?? entrant.name;
-      entrant.handsPlayed = occupiedSeat.handsPlayed;
-
-      if (occupiedSeat.stack > 0) {
-        delete occupiedSeat.bustedPosition;
-        entrant.status = "seated";
-        entrant.stack = occupiedSeat.stack;
-        entrant.tableId = game.id;
-        entrant.seatIndex = i;
-        continue;
-      }
-
-      if (entrant.status === "seated") {
-        bustedEntrants.push({ seat: occupiedSeat, entrant, seatIndex: i });
-      }
-    }
-
-    return bustedEntrants;
-  }
-
-  /**
-   * @param {Game} game
-   * @param {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>} bustedEntrants
-   * @param {number} activeBefore
-   */
-  function markBustedEntrants(game, bustedEntrants, activeBefore) {
-    bustedEntrants
-      .sort((a, b) => a.seatIndex - b.seatIndex)
-      .forEach(({ seat, entrant, seatIndex }, index) => {
-        const finishPosition = activeBefore - index;
-        seat.bustedPosition = finishPosition;
-        seat.stack = 0;
-        seat.bet = 0;
-        seat.sittingOut = true;
-        entrant.status = "eliminated";
-        entrant.stack = 0;
-        delete entrant.tableId;
-        delete entrant.seatIndex;
-        entrant.finishPosition = finishPosition;
-        entrant.eliminatedAt = now();
-        game.seats[seatIndex] = Seat.empty();
-      });
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
    * @param {Iterable<string>} tableIds
    */
   function syncTables(tournament, tableIds) {
@@ -444,16 +381,6 @@ export function createMttManager({
       clearTableWinner(game);
       syncWaitingTableState(tournament, game, ensureTableTick);
     }
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @param {Game} game
-   */
-  function processTableAfterHand(tournament, game) {
-    const activeBefore = countActiveEntrants(tournament);
-    const bustedEntrants = getBustedEntrantsForTable(tournament, game);
-    markBustedEntrants(game, bustedEntrants, activeBefore);
   }
 
   /**
@@ -483,7 +410,7 @@ export function createMttManager({
         continue;
       }
       if (finalizePendingTableHand(entry.game)) {
-        processTableAfterHand(tournament, entry.game);
+        processTableAfterHand(tournament, entry.game, now);
         changedTableIds.add(entry.game.id);
       }
     }
@@ -801,7 +728,7 @@ export function createMttManager({
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
       finalizeSettledWaitingTables(tournament, changedTableIds);
-      processTableAfterHand(tournament, game);
+      processTableAfterHand(tournament, game, now);
       maybeStartPendingBreak(tournament, changedTableIds);
       reconcileTournament(tournament, changedTableIds);
     },
