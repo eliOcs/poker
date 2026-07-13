@@ -485,7 +485,7 @@ export function startHand(game) {
 }
 
 /**
- * Ends the current hand and moves button
+ * Ends the current hand
  * @param {Game} game
  */
 export function endHand(game) {
@@ -521,9 +521,6 @@ export function endHand(game) {
 
   // Convert pending sit-outs into actual sit-outs
   applyPendingSitOuts(game);
-
-  // Move button to next occupied seat
-  moveButton(game);
 
   // Start pending break if timer expired during this hand
   TournamentTick.startPendingBreak(game);

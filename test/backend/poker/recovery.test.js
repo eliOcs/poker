@@ -3,6 +3,7 @@ import assert from "node:assert";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { recoverGameFromHistory } from "../../../src/backend/poker/recovery.js";
+import * as Game from "../../../src/backend/poker/game.js";
 import { createTempDataDir } from "../temp-data-dir.js";
 
 let testDataDir;
@@ -132,7 +133,7 @@ describe("game recovery", () => {
     assert.equal(game.tournament, null);
     assert.equal(game.blinds.small, 100);
     assert.equal(game.blinds.big, 200);
-    assert.equal(game.button, 0);
+    assert.equal(game.button, 1);
 
     assert.equal(game.seats[0].empty, false);
     assert.equal(game.seats[1].empty, false);
@@ -154,6 +155,11 @@ describe("game recovery", () => {
     assert.equal(seat2.handsPlayed, 2);
     assert.equal(seat1.disconnected, true);
     assert.equal(seat2.disconnected, true);
+
+    Game.startHand(game);
+
+    assert.equal(game.handNumber, 3);
+    assert.equal(game.button, 0);
   });
 
   it("ignores malformed trailing OHH data", async () => {
@@ -295,7 +301,7 @@ describe("game recovery", () => {
     assert.equal(game.tournament.startTime, "2026-02-07T08:00:00.000Z");
     assert.equal(game.tournament.level, 2);
     assert.equal(game.tournament.winner, 0);
-    assert.equal(game.button, 1);
+    assert.equal(game.button, 0);
 
     const seat1 =
       /** @type {import('../../../src/backend/poker/seat.js').OccupiedSeat} */ (
@@ -309,6 +315,48 @@ describe("game recovery", () => {
     assert.equal(seat2.stack, 490000);
     assert.equal(seat1.disconnected, true);
     assert.equal(seat2.disconnected, true);
+  });
+
+  it("advances a recovered tournament button once at the next hand start", async () => {
+    const gameId = "tourrecover2";
+    await writeOHH(gameId, [
+      {
+        game_number: `${gameId}-1`,
+        table_size: 6,
+        dealer_seat: 1,
+        small_blind_amount: 50,
+        big_blind_amount: 100,
+        ante_amount: 0,
+        tournament: true,
+        tournament_info: {
+          tournament_number: gameId,
+          name: "Sit & Go",
+          start_date_utc: "2026-02-07T08:00:00.000Z",
+          currency: "USD",
+          buyin_amount: 10,
+          fee_amount: 0,
+          initial_stack: 5000,
+          type: "SnG",
+          speed: "Regular",
+        },
+        players: [
+          { id: "p1", seat: 1, name: "Alice", starting_stack: 5000 },
+          { id: "p2", seat: 2, name: "Bob", starting_stack: 5000 },
+        ],
+        rounds: [],
+        pots: [],
+      },
+    ]);
+
+    const game = await recoverGameFromHistory(gameId);
+
+    assert.ok(game);
+    assert.equal(game.button, 0);
+
+    Game.startHand(game);
+
+    assert.equal(game.handNumber, 2);
+    assert.equal(game.button, 1);
   });
 
   it("returns undefined when no hand history exists", async () => {

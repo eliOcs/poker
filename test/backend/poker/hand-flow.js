@@ -92,12 +92,12 @@ describe("hand flow", () => {
       assert.equal(game.hand.pot, 0);
     });
 
-    it("should move button", () => {
+    it("should keep the button on the previous dealer", () => {
       game.button = 0;
 
       Actions.endHand(game);
 
-      assert.equal(game.button, 2);
+      assert.equal(game.button, 0);
     });
   });
 

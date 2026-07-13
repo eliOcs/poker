@@ -12,6 +12,21 @@ in the future, but it is not configurable per tournament for now.
 
 Sit & Go tournaments are not included.
 
+## Dealer button timing
+
+The dealer button advances only when a hand is ready to start. It stays on the
+previous dealer throughout the between-hand waiting period and countdown so
+the final set of participating players determines the next dealer and blind
+positions.
+
+The first hand keeps the table's initial button. A later start advances the
+button exactly once after confirming that at least two players can play and
+before recording or dealing the hand. An unsuccessful start does not move it.
+This rule applies to cash games, Sit & Go tournaments, and MTTs.
+
+Recovery restores the dealer recorded for the last completed hand. The next
+successful hand start performs the normal single advancement.
+
 ## Eligibility
 
 A player is eligible for a rebuy when all of the following are true:

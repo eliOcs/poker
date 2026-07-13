@@ -179,6 +179,10 @@ export function startHand(game) {
     return handData;
   }
 
+  if (game.handNumber > 0) {
+    Actions.moveButton(game);
+  }
+
   delete game.winnerMessage;
   game.handNumber++;
   Actions.startHand(game);
