@@ -6,6 +6,7 @@
 
 import { toDollars, writeTournamentSummary } from "./hand-history/io.js";
 import * as Tournament from "../../shared/tournament.js";
+import { calculatePrizePool } from "../mtt-rebuy-policy.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -45,6 +46,12 @@ import * as Tournament from "../../shared/tournament.js";
  */
 
 /**
+ * @typedef {object} OTSRebuy
+ * @property {string} player_name
+ * @property {number} rebuys
+ */
+
+/**
  * @typedef {object} OTSSummary
  * @property {string} spec_version
  * @property {string} site_name
@@ -62,6 +69,8 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {number} prize_pool
  * @property {number} player_count
  * @property {OTSFinish[]} tournament_finishes_and_winnings
+ * @property {number} [rebuy_cost]
+ * @property {OTSRebuy[]} [tournament_rebuys]
  */
 
 /**
@@ -77,6 +86,8 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {string[]} flags
  * @property {number} playerCount
  * @property {OTSFinish[]} finishes
+ * @property {Cents} [rebuyCost]
+ * @property {OTSRebuy[]} [rebuys]
  */
 
 /** @type {Map<string, TournamentRecorder>} */
@@ -130,7 +141,8 @@ function buildFinish(playerId, finishPosition, prizeByPosition) {
  * @returns {OTSSummary}
  */
 function buildSummary(input) {
-  return {
+  /** @type {OTSSummary} */
+  const summary = {
     spec_version: "1.1.5",
     site_name: "Pluton Poker",
     tournament_number: input.tournamentNumber,
@@ -153,6 +165,13 @@ function buildSummary(input) {
       (a, b) => a.finish_position - b.finish_position,
     ),
   };
+
+  if (input.rebuyCost !== undefined) {
+    summary.rebuy_cost = toDollars(input.rebuyCost);
+    summary.tournament_rebuys = input.rebuys ?? [];
+  }
+
+  return summary;
 }
 
 /**
@@ -297,10 +316,17 @@ function buildManagedTournamentFinishes(tournament, prizeByPosition) {
 function buildManagedTournamentSummary(tournament) {
   const endTime = tournament.endedAt ?? new Date().toISOString();
   const playerCount = tournament.entrants.size;
-  const prizePool = playerCount * tournament.buyIn;
+  const prizePool = calculatePrizePool(tournament);
   const prizeByPosition = buildPrizeByPosition(
     Tournament.calculatePrizesFromPool(playerCount, prizePool),
   );
+  const rebuys = [...tournament.entrants.values()]
+    .filter((entrant) => entrant.rebuysUsed > 0)
+    .map((entrant) => ({
+      player_name: entrant.playerId,
+      rebuys: entrant.rebuysUsed,
+    }));
+  const rebuysEnabled = tournament.maxRebuys > 0;
 
   return buildSummary({
     tournamentNumber: tournament.id,
@@ -311,9 +337,10 @@ function buildManagedTournamentSummary(tournament) {
     prizePool,
     initialStack: tournament.initialStack,
     type: "MTT",
-    flags: ["MTT"],
+    flags: rebuysEnabled ? ["MTT", "Re-Entry"] : ["MTT"],
     playerCount,
     finishes: buildManagedTournamentFinishes(tournament, prizeByPosition),
+    ...(rebuysEnabled ? { rebuyCost: tournament.buyIn, rebuys } : {}),
   });
 }
 

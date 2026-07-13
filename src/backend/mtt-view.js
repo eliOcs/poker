@@ -1,4 +1,5 @@
 import * as Tournament from "../shared/tournament.js";
+import { calculatePrizePool } from "./mtt-rebuy-policy.js";
 import {
   countActivePlayers,
   isTableReadyForNextHand,
@@ -78,7 +79,9 @@ function buildStandings(tournament, prizePool) {
       if (entry.status === "registered") continue;
       const position = entry.finishPosition ?? i + 1;
       const prize = prizeByPosition.get(position) ?? 0;
-      entry.netWinnings = prize - tournament.buyIn;
+      const rebuysUsed =
+        tournament.entrants.get(entry.playerId)?.rebuysUsed ?? 0;
+      entry.netWinnings = prize - tournament.buyIn * (1 + rebuysUsed);
     }
   }
 
@@ -148,7 +151,7 @@ function buildTournamentActions(tournament, entrant, playerId) {
 export function buildTournamentView(tournament, games, playerId) {
   const entrant = tournament.entrants.get(playerId);
   const entrants = buildEntrants(tournament);
-  const prizePool = tournament.entrants.size * tournament.buyIn;
+  const prizePool = calculatePrizePool(tournament);
   const standings = buildStandings(tournament, prizePool);
   const tables = buildTables(tournament, games);
   return {

@@ -163,4 +163,66 @@ describe("mtt recovery", () => {
 
     manager.close();
   });
+
+  it("recovers rebuy usage, accounting, and the enlarged chip total", async () => {
+    await writeTournamentSummary("mtt-rebuys", {
+      spec_version: "1.1.5",
+      site_name: "Pluton Poker",
+      tournament_number: "mtt-rebuys",
+      tournament_name: "Recovered Rebuy MTT",
+      start_date_utc: "2026-04-01T12:00:00.000Z",
+      end_date_utc: "2026-04-01T12:45:00.000Z",
+      currency: "USD",
+      buyin_amount: 5,
+      fee_amount: 0,
+      initial_stack: 5000,
+      type: "MTT",
+      flags: ["MTT", "Re-Entry"],
+      speed: { type: "normal", round_time: 900 },
+      prize_pool: 30,
+      player_count: 3,
+      rebuy_cost: 5,
+      tournament_rebuys: [
+        { player_name: "p1", rebuys: 1 },
+        { player_name: "p3", rebuys: 2 },
+      ],
+      tournament_finishes_and_winnings: [
+        {
+          player_name: "p1",
+          finish_position: 1,
+          still_playing: false,
+          prize: 30,
+        },
+        {
+          player_name: "p2",
+          finish_position: 2,
+          still_playing: false,
+          prize: 0,
+        },
+        {
+          player_name: "p3",
+          finish_position: 3,
+          still_playing: false,
+          prize: 0,
+        },
+      ],
+    });
+
+    const manager = createMttManager({ games: new Map() });
+    const view = manager.getTournamentView("mtt-rebuys", "p1");
+    const recoveredTournament = manager.getTournament("mtt-rebuys");
+    assert.ok(recoveredTournament);
+
+    assert.equal(recoveredTournament.maxRebuys, 2);
+    assert.equal(recoveredTournament.entrants.get("p1")?.rebuysUsed, 1);
+    assert.equal(recoveredTournament.entrants.get("p2")?.rebuysUsed, 0);
+    assert.equal(recoveredTournament.entrants.get("p3")?.rebuysUsed, 2);
+    assert.equal(recoveredTournament.entrants.get("p1")?.stack, 3_000_000);
+    assert.equal(view.prizePool, 3_000);
+    assert.equal(view.standings[0].netWinnings, 2_000);
+    assert.equal(view.standings[1].netWinnings, -500);
+    assert.equal(view.standings[2].netWinnings, -1_500);
+
+    manager.close();
+  });
 });

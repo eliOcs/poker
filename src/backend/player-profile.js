@@ -279,6 +279,11 @@ async function calculateTournamentNetResult(
  */
 function calculateTournamentSummaryNetResult(summary, playerId) {
   const buyIn = toCents(summary.buyin_amount);
+  const fee = toCents(summary.fee_amount);
+  const rebuys = (summary.tournament_rebuys ?? [])
+    .filter((rebuy) => rebuy.player_name === playerId)
+    .reduce((total, rebuy) => total + rebuy.rebuys, 0);
+  const rebuyCost = toCents(summary.rebuy_cost ?? 0);
   const finish = summary.tournament_finishes_and_winnings.find(
     (entry) => entry.player_name === playerId,
   );
@@ -287,7 +292,7 @@ function calculateTournamentSummaryNetResult(summary, playerId) {
     return 0;
   }
 
-  return toCents(finish.prize) - buyIn;
+  return toCents(finish.prize) - buyIn - fee - rebuyCost * rebuys;
 }
 
 /**

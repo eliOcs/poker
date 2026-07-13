@@ -245,7 +245,7 @@ describe("player-profile history", function () {
       start_date_utc: "2026-03-10T12:00:00.000Z",
       currency: "USD",
       buyin_amount: 5,
-      fee_amount: 0,
+      fee_amount: 1,
       initial_stack: 50,
       type: "MTT",
       speed: "Regular",
@@ -314,13 +314,15 @@ describe("player-profile history", function () {
       end_date_utc: "2026-03-11T12:30:00.000Z",
       currency: "USD",
       buyin_amount: 5,
-      fee_amount: 0,
+      fee_amount: 1,
       initial_stack: 50,
       type: "MTT",
-      flags: ["MTT"],
+      flags: ["MTT", "Re-Entry"],
       speed: { type: "normal", round_time: 900 },
       prize_pool: 10,
       player_count: 2,
+      rebuy_cost: 5,
+      tournament_rebuys: [{ player_name: "player1", rebuys: 1 }],
       tournament_finishes_and_winnings: [
         {
           player_name: "player3",
@@ -341,14 +343,14 @@ describe("player-profile history", function () {
 
     assert.ok(profile);
     assert.equal(profile.totalHands, 2);
-    assert.equal(profile.totalNetWinnings, 100);
+    assert.equal(profile.totalNetWinnings, -500);
     assert.deepStrictEqual(profile.recentGames, [
       {
         gameId: "mtttable2",
         tableId: "mtttable2",
         tournamentId: "mtt999",
         gameType: "mtt",
-        netWinnings: 100,
+        netWinnings: -500,
         handsPlayed: 2,
         lastPlayedAt: "2026-03-11T12:00:00.000Z",
         lastHandNumber: 2,

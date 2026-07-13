@@ -100,6 +100,37 @@ describe("mtt rebuy policy", () => {
     assert.equal(calculatePrizePool(tournament), 3_000);
   });
 
+  it("uses accepted rebuys in live payouts and entrant net winnings", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner"),
+      buyIn: 500,
+      tableSize: 6,
+      maxRebuys: 2,
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2"));
+    ctx.manager.registerPlayer(tournamentId, createUser("p3"));
+    ctx.manager.startTournament(tournamentId, "owner");
+
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const owner = tournament.entrants.get("owner");
+    const p2 = tournament.entrants.get("p2");
+    assert.ok(owner);
+    assert.ok(p2);
+    owner.rebuysUsed = 1;
+    p2.rebuysUsed = 2;
+
+    const view = ctx.manager.getTournamentView(tournamentId, "owner");
+    const standings = new Map(
+      view.standings.map((entrant) => [entrant.playerId, entrant]),
+    );
+
+    assert.equal(view.prizePool, 3_000);
+    assert.equal(standings.get("owner")?.netWinnings, 2_000);
+    assert.equal(standings.get("p2")?.netWinnings, -1_500);
+    assert.equal(standings.get("p3")?.netWinnings, -500);
+  });
+
   it("keeps the rebuy cutoff fixed to the first break", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner"),

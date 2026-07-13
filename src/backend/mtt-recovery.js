@@ -162,6 +162,36 @@ function buildTableById(tables) {
 }
 
 /**
+ * @param {OTSSummary} summary
+ * @returns {Map<string, number>}
+ */
+function buildRebuysByPlayer(summary) {
+  const rebuysByPlayer = new Map();
+  for (const rebuy of summary.tournament_rebuys ?? []) {
+    if (!Number.isSafeInteger(rebuy.rebuys) || rebuy.rebuys <= 0) continue;
+    rebuysByPlayer.set(
+      rebuy.player_name,
+      (rebuysByPlayer.get(rebuy.player_name) ?? 0) + rebuy.rebuys,
+    );
+  }
+  return rebuysByPlayer;
+}
+
+/**
+ * @param {OTSSummary} summary
+ * @param {Map<string, number>} rebuysByPlayer
+ * @returns {number}
+ */
+function recoverMaxRebuys(summary, rebuysByPlayer) {
+  const hasRebuyFields =
+    summary.rebuy_cost !== undefined ||
+    summary.tournament_rebuys !== undefined ||
+    summary.flags.includes("Re-Entry");
+  if (!hasRebuyFields) return 0;
+  return Math.max(1, ...rebuysByPlayer.values());
+}
+
+/**
  * @param {string} tournamentId
  * @param {string} playerId
  * @param {Map<string, RecoveredTable>} tableById
@@ -183,10 +213,14 @@ function findPlayerLatestTable(tournamentId, playerId, tableById) {
  * @param {OTSSummary} summary
  * @param {RecoveredTable[]} tables
  * @param {string} tournamentId
+ * @param {Map<string, number>} rebuysByPlayer
  * @returns {TournamentEntrant[]}
  */
-function recoverEntrants(summary, tables, tournamentId) {
+function recoverEntrants(summary, tables, tournamentId, rebuysByPlayer) {
   const tableById = buildTableById(tables);
+  const totalEntries =
+    summary.player_count +
+    [...rebuysByPlayer.values()].reduce((total, rebuys) => total + rebuys, 0);
   return summary.tournament_finishes_and_winnings
     .slice()
     .sort((a, b) => a.finish_position - b.finish_position)
@@ -202,12 +236,12 @@ function recoverEntrants(summary, tables, tournamentId) {
         name: getPlayerName(finish.player_name),
         status: isWinner ? "winner" : "eliminated",
         stack: isWinner
-          ? toCents(summary.initial_stack || 0) * (summary.player_count || 1)
+          ? toCents(summary.initial_stack || 0) * Math.max(totalEntries, 1)
           : 0,
         tableId: latestTable?.tableId,
         finishPosition: finish.finish_position,
         handsPlayed: latestTable?.handNumber ?? 0,
-        rebuysUsed: 0,
+        rebuysUsed: rebuysByPlayer.get(finish.player_name) ?? 0,
         registrationOrder: index,
         registeredAt: summary.start_date_utc,
         ...(isWinner ? {} : { eliminatedAt: summary.end_date_utc }),
@@ -244,7 +278,13 @@ export function recoverFinishedMttFromSummary(tournamentId) {
   if (!summary || summary.type !== "MTT") return;
 
   const tables = recoverTables(tournamentId);
-  const entrants = recoverEntrants(summary, tables, tournamentId);
+  const rebuysByPlayer = buildRebuysByPlayer(summary);
+  const entrants = recoverEntrants(
+    summary,
+    tables,
+    tournamentId,
+    rebuysByPlayer,
+  );
   return {
     id: tournamentId,
     name: summary.tournament_name || tournamentId,
@@ -253,7 +293,7 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     buyIn: toCents(summary.buyin_amount || 0),
     tableSize: recoverTableSize(summary, tables),
     initialStack: toCents(summary.initial_stack || 0),
-    maxRebuys: 0,
+    maxRebuys: recoverMaxRebuys(summary, rebuysByPlayer),
     level: 1,
     levelTicks: 0,
     onBreak: false,
