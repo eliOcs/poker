@@ -19,6 +19,25 @@ maxRebuys = 1
 The implementation must model this as a non-negative integer so a future
 change can support `0`, `1`, `2`, or more without redesigning the lifecycle.
 
+## Progress
+
+Update this checklist in the same commit that completes each remaining stage.
+
+- [x] Stage 0 — Baseline validation and documentation (`fe76abd`)
+- [ ] Stage 1 — Advance the button at hand start for every game type
+- [ ] Stage 2 — Extract reusable action-clock state
+- [ ] Stage 3 — Separate payout structure from prize-pool calculation
+- [ ] Stage 4 — Add a managed table-action dispatch seam
+- [ ] Stage 5 — Split hand-settled and table-ready concepts
+- [ ] Stage 6 — Centralize MTT reconciliation
+- [ ] Stage 7 — Extract the MTT player lifecycle
+- [ ] Stage 8 — Add rebuy policy and usage data
+- [ ] Stage 9 — Add dormant rebuy accounting and recovery
+- [ ] Stage 10 — Implement the pure rebuy decision state machine
+- [ ] Stage 11 — Integrate decisions, actions, and views
+- [ ] Stage 12 — Integrate rebuy clocks and cutoff transitions
+- [ ] Stage 13 — Activate one rebuy for every MTT
+
 ## Working agreement
 
 - One concern per commit.
