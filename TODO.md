@@ -1,7 +1,6 @@
 # To do
 
 - Late Registration
-- Rebuy option: (1 rebuy)
 - Bounty option: (+10% buyin)
 - Show owner name in tournament lobby
 - graph of the evolution
