@@ -28,6 +28,7 @@ import {
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-collapse.js";
 import { processTableAfterHand } from "./mtt-player-lifecycle.js";
+import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
 
 const FINAL_TABLE_NAME = "Final Table";
 
@@ -46,6 +47,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {number} [seatIndex]
  * @property {number} [finishPosition]
  * @property {number} handsPlayed
+ * @property {number} rebuysUsed
  * @property {number} registrationOrder
  * @property {string} registeredAt
  * @property {string} [eliminatedAt]
@@ -67,6 +69,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {number} buyIn
  * @property {number} tableSize
  * @property {number} initialStack
+ * @property {number} maxRebuys
  * @property {number} level
  * @property {number} levelTicks
  * @property {boolean} onBreak
@@ -547,6 +550,7 @@ export function createMttManager({
       status: "registered",
       stack: tournament.initialStack,
       handsPlayed: 0,
+      rebuysUsed: 0,
       registrationOrder: tournament.nextRegistrationOrder,
       registeredAt: now(),
     });
@@ -557,11 +561,23 @@ export function createMttManager({
 
   return {
     /**
-     * @param {{ owner: User, buyIn: number, tableSize: number }} options
+     * @param {{ owner: User, buyIn: number, tableSize: number, maxRebuys?: unknown }} options
      */
-    createTournament({ owner, buyIn, tableSize }) {
+    createTournament({
+      owner,
+      buyIn,
+      tableSize,
+      maxRebuys = DEFAULT_MAX_REBUYS,
+    }) {
       if (!Tournament.isValidBuyin(buyIn)) {
         throw new Error("invalid tournament buy-in");
+      }
+      if (
+        typeof maxRebuys !== "number" ||
+        !Number.isInteger(maxRebuys) ||
+        maxRebuys < 0
+      ) {
+        throw new Error("invalid maximum rebuys");
       }
 
       const createdAt = now();
@@ -575,6 +591,7 @@ export function createMttManager({
         buyIn,
         tableSize,
         initialStack: Tournament.INITIAL_STACK,
+        maxRebuys,
         level: 1,
         levelTicks: 0,
         onBreak: false,

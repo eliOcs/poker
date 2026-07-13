@@ -151,7 +151,15 @@ describe("mtt recovery", () => {
     assert.equal(view.standings[1].playerId, "p2");
     assert.equal(view.standings[1].tableId, "table123");
     assert.equal(view.standings[1].netWinnings, -500);
-    assert.ok(manager.getTournament("mtt123"));
+    const recoveredTournament = manager.getTournament("mtt123");
+    assert.ok(recoveredTournament);
+    assert.equal(recoveredTournament.maxRebuys, 0);
+    assert.deepEqual(
+      [...recoveredTournament.entrants.values()].map(
+        (entrant) => entrant.rebuysUsed,
+      ),
+      [0, 0],
+    );
 
     manager.close();
   });

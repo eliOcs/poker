@@ -31,7 +31,7 @@ Update this checklist in the same commit that completes each remaining stage.
 - [x] Stage 5 — Split hand-settled and table-ready concepts
 - [x] Stage 6 — Centralize MTT reconciliation
 - [x] Stage 7 — Extract the MTT player lifecycle
-- [ ] Stage 8 — Add rebuy policy and usage data
+- [x] Stage 8 — Add rebuy policy and usage data
 - [ ] Stage 9 — Add dormant rebuy accounting and recovery
 - [ ] Stage 10 — Implement the pure rebuy decision state machine
 - [ ] Stage 11 — Integrate decisions, actions, and views
