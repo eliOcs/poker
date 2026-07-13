@@ -435,14 +435,14 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @param {Set<string>} changedTableIds
+   * @param {Iterable<string>} tableIds
    */
-  function syncChangedTables(tournament, changedTableIds) {
-    for (const tableId of changedTableIds) {
-      const changedGame = games.get(tableId);
-      if (!changedGame) continue;
-      clearTableWinner(changedGame);
-      syncWaitingTableState(tournament, changedGame, ensureTableTick);
+  function syncTables(tournament, tableIds) {
+    for (const tableId of tableIds) {
+      const game = games.get(tableId);
+      if (!game) continue;
+      clearTableWinner(game);
+      syncWaitingTableState(tournament, game, ensureTableTick);
     }
   }
 
@@ -490,6 +490,90 @@ export function createMttManager({
   }
 
   /**
+   * @param {ManagedTournament} tournament
+   * @returns {boolean}
+   */
+  function canCoordinateTournament(tournament) {
+    return tournament.status === "running";
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @returns {string[]}
+   */
+  function getOpenTableIds(tournament) {
+    return tournament.tables
+      .filter(
+        (table) => table.closedAt === undefined && games.has(table.tableId),
+      )
+      .map((table) => table.tableId);
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   * @returns {boolean}
+   */
+  function maybeFinishTournament(tournament, changedTableIds) {
+    const contenders = getContendingEntrants(tournament, games);
+    if (contenders.length !== 1) {
+      return false;
+    }
+
+    finishTournament(tournament, games, ensureTableTick, now, contenders[0]);
+    stopTicking(tournament);
+    for (const table of tournament.tables) {
+      changedTableIds.add(table.tableId);
+    }
+    return true;
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   * @param {{ broadcastAllOpenTables?: boolean, detectWinner?: boolean }} [options]
+   */
+  function reconcileTournament(
+    tournament,
+    changedTableIds,
+    { broadcastAllOpenTables = false, detectWinner = true } = {},
+  ) {
+    /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
+    const playerMoves = [];
+
+    if (canCoordinateTournament(tournament)) {
+      if (detectWinner && maybeFinishTournament(tournament, changedTableIds)) {
+        broadcastTables(tournament, changedTableIds);
+        return;
+      }
+
+      const balancedTables = rebalanceTournament(
+        tournament,
+        games,
+        now,
+        (activeTables, changedTables) => {
+          mergeIntoFinalTable(
+            tournament,
+            activeTables,
+            changedTables,
+            playerMoves,
+          );
+        },
+        playerMoves,
+      );
+      for (const tableId of balancedTables) {
+        changedTableIds.add(tableId);
+      }
+    }
+
+    const tableIds = broadcastAllOpenTables
+      ? getOpenTableIds(tournament)
+      : changedTableIds;
+    syncTables(tournament, tableIds);
+    broadcastTables(tournament, tableIds, playerMoves);
+  }
+
+  /**
    * @param {string} tournamentId
    */
   function tickTournament(tournamentId) {
@@ -500,8 +584,6 @@ export function createMttManager({
 
     /** @type {Set<string>} */
     const changedTableIds = new Set();
-    /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
-    const playerMoves = [];
     finalizeSettledWaitingTables(tournament, changedTableIds);
 
     const canStartBreak = getActiveTables(tournament, games).every((entry) =>
@@ -509,35 +591,10 @@ export function createMttManager({
     );
     tickClock(tournament, canStartBreak);
 
-    const balancedTables = rebalanceTournament(
-      tournament,
-      games,
-      ensureTableTick,
-      now,
-      (activeTables, changedTables) => {
-        mergeIntoFinalTable(
-          tournament,
-          activeTables,
-          changedTables,
-          playerMoves,
-        );
-      },
-      playerMoves,
-    );
-    for (const tableId of balancedTables) {
-      changedTableIds.add(tableId);
-    }
-
-    for (const table of tournament.tables) {
-      const game = games.get(table.tableId);
-      if (!game) continue;
-      if (table.closedAt !== undefined) {
-        continue;
-      }
-      syncWaitingTableState(tournament, game, ensureTableTick);
-      broadcastTableState(table.tableId);
-    }
-    broadcastTournament(tournament, playerMoves);
+    reconcileTournament(tournament, changedTableIds, {
+      broadcastAllOpenTables: true,
+      detectWinner: false,
+    });
   }
 
   /**
@@ -743,50 +800,10 @@ export function createMttManager({
 
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
-      /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
-      const playerMoves = [];
       finalizeSettledWaitingTables(tournament, changedTableIds);
       processTableAfterHand(tournament, game);
       maybeStartPendingBreak(tournament, changedTableIds);
-
-      const contenders = getContendingEntrants(tournament, games);
-      if (contenders.length === 1) {
-        finishTournament(
-          tournament,
-          games,
-          ensureTableTick,
-          now,
-          contenders[0],
-        );
-        stopTicking(tournament);
-        for (const table of tournament.tables) {
-          changedTableIds.add(table.tableId);
-        }
-        broadcastTables(tournament, changedTableIds);
-        return;
-      }
-
-      const balancedTables = rebalanceTournament(
-        tournament,
-        games,
-        ensureTableTick,
-        now,
-        (activeTables, changedTableIds) => {
-          mergeIntoFinalTable(
-            tournament,
-            activeTables,
-            changedTableIds,
-            playerMoves,
-          );
-        },
-        playerMoves,
-      );
-      for (const tableId of balancedTables) {
-        changedTableIds.add(tableId);
-      }
-
-      syncChangedTables(tournament, changedTableIds);
-      broadcastTables(tournament, changedTableIds, playerMoves);
+      reconcileTournament(tournament, changedTableIds);
     },
 
     /**

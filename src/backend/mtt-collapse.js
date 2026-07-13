@@ -4,7 +4,6 @@ import {
   clearTableWinner,
   resetClosedTable,
   applyTournamentStateToTable,
-  syncWaitingTableState,
   getActiveTables,
 } from "./mtt-table-state.js";
 import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
@@ -246,7 +245,6 @@ export function balanceWaitingTables(
 /**
  * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
- * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
  * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
  * @param {PlayerMovedEvent[]} playerMoves
@@ -255,7 +253,6 @@ export function balanceWaitingTables(
 export function rebalanceTournament(
   tournament,
   games,
-  ensureTableTick,
   now,
   mergeIntoFinalTable,
   playerMoves,
@@ -272,13 +269,6 @@ export function rebalanceTournament(
     playerMoves,
   );
   balanceWaitingTables(tournament, games, changedTables, playerMoves);
-
-  for (const tableId of changedTables) {
-    const game = games.get(tableId);
-    if (game) {
-      syncWaitingTableState(tournament, game, ensureTableTick);
-    }
-  }
 
   return changedTables;
 }
