@@ -1,10 +1,9 @@
 import {
-  isTableWaiting,
+  isTableReadyForRebalance,
   countActivePlayers,
   clearTableWinner,
   resetClosedTable,
   applyTournamentStateToTable,
-  syncWaitingTableState,
   getActiveTables,
 } from "./mtt-table-state.js";
 import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
@@ -20,8 +19,8 @@ import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
  * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
  * @returns {boolean}
  */
-function areAllTablesWaiting(activeTables) {
-  return activeTables.every((entry) => isTableWaiting(entry.game));
+function areAllTablesReadyForRebalance(activeTables) {
+  return activeTables.every((entry) => isTableReadyForRebalance(entry.game));
 }
 
 /**
@@ -68,7 +67,7 @@ function markPendingCollapse(tournament, activeTables, changedTables) {
  */
 function getBreakCandidate(activeTables) {
   return sortBySmallestTable(activeTables).find((entry) =>
-    isTableWaiting(entry.game),
+    isTableReadyForRebalance(entry.game),
   );
 }
 
@@ -76,14 +75,14 @@ function getBreakCandidate(activeTables) {
  * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} destinationTables
  * @returns {{ table: ManagedTable, game: Game, activePlayers: number } | undefined}
  */
-function getWaitingDestinationTable(destinationTables) {
+function getReadyDestinationTable(destinationTables) {
   return sortBySmallestTable(
     destinationTables
       .map((entry) => ({
         ...entry,
         activePlayers: countActivePlayers(entry.game),
       }))
-      .filter((entry) => isTableWaiting(entry.game)),
+      .filter((entry) => isTableReadyForRebalance(entry.game)),
   )[0];
 }
 
@@ -108,7 +107,7 @@ function collapseTableIntoDestinations(
   ).sort((a, b) => b - a);
 
   for (const seatIndex of activeSeats) {
-    const destination = getWaitingDestinationTable(destinationTables);
+    const destination = getReadyDestinationTable(destinationTables);
     if (!destination) {
       return false;
     }
@@ -156,7 +155,7 @@ export function collapseExtraTables(
     }
 
     if (targetTableCount === 1) {
-      if (!areAllTablesWaiting(activeTables)) {
+      if (!areAllTablesReadyForRebalance(activeTables)) {
         markPendingCollapse(tournament, activeTables, changedTables);
         return;
       }
@@ -208,15 +207,15 @@ export function balanceWaitingTables(
   playerMoves,
 ) {
   for (;;) {
-    const waitingTables = getActiveTables(tournament, games).filter((entry) =>
-      isTableWaiting(entry.game),
+    const readyTables = getActiveTables(tournament, games).filter((entry) =>
+      isTableReadyForRebalance(entry.game),
     );
-    if (waitingTables.length < 2) {
+    if (readyTables.length < 2) {
       return;
     }
 
-    const fullest = sortByLargestTable(waitingTables)[0];
-    const emptiest = sortBySmallestTable(waitingTables)[0];
+    const fullest = sortByLargestTable(readyTables)[0];
+    const emptiest = sortBySmallestTable(readyTables)[0];
     if (
       !fullest ||
       !emptiest ||
@@ -246,7 +245,6 @@ export function balanceWaitingTables(
 /**
  * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
- * @param {(game: Game) => void} ensureTableTick
  * @param {() => string} now
  * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
  * @param {PlayerMovedEvent[]} playerMoves
@@ -255,7 +253,6 @@ export function balanceWaitingTables(
 export function rebalanceTournament(
   tournament,
   games,
-  ensureTableTick,
   now,
   mergeIntoFinalTable,
   playerMoves,
@@ -272,13 +269,6 @@ export function rebalanceTournament(
     playerMoves,
   );
   balanceWaitingTables(tournament, games, changedTables, playerMoves);
-
-  for (const tableId of changedTables) {
-    const game = games.get(tableId);
-    if (game) {
-      syncWaitingTableState(tournament, game, ensureTableTick);
-    }
-  }
 
   return changedTables;
 }

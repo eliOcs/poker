@@ -30,8 +30,8 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 60; // 60 ticks (enough for clock)
-      g.clockTicks = 0; // Clock not called
+      g.actionClock.waitTicks = 60;
+      g.actionClock.countdownTicks = 0;
 
       // Player 1 (seat 0) is waiting - should see callClock action on their own seat
       const view = playerView(g, p1);
@@ -59,8 +59,8 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 60; // 60 ticks (enough for clock)
-      g.clockTicks = 0; // Clock not called
+      g.actionClock.waitTicks = 60;
+      g.actionClock.countdownTicks = 0;
 
       // Player 2 (seat 1) is acting - should NOT see callClock on their own seat
       const view = playerView(g, p2);
@@ -91,8 +91,8 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 10; // Only 10 ticks
-      g.clockTicks = 0;
+      g.actionClock.waitTicks = 10;
+      g.actionClock.countdownTicks = 0;
 
       // Player 1 (seat 0) is waiting - should NOT see callClock yet
       const view = playerView(g, p1);
@@ -123,8 +123,8 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 60;
-      g.clockTicks = 5; // Clock was called 5 ticks ago
+      g.actionClock.waitTicks = 60;
+      g.actionClock.countdownTicks = 5;
 
       // Player 1 (seat 0) should NOT see callClock again
       const view = playerView(g, p1);
@@ -155,8 +155,8 @@ describe("Player View", function () {
         lastRaiser: -1,
         lastRaiseSize: 0,
       };
-      g.actingTicks = 0;
-      g.clockTicks = 0;
+      g.actionClock.waitTicks = 0;
+      g.actionClock.countdownTicks = 0;
 
       const view = playerView(g, p1);
       const p1Actions = view.seats[0].actions;

@@ -71,6 +71,7 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {string} startDateUtc
  * @property {string} endDateUtc
  * @property {Cents} buyIn
+ * @property {Cents} prizePool
  * @property {Cents} initialStack
  * @property {"STT"|"MTT"} type
  * @property {string[]} flags
@@ -100,12 +101,10 @@ function getRecorder(gameId) {
 }
 
 /**
- * @param {number} playerCount
- * @param {Cents} buyIn
+ * @param {{ position: number, amount: Cents }[]} prizes
  * @returns {Map<number, number>}
  */
-function buildPrizeByPosition(playerCount, buyIn) {
-  const prizes = Tournament.calculatePrizes(playerCount, buyIn);
+function buildPrizeByPosition(prizes) {
   return new Map(
     prizes.map((prize) => [prize.position, toDollars(prize.amount)]),
   );
@@ -148,7 +147,7 @@ function buildSummary(input) {
       type: "normal",
       round_time: Tournament.LEVEL_DURATION_TICKS,
     },
-    prize_pool: toDollars(input.buyIn * input.playerCount),
+    prize_pool: toDollars(input.prizePool),
     player_count: input.playerCount,
     tournament_finishes_and_winnings: [...input.finishes].sort(
       (a, b) => a.finish_position - b.finish_position,
@@ -253,7 +252,10 @@ function buildOTSSummary(recorder, game) {
 
   const buyIn = tournament.buyIn;
   const playerCount = recorder.players.length;
-  const prizeByPosition = buildPrizeByPosition(playerCount, buyIn);
+  const prizePool = playerCount * buyIn;
+  const prizeByPosition = buildPrizeByPosition(
+    Tournament.calculatePrizes(playerCount, buyIn),
+  );
 
   const finishes = buildEliminatedFinishes(recorder, prizeByPosition);
   const winnerFinish = buildWinnerFinish(game, prizeByPosition);
@@ -267,6 +269,7 @@ function buildOTSSummary(recorder, game) {
     startDateUtc: recorder.startTime ?? endTime,
     endDateUtc: endTime,
     buyIn,
+    prizePool,
     initialStack: Tournament.INITIAL_STACK,
     type: "STT",
     flags: ["SNG"],
@@ -294,7 +297,10 @@ function buildManagedTournamentFinishes(tournament, prizeByPosition) {
 function buildManagedTournamentSummary(tournament) {
   const endTime = tournament.endedAt ?? new Date().toISOString();
   const playerCount = tournament.entrants.size;
-  const prizeByPosition = buildPrizeByPosition(playerCount, tournament.buyIn);
+  const prizePool = playerCount * tournament.buyIn;
+  const prizeByPosition = buildPrizeByPosition(
+    Tournament.calculatePrizesFromPool(playerCount, prizePool),
+  );
 
   return buildSummary({
     tournamentNumber: tournament.id,
@@ -302,6 +308,7 @@ function buildManagedTournamentSummary(tournament) {
     startDateUtc: tournament.startedAt ?? tournament.createdAt,
     endDateUtc: endTime,
     buyIn: tournament.buyIn,
+    prizePool,
     initialStack: tournament.initialStack,
     type: "MTT",
     flags: ["MTT"],

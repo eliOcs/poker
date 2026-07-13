@@ -56,6 +56,7 @@ export function createMockTournamentView(overrides = {}) {
     status: "registration",
     ownerId: "u1",
     buyIn: 500,
+    prizePool: 0,
     tableSize: 6,
     level: 1,
     timeToNextLevel: 300,
@@ -81,6 +82,9 @@ export function createMockTournamentView(overrides = {}) {
     },
   };
 
+  const entrants = overrides.entrants || base.entrants;
+  const buyIn = overrides.buyIn ?? base.buyIn;
+
   return {
     ...base,
     ...overrides,
@@ -93,7 +97,8 @@ export function createMockTournamentView(overrides = {}) {
       ...(overrides.actions || {}),
     },
     tables: overrides.tables || base.tables,
-    entrants: overrides.entrants || base.entrants,
+    entrants,
+    prizePool: overrides.prizePool ?? entrants.length * buyIn,
     standings: overrides.standings || base.standings,
   };
 }

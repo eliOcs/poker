@@ -1,7 +1,5 @@
 # To do
 
-- Allow clicking users in tournament lobby to view their profile
-- History down panel allow resize
 - Late Registration
 - Rebuy option: (1 rebuy)
 - Bounty option: (+10% buyin)
@@ -31,6 +29,7 @@
 - Inspiration Chess.com - "Hand review"
 - Inspiration Chess.com - "Play coach"
 - Inspiration Chess.com - "Ranked Poker"
+- use SSE instead of websockets when we are only communicating updates from the backend to the frontend (eg: hand history)
 - OLAP db to store logs (DuckDB)
 
 ## Hand Rank modal [WIP]

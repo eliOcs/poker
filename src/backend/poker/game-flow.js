@@ -1,9 +1,9 @@
 import * as Betting from "./betting.js";
 import * as Showdown from "./showdown.js";
 import * as Actions from "./actions.js";
+import * as ActionClock from "./action-clock.js";
 import * as HandHistory from "./hand-history/index.js";
 import HandRankings from "./hand-rankings.js";
-import { resetActingTicks } from "./game-tick.js";
 import { RUNOUT_DELAY_TICKS } from "./game-constants.js";
 import {
   autoFoldSittingOutActingPlayers,
@@ -182,7 +182,7 @@ export function processGameFlow(game) {
   }
 
   if (autoFoldSittingOutActingPlayers(game)) {
-    resetActingTicks(game);
+    ActionClock.reset(game.actionClock);
   }
   executePreActions(game);
 
@@ -225,7 +225,7 @@ export function finishCollectBets(game) {
   Betting.startBettingRound(game, handler.next);
 
   if (autoFoldSittingOutActingPlayers(game)) {
-    resetActingTicks(game);
+    ActionClock.reset(game.actionClock);
   }
   executePreActions(game);
   return processGameFlow(game);

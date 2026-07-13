@@ -297,28 +297,15 @@ function buildRecoveredSeatStates(hands) {
 }
 
 /**
- * @param {PokerSeat[]} seats
- * @param {number} previousButton
+ * @param {number} seatCount
+ * @param {number} dealerSeat
  * @returns {number}
  */
-function getNextButton(seats, previousButton) {
-  if (seats.length === 0) return 0;
+function getRecordedButton(seatCount, dealerSeat) {
+  if (seatCount === 0) return 0;
 
-  const start = ((previousButton % seats.length) + seats.length) % seats.length;
-  let next = (start + 1) % seats.length;
-
-  while (next !== start) {
-    const seat = /** @type {import('./seat.js').Seat} */ (seats[next]);
-    if (
-      !seat.empty &&
-      !(/** @type {import('./seat.js').OccupiedSeat} */ (seat).sittingOut)
-    ) {
-      return next;
-    }
-    next = (next + 1) % seats.length;
-  }
-
-  return start;
+  const button = dealerSeat - 1;
+  return ((button % seatCount) + seatCount) % seatCount;
 }
 
 /**
@@ -570,8 +557,7 @@ export function rebuildGameFromHistory(gameId, hands, summary) {
     tournamentInitialStack,
   );
 
-  const previousDealer = lastHand.dealer_seat - 1;
-  game.button = getNextButton(game.seats, previousDealer);
+  game.button = getRecordedButton(game.seats.length, lastHand.dealer_seat);
   applyTournamentState(game, lastHand, summary, blinds);
 
   return game;

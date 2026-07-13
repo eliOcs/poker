@@ -2,14 +2,10 @@ import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
+import * as ActionClock from "../../../src/backend/poker/action-clock.js";
 import {
   tick,
   shouldTickBeRunning,
-  resetActingTicks,
-  startClockTicks,
-  isClockCallable,
-  CLOCK_WAIT_TICKS,
-  CLOCK_DURATION_TICKS,
 } from "../../../src/backend/poker/game-tick.js";
 import { createHeadsUpGame } from "./test-helpers.js";
 
@@ -52,27 +48,27 @@ describe("game-tick", () => {
       });
     });
 
-    describe("acting ticks", () => {
+    describe("action wait ticks", () => {
       beforeEach(() => {
         Betting.startBettingRound(game, "flop");
       });
 
-      it("should increment actingTicks each tick", () => {
-        assert.strictEqual(game.actingTicks, 0);
+      it("should increment wait ticks while a player is acting", () => {
+        assert.strictEqual(game.actionClock.waitTicks, 0);
 
         tick(game);
-        assert.strictEqual(game.actingTicks, 1);
+        assert.strictEqual(game.actionClock.waitTicks, 1);
 
         tick(game);
-        assert.strictEqual(game.actingTicks, 2);
+        assert.strictEqual(game.actionClock.waitTicks, 2);
       });
 
-      it("should not increment actingTicks when no one is acting", () => {
+      it("should not increment wait ticks when no one is acting", () => {
         game.hand.actingSeat = -1;
-        game.actingTicks = 0;
+        game.actionClock.waitTicks = 0;
 
         tick(game);
-        assert.strictEqual(game.actingTicks, 0);
+        assert.strictEqual(game.actionClock.waitTicks, 0);
       });
     });
 
@@ -83,7 +79,7 @@ describe("game-tick", () => {
 
       it("should trigger auto-action when clock expires", () => {
         const actingSeat = game.hand.actingSeat;
-        game.clockTicks = CLOCK_DURATION_TICKS - 1;
+        game.actionClock.countdownTicks = ActionClock.CLOCK_DURATION_TICKS - 1;
 
         const result = tick(game);
 
@@ -92,7 +88,7 @@ describe("game-tick", () => {
       });
 
       it("should not trigger auto-action if clock not expired", () => {
-        game.clockTicks = CLOCK_DURATION_TICKS - 2;
+        game.actionClock.countdownTicks = ActionClock.CLOCK_DURATION_TICKS - 2;
 
         const result = tick(game);
 
@@ -100,21 +96,33 @@ describe("game-tick", () => {
       });
 
       it("should not trigger auto-action if clock not called", () => {
-        game.clockTicks = 0;
+        game.actionClock.countdownTicks = 0;
 
         const result = tick(game);
 
         assert.strictEqual(result.autoActionSeat, undefined);
       });
 
-      it("should increment clockTicks when clock is active", () => {
-        game.clockTicks = 1;
+      it("should increment countdown ticks when clock is active", () => {
+        game.actionClock.countdownTicks = 1;
 
         tick(game);
-        assert.strictEqual(game.clockTicks, 2);
+        assert.strictEqual(game.actionClock.countdownTicks, 2);
 
         tick(game);
-        assert.strictEqual(game.clockTicks, 3);
+        assert.strictEqual(game.actionClock.countdownTicks, 3);
+      });
+
+      it("should request exactly one automatic action when clock expires", () => {
+        const actingSeat = game.hand.actingSeat;
+        game.actionClock.countdownTicks = ActionClock.CLOCK_DURATION_TICKS - 1;
+
+        const expiryTick = tick(game);
+        const laterTick = tick(game);
+
+        assert.strictEqual(expiryTick.autoActionSeat, actingSeat);
+        assert.strictEqual(expiryTick.autoActionReason, "clock");
+        assert.strictEqual(laterTick.autoActionSeat, undefined);
       });
     });
 
@@ -187,67 +195,13 @@ describe("game-tick", () => {
     });
   });
 
-  describe("resetActingTicks", () => {
-    it("should reset all tick counters", () => {
-      game.actingTicks = 10;
-      game.clockTicks = 15;
-
-      resetActingTicks(game);
-
-      assert.strictEqual(game.actingTicks, 0);
-      assert.strictEqual(game.clockTicks, 0);
-    });
-  });
-
-  describe("startClockTicks", () => {
-    it("should set clockTicks to 1", () => {
-      game.clockTicks = 0;
-
-      startClockTicks(game);
-
-      assert.strictEqual(game.clockTicks, 1);
-    });
-  });
-
-  describe("isClockCallable", () => {
-    it("should return true when actingTicks >= CLOCK_WAIT_TICKS and clock not called", () => {
-      game.actingTicks = CLOCK_WAIT_TICKS;
-      game.clockTicks = 0;
-
-      assert.strictEqual(isClockCallable(game), true);
-    });
-
-    it("should return false when actingTicks < CLOCK_WAIT_TICKS", () => {
-      game.actingTicks = CLOCK_WAIT_TICKS - 1;
-      game.clockTicks = 0;
-
-      assert.strictEqual(isClockCallable(game), false);
-    });
-
-    it("should return false when clock already called", () => {
-      game.actingTicks = CLOCK_WAIT_TICKS;
-      game.clockTicks = 1;
-
-      assert.strictEqual(isClockCallable(game), false);
-    });
-  });
-
-  describe("tick constants", () => {
-    it("should have correct default values", () => {
-      assert.strictEqual(CLOCK_WAIT_TICKS, 15);
-      assert.strictEqual(CLOCK_DURATION_TICKS, 60);
-    });
-  });
-
   describe("game state initialization", () => {
-    it("should initialize actingTicks as 0", () => {
+    it("should initialize action clock state", () => {
       const newGame = Game.create();
-      assert.strictEqual(newGame.actingTicks, 0);
-    });
-
-    it("should initialize clockTicks as 0", () => {
-      const newGame = Game.create();
-      assert.strictEqual(newGame.clockTicks, 0);
+      assert.deepStrictEqual(newGame.actionClock, {
+        waitTicks: 0,
+        countdownTicks: 0,
+      });
     });
 
     it("should initialize runout as undefined", () => {

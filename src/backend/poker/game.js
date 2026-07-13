@@ -1,4 +1,5 @@
 import * as Id from "../id.js";
+import * as ActionClock from "./action-clock.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Tournament from "../../shared/tournament.js";
@@ -100,8 +101,7 @@ export {
  * @property {number} [countdown] - Countdown ticks until hand starts
  * @property {NodeJS.Timeout} [tickTimer] - Unified game tick timer (1 second interval)
  * @property {WinnerMessage} [winnerMessage] - Winner info to display after hand ends
- * @property {number} actingTicks - Ticks the current player has been acting (for call clock availability)
- * @property {number} clockTicks - Ticks since clock was called (for clock expiry)
+ * @property {import('./action-clock.js').ActionClock} actionClock - Shared action timing state
  * @property {TournamentState} [tournament] - Tournament state
  * @property {RunoutState} [runout] - Runout state for all-in scenarios
  * @property {import('./showdown.js').PotResult[]} [pendingHandHistory] - Pot results to finalize after reveal window
@@ -174,8 +174,7 @@ export function create(options = {}) {
     board: { cards: [] },
     hand: createHand(),
     handNumber: 0,
-    actingTicks: 0,
-    clockTicks: 0,
+    actionClock: ActionClock.create(),
   });
 }
 

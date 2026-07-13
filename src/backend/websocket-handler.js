@@ -4,7 +4,7 @@ import {
   classifyAllInAction,
   recordBettingAction,
 } from "./poker/hand-history/record.js";
-import { resetActingTicks, startClockTicks } from "./poker/game-tick.js";
+import * as ActionClock from "./poker/action-clock.js";
 import * as PokerGame from "./poker/game.js";
 import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
 
@@ -51,7 +51,7 @@ function handleSitOutOrLeave(game) {
  * @returns {FinalizedHand|void}
  */
 function handleBettingAction(game) {
-  resetActingTicks(game);
+  ActionClock.reset(game.actionClock);
   return PokerGame.processGameFlow(game);
 }
 
@@ -61,7 +61,7 @@ export const POST_ACTION_HANDLERS = {
   cancelSitOut: handleSitOutOrLeave,
   leave: handleSitOutOrLeave,
   callClock: (game) => {
-    startClockTicks(game);
+    ActionClock.start(game.actionClock);
     return;
   },
 };

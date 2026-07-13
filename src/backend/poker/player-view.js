@@ -1,9 +1,9 @@
 import * as Betting from "./betting.js";
+import * as ActionClock from "./action-clock.js";
 import {
   countAlivePlayersWithChips,
   countPlayersWithChips,
 } from "./actions.js";
-import { isClockCallable, CLOCK_DURATION_TICKS } from "./game-tick.js";
 import * as TournamentTick from "./tournament-tick.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
@@ -622,7 +622,7 @@ function canCallClock(game, playerSeatIndex) {
   return (
     game.hand.actingSeat !== -1 &&
     game.hand.actingSeat !== playerSeatIndex &&
-    isClockCallable(game)
+    ActionClock.canStart(game.actionClock)
   );
 }
 
@@ -800,11 +800,8 @@ export default function playerView(game, player) {
         : game.hand.pot,
       currentBet: game.hand.currentBet,
       actingSeat: game.hand.actingSeat,
-      actingTicks: game.actingTicks,
-      clockRemaining:
-        game.clockTicks > 0
-          ? Math.max(0, CLOCK_DURATION_TICKS - game.clockTicks)
-          : undefined,
+      actingTicks: game.actionClock.waitTicks,
+      clockRemaining: ActionClock.getRemaining(game.actionClock),
       collectingBets: !!game.collectingBets?.active,
     },
     countdown: game.countdown,

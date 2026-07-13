@@ -1,4 +1,5 @@
 import * as PokerGame from "./poker/game.js";
+import * as ActionClock from "./poker/action-clock.js";
 import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
 
@@ -36,12 +37,11 @@ export function applyTournamentStateToTable(tournament, game) {
  * @param {Game} game
  * @returns {boolean}
  */
-export function isTableWaiting(game) {
+export function isHandSettled(game) {
   return (
     game.hand.phase === "waiting" &&
     game.collectingBets === undefined &&
-    game.runout?.active !== true &&
-    game.pendingHandHistory === undefined
+    game.runout?.active !== true
   );
 }
 
@@ -49,13 +49,24 @@ export function isTableWaiting(game) {
  * @param {Game} game
  * @returns {boolean}
  */
+export function isTableReadyForNextHand(game) {
+  return isHandSettled(game) && game.pendingHandHistory === undefined;
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
+export function isTableReadyForRebalance(game) {
+  return isTableReadyForNextHand(game);
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
 export function hasSettledWaitingHand(game) {
-  return (
-    game.hand.phase === "waiting" &&
-    game.collectingBets === undefined &&
-    game.runout?.active !== true &&
-    game.pendingHandHistory !== undefined
-  );
+  return isHandSettled(game) && game.pendingHandHistory !== undefined;
 }
 
 /**
@@ -104,8 +115,7 @@ export function resetClosedTable(game) {
   delete game.runout;
   delete game.pendingHandHistory;
   delete game.winnerMessage;
-  game.actingTicks = 0;
-  game.clockTicks = 0;
+  ActionClock.reset(game.actionClock);
   for (let i = 0; i < game.seats.length; i += 1) {
     game.seats[i] = Seat.empty();
   }
@@ -119,7 +129,7 @@ export function resetClosedTable(game) {
 export function syncWaitingTableState(tournament, game, ensureTableTick) {
   applyTournamentStateToTable(tournament, game);
 
-  if (!isTableWaiting(game)) {
+  if (!isTableReadyForNextHand(game)) {
     ensureTableTick(game);
     return;
   }
@@ -176,6 +186,6 @@ export function getTimeToNextLevel(tournament) {
 export function canStartPendingBreak(tournament, games) {
   if (!tournament.pendingBreak) return false;
   return getActiveTables(tournament, games).every((entry) =>
-    isTableWaiting(entry.game),
+    isHandSettled(entry.game),
   );
 }

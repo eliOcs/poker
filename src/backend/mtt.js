@@ -1,6 +1,5 @@
 import * as Id from "./id.js";
 import * as PokerGame from "./poker/game.js";
-import * as Seat from "./poker/seat.js";
 import * as Tournament from "../shared/tournament.js";
 import { TIMER_INTERVAL } from "./poker/game-constants.js";
 import { tickClock } from "./poker/tournament-clock.js";
@@ -10,8 +9,7 @@ import {
 } from "./mtt-metadata.js";
 import {
   applyTournamentStateToTable,
-  isTableWaiting,
-  countActiveEntrants,
+  isHandSettled,
   syncWaitingTableState,
   getActiveTables,
   hasSettledWaitingHand,
@@ -29,6 +27,8 @@ import {
   movePlayer,
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-collapse.js";
+import { processTableAfterHand } from "./mtt-player-lifecycle.js";
+import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
 
 const FINAL_TABLE_NAME = "Final Table";
 
@@ -40,13 +40,14 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} TournamentEntrant
  * @property {string} playerId
- * @property {string} name
+ * @property {string} [name]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
  * @property {number} [seatIndex]
  * @property {number} [finishPosition]
  * @property {number} handsPlayed
+ * @property {number} rebuysUsed
  * @property {number} registrationOrder
  * @property {string} registeredAt
  * @property {string} [eliminatedAt]
@@ -64,9 +65,11 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
+ * @property {string} [ownerName]
  * @property {number} buyIn
  * @property {number} tableSize
  * @property {number} initialStack
+ * @property {number} maxRebuys
  * @property {number} level
  * @property {number} levelTicks
  * @property {boolean} onBreak
@@ -93,7 +96,7 @@ const FINAL_TABLE_NAME = "Final Table";
  *
  * @typedef {object} ManagedTournamentViewEntrant
  * @property {string} playerId
- * @property {string} name
+ * @property {string} [name]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
@@ -106,7 +109,9 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {string} name
  * @property {TournamentStatus} status
  * @property {string} ownerId
+ * @property {{ id: string, name?: string }} owner
  * @property {number} buyIn
+ * @property {number} prizePool
  * @property {number} tableSize
  * @property {number} level
  * @property {number} timeToNextLevel
@@ -195,6 +200,22 @@ export function createMttManager({
    */
   function broadcastTournament(tournament, playerMoves = []) {
     broadcastTournamentState(tournament.id, playerMoves);
+  }
+
+  /**
+   * @param {TournamentEntrant} entrant
+   */
+  function syncEntrantNameToTable(entrant) {
+    if (!entrant.tableId || entrant.seatIndex === undefined) return;
+
+    const game = games.get(entrant.tableId);
+    if (!game) return;
+
+    const seat = game.seats[entrant.seatIndex];
+    if (!seat || seat.empty) return;
+
+    seat.player.name = entrant.name;
+    broadcastTableState(game.id);
   }
 
   /**
@@ -354,87 +375,15 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @param {Game} game
-   * @returns {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>}
+   * @param {Iterable<string>} tableIds
    */
-  function getBustedEntrantsForTable(tournament, game) {
-    /** @type {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>} */
-    const bustedEntrants = [];
-
-    for (let i = 0; i < game.seats.length; i += 1) {
-      const seat = game.seats[i];
-      if (!seat || seat.empty) continue;
-
-      const occupiedSeat =
-        /** @type {import("./poker/seat.js").OccupiedSeat} */ (seat);
-
-      const entrant = tournament.entrants.get(occupiedSeat.player.id);
-      if (!entrant) continue;
-      entrant.name = occupiedSeat.player.name ?? entrant.name;
-      entrant.handsPlayed = occupiedSeat.handsPlayed;
-
-      if (occupiedSeat.stack > 0) {
-        delete occupiedSeat.bustedPosition;
-        entrant.status = "seated";
-        entrant.stack = occupiedSeat.stack;
-        entrant.tableId = game.id;
-        entrant.seatIndex = i;
-        continue;
-      }
-
-      if (entrant.status === "seated") {
-        bustedEntrants.push({ seat: occupiedSeat, entrant, seatIndex: i });
-      }
+  function syncTables(tournament, tableIds) {
+    for (const tableId of tableIds) {
+      const game = games.get(tableId);
+      if (!game) continue;
+      clearTableWinner(game);
+      syncWaitingTableState(tournament, game, ensureTableTick);
     }
-
-    return bustedEntrants;
-  }
-
-  /**
-   * @param {Game} game
-   * @param {Array<{ seat: import("./poker/seat.js").OccupiedSeat, entrant: TournamentEntrant, seatIndex: number }>} bustedEntrants
-   * @param {number} activeBefore
-   */
-  function markBustedEntrants(game, bustedEntrants, activeBefore) {
-    bustedEntrants
-      .sort((a, b) => a.seatIndex - b.seatIndex)
-      .forEach(({ seat, entrant, seatIndex }, index) => {
-        const finishPosition = activeBefore - index;
-        seat.bustedPosition = finishPosition;
-        seat.stack = 0;
-        seat.bet = 0;
-        seat.sittingOut = true;
-        entrant.status = "eliminated";
-        entrant.stack = 0;
-        delete entrant.tableId;
-        delete entrant.seatIndex;
-        entrant.finishPosition = finishPosition;
-        entrant.eliminatedAt = now();
-        game.seats[seatIndex] = Seat.empty();
-      });
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @param {Set<string>} changedTableIds
-   */
-  function syncChangedTables(tournament, changedTableIds) {
-    for (const tableId of changedTableIds) {
-      const changedGame = games.get(tableId);
-      if (!changedGame) continue;
-      clearTableWinner(changedGame);
-      syncWaitingTableState(tournament, changedGame, ensureTableTick);
-    }
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @param {Game} game
-   */
-  function processTableAfterHand(tournament, game) {
-    const activeBefore = countActiveEntrants(tournament);
-    const bustedEntrants = getBustedEntrantsForTable(tournament, game);
-    markBustedEntrants(game, bustedEntrants, activeBefore);
   }
 
   /**
@@ -464,10 +413,94 @@ export function createMttManager({
         continue;
       }
       if (finalizePendingTableHand(entry.game)) {
-        processTableAfterHand(tournament, entry.game);
+        processTableAfterHand(tournament, entry.game, now);
         changedTableIds.add(entry.game.id);
       }
     }
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @returns {boolean}
+   */
+  function canCoordinateTournament(tournament) {
+    return tournament.status === "running";
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @returns {string[]}
+   */
+  function getOpenTableIds(tournament) {
+    return tournament.tables
+      .filter(
+        (table) => table.closedAt === undefined && games.has(table.tableId),
+      )
+      .map((table) => table.tableId);
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   * @returns {boolean}
+   */
+  function maybeFinishTournament(tournament, changedTableIds) {
+    const contenders = getContendingEntrants(tournament, games);
+    if (contenders.length !== 1) {
+      return false;
+    }
+
+    finishTournament(tournament, games, ensureTableTick, now, contenders[0]);
+    stopTicking(tournament);
+    for (const table of tournament.tables) {
+      changedTableIds.add(table.tableId);
+    }
+    return true;
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   * @param {{ broadcastAllOpenTables?: boolean, detectWinner?: boolean }} [options]
+   */
+  function reconcileTournament(
+    tournament,
+    changedTableIds,
+    { broadcastAllOpenTables = false, detectWinner = true } = {},
+  ) {
+    /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
+    const playerMoves = [];
+
+    if (canCoordinateTournament(tournament)) {
+      if (detectWinner && maybeFinishTournament(tournament, changedTableIds)) {
+        broadcastTables(tournament, changedTableIds);
+        return;
+      }
+
+      const balancedTables = rebalanceTournament(
+        tournament,
+        games,
+        now,
+        (activeTables, changedTables) => {
+          mergeIntoFinalTable(
+            tournament,
+            activeTables,
+            changedTables,
+            playerMoves,
+          );
+        },
+        playerMoves,
+      );
+      for (const tableId of balancedTables) {
+        changedTableIds.add(tableId);
+      }
+    }
+
+    const tableIds = broadcastAllOpenTables
+      ? getOpenTableIds(tournament)
+      : changedTableIds;
+    syncTables(tournament, tableIds);
+    broadcastTables(tournament, tableIds, playerMoves);
   }
 
   /**
@@ -481,44 +514,17 @@ export function createMttManager({
 
     /** @type {Set<string>} */
     const changedTableIds = new Set();
-    /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
-    const playerMoves = [];
     finalizeSettledWaitingTables(tournament, changedTableIds);
 
     const canStartBreak = getActiveTables(tournament, games).every((entry) =>
-      isTableWaiting(entry.game),
+      isHandSettled(entry.game),
     );
     tickClock(tournament, canStartBreak);
 
-    const balancedTables = rebalanceTournament(
-      tournament,
-      games,
-      ensureTableTick,
-      now,
-      (activeTables, changedTables) => {
-        mergeIntoFinalTable(
-          tournament,
-          activeTables,
-          changedTables,
-          playerMoves,
-        );
-      },
-      playerMoves,
-    );
-    for (const tableId of balancedTables) {
-      changedTableIds.add(tableId);
-    }
-
-    for (const table of tournament.tables) {
-      const game = games.get(table.tableId);
-      if (!game) continue;
-      if (table.closedAt !== undefined) {
-        continue;
-      }
-      syncWaitingTableState(tournament, game, ensureTableTick);
-      broadcastTableState(table.tableId);
-    }
-    broadcastTournament(tournament, playerMoves);
+    reconcileTournament(tournament, changedTableIds, {
+      broadcastAllOpenTables: true,
+      detectWinner: false,
+    });
   }
 
   /**
@@ -540,10 +546,11 @@ export function createMttManager({
 
     tournament.entrants.set(user.id, {
       playerId: user.id,
-      name: user.name ?? user.id,
+      name: user.name,
       status: "registered",
       stack: tournament.initialStack,
       handsPlayed: 0,
+      rebuysUsed: 0,
       registrationOrder: tournament.nextRegistrationOrder,
       registeredAt: now(),
     });
@@ -554,11 +561,23 @@ export function createMttManager({
 
   return {
     /**
-     * @param {{ owner: User, buyIn: number, tableSize: number }} options
+     * @param {{ owner: User, buyIn: number, tableSize: number, maxRebuys?: unknown }} options
      */
-    createTournament({ owner, buyIn, tableSize }) {
+    createTournament({
+      owner,
+      buyIn,
+      tableSize,
+      maxRebuys = DEFAULT_MAX_REBUYS,
+    }) {
       if (!Tournament.isValidBuyin(buyIn)) {
         throw new Error("invalid tournament buy-in");
+      }
+      if (
+        typeof maxRebuys !== "number" ||
+        !Number.isInteger(maxRebuys) ||
+        maxRebuys < 0
+      ) {
+        throw new Error("invalid maximum rebuys");
       }
 
       const createdAt = now();
@@ -568,9 +587,11 @@ export function createMttManager({
         name: DEFAULT_TOURNAMENT_NAME,
         status: "registration",
         ownerId: owner.id,
+        ownerName: owner.name,
         buyIn,
         tableSize,
         initialStack: Tournament.INITIAL_STACK,
+        maxRebuys,
         level: 1,
         levelTicks: 0,
         onBreak: false,
@@ -685,22 +706,27 @@ export function createMttManager({
      */
     syncUser(user) {
       for (const tournament of tournaments.values()) {
+        const isOwner = tournament.ownerId === user.id;
         const entrant = tournament.entrants.get(user.id);
-        if (!entrant) continue;
-        entrant.name = user.name ?? user.id;
-        if (entrant.tableId) {
-          const game = games.get(entrant.tableId);
-          const seat =
-            game && entrant.seatIndex !== undefined
-              ? game.seats[entrant.seatIndex]
-              : undefined;
-          if (game && seat && !seat.empty) {
-            seat.player.name = entrant.name;
-            broadcastTableState(game.id);
-          }
+        if (!isOwner && !entrant) continue;
+
+        if (isOwner) {
+          tournament.ownerName = user.name;
+        }
+        if (entrant) {
+          entrant.name = user.name;
+          syncEntrantNameToTable(entrant);
         }
         broadcastTournament(tournament);
       }
+    },
+
+    /**
+     * Managed table actions are added by later rebuy stages.
+     * @returns {false}
+     */
+    handleTableAction() {
+      return false;
     },
 
     /**
@@ -718,50 +744,10 @@ export function createMttManager({
 
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
-      /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
-      const playerMoves = [];
       finalizeSettledWaitingTables(tournament, changedTableIds);
-      processTableAfterHand(tournament, game);
+      processTableAfterHand(tournament, game, now);
       maybeStartPendingBreak(tournament, changedTableIds);
-
-      const contenders = getContendingEntrants(tournament, games);
-      if (contenders.length === 1) {
-        finishTournament(
-          tournament,
-          games,
-          ensureTableTick,
-          now,
-          contenders[0],
-        );
-        stopTicking(tournament);
-        for (const table of tournament.tables) {
-          changedTableIds.add(table.tableId);
-        }
-        broadcastTables(tournament, changedTableIds);
-        return;
-      }
-
-      const balancedTables = rebalanceTournament(
-        tournament,
-        games,
-        ensureTableTick,
-        now,
-        (activeTables, changedTableIds) => {
-          mergeIntoFinalTable(
-            tournament,
-            activeTables,
-            changedTableIds,
-            playerMoves,
-          );
-        },
-        playerMoves,
-      );
-      for (const tableId of balancedTables) {
-        changedTableIds.add(tableId);
-      }
-
-      syncChangedTables(tournament, changedTableIds);
-      broadcastTables(tournament, changedTableIds, playerMoves);
+      reconcileTournament(tournament, changedTableIds);
     },
 
     /**

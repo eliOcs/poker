@@ -1,8 +1,8 @@
 import * as Actions from "./actions.js";
+import * as ActionClock from "./action-clock.js";
 import * as HandHistory from "./hand-history/index.js";
 import * as PreAction from "./pre-action.js";
 import { recordBettingAction } from "./hand-history/record.js";
-import { resetActingTicks } from "./game-tick.js";
 
 /**
  * @typedef {import('./game.js').Game} Game
@@ -85,6 +85,6 @@ export function executePreActions(game) {
       currentBetBefore,
     );
 
-    resetActingTicks(game);
+    ActionClock.reset(game.actionClock);
   }
 }

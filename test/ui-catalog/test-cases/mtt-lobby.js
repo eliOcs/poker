@@ -44,7 +44,7 @@ function makeTable(tableId, tableName, overrides = {}) {
 }
 
 function makeBaseTournament(overrides = {}) {
-  return {
+  const tournament = {
     id: "t1abc123",
     status: "registration",
     ownerId: "owner1",
@@ -73,6 +73,12 @@ function makeBaseTournament(overrides = {}) {
       canStart: false,
     },
     ...overrides,
+  };
+
+  return {
+    ...tournament,
+    prizePool:
+      overrides.prizePool ?? tournament.entrants.length * tournament.buyIn,
   };
 }
 

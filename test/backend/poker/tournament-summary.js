@@ -430,4 +430,25 @@ describe("calculatePrizes", () => {
     assert.equal(prizes9[2].position, 3);
     assert.equal(prizes9[2].amount, 900); // 10% of 9000
   });
+
+  it("should change awards from an explicit pool without changing paid positions", () => {
+    const basePrizes = Tournament.calculatePrizesFromPool(5, 2500);
+    const enlargedPrizes = Tournament.calculatePrizesFromPool(5, 3750);
+
+    assert.deepEqual(
+      enlargedPrizes.map((prize) => prize.position),
+      basePrizes.map((prize) => prize.position),
+    );
+    assert.deepEqual(enlargedPrizes, [
+      { position: 1, amount: 3000 },
+      { position: 2, amount: 750 },
+    ]);
+  });
+
+  it("should retain per-award rounding for an explicit pool", () => {
+    assert.deepEqual(Tournament.calculatePrizesFromPool(5, 2503), [
+      { position: 1, amount: 2002 },
+      { position: 2, amount: 501 },
+    ]);
+  });
 });
