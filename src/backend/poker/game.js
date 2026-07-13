@@ -107,6 +107,7 @@ export {
  * @property {import('./showdown.js').PotResult[]} [pendingHandHistory] - Pot results to finalize after reveal window
  * @property {{ active: boolean, delayTicks: number }} [collectingBets] - Bet collection animation state
  * @property {import('../logger.js').Log} [handLog] - Deferred hand-level log record for the current hand
+ * @property {import('../mtt-rebuys.js').RebuyDecision} [pendingRebuyDecision] - Concurrent post-hand MTT rebuy decisions
  */
 
 /**

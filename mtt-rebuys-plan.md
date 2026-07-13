@@ -33,7 +33,7 @@ Update this checklist in the same commit that completes each remaining stage.
 - [x] Stage 7 — Extract the MTT player lifecycle
 - [x] Stage 8 — Add rebuy policy and usage data
 - [x] Stage 9 — Add dormant rebuy accounting and recovery
-- [ ] Stage 10 — Implement the pure rebuy decision state machine
+- [x] Stage 10 — Implement the pure rebuy decision state machine
 - [ ] Stage 11 — Integrate decisions, actions, and views
 - [ ] Stage 12 — Integrate rebuy clocks and cutoff transitions
 - [ ] Stage 13 — Activate one rebuy for every MTT
