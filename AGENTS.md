@@ -276,6 +276,7 @@ npm run test:e2e:coverage       # Run e2e tests with coverage reporting
 npm run duplicates              # Check for code duplication (jscpd)
 npm run lint                    # ESLint + Stylelint (check only)
 npm run format                  # Prettier (check only)
+npm run review                  # Semantic review of uncommitted changes with Codex
 npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
