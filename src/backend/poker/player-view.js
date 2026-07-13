@@ -739,6 +739,10 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     game,
   );
   const isOwnSeat = index === playerSeatIndex;
+  const isRebuyDecisionPending =
+    game.pendingRebuyDecision?.entries.some(
+      (entry) => entry.seatIndex === index && entry.resolution === undefined,
+    ) ?? false;
 
   // Calculate hand rank only for visible cards of non-folded players
   const handRank =
@@ -758,12 +762,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     cards: getCardsForView(seat, revealAllCards, isOwnSeat),
     actions: getAvailableActions(game, index, playerSeatIndex),
     isCurrentPlayer: index === playerSeatIndex,
-    isActing:
-      index === game.hand.actingSeat ||
-      (game.pendingRebuyDecision?.entries.some(
-        (entry) => entry.seatIndex === index && entry.resolution === undefined,
-      ) ??
-        false),
+    isActing: index === game.hand.actingSeat || isRebuyDecisionPending,
     lastAction: seat.lastAction,
     handResult: seat.handResult,
     handRank,
