@@ -7,6 +7,7 @@ import {
   isRebuyPeriodOpen,
 } from "./mtt-rebuy-policy.js";
 import { countActiveEntrants } from "./mtt-table-state.js";
+import * as ActionClock from "./poker/action-clock.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -20,6 +21,7 @@ import { countActiveEntrants } from "./mtt-table-state.js";
  *
  * @typedef {object} RebuyDecision
  * @property {RebuyDecisionEntry[]} entries
+ * @property {import('./poker/action-clock.js').ActionClock} clock
  */
 
 /**
@@ -57,6 +59,7 @@ export function openRebuyDecision(tournament, game) {
         ? {}
         : { resolution: /** @type {const} */ ("leave") }),
     })),
+    clock: ActionClock.create(),
   };
   game.pendingRebuyDecision = decision;
   return decision;
@@ -110,6 +113,33 @@ export function resolveRebuyDecision(tournament, game, playerId, resolution) {
 }
 
 /**
+ * Validates and applies one user-facing rebuy resolution action.
+ *
+ * @param {ManagedTournament} tournament
+ * @param {Game} game
+ * @param {string} playerId
+ * @param {string} action
+ * @returns {boolean} whether a rebuy resolution action was handled
+ */
+export function handleRebuyDecisionAction(tournament, game, playerId, action) {
+  if (action !== "rebuy" && action !== "leave") return false;
+
+  const entry = game.pendingRebuyDecision?.entries.find(
+    (candidate) => candidate.playerId === playerId,
+  );
+  if (tournament.status !== "running" || !entry) {
+    if (action === "rebuy") {
+      throw new Error("rebuy decision is not pending");
+    }
+    return false;
+  }
+  if (!resolveRebuyDecision(tournament, game, playerId, action)) {
+    throw new Error("rebuy decision is already resolved");
+  }
+  return true;
+}
+
+/**
  * Resolves every unanswered entry as leave without changing an entry that was
  * already accepted.
  *
@@ -126,6 +156,20 @@ export function expireRebuyDecisions(decision) {
     expired += 1;
   }
   return expired;
+}
+
+/**
+ * Advances one table-local decision clock. The same clock targets every
+ * unresolved entry in the batch.
+ *
+ * @param {RebuyDecision|undefined} decision
+ * @returns {boolean} whether the countdown expired on this tick
+ */
+export function tickRebuyDecisionClock(decision) {
+  if (!hasUnresolvedRebuyDecisions(decision)) return false;
+
+  ActionClock.tickWait(/** @type {RebuyDecision} */ (decision).clock);
+  return ActionClock.tick(/** @type {RebuyDecision} */ (decision).clock);
 }
 
 /**
@@ -161,4 +205,21 @@ export function finalizeRebuyDecision(tournament, game, now) {
   );
   delete game.pendingRebuyDecision;
   return true;
+}
+
+/**
+ * Opens a post-hand batch and immediately finalizes it when every busted
+ * entrant was pre-resolved as ineligible.
+ *
+ * @param {ManagedTournament} tournament
+ * @param {Game} game
+ * @param {() => string} now
+ */
+export function processTableAfterHand(tournament, game, now) {
+  const decision = openRebuyDecision(tournament, game);
+  if (!hasUnresolvedRebuyDecisions(decision)) {
+    finalizeRebuyDecision(tournament, game, now);
+    return;
+  }
+  delete game.countdown;
 }

@@ -35,7 +35,7 @@ Update this checklist in the same commit that completes each remaining stage.
 - [x] Stage 9 — Add dormant rebuy accounting and recovery
 - [x] Stage 10 — Implement the pure rebuy decision state machine
 - [x] Stage 11 — Integrate decisions, actions, and views
-- [ ] Stage 12 — Integrate rebuy clocks and cutoff transitions
+- [x] Stage 12 — Integrate rebuy clocks and cutoff transitions
 - [ ] Stage 13 — Activate one rebuy for every MTT
 
 ## Working agreement

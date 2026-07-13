@@ -26,6 +26,22 @@ describe("action clock", () => {
     assert.strictEqual(ActionClock.canStart(clock), true);
   });
 
+  it("shares manual start rejection behavior across clock callers", () => {
+    const clock = ActionClock.create();
+
+    assert.throws(() => ActionClock.assertCanStart(clock), {
+      message: "must wait 60 seconds before calling clock",
+    });
+
+    clock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
+    assert.doesNotThrow(() => ActionClock.assertCanStart(clock));
+    ActionClock.start(clock);
+
+    assert.throws(() => ActionClock.assertCanStart(clock), {
+      message: "clock already called",
+    });
+  });
+
   it("starts a countdown once without resetting elapsed wait", () => {
     const clock = {
       waitTicks: ActionClock.CLOCK_WAIT_TICKS,

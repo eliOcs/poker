@@ -624,6 +624,17 @@ function addRaiseAction(actions, seat, game) {
  * @returns {boolean}
  */
 function canCallClock(game, playerSeatIndex) {
+  const rebuyDecision = game.pendingRebuyDecision;
+  if (rebuyDecision?.entries.some((entry) => entry.resolution === undefined)) {
+    const ownDecision = rebuyDecision.entries.find(
+      (entry) => entry.seatIndex === playerSeatIndex,
+    );
+    return (
+      (ownDecision === undefined || ownDecision.resolution !== undefined) &&
+      ActionClock.canStart(rebuyDecision.clock)
+    );
+  }
+
   return (
     game.hand.actingSeat !== -1 &&
     game.hand.actingSeat !== playerSeatIndex &&
@@ -681,6 +692,22 @@ function getNotActingActions(game, seat, actions) {
   return addFoldedActions(game, seat, actions);
 }
 
+/**
+ * @param {Game} game
+ * @param {import('../mtt-rebuys.js').RebuyDecisionEntry} entry
+ * @param {number} playerSeatIndex
+ * @returns {PlayerAction[]}
+ */
+function getPendingRebuyEntryActions(game, entry, playerSeatIndex) {
+  if (entry.resolution === undefined) {
+    return [{ action: "rebuy" }, { action: "leave" }];
+  }
+
+  return canCallClock(game, playerSeatIndex)
+    ? [{ action: "callClock" }, { action: "emote" }, { action: "chat" }]
+    : [{ action: "emote" }, { action: "chat" }];
+}
+
 function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const seat = game.seats[seatIndex];
 
@@ -696,8 +723,12 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
   const pendingRebuyEntry = game.pendingRebuyDecision?.entries.find(
     (entry) => entry.seatIndex === seatIndex,
   );
-  if (pendingRebuyEntry && pendingRebuyEntry.resolution === undefined) {
-    return [{ action: "rebuy" }, { action: "leave" }];
+  if (pendingRebuyEntry) {
+    return getPendingRebuyEntryActions(
+      game,
+      pendingRebuyEntry,
+      playerSeatIndex,
+    );
   }
 
   /** @type {PlayerAction[]} */
@@ -789,6 +820,12 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
  */
 export default function playerView(game, player) {
   const playerSeatIndex = findPlayerSeat(game, player.id);
+  const decisionClock = game.pendingRebuyDecision?.entries.some(
+    (entry) => entry.resolution === undefined,
+  )
+    ? game.pendingRebuyDecision.clock
+    : undefined;
+  const actionClock = decisionClock ?? game.actionClock;
 
   /** @type {TournamentView|undefined} */
   const tournament = game.tournament?.active
@@ -816,8 +853,8 @@ export default function playerView(game, player) {
         : game.hand.pot,
       currentBet: game.hand.currentBet,
       actingSeat: game.hand.actingSeat,
-      actingTicks: game.actionClock.waitTicks,
-      clockRemaining: ActionClock.getRemaining(game.actionClock),
+      actingTicks: actionClock.waitTicks,
+      clockRemaining: ActionClock.getRemaining(actionClock),
       collectingBets: !!game.collectingBets?.active,
     },
     countdown: game.countdown,

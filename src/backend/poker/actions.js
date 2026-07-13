@@ -694,10 +694,5 @@ export function callClock(game, { seat }) {
     throw new Error("cannot call clock on yourself");
   }
 
-  if (!ActionClock.canStart(game.actionClock)) {
-    if (ActionClock.isActive(game.actionClock)) {
-      throw new Error("clock already called");
-    }
-    throw new Error("must wait 60 seconds before calling clock");
-  }
+  ActionClock.assertCanStart(game.actionClock);
 }

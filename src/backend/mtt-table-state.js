@@ -98,6 +98,23 @@ export function countActiveEntrants(tournament) {
 }
 
 /**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
+ * @returns {boolean}
+ */
+export function canCoordinateTournament(tournament, games) {
+  if (tournament.status !== "running") return false;
+
+  return tournament.tables.every((table) => {
+    const game = games.get(table.tableId);
+    if (!game) throw new Error("managed tournament table not found");
+    return !game.pendingRebuyDecision?.entries.some(
+      (entry) => entry.resolution === undefined,
+    );
+  });
+}
+
+/**
  * @param {Game} game
  * @returns {void}
  */

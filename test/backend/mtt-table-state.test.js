@@ -53,6 +53,7 @@ describe("mtt table state", () => {
     const game = PokerGame.create();
     game.pendingRebuyDecision = {
       entries: [{ playerId: "p1", seatIndex: 0 }],
+      clock: { waitTicks: 0, countdownTicks: 0 },
     };
 
     assert.equal(isHandSettled(game), true);

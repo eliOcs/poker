@@ -33,6 +33,17 @@ export function canStart(clock) {
 /**
  * @param {ActionClock} clock
  */
+export function assertCanStart(clock) {
+  if (canStart(clock)) return;
+  if (isActive(clock)) {
+    throw new Error("clock already called");
+  }
+  throw new Error("must wait 60 seconds before calling clock");
+}
+
+/**
+ * @param {ActionClock} clock
+ */
 export function tickWait(clock) {
   clock.waitTicks += 1;
 }

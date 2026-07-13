@@ -16,6 +16,7 @@ import {
   clearTableWinner,
   resetClosedTable,
   canStartPendingBreak,
+  canCoordinateTournament,
 } from "./mtt-table-state.js";
 import { finishTournament } from "./mtt-finish.js";
 import { recoverFinishedMttFromSummary } from "./mtt-recovery.js";
@@ -27,13 +28,17 @@ import {
   movePlayer,
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-collapse.js";
-import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
+import { DEFAULT_MAX_REBUYS, isRebuyPeriodOpen } from "./mtt-rebuy-policy.js";
 import {
   finalizeRebuyDecision,
-  hasUnresolvedRebuyDecisions,
-  openRebuyDecision,
-  resolveRebuyDecision,
+  handleRebuyDecisionAction,
+  processTableAfterHand,
 } from "./mtt-rebuys.js";
+import {
+  applyRebuyPeriodTransition,
+  callRebuyClock,
+  tickRebuyDecisionClocks,
+} from "./mtt-rebuy-clock.js";
 
 const FINAL_TABLE_NAME = "Final Table";
 
@@ -396,9 +401,7 @@ export function createMttManager({
    * @param {Set<string>} changedTableIds
    */
   function maybeStartPendingBreak(tournament, changedTableIds) {
-    if (!canStartPendingBreak(tournament, games)) {
-      return;
-    }
+    if (!canStartPendingBreak(tournament, games)) return;
 
     tournament.pendingBreak = false;
     tournament.onBreak = true;
@@ -418,43 +421,10 @@ export function createMttManager({
         continue;
       }
       if (finalizePendingTableHand(entry.game)) {
-        processTableAfterHand(tournament, entry.game);
+        processTableAfterHand(tournament, entry.game, now);
         changedTableIds.add(entry.game.id);
       }
     }
-  }
-
-  /**
-   * Opens the post-hand rebuy batch and immediately finalizes it when every
-   * busted entrant was pre-resolved as ineligible.
-   *
-   * @param {ManagedTournament} tournament
-   * @param {Game} game
-   */
-  function processTableAfterHand(tournament, game) {
-    const decision = openRebuyDecision(tournament, game);
-    if (!hasUnresolvedRebuyDecisions(decision)) {
-      finalizeRebuyDecision(tournament, game, now);
-      return;
-    }
-
-    delete game.countdown;
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @returns {boolean}
-   */
-  function canCoordinateTournament(tournament) {
-    if (tournament.status !== "running") return false;
-
-    return tournament.tables.every((table) => {
-      const game = games.get(table.tableId);
-      if (!game) {
-        throw new Error("managed tournament table not found");
-      }
-      return !hasUnresolvedRebuyDecisions(game.pendingRebuyDecision);
-    });
   }
 
   /**
@@ -501,7 +471,7 @@ export function createMttManager({
     /** @type {import('./mtt-seating.js').PlayerMovedEvent[]} */
     const playerMoves = [];
 
-    if (canCoordinateTournament(tournament)) {
+    if (canCoordinateTournament(tournament, games)) {
       if (detectWinner && maybeFinishTournament(tournament, changedTableIds)) {
         broadcastTables(tournament, changedTableIds);
         return;
@@ -544,16 +514,29 @@ export function createMttManager({
 
     /** @type {Set<string>} */
     const changedTableIds = new Set();
-    finalizeSettledWaitingTables(tournament, changedTableIds);
+    const finalizedRebuyDecision = tickRebuyDecisionClocks(
+      tournament,
+      games,
+      now,
+      changedTableIds,
+    );
 
+    const rebuyPeriodWasOpen = isRebuyPeriodOpen(tournament);
     const canStartBreak = getActiveTables(tournament, games).every((entry) =>
       isHandSettled(entry.game),
     );
     tickClock(tournament, canStartBreak);
+    applyRebuyPeriodTransition(
+      tournament,
+      games,
+      rebuyPeriodWasOpen,
+      changedTableIds,
+    );
+    finalizeSettledWaitingTables(tournament, changedTableIds);
 
     reconcileTournament(tournament, changedTableIds, {
       broadcastAllOpenTables: true,
-      detectWinner: false,
+      detectWinner: finalizedRebuyDecision,
     });
   }
 
@@ -758,7 +741,7 @@ export function createMttManager({
      * @returns {boolean}
      */
     handleTableAction(player, game, action) {
-      if (game.kind !== "mtt" || (action !== "rebuy" && action !== "leave")) {
+      if (game.kind !== "mtt") {
         return false;
       }
 
@@ -766,18 +749,15 @@ export function createMttManager({
       if (!tournament) {
         throw new Error("managed tournament not found");
       }
-      const entry = game.pendingRebuyDecision?.entries.find(
-        (candidate) => candidate.playerId === player.id,
-      );
-      if (tournament.status !== "running" || !entry) {
-        if (action === "rebuy") {
-          throw new Error("rebuy decision is not pending");
-        }
-        return false;
+      if (action === "callClock" && callRebuyClock(game, player.id)) {
+        reconcileTournament(tournament, new Set([game.id]), {
+          detectWinner: false,
+        });
+        return true;
       }
 
-      if (!resolveRebuyDecision(tournament, game, player.id, action)) {
-        throw new Error("rebuy decision is already resolved");
+      if (!handleRebuyDecisionAction(tournament, game, player.id, action)) {
+        return false;
       }
 
       const changedTableIds = new Set([game.id]);
@@ -801,9 +781,16 @@ export function createMttManager({
 
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
-      finalizeSettledWaitingTables(tournament, changedTableIds);
-      processTableAfterHand(tournament, game);
+      const rebuyPeriodWasOpen = isRebuyPeriodOpen(tournament);
       maybeStartPendingBreak(tournament, changedTableIds);
+      applyRebuyPeriodTransition(
+        tournament,
+        games,
+        rebuyPeriodWasOpen,
+        changedTableIds,
+      );
+      finalizeSettledWaitingTables(tournament, changedTableIds);
+      processTableAfterHand(tournament, game, now);
       reconcileTournament(tournament, changedTableIds);
     },
 
