@@ -33,7 +33,7 @@ describe("mtt rebuy accounting", () => {
       owner: createUser("owner"),
       buyIn: 500,
       tableSize: 6,
-      maxRebuys,
+      ...(maxRebuys === undefined ? {} : { maxRebuys }),
     });
     ctx.manager.registerPlayer(tournamentId, createUser("p2"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3"));
@@ -91,13 +91,14 @@ describe("mtt rebuy accounting", () => {
     );
   });
 
-  it("writes an empty rebuy list when rebuys are enabled but unused", async () => {
-    const tournament = createFinishedTournament(1);
+  it("writes Re-Entry fields for a default tournament with no accepted rebuys", async () => {
+    const tournament = createFinishedTournament(undefined);
 
     await finalizeManagedTournament(tournament);
 
     const summary = await readTournamentSummary(tournament.id);
     assert.ok(summary);
+    assert.equal(tournament.maxRebuys, 1);
     assert.deepEqual(summary.flags, ["MTT", "Re-Entry"]);
     assert.equal(summary.rebuy_cost, 5);
     assert.deepEqual(summary.tournament_rebuys, []);

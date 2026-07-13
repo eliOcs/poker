@@ -5,7 +5,7 @@ import { BREAK_AFTER_LEVEL } from "../shared/tournament.js";
  * @typedef {import('./mtt.js').TournamentEntrant} TournamentEntrant
  */
 
-export const DEFAULT_MAX_REBUYS = 0;
+export const DEFAULT_MAX_REBUYS = 1;
 
 /**
  * @param {ManagedTournament} tournament

@@ -10,6 +10,7 @@ function createTournamentView() {
     owner: { id: "owner", name: "Owner" },
     buyIn: 500,
     prizePool: 500,
+    maxRebuys: 1,
     tableSize: 6,
     level: 2,
     timeToNextLevel: 90,
@@ -88,6 +89,10 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Table 1");
     expect(element.shadowRoot.textContent).to.include("Standings");
     expect(element.shadowRoot.textContent).to.include("Lobby");
+    const rebuyStat = [...element.shadowRoot.querySelectorAll(".stat")].find(
+      (stat) => stat.querySelector(".label")?.textContent.trim() === "Rebuys",
+    );
+    expect(rebuyStat.querySelector(".value").textContent.trim()).to.equal("1");
   });
 
   it("renders payouts from the backend-provided prize pool", async () => {

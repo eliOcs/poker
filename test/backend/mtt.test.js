@@ -25,6 +25,7 @@ describe("mtt-manager", () => {
     assert.equal(view.name, "Multi-Table Tournament");
     assert.equal(view.entrants.length, 1);
     assert.equal(view.prizePool, 500);
+    assert.equal(view.maxRebuys, 1);
     assert.equal(view.currentPlayer.status, "registered");
     assert.equal(view.actions.canStart, false);
 

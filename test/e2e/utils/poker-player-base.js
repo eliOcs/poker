@@ -2,7 +2,8 @@
  * Base class for PokerPlayer: constructor, locator getters, and basic navigation.
  */
 
-const TURN_ACTION_BUTTON_NAME = /^(Check|Fold|Call\s+\$|Bet|Raise to|All-In)/;
+const TURN_ACTION_BUTTON_NAME =
+  /^(Check|Fold|Call\s+\$|Bet|Raise to|All-In|Rebuy|Leave)/;
 
 export class PokerPlayerBase {
   /** @type {import('@playwright/test').BrowserContext} */

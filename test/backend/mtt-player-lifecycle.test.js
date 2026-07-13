@@ -12,6 +12,7 @@ describe("mtt player lifecycle", () => {
       owner: createUser("owner", "Owner"),
       buyIn: 500,
       tableSize: 6,
+      maxRebuys: 0,
     });
     for (const id of ["p2", "p3", "p4", "p5"]) {
       ctx.manager.registerPlayer(

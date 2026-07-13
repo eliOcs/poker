@@ -69,8 +69,8 @@ describe("mtt rebuy integration", () => {
   beforeEach(() => ctx.setup());
   afterEach(() => ctx.teardown());
 
-  it("keeps immediate elimination when the production rebuy limit is zero", () => {
-    const { tournament } = createStartedTournament(ctx);
+  it("keeps immediate elimination when the rebuy limit is explicitly zero", () => {
+    const { tournament } = createStartedTournament(ctx, { maxRebuys: 0 });
     const game = ctx.games.get(tournament.tables[0].tableId);
     assert.ok(game);
     const bustedSeat = game.seats[1];
@@ -93,9 +93,7 @@ describe("mtt rebuy integration", () => {
   });
 
   it("offers concurrent decisions and resolves authenticated actions through the dispatcher", () => {
-    const { tournamentId, tournament } = createStartedTournament(ctx, {
-      maxRebuys: 1,
-    });
+    const { tournamentId, tournament } = createStartedTournament(ctx);
     const game = ctx.games.get(tournament.tables[0].tableId);
     assert.ok(game);
     const rebuySeatIndex = 1;

@@ -217,6 +217,8 @@ async function collectGameSnapshots(
  */
 async function getAvailableActions(player) {
   const actions = [];
+  if (await player.hasAction("rebuy")) actions.push("rebuy");
+  if (await player.hasAction("leave")) actions.push("leave");
   if (await player.hasAction("check")) actions.push("check");
   if (await player.hasAction("call")) actions.push("call");
   if (await player.hasAction("fold")) actions.push("fold");
@@ -233,6 +235,9 @@ async function getAvailableActions(player) {
  * @returns {string}
  */
 function selectRandomAction(availableActions) {
+  if (availableActions.includes("rebuy")) {
+    return Math.random() < 0.5 ? "rebuy" : "leave";
+  }
   const roll = Math.random();
   for (const { threshold, action } of WEIGHTED_ACTIONS) {
     if (roll < threshold && availableActions.includes(action)) return action;
@@ -562,6 +567,10 @@ test.describe("Tournament E2E", () => {
       type: "mtt",
       tableSize: 6,
     });
+    await expect(player1.mttLobby.getByText("Rebuys")).toBeVisible();
+    await expect(
+      player1.mttLobby.getByText("1", { exact: true }),
+    ).toBeVisible();
     await renameTournamentInLobby(player1.page, "Stress Test Championship");
     await expect(
       player1.page.getByText("Stress Test Championship"),

@@ -14,6 +14,7 @@ function startThreePlayerTournament(ctx) {
     owner: createUser("owner", "Owner"),
     buyIn: 500,
     tableSize: 2,
+    maxRebuys: 0,
   });
   ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
   ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));

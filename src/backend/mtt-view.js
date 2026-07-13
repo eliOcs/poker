@@ -165,6 +165,7 @@ export function buildTournamentView(tournament, games, playerId) {
     },
     buyIn: tournament.buyIn,
     prizePool,
+    maxRebuys: tournament.maxRebuys,
     tableSize: tournament.tableSize,
     level: tournament.level,
     timeToNextLevel: getTimeToNextLevel(tournament),

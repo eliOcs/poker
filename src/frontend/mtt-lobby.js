@@ -336,6 +336,10 @@ class MttLobby extends LitElement {
                       </div>
                     </article>
                     <article class="stat">
+                      <div class="label">Rebuys</div>
+                      <div class="value">${tournament.maxRebuys}</div>
+                    </article>
+                    <article class="stat">
                       <div class="label">Table Size</div>
                       <div class="value">${tournament.tableSize}-Max</div>
                     </article>

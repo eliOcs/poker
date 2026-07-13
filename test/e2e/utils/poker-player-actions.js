@@ -178,7 +178,7 @@ export class PokerPlayerActions extends PokerPlayerBase {
 
   /**
    * Perform a betting action
-   * @param {'check' | 'call' | 'fold' | 'bet' | 'raise' | 'allIn'} action
+   * @param {'check' | 'call' | 'fold' | 'bet' | 'raise' | 'allIn' | 'rebuy' | 'leave'} action
    */
   async act(action) {
     const handlers = {
@@ -206,6 +206,12 @@ export class PokerPlayerActions extends PokerPlayerBase {
         await this.actionPanel
           .getByRole("button", { name: /^Raise to/ })
           .click();
+      },
+      rebuy: async () => {
+        await this.actionPanel.getByRole("button", { name: "Rebuy" }).click();
+      },
+      leave: async () => {
+        await this.actionPanel.getByRole("button", { name: "Leave" }).click();
       },
     };
     const handler = handlers[action];

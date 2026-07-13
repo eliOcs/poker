@@ -15,7 +15,7 @@ describe("mtt rebuy policy", () => {
   beforeEach(() => ctx.setup());
   afterEach(() => ctx.teardown());
 
-  it("defaults to disabled rebuys and initializes every entrant's usage", () => {
+  it("defaults to one rebuy and initializes every entrant's usage", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner"),
       buyIn: 500,
@@ -25,7 +25,7 @@ describe("mtt rebuy policy", () => {
 
     const tournament = ctx.manager.getTournament(tournamentId);
     assert.ok(tournament);
-    assert.equal(tournament.maxRebuys, 0);
+    assert.equal(tournament.maxRebuys, 1);
     assert.deepEqual(
       [...tournament.entrants.values()].map((entrant) => entrant.rebuysUsed),
       [0, 0],

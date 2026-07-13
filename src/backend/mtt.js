@@ -122,6 +122,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {{ id: string, name?: string }} owner
  * @property {number} buyIn
  * @property {number} prizePool
+ * @property {number} maxRebuys
  * @property {number} tableSize
  * @property {number} level
  * @property {number} timeToNextLevel

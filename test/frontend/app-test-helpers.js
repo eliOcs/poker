@@ -57,6 +57,7 @@ export function createMockTournamentView(overrides = {}) {
     ownerId: "u1",
     buyIn: 500,
     prizePool: 0,
+    maxRebuys: 1,
     tableSize: 6,
     level: 1,
     timeToNextLevel: 300,

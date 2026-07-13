@@ -23,17 +23,26 @@ async function waitForTournamentSummary(tournamentId) {
   return null;
 }
 
+/**
+ * @param {ReturnType<typeof createMttContext>} ctx
+ * @param {number} tableSize
+ */
+function createNoRebuyTournament(ctx, tableSize) {
+  return ctx.manager.createTournament({
+    owner: createUser("owner", "Owner"),
+    buyIn: 500,
+    tableSize,
+    maxRebuys: 0,
+  });
+}
+
 describe("mtt-manager table collapse", () => {
   const ctx = createMttContext();
   beforeEach(() => ctx.setup());
   afterEach(() => ctx.teardown());
 
   it("breaks small tables, moves players deterministically, and detects the winner", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 2,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 2);
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
     ctx.manager.startTournament(tournamentId, "owner");
@@ -116,11 +125,7 @@ describe("mtt-manager table collapse", () => {
     const dataDir = await createTempDataDir();
     process.env.DATA_DIR = dataDir;
     try {
-      const tournamentId = ctx.manager.createTournament({
-        owner: createUser("owner", "Owner"),
-        buyIn: 500,
-        tableSize: 6,
-      });
+      const tournamentId = createNoRebuyTournament(ctx, 6);
       ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
       ctx.manager.startTournament(tournamentId, "owner");
 
@@ -169,11 +174,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("retries table collapse on tick when destination was mid-hand during handleHandFinalized", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 2,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 2);
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
     ctx.manager.startTournament(tournamentId, "owner");
@@ -215,11 +216,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("keeps chip-positive MTT entrants alive even if their seat is sitting out", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 2,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 2);
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
     ctx.manager.startTournament(tournamentId, "owner");
@@ -259,11 +256,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("empties busted MTT seats while preserving the player's finish position", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 6,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 11; i++) {
       ctx.manager.registerPlayer(
         tournamentId,
@@ -303,11 +296,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("finalizes waiting destination history before collapsing tables", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 2,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 2);
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
     ctx.manager.startTournament(tournamentId, "owner");
@@ -348,11 +337,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("suppresses countdowns on waiting tables until pending collapse completes", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 6,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 7; i++) {
       ctx.manager.registerPlayer(
         tournamentId,
@@ -405,11 +390,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("freezes other waiting tables when hand finalization arrives after the busted table already restarted", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 6,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 7; i++) {
       ctx.manager.registerPlayer(
         tournamentId,
@@ -462,11 +443,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("finalizes a busted table's waiting hand on tick so final-table collapse can happen before restart", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 6,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 7; i++) {
       ctx.manager.registerPlayer(
         tournamentId,
@@ -519,11 +496,7 @@ describe("mtt-manager table collapse", () => {
   });
 
   it("reuses newly-eliminated seats before balancing waiting tables", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner", "Owner"),
-      buyIn: 500,
-      tableSize: 6,
-    });
+    const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 12; i++) {
       ctx.manager.registerPlayer(
         tournamentId,

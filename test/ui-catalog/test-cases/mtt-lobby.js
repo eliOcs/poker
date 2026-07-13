@@ -49,6 +49,7 @@ function makeBaseTournament(overrides = {}) {
     status: "registration",
     ownerId: "owner1",
     buyIn: 500,
+    maxRebuys: 1,
     tableSize: 6,
     level: 1,
     timeToNextLevel: 420,
