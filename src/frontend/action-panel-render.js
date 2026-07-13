@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { formatCurrency } from "./styles.js";
+import { renderRebuyDecision } from "./action-panel-rebuy.js";
 
 function formatPosition(position) {
   const suffixes = ["th", "st", "nd", "rd"];
@@ -478,6 +479,7 @@ function renderStart(panel, actionMap) {
 
 function renderForActionMap(panel, actionMap) {
   if (actionMap.buyIn) return renderBuyIn(panel, actionMap.buyIn);
+  if (actionMap.rebuy) return renderRebuyDecision(panel);
   if (actionMap.sitIn || actionMap.leave)
     return renderSitInLeave(panel, actionMap);
   if (actionMap.start) return renderStart(panel, actionMap);

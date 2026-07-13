@@ -334,6 +334,27 @@ describe("phg-seat", () => {
     expect(foundActing).to.be.true;
   });
 
+  it("highlights every concurrently acting seat", async () => {
+    element.game = createMockGameState({
+      seats: [
+        { ...mockOccupiedSeat, isActing: true },
+        { ...mockOpponentSeat, isActing: true },
+        { ...mockEmptySeat, actions: [] },
+        { ...mockEmptySeat, actions: [] },
+        { ...mockEmptySeat, actions: [] },
+        { ...mockEmptySeat, actions: [] },
+      ],
+    });
+    await element.updateComplete;
+
+    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    await Promise.all([...seats].map((seat) => seat.updateComplete));
+
+    expect(
+      [...seats].filter((seat) => seat.classList.contains("acting")),
+    ).to.have.length(2);
+  });
+
   it("applies .all-in class when seat.allIn is true", async () => {
     element.game = createMockGameState({
       seats: [

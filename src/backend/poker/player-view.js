@@ -115,6 +115,11 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
+ * @typedef {object} ActionRebuy
+ * @property {'rebuy'} action
+ */
+
+/**
  * @typedef {object} ActionLeave
  * @property {'leave'} action
  */
@@ -135,7 +140,7 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionLeave|ActionEmote|ActionShare|ActionChat} PlayerAction
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionRebuy|ActionLeave|ActionEmote|ActionShare|ActionChat} PlayerAction
  */
 
 /**
@@ -688,6 +693,13 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
     return [];
   }
 
+  const pendingRebuyEntry = game.pendingRebuyDecision?.entries.find(
+    (entry) => entry.seatIndex === seatIndex,
+  );
+  if (pendingRebuyEntry && pendingRebuyEntry.resolution === undefined) {
+    return [{ action: "rebuy" }, { action: "leave" }];
+  }
+
   /** @type {PlayerAction[]} */
   const actions = [];
 
@@ -746,7 +758,12 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     cards: getCardsForView(seat, revealAllCards, isOwnSeat),
     actions: getAvailableActions(game, index, playerSeatIndex),
     isCurrentPlayer: index === playerSeatIndex,
-    isActing: index === game.hand.actingSeat,
+    isActing:
+      index === game.hand.actingSeat ||
+      (game.pendingRebuyDecision?.entries.some(
+        (entry) => entry.seatIndex === index && entry.resolution === undefined,
+      ) ??
+        false),
     lastAction: seat.lastAction,
     handResult: seat.handResult,
     handRank,

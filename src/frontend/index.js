@@ -464,7 +464,7 @@ export class Game extends LitElement {
                     .showSitAction=${!isSeated}
                     .buyIn=${this.game.tournament?.buyIn ?? 0}
                     .hideBet=${!!this.game.hand?.collectingBets}
-                    .clockRemaining=${this.game.hand?.actingSeat === i
+                    .clockRemaining=${seat.isActing
                       ? this.game.hand?.clockRemaining
                       : undefined}
                     @seat-action=${this.handleSeatAction}

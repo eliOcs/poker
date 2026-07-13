@@ -186,6 +186,7 @@ describe("mtt rebuy policy", () => {
     bustedSeat.sittingOut = true;
 
     ctx.manager.handleHandFinalized(sourceTable);
+    ctx.manager.handleTableAction(bustedSeat.player, sourceTable, "leave");
 
     assert.equal(owner.rebuysUsed, 1);
     assert.notEqual(owner.tableId, sourceTableId);

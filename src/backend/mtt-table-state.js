@@ -50,7 +50,13 @@ export function isHandSettled(game) {
  * @returns {boolean}
  */
 export function isTableReadyForNextHand(game) {
-  return isHandSettled(game) && game.pendingHandHistory === undefined;
+  return (
+    isHandSettled(game) &&
+    game.pendingHandHistory === undefined &&
+    !game.pendingRebuyDecision?.entries.some(
+      (entry) => entry.resolution === undefined,
+    )
+  );
 }
 
 /**

@@ -49,6 +49,22 @@ describe("mtt table state", () => {
     }
   });
 
+  it("keeps unresolved rebuy decisions out of next-hand and rebalance readiness", () => {
+    const game = PokerGame.create();
+    game.pendingRebuyDecision = {
+      entries: [{ playerId: "p1", seatIndex: 0 }],
+    };
+
+    assert.equal(isHandSettled(game), true);
+    assert.equal(isTableReadyForNextHand(game), false);
+    assert.equal(isTableReadyForRebalance(game), false);
+
+    game.pendingRebuyDecision.entries[0].resolution = "rebuy";
+
+    assert.equal(isTableReadyForNextHand(game), true);
+    assert.equal(isTableReadyForRebalance(game), true);
+  });
+
   it("resets the action clock when clearing a closed table", () => {
     const game = PokerGame.create();
     game.actionClock.waitTicks = 15;

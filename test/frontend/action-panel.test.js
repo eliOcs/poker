@@ -226,6 +226,35 @@ describe("phg-action-panel", () => {
       expect(foldButton.textContent).to.include("Fold");
     });
 
+    it('renders dedicated "Rebuy" and "Leave" decision actions', async () => {
+      element.game = createMockGameState({
+        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            stack: 0,
+            sittingOut: true,
+            isActing: true,
+            actions: [{ action: "rebuy" }, { action: "leave" }],
+          },
+          mockOpponentSeat,
+          { ...mockEmptySeat, actions: [] },
+          { ...mockEmptySeat, actions: [] },
+          { ...mockEmptySeat, actions: [] },
+          { ...mockEmptySeat, actions: [] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      expect(findButtonByExactText(actionPanel.shadowRoot, "Rebuy")).to.exist;
+      expect(findButtonByExactText(actionPanel.shadowRoot, "Leave")).to.exist;
+      expect(findButtonByExactText(actionPanel.shadowRoot, "Leave Table")).to
+        .not.exist;
+    });
+
     it("renders Bet slider and button", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
