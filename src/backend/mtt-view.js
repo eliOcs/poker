@@ -1,7 +1,7 @@
 import * as Tournament from "../shared/tournament.js";
 import {
   countActivePlayers,
-  isTableWaiting,
+  isTableReadyForNextHand,
   getTimeToNextLevel,
 } from "./mtt-table-state.js";
 
@@ -98,7 +98,7 @@ function buildTables(tournament, games) {
       tableName: table.tableName,
       playerCount: game ? countActivePlayers(game) : 0,
       handNumber: game?.handNumber ?? table.handNumber ?? 0,
-      waiting: game ? isTableWaiting(game) : true,
+      waiting: game ? isTableReadyForNextHand(game) : true,
       closed: table.closedAt !== undefined,
     };
   });

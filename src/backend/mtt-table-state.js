@@ -37,12 +37,11 @@ export function applyTournamentStateToTable(tournament, game) {
  * @param {Game} game
  * @returns {boolean}
  */
-export function isTableWaiting(game) {
+export function isHandSettled(game) {
   return (
     game.hand.phase === "waiting" &&
     game.collectingBets === undefined &&
-    game.runout?.active !== true &&
-    game.pendingHandHistory === undefined
+    game.runout?.active !== true
   );
 }
 
@@ -50,13 +49,24 @@ export function isTableWaiting(game) {
  * @param {Game} game
  * @returns {boolean}
  */
+export function isTableReadyForNextHand(game) {
+  return isHandSettled(game) && game.pendingHandHistory === undefined;
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
+export function isTableReadyForRebalance(game) {
+  return isTableReadyForNextHand(game);
+}
+
+/**
+ * @param {Game} game
+ * @returns {boolean}
+ */
 export function hasSettledWaitingHand(game) {
-  return (
-    game.hand.phase === "waiting" &&
-    game.collectingBets === undefined &&
-    game.runout?.active !== true &&
-    game.pendingHandHistory !== undefined
-  );
+  return isHandSettled(game) && game.pendingHandHistory !== undefined;
 }
 
 /**
@@ -119,7 +129,7 @@ export function resetClosedTable(game) {
 export function syncWaitingTableState(tournament, game, ensureTableTick) {
   applyTournamentStateToTable(tournament, game);
 
-  if (!isTableWaiting(game)) {
+  if (!isTableReadyForNextHand(game)) {
     ensureTableTick(game);
     return;
   }
@@ -176,6 +186,6 @@ export function getTimeToNextLevel(tournament) {
 export function canStartPendingBreak(tournament, games) {
   if (!tournament.pendingBreak) return false;
   return getActiveTables(tournament, games).every((entry) =>
-    isTableWaiting(entry.game),
+    isHandSettled(entry.game),
   );
 }

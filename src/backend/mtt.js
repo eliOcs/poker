@@ -10,7 +10,7 @@ import {
 } from "./mtt-metadata.js";
 import {
   applyTournamentStateToTable,
-  isTableWaiting,
+  isHandSettled,
   countActiveEntrants,
   syncWaitingTableState,
   getActiveTables,
@@ -505,7 +505,7 @@ export function createMttManager({
     finalizeSettledWaitingTables(tournament, changedTableIds);
 
     const canStartBreak = getActiveTables(tournament, games).every((entry) =>
-      isTableWaiting(entry.game),
+      isHandSettled(entry.game),
     );
     tickClock(tournament, canStartBreak);
 
