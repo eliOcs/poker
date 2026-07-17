@@ -2,7 +2,6 @@
 
 - Late Registration
 - Bounty option: (+10% buyin)
-- Show owner name in tournament lobby
 - graph of the evolution
 - background on pot numbers
 - allow sit in in the middle of the hand
