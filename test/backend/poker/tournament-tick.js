@@ -99,6 +99,7 @@ describe("tournament-tick", () => {
       const result = TournamentTick.tick(game);
 
       assert.equal(result.levelChanged, true);
+      assert.equal(result.completedLevel, 1);
       assert.equal(game.tournament.level, 2);
       assert.equal(game.tournament.levelTicks, 0);
     });
@@ -111,6 +112,7 @@ describe("tournament-tick", () => {
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakStarted, true);
+      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVEL);
       assert.equal(game.tournament.onBreak, true);
       assert.equal(game.tournament.pendingBreak, false);
     });
@@ -123,12 +125,36 @@ describe("tournament-tick", () => {
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakStarted, false, "break should not start yet");
+      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVEL);
       assert.equal(game.tournament.onBreak, false, "should not be on break");
       assert.equal(
         game.tournament.pendingBreak,
         true,
         "break should be pending",
       );
+    });
+
+    it("should advance after a break without completing another playing level", () => {
+      game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
+      game.tournament.onBreak = true;
+      game.tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
+
+      const result = TournamentTick.tick(game);
+
+      assert.equal(result.breakEnded, true);
+      assert.equal(result.completedLevel, undefined);
+      assert.equal(game.tournament.level, Tournament.BREAK_AFTER_LEVEL + 1);
+    });
+
+    it("should report completion of the maximum playing level", () => {
+      game.tournament.level = Tournament.getMaxLevel();
+      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+
+      const result = TournamentTick.tick(game);
+
+      assert.equal(result.completedLevel, Tournament.getMaxLevel());
+      assert.equal(game.tournament.level, Tournament.getMaxLevel());
+      assert.equal(game.tournament.levelTicks, 0);
     });
 
     it("should not increment levelTicks before tournament starts", () => {

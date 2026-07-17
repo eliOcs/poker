@@ -298,7 +298,7 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     levelTicks: 0,
     onBreak: false,
     pendingBreak: false,
-    pendingCollapse: false,
+    pendingRebalance: false,
     breakTicks: 0,
     createdAt: summary.start_date_utc,
     startedAt: summary.start_date_utc,

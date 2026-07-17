@@ -15,6 +15,7 @@ import { tickClock } from "./tournament-clock.js";
  * @property {boolean} levelChanged - Whether blind level increased
  * @property {boolean} breakStarted - Whether break just started
  * @property {boolean} breakEnded - Whether break just ended
+ * @property {number|undefined} completedLevel - Playing level completed on this tick
  * @property {boolean} tournamentEnded - Whether tournament has a winner
  */
 
@@ -26,6 +27,7 @@ function createEmptyResult() {
     levelChanged: false,
     breakStarted: false,
     breakEnded: false,
+    completedLevel: undefined,
     tournamentEnded: false,
   };
 }
@@ -68,6 +70,7 @@ export function tick(game) {
   result.levelChanged = clockResult.levelChanged;
   result.breakStarted = clockResult.breakStarted;
   result.breakEnded = clockResult.breakEnded;
+  result.completedLevel = clockResult.completedLevel;
 
   if (clockResult.levelChanged) {
     syncBlinds(game);

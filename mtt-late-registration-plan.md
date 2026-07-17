@@ -22,6 +22,13 @@ npm run test:e2e
 
 `npm run validate` already includes backend/frontend tests, the E2E smoke suite, UI-catalog regression tests, architectural checks, and semantic review. `npm run test:e2e` is still required separately because it also runs the slow MTT stress scenario.
 
+## Progress
+
+- [x] Commit 1 completed on 2026-07-17: clock ticks expose completed playing levels; entrant and table populations are explicit; collapse state and orchestration use neutral reconciliation naming; and managed table identity allocation is centralized. Focused tests, format, lint, typecheck, duplication and dependency checks, backend/frontend tests, E2E smoke, UI-catalog regression tests, the full E2E suite, and semantic review pass.
+- [ ] Commit 2: Add the shared entry-period configuration and cutoff.
+- [ ] Commit 3: Add backend late registration and field growth.
+- [ ] Commit 4: Add lobby UX and end-to-end coverage.
+
 ## Why preparatory refactoring is warranted
 
 The current implementation has good primitives, but several names and assumptions are narrower than the feature:

@@ -19,13 +19,19 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {boolean} levelChanged
  * @property {boolean} breakStarted
  * @property {boolean} breakEnded
+ * @property {number|undefined} completedLevel
  */
 
 /**
  * @returns {ClockTickResult}
  */
 function emptyResult() {
-  return { levelChanged: false, breakStarted: false, breakEnded: false };
+  return {
+    levelChanged: false,
+    breakStarted: false,
+    breakEnded: false,
+    completedLevel: undefined,
+  };
 }
 
 /**
@@ -80,6 +86,7 @@ function tickLevel(clock, canStartBreak) {
   }
 
   clock.levelTicks = 0;
+  result.completedLevel = clock.level;
 
   if (clock.level !== Tournament.BREAK_AFTER_LEVEL) {
     advanceLevel(clock);

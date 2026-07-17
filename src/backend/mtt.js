@@ -11,7 +11,8 @@ import {
   applyTournamentStateToTable,
   isHandSettled,
   syncWaitingTableState,
-  getActiveTables,
+  getOpenTables,
+  getPopulatedOpenTables,
   hasSettledWaitingHand,
   clearTableWinner,
   resetClosedTable,
@@ -24,10 +25,11 @@ import { buildTournamentView } from "./mtt-view.js";
 import {
   seatEntrantAtTable,
   getActiveSeatIndexes,
-  getContendingEntrants,
+  getSeatedContenders,
   movePlayer,
 } from "./mtt-seating.js";
-import { rebalanceTournament } from "./mtt-collapse.js";
+import { rebalanceTournament } from "./mtt-reconciliation.js";
+import { allocateManagedTableIdentity } from "./mtt-table-names.js";
 import { DEFAULT_MAX_REBUYS, isRebuyPeriodOpen } from "./mtt-rebuy-policy.js";
 import {
   finalizeRebuyDecision,
@@ -39,8 +41,6 @@ import {
   callRebuyClock,
   tickRebuyDecisionClocks,
 } from "./mtt-rebuy-clock.js";
-
-const FINAL_TABLE_NAME = "Final Table";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -84,7 +84,7 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {number} levelTicks
  * @property {boolean} onBreak
  * @property {boolean} pendingBreak
- * @property {boolean} pendingCollapse
+ * @property {boolean} pendingRebalance
  * @property {number} breakTicks
  * @property {string} createdAt
  * @property {string} [startedAt]
@@ -137,19 +137,6 @@ const FINAL_TABLE_NAME = "Final Table";
  * @property {{ isOwner: boolean, status: EntrantStatus|"not_registered", tableId?: string, seatIndex?: number, finishPosition?: number }} currentPlayer
  * @property {{ canRegister: boolean, canUnregister: boolean, canStart: boolean, canRename: boolean }} actions
  */
-
-/**
- * @param {ManagedTournament} tournament
- * @returns {number}
- */
-function getNextTableCreatedOrder(tournament) {
-  return (
-    tournament.tables.reduce(
-      (maxCreatedOrder, table) => Math.max(maxCreatedOrder, table.createdOrder),
-      -1,
-    ) + 1
-  );
-}
 
 /**
  * @param {{
@@ -284,10 +271,14 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @param {string} tableName
+   * @param {{ finalTable: boolean }} options
    * @returns {{ table: ManagedTable, game: Game }}
    */
-  function createManagedTable(tournament, tableName) {
+  function createManagedTable(tournament, options) {
+    const { tableName, createdOrder } = allocateManagedTableIdentity(
+      tournament,
+      options,
+    );
     const game = PokerGame.createMttTable({
       seats: tournament.tableSize,
       buyIn: tournament.buyIn,
@@ -302,7 +293,7 @@ export function createMttManager({
     const table = {
       tableId: game.id,
       tableName,
-      createdOrder: getNextTableCreatedOrder(tournament),
+      createdOrder,
       createdAt: tournament.startedAt ?? now(),
     };
     tournament.tables.push(table);
@@ -322,10 +313,9 @@ export function createMttManager({
     changedTables,
     playerMoves,
   ) {
-    const { game: finalGame } = createManagedTable(
-      tournament,
-      FINAL_TABLE_NAME,
-    );
+    const { game: finalGame } = createManagedTable(tournament, {
+      finalTable: true,
+    });
     changedTables.add(finalGame.id);
 
     const tablesInMoveOrder = [...activeTables].sort(
@@ -364,10 +354,10 @@ export function createMttManager({
     const createdTableIds = [];
     let entrantIndex = 0;
 
-    tableSizes.forEach((tableSize, index) => {
-      const tableName =
-        tableSizes.length === 1 ? FINAL_TABLE_NAME : `Table ${index + 1}`;
-      const { game } = createManagedTable(tournament, tableName);
+    tableSizes.forEach((tableSize) => {
+      const { game } = createManagedTable(tournament, {
+        finalTable: tableSizes.length === 1,
+      });
       createdTableIds.push(game.id);
 
       for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
@@ -417,7 +407,7 @@ export function createMttManager({
    * @param {Set<string>} changedTableIds
    */
   function finalizeSettledWaitingTables(tournament, changedTableIds) {
-    for (const entry of getActiveTables(tournament, games)) {
+    for (const entry of getPopulatedOpenTables(tournament, games)) {
       if (!hasSettledWaitingHand(entry.game)) {
         continue;
       }
@@ -430,23 +420,11 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @returns {string[]}
-   */
-  function getOpenTableIds(tournament) {
-    return tournament.tables
-      .filter(
-        (table) => table.closedAt === undefined && games.has(table.tableId),
-      )
-      .map((table) => table.tableId);
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
    * @param {Set<string>} changedTableIds
    * @returns {boolean}
    */
   function maybeFinishTournament(tournament, changedTableIds) {
-    const contenders = getContendingEntrants(tournament, games);
+    const contenders = getSeatedContenders(tournament, games);
     if (contenders.length !== 1) {
       return false;
     }
@@ -498,7 +476,7 @@ export function createMttManager({
     }
 
     const tableIds = broadcastAllOpenTables
-      ? getOpenTableIds(tournament)
+      ? getOpenTables(tournament, games).map((entry) => entry.table.tableId)
       : changedTableIds;
     syncTables(tournament, tableIds);
     broadcastTables(tournament, tableIds, playerMoves);
@@ -523,8 +501,8 @@ export function createMttManager({
     );
 
     const rebuyPeriodWasOpen = isRebuyPeriodOpen(tournament);
-    const canStartBreak = getActiveTables(tournament, games).every((entry) =>
-      isHandSettled(entry.game),
+    const canStartBreak = getPopulatedOpenTables(tournament, games).every(
+      (entry) => isHandSettled(entry.game),
     );
     tickClock(tournament, canStartBreak);
     applyRebuyPeriodTransition(
@@ -610,7 +588,7 @@ export function createMttManager({
         levelTicks: 0,
         onBreak: false,
         pendingBreak: false,
-        pendingCollapse: false,
+        pendingRebalance: false,
         breakTicks: 0,
         createdAt,
         entrants: new Map(),

@@ -4,7 +4,7 @@ import {
   clearTableWinner,
   resetClosedTable,
   applyTournamentStateToTable,
-  getActiveTables,
+  getPopulatedOpenTables,
 } from "./mtt-table-state.js";
 import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
 
@@ -54,8 +54,8 @@ function sortByLargestTable(tables) {
  * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
  * @param {Set<string>} changedTables
  */
-function markPendingCollapse(tournament, activeTables, changedTables) {
-  tournament.pendingCollapse = true;
+function markPendingRebalance(tournament, activeTables, changedTables) {
+  tournament.pendingRebalance = true;
   for (const entry of activeTables) {
     changedTables.add(entry.game.id);
   }
@@ -139,7 +139,7 @@ export function collapseExtraTables(
   playerMoves,
 ) {
   for (;;) {
-    const activeTables = getActiveTables(tournament, games);
+    const activeTables = getPopulatedOpenTables(tournament, games);
     const totalPlayers = activeTables.reduce(
       (sum, table) => sum + table.activePlayers,
       0,
@@ -150,24 +150,24 @@ export function collapseExtraTables(
     );
 
     if (activeTables.length <= targetTableCount) {
-      tournament.pendingCollapse = false;
+      tournament.pendingRebalance = false;
       return;
     }
 
     if (targetTableCount === 1) {
       if (!areAllTablesReadyForRebalance(activeTables)) {
-        markPendingCollapse(tournament, activeTables, changedTables);
+        markPendingRebalance(tournament, activeTables, changedTables);
         return;
       }
 
       mergeIntoFinalTable(activeTables, changedTables, playerMoves);
-      tournament.pendingCollapse = false;
+      tournament.pendingRebalance = false;
       return;
     }
 
     const breakCandidate = getBreakCandidate(activeTables);
     if (!breakCandidate) {
-      markPendingCollapse(tournament, activeTables, changedTables);
+      markPendingRebalance(tournament, activeTables, changedTables);
       return;
     }
 
@@ -183,7 +183,7 @@ export function collapseExtraTables(
         playerMoves,
       )
     ) {
-      markPendingCollapse(tournament, activeTables, changedTables);
+      markPendingRebalance(tournament, activeTables, changedTables);
       return;
     }
 
@@ -207,8 +207,8 @@ export function balanceWaitingTables(
   playerMoves,
 ) {
   for (;;) {
-    const readyTables = getActiveTables(tournament, games).filter((entry) =>
-      isTableReadyForRebalance(entry.game),
+    const readyTables = getPopulatedOpenTables(tournament, games).filter(
+      (entry) => isTableReadyForRebalance(entry.game),
     );
     if (readyTables.length < 2) {
       return;

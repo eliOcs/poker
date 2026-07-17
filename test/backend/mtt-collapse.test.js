@@ -325,7 +325,7 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.handleHandFinalized(tableA);
 
-    assert.equal(tournament.pendingCollapse, false);
+    assert.equal(tournament.pendingRebalance, false);
     assert.equal(tableB.pendingHandHistory, undefined);
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
@@ -336,7 +336,7 @@ describe("mtt-manager table collapse", () => {
     assert.equal(countActivePlayers(finalTable), 2);
   });
 
-  it("suppresses countdowns on waiting tables until pending collapse completes", () => {
+  it("suppresses countdowns on waiting tables until pending rebalance completes", () => {
     const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 7; i++) {
       ctx.manager.registerPlayer(
@@ -372,7 +372,7 @@ describe("mtt-manager table collapse", () => {
     tableB.hand.phase = "flop";
     ctx.manager.handleHandFinalized(tableA);
 
-    assert.equal(tournament.pendingCollapse, true);
+    assert.equal(tournament.pendingRebalance, true);
     assert.equal(tableA.countdown, undefined);
     assert.equal(tournament.tables[0].closedAt, undefined);
     assert.equal(tournament.tables[1].closedAt, undefined);
@@ -380,7 +380,7 @@ describe("mtt-manager table collapse", () => {
     tableB.hand.phase = "waiting";
     ctx.manager.handleHandFinalized(tableB);
 
-    assert.equal(tournament.pendingCollapse, false);
+    assert.equal(tournament.pendingRebalance, false);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
     assert.ok(finalTable);
     const closedCount = tournament.tables.filter((t) => t.closedAt).length;
@@ -427,13 +427,13 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.handleHandFinalized(tableA);
 
-    assert.equal(tournament.pendingCollapse, true);
+    assert.equal(tournament.pendingRebalance, true);
     assert.equal(tableB.countdown, undefined);
 
     tableA.hand.phase = "waiting";
     ctx.manager.tickTournament(tournamentId);
 
-    assert.equal(tournament.pendingCollapse, false);
+    assert.equal(tournament.pendingRebalance, false);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
     assert.ok(finalTable);
     const closedCount = tournament.tables.filter((t) => t.closedAt).length;
@@ -484,7 +484,7 @@ describe("mtt-manager table collapse", () => {
     ctx.manager.tickTournament(tournamentId);
 
     assert.equal(tableA.pendingHandHistory, undefined);
-    assert.equal(tournament.pendingCollapse, false);
+    assert.equal(tournament.pendingRebalance, false);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
     assert.ok(finalTable);
     const closedCount = tournament.tables.filter(

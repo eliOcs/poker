@@ -43,10 +43,20 @@ export function getEntrantSeatContext(games, entrant) {
 
 /**
  * @param {ManagedTournament} tournament
+ * @returns {TournamentEntrant[]}
+ */
+export function getWaitingEntrants(tournament) {
+  return [...tournament.entrants.values()]
+    .filter((entrant) => entrant.status === "registered")
+    .sort((a, b) => a.registrationOrder - b.registrationOrder);
+}
+
+/**
+ * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
  * @returns {TournamentEntrant[]}
  */
-export function getContendingEntrants(tournament, games) {
+export function getSeatedContenders(tournament, games) {
   return [...tournament.entrants.values()].filter((entrant) => {
     if (entrant.status !== "seated") {
       return false;
@@ -54,6 +64,25 @@ export function getContendingEntrants(tournament, games) {
     const seatContext = getEntrantSeatContext(games, entrant);
     return seatContext !== undefined && seatContext.seat.stack > 0;
   });
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
+ * @returns {TournamentEntrant[]}
+ */
+export function getRemainingEntrants(tournament, games) {
+  const seatedContenderIds = new Set(
+    getSeatedContenders(tournament, games).map((entrant) => entrant.playerId),
+  );
+  return [...tournament.entrants.values()]
+    .filter(
+      (entrant) =>
+        entrant.status === "registered" ||
+        entrant.status === "winner" ||
+        seatedContenderIds.has(entrant.playerId),
+    )
+    .sort((a, b) => a.registrationOrder - b.registrationOrder);
 }
 
 /**

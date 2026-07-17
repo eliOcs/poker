@@ -157,7 +157,7 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
     return;
   }
 
-  if (tournament.onBreak || tournament.pendingCollapse) {
+  if (tournament.onBreak || tournament.pendingRebalance) {
     delete game.countdown;
   } else if (
     countActivePlayers(game) >= 2 &&
@@ -176,18 +176,28 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
  * @param {Map<string, Game>} games
  * @returns {Array<{ table: import('./mtt.js').ManagedTable, game: Game, activePlayers: number }>}
  */
-export function getActiveTables(tournament, games) {
+export function getOpenTables(tournament, games) {
   return tournament.tables
     .map((table) => ({ table, game: games.get(table.tableId) }))
-    .filter((entry) => entry.game !== undefined)
+    .filter(
+      (entry) => entry.game !== undefined && entry.table.closedAt === undefined,
+    )
     .map((entry) => ({
       table: entry.table,
       game: /** @type {Game} */ (entry.game),
       activePlayers: countActivePlayers(/** @type {Game} */ (entry.game)),
-    }))
-    .filter(
-      (entry) => entry.activePlayers > 0 && entry.table.closedAt === undefined,
-    );
+    }));
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
+ * @returns {Array<{ table: import('./mtt.js').ManagedTable, game: Game, activePlayers: number }>}
+ */
+export function getPopulatedOpenTables(tournament, games) {
+  return getOpenTables(tournament, games).filter(
+    (entry) => entry.activePlayers > 0,
+  );
 }
 
 /**
@@ -208,7 +218,7 @@ export function getTimeToNextLevel(tournament) {
  */
 export function canStartPendingBreak(tournament, games) {
   if (!tournament.pendingBreak) return false;
-  return getActiveTables(tournament, games).every((entry) =>
+  return getPopulatedOpenTables(tournament, games).every((entry) =>
     isHandSettled(entry.game),
   );
 }
