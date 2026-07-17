@@ -16,14 +16,29 @@ export function formatTimer(seconds) {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+export function renderTooltipIcon() {
+  return html`<svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      d="M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM4 18H2V6H4V18ZM13 18H11V16H13V18ZM22 18H20V6H22V18ZM15 13H13V15H11V11H15V13ZM17 11H15V8H17V11ZM9 10H7V8H9V10ZM15 8H9V6H15V8ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z"
+    ></path>
+  </svg>`;
+}
+
 export function formatStatus(status) {
   if (status === "registration") return "Registration Open";
   if (status === "running") return "Running";
   return "Finished";
 }
 
-export function formatEntrantStatus(status) {
-  if (status === "registered") return "Registered";
+export function formatEntrantStatus(status, tournamentStatus) {
+  if (status === "registered") {
+    return tournamentStatus === "running" ? "Waiting for table" : "Registered";
+  }
   if (status === "seated") return "Playing";
   if (status === "eliminated") return "Eliminated";
   if (status === "winner") return "Winner";
@@ -119,22 +134,49 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
 
 /**
  * @param {object} params
- * @param {object} params.actions
+ * @param {object} params.tournament
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
  */
-function renderRegistrationActions({ actions, actionPending, onMttAction }) {
+function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
+  const { actions } = tournament;
+  const isLateRegistration = tournament.status === "running";
+
   return html`
     ${actions.canRegister
-      ? html`<phg-button
-          variant="primary"
-          ?disabled=${actionPending}
-          @click=${() => {
-            onMttAction("register");
-          }}
-        >
-          Register
-        </phg-button>`
+      ? isLateRegistration
+        ? html`<div class="tooltip-control late-registration-control">
+            <phg-button
+              variant="primary"
+              ?disabled=${actionPending}
+              @click=${() => {
+                onMttAction("register");
+              }}
+            >
+              Late Register
+            </phg-button>
+            <button
+              class="tooltip-trigger"
+              type="button"
+              aria-label="Late registration details"
+              aria-describedby="late-registration-tooltip"
+            >
+              ${renderTooltipIcon()}
+            </button>
+            <span class="tooltip" id="late-registration-tooltip" role="tooltip">
+              Late registration is allowed through level
+              ${tournament.entryPeriodLevels}.
+            </span>
+          </div>`
+        : html`<phg-button
+            variant="primary"
+            ?disabled=${actionPending}
+            @click=${() => {
+              onMttAction("register");
+            }}
+          >
+            Register
+          </phg-button>`
       : ""}
     ${actions.canUnregister
       ? html`<phg-button
@@ -197,7 +239,11 @@ export function renderActions({
   return html`
     <div class="action-row">
       ${renderMyTableAction({ tournament, tournamentId, onNavigate })}
-      ${renderRegistrationActions({ actions, actionPending, onMttAction })}
+      ${renderRegistrationActions({
+        tournament,
+        actionPending,
+        onMttAction,
+      })}
       ${renderTournamentActions({ actions, actionPending, onMttAction })}
       <phg-button variant="secondary" @click=${onCopyLink}>
         ${copied ? "Copied!" : "Copy Link"}
@@ -298,7 +344,9 @@ export function renderEntrantsTable(tournament) {
             (entrant) => html`
               <tr>
                 <td>${renderPlayerProfileLink(entrant)}</td>
-                <td>${formatEntrantStatus(entrant.status)}</td>
+                <td>
+                  ${formatEntrantStatus(entrant.status, tournament.status)}
+                </td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
                   ${entrant.tableId
@@ -341,7 +389,9 @@ export function renderStandingsTable(tournament) {
             (entrant) => html`
               <tr>
                 <td>${renderPlayerProfileLink(entrant)}</td>
-                <td>${formatEntrantStatus(entrant.status)}</td>
+                <td>
+                  ${formatEntrantStatus(entrant.status, tournament.status)}
+                </td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
                   ${entrant.tableId

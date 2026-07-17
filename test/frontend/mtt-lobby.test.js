@@ -1,4 +1,4 @@
-import { fixture, expect, html, oneEvent } from "@open-wc/testing";
+import { aTimeout, fixture, expect, html, oneEvent } from "@open-wc/testing";
 import "../../src/frontend/mtt-lobby.js";
 
 function createTournamentView() {
@@ -92,9 +92,129 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot.textContent).to.include("Standings");
     expect(element.shadowRoot.textContent).to.include("Lobby");
     const rebuyStat = [...element.shadowRoot.querySelectorAll(".stat")].find(
-      (stat) => stat.querySelector(".label")?.textContent.trim() === "Rebuys",
+      (stat) =>
+        stat.querySelector(".label > span")?.textContent.trim() === "Rebuys",
     );
     expect(rebuyStat.querySelector(".value").textContent.trim()).to.equal("1");
+  });
+
+  it("shows late registration with accessible dynamic tooltips", async () => {
+    const view = createTournamentView();
+    view.currentPlayer = {
+      isOwner: false,
+      status: "not_registered",
+      tableId: null,
+      seatIndex: null,
+    };
+    view.actions.canRegister = true;
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    const lateRegister = [
+      ...element.shadowRoot.querySelectorAll(".action-row phg-button"),
+    ].find((button) => button.textContent.includes("Late Register"));
+    expect(lateRegister).to.exist;
+    const componentStyles = element.shadowRoot.adoptedStyleSheets
+      .flatMap((sheet) => [...sheet.cssRules])
+      .map((rule) => rule.cssText)
+      .join("\n");
+    expect(componentStyles).to.match(
+      /\.tooltip-control:hover \.tooltip[^}]*visibility: visible/,
+    );
+
+    const tooltipCases = [
+      {
+        triggerLabel: "Rebuy period details",
+        tooltipId: "rebuy-period-tooltip",
+        text: "Rebuys are allowed through level 4.",
+      },
+      {
+        triggerLabel: "Late registration details",
+        tooltipId: "late-registration-tooltip",
+        text: "Late registration is allowed through level 4.",
+      },
+    ];
+
+    for (const tooltipCase of tooltipCases) {
+      const trigger = element.shadowRoot.querySelector(
+        `[aria-label="${tooltipCase.triggerLabel}"]`,
+      );
+      const tooltip = element.shadowRoot.querySelector(
+        `#${tooltipCase.tooltipId}`,
+      );
+      expect(trigger.tagName).to.equal("BUTTON");
+      expect(trigger.getAttribute("aria-describedby")).to.equal(
+        tooltipCase.tooltipId,
+      );
+      expect(trigger.querySelector("svg")).to.exist;
+      expect(trigger.querySelector("path").getAttribute("d")).to.equal(
+        "M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM4 18H2V6H4V18ZM13 18H11V16H13V18ZM22 18H20V6H22V18ZM15 13H13V15H11V11H15V13ZM17 11H15V8H17V11ZM9 10H7V8H9V10ZM15 8H9V6H15V8ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z",
+      );
+      expect(tooltip.getAttribute("role")).to.equal("tooltip");
+      expect(tooltip.textContent.replace(/\s+/g, " ").trim()).to.equal(
+        tooltipCase.text,
+      );
+      expect(getComputedStyle(tooltip).visibility).to.equal("hidden");
+
+      trigger.focus();
+      expect(document.activeElement).to.equal(element);
+      expect(element.shadowRoot.activeElement).to.equal(trigger);
+      expect(trigger.parentElement.matches(":focus-within")).to.equal(true);
+      await aTimeout(150);
+      expect(getComputedStyle(tooltip).visibility).to.equal("visible");
+      trigger.blur();
+    }
+  });
+
+  it("hides registration actions after the entry period closes", async () => {
+    const view = createTournamentView();
+    view.entryPeriodOpen = false;
+    view.currentPlayer = {
+      isOwner: false,
+      status: "not_registered",
+      tableId: null,
+      seatIndex: null,
+    };
+    view.actions.canRegister = false;
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).not.to.include("Late Register");
+    expect(element.shadowRoot.textContent).not.to.include(
+      "Late registration is allowed",
+    );
+  });
+
+  it("shows a queued running entrant as waiting for a table", async () => {
+    const view = createTournamentView();
+    const waitingEntrant = {
+      playerId: "waiting",
+      name: "Waiting Player",
+      status: "registered",
+      stack: 5000,
+      tableId: null,
+      seatIndex: null,
+      finishPosition: null,
+      netWinnings: -500,
+    };
+    view.entrants.push(waitingEntrant);
+    view.standings.push(waitingEntrant);
+    view.currentPlayer = {
+      isOwner: false,
+      status: "registered",
+      tableId: null,
+      seatIndex: null,
+    };
+
+    const element = await fixture(html`
+      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+    `);
+
+    expect(element.shadowRoot.textContent).to.include("Waiting for table");
   });
 
   it("renders payouts from the backend-provided prize pool", async () => {

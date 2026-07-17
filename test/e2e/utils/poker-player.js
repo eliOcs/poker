@@ -223,6 +223,40 @@ export class PokerPlayer extends PokerPlayerActions {
   }
 
   /**
+   * Read the latest server-backed tournament lobby view retained by the app.
+   * @returns {Promise<{
+   *   status: string,
+   *   level: number,
+   *   entryPeriodLevels: number,
+   *   entrantCount: number,
+   *   prizePool: number,
+   *   buyIn: number,
+   *   currentPlayer: { status: string, tableId: string|null },
+   * }|null>}
+   */
+  async getTournamentViewSnapshot() {
+    return await this.page
+      .locator("phg-app")
+      .evaluate((app) => {
+        const view = /** @type {any} */ (app)._mttView;
+        if (!view) return null;
+        return {
+          status: view.status,
+          level: view.level,
+          entryPeriodLevels: view.entryPeriodLevels,
+          entrantCount: view.entrants.length,
+          prizePool: view.prizePool,
+          buyIn: view.buyIn,
+          currentPlayer: {
+            status: view.currentPlayer?.status ?? "not_registered",
+            tableId: view.currentPlayer?.tableId ?? null,
+          },
+        };
+      })
+      .catch(() => null);
+  }
+
+  /**
    * Get the current blinds from the UI
    * @returns {Promise<{small: number, big: number}|null>}
    */

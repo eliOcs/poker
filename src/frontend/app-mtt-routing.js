@@ -64,6 +64,14 @@ function hasLoadedMttRouteState(app) {
   return !!app._mttTournamentId && !!app._mttView;
 }
 
+function isQueuedRegistration(action, tournament) {
+  return (
+    action === "register" &&
+    tournament.currentPlayer?.status === "registered" &&
+    !tournament.currentPlayer.tableId
+  );
+}
+
 /**
  * Resolves the MTT redirect path if the player should be moved
  * @param {any} app
@@ -120,6 +128,12 @@ export async function performMttAction(app, action) {
     }
     app._mttView = data;
     app._mttError = "";
+    if (isQueuedRegistration(action, data)) {
+      app.toast = {
+        message: "Registered. Waiting for a table.",
+        variant: "info",
+      };
+    }
     maybeRedirectMttRoute(app);
   } catch (err) {
     const error = /** @type {Error} */ (err);

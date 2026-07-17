@@ -12,6 +12,7 @@ import {
   renderTables,
   renderEntrantsTable,
   renderStandingsTable,
+  renderTooltipIcon,
 } from "./mtt-lobby-render.js";
 import "./button.js";
 import "./edit-label.js";
@@ -336,7 +337,25 @@ class MttLobby extends LitElement {
                       </div>
                     </article>
                     <article class="stat">
-                      <div class="label">Rebuys</div>
+                      <div class="label tooltip-control stat-tooltip-control">
+                        <span>Rebuys</span>
+                        <button
+                          class="tooltip-trigger"
+                          type="button"
+                          aria-label="Rebuy period details"
+                          aria-describedby="rebuy-period-tooltip"
+                        >
+                          ${renderTooltipIcon()}
+                        </button>
+                        <span
+                          class="tooltip"
+                          id="rebuy-period-tooltip"
+                          role="tooltip"
+                        >
+                          Rebuys are allowed through level
+                          ${tournament.entryPeriodLevels}.
+                        </span>
+                      </div>
                       <div class="value">${tournament.maxRebuys}</div>
                     </article>
                     <article class="stat">

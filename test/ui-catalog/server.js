@@ -31,6 +31,10 @@ const routes = {
   "/test-cases/table-sizes.js": "test/ui-catalog/test-cases/table-sizes.js",
   "/test-cases/action-panel.js": "test/ui-catalog/test-cases/action-panel.js",
   "/test-cases/mtt-lobby.js": "test/ui-catalog/test-cases/mtt-lobby.js",
+  "/test-cases/mtt-lobby-fixtures.js":
+    "test/ui-catalog/test-cases/mtt-lobby-fixtures.js",
+  "/test-cases/mtt-lobby-late-registration.js":
+    "test/ui-catalog/test-cases/mtt-lobby-late-registration.js",
   "/fixtures.js": "test/frontend/fixtures/index.js",
   "/history.js": "test/frontend/fixtures/history.js",
   "/logo.png": "src/frontend/logo.png",

@@ -106,6 +106,78 @@ export const mttLobbyStyles = [
       gap: 12px;
     }
 
+    .tooltip-control {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .late-registration-control {
+      align-items: start;
+    }
+
+    .tooltip-trigger {
+      display: inline-grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      color: var(--color-fg-white);
+      font: inherit;
+      font-size: var(--font-xs);
+      line-height: 1;
+      cursor: help;
+    }
+
+    .tooltip-trigger:hover {
+      color: var(--color-primary);
+    }
+
+    .tooltip-trigger:focus-visible {
+      color: var(--color-primary);
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    .tooltip-trigger svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 10;
+      top: calc(100% + var(--space-sm));
+      left: 0;
+      width: max-content;
+      max-width: min(280px, 80vw);
+      padding: var(--space-sm) var(--space-md);
+      border: 2px solid var(--color-bg-light);
+      background: var(--color-bg-dark);
+      box-shadow: var(--space-xs) var(--space-xs) 0 var(--color-bg-dark);
+      color: var(--color-fg-white);
+      font-size: var(--font-xs);
+      line-height: 1.6;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-4px);
+      transition:
+        opacity 120ms ease,
+        transform 120ms ease;
+    }
+
+    .tooltip-control:hover .tooltip,
+    .tooltip-control:focus-within .tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
     .assignment {
       display: grid;
       gap: 12px;
@@ -219,6 +291,10 @@ export const mttLobbyStyles = [
 
       .status-pill {
         justify-content: center;
+      }
+
+      .stat-tooltip-control .tooltip {
+        max-width: 70vw;
       }
     }
   `,

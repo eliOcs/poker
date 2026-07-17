@@ -82,6 +82,9 @@ const TEST_CASES = [
   "mtt-lobby-registration-registered",
   "mtt-lobby-registration-owner-can-start",
   "mtt-lobby-registration-action-pending",
+  "mtt-lobby-running-can-late-register",
+  "mtt-lobby-running-late-register-tooltip",
+  "mtt-lobby-running-waiting-for-table",
   "mtt-lobby-running",
   "mtt-lobby-running-on-break",
   "mtt-lobby-running-pending-break",
@@ -108,6 +111,19 @@ function getComponentSelector(testCase) {
   return "phg-game";
 }
 
+async function prepareTestCase(testCase, component) {
+  if (testCase !== "mtt-lobby-running-late-register-tooltip") return;
+  await component.evaluate((element) => {
+    const trigger = element.shadowRoot?.querySelector(
+      '[aria-label="Late registration details"]',
+    );
+    if (!(trigger instanceof HTMLElement)) {
+      throw new Error("Late registration tooltip trigger was not rendered");
+    }
+    trigger.focus({ preventScroll: true });
+  });
+}
+
 for (const testCase of TEST_CASES) {
   // eslint-disable-next-line playwright/valid-title
   test(testCase, async ({ page }) => {
@@ -119,6 +135,8 @@ for (const testCase of TEST_CASES) {
 
     // Wait for Lit component to fully render
     await component.evaluate((el) => el.updateComplete);
+
+    await prepareTestCase(testCase, component);
 
     // Capture content that extends below the viewport as well.
     await expect(page).toHaveScreenshot(`${testCase}.png`, {

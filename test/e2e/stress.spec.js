@@ -1,10 +1,17 @@
 /* eslint-disable playwright/no-conditional-in-test */
 import { test, expect } from "./utils/fixtures.js";
 import { createGame, renameTournamentInLobby } from "./utils/game-helpers.js";
-import { waitForLatestEmail } from "./utils/email.js";
+import {
+  allLateRegistrationsAssigned,
+  processLateRegistrations,
+  signUpTournamentCreator,
+  signUpTournamentRegistrant,
+} from "./utils/mtt-registration.js";
+
+/** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
 
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
-test.setTimeout(15 * 60 * 1000);
+test.setTimeout(20 * 60 * 1000);
 
 const WEIGHTED_ACTIONS = [
   { threshold: 0.02, action: "allIn" },
@@ -70,45 +77,6 @@ async function initializeGuestSessions(players) {
     await player.page.goto("/");
     await player.page.locator("phg-home").waitFor();
   });
-}
-
-/**
- * @param {import('./utils/poker-player.js').PokerPlayer} player
- * @param {string} email
- * @param {string} name
- */
-async function completeSignUp(player, email, name) {
-  await player.page.locator("#profile-sign-up-name").fill(name);
-  await player.page.locator("#profile-sign-in-email").fill(email);
-
-  const [signInEmail] = await Promise.all([
-    waitForLatestEmail(email),
-    player.page.getByRole("button", { name: "Send sign-up link" }).click(),
-  ]);
-
-  await player.completeSignInFromEmail(signInEmail.html);
-}
-
-/**
- * @param {import('./utils/poker-player.js').PokerPlayer} player
- * @param {string} email
- */
-async function signUpTournamentCreator(player, email) {
-  await player.page.goto("/mtt");
-  await player.page.locator("phg-tournaments").waitFor();
-  await completeSignUp(player, email, "Stress Creator");
-  await player.page.locator("phg-tournaments").waitFor();
-}
-
-/**
- * @param {import('./utils/poker-player.js').PokerPlayer} player
- * @param {string} email
- */
-async function signUpTournamentRegistrant(player, email) {
-  await player.mttLobby.getByRole("button", { name: "Register" }).click();
-  await completeSignUp(player, email, player.name);
-  await player.mttLobby.waitFor();
-  await player.mttLobby.getByRole("button", { name: "Unregister" }).waitFor();
 }
 
 /**
@@ -445,7 +413,7 @@ async function collectStallSnapshot(players, activePlayers, state) {
  * Throws with a detailed snapshot if loop progress has stalled
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
- * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string}} state
+ * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string, lateRegistrations: LateRegistration[]}} state
  */
 async function assertNotStalled(players, activePlayers, state) {
   const stalledForMs = Date.now() - state.lastProgressAt;
@@ -458,10 +426,30 @@ async function assertNotStalled(players, activePlayers, state) {
 }
 
 /**
+ * @param {string|null} winnerName
+ * @param {number} activePlayerCount
+ * @param {LateRegistration[]} lateRegistrations
+ * @returns {string|null|undefined}
+ */
+function getTournamentLoopResult(
+  winnerName,
+  activePlayerCount,
+  lateRegistrations,
+) {
+  if (!winnerName && activePlayerCount > 1) return;
+  if (!allLateRegistrationsAssigned(lateRegistrations)) {
+    throw new Error(
+      "Tournament ended before both scheduled late entrants reached a table",
+    );
+  }
+  return winnerName;
+}
+
+/**
  * Run the tournament game loop until a winner is found
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
- * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string}} state
+ * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string, lateRegistrations: LateRegistration[]}} state
  * @returns {Promise<string|null>} Winner name or null
  */
 async function runTournamentLoop(players, activePlayers, state) {
@@ -471,6 +459,12 @@ async function runTournamentLoop(players, activePlayers, state) {
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
     await assertNotStalled(players, activePlayers, state);
+    await processLateRegistrations(
+      players,
+      activePlayers,
+      state.lateRegistrations,
+      state,
+    );
 
     // Single pass: winner check + bust detection + hand number tracking
     const snapshots = await collectGameSnapshots(
@@ -478,11 +472,15 @@ async function runTournamentLoop(players, activePlayers, state) {
       activePlayers,
       eliminationCandidates,
     );
-    if (snapshots.winnerName) return snapshots.winnerName;
+    const loopResult = getTournamentLoopResult(
+      snapshots.winnerName,
+      activePlayers.size,
+      state.lateRegistrations,
+    );
+    if (loopResult !== undefined) return loopResult;
     if (snapshots.removedCount > 0) {
       markProgress(state, `removed-${snapshots.removedCount}-busted`);
     }
-    if (activePlayers.size <= 1) return null;
     if (trackHandTransition(snapshots.maxHandNumber, state)) {
       markProgress(state, `hand-${state.handCount}`);
     }
@@ -567,7 +565,9 @@ test.describe("Tournament E2E", () => {
       type: "mtt",
       tableSize: 6,
     });
-    await expect(player1.mttLobby.getByText("Rebuys")).toBeVisible();
+    await expect(
+      player1.mttLobby.getByText("Rebuys", { exact: true }),
+    ).toBeVisible();
     await expect(
       player1.mttLobby.getByText("1", { exact: true }),
     ).toBeVisible();
@@ -578,6 +578,8 @@ test.describe("Tournament E2E", () => {
     console.log(`Tournament created at ${tournamentUrl}`);
 
     const joiningPlayers = players.slice(1);
+    const startingPlayers = players.slice(0, 9);
+    const preStartRegistrants = players.slice(1, 9);
     await initializeGuestSessions(joiningPlayers);
     console.log("All guest sessions initialized");
 
@@ -586,22 +588,22 @@ test.describe("Tournament E2E", () => {
     });
     console.log("All players reached the MTT lobby");
 
-    await runSequentially(joiningPlayers, async (player, index) => {
+    await runSequentially(preStartRegistrants, async (player, index) => {
       await signUpTournamentRegistrant(
         player,
         `stress-player-${index + 2}-${Date.now()}@example.com`,
       );
     });
-    console.log("All joining players signed up");
-
-    console.log("All joining players signed up and registered");
+    console.log("Nine starting players signed up and registered");
 
     await player1.startTournament();
-    await Promise.all(players.map((player) => player.waitForTournamentTable()));
-    console.log("Tournament started and all players reached a table");
+    await Promise.all(
+      startingPlayers.map((player) => player.waitForTournamentTable()),
+    );
+    console.log("Tournament started and nine players reached a table");
 
     const initialTableIds = new Set(
-      players
+      startingPlayers
         .map(
           (player) =>
             player.page
@@ -635,8 +637,26 @@ test.describe("Tournament E2E", () => {
       handCount: 1,
       lastProgressAt: Date.now(),
       lastProgressReason: "tournament-started",
+      lateRegistrations: [
+        {
+          playerIndex: 9,
+          targetLevel: 2,
+          expectedEntrantCount: 10,
+          registered: false,
+          queued: false,
+          assigned: false,
+        },
+        {
+          playerIndex: 10,
+          targetLevel: 3,
+          expectedEntrantCount: 11,
+          registered: false,
+          queued: false,
+          assigned: false,
+        },
+      ],
     };
-    const activePlayers = new Set(players.map((_, idx) => idx));
+    const activePlayers = new Set(startingPlayers.map((_, idx) => idx));
     const winnerName = await runTournamentLoop(players, activePlayers, state);
 
     if (winnerName) {
@@ -644,6 +664,7 @@ test.describe("Tournament E2E", () => {
         `Tournament Winner: ${winnerName} (after ${state.handCount} hands)`,
       );
     }
+    expect(allLateRegistrationsAssigned(state.lateRegistrations)).toBe(true);
     expect(winnerName).toBeTruthy();
   });
 });
