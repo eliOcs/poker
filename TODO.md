@@ -1,6 +1,5 @@
 # To do
 
-- Late Registration
 - Bounty option: (+10% buyin)
 - graph of the evolution
 - background on pot numbers
