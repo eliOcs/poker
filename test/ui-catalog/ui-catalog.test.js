@@ -120,8 +120,9 @@ for (const testCase of TEST_CASES) {
     // Wait for Lit component to fully render
     await component.evaluate((el) => el.updateComplete);
 
-    // Take screenshot of the root element (full viewport)
-    await expect(page.locator("#root")).toHaveScreenshot(`${testCase}.png`, {
+    // Capture content that extends below the viewport as well.
+    await expect(page).toHaveScreenshot(`${testCase}.png`, {
+      fullPage: true,
       maxDiffPixelRatio: 0.01,
     });
   });
@@ -133,6 +134,5 @@ test("release-notes", async ({ page }) => {
 
   await page.locator("phg-release-notes").waitFor();
 
-  // Take viewport screenshot (not full page)
-  await expect(page).toHaveScreenshot("release-notes.png");
+  await expect(page).toHaveScreenshot("release-notes.png", { fullPage: true });
 });
