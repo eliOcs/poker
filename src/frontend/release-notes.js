@@ -108,6 +108,123 @@ class ReleaseNotes extends LitElement {
         <div class="container">
           <h1>Release Notes</h1>
 
+          <h2>July 17, 2026</h2>
+          <h3>New Features</h3>
+          <h4>Multi-Table Tournaments</h4>
+          <ul>
+            <li>
+              Create a multi-table tournament with your choice of buy-in and
+              table size, then invite players with a shareable link
+            </li>
+            <li>
+              Register before the tournament starts, with the owner in control
+              of the start time and tournament name
+            </li>
+            <li>
+              Follow entrants, tables, blind levels, payouts, live standings,
+              and net results from the tournament lobby
+            </li>
+            <li>
+              Players are seated, rebalanced between tables, and brought
+              together at the final table automatically
+            </li>
+            <li>
+              Player names link to profiles, and completed tournaments and table
+              histories remain available after play ends
+            </li>
+          </ul>
+          <h4>Late Registration and Rebuys</h4>
+          <ul>
+            <li>
+              Join a tournament after it starts through level 4 and be seated as
+              soon as a table is ready
+            </li>
+            <li>
+              Choose to rebuy or leave after being eliminated, with one rebuy
+              available through level 4
+            </li>
+            <li>
+              Rebuys are included in the prize pool, payouts, tournament
+              results, and player stats
+            </li>
+          </ul>
+          <h4>Account Sign-Up</h4>
+          <ul>
+            <li>
+              New sign-up flow collects your name and email before sending a
+              passwordless confirmation link
+            </li>
+            <li>
+              A registered account is now required to create or enter a
+              multi-table tournament
+            </li>
+            <li>
+              After signing up from a tournament lobby, registration continues
+              automatically
+            </li>
+          </ul>
+          <h4>Hand History</h4>
+          <ul>
+            <li>
+              Resize the action timeline on desktop to make more room for the
+              table or hand details
+            </li>
+          </ul>
+          <h3>Improvements</h3>
+          <ul>
+            <li>
+              View the complete blind-level and break schedule from a tournament
+              table
+            </li>
+            <li>
+              Returning to the home page now takes you straight back to an
+              active game
+            </li>
+            <li>
+              Turn notifications can vibrate your device, with a saved on/off
+              setting
+            </li>
+            <li>
+              Poker table layouts now adapt more cleanly to different table
+              sizes
+            </li>
+            <li>
+              A dedicated All-In button is shown whenever going all-in is
+              available as a separate action
+            </li>
+            <li>
+              Navigation between games, tournament lobbies, profiles, and hand
+              histories is smoother and preserves the game screen while tables
+              load
+            </li>
+            <li>Signed-in sessions now remain active for 30 days</li>
+          </ul>
+          <h3>Bug Fixes</h3>
+          <ul>
+            <li>
+              Fixed tournament table balancing, table closures, and final-table
+              moves occasionally stalling or moving players at the wrong time
+            </li>
+            <li>
+              Fixed tournament breaks starting too early, remaining pending, or
+              displaying the wrong state
+            </li>
+            <li>
+              Fixed the action clock display reaching zero before the player's
+              turn actually expired
+            </li>
+            <li>
+              Fixed hand histories being incomplete for hands ended by timed or
+              automatic actions
+            </li>
+            <li>
+              Fixed eliminated tournament seats and players with chips being
+              handled incorrectly during table transitions
+            </li>
+            <li>Fixed Sit &amp; Go games sometimes not completing correctly</li>
+            <li>Fixed mobile games not reconnecting reliably</li>
+          </ul>
+
           <h2>March 13, 2026</h2>
           <h3>New Features</h3>
           <h4>Email Sign-In</h4>
