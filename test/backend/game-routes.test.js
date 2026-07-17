@@ -9,9 +9,9 @@ import {
   createGameRoutes,
   findActiveGamePath,
 } from "../../src/backend/game-routes.js";
+import { HttpError } from "../../src/backend/http-error.js";
 import { handleRequest } from "../../src/backend/http-routes.js";
 import { DEFAULT_ENTRY_PERIOD_LEVELS } from "../../src/backend/mtt-entry-policy.js";
-import { createLog } from "../../src/backend/logger.js";
 import { createMttContext, createUser } from "./mtt-test-context.js";
 
 describe("game-routes", () => {
@@ -115,7 +115,7 @@ describe("game-routes", () => {
     }
   });
 
-  it("records accepted and rejected late registration outcomes in the HTTP log", () => {
+  it("accepts open and rejects closed late registration over HTTP", async () => {
     const ctx = createMttContext();
     ctx.setup();
     try {
@@ -145,59 +145,58 @@ describe("game-routes", () => {
         mttManager: ctx.manager,
       });
       const path = `/api/mtt/${tournamentId}/register`;
-      const route = routes.find(
-        (candidate) =>
-          candidate.method === "POST" &&
-          candidate.path instanceof RegExp &&
-          path.match(candidate.path),
-      );
-      assert.ok(route);
+      const server = http.createServer(async (req, res) => {
+        try {
+          await handleRequest(req, res, routes);
+        } catch (error) {
+          if (!(error instanceof HttpError)) {
+            res.destroy(error instanceof Error ? error : undefined);
+            return;
+          }
+          res.writeHead(error.status, { "content-type": "application/json" });
+          res.end(
+            JSON.stringify(
+              error.body ?? { error: error.message, status: error.status },
+            ),
+          );
+        }
+      });
+      server.listen(0, "127.0.0.1");
+      await once(server, "listening");
 
-      function invoke(playerId, log) {
-        const req = { headers: { cookie: `phg=${playerId}` } };
-        const res = {
-          setHeader() {},
-          writeHead() {},
-          end() {},
-        };
-        return route.handler({
-          req,
-          res,
-          match: path.match(route.path),
-          users,
-          games: ctx.games,
-          broadcast: () => {},
-          log,
+      try {
+        const address = server.address();
+        assert.ok(address && typeof address === "object");
+        const url = `http://127.0.0.1:${address.port}${path}`;
+        const acceptedResponse = await fetch(url, {
+          method: "POST",
+          headers: { cookie: `phg=${latePlayer.id}` },
         });
+        assert.equal(acceptedResponse.status, 200);
+        await acceptedResponse.json();
+        const acceptedTournament = ctx.manager.getTournament(tournamentId);
+        assert.ok(acceptedTournament);
+        const acceptedEntrant = acceptedTournament.entrants.get(latePlayer.id);
+        assert.ok(acceptedEntrant);
+        assert.equal(acceptedEntrant.status, "registered");
+
+        tournament.entryPeriodOpen = false;
+        const rejectedResponse = await fetch(url, {
+          method: "POST",
+          headers: { cookie: `phg=${closedPlayer.id}` },
+        });
+        assert.equal(rejectedResponse.status, 400);
+        assert.deepEqual(await rejectedResponse.json(), {
+          error: "registration is closed",
+          status: 400,
+        });
+        const rejectedTournament = ctx.manager.getTournament(tournamentId);
+        assert.ok(rejectedTournament);
+        assert.equal(rejectedTournament.entrants.has(closedPlayer.id), false);
+      } finally {
+        server.close();
+        await once(server, "close");
       }
-
-      const acceptedLog = createLog("http_request");
-      invoke(latePlayer.id, acceptedLog);
-      assert.deepEqual(acceptedLog.context.mttRegistration, {
-        tournamentId,
-        playerId: latePlayer.id,
-        mode: "late",
-        level: 1,
-        entryPeriodLevels: 4,
-        result: "accepted",
-        seating: "queued",
-      });
-
-      tournament.entryPeriodOpen = false;
-      const rejectedLog = createLog("http_request");
-      assert.throws(
-        () => invoke(closedPlayer.id, rejectedLog),
-        /registration is closed/,
-      );
-      assert.deepEqual(rejectedLog.context.mttRegistration, {
-        tournamentId,
-        playerId: closedPlayer.id,
-        mode: "late",
-        level: 1,
-        entryPeriodLevels: 4,
-        result: "rejected",
-        error: "registration is closed",
-      });
     } finally {
       ctx.teardown();
     }
