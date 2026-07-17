@@ -20,14 +20,24 @@ $rules
 </semantic-review-rules>"
 
 output=$(mktemp "${TMPDIR:-/tmp}/poker-review.XXXXXX")
-trap 'rm -f "$output"' EXIT
+log=$(mktemp "${TMPDIR:-/tmp}/poker-review-log.XXXXXX")
+trap 'rm -f "$output" "$log"' EXIT
 
-codex exec \
-  --sandbox read-only \
-  --ephemeral \
-  --output-schema scripts/review/output.schema.json \
-  --output-last-message "$output" \
-  "$prompt" </dev/null
+runReview() {
+  codex exec \
+    --sandbox read-only \
+    --ephemeral \
+    --output-schema scripts/review/output.schema.json \
+    --output-last-message "$output" \
+    - <<<"$prompt"
+}
+
+if [[ -n "${DEBUG:-}" ]]; then
+  runReview
+elif ! runReview >"$log" 2>&1; then
+  cat "$log" >&2
+  exit 1
+fi
 
 if [[ "$(tr -d '[:space:]' <"$output")" == '{"findings":[]}' ]]; then
   echo "Semantic review passed"
