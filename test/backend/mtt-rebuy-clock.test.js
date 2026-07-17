@@ -182,7 +182,7 @@ describe("mtt rebuy clocks", () => {
   });
 
   it("forces earlier decisions but offers no decision for the cutoff hand", () => {
-    const { tournament } = createStartedTournament({
+    const { tournamentId, tournament } = createStartedTournament({
       playerCount: 7,
       tableSize: 6,
     });
@@ -193,14 +193,19 @@ describe("mtt rebuy clocks", () => {
     const earlierBust = bustSeat(earlierGame, 1);
     const cutoffBust = bustSeat(cutoffGame, 1);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
-    tournament.pendingBreak = true;
     cutoffGame.hand.phase = "turn";
     ctx.manager.handleHandFinalized(earlierGame);
 
     const earlierDecision = earlierGame.pendingRebuyDecision;
     assert.ok(earlierDecision);
     assert.equal(earlierDecision.clock.countdownTicks, 0);
+
+    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+    ctx.manager.tickTournament(tournamentId);
+    assert.equal(tournament.pendingBreak, true);
+    assert.equal(tournament.entryPeriodOpen, false);
+    assert.equal(earlierDecision.clock.countdownTicks, 1);
 
     cutoffGame.hand.phase = "waiting";
     ctx.manager.handleHandFinalized(cutoffGame);

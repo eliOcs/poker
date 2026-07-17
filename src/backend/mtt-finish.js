@@ -59,6 +59,7 @@ export function finishTournament(
   resolvedWinner.finishPosition = 1;
   resolvedWinner.tableId = winnerSeatContext.game.id;
   tournament.status = "finished";
+  tournament.entryPeriodOpen = false;
   tournament.endedAt = winnerEndedAt;
 
   for (const table of tournament.tables) {

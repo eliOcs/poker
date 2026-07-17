@@ -1,9 +1,15 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
+import { Readable } from "node:stream";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import * as Player from "../../src/backend/poker/player.js";
 import * as Seat from "../../src/backend/poker/seat.js";
-import { findActiveGamePath } from "../../src/backend/game-routes.js";
+import {
+  createGameRoutes,
+  findActiveGamePath,
+} from "../../src/backend/game-routes.js";
+import { DEFAULT_ENTRY_PERIOD_LEVELS } from "../../src/backend/mtt-entry-policy.js";
+import { createMttContext, createUser } from "./mtt-test-context.js";
 
 describe("game-routes", () => {
   it("returns the live cash path for a seated player", () => {
@@ -59,5 +65,53 @@ describe("game-routes", () => {
     const path = findActiveGamePath(new Map([[game.id, game]]), user.id);
 
     assert.strictEqual(path, undefined);
+  });
+
+  it("does not forward a client entry-period override when creating an MTT", async () => {
+    const ctx = createMttContext();
+    ctx.setup();
+    try {
+      const owner = createUser("owner");
+      const users = { [owner.id]: owner };
+      const routes = createGameRoutes(users, ctx.games, () => {}, {
+        mttManager: ctx.manager,
+      });
+      const route = routes.find(
+        (candidate) => candidate.method === "POST" && candidate.path === "/mtt",
+      );
+      assert.ok(route);
+
+      const req = Readable.from([
+        JSON.stringify({
+          seats: 9,
+          buyIn: 1_000,
+          entryPeriodLevels: 7,
+        }),
+      ]);
+      req.headers = { cookie: `phg=${owner.id}` };
+      let responseBody = "";
+      const res = {
+        setHeader() {},
+        writeHead() {},
+        end(body = "") {
+          responseBody = body;
+        },
+      };
+
+      await route.handler(
+        /** @type {any} */ ({
+          req,
+          res,
+          log: { context: {} },
+        }),
+      );
+
+      const { id } = JSON.parse(responseBody);
+      const tournament = ctx.manager.getTournament(id);
+      assert.ok(tournament);
+      assert.equal(tournament.entryPeriodLevels, DEFAULT_ENTRY_PERIOD_LEVELS);
+    } finally {
+      ctx.teardown();
+    }
   });
 });

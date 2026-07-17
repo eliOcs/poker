@@ -25,7 +25,7 @@ npm run test:e2e
 ## Progress
 
 - [x] Commit 1 completed on 2026-07-17: clock ticks expose completed playing levels; entrant and table populations are explicit; collapse state and orchestration use neutral reconciliation naming; and managed table identity allocation is centralized. Focused tests, format, lint, typecheck, duplication and dependency checks, backend/frontend tests, E2E smoke, UI-catalog regression tests, the full E2E suite, and semantic review pass.
-- [ ] Commit 2: Add the shared entry-period configuration and cutoff.
+- [x] Commit 2 completed on 2026-07-17: managed tournaments own a validated, server-defaulted entry period; completed playing levels close it permanently and independently of breaks; rebuy offers use the shared policy while grandfathered decisions retain their clocks; live and recovered views expose the state; and finished tournaments are closed. Focused tests, format, lint, typecheck, duplication and dependency checks, backend/frontend tests, E2E smoke, UI-catalog regression tests, the full E2E suite, and semantic review pass.
 - [ ] Commit 3: Add backend late registration and field growth.
 - [ ] Commit 4: Add lobby UX and end-to-end coverage.
 

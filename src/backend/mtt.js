@@ -30,7 +30,13 @@ import {
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-reconciliation.js";
 import { allocateManagedTableIdentity } from "./mtt-table-names.js";
-import { DEFAULT_MAX_REBUYS, isRebuyPeriodOpen } from "./mtt-rebuy-policy.js";
+import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
+import {
+  applyEntryPeriodCutoff,
+  DEFAULT_ENTRY_PERIOD_LEVELS,
+  isEntryPeriodOpen,
+  validateEntryPeriodLevels,
+} from "./mtt-entry-policy.js";
 import {
   finalizeRebuyDecision,
   handleRebuyDecisionAction,
@@ -80,6 +86,8 @@ import {
  * @property {number} tableSize
  * @property {number} initialStack
  * @property {number} maxRebuys
+ * @property {number} entryPeriodLevels
+ * @property {boolean} entryPeriodOpen
  * @property {number} level
  * @property {number} levelTicks
  * @property {boolean} onBreak
@@ -123,6 +131,8 @@ import {
  * @property {number} buyIn
  * @property {number} prizePool
  * @property {number} maxRebuys
+ * @property {number} entryPeriodLevels
+ * @property {boolean} entryPeriodOpen
  * @property {number} tableSize
  * @property {number} level
  * @property {number} timeToNextLevel
@@ -500,15 +510,16 @@ export function createMttManager({
       changedTableIds,
     );
 
-    const rebuyPeriodWasOpen = isRebuyPeriodOpen(tournament);
+    const entryPeriodWasOpen = isEntryPeriodOpen(tournament);
     const canStartBreak = getPopulatedOpenTables(tournament, games).every(
       (entry) => isHandSettled(entry.game),
     );
-    tickClock(tournament, canStartBreak);
+    const { completedLevel } = tickClock(tournament, canStartBreak);
+    applyEntryPeriodCutoff(tournament, completedLevel);
     applyRebuyPeriodTransition(
       tournament,
       games,
-      rebuyPeriodWasOpen,
+      entryPeriodWasOpen,
       changedTableIds,
     );
     finalizeSettledWaitingTables(tournament, changedTableIds);
@@ -553,13 +564,14 @@ export function createMttManager({
 
   return {
     /**
-     * @param {{ owner: User, buyIn: number, tableSize: number, maxRebuys?: unknown }} options
+     * @param {{ owner: User, buyIn: number, tableSize: number, maxRebuys?: unknown, entryPeriodLevels?: unknown }} options
      */
     createTournament({
       owner,
       buyIn,
       tableSize,
       maxRebuys = DEFAULT_MAX_REBUYS,
+      entryPeriodLevels = DEFAULT_ENTRY_PERIOD_LEVELS,
     }) {
       if (!Tournament.isValidBuyin(buyIn)) {
         throw new Error("invalid tournament buy-in");
@@ -571,7 +583,6 @@ export function createMttManager({
       ) {
         throw new Error("invalid maximum rebuys");
       }
-
       const createdAt = now();
       /** @type {ManagedTournament} */
       const tournament = {
@@ -584,6 +595,8 @@ export function createMttManager({
         tableSize,
         initialStack: Tournament.INITIAL_STACK,
         maxRebuys,
+        entryPeriodLevels: validateEntryPeriodLevels(entryPeriodLevels),
+        entryPeriodOpen: false,
         level: 1,
         levelTicks: 0,
         onBreak: false,
@@ -676,6 +689,7 @@ export function createMttManager({
       }
 
       tournament.status = "running";
+      tournament.entryPeriodOpen = tournament.entryPeriodLevels > 0;
       tournament.startedAt = now();
       const createdTableIds = startManagedTables(tournament);
       startTicking(tournament);
@@ -760,12 +774,12 @@ export function createMttManager({
 
       /** @type {Set<string>} */
       const changedTableIds = new Set([game.id]);
-      const rebuyPeriodWasOpen = isRebuyPeriodOpen(tournament);
+      const entryPeriodWasOpen = isEntryPeriodOpen(tournament);
       maybeStartPendingBreak(tournament, changedTableIds);
       applyRebuyPeriodTransition(
         tournament,
         games,
-        rebuyPeriodWasOpen,
+        entryPeriodWasOpen,
         changedTableIds,
       );
       finalizeSettledWaitingTables(tournament, changedTableIds);

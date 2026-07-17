@@ -108,6 +108,7 @@ describe("mtt-manager table collapse", () => {
     const winner = tournament.entrants.get("owner");
     const runnerUp = tournament.entrants.get(finalBustSeat.player.id);
     assert.equal(tournament.status, "finished");
+    assert.equal(tournament.entryPeriodOpen, false);
     assert.equal(winner?.status, "winner");
     assert.equal(winner?.finishPosition, 1);
     assert.equal(runnerUp?.finishPosition, 2);

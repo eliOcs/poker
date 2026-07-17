@@ -11,6 +11,8 @@ function createTournamentView() {
     buyIn: 500,
     prizePool: 500,
     maxRebuys: 1,
+    entryPeriodLevels: 4,
+    entryPeriodOpen: true,
     tableSize: 6,
     level: 2,
     timeToNextLevel: 90,

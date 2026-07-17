@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import * as Store from "../../src/backend/store.js";
 import { createMttManager } from "../../src/backend/mtt.js";
+import { DEFAULT_ENTRY_PERIOD_LEVELS } from "../../src/backend/mtt-entry-policy.js";
 import {
   writeHandToFile,
   writeTournamentSummary,
@@ -154,6 +155,13 @@ describe("mtt recovery", () => {
     const recoveredTournament = manager.getTournament("mtt123");
     assert.ok(recoveredTournament);
     assert.equal(recoveredTournament.maxRebuys, 0);
+    assert.equal(
+      recoveredTournament.entryPeriodLevels,
+      DEFAULT_ENTRY_PERIOD_LEVELS,
+    );
+    assert.equal(recoveredTournament.entryPeriodOpen, false);
+    assert.equal(view.entryPeriodLevels, DEFAULT_ENTRY_PERIOD_LEVELS);
+    assert.equal(view.entryPeriodOpen, false);
     assert.deepEqual(
       [...recoveredTournament.entrants.values()].map(
         (entrant) => entrant.rebuysUsed,

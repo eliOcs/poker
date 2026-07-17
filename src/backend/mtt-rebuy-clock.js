@@ -1,5 +1,5 @@
 import * as ActionClock from "./poker/action-clock.js";
-import { isRebuyPeriodOpen } from "./mtt-rebuy-policy.js";
+import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
 import {
   expireRebuyDecisions,
   finalizeRebuyDecision,
@@ -29,7 +29,7 @@ function getOpenTournamentTables(tournament, games) {
 
 /**
  * Starts the shared countdown for every grandfathered decision when the
- * centralized rebuy-period predicate transitions from open to closed.
+ * centralized entry-period predicate transitions from open to closed.
  * Existing countdowns are deliberately left untouched.
  *
  * @param {ManagedTournament} tournament
@@ -43,7 +43,7 @@ export function applyRebuyPeriodTransition(
   wasOpen,
   changedTableIds,
 ) {
-  if (!wasOpen || isRebuyPeriodOpen(tournament)) return;
+  if (!wasOpen || isEntryPeriodOpen(tournament)) return;
 
   for (const game of getOpenTournamentTables(tournament, games)) {
     const decision = game.pendingRebuyDecision;

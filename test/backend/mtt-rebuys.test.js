@@ -67,7 +67,7 @@ describe("mtt rebuy decisions", () => {
       {
         maxRebuys: 1,
         prepare(tournament) {
-          tournament.onBreak = true;
+          tournament.entryPeriodOpen = false;
         },
       },
     ];

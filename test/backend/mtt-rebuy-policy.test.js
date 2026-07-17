@@ -1,12 +1,10 @@
 import { afterEach, beforeEach, describe, it } from "node:test";
 import assert from "node:assert";
-import { BREAK_AFTER_LEVEL } from "../../src/shared/tournament.js";
 import {
   calculatePrizePool,
   getRemainingRebuys,
   getTotalAcceptedRebuys,
   isRebuyEligibleByCount,
-  isRebuyPeriodOpen,
 } from "../../src/backend/mtt-rebuy-policy.js";
 import { createMttContext, createUser } from "./mtt-test-context.js";
 
@@ -129,31 +127,6 @@ describe("mtt rebuy policy", () => {
     assert.equal(standings.get("owner")?.netWinnings, 2_000);
     assert.equal(standings.get("p2")?.netWinnings, -1_500);
     assert.equal(standings.get("p3")?.netWinnings, -500);
-  });
-
-  it("keeps the rebuy cutoff fixed to the first break", () => {
-    const tournamentId = ctx.manager.createTournament({
-      owner: createUser("owner"),
-      buyIn: 500,
-      tableSize: 6,
-      maxRebuys: 1,
-    });
-    const tournament = ctx.manager.getTournament(tournamentId);
-    assert.ok(tournament);
-
-    assert.equal(isRebuyPeriodOpen(tournament), true);
-
-    tournament.level = BREAK_AFTER_LEVEL;
-    tournament.pendingBreak = true;
-    assert.equal(isRebuyPeriodOpen(tournament), true);
-
-    tournament.pendingBreak = false;
-    tournament.onBreak = true;
-    assert.equal(isRebuyPeriodOpen(tournament), false);
-
-    tournament.onBreak = false;
-    tournament.level = BREAK_AFTER_LEVEL + 1;
-    assert.equal(isRebuyPeriodOpen(tournament), false);
   });
 
   it("preserves entrant usage through seating and table movement", () => {

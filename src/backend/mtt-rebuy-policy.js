@@ -1,5 +1,3 @@
-import { BREAK_AFTER_LEVEL } from "../shared/tournament.js";
-
 /**
  * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
  * @typedef {import('./mtt.js').TournamentEntrant} TournamentEntrant
@@ -34,16 +32,6 @@ export function getTotalAcceptedRebuys(tournament) {
  */
 export function isRebuyEligibleByCount(tournament, entrant) {
   return entrant.rebuysUsed < tournament.maxRebuys;
-}
-
-/**
- * The rebuy period closes when the first break starts and never reopens.
- *
- * @param {ManagedTournament} tournament
- * @returns {boolean}
- */
-export function isRebuyPeriodOpen(tournament) {
-  return !tournament.onBreak && tournament.level <= BREAK_AFTER_LEVEL;
 }
 
 /**

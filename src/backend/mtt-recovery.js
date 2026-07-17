@@ -4,6 +4,7 @@ import {
   readTournamentSummarySync,
   toCents,
 } from "./poker/hand-history/io.js";
+import { DEFAULT_ENTRY_PERIOD_LEVELS } from "./mtt-entry-policy.js";
 import * as Store from "./store.js";
 import * as Tournament from "../shared/tournament.js";
 
@@ -294,6 +295,8 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     tableSize: recoverTableSize(summary, tables),
     initialStack: toCents(summary.initial_stack || 0),
     maxRebuys: recoverMaxRebuys(summary, rebuysByPlayer),
+    entryPeriodLevels: DEFAULT_ENTRY_PERIOD_LEVELS,
+    entryPeriodOpen: false,
     level: 1,
     levelTicks: 0,
     onBreak: false,

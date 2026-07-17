@@ -2,10 +2,8 @@ import {
   collectBustedEntrants,
   eliminateBustedEntrants,
 } from "./mtt-player-lifecycle.js";
-import {
-  isRebuyEligibleByCount,
-  isRebuyPeriodOpen,
-} from "./mtt-rebuy-policy.js";
+import { isRebuyEligibleByCount } from "./mtt-rebuy-policy.js";
+import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
 import { countActiveEntrants } from "./mtt-table-state.js";
 import * as ActionClock from "./poker/action-clock.js";
 
@@ -30,7 +28,7 @@ import * as ActionClock from "./poker/action-clock.js";
  */
 export function isRebuyEligible(tournament, entrant) {
   return (
-    isRebuyPeriodOpen(tournament) && isRebuyEligibleByCount(tournament, entrant)
+    isEntryPeriodOpen(tournament) && isRebuyEligibleByCount(tournament, entrant)
   );
 }
 
