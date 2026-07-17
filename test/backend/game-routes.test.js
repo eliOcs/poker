@@ -11,6 +11,7 @@ import {
 } from "../../src/backend/game-routes.js";
 import { handleRequest } from "../../src/backend/http-routes.js";
 import { DEFAULT_ENTRY_PERIOD_LEVELS } from "../../src/backend/mtt-entry-policy.js";
+import { createLog } from "../../src/backend/logger.js";
 import { createMttContext, createUser } from "./mtt-test-context.js";
 
 describe("game-routes", () => {
@@ -109,6 +110,94 @@ describe("game-routes", () => {
         server.close();
         await once(server, "close");
       }
+    } finally {
+      ctx.teardown();
+    }
+  });
+
+  it("records accepted and rejected late registration outcomes in the HTTP log", () => {
+    const ctx = createMttContext();
+    ctx.setup();
+    try {
+      const owner = createUser("owner");
+      const latePlayer = createUser("late");
+      const closedPlayer = createUser("closed");
+      const users = {
+        [owner.id]: owner,
+        [latePlayer.id]: latePlayer,
+        [closedPlayer.id]: closedPlayer,
+      };
+      const tournamentId = ctx.manager.createTournament({
+        owner,
+        buyIn: 500,
+        tableSize: 6,
+        maxRebuys: 0,
+      });
+      ctx.manager.registerPlayer(tournamentId, createUser("p2"));
+      ctx.manager.startTournament(tournamentId, owner.id);
+      const tournament = ctx.manager.getTournament(tournamentId);
+      assert.ok(tournament);
+      const table = ctx.games.get(tournament.tables[0].tableId);
+      assert.ok(table);
+      table.hand.phase = "flop";
+
+      const routes = createGameRoutes(users, ctx.games, () => {}, {
+        mttManager: ctx.manager,
+      });
+      const path = `/api/mtt/${tournamentId}/register`;
+      const route = routes.find(
+        (candidate) =>
+          candidate.method === "POST" &&
+          candidate.path instanceof RegExp &&
+          path.match(candidate.path),
+      );
+      assert.ok(route);
+
+      function invoke(playerId, log) {
+        const req = { headers: { cookie: `phg=${playerId}` } };
+        const res = {
+          setHeader() {},
+          writeHead() {},
+          end() {},
+        };
+        return route.handler({
+          req,
+          res,
+          match: path.match(route.path),
+          users,
+          games: ctx.games,
+          broadcast: () => {},
+          log,
+        });
+      }
+
+      const acceptedLog = createLog("http_request");
+      invoke(latePlayer.id, acceptedLog);
+      assert.deepEqual(acceptedLog.context.mttRegistration, {
+        tournamentId,
+        playerId: latePlayer.id,
+        mode: "late",
+        level: 1,
+        entryPeriodLevels: 4,
+        result: "accepted",
+        seating: "queued",
+      });
+
+      tournament.entryPeriodOpen = false;
+      const rejectedLog = createLog("http_request");
+      assert.throws(
+        () => invoke(closedPlayer.id, rejectedLog),
+        /registration is closed/,
+      );
+      assert.deepEqual(rejectedLog.context.mttRegistration, {
+        tournamentId,
+        playerId: closedPlayer.id,
+        mode: "late",
+        level: 1,
+        entryPeriodLevels: 4,
+        result: "rejected",
+        error: "registration is closed",
+      });
     } finally {
       ctx.teardown();
     }

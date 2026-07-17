@@ -87,10 +87,14 @@ export function countActivePlayers(game) {
  * @param {ManagedTournament} tournament
  * @returns {number}
  */
-export function countActiveEntrants(tournament) {
+export function countRemainingEntrants(tournament) {
   let count = 0;
   for (const entrant of tournament.entrants.values()) {
-    if (entrant.status === "seated" || entrant.status === "winner") {
+    if (
+      entrant.status === "registered" ||
+      entrant.status === "seated" ||
+      entrant.status === "winner"
+    ) {
       count += 1;
     }
   }

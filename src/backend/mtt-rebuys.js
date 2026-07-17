@@ -4,7 +4,7 @@ import {
 } from "./mtt-player-lifecycle.js";
 import { isRebuyEligibleByCount } from "./mtt-rebuy-policy.js";
 import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
-import { countActiveEntrants } from "./mtt-table-state.js";
+import { countRemainingEntrants } from "./mtt-table-state.js";
 import * as ActionClock from "./poker/action-clock.js";
 
 /**
@@ -198,7 +198,7 @@ export function finalizeRebuyDecision(tournament, game, now) {
   eliminateBustedEntrants(
     game,
     eliminatedEntrants,
-    countActiveEntrants(tournament),
+    countRemainingEntrants(tournament),
     now,
   );
   delete game.pendingRebuyDecision;

@@ -4,9 +4,16 @@ import {
   clearTableWinner,
   resetClosedTable,
   applyTournamentStateToTable,
-  getPopulatedOpenTables,
+  getOpenTables,
 } from "./mtt-table-state.js";
-import { getActiveSeatIndexes, movePlayer } from "./mtt-seating.js";
+import {
+  findAvailableSeat,
+  getActiveSeatIndexes,
+  getRemainingEntrants,
+  getWaitingEntrants,
+  movePlayer,
+  seatEntrantAtTable,
+} from "./mtt-seating.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -57,7 +64,9 @@ function sortByLargestTable(tables) {
 function markPendingRebalance(tournament, activeTables, changedTables) {
   tournament.pendingRebalance = true;
   for (const entry of activeTables) {
-    changedTables.add(entry.game.id);
+    if (isTableReadyForRebalance(entry.game)) {
+      changedTables.add(entry.game.id);
+    }
   }
 }
 
@@ -72,17 +81,22 @@ function getBreakCandidate(activeTables) {
 }
 
 /**
+ * @param {ManagedTournament} tournament
  * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} destinationTables
  * @returns {{ table: ManagedTable, game: Game, activePlayers: number } | undefined}
  */
-function getReadyDestinationTable(destinationTables) {
+function getReadyDestinationTable(tournament, destinationTables) {
   return sortBySmallestTable(
     destinationTables
       .map((entry) => ({
         ...entry,
         activePlayers: countActivePlayers(entry.game),
       }))
-      .filter((entry) => isTableReadyForRebalance(entry.game)),
+      .filter(
+        (entry) =>
+          isTableReadyForRebalance(entry.game) &&
+          findAvailableSeat(entry.game, tournament) !== -1,
+      ),
   )[0];
 }
 
@@ -107,7 +121,7 @@ function collapseTableIntoDestinations(
   ).sort((a, b) => b - a);
 
   for (const seatIndex of activeSeats) {
-    const destination = getReadyDestinationTable(destinationTables);
+    const destination = getReadyDestinationTable(tournament, destinationTables);
     if (!destination) {
       return false;
     }
@@ -127,8 +141,9 @@ function collapseTableIntoDestinations(
  * @param {Map<string, Game>} games
  * @param {Set<string>} changedTables
  * @param {() => string} now
- * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
+ * @param {(populatedTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, openTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
  * @param {PlayerMovedEvent[]} playerMoves
+ * @param {number} targetTableCount
  */
 export function collapseExtraTables(
   tournament,
@@ -137,20 +152,12 @@ export function collapseExtraTables(
   now,
   mergeIntoFinalTable,
   playerMoves,
+  targetTableCount,
 ) {
   for (;;) {
-    const activeTables = getPopulatedOpenTables(tournament, games);
-    const totalPlayers = activeTables.reduce(
-      (sum, table) => sum + table.activePlayers,
-      0,
-    );
-    const targetTableCount = Math.max(
-      1,
-      Math.ceil(totalPlayers / tournament.tableSize),
-    );
+    const activeTables = getOpenTables(tournament, games);
 
     if (activeTables.length <= targetTableCount) {
-      tournament.pendingRebalance = false;
       return;
     }
 
@@ -160,8 +167,12 @@ export function collapseExtraTables(
         return;
       }
 
-      mergeIntoFinalTable(activeTables, changedTables, playerMoves);
-      tournament.pendingRebalance = false;
+      mergeIntoFinalTable(
+        activeTables.filter((entry) => entry.activePlayers > 0),
+        activeTables,
+        changedTables,
+        playerMoves,
+      );
       return;
     }
 
@@ -207,8 +218,8 @@ export function balanceWaitingTables(
   playerMoves,
 ) {
   for (;;) {
-    const readyTables = getPopulatedOpenTables(tournament, games).filter(
-      (entry) => isTableReadyForRebalance(entry.game),
+    const readyTables = getOpenTables(tournament, games).filter((entry) =>
+      isTableReadyForRebalance(entry.game),
     );
     if (readyTables.length < 2) {
       return;
@@ -245,8 +256,57 @@ export function balanceWaitingTables(
 /**
  * @param {ManagedTournament} tournament
  * @param {Map<string, Game>} games
+ * @param {Set<string>} changedTables
+ * @param {PlayerMovedEvent[]} playerMoves
+ */
+function seatWaitingEntrants(tournament, games, changedTables, playerMoves) {
+  for (const entrant of getWaitingEntrants(tournament)) {
+    const destination = sortBySmallestTable(
+      getOpenTables(tournament, games).filter(
+        (entry) =>
+          isTableReadyForRebalance(entry.game) &&
+          findAvailableSeat(entry.game, tournament) !== -1,
+      ),
+    )[0];
+    if (!destination) return;
+
+    const seatIndex = findAvailableSeat(destination.game, tournament);
+    seatEntrantAtTable(tournament, destination.game, entrant, seatIndex);
+    changedTables.add(destination.game.id);
+    playerMoves.push({
+      playerId: entrant.playerId,
+      tournamentId: tournament.id,
+      tableId: destination.game.id,
+      tableName: /** @type {string} */ (destination.game.tableName),
+    });
+  }
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
+ * @param {number} targetTableCount
+ * @returns {boolean}
+ */
+function isReconciliationComplete(tournament, games, targetTableCount) {
+  if (getWaitingEntrants(tournament).length > 0) return false;
+
+  const openTables = getOpenTables(tournament, games);
+  if (openTables.length !== targetTableCount) return false;
+
+  const populations = openTables.map((entry) => entry.activePlayers);
+  return Math.max(...populations) - Math.min(...populations) <= 1;
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {Map<string, Game>} games
  * @param {() => string} now
- * @param {(activeTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void} mergeIntoFinalTable
+ * @param {{
+ *   createRegularTable: () => { table: ManagedTable, game: Game },
+ *   renameFinalTable: (entry: { table: ManagedTable, game: Game, activePlayers: number }) => void,
+ *   mergeIntoFinalTable: (populatedTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, openTables: Array<{ table: ManagedTable, game: Game, activePlayers: number }>, changedTables: Set<string>, playerMoves: PlayerMovedEvent[]) => void,
+ * }} operations
  * @param {PlayerMovedEvent[]} playerMoves
  * @returns {Set<string>}
  */
@@ -254,21 +314,62 @@ export function rebalanceTournament(
   tournament,
   games,
   now,
-  mergeIntoFinalTable,
+  operations,
   playerMoves,
 ) {
   /** @type {Set<string>} */
   const changedTables = new Set();
+  const targetTableCount = Math.max(
+    1,
+    Math.ceil(
+      getRemainingEntrants(tournament, games).length / tournament.tableSize,
+    ),
+  );
+  let openTables = getOpenTables(tournament, games);
+
+  const onlyOpenTable = openTables.length === 1 ? openTables[0] : undefined;
+  if (
+    onlyOpenTable?.table.tableName === "Final Table" &&
+    targetTableCount > 1
+  ) {
+    operations.renameFinalTable(onlyOpenTable);
+    changedTables.add(onlyOpenTable.game.id);
+  }
+
+  while (openTables.length < targetTableCount) {
+    const { game } = operations.createRegularTable();
+    changedTables.add(game.id);
+    openTables = getOpenTables(tournament, games);
+  }
+
+  seatWaitingEntrants(tournament, games, changedTables, playerMoves);
 
   collapseExtraTables(
     tournament,
     games,
     changedTables,
     now,
-    mergeIntoFinalTable,
+    operations.mergeIntoFinalTable,
     playerMoves,
+    targetTableCount,
   );
   balanceWaitingTables(tournament, games, changedTables, playerMoves);
+
+  const wasPending = tournament.pendingRebalance;
+  if (isReconciliationComplete(tournament, games, targetTableCount)) {
+    tournament.pendingRebalance = false;
+    if (wasPending) {
+      for (const entry of getOpenTables(tournament, games)) {
+        changedTables.add(entry.game.id);
+      }
+    }
+  } else {
+    markPendingRebalance(
+      tournament,
+      getOpenTables(tournament, games),
+      changedTables,
+    );
+  }
 
   return changedTables;
 }

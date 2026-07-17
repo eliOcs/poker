@@ -76,6 +76,28 @@ function parseTournamentName(data) {
 }
 
 /**
+ * @param {import('./mtt.js').ManagedTournament|undefined} tournament
+ * @param {UserType} user
+ * @returns {Record<string, unknown>}
+ */
+function buildRegistrationLog(tournament, user) {
+  return {
+    tournamentId: tournament?.id,
+    playerId: user.id,
+    mode: tournament?.status === "running" ? "late" : "pre-start",
+    level: tournament?.level,
+    entryPeriodLevels: tournament?.entryPeriodLevels,
+    result: "rejected",
+  };
+}
+
+/** @param {import('./mtt.js').ManagedTournamentView} tournament */
+function getRegistrationSeating(tournament) {
+  if (tournament.status === "registration") return "pre-start";
+  return tournament.currentPlayer.tableId ? "immediate" : "queued";
+}
+
+/**
  * Creates game-related routes (user, cash, sitngo, mtt, player profiles)
  * @param {Record<string, UserType>} users
  * @param {Map<Id, Game>} games
@@ -281,6 +303,11 @@ export function createGameRoutes(users, games, broadcast, services) {
         const tournamentId = /** @type {string} */ (
           /** @type {RegExpMatchArray} */ (match)[1]
         );
+        const tournamentState =
+          services.mttManager?.getTournament(tournamentId);
+        const registrationLog = buildRegistrationLog(tournamentState, user);
+        registrationLog.tournamentId = tournamentId;
+        log.context.mttRegistration = registrationLog;
         try {
           const tournament = services.mttManager?.registerPlayer(
             tournamentId,
@@ -289,8 +316,12 @@ export function createGameRoutes(users, games, broadcast, services) {
           if (!tournament) {
             throw new Error("tournament service unavailable");
           }
+          registrationLog.result = "accepted";
+          registrationLog.seating = getRegistrationSeating(tournament);
           respondWithJson(res, tournament);
         } catch (err) {
+          registrationLog.error =
+            err instanceof Error ? err.message : String(err);
           rethrowTournamentError(err);
         }
       },

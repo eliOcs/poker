@@ -23,7 +23,7 @@ function getNextTableCreatedOrder(tournament) {
  * @param {ManagedTournament} tournament
  * @returns {string}
  */
-function getNextRegularTableName(tournament) {
+export function getNextRegularTableName(tournament) {
   const highestTableNumber = tournament.tables.reduce((highest, table) => {
     const match = REGULAR_TABLE_NAME.exec(table.tableName);
     return match ? Math.max(highest, Number(match[1])) : highest;
@@ -43,4 +43,15 @@ export function allocateManagedTableIdentity(tournament, { finalTable }) {
       : getNextRegularTableName(tournament),
     createdOrder: getNextTableCreatedOrder(tournament),
   };
+}
+
+/**
+ * @param {ManagedTournament} tournament
+ * @param {import('./mtt.js').ManagedTable} table
+ * @param {import('./poker/game.js').Game} game
+ */
+export function renameManagedFinalTable(tournament, table, game) {
+  const tableName = getNextRegularTableName(tournament);
+  table.tableName = tableName;
+  game.tableName = tableName;
 }

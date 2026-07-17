@@ -5,6 +5,7 @@ import {
   isTableReadyForNextHand,
   getTimeToNextLevel,
 } from "./mtt-table-state.js";
+import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -76,7 +77,6 @@ function buildStandings(tournament, prizePool) {
 
     for (let i = 0; i < standings.length; i++) {
       const entry = /** @type {ManagedTournamentViewEntrant} */ (standings[i]);
-      if (entry.status === "registered") continue;
       const position = entry.finishPosition ?? i + 1;
       const prize = prizeByPosition.get(position) ?? 0;
       const rebuysUsed =
@@ -131,7 +131,9 @@ function buildCurrentPlayerView(tournament, entrant, playerId) {
  */
 function buildTournamentActions(tournament, entrant, playerId) {
   return {
-    canRegister: tournament.status === "registration" && entrant === undefined,
+    canRegister:
+      entrant === undefined &&
+      (tournament.status === "registration" || isEntryPeriodOpen(tournament)),
     canUnregister:
       tournament.status === "registration" && entrant?.status === "registered",
     canStart:

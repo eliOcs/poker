@@ -23,13 +23,18 @@ import { finishTournament } from "./mtt-finish.js";
 import { recoverFinishedMttFromSummary } from "./mtt-recovery.js";
 import { buildTournamentView } from "./mtt-view.js";
 import {
-  seatEntrantAtTable,
   getActiveSeatIndexes,
   getSeatedContenders,
+  getWaitingEntrants,
   movePlayer,
 } from "./mtt-seating.js";
 import { rebalanceTournament } from "./mtt-reconciliation.js";
-import { allocateManagedTableIdentity } from "./mtt-table-names.js";
+import {
+  allocateManagedTableIdentity,
+  renameManagedFinalTable,
+} from "./mtt-table-names.js";
+import { addTournamentEntrant } from "./mtt-registration.js";
+import { createStartingTables } from "./mtt-start.js";
 import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
 import {
   applyEntryPeriodCutoff,
@@ -206,10 +211,6 @@ export function createMttManager({
    * @param {ManagedTournament} tournament
    * @param {import('./mtt-seating.js').PlayerMovedEvent[]} [playerMoves]
    */
-  function broadcastTournament(tournament, playerMoves = []) {
-    broadcastTournamentState(tournament.id, playerMoves);
-  }
-
   /**
    * @param {TournamentEntrant} entrant
    */
@@ -235,7 +236,7 @@ export function createMttManager({
     for (const tableId of tableIds) {
       broadcastTableState(tableId);
     }
-    broadcastTournament(tournament, playerMoves);
+    broadcastTournamentState(tournament.id, playerMoves);
   }
 
   /**
@@ -260,23 +261,6 @@ export function createMttManager({
       tickTimer.unref();
     }
     tournament.tickTimer = /** @type {NodeJS.Timeout} */ (tickTimer);
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @param {number} entrantCount
-   * @returns {number[]}
-   */
-  function buildTableSizes(tournament, entrantCount) {
-    const tableCount = Math.ceil(entrantCount / tournament.tableSize);
-    const base = Math.floor(entrantCount / tableCount);
-    const remainder = entrantCount % tableCount;
-    /** @type {number[]} */
-    const sizes = [];
-    for (let i = 0; i < tableCount; i += 1) {
-      sizes.push(base + (i < remainder ? 1 : 0));
-    }
-    return sizes;
   }
 
   /**
@@ -313,13 +297,15 @@ export function createMttManager({
 
   /**
    * @param {ManagedTournament} tournament
-   * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} activeTables
+   * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} populatedTables
+   * @param {Array<{ table: ManagedTable, game: Game, activePlayers: number }>} openTables
    * @param {Set<string>} changedTables
    * @param {import('./mtt-seating.js').PlayerMovedEvent[]} playerMoves
    */
   function mergeIntoFinalTable(
     tournament,
-    activeTables,
+    populatedTables,
+    openTables,
     changedTables,
     playerMoves,
   ) {
@@ -328,7 +314,7 @@ export function createMttManager({
     });
     changedTables.add(finalGame.id);
 
-    const tablesInMoveOrder = [...activeTables].sort(
+    const tablesInMoveOrder = [...populatedTables].sort(
       (a, b) => a.table.createdOrder - b.table.createdOrder,
     );
 
@@ -342,46 +328,15 @@ export function createMttManager({
           movePlayer(tournament, entry.game, seatIndex, finalGame),
         );
       }
+    }
 
+    for (const entry of openTables) {
       changedTables.add(entry.game.id);
       entry.table.closedAt = now();
       clearTableWinner(entry.game);
       resetClosedTable(entry.game);
       applyTournamentStateToTable(tournament, entry.game);
     }
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @returns {string[]}
-   */
-  function startManagedTables(tournament) {
-    const entrants = [...tournament.entrants.values()].sort(
-      (a, b) => a.registrationOrder - b.registrationOrder,
-    );
-    const tableSizes = buildTableSizes(tournament, entrants.length);
-    /** @type {string[]} */
-    const createdTableIds = [];
-    let entrantIndex = 0;
-
-    tableSizes.forEach((tableSize) => {
-      const { game } = createManagedTable(tournament, {
-        finalTable: tableSizes.length === 1,
-      });
-      createdTableIds.push(game.id);
-
-      for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
-        const entrant = entrants[entrantIndex];
-        if (!entrant) break;
-        entrant.stack = tournament.initialStack;
-        seatEntrantAtTable(tournament, game, entrant, seatIndex);
-        entrantIndex += 1;
-      }
-
-      syncWaitingTableState(tournament, game, ensureTableTick);
-    });
-
-    return createdTableIds;
   }
 
   /**
@@ -435,7 +390,10 @@ export function createMttManager({
    */
   function maybeFinishTournament(tournament, changedTableIds) {
     const contenders = getSeatedContenders(tournament, games);
-    if (contenders.length !== 1) {
+    if (
+      contenders.length !== 1 ||
+      getWaitingEntrants(tournament).length !== 0
+    ) {
       return false;
     }
 
@@ -445,6 +403,64 @@ export function createMttManager({
       changedTableIds.add(table.tableId);
     }
     return true;
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   * @param {import('./mtt-seating.js').PlayerMovedEvent[]} playerMoves
+   * @param {boolean} detectWinner
+   * @returns {boolean}
+   */
+  function coordinateTournament(
+    tournament,
+    changedTableIds,
+    playerMoves,
+    detectWinner,
+  ) {
+    if (detectWinner && maybeFinishTournament(tournament, changedTableIds)) {
+      return true;
+    }
+
+    const balancedTables = rebalanceTournament(
+      tournament,
+      games,
+      now,
+      {
+        createRegularTable: () =>
+          createManagedTable(tournament, { finalTable: false }),
+        renameFinalTable: ({ table, game }) => {
+          renameManagedFinalTable(tournament, table, game);
+        },
+        mergeIntoFinalTable: (populatedTables, openTables, changedTables) => {
+          mergeIntoFinalTable(
+            tournament,
+            populatedTables,
+            openTables,
+            changedTables,
+            playerMoves,
+          );
+        },
+      },
+      playerMoves,
+    );
+    for (const tableId of balancedTables) changedTableIds.add(tableId);
+    return false;
+  }
+
+  /**
+   * @param {ManagedTournament} tournament
+   * @param {Set<string>} changedTableIds
+   */
+  function holdTablesForWaitingEntrants(tournament, changedTableIds) {
+    if (getWaitingEntrants(tournament).length === 0) return;
+
+    tournament.pendingRebalance = true;
+    for (const entry of getOpenTables(tournament, games)) {
+      if (entry.game.hand.phase === "waiting") {
+        changedTableIds.add(entry.game.id);
+      }
+    }
   }
 
   /**
@@ -461,28 +477,19 @@ export function createMttManager({
     const playerMoves = [];
 
     if (canCoordinateTournament(tournament, games)) {
-      if (detectWinner && maybeFinishTournament(tournament, changedTableIds)) {
+      if (
+        coordinateTournament(
+          tournament,
+          changedTableIds,
+          playerMoves,
+          detectWinner,
+        )
+      ) {
         broadcastTables(tournament, changedTableIds);
         return;
       }
-
-      const balancedTables = rebalanceTournament(
-        tournament,
-        games,
-        now,
-        (activeTables, changedTables) => {
-          mergeIntoFinalTable(
-            tournament,
-            activeTables,
-            changedTables,
-            playerMoves,
-          );
-        },
-        playerMoves,
-      );
-      for (const tableId of balancedTables) {
-        changedTableIds.add(tableId);
-      }
+    } else {
+      holdTablesForWaitingEntrants(tournament, changedTableIds);
     }
 
     const tableIds = broadcastAllOpenTables
@@ -537,28 +544,13 @@ export function createMttManager({
    */
   function registerPlayer(tournamentId, user) {
     const tournament = requireTournament(tournamentId);
-    if (tournament.status !== "registration") {
-      throw new Error("registration is closed");
-    }
-    if (!user.email) {
-      throw new Error("sign up required to register");
-    }
-    if (tournament.entrants.has(user.id)) {
-      throw new Error("player already registered");
-    }
+    addTournamentEntrant(tournament, user, now);
 
-    tournament.entrants.set(user.id, {
-      playerId: user.id,
-      name: user.name,
-      status: "registered",
-      stack: tournament.initialStack,
-      handsPlayed: 0,
-      rebuysUsed: 0,
-      registrationOrder: tournament.nextRegistrationOrder,
-      registeredAt: now(),
-    });
-    tournament.nextRegistrationOrder += 1;
-    broadcastTournament(tournament);
+    if (tournament.status === "running") {
+      reconcileTournament(tournament, new Set());
+    } else {
+      broadcastTournamentState(tournament.id);
+    }
     return buildTournamentView(tournament, games, user.id);
   }
 
@@ -643,7 +635,7 @@ export function createMttManager({
           game.tournament.name = tournament.name;
         }
       }
-      broadcastTournament(tournament);
+      broadcastTournamentState(tournament.id);
       return buildTournamentView(tournament, games, actorId);
     },
 
@@ -667,7 +659,7 @@ export function createMttManager({
       }
 
       tournament.entrants.delete(playerId);
-      broadcastTournament(tournament);
+      broadcastTournamentState(tournament.id);
       return buildTournamentView(tournament, games, actorId);
     },
 
@@ -691,7 +683,11 @@ export function createMttManager({
       tournament.status = "running";
       tournament.entryPeriodOpen = tournament.entryPeriodLevels > 0;
       tournament.startedAt = now();
-      const createdTableIds = startManagedTables(tournament);
+      const createdTableIds = createStartingTables(
+        tournament,
+        (options) => createManagedTable(tournament, options),
+        ensureTableTick,
+      );
       startTicking(tournament);
       broadcastTables(tournament, createdTableIds);
       return buildTournamentView(tournament, games, actorId);
@@ -723,7 +719,7 @@ export function createMttManager({
           entrant.name = user.name;
           syncEntrantNameToTable(entrant);
         }
-        broadcastTournament(tournament);
+        broadcastTournamentState(tournament.id);
       }
     },
 
