@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { Readable } from "node:stream";
+import http from "node:http";
+import { once } from "node:events";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import * as Player from "../../src/backend/poker/player.js";
 import * as Seat from "../../src/backend/poker/seat.js";
@@ -8,6 +9,7 @@ import {
   createGameRoutes,
   findActiveGamePath,
 } from "../../src/backend/game-routes.js";
+import { handleRequest } from "../../src/backend/http-routes.js";
 import { DEFAULT_ENTRY_PERIOD_LEVELS } from "../../src/backend/mtt-entry-policy.js";
 import { createMttContext, createUser } from "./mtt-test-context.js";
 
@@ -76,40 +78,37 @@ describe("game-routes", () => {
       const routes = createGameRoutes(users, ctx.games, () => {}, {
         mttManager: ctx.manager,
       });
-      const route = routes.find(
-        (candidate) => candidate.method === "POST" && candidate.path === "/mtt",
-      );
-      assert.ok(route);
+      const server = http.createServer((req, res) => {
+        handleRequest(req, res, routes).catch((error) => res.destroy(error));
+      });
+      server.listen(0, "127.0.0.1");
+      await once(server, "listening");
 
-      const req = Readable.from([
-        JSON.stringify({
-          seats: 9,
-          buyIn: 1_000,
-          entryPeriodLevels: 7,
-        }),
-      ]);
-      req.headers = { cookie: `phg=${owner.id}` };
-      let responseBody = "";
-      const res = {
-        setHeader() {},
-        writeHead() {},
-        end(body = "") {
-          responseBody = body;
-        },
-      };
+      try {
+        const address = server.address();
+        assert.ok(address && typeof address === "object");
+        const response = await fetch(`http://127.0.0.1:${address.port}/mtt`, {
+          method: "POST",
+          headers: {
+            cookie: `phg=${owner.id}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            seats: 9,
+            buyIn: 1_000,
+            entryPeriodLevels: 7,
+          }),
+        });
 
-      await route.handler(
-        /** @type {any} */ ({
-          req,
-          res,
-          log: { context: {} },
-        }),
-      );
-
-      const { id } = JSON.parse(responseBody);
-      const tournament = ctx.manager.getTournament(id);
-      assert.ok(tournament);
-      assert.equal(tournament.entryPeriodLevels, DEFAULT_ENTRY_PERIOD_LEVELS);
+        assert.equal(response.status, 200);
+        const { id } = await response.json();
+        const tournament = ctx.manager.getTournament(id);
+        assert.ok(tournament);
+        assert.equal(tournament.entryPeriodLevels, DEFAULT_ENTRY_PERIOD_LEVELS);
+      } finally {
+        server.close();
+        await once(server, "close");
+      }
     } finally {
       ctx.teardown();
     }
