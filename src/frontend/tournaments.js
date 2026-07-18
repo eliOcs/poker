@@ -5,7 +5,6 @@ import { getMttPath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
   dispatchNavigate,
-  gameCreateStyles,
   postCreate,
   renderCreatePage,
   renderPresetSelect,
@@ -13,8 +12,8 @@ import {
 } from "./game-create-form.js";
 
 class Tournaments extends LitElement {
-  static get styles() {
-    return gameCreateStyles;
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

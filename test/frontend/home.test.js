@@ -4,13 +4,14 @@ import "../../src/frontend/home.js";
 describe("phg-home", () => {
   it("renders the game creation form", async () => {
     const element = await fixture(html`<phg-home></phg-home>`);
-    expect(element.shadowRoot.querySelector(".panel")).to.exist;
-    expect(element.shadowRoot.querySelector("phg-button")).to.exist;
+    expect(element.shadowRoot).to.be.null;
+    expect(element.querySelector(".panel")).to.exist;
+    expect(element.querySelector("phg-button")).to.exist;
   });
 
   it("does not show multi-table tournaments as a game type", async () => {
     const element = await fixture(html`<phg-home></phg-home>`);
-    expect(element.shadowRoot.querySelector('input[value="mtt"]')).to.not.exist;
+    expect(element.querySelector('input[value="mtt"]')).to.not.exist;
   });
 
   it("creates a Sit & Go and navigates to the table", async () => {
@@ -26,13 +27,13 @@ describe("phg-home", () => {
 
     const element = await fixture(html`<phg-home></phg-home>`);
     const radio = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector('input[value="sitngo"]')
+      element.querySelector('input[value="sitngo"]')
     );
     radio.click();
     await element.updateComplete;
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("phg-button").click();
+      element.querySelector("phg-button").click();
     });
 
     const event = await oneEvent(element, "navigate");

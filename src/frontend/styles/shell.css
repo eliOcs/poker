@@ -24,7 +24,8 @@
   max-width: 100%;
 }
 
-.panel {
+.shell-panel,
+.shell-content > .panel {
   display: grid;
   gap: 16px;
   width: 100%;

@@ -1,0 +1,227 @@
+:is(phg-home, phg-tournaments) {
+  display: flex;
+  flex-direction: column;
+  color: var(--color-fg-medium);
+  background-color: var(--color-bg-medium);
+}
+
+:is(phg-home, phg-tournaments) > .main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: clamp(16px, 3vw, 32px);
+  background: var(--color-bg-medium);
+}
+
+:is(phg-home, phg-tournaments) > .main > .panel {
+  display: grid;
+  justify-items: center;
+  width: min(720px, 100%);
+  padding: clamp(24px, 5vw, 40px);
+}
+
+:is(phg-home, phg-tournaments) .logo {
+  width: 80%;
+  max-width: 450px;
+  margin-bottom: 1.5em;
+  image-rendering: pixelated;
+}
+
+:is(phg-home, phg-tournaments) .panel > p {
+  max-width: 500px;
+  padding: 0 1em;
+  margin-bottom: 2em;
+  color: var(--color-fg-medium);
+  font-size: var(--font-md);
+  line-height: 2;
+  text-align: center;
+}
+
+:is(phg-home, phg-tournaments) .stakes-selector,
+phg-home .game-type-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: 2em;
+}
+
+:is(phg-home, phg-tournaments) .stakes-label {
+  color: var(--color-fg-muted);
+  font-size: var(--font-sm);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+:is(phg-home, phg-tournaments) select {
+  padding: var(--space-md);
+  color: var(--color-fg-white);
+  font: inherit;
+  font-size: var(--font-md);
+  cursor: pointer;
+  background: var(--color-bg-light);
+  border: 2px solid var(--color-bg-disabled);
+  outline: none;
+  accent-color: var(--color-secondary);
+}
+
+:is(phg-home, phg-tournaments) select:focus {
+  border-color: var(--color-secondary);
+}
+
+:is(phg-home, phg-tournaments) option {
+  color: var(--color-fg-white);
+  background: var(--color-bg-light);
+}
+
+:is(phg-home, phg-tournaments) .create-button-row {
+  display: flex;
+  justify-content: center;
+  justify-self: center;
+  width: min(100%, 320px);
+}
+
+phg-home .radio-group {
+  display: flex;
+  gap: var(--space-md);
+}
+
+phg-home .radio-group label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  font-size: var(--font-md);
+  cursor: pointer;
+  background: var(--color-bg-medium);
+  border: 2px solid var(--color-bg-disabled);
+  transition: border-color 0.2s;
+}
+
+phg-home .radio-group label:has(input:checked) {
+  border-color: var(--color-secondary);
+}
+
+phg-home .radio-group input[type="radio"] {
+  width: 1em;
+  height: 1em;
+  cursor: pointer;
+  border: 2px solid var(--color-fg-muted);
+  border-radius: 50%;
+  appearance: none;
+}
+
+phg-home .radio-group input[type="radio"]:checked {
+  background: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+phg-release-notes {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  color: var(--color-fg-medium);
+  background: var(--color-bg-medium);
+}
+
+phg-release-notes > .main {
+  flex: 1;
+  min-width: 0;
+  padding: clamp(20px, 4vw, 48px);
+  overflow-y: auto;
+  background: var(--color-bg-medium);
+}
+
+phg-release-notes .container {
+  max-width: 700px;
+  padding-bottom: clamp(24px, 6vw, 64px);
+  margin: 0 auto;
+  font-size: var(--font-sm);
+  line-height: 1.8;
+}
+
+phg-release-notes h1 {
+  margin: 0 0 calc(var(--space-lg) * 2);
+  color: var(--color-fg-medium);
+  font-size: var(--font-lg);
+  text-align: center;
+}
+
+phg-release-notes h2 {
+  padding-bottom: var(--space-sm);
+  margin-top: calc(var(--space-lg) * 2);
+  margin-bottom: var(--space-lg);
+  color: var(--color-secondary);
+  font-size: var(--font-md);
+  border-bottom: 2px solid var(--color-bg-light);
+}
+
+phg-release-notes h3 {
+  margin-top: calc(var(--space-lg) * 1.5);
+  margin-bottom: var(--space-md);
+  color: var(--color-primary);
+  font-size: var(--font-sm);
+}
+
+phg-release-notes h4 {
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  color: var(--color-fg-white);
+  font-size: var(--font-sm);
+}
+
+phg-release-notes p {
+  margin: var(--space-md) 0;
+}
+
+phg-release-notes strong {
+  color: var(--color-fg-white);
+}
+
+phg-release-notes ul {
+  padding-left: 1.5rem;
+  margin: var(--space-sm) 0;
+}
+
+phg-release-notes li {
+  margin: var(--space-sm) 0;
+}
+
+phg-release-notes .container a {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+phg-release-notes .container a:hover {
+  text-decoration: underline;
+}
+
+@media (width >= 600px) {
+  :is(phg-home, phg-tournaments) .logo {
+    width: 60%;
+  }
+}
+
+@media (width < 800px) {
+  :is(phg-home, phg-tournaments) > .main {
+    padding: 56px var(--space-md) var(--space-md);
+  }
+
+  :is(phg-home, phg-tournaments) > .main > .panel,
+  :is(phg-home, phg-tournaments) .create-button-row,
+  phg-home .radio-group,
+  phg-home .radio-group label {
+    width: 100%;
+  }
+
+  phg-home .radio-group {
+    flex-direction: column;
+  }
+
+  phg-release-notes > .main {
+    padding: 56px var(--space-md) var(--space-md);
+  }
+}

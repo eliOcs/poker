@@ -475,7 +475,7 @@ describe("phg-app sign in", () => {
 
     element
       ?.querySelector("phg-tournaments")
-      ?.shadowRoot?.querySelector("phg-button")
+      ?.querySelector("phg-button")
       ?.click();
     await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
 

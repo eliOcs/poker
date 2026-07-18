@@ -4,13 +4,13 @@ import "../../src/frontend/tournaments.js";
 describe("phg-tournaments", () => {
   it("renders the tournament creation form without a game type selector", async () => {
     const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
+    expect(element.shadowRoot).to.be.null;
 
-    expect(element.shadowRoot.querySelector(".panel")).to.exist;
-    expect(element.shadowRoot.querySelector('input[name="gameType"]')).to.not
-      .exist;
-    expect(
-      element.shadowRoot.querySelector("phg-button").textContent,
-    ).to.include("Create Tournament");
+    expect(element.querySelector(".panel")).to.exist;
+    expect(element.querySelector('input[name="gameType"]')).to.not.exist;
+    expect(element.querySelector("phg-button").textContent).to.include(
+      "Create Tournament",
+    );
   });
 
   it("creates an MTT and navigates to the lobby", async () => {
@@ -29,7 +29,7 @@ describe("phg-tournaments", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("phg-button").click();
+      element.querySelector("phg-button").click();
     });
 
     const event = await oneEvent(element, "navigate");
@@ -51,7 +51,7 @@ describe("phg-tournaments", () => {
     );
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("phg-button").click();
+      element.querySelector("phg-button").click();
     });
 
     const event = await oneEvent(element, "open-sign-up");

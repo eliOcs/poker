@@ -468,11 +468,11 @@ would collide.
 
 - [x] Convert `phg-app` to light DOM.
 - [x] Move app modal and authentication-status CSS into normal stylesheets.
-- [ ] Convert `phg-home`.
-- [ ] Convert `phg-tournaments`.
+- [x] Convert `phg-home`.
+- [x] Convert `phg-tournaments`.
 - [ ] Convert `phg-mtt-lobby`.
 - [ ] Convert `phg-player-profile`.
-- [ ] Convert `phg-release-notes`.
+- [x] Convert `phg-release-notes`.
 - [ ] Convert `phg-history` while leaving its nested poker components shadowed
       temporarily.
 - [ ] Update unit tests for each component as it moves.

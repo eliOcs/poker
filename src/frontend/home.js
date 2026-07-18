@@ -1,4 +1,4 @@
-import { html, css, LitElement } from "lit";
+import { html, LitElement } from "lit";
 import "./button.js";
 import {
   PRESETS as STAKES_PRESETS,
@@ -9,7 +9,6 @@ import { getTablePath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
   dispatchNavigate,
-  gameCreateStyles,
   postCreate,
   renderCreatePage,
   renderPresetSelect,
@@ -17,65 +16,8 @@ import {
 } from "./game-create-form.js";
 
 class Home extends LitElement {
-  static get styles() {
-    return [
-      gameCreateStyles,
-      css`
-        .game-type-selector {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-sm);
-          margin-bottom: 2em;
-        }
-
-        .radio-group {
-          display: flex;
-          gap: var(--space-md);
-        }
-
-        .radio-group label {
-          display: flex;
-          align-items: center;
-          gap: var(--space-xs);
-          cursor: pointer;
-          font-size: var(--font-md);
-          padding: var(--space-md);
-          background: var(--color-bg-medium);
-          border: 2px solid var(--color-bg-disabled);
-          transition: border-color 0.2s;
-        }
-
-        .radio-group label:has(input:checked) {
-          border-color: var(--color-secondary);
-        }
-
-        .radio-group input[type="radio"] {
-          appearance: none;
-          width: 1em;
-          height: 1em;
-          border: 2px solid var(--color-fg-muted);
-          border-radius: 50%;
-          cursor: pointer;
-        }
-
-        .radio-group input[type="radio"]:checked {
-          border-color: var(--color-secondary);
-          background: var(--color-secondary);
-        }
-
-        @media (width < 800px) {
-          .radio-group {
-            flex-direction: column;
-            width: 100%;
-          }
-
-          .radio-group label {
-            width: 100%;
-          }
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {
