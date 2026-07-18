@@ -8,30 +8,32 @@ describe("phg-modal", () => {
         html`<phg-modal title="Test Modal"></phg-modal>`,
       );
 
-      const header = element.shadowRoot.querySelector("h3");
+      const header = element.querySelector("h3");
       expect(header.textContent).to.equal("Test Modal");
     });
 
-    it("renders slotted content", async () => {
+    it("renders template content", async () => {
       const element = await fixture(
-        html`<phg-modal title="Test"><p>Modal content</p></phg-modal>`,
+        html`<phg-modal
+          title="Test"
+          .content=${html`<p>Modal content</p>`}
+        ></phg-modal>`,
       );
 
-      const slot = element.shadowRoot.querySelector("slot");
-      expect(slot).to.exist;
+      expect(element.querySelector("p").textContent).to.equal("Modal content");
     });
 
     it("has close button", async () => {
       const element = await fixture(html`<phg-modal title="Test"></phg-modal>`);
 
-      const closeBtn = element.shadowRoot.querySelector(".close-btn");
+      const closeBtn = element.querySelector(".modal-close");
       expect(closeBtn).to.exist;
     });
 
     it("has overlay", async () => {
       const element = await fixture(html`<phg-modal title="Test"></phg-modal>`);
 
-      const overlay = element.shadowRoot.querySelector(".overlay");
+      const overlay = element.querySelector(".modal-overlay");
       expect(overlay).to.exist;
     });
   });
@@ -48,7 +50,7 @@ describe("phg-modal", () => {
         ></phg-modal>`,
       );
 
-      const closeBtn = element.shadowRoot.querySelector(".close-btn");
+      const closeBtn = element.querySelector(".modal-close");
       closeBtn.click();
 
       expect(closeEvent).to.exist;
@@ -65,7 +67,7 @@ describe("phg-modal", () => {
         ></phg-modal>`,
       );
 
-      const overlay = element.shadowRoot.querySelector(".overlay");
+      const overlay = element.querySelector(".modal-overlay");
       overlay.click();
 
       expect(closeEvent).to.exist;

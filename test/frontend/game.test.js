@@ -114,10 +114,10 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const drawer = element.querySelector("phg-navigation-drawer");
-      const drawerNav = drawer.shadowRoot.querySelector("nav");
+      const drawerNav = drawer.querySelector("nav");
       const firstItem = drawerNav.firstElementChild;
       expect(firstItem).to.exist;
-      expect(firstItem.matches(".home-link")).to.be.true;
+      expect(firstItem.matches(".drawer-home-link")).to.be.true;
       expect(firstItem.getAttribute("href")).to.equal("/");
       expect(firstItem.getAttribute("target")).to.equal("_blank");
       expect(firstItem.getAttribute("rel")).to.equal("noopener noreferrer");
@@ -187,6 +187,8 @@ describe("phg-game", () => {
 
     it("opens settings modal when settings button clicked", async () => {
       element.game = createMockGameState();
+      element._mql = { matches: false, removeEventListener() {} };
+      element._drawerOpen = true;
       await element.updateComplete;
 
       const settingsBtn = Array.from(element.querySelectorAll("button")).find(
@@ -197,6 +199,7 @@ describe("phg-game", () => {
 
       const modal = element.querySelector("phg-modal");
       expect(modal).to.exist;
+      expect(element._drawerOpen).to.be.false;
     });
 
     it("opens sign-in modal when sign-in button clicked", async () => {
@@ -211,9 +214,7 @@ describe("phg-game", () => {
 
       const modal = element.querySelector("phg-modal");
       expect(modal).to.exist;
-      expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-        "Sign in",
-      );
+      expect(modal.querySelector("h3").textContent).to.equal("Sign in");
     });
 
     it("shows signed-in account item with player name", async () => {
@@ -351,7 +352,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const modal = element.querySelector("phg-modal");
-      const overlay = modal.shadowRoot.querySelector(".overlay");
+      const overlay = modal.querySelector(".modal-overlay");
       overlay.click();
       await element.updateComplete;
 

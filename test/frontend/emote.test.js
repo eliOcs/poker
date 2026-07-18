@@ -76,7 +76,7 @@ describe("emote picker", () => {
 
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal("Emote");
+    expect(modal.querySelector("h3").textContent).to.equal("Emote");
     const grid = modal.querySelector(".emote-grid");
     expect(grid).to.exist;
     const emojiButtons = grid.querySelectorAll("button");

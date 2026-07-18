@@ -34,9 +34,7 @@ describe("phg-game sign up", () => {
 
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign up",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign up");
   });
 
   it("switches between sign-in and sign-up modals from the footer links", async () => {
@@ -52,9 +50,7 @@ describe("phg-game sign up", () => {
 
     modal = element.querySelector("phg-modal");
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign up",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign up");
     expect(modal.textContent.replace(/\s+/g, " ")).to.include(
       "Have an account? Sign in",
     );
@@ -65,9 +61,7 @@ describe("phg-game sign up", () => {
 
     modal = element.querySelector("phg-modal");
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign in",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign in");
   });
 
   it("prefills the required name and includes the email input", async () => {

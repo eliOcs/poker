@@ -10,8 +10,8 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const playLink = Array.from(element.shadowRoot.querySelectorAll("a")).find(
-      (link) => link.textContent.includes("Quick play"),
+    const playLink = Array.from(element.querySelectorAll("a")).find((link) =>
+      link.textContent.includes("Quick play"),
     );
     expect(playLink).to.exist;
     expect(playLink.getAttribute("href")).to.equal("/");
@@ -26,9 +26,9 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const releaseNotesLink = Array.from(
-      element.shadowRoot.querySelectorAll("a"),
-    ).find((link) => link.textContent.includes("Release Notes"));
+    const releaseNotesLink = Array.from(element.querySelectorAll("a")).find(
+      (link) => link.textContent.includes("Release Notes"),
+    );
     expect(releaseNotesLink).to.exist;
     expect(releaseNotesLink.classList.contains("active")).to.equal(true);
   });
@@ -41,9 +41,9 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const tournamentsLink = Array.from(
-      element.shadowRoot.querySelectorAll("a"),
-    ).find((link) => link.textContent.includes("Tournaments"));
+    const tournamentsLink = Array.from(element.querySelectorAll("a")).find(
+      (link) => link.textContent.includes("Tournaments"),
+    );
     expect(tournamentsLink).to.exist;
     expect(tournamentsLink.getAttribute("href")).to.equal("/mtt");
     expect(tournamentsLink.classList.contains("active")).to.equal(true);
@@ -65,9 +65,9 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const accountLink = Array.from(
-      element.shadowRoot.querySelectorAll("a"),
-    ).find((link) => link.textContent.includes("Elio"));
+    const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
+      link.textContent.includes("Elio"),
+    );
     expect(accountLink).to.exist;
     expect(accountLink.getAttribute("href")).to.equal("/players/player2");
   });
@@ -88,9 +88,9 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const accountLink = Array.from(
-      element.shadowRoot.querySelectorAll("a"),
-    ).find((link) => link.textContent.includes("Elio"));
+    const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
+      link.textContent.includes("Elio"),
+    );
     expect(accountLink).to.exist;
     expect(accountLink.classList.contains("drawer-account")).to.equal(true);
     expect(accountLink.classList.contains("active")).to.equal(true);
@@ -105,9 +105,9 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      const signInBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Sign in"));
+      const signInBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Sign in"),
+      );
       signInBtn.click();
     });
 
@@ -124,9 +124,9 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      const signUpBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Sign up"));
+      const signUpBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Sign up"),
+      );
       signUpBtn.click();
     });
 
@@ -142,9 +142,9 @@ describe("phg-app-shell", () => {
     element.drawerOpen = true;
     await element.updateComplete;
 
-    const buttonLabels = Array.from(
-      element.shadowRoot.querySelectorAll("button"),
-    ).map((button) => button.textContent.trim());
+    const buttonLabels = Array.from(element.querySelectorAll("button")).map(
+      (button) => button.textContent.trim(),
+    );
 
     expect(buttonLabels.indexOf("Sign up")).to.be.lessThan(
       buttonLabels.indexOf("Sign in"),
@@ -160,9 +160,9 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      const settingsBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Settings"));
+      const settingsBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Settings"),
+      );
       settingsBtn.click();
     });
 
@@ -177,7 +177,6 @@ describe("phg-app-shell", () => {
 
     await element.updateComplete;
 
-    expect(element.shadowRoot.querySelector("phg-navigation-drawer")).to.not
-      .exist;
+    expect(element.querySelector("phg-navigation-drawer")).to.not.exist;
   });
 });

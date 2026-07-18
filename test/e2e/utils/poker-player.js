@@ -12,7 +12,8 @@ export class PokerPlayer extends PokerPlayerActions {
     await this.openDrawer();
     const settingsButton = this.game
       .locator("phg-navigation-drawer")
-      .locator('button[slot="footer"]', { hasText: "Settings" });
+      .locator(".drawer-footer")
+      .getByRole("button", { name: "Settings" });
     await settingsButton.waitFor();
     await settingsButton.evaluate((button) => button.click());
     await this.game.locator("#name-input").waitFor();

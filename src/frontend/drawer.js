@@ -61,19 +61,28 @@ const iconSitOut = html`<svg viewBox="0 0 24 24">
 
 const canShare = typeof navigator.share === "function";
 
+function handleDrawerAction(game, action) {
+  return () => {
+    game.closeMobileDrawer();
+    void action();
+  };
+}
+
 function renderSitOutButton(game) {
   const state = game._getSitOutState();
   if (state === "active") {
-    return html`<button type="button" slot="main" @click=${game.toggleSitOut}>
+    return html`<button
+      type="button"
+      @click=${handleDrawerAction(game, () => game.toggleSitOut())}
+    >
       ${iconSitOut} Sit Out
     </button>`;
   }
   if (state === "pendingSitOut") {
     return html`<button
       type="button"
-      slot="main"
       class="active"
-      @click=${game.toggleSitOut}
+      @click=${handleDrawerAction(game, () => game.toggleSitOut())}
     >
       ${iconSitOut} Sitting Out
     </button>`;
@@ -81,7 +90,10 @@ function renderSitOutButton(game) {
   if (state === "sittingOut") {
     const canLeave = !game.game?.tournament || game.game?.handNumber === 0;
     if (!canLeave) return "";
-    return html`<button type="button" slot="main" @click=${game.leaveTable}>
+    return html`<button
+      type="button"
+      @click=${handleDrawerAction(game, () => game.leaveTable())}
+    >
       ${iconSitOut} Leave
     </button>`;
   }
@@ -95,26 +107,30 @@ function renderMttDrawer(game) {
   const historyPath = getHistoryPath(game.gameId);
   return renderMttNavigationDrawer({
     open: game._drawerOpen,
-    onToggle: game.toggleDrawer,
+    onToggle: () => game.toggleDrawer(),
     user: game.user,
-    onOpenLobby: () => game.openTournamentLobby(),
+    onOpenLobby: handleDrawerAction(game, () => game.openTournamentLobby()),
     tableItems: activeTables.map((table) => ({
       label: table.tableName,
       active: table.tableId === game.gameId,
       isCurrentPlayerTable:
         table.tableId === game.mttTournament?.currentPlayer?.tableId,
-      onOpen: () => game.openTournamentTable(table.tableId),
+      onOpen: handleDrawerAction(game, () =>
+        game.openTournamentTable(table.tableId),
+      ),
     })),
     showHistory: true,
     historyPath: hasRecordedHands ? historyPath : undefined,
-    onOpenLevels: () => game.openTournamentLevels(),
-    onCopyLink: () => game.copyGameLink(),
+    onOpenLevels: handleDrawerAction(game, () => game.openTournamentLevels()),
+    onCopyLink: handleDrawerAction(game, () => game.copyGameLink()),
     copied: game._copied,
-    onShare: canShare ? () => game.shareGameLink() : undefined,
+    onShare: canShare
+      ? handleDrawerAction(game, () => game.shareGameLink())
+      : undefined,
     extraMainItems: [renderSitOutButton(game)],
-    onOpenSettings: () => game.openSettings(),
-    onOpenSignIn: () => game.openSignIn(),
-    onOpenSignUp: () => game.openSignUp(),
+    onOpenSettings: handleDrawerAction(game, () => game.openSettings()),
+    onOpenSignIn: handleDrawerAction(game, () => game.openSignIn()),
+    onOpenSignUp: handleDrawerAction(game, () => game.openSignUp()),
   });
 }
 
@@ -127,69 +143,76 @@ function renderCashDrawer(game) {
     "Sign in",
   );
   const isSignedIn = !!game.user?.email;
-
-  return html`
-    <phg-navigation-drawer
-      ?open=${game._drawerOpen}
-      @drawer-toggle=${game.toggleDrawer}
+  const mainItems = html`
+    <button
+      type="button"
+      ?disabled=${!hasRecordedHands}
+      @click=${handleDrawerAction(game, () => game.openRanking())}
     >
-      <button
-        type="button"
-        slot="main"
-        ?disabled=${!hasRecordedHands}
-        @click=${game.openRanking}
-      >
-        ${iconRankings} Rankings
-      </button>
-      ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
-      ${game.game?.tournament
-        ? html`<button
-            type="button"
-            slot="main"
-            @click=${game.openTournamentLevels}
-          >
-            ${ICONS.levels} Levels
-          </button>`
-        : ""}
-      ${renderSitOutButton(game)}
-      <button type="button" slot="main" @click=${game.copyGameLink}>
-        ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
-      </button>
-      ${canShare
-        ? html`<button type="button" slot="main" @click=${game.shareGameLink}>
-            ${iconShare} Share
-          </button>`
-        : ""}
-      ${isSignedIn
-        ? html`<a
-            slot="footer"
-            class="drawer-account"
-            href=${`/players/${game.user.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            ${ICONS.signIn} ${accountLabel}
-          </a>`
-        : html`<button
-              type="button"
-              slot="footer"
-              class="drawer-primary"
-              @click=${game.openSignUp}
-            >
-              ${ICONS.signUp} Sign up</button
-            ><button
-              type="button"
-              slot="footer"
-              class="drawer-entry"
-              @click=${game.openSignIn}
-            >
-              ${ICONS.signIn} Sign in
-            </button>`}
-      <button type="button" slot="footer" @click=${game.openSettings}>
-        ${ICONS.settings} Settings
-      </button>
-    </phg-navigation-drawer>
+      ${iconRankings} Rankings
+    </button>
+    ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
+    ${game.game?.tournament
+      ? html`<button
+          type="button"
+          @click=${handleDrawerAction(game, () => game.openTournamentLevels())}
+        >
+          ${ICONS.levels} Levels
+        </button>`
+      : ""}
+    ${renderSitOutButton(game)}
+    <button
+      type="button"
+      @click=${handleDrawerAction(game, () => game.copyGameLink())}
+    >
+      ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
+    </button>
+    ${canShare
+      ? html`<button
+          type="button"
+          @click=${handleDrawerAction(game, () => game.shareGameLink())}
+        >
+          ${iconShare} Share
+        </button>`
+      : ""}
   `;
+  const footerItems = html`
+    ${isSignedIn
+      ? html`<a
+          class="drawer-account"
+          href=${`/players/${game.user.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ${ICONS.signIn} ${accountLabel}
+        </a>`
+      : html`<button
+            type="button"
+            class="drawer-primary"
+            @click=${handleDrawerAction(game, () => game.openSignUp())}
+          >
+            ${ICONS.signUp} Sign up</button
+          ><button
+            type="button"
+            class="drawer-entry"
+            @click=${handleDrawerAction(game, () => game.openSignIn())}
+          >
+            ${ICONS.signIn} Sign in
+          </button>`}
+    <button
+      type="button"
+      @click=${handleDrawerAction(game, () => game.openSettings())}
+    >
+      ${ICONS.settings} Settings
+    </button>
+  `;
+
+  return html`<phg-navigation-drawer
+    ?open=${game._drawerOpen}
+    .mainItems=${mainItems}
+    .footerItems=${footerItems}
+    @drawer-toggle=${() => game.toggleDrawer()}
+  ></phg-navigation-drawer>`;
 }
 
 export function renderDrawer(game) {

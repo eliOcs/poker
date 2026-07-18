@@ -73,9 +73,9 @@ describe("phg-app profile settings", () => {
     const shell = element.querySelector("phg-app-shell");
     shell.drawerOpen = true;
     await shell.updateComplete;
-    const settingsBtn = Array.from(
-      shell.shadowRoot.querySelectorAll("button"),
-    ).find((button) => button.textContent.includes("Settings"));
+    const settingsBtn = Array.from(shell.querySelectorAll("button")).find(
+      (button) => button.textContent.includes("Settings"),
+    );
     settingsBtn.click();
     await element.updateComplete;
 
@@ -88,9 +88,7 @@ describe("phg-app profile settings", () => {
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Settings",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Settings");
   });
 
   it("shows a success toast after saving profile settings", async () => {

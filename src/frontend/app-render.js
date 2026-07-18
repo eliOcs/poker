@@ -116,7 +116,8 @@ export function renderShellView(app, content, options = {}) {
       .user=${app.user}
       .path=${app.path}
       .navigationRenderer=${options.navigationRenderer ?? undefined}
-      >${content}</phg-app-shell
+      .content=${content}
+    ></phg-app-shell
     >${renderProfileSettingsModal(app)}${renderProfileSignInModal(
       app,
     )}${renderProfileSignUpModal(app)}`;

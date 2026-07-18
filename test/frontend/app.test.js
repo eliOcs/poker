@@ -126,9 +126,9 @@ describe("phg-app", () => {
 
       const shell = element?.querySelector("phg-app-shell");
       if (!shell) throw new Error("Expected app shell");
-      const releaseNotesLink = Array.from(
-        shell.shadowRoot.querySelectorAll("a"),
-      ).find((link) => link.textContent.includes("Release Notes"));
+      const releaseNotesLink = Array.from(shell.querySelectorAll("a")).find(
+        (link) => link.textContent.includes("Release Notes"),
+      );
       if (!releaseNotesLink) throw new Error("Expected release notes link");
 
       releaseNotesLink.click();

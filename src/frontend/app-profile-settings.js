@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { renderModal } from "./modal.js";
 
 const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
 const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
@@ -13,11 +14,10 @@ const SETTINGS_TURN_VIBRATION_OPTIONS = [
 export function renderProfileSettingsModal(app) {
   if (!app._showProfileSettings) return "";
 
-  return html`<phg-modal
-    .title=${"Settings"}
-    @close=${app.closeProfileSettings}
-  >
-    <form
+  return renderModal(
+    "Settings",
+    app.closeProfileSettings,
+    html`<form
       class="settings-content"
       @submit=${(event) => {
         event.preventDefault();
@@ -80,12 +80,12 @@ export function renderProfileSettingsModal(app) {
         <button
           type="button"
           class="button button--muted"
-          @click=${app.closeProfileSettings}
+          @click=${() => app.closeProfileSettings()}
         >
           Cancel
         </button>
         <button type="submit" class="button button--action">Save</button>
       </div>
-    </form>
-  </phg-modal>`;
+    </form>`,
+  );
 }

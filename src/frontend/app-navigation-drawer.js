@@ -39,41 +39,40 @@ export function renderAppNavigationDrawer({
     view.user?.id,
     "Sign in",
   );
-
-  return html`
-    <phg-navigation-drawer
-      ?open=${view.drawerOpen}
-      @drawer-toggle=${view.toggleDrawer}
-    >
-      <a slot="main" class=${drawerItemClass(playActive)} href="/">
-        ${ICONS.play}
-        <span>Quick play</span>
-      </a>
-      <a slot="main" class=${drawerItemClass(tournamentsActive)} href="/mtt">
-        ${ICONS.tournament}
-        <span>Tournaments</span>
-      </a>
-      <a
-        slot="main"
-        class=${drawerItemClass(releaseNotesActive)}
-        href="/release-notes"
-      >
-        ${iconReleaseNotes}
-        <span>Release Notes</span>
-      </a>
-      ${renderAccountEntry(
-        isSignedIn,
-        accountPath,
-        accountLabel,
-        accountActive,
-        view,
-      )}
-      <button type="button" slot="footer" @click=${view.openSettings}>
-        ${ICONS.settings}
-        <span>Settings</span>
-      </button>
-    </phg-navigation-drawer>
+  const mainItems = html`
+    <a class=${drawerItemClass(playActive)} href="/">
+      ${ICONS.play}
+      <span>Quick play</span>
+    </a>
+    <a class=${drawerItemClass(tournamentsActive)} href="/mtt">
+      ${ICONS.tournament}
+      <span>Tournaments</span>
+    </a>
+    <a class=${drawerItemClass(releaseNotesActive)} href="/release-notes">
+      ${iconReleaseNotes}
+      <span>Release Notes</span>
+    </a>
   `;
+  const footerItems = html`
+    ${renderAccountEntry(
+      isSignedIn,
+      accountPath,
+      accountLabel,
+      accountActive,
+      view,
+    )}
+    <button type="button" @click=${() => view.openSettings()}>
+      ${ICONS.settings}
+      <span>Settings</span>
+    </button>
+  `;
+
+  return html`<phg-navigation-drawer
+    ?open=${view.drawerOpen}
+    .mainItems=${mainItems}
+    .footerItems=${footerItems}
+    @drawer-toggle=${() => view.toggleDrawer()}
+  ></phg-navigation-drawer>`;
 }
 
 function renderAccountEntry(
@@ -85,7 +84,6 @@ function renderAccountEntry(
 ) {
   if (isSignedIn && accountPath) {
     return html`<a
-      slot="footer"
       class=${`drawer-item drawer-account${accountActive ? " active" : ""}`}
       href=${accountPath}
     >
@@ -96,17 +94,15 @@ function renderAccountEntry(
 
   return html`<button
       type="button"
-      slot="footer"
       class="drawer-item drawer-primary"
-      @click=${view.openSignUp}
+      @click=${() => view.openSignUp()}
     >
       ${ICONS.signUp}
       <span>Sign up</span></button
     ><button
       type="button"
-      slot="footer"
       class="drawer-item"
-      @click=${view.openSignIn}
+      @click=${() => view.openSignIn()}
     >
       ${ICONS.signIn}
       <span>Sign in</span>

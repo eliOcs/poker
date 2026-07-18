@@ -8,7 +8,7 @@ describe("phg-toast", () => {
         html`<phg-toast variant="error" message="Error message"></phg-toast>`,
       );
       expect(element.variant).to.equal("error");
-      const toast = element.shadowRoot.querySelector(".toast");
+      const toast = element.querySelector(".toast");
       expect(toast).to.exist;
     });
 
@@ -39,16 +39,8 @@ describe("phg-toast", () => {
       const element = await fixture(
         html`<phg-toast message="Test message"></phg-toast>`,
       );
-      const toast = element.shadowRoot.querySelector(".toast");
+      const toast = element.querySelector(".toast");
       expect(toast.textContent).to.include("Test message");
-    });
-
-    it("displays slotted content", async () => {
-      const element = await fixture(
-        html`<phg-toast>Slotted content</phg-toast>`,
-      );
-      // Slotted content is rendered in the light DOM
-      expect(element.textContent).to.include("Slotted content");
     });
   });
 
@@ -107,7 +99,7 @@ describe("phg-toast", () => {
         ></phg-toast>`,
       );
 
-      const toast = element.shadowRoot.querySelector(".toast");
+      const toast = element.querySelector(".toast");
       toast.click();
 
       expect(dismissed).to.be.true;

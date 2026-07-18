@@ -1,3 +1,320 @@
+.app-shell-layout {
+  display: flex;
+  height: 100vh;
+  background: var(--color-bg-dark);
+}
+
+.app-shell-content {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+@scope (phg-toast) {
+  :where(:scope) {
+    position: fixed;
+    top: var(--space-lg);
+    left: 50%;
+    z-index: 1000;
+    display: block;
+    transform: translateX(-50%);
+  }
+
+  .toast {
+    max-width: 90vw;
+    padding: var(--space-md) var(--space-lg);
+    color: var(--color-fg-white);
+    font-size: var(--font-sm);
+    text-align: center;
+    border: 3px solid var(--color-bg-dark);
+    box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
+  }
+
+  :scope[variant="error"] .toast {
+    background-color: var(--color-error);
+  }
+
+  :scope[variant="success"] .toast {
+    background-color: var(--color-success);
+  }
+
+  :scope[variant="warning"] .toast {
+    background-color: var(--color-warning);
+  }
+
+  :scope[variant="info"] .toast {
+    background-color: var(--color-accent);
+  }
+}
+
+@scope (phg-modal) {
+  :where(:scope) {
+    display: block;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    z-index: 199;
+    inset: 0;
+    background: rgb(0 0 0 / 50%);
+  }
+
+  dialog.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 200;
+    box-sizing: content-box;
+    min-width: 280px;
+    max-width: min(600px, 90vw);
+    max-height: 90vh;
+    padding: var(--space-lg);
+    margin: 0;
+    overflow: auto;
+    color: inherit;
+    font: inherit;
+    background: var(--color-bg-light);
+    border: var(--space-sm) solid var(--color-fg-muted);
+    box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+    transform: translate(-50%, -50%);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+  }
+
+  h3 {
+    margin: 0;
+    color: var(--color-fg-white);
+    font-family: inherit;
+    font-size: var(--font-md);
+  }
+
+  .modal-close {
+    padding: 0;
+    color: var(--color-fg-muted);
+    font: inherit;
+    font-size: var(--font-lg);
+    line-height: 1;
+    cursor: pointer;
+    background: none;
+    border: 0;
+  }
+
+  .modal-close:hover {
+    color: var(--color-fg-white);
+  }
+}
+
+@scope (phg-navigation-drawer) {
+  :where(:scope) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    pointer-events: none;
+  }
+
+  @media (width >= 800px) {
+    :where(:scope) {
+      position: relative;
+      z-index: auto;
+    }
+  }
+
+  .drawer-backdrop {
+    display: none;
+  }
+
+  :scope[open] .drawer-backdrop {
+    position: fixed;
+    z-index: -1;
+    display: block;
+    pointer-events: auto;
+    inset: 0;
+  }
+
+  @media (width >= 800px) {
+    .drawer-backdrop {
+      display: none !important;
+    }
+  }
+
+  .drawer-toggle {
+    position: absolute;
+    top: var(--space-md);
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    color: var(--color-fg-medium);
+    cursor: pointer;
+    pointer-events: auto;
+    background: var(--color-bg-dark);
+    border: 2px solid var(--color-bg-light);
+    border-left: 0;
+    border-radius: 0 4px 4px 0;
+    transition: left 0.2s ease;
+  }
+
+  :scope[open] .drawer-toggle {
+    left: clamp(180px, 16vw, 240px);
+    border-left: 0;
+  }
+
+  @media (width >= 800px) {
+    .drawer-toggle {
+      display: none;
+    }
+  }
+
+  .drawer-toggle:hover {
+    color: var(--color-fg-white);
+  }
+
+  .drawer-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: currentcolor;
+  }
+
+  .drawer-panel {
+    display: flex;
+    flex-direction: column;
+    width: clamp(180px, 16vw, 240px);
+    height: 100%;
+    overflow: hidden;
+    pointer-events: auto;
+    background: var(--color-bg-dark);
+    border-right: 2px solid var(--color-bg-light);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  :scope[open] .drawer-panel {
+    transform: translateX(0);
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: 100%;
+    padding: var(--space-lg) 0 var(--space-md);
+  }
+
+  .drawer-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 0;
+    padding-inline: var(--space-md);
+  }
+
+  .drawer-main {
+    flex: 1;
+  }
+
+  .drawer-footer {
+    padding-top: var(--space-lg);
+  }
+
+  .drawer-home-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md) var(--space-md) var(--space-lg);
+    margin-inline: var(--space-md);
+    text-decoration: none;
+  }
+
+  .drawer-home-logo {
+    width: 100%;
+    max-width: 140px;
+    height: auto;
+    image-rendering: pixelated;
+  }
+
+  hr {
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--color-bg-light);
+  }
+
+  .drawer-section-divider {
+    margin: 0 var(--space-md) var(--space-md);
+  }
+
+  .drawer-footer-divider {
+    margin: var(--space-lg) var(--space-md) 0;
+  }
+
+  .drawer-section > :is(a, button) {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: var(--space-md);
+    color: var(--color-fg-medium);
+    font: inherit;
+    font-size: var(--font-sm);
+    text-align: left;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    background: none;
+    border: 0;
+    appearance: none;
+  }
+
+  .drawer-section > :is(a, button):hover {
+    color: var(--color-fg-white);
+    background: var(--color-bg-light);
+  }
+
+  .drawer-section > a:visited {
+    color: var(--color-fg-medium);
+  }
+
+  .drawer-section > .active,
+  .drawer-section > a.active:visited {
+    color: var(--color-primary);
+  }
+
+  .drawer-section > .drawer-primary,
+  .drawer-section > .drawer-primary:hover {
+    color: var(--color-primary);
+  }
+
+  .drawer-section > :is(a, button):disabled {
+    color: var(--color-fg-muted);
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  .drawer-section > :is(a, button):disabled:hover {
+    color: var(--color-fg-muted);
+    background: none;
+  }
+
+  .drawer-section svg {
+    flex: none;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    fill: currentcolor;
+  }
+}
+
 .shell-page {
   display: flex;
   flex-direction: column;

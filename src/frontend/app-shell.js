@@ -1,32 +1,13 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 import { renderAppNavigationDrawer } from "./app-navigation-drawer.js";
 import "./navigation-drawer.js";
 
 class AppShell extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      css`
-        .layout {
-          height: 100vh;
-          display: flex;
-          background: var(--color-bg-dark);
-        }
-
-        ::slotted(*) {
-          flex: 1;
-          min-width: 0;
-          overflow-y: auto;
-        }
-      `,
-    ];
-  }
-
   static get properties() {
     return {
       user: { type: Object },
       path: { type: String },
+      content: { attribute: false },
       navigationRenderer: { attribute: false },
       drawerOpen: { state: true },
     };
@@ -36,11 +17,16 @@ class AppShell extends LitElement {
     super();
     this.user = undefined;
     this.path = "/";
+    this.content = "";
     this.navigationRenderer = undefined;
     this.drawerOpen = false;
     this._onMediaChange = (event) => {
       this.drawerOpen = event.matches;
     };
+  }
+
+  createRenderRoot() {
+    return this;
   }
 
   connectedCallback() {
@@ -59,40 +45,23 @@ class AppShell extends LitElement {
     this.drawerOpen = !this.drawerOpen;
   }
 
+  _closeMobileDrawer() {
+    if (!this._mql?.matches) this.drawerOpen = false;
+  }
+
   openSettings() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-settings", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._closeMobileDrawer();
+    this.dispatchEvent(new CustomEvent("open-settings", { bubbles: true }));
   }
 
   openSignIn() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-sign-in", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._closeMobileDrawer();
+    this.dispatchEvent(new CustomEvent("open-sign-in", { bubbles: true }));
   }
 
   openSignUp() {
-    if (!this._mql?.matches) {
-      this.drawerOpen = false;
-    }
-    this.dispatchEvent(
-      new CustomEvent("open-sign-up", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._closeMobileDrawer();
+    this.dispatchEvent(new CustomEvent("open-sign-up", { bubbles: true }));
   }
 
   render() {
@@ -111,12 +80,10 @@ class AppShell extends LitElement {
           accountActive,
         });
 
-    return html`
-      <div class="layout">
-        ${navigation}
-        <slot></slot>
-      </div>
-    `;
+    return html`<div class="app-shell-layout">
+      ${navigation}
+      <main class="app-shell-content">${this.content}</main>
+    </div>`;
   }
 }
 

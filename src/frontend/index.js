@@ -113,6 +113,10 @@ export class Game extends LitElement {
     this._drawerOpen = !this._drawerOpen;
   }
 
+  closeMobileDrawer() {
+    if (!this._mql?.matches) this._drawerOpen = false;
+  }
+
   async copyGameLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);

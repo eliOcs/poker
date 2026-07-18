@@ -1,4 +1,5 @@
 import { html, LitElement } from "lit";
+import { renderModal } from "./modal.js";
 
 class AppSignInModal extends LitElement {
   static get properties() {
@@ -93,7 +94,9 @@ class AppSignInModal extends LitElement {
         aria-invalid=${this._nameInvalid ? "true" : "false"}
         autofocus
         .value=${this.prefillName}
-        @input=${this.clearValidation}
+        @input=${() => {
+          this.clearValidation();
+        }}
         @invalid=${(event) => {
           event.preventDefault();
           this._nameInvalid = true;
@@ -105,66 +108,69 @@ class AppSignInModal extends LitElement {
 
   render() {
     const isSignUp = this.mode === "sign-up";
-    return html`
-      <phg-modal
-        .title=${isSignUp ? "Sign up" : "Sign in"}
-        @close=${this.close}
+    return renderModal(
+      isSignUp ? "Sign up" : "Sign in",
+      this.close,
+      html`<form
+        class="sign-in-content"
+        @submit=${(event) => {
+          event.preventDefault();
+          this.submit(event.currentTarget);
+        }}
       >
-        <form
-          class="sign-in-content"
-          @submit=${(event) => {
-            event.preventDefault();
-            this.submit(event.currentTarget);
+        <p class="sign-in-intro">
+          ${isSignUp
+            ? html`You will receive an email to complete the sign up.`
+            : html`You will receive an email to complete the sign in.`}
+        </p>
+        ${this.renderNameInput()}
+        <label for="profile-sign-in-email">Email</label>
+        <input
+          id="profile-sign-in-email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          placeholder="you@example.com"
+          ?required=${true}
+          aria-invalid=${this._emailInvalid ? "true" : "false"}
+          ?autofocus=${!isSignUp}
+          @input=${() => {
+            this.clearValidation();
           }}
-        >
-          <p class="sign-in-intro">
-            ${isSignUp
-              ? html`You will receive an email to complete the sign up.`
-              : html`You will receive an email to complete the sign in.`}
-          </p>
-          ${this.renderNameInput()}
-          <label for="profile-sign-in-email">Email</label>
-          <input
-            id="profile-sign-in-email"
-            name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            ?required=${true}
-            aria-invalid=${this._emailInvalid ? "true" : "false"}
-            ?autofocus=${!isSignUp}
-            @input=${this.clearValidation}
-            @invalid=${(event) => {
-              event.preventDefault();
-              this._emailInvalid = true;
-              event.currentTarget.focus();
+          @invalid=${(event) => {
+            event.preventDefault();
+            this._emailInvalid = true;
+            event.currentTarget.focus();
+          }}
+        />
+        <div class="buttons">
+          <button
+            type="button"
+            class="button button--muted"
+            @click=${() => {
+              this.close();
             }}
-          />
-          <div class="buttons">
-            <button
-              type="button"
-              class="button button--muted"
-              @click=${this.close}
-            >
-              Cancel
-            </button>
-            <button type="submit" class="button button--action">
-              ${isSignUp ? "Send sign-up link" : "Send sign-in link"}
-            </button>
-          </div>
-          <p class="sign-in-switch">
-            ${isSignUp ? "Have an account?" : "New?"}
-            <button
-              type="button"
-              class="sign-in-switch-link"
-              @click=${this.switchMode}
-            >
-              ${isSignUp ? "Sign in" : "Sign up"}
-            </button>
-          </p>
-        </form>
-      </phg-modal>
-    `;
+          >
+            Cancel
+          </button>
+          <button type="submit" class="button button--action">
+            ${isSignUp ? "Send sign-up link" : "Send sign-in link"}
+          </button>
+        </div>
+        <p class="sign-in-switch">
+          ${isSignUp ? "Have an account?" : "New?"}
+          <button
+            type="button"
+            class="sign-in-switch-link"
+            @click=${() => {
+              this.switchMode();
+            }}
+          >
+            ${isSignUp ? "Sign in" : "Sign up"}
+          </button>
+        </p>
+      </form>`,
+    );
   }
 }
 

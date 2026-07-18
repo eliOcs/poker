@@ -228,7 +228,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     const drawerItems = Array.from(
-      element.querySelectorAll("phg-navigation-drawer [slot='main']"),
+      element.querySelectorAll("phg-navigation-drawer .drawer-main > *"),
     );
     expect(
       drawerItems.some((item) => item.textContent.includes("History")),

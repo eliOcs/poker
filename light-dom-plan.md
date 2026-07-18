@@ -512,14 +512,14 @@ would collide.
 
 ### Phase 5: Slot-Based Layout Primitives
 
-- [ ] Remove the toast slot and convert the toast to light DOM.
-- [ ] Replace modal slot projection with template ownership or a template
+- [x] Remove the toast slot and convert the toast to light DOM.
+- [x] Replace modal slot projection with template ownership or a template
       property.
-- [ ] Adopt native `<dialog>` behavior where practical.
-- [ ] Simplify or merge `phg-app-shell`.
-- [ ] Replace navigation drawer named slots with explicit item templates.
-- [ ] Remove drawer `slotchange` synchronization and inline SVG styling.
-- [ ] Convert the remaining primitives to light DOM or render helpers.
+- [x] Adopt native `<dialog>` behavior where practical.
+- [x] Simplify or merge `phg-app-shell`.
+- [x] Replace navigation drawer named slots with explicit item templates.
+- [x] Remove drawer `slotchange` synchronization and inline SVG styling.
+- [x] Convert the remaining primitives to light DOM or render helpers.
 
 ### Phase 6: Cleanup
 

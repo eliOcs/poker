@@ -81,7 +81,6 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
   const accountLabel = formatPlayerLabel(user?.name, user?.id, "Sign in");
   if (user?.email) {
     return html`<a
-      slot="footer"
       class="drawer-account"
       href=${`/players/${user.id}`}
       target="_blank"
@@ -93,7 +92,6 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
   }
   return html`<button
       type="button"
-      slot="footer"
       class="drawer-primary"
       @click=${handleAction(onOpenSignUp)}
     >
@@ -101,7 +99,6 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
       <span>Sign up</span></button
     ><button
       type="button"
-      slot="footer"
       class="drawer-entry"
       @click=${handleAction(onOpenSignIn)}
     >
@@ -116,7 +113,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
  */
 function renderShareButton(onShare) {
   if (!onShare) return "";
-  return html`<button type="button" slot="main" @click=${handleAction(onShare)}>
+  return html`<button type="button" @click=${handleAction(onShare)}>
     ${iconShare}
     <span>Share</span>
   </button>`;
@@ -129,7 +126,6 @@ function renderShareButton(onShare) {
 function renderTableItem(table) {
   return html`<button
     type="button"
-    slot="main"
     class=${drawerItemClass(table.active)}
     @click=${handleAction(table.onOpen)}
   >
@@ -150,13 +146,13 @@ function renderTableItem(table) {
  */
 export function renderHistoryItem(historyPath) {
   if (historyPath) {
-    return html`<a slot="main" href=${historyPath}>
+    return html`<a href=${historyPath}>
       ${iconHistory}
       <span>History</span>
     </a>`;
   }
 
-  return html`<button type="button" slot="main" disabled>
+  return html`<button type="button" disabled>
     ${iconHistory}
     <span>History</span>
   </button>`;
@@ -206,52 +202,48 @@ function renderDrawerTemplate(params) {
   } = params;
   const copyLabel = params.copied ? "Copied!" : "Copy Link";
 
-  return html`
-    <phg-navigation-drawer ?open=${open} @drawer-toggle=${onToggle}>
-      <button
-        type="button"
-        slot="main"
-        class=${drawerItemClass(lobbyActive)}
-        ?disabled=${!onOpenLobby}
-        @click=${handleAction(onOpenLobby)}
-      >
-        ${iconLobby}
-        <span>Lobby</span>
-      </button>
-      ${tableItems.map(renderTableItem)}
-      ${showHistory ? renderHistoryItem(historyPath) : ""}
-      ${onOpenLevels
-        ? html`<button
-            type="button"
-            slot="main"
-            @click=${handleAction(onOpenLevels)}
-          >
-            ${ICONS.levels}
-            <span>Levels</span>
-          </button>`
-        : ""}
-      ${extraMainItems}
-      <button
-        type="button"
-        slot="main"
-        ?disabled=${!onCopyLink}
-        @click=${handleAction(onCopyLink)}
-      >
-        ${iconCopyLink}
-        <span>${copyLabel}</span>
-      </button>
-      ${renderShareButton(onShare)}
-      ${renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp)}
-      <button
-        type="button"
-        slot="footer"
-        @click=${handleAction(onOpenSettings)}
-      >
-        ${ICONS.settings}
-        <span>Settings</span>
-      </button>
-    </phg-navigation-drawer>
+  const mainItems = html`
+    <button
+      type="button"
+      class=${drawerItemClass(lobbyActive)}
+      ?disabled=${!onOpenLobby}
+      @click=${handleAction(onOpenLobby)}
+    >
+      ${iconLobby}
+      <span>Lobby</span>
+    </button>
+    ${tableItems.map(renderTableItem)}
+    ${showHistory ? renderHistoryItem(historyPath) : ""}
+    ${onOpenLevels
+      ? html`<button type="button" @click=${handleAction(onOpenLevels)}>
+          ${ICONS.levels}
+          <span>Levels</span>
+        </button>`
+      : ""}
+    ${extraMainItems}
+    <button
+      type="button"
+      ?disabled=${!onCopyLink}
+      @click=${handleAction(onCopyLink)}
+    >
+      ${iconCopyLink}
+      <span>${copyLabel}</span>
+    </button>
+    ${renderShareButton(onShare)}
   `;
+  const footerItems = html`
+    ${renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp)}
+    <button type="button" @click=${handleAction(onOpenSettings)}>
+      ${ICONS.settings}
+      <span>Settings</span>
+    </button>
+  `;
+  return html`<phg-navigation-drawer
+    ?open=${open}
+    .mainItems=${mainItems}
+    .footerItems=${footerItems}
+    @drawer-toggle=${onToggle}
+  ></phg-navigation-drawer>`;
 }
 
 /**

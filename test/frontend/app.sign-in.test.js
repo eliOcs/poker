@@ -393,9 +393,7 @@ describe("phg-app sign in", () => {
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign in",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign in");
   });
 
   it("opens the sign-in modal from the landing page drawer event", async () => {
@@ -430,9 +428,7 @@ describe("phg-app sign in", () => {
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign in",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign in");
   });
 
   it("opens the sign-up modal from the app event", async () => {
@@ -462,9 +458,7 @@ describe("phg-app sign in", () => {
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Sign up",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Sign up");
   });
 
   it("opens sign-up for guests on the tournament route and again on create", async () => {
@@ -543,6 +537,7 @@ describe("phg-app sign in", () => {
     await element.updateComplete;
 
     modal = element.querySelector("phg-app-sign-in-modal");
+    await modal.updateComplete;
     expect(modal.mode).to.equal("sign-in");
     expect(modal.querySelector(".sign-in-switch").textContent).to.include(
       "New?",

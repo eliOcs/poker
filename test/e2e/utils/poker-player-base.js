@@ -112,26 +112,26 @@ export class PokerPlayerBase {
    * Open the navigation drawer if it's not already open
    */
   async openDrawer() {
-    const nav = this.game.locator("#drawer-nav");
-    if (await nav.isVisible()) return;
-    const toggle = this.game.locator("#drawer-toggle");
+    const drawer = this.game.locator("phg-navigation-drawer");
+    if ((await drawer.getAttribute("open")) !== null) return;
+    const toggle = drawer.locator(".drawer-toggle");
     if (!(await toggle.isVisible().catch(() => false))) {
       throw new Error("Drawer is closed but toggle is not visible");
     }
     await toggle.click();
-    await nav.waitFor();
+    await drawer.evaluate((element) => element.updateComplete);
   }
 
   /**
    * Close the navigation drawer if it is open
    */
   async closeDrawer() {
-    const nav = this.game.locator("#drawer-nav");
-    if (!(await nav.isVisible().catch(() => false))) return;
-    const toggle = this.game.locator("#drawer-toggle");
+    const drawer = this.game.locator("phg-navigation-drawer");
+    if ((await drawer.getAttribute("open")) === null) return;
+    const toggle = drawer.locator(".drawer-toggle");
     if (!(await toggle.isVisible().catch(() => false))) return;
     await toggle.click();
-    await nav.waitFor({ state: "hidden" });
+    await drawer.evaluate((element) => element.updateComplete);
   }
 
   /**

@@ -40,9 +40,7 @@ describe("tournament levels modal", () => {
 
     const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Tournament Levels",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Tournament Levels");
 
     const panel = modal.querySelector("phg-tournament-levels-panel");
     expect(panel).to.exist;
@@ -61,7 +59,7 @@ describe("tournament levels modal", () => {
     const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
 
-    modal.shadowRoot.querySelector(".close-btn").click();
+    modal.querySelector(".modal-close").click();
     await game.updateComplete;
 
     expect(game.querySelector("phg-modal")).to.not.exist;
@@ -86,9 +84,7 @@ describe("tournament levels modal", () => {
 
     const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Tournament Levels",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Tournament Levels");
   });
 
   it("opens from the Levels drawer item on an MTT table", async () => {
@@ -116,9 +112,7 @@ describe("tournament levels modal", () => {
 
     const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
-    expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
-      "Tournament Levels",
-    );
+    expect(modal.querySelector("h3").textContent).to.equal("Tournament Levels");
   });
 });
 
