@@ -7,9 +7,9 @@ import {
   mockEmptySeat,
 } from "./setup.js";
 
-// Helper to find phg-button by text content
+// Helper to find button.button by text content
 function findButtonByText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.includes(text)) {
       return btn;

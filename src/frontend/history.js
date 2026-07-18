@@ -3,7 +3,6 @@ import { formatCurrency } from "./currency.js";
 import { renderHistoryTimeline } from "./history-timeline.js";
 import { getHistoryPath } from "../shared/routes.js";
 import "./card.js";
-import "./button.js";
 import "./seat.js";
 import "./board.js";
 
@@ -230,7 +229,7 @@ export class History extends LitElement {
 
   renderHandNavLink(label, title, handNumber) {
     if (handNumber === undefined) {
-      return html`<button class="nav-btn" disabled title=${title}>
+      return html`<button type="button" class="nav-btn" disabled title=${title}>
         ${label}
       </button>`;
     }
@@ -293,7 +292,12 @@ export class History extends LitElement {
 
     return html`
       <div class="nav-bar">
-        <button class="nav-btn" @click=${this.goBack} title="Back to game">
+        <button
+          type="button"
+          class="nav-btn"
+          @click=${this.goBack}
+          title="Back to game"
+        >
           ✕
         </button>
         ${this.renderHandNavLink("←", "Previous hand", prevHandNumber)}
@@ -419,6 +423,7 @@ export class History extends LitElement {
       <div class="sidebar">
         <div class="sidebar-header">
           <button
+            type="button"
             class="sidebar-back"
             @click=${this.goBack}
             title="Back to game"

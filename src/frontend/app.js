@@ -10,7 +10,6 @@ import "./release-notes.js";
 import "./app-shell.js";
 import "./toast.js";
 import "./modal.js";
-import "./button.js";
 import {
   connectAppEventHandlers,
   disconnectAppEventHandlers,

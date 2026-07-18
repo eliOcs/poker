@@ -250,7 +250,7 @@ export const actionPanelStyles = css`
     width: 100%;
   }
 
-  .action-row phg-button {
+  .action-row .button {
     display: block;
     width: 100%;
   }

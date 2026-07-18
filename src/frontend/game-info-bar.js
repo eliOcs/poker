@@ -83,20 +83,13 @@ export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
     return html`<div id="info-bar">${cells}</div>`;
   }
 
-  return html`<div
+  return html`<button
+    type="button"
     id="info-bar"
     class="clickable"
-    role="button"
-    tabindex="0"
     title="Show tournament levels"
     @click=${onOpenTournamentLevels}
-    @keydown=${(event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        onOpenTournamentLevels?.();
-      }
-    }}
   >
     ${cells}
-  </div>`;
+  </button>`;
 }

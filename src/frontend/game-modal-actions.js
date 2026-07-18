@@ -8,10 +8,9 @@ function dispatchToast(host, detail) {
   );
 }
 
-function readInput(root, selector) {
-  return /** @type {HTMLInputElement|undefined} */ (
-    root?.querySelector(selector)
-  );
+function readInput(form, name) {
+  const control = form.elements.namedItem(name);
+  return control instanceof HTMLInputElement ? control : undefined;
 }
 
 function validateRequiredInput(input) {
@@ -107,18 +106,25 @@ export const gameModalActions = {
     this.showTournamentLevels = false;
   },
 
-  saveSettings() {
-    const input = /** @type {HTMLInputElement|undefined} */ (
-      this.querySelector("#name-input")
-    );
-    const name = input?.value.trim() ?? "";
+  saveSettings(form) {
+    const formData = new FormData(form);
+    const nameValue = formData.get("name");
+    const volumeValue = formData.get("volume");
+    const vibrationValue = formData.get("vibration");
+    const name = typeof nameValue === "string" ? nameValue.trim() : "";
     this.dispatchEvent(
       new CustomEvent("update-user", {
         detail: {
           name,
           settings: {
-            volume: this.volume,
-            vibration: this.vibration,
+            volume:
+              typeof volumeValue === "string"
+                ? Number(volumeValue)
+                : this.volume,
+            vibration:
+              typeof vibrationValue === "string"
+                ? vibrationValue === "true"
+                : this.vibration,
           },
         },
         bubbles: true,
@@ -129,8 +135,8 @@ export const gameModalActions = {
     this.showSettings = false;
   },
 
-  requestSignIn() {
-    const input = readInput(this, "#sign-in-email");
+  requestSignIn(form) {
+    const input = readInput(form, "email");
     const email = input?.value.trim() ?? "";
     if (!validateEmailInput(input)) {
       this._signInInvalid = true;
@@ -147,9 +153,9 @@ export const gameModalActions = {
     this.showSignIn = false;
   },
 
-  requestSignUp() {
-    const nameInput = readInput(this, "#sign-up-name");
-    const emailInput = readInput(this, "#sign-up-email");
+  requestSignUp(form) {
+    const nameInput = readInput(form, "name");
+    const emailInput = readInput(form, "email");
     const name = nameInput?.value.trim() ?? "";
     const email = emailInput?.value.trim() ?? "";
 

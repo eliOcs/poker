@@ -64,19 +64,24 @@ const canShare = typeof navigator.share === "function";
 function renderSitOutButton(game) {
   const state = game._getSitOutState();
   if (state === "active") {
-    return html`<button slot="main" @click=${game.toggleSitOut}>
+    return html`<button type="button" slot="main" @click=${game.toggleSitOut}>
       ${iconSitOut} Sit Out
     </button>`;
   }
   if (state === "pendingSitOut") {
-    return html`<button slot="main" class="active" @click=${game.toggleSitOut}>
+    return html`<button
+      type="button"
+      slot="main"
+      class="active"
+      @click=${game.toggleSitOut}
+    >
       ${iconSitOut} Sitting Out
     </button>`;
   }
   if (state === "sittingOut") {
     const canLeave = !game.game?.tournament || game.game?.handNumber === 0;
     if (!canLeave) return "";
-    return html`<button slot="main" @click=${game.leaveTable}>
+    return html`<button type="button" slot="main" @click=${game.leaveTable}>
       ${iconSitOut} Leave
     </button>`;
   }
@@ -129,6 +134,7 @@ function renderCashDrawer(game) {
       @drawer-toggle=${game.toggleDrawer}
     >
       <button
+        type="button"
         slot="main"
         ?disabled=${!hasRecordedHands}
         @click=${game.openRanking}
@@ -137,16 +143,20 @@ function renderCashDrawer(game) {
       </button>
       ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
       ${game.game?.tournament
-        ? html`<button slot="main" @click=${game.openTournamentLevels}>
+        ? html`<button
+            type="button"
+            slot="main"
+            @click=${game.openTournamentLevels}
+          >
             ${ICONS.levels} Levels
           </button>`
         : ""}
       ${renderSitOutButton(game)}
-      <button slot="main" @click=${game.copyGameLink}>
+      <button type="button" slot="main" @click=${game.copyGameLink}>
         ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
       </button>
       ${canShare
-        ? html`<button slot="main" @click=${game.shareGameLink}>
+        ? html`<button type="button" slot="main" @click=${game.shareGameLink}>
             ${iconShare} Share
           </button>`
         : ""}
@@ -161,19 +171,21 @@ function renderCashDrawer(game) {
             ${ICONS.signIn} ${accountLabel}
           </a>`
         : html`<button
+              type="button"
               slot="footer"
               class="drawer-primary"
               @click=${game.openSignUp}
             >
               ${ICONS.signUp} Sign up</button
             ><button
+              type="button"
               slot="footer"
               class="drawer-entry"
               @click=${game.openSignIn}
             >
               ${ICONS.signIn} Sign in
             </button>`}
-      <button slot="footer" @click=${game.openSettings}>
+      <button type="button" slot="footer" @click=${game.openSettings}>
         ${ICONS.settings} Settings
       </button>
     </phg-navigation-drawer>

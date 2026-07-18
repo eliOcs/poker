@@ -1,4 +1,5 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
+import { sendKeys } from "@web/test-runner-commands";
 import { OriginalFetch } from "./setup.js";
 import { createMockTournamentView } from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
@@ -106,7 +107,7 @@ describe("phg-app sign in", () => {
     expect(nameInput.value).to.equal("Guest Name");
     emailInput.value = "player@example.com";
 
-    modal.submit();
+    modal.querySelector("form").requestSubmit();
 
     await waitUntil(() => element.toast?.message === "Sign-in link sent", {
       timeout: 2000,
@@ -118,6 +119,29 @@ describe("phg-app sign in", () => {
     expect(signInRequestBody).to.deep.equal({
       email: "player@example.com",
       returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+    });
+  });
+
+  it("submits sign up when Enter is pressed in the email input", async () => {
+    const modal = await fixture(html`
+      <phg-app-sign-in-modal
+        mode="sign-up"
+        prefill-name="Table Captain"
+      ></phg-app-sign-in-modal>
+    `);
+    let request = null;
+    modal.addEventListener("request-sign-in", (event) => {
+      request = event.detail;
+    });
+
+    const emailInput = modal.querySelector("#profile-sign-in-email");
+    emailInput.value = "player@example.com";
+    emailInput.focus();
+    await sendKeys({ press: "Enter" });
+
+    expect(request).to.deep.equal({
+      email: "player@example.com",
+      name: "Table Captain",
     });
   });
 
@@ -475,7 +499,7 @@ describe("phg-app sign in", () => {
 
     element
       ?.querySelector("phg-tournaments")
-      ?.querySelector("phg-button")
+      ?.querySelector("button.button")
       ?.click();
     await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
 

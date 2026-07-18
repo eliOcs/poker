@@ -28,8 +28,8 @@
     width: 100%;
   }
 
-  .action-row phg-button {
-    display: block;
+  .action-row .button {
+    display: flex;
     width: 100%;
   }
 

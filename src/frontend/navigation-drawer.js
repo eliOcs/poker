@@ -275,7 +275,7 @@ class NavigationDrawer extends LitElement {
   render() {
     return html`
       <div id="backdrop" @click=${this.toggle}></div>
-      <button id="drawer-toggle" @click=${this.toggle}>
+      <button type="button" id="drawer-toggle" @click=${this.toggle}>
         ${this.open ? ICONS.close : ICONS.menu}
       </button>
       <div id="drawer-nav">

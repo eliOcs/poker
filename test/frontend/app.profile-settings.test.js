@@ -99,7 +99,7 @@ describe("phg-app profile settings", () => {
     const input = element.querySelector("#profile-settings-name-input");
     input.value = "Updated";
 
-    const saveBtn = element.querySelector('phg-button[variant="action"]');
+    const saveBtn = element.querySelector("button.button--action");
     saveBtn.click();
     await waitUntil(() => element.toast?.message === "Settings saved", {
       timeout: 2000,
@@ -120,12 +120,12 @@ describe("phg-app profile settings", () => {
     });
     const vibrationOffButton = element
       .querySelectorAll(".volume-slider")[1]
-      ?.querySelector("button");
+      ?.querySelector("label");
 
     expect(vibrationOffButton).to.exist;
     vibrationOffButton.click();
 
-    const saveBtn = element.querySelector('phg-button[variant="action"]');
+    const saveBtn = element.querySelector("button.button--action");
     saveBtn.click();
     await waitUntil(() => element.toast?.message === "Settings saved", {
       timeout: 2000,
@@ -136,5 +136,24 @@ describe("phg-app profile settings", () => {
       settings: { volume: 0.75, vibration: false },
     });
     expect(element.user.settings.vibration).to.equal(false);
+  });
+
+  it("preserves a legacy volume when no radio option matches", async () => {
+    /** @type {any} */
+    let requestBody = null;
+    const element = await openOwnProfileSettings("Test", true, (body) => {
+      requestBody = body;
+    });
+    element._settingsVolume = 0.5;
+    element.requestUpdate();
+    await element.updateComplete;
+
+    expect(element.querySelector('input[name="volume"]:checked')).to.not.exist;
+    element.querySelector("button.button--action").click();
+    await waitUntil(() => element.toast?.message === "Settings saved", {
+      timeout: 2000,
+    });
+
+    expect(requestBody.settings.volume).to.equal(0.5);
   });
 });

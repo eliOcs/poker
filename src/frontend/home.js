@@ -1,5 +1,4 @@
 import { html, LitElement } from "lit";
-import "./button.js";
 import {
   PRESETS as STAKES_PRESETS,
   DEFAULT as DEFAULT_STAKES,
@@ -148,14 +147,14 @@ class Home extends LitElement {
           onChange: this.handleTableSizeChange,
         })}
         <div class="create-button-row">
-          <phg-button
-            variant="primary"
-            size="large"
+          <button
+            type="button"
+            class="button button--primary button--large"
             ?disabled=${this.creating}
             @click=${this.createGame}
           >
             ${this.creating ? "Creating..." : "Create Game"}
-          </phg-button>
+          </button>
         </div>
       `,
     );

@@ -53,51 +53,71 @@ export function renderSettingsModal(game) {
   ];
   return html`
     <phg-modal .title=${"Settings"} @close=${game.closeSettings}>
-      <div class="settings-content">
-        <label>Name</label>
+      <form
+        class="settings-content"
+        @submit=${(event) => {
+          event.preventDefault();
+          game.saveSettings(event.currentTarget);
+        }}
+      >
+        <label for="name-input">Name</label>
         <input
           id="name-input"
+          name="name"
           type="text"
           placeholder="Enter your name"
           maxlength="20"
           .value=${game.getCurrentPlayerName()}
-          @keydown=${(e) => e.key === "Enter" && game.saveSettings()}
         />
-        <label>Sound Volume</label>
-        <div class="volume-slider">
-          ${volumeSteps.map(
-            (v, i) => html`
-              <button
-                class=${game.volume === v ? "active" : ""}
-                @click=${() => game.setVolume(v)}
-              >
-                ${labels[i]}
-              </button>
-            `,
-          )}
-        </div>
-        <label>Vibration</label>
-        <div class="volume-slider">
-          ${vibrationOptions.map(
-            ({ label, value }) => html`
-              <button
-                class=${game.vibration === value ? "active" : ""}
-                @click=${() => game.setVibration(value)}
-              >
-                ${label}
-              </button>
-            `,
-          )}
-        </div>
+        <fieldset>
+          <legend>Sound Volume</legend>
+          <div class="volume-slider">
+            ${volumeSteps.map(
+              (v, i) => html`
+                <label class=${game.volume === v ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="volume"
+                    value=${v}
+                    .checked=${game.volume === v}
+                    @change=${() => game.setVolume(v)}
+                  />
+                  ${labels[i]}
+                </label>
+              `,
+            )}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Vibration</legend>
+          <div class="volume-slider">
+            ${vibrationOptions.map(
+              ({ label, value }) => html`
+                <label class=${game.vibration === value ? "active" : ""}>
+                  <input
+                    type="radio"
+                    name="vibration"
+                    value=${String(value)}
+                    .checked=${game.vibration === value}
+                    @change=${() => game.setVibration(value)}
+                  />
+                  ${label}
+                </label>
+              `,
+            )}
+          </div>
+        </fieldset>
         <div class="buttons">
-          <phg-button variant="muted" @click=${game.closeSettings}
-            >Cancel</phg-button
+          <button
+            type="button"
+            class="button button--muted"
+            @click=${game.closeSettings}
           >
-          <phg-button variant="action" @click=${game.saveSettings}
-            >Save</phg-button
-          >
+            Cancel
+          </button>
+          <button type="submit" class="button button--action">Save</button>
         </div>
-      </div>
+      </form>
     </phg-modal>
   `;
 }
@@ -110,7 +130,7 @@ export function renderSignInModal(game) {
         class="sign-in-content"
         @submit=${(e) => {
           e.preventDefault();
-          game.requestSignIn();
+          game.requestSignIn(e.currentTarget);
         }}
       >
         <p class="sign-in-intro">
@@ -119,6 +139,7 @@ export function renderSignInModal(game) {
         <label for="sign-in-email">Email</label>
         <input
           id="sign-in-email"
+          name="email"
           type="email"
           autocomplete="email"
           placeholder="you@example.com"
@@ -126,14 +147,23 @@ export function renderSignInModal(game) {
           aria-invalid=${game._signInInvalid ? "true" : "false"}
           autofocus
           @input=${game.clearSignInValidation}
+          @invalid=${(event) => {
+            event.preventDefault();
+            game._signInInvalid = true;
+            event.currentTarget.focus();
+          }}
         />
         <div class="buttons">
-          <phg-button variant="muted" @click=${game.closeSignIn}
-            >Cancel</phg-button
+          <button
+            type="button"
+            class="button button--muted"
+            @click=${game.closeSignIn}
           >
-          <phg-button variant="action" @click=${game.requestSignIn}
-            >Send sign-in link</phg-button
-          >
+            Cancel
+          </button>
+          <button type="submit" class="button button--action">
+            Send sign-in link
+          </button>
         </div>
         <p class="sign-in-switch">
           New?
@@ -158,7 +188,7 @@ export function renderSignUpModal(game) {
         class="sign-in-content"
         @submit=${(e) => {
           e.preventDefault();
-          game.requestSignUp();
+          game.requestSignUp(e.currentTarget);
         }}
       >
         <p class="sign-in-intro">
@@ -167,6 +197,7 @@ export function renderSignUpModal(game) {
         <label for="sign-up-name">Name</label>
         <input
           id="sign-up-name"
+          name="name"
           type="text"
           autocomplete="name"
           placeholder="Enter your name"
@@ -176,24 +207,39 @@ export function renderSignUpModal(game) {
           autofocus
           .value=${game.getCurrentPlayerName()}
           @input=${game.clearSignUpValidation}
+          @invalid=${(event) => {
+            event.preventDefault();
+            game._signUpNameInvalid = true;
+            event.currentTarget.focus();
+          }}
         />
         <label for="sign-up-email">Email</label>
         <input
           id="sign-up-email"
+          name="email"
           type="email"
           autocomplete="email"
           placeholder="you@example.com"
           ?required=${true}
           aria-invalid=${game._signUpEmailInvalid ? "true" : "false"}
           @input=${game.clearSignUpValidation}
+          @invalid=${(event) => {
+            event.preventDefault();
+            game._signUpEmailInvalid = true;
+            event.currentTarget.focus();
+          }}
         />
         <div class="buttons">
-          <phg-button variant="muted" @click=${game.closeSignUp}
-            >Cancel</phg-button
+          <button
+            type="button"
+            class="button button--muted"
+            @click=${game.closeSignUp}
           >
-          <phg-button variant="action" @click=${game.requestSignUp}
-            >Send sign-up link</phg-button
-          >
+            Cancel
+          </button>
+          <button type="submit" class="button button--action">
+            Send sign-up link
+          </button>
         </div>
         <p class="sign-in-switch">
           Have an account?
@@ -216,7 +262,9 @@ export function renderEmoteModal(game) {
     <div class="emote-grid">
       ${EMOJIS.map(
         (emoji) =>
-          html`<button @click=${() => game.sendEmote(emoji)}>${emoji}</button>`,
+          html`<button type="button" @click=${() => game.sendEmote(emoji)}>
+            ${emoji}
+          </button>`,
       )}
     </div>
   </phg-modal>`;
@@ -225,9 +273,17 @@ export function renderEmoteModal(game) {
 export function renderChatModal(game) {
   if (!game.showChat) return "";
   return html`<phg-modal .title=${"Chat"} @close=${game.closeChat}>
-    <div class="chat-input-container">
+    <form
+      class="chat-input-container"
+      @submit=${(event) => {
+        event.preventDefault();
+        const message = new FormData(event.currentTarget).get("message");
+        game.sendChat(typeof message === "string" ? message : "");
+      }}
+    >
       <textarea
         id="chat-input"
+        name="message"
         autofocus
         enterkeyhint="send"
         placeholder="Type a message..."
@@ -236,19 +292,15 @@ export function renderChatModal(game) {
         @keydown=${(e) => {
           if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
-            game.sendChat(e.target.value);
+            const form = e.currentTarget.form;
+            if (!form) throw new Error("Chat input must belong to a form");
+            form.requestSubmit();
           }
         }}
       ></textarea>
-      <phg-button
-        variant="action"
-        full-width
-        @click=${() => {
-          const input = game.querySelector("#chat-input");
-          game.sendChat(input?.value ?? "");
-        }}
-        >Send</phg-button
-      >
-    </div>
+      <button type="submit" class="button button--action button--full-width">
+        Send
+      </button>
+    </form>
   </phg-modal>`;
 }

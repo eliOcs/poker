@@ -92,6 +92,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
     </a>`;
   }
   return html`<button
+      type="button"
       slot="footer"
       class="drawer-primary"
       @click=${handleAction(onOpenSignUp)}
@@ -99,6 +100,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
       ${ICONS.signUp}
       <span>Sign up</span></button
     ><button
+      type="button"
       slot="footer"
       class="drawer-entry"
       @click=${handleAction(onOpenSignIn)}
@@ -114,7 +116,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
  */
 function renderShareButton(onShare) {
   if (!onShare) return "";
-  return html`<button slot="main" @click=${handleAction(onShare)}>
+  return html`<button type="button" slot="main" @click=${handleAction(onShare)}>
     ${iconShare}
     <span>Share</span>
   </button>`;
@@ -126,6 +128,7 @@ function renderShareButton(onShare) {
  */
 function renderTableItem(table) {
   return html`<button
+    type="button"
     slot="main"
     class=${drawerItemClass(table.active)}
     @click=${handleAction(table.onOpen)}
@@ -153,7 +156,7 @@ export function renderHistoryItem(historyPath) {
     </a>`;
   }
 
-  return html`<button slot="main" disabled>
+  return html`<button type="button" slot="main" disabled>
     ${iconHistory}
     <span>History</span>
   </button>`;
@@ -206,6 +209,7 @@ function renderDrawerTemplate(params) {
   return html`
     <phg-navigation-drawer ?open=${open} @drawer-toggle=${onToggle}>
       <button
+        type="button"
         slot="main"
         class=${drawerItemClass(lobbyActive)}
         ?disabled=${!onOpenLobby}
@@ -217,13 +221,18 @@ function renderDrawerTemplate(params) {
       ${tableItems.map(renderTableItem)}
       ${showHistory ? renderHistoryItem(historyPath) : ""}
       ${onOpenLevels
-        ? html`<button slot="main" @click=${handleAction(onOpenLevels)}>
+        ? html`<button
+            type="button"
+            slot="main"
+            @click=${handleAction(onOpenLevels)}
+          >
             ${ICONS.levels}
             <span>Levels</span>
           </button>`
         : ""}
       ${extraMainItems}
       <button
+        type="button"
         slot="main"
         ?disabled=${!onCopyLink}
         @click=${handleAction(onCopyLink)}
@@ -233,7 +242,11 @@ function renderDrawerTemplate(params) {
       </button>
       ${renderShareButton(onShare)}
       ${renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp)}
-      <button slot="footer" @click=${handleAction(onOpenSettings)}>
+      <button
+        type="button"
+        slot="footer"
+        @click=${handleAction(onOpenSettings)}
+      >
         ${ICONS.settings}
         <span>Settings</span>
       </button>

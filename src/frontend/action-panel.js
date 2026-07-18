@@ -1,7 +1,6 @@
 import { LitElement } from "lit";
 import { getChipDenomination } from "../shared/stakes.js";
 import { renderActionPanel } from "./action-panel-render.js";
-import "./button.js";
 import "./currency-slider.js";
 import "./card.js";
 

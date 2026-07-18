@@ -10,9 +10,9 @@ import {
   mockOccupiedSeat,
 } from "./setup.js";
 
-// Helper to find phg-button by text content
+// Helper to find button.button by text content
 function findButtonByText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.includes(text)) {
       return btn;
@@ -22,7 +22,7 @@ function findButtonByText(root, text) {
 }
 
 function findButtonByExactText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.trim() === text) {
       return btn;
@@ -387,7 +387,7 @@ describe("phg-action-panel", () => {
       await actionPanel.updateComplete;
 
       const showButtons = [
-        ...actionPanel.querySelectorAll("phg-button"),
+        ...actionPanel.querySelectorAll("button.button"),
       ].filter((btn) => btn.textContent.includes("Show"));
       expect(showButtons.length).to.equal(3);
 
@@ -429,9 +429,7 @@ describe("phg-action-panel", () => {
 
       const callClockButton = findButtonByText(actionPanel, "Call the clock");
       expect(callClockButton).to.exist;
-      expect(callClockButton.getAttribute("icon")).to.equal("clock");
-      const callClockIcon =
-        callClockButton.shadowRoot.querySelector(".icon svg");
+      const callClockIcon = callClockButton.querySelector(".button__icon svg");
       expect(callClockIcon).to.exist;
       expect(callClockIcon.childElementCount).to.equal(16);
       expect(

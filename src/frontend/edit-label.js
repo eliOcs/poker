@@ -71,11 +71,6 @@ class EditLabel extends LitElement {
       this.cancel();
       return;
     }
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      this.submit();
-    }
   }
 
   handleSubmit(event) {

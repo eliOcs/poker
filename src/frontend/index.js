@@ -5,7 +5,6 @@ import "./card.js";
 import "./board.js";
 import "./seat.js";
 import "./action-panel.js";
-import "./button.js";
 import "./modal.js";
 import "./ranking-panel.js";
 import "./tournament-levels-panel.js";

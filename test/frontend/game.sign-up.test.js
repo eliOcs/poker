@@ -1,4 +1,5 @@
 import { fixture, expect, html } from "@open-wc/testing";
+import { sendKeys } from "@web/test-runner-commands";
 import {
   OriginalWebSocket,
   MockWebSocket,
@@ -110,7 +111,7 @@ describe("phg-game sign up", () => {
     nameInput.value = "Table Captain";
     emailInput.value = "player@example.com";
 
-    element.requestSignUp();
+    element.querySelector(".sign-in-content").requestSubmit();
     await element.updateComplete;
 
     expect(request).to.deep.equal({
@@ -118,6 +119,28 @@ describe("phg-game sign up", () => {
       name: "Table Captain",
     });
     expect(element.querySelector("phg-modal")).to.not.exist;
+  });
+
+  it("submits when Enter is pressed in the email input", async () => {
+    element.showSignUp = true;
+    await element.updateComplete;
+
+    let request = null;
+    element.addEventListener("request-sign-in", (event) => {
+      request = event.detail;
+    });
+
+    const nameInput = element.querySelector("#sign-up-name");
+    const emailInput = element.querySelector("#sign-up-email");
+    nameInput.value = "Table Captain";
+    emailInput.value = "player@example.com";
+    emailInput.focus();
+    await sendKeys({ press: "Enter" });
+
+    expect(request).to.deep.equal({
+      email: "player@example.com",
+      name: "Table Captain",
+    });
   });
 
   it("marks the name invalid and focuses it when submitted empty", async () => {
@@ -133,7 +156,7 @@ describe("phg-game sign up", () => {
     nameInput.value = "";
     emailInput.value = "player@example.com";
 
-    element.requestSignUp();
+    element.querySelector(".sign-in-content").requestSubmit();
     await element.updateComplete;
 
     expect(element._signUpNameInvalid).to.equal(true);

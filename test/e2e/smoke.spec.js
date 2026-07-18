@@ -287,7 +287,7 @@ test.describe("Poker Game Smoke Test", () => {
       profilePage.locator("#profile-settings-name-input"),
     ).toHaveValue("Player 1");
     await expect(
-      profilePage.locator(".volume-slider").first().locator("button.active"),
+      profilePage.locator(".volume-slider").first().locator("label.active"),
     ).toHaveText("25%");
   });
 });

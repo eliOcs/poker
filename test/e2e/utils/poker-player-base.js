@@ -59,7 +59,7 @@ export class PokerPlayerBase {
    */
   get turnButtons() {
     return this.actionPanel
-      .locator("phg-button:not([pre-action])")
+      .locator("button.button:not(.button--pre-action)")
       .getByRole("button", { name: TURN_ACTION_BUTTON_NAME });
   }
 

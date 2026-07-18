@@ -68,7 +68,7 @@ export function renderAppNavigationDrawer({
         accountActive,
         view,
       )}
-      <button slot="footer" @click=${view.openSettings}>
+      <button type="button" slot="footer" @click=${view.openSettings}>
         ${ICONS.settings}
         <span>Settings</span>
       </button>
@@ -95,13 +95,19 @@ function renderAccountEntry(
   }
 
   return html`<button
+      type="button"
       slot="footer"
       class="drawer-item drawer-primary"
       @click=${view.openSignUp}
     >
       ${ICONS.signUp}
       <span>Sign up</span></button
-    ><button slot="footer" class="drawer-item" @click=${view.openSignIn}>
+    ><button
+      type="button"
+      slot="footer"
+      class="drawer-item"
+      @click=${view.openSignIn}
+    >
       ${ICONS.signIn}
       <span>Sign in</span>
     </button>`;

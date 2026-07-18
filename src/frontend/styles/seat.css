@@ -147,7 +147,7 @@
   .last-action,
   .hand-rank,
   .clock-countdown,
-  phg-button {
+  .button {
     position: relative;
     z-index: 1;
   }

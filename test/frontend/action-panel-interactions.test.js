@@ -13,7 +13,7 @@ import {
 } from "./setup.js";
 
 function findButtonByText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.includes(text)) {
       return btn;
@@ -23,7 +23,7 @@ function findButtonByText(root, text) {
 }
 
 function findButtonByExactText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.trim() === text) {
       return btn;
@@ -153,9 +153,9 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const showButton = [...actionPanel.querySelectorAll("phg-button")].find(
-        (btn) => btn.textContent.includes("Show"),
-      );
+      const showButton = [
+        ...actionPanel.querySelectorAll("button.button"),
+      ].find((btn) => btn.textContent.includes("Show"));
       showButton.click();
 
       expect(sentMessage).to.exist;
@@ -419,9 +419,7 @@ describe("phg-action-panel", () => {
       const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const sitInButton = actionPanel.querySelector(
-        'phg-button[variant="success"]',
-      );
+      const sitInButton = actionPanel.querySelector("button.button--success");
       expect(sitInButton).to.exist;
       expect(sitInButton.textContent).to.include("Sit In");
     });
@@ -447,9 +445,7 @@ describe("phg-action-panel", () => {
         sentMessage = e.detail;
       });
 
-      const sitInButton = actionPanel.querySelector(
-        'phg-button[variant="success"]',
-      );
+      const sitInButton = actionPanel.querySelector("button.button--success");
       sitInButton.click();
 
       expect(sentMessage).to.exist;

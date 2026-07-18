@@ -35,7 +35,7 @@ describe("phg-seat", () => {
     for (const seat of seats) {
       await seat.updateComplete;
       if (seat.classList.contains("empty")) emptyCount++;
-      const sitBtn = seat.querySelector("phg-button");
+      const sitBtn = seat.querySelector("button.button");
       if (sitBtn && sitBtn.textContent.trim() === "Sit") sitButtonCount++;
     }
     expect(emptyCount).to.equal(6);
@@ -398,7 +398,7 @@ describe("phg-seat", () => {
 
     const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitButton = seats[0].querySelector("phg-button");
+    const sitButton = seats[0].querySelector("button.button");
     sitButton.click();
 
     expect(sentMessage).to.exist;
@@ -412,7 +412,7 @@ describe("phg-seat", () => {
 
     const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitBtn = seats[0].querySelector("phg-button");
+    const sitBtn = seats[0].querySelector("button.button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit");
   });
@@ -423,7 +423,7 @@ describe("phg-seat", () => {
 
     const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitBtn = seats[0].querySelector("phg-button");
+    const sitBtn = seats[0].querySelector("button.button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit $5");
   });

@@ -41,7 +41,7 @@ phg-app .sign-in-content {
   --modal-slider-active-color: var(--color-secondary);
 }
 
-phg-app :is(.settings-content, .sign-in-content) input {
+phg-app :is(.settings-content, .sign-in-content) input:not([type="radio"]) {
   width: 100%;
   padding: var(--space-md);
   color: var(--color-fg-white);
@@ -52,7 +52,9 @@ phg-app :is(.settings-content, .sign-in-content) input {
   outline: none;
 }
 
-phg-app :is(.settings-content, .sign-in-content) input:focus {
+phg-app
+  :is(.settings-content, .sign-in-content)
+  input:not([type="radio"]):focus {
   border-color: var(--modal-input-focus-color, var(--color-secondary));
   box-shadow: var(
     --modal-input-focus-shadow,
@@ -60,14 +62,16 @@ phg-app :is(.settings-content, .sign-in-content) input:focus {
   );
 }
 
-phg-app :is(.settings-content, .sign-in-content) input[aria-invalid="true"] {
+phg-app
+  :is(.settings-content, .sign-in-content)
+  input:not([type="radio"])[aria-invalid="true"] {
   border-color: var(--color-error);
   box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
 }
 
 phg-app
   :is(.settings-content, .sign-in-content)
-  input[aria-invalid="true"]:focus {
+  input:not([type="radio"])[aria-invalid="true"]:focus {
   border-color: var(--color-error);
   box-shadow: var(
     --modal-input-error-focus-shadow,
@@ -75,7 +79,7 @@ phg-app
   );
 }
 
-phg-app .settings-content input {
+phg-app .settings-content > input {
   margin-bottom: var(--space-lg);
 }
 
@@ -86,7 +90,8 @@ phg-app .sign-in-content .buttons {
   justify-content: center;
 }
 
-phg-app .settings-content label {
+phg-app .settings-content > label,
+phg-app .settings-content legend {
   display: block;
   margin-bottom: var(--space-md);
   color: var(--color-fg-medium);
@@ -141,8 +146,17 @@ phg-app .volume-slider {
   margin-bottom: var(--space-lg);
 }
 
-phg-app .volume-slider button {
+phg-app .settings-content fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+phg-app .volume-slider label {
+  position: relative;
   flex: 1;
+  box-sizing: border-box;
   padding: var(--space-md);
   color: var(--color-fg-medium);
   font: inherit;
@@ -150,13 +164,21 @@ phg-app .volume-slider button {
   cursor: pointer;
   background: var(--color-bg-medium);
   border: 3px solid var(--color-bg-dark);
+  text-align: center;
+  cursor: pointer;
 }
 
-phg-app .volume-slider button:hover {
+phg-app .volume-slider input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+phg-app .volume-slider label:hover {
   background: var(--color-bg-dark);
 }
 
-phg-app .volume-slider button.active {
+phg-app .volume-slider label.active {
   color: var(--color-fg-white);
   background: var(--modal-slider-active-color);
   border-color: var(--modal-slider-active-color);

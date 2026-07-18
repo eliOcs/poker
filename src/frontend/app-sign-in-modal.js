@@ -39,10 +39,9 @@ class AppSignInModal extends LitElement {
     this._nameInvalid = false;
   }
 
-  _input(selector) {
-    return /** @type {HTMLInputElement|undefined} */ (
-      this.querySelector(selector)
-    );
+  _input(form, name) {
+    const control = form.elements.namedItem(name);
+    return control instanceof HTMLInputElement ? control : undefined;
   }
 
   _validateEmail(input) {
@@ -59,10 +58,10 @@ class AppSignInModal extends LitElement {
     return false;
   }
 
-  submit() {
-    const emailInput = this._input("#profile-sign-in-email");
+  submit(form) {
+    const emailInput = this._input(form, "email");
     const email = emailInput?.value.trim() ?? "";
-    const nameInput = this._input("#profile-sign-up-name");
+    const nameInput = this._input(form, "name");
     const name = nameInput?.value.trim() ?? "";
 
     this.clearValidation();
@@ -85,6 +84,7 @@ class AppSignInModal extends LitElement {
       <label for="profile-sign-up-name">Name</label>
       <input
         id="profile-sign-up-name"
+        name="name"
         type="text"
         autocomplete="name"
         placeholder="Enter your name"
@@ -94,6 +94,11 @@ class AppSignInModal extends LitElement {
         autofocus
         .value=${this.prefillName}
         @input=${this.clearValidation}
+        @invalid=${(event) => {
+          event.preventDefault();
+          this._nameInvalid = true;
+          event.currentTarget.focus();
+        }}
       />
     `;
   }
@@ -107,9 +112,9 @@ class AppSignInModal extends LitElement {
       >
         <form
           class="sign-in-content"
-          @submit=${(e) => {
-            e.preventDefault();
-            this.submit();
+          @submit=${(event) => {
+            event.preventDefault();
+            this.submit(event.currentTarget);
           }}
         >
           <p class="sign-in-intro">
@@ -121,6 +126,7 @@ class AppSignInModal extends LitElement {
           <label for="profile-sign-in-email">Email</label>
           <input
             id="profile-sign-in-email"
+            name="email"
             type="email"
             autocomplete="email"
             placeholder="you@example.com"
@@ -128,14 +134,23 @@ class AppSignInModal extends LitElement {
             aria-invalid=${this._emailInvalid ? "true" : "false"}
             ?autofocus=${!isSignUp}
             @input=${this.clearValidation}
+            @invalid=${(event) => {
+              event.preventDefault();
+              this._emailInvalid = true;
+              event.currentTarget.focus();
+            }}
           />
           <div class="buttons">
-            <phg-button variant="muted" @click=${this.close}>Cancel</phg-button>
-            <phg-button variant="action" @click=${this.submit}
-              >${isSignUp
-                ? "Send sign-up link"
-                : "Send sign-in link"}</phg-button
+            <button
+              type="button"
+              class="button button--muted"
+              @click=${this.close}
             >
+              Cancel
+            </button>
+            <button type="submit" class="button button--action">
+              ${isSignUp ? "Send sign-up link" : "Send sign-in link"}
+            </button>
           </div>
           <p class="sign-in-switch">
             ${isSignUp ? "Have an account?" : "New?"}

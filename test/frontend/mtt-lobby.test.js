@@ -114,7 +114,7 @@ describe("phg-mtt-lobby", () => {
     expect(element.shadowRoot).to.be.null;
 
     const lateRegister = [
-      ...element.querySelectorAll(".action-row phg-button"),
+      ...element.querySelectorAll(".action-row button.button"),
     ].find((button) => button.textContent.includes("Late Register"));
     expect(lateRegister).to.exist;
     const tooltipCases = [
@@ -339,7 +339,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      const buttons = Array.from(element.querySelectorAll("phg-button"));
+      const buttons = Array.from(element.querySelectorAll("button.button"));
       const openButton = buttons.find((b) =>
         b.textContent.includes("Open My Table"),
       );
@@ -372,7 +372,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    const buttons = element.querySelectorAll(".action-row phg-button");
+    const buttons = element.querySelectorAll(".action-row button.button");
     setTimeout(() => {
       buttons[0].click();
     });
@@ -406,7 +406,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.querySelector(".action-row phg-button").click();
+      element.querySelector(".action-row button.button").click();
     });
 
     const event = await oneEvent(element, "open-sign-up");
@@ -440,7 +440,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.querySelector(".action-row phg-button").click();
+      element.querySelector(".action-row button.button").click();
     });
 
     const event = await oneEvent(element, "mtt-action");

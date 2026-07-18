@@ -1,5 +1,4 @@
 import { html, LitElement } from "lit";
-import "./button.js";
 import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
 import { getMttPath } from "../shared/routes.js";
 import {
@@ -96,14 +95,14 @@ class Tournaments extends LitElement {
           onChange: this.handleTableSizeChange,
         })}
         <div class="create-button-row">
-          <phg-button
-            variant="primary"
-            size="large"
+          <button
+            type="button"
+            class="button button--primary button--large"
             ?disabled=${this.creating}
             @click=${() => this.createTournament()}
           >
             ${this.creating ? "Creating..." : "Create Tournament"}
-          </phg-button>
+          </button>
         </div>
       `,
     );

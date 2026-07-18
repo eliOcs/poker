@@ -112,24 +112,26 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
     tournament.tables.find((t) => t.tableId === tableId)?.closed ?? false;
 
   if (isClosed) {
-    return html`<phg-button
-      variant="primary"
+    return html`<button
+      type="button"
+      class="button button--primary"
       @click=${() => {
         onNavigate(getHistoryPath(tableId));
       }}
     >
       Show My Last Table
-    </phg-button>`;
+    </button>`;
   }
 
-  return html`<phg-button
-    variant="primary"
+  return html`<button
+    type="button"
+    class="button button--primary"
     @click=${() => {
       onNavigate(getTablePath("mtt", tableId, tournamentId));
     }}
   >
     Open My Table
-  </phg-button>`;
+  </button>`;
 }
 
 /**
@@ -146,15 +148,16 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
     ${actions.canRegister
       ? isLateRegistration
         ? html`<div class="tooltip-control late-registration-control">
-            <phg-button
-              variant="primary"
+            <button
+              type="button"
+              class="button button--primary"
               ?disabled=${actionPending}
               @click=${() => {
                 onMttAction("register");
               }}
             >
               Late Register
-            </phg-button>
+            </button>
             <button
               class="tooltip-trigger"
               type="button"
@@ -168,26 +171,28 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
               ${tournament.entryPeriodLevels}.
             </span>
           </div>`
-        : html`<phg-button
-            variant="primary"
+        : html`<button
+            type="button"
+            class="button button--primary"
             ?disabled=${actionPending}
             @click=${() => {
               onMttAction("register");
             }}
           >
             Register
-          </phg-button>`
+          </button>`
       : ""}
     ${actions.canUnregister
-      ? html`<phg-button
-          variant="muted"
+      ? html`<button
+          type="button"
+          class="button button--muted"
           ?disabled=${actionPending}
           @click=${() => {
             onMttAction("unregister");
           }}
         >
           Unregister
-        </phg-button>`
+        </button>`
       : ""}
   `;
 }
@@ -201,15 +206,16 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
 function renderTournamentActions({ actions, actionPending, onMttAction }) {
   if (!actions.canStart) return "";
 
-  return html`<phg-button
-    variant="success"
+  return html`<button
+    type="button"
+    class="button button--success"
     ?disabled=${actionPending}
     @click=${() => {
       onMttAction("start");
     }}
   >
     Start Tournament
-  </phg-button>`;
+  </button>`;
 }
 
 /**
@@ -245,13 +251,21 @@ export function renderActions({
         onMttAction,
       })}
       ${renderTournamentActions({ actions, actionPending, onMttAction })}
-      <phg-button variant="secondary" @click=${onCopyLink}>
+      <button
+        type="button"
+        class="button button--secondary"
+        @click=${onCopyLink}
+      >
         ${copied ? "Copied!" : "Copy Link"}
-      </phg-button>
+      </button>
       ${onShare
-        ? html`<phg-button variant="secondary" @click=${onShare}>
+        ? html`<button
+            type="button"
+            class="button button--secondary"
+            @click=${onShare}
+          >
             Share
-          </phg-button>`
+          </button>`
         : ""}
     </div>
   `;
@@ -295,16 +309,18 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
             </div>
             <div class="table-actions">
               ${table.closed
-                ? html`<phg-button
-                    variant="secondary"
+                ? html`<button
+                    type="button"
+                    class="button button--secondary"
                     @click=${() => {
                       onNavigate(getHistoryPath(table.tableId));
                     }}
                   >
                     Show History
-                  </phg-button>`
-                : html`<phg-button
-                    variant=${isCurrent ? "success" : "secondary"}
+                  </button>`
+                : html`<button
+                    type="button"
+                    class=${`button button--${isCurrent ? "success" : "secondary"}`}
                     @click=${() => {
                       onNavigate(
                         getTablePath("mtt", table.tableId, tournamentId),
@@ -312,7 +328,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
                     }}
                   >
                     ${isCurrent ? "Open My Table" : "Open Table"}
-                  </phg-button>`}
+                  </button>`}
             </div>
           </article>
         `;

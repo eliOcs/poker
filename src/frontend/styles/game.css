@@ -1,5 +1,5 @@
 @scope (phg-game) {
-  phg-modal input {
+  phg-modal input:not([type="radio"]) {
     width: 100%;
     padding: var(--space-md);
     font-family: inherit;
@@ -11,7 +11,7 @@
     outline: none;
   }
 
-  phg-modal input:focus {
+  phg-modal input:not([type="radio"]):focus {
     border-color: var(--modal-input-focus-color, var(--color-secondary));
     box-shadow: var(
       --modal-input-focus-shadow,
@@ -19,12 +19,12 @@
     );
   }
 
-  phg-modal input[aria-invalid="true"] {
+  phg-modal input:not([type="radio"])[aria-invalid="true"] {
     border-color: var(--color-error);
     box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
   }
 
-  phg-modal input[aria-invalid="true"]:focus {
+  phg-modal input:not([type="radio"])[aria-invalid="true"]:focus {
     border-color: var(--color-error);
     box-shadow: var(
       --modal-input-error-focus-shadow,
@@ -39,7 +39,8 @@
     justify-content: center;
   }
 
-  .settings-content label {
+  .settings-content > label,
+  .settings-content legend {
     display: block;
     margin-bottom: var(--space-md);
     color: var(--color-fg-medium);
@@ -81,8 +82,17 @@
     margin-bottom: var(--space-lg);
   }
 
-  .volume-slider button {
+  .settings-content fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .volume-slider label {
+    position: relative;
     flex: 1;
+    box-sizing: border-box;
     padding: var(--space-md);
     font-family: inherit;
     font-size: var(--font-md);
@@ -90,13 +100,20 @@
     background: var(--color-bg-medium);
     color: var(--color-fg-medium);
     cursor: pointer;
+    text-align: center;
   }
 
-  .volume-slider button:hover {
+  .volume-slider input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .volume-slider label:hover {
     background: var(--color-bg-dark);
   }
 
-  .volume-slider button.active {
+  .volume-slider label.active {
     background: var(--modal-slider-active-color);
     color: var(--color-fg-white);
     border-color: var(--modal-slider-active-color);
@@ -124,6 +141,10 @@
 
   :scope * {
     box-sizing: inherit;
+  }
+
+  :scope .button {
+    box-sizing: border-box;
   }
 
   #wrapper {
@@ -213,6 +234,13 @@
     color: var(--color-fg-medium);
   }
 
+  button#info-bar {
+    padding: 0;
+    font: inherit;
+    background: none;
+    border: 0;
+  }
+
   .info-cell {
     white-space: nowrap;
   }
@@ -242,7 +270,7 @@
     color: var(--color-bg-disabled);
   }
 
-  .settings-content input,
+  .settings-content > input,
   .sign-in-content input {
     margin-bottom: var(--space-lg);
   }

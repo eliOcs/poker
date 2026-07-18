@@ -33,10 +33,7 @@ export class PokerPlayer extends PokerPlayerActions {
     if (options.volumeLabel) {
       await this.game
         .locator(".volume-slider")
-        .getByRole("button", {
-          name: options.volumeLabel,
-          exact: true,
-        })
+        .locator("label", { hasText: options.volumeLabel })
         .click();
     }
 

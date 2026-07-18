@@ -7,7 +7,6 @@ import {
   getResultClass,
 } from "./seat-utils.js";
 import "./card.js";
-import "./button.js";
 import "./chips.js";
 /** @typedef {(seat: any) => boolean} SeatClassCondition */
 
@@ -168,7 +167,9 @@ class Seat extends LitElement {
     const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
     if (!sitAction || !this.showSitAction) return "";
     const label = this.buyIn ? `Sit ${formatCurrency(this.buyIn)}` : "Sit";
-    return html`<phg-button @click=${this.handleSit}>${label}</phg-button>`;
+    return html`<button type="button" class="button" @click=${this.handleSit}>
+      ${label}
+    </button>`;
   }
 
   _renderStatusOrAction() {

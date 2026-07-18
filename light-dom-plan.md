@@ -497,18 +497,18 @@ would collide.
 
 ### Phase 4: Native Controls and Forms
 
-- [ ] Replace all `phg-button` instances with native buttons.
-- [ ] Move button variants and sizes into normal CSS classes.
-- [ ] Preserve disabled, full-width, large, compact, icon, and pre-action
+- [x] Replace all `phg-button` instances with native buttons.
+- [x] Move button variants and sizes into normal CSS classes.
+- [x] Preserve disabled, full-width, large, compact, icon, and pre-action
       behavior.
-- [ ] Use native submit buttons in sign-in and sign-up forms.
-- [ ] Remove hidden submit-button workarounds.
-- [ ] Convert settings panels to forms.
-- [ ] Add input names and use `FormData` or `form.elements`.
-- [ ] Remove manual settings Enter handlers.
-- [ ] Remove the edit-label Enter handler.
-- [ ] Replace the clickable tournament info `div` with a button.
-- [ ] Delete `button.js` and its implementation-specific tests.
+- [x] Use native submit buttons in sign-in and sign-up forms.
+- [x] Remove hidden submit-button workarounds.
+- [x] Convert settings panels to forms.
+- [x] Add input names and use `FormData` or `form.elements`.
+- [x] Remove manual settings Enter handlers.
+- [x] Remove the edit-label Enter handler.
+- [x] Replace the clickable tournament info `div` with a button.
+- [x] Delete `button.js` and its implementation-specific tests.
 
 ### Phase 5: Slot-Based Layout Primitives
 

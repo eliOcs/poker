@@ -9,9 +9,9 @@ import {
   mockEmptySeat,
 } from "./setup.js";
 
-// Helper to find phg-button by text content
+// Helper to find button.button by text content
 function findButtonByText(root, text) {
-  const buttons = root.querySelectorAll("phg-button");
+  const buttons = root.querySelectorAll("button.button");
   for (const btn of buttons) {
     if (btn.textContent.includes(text)) {
       return btn;
@@ -82,7 +82,7 @@ describe("phg-game", () => {
       // Trigger a seat action via the phg-seat component
       const seats = element.querySelectorAll("phg-seat");
       await seats[0].updateComplete;
-      const sitButton = seats[0].querySelector("phg-button");
+      const sitButton = seats[0].querySelector("button.button");
       sitButton.click();
 
       // Should receive exactly one event, not two
@@ -337,7 +337,7 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const cancelBtn = element.querySelector('phg-button[variant="muted"]');
+      const cancelBtn = element.querySelector("button.button--muted");
       cancelBtn.click();
       await element.updateComplete;
 
@@ -359,7 +359,7 @@ describe("phg-game", () => {
       expect(closedModal).to.not.exist;
     });
 
-    it("sends update-user event when save button clicked", async () => {
+    it("sends update-user and preserves an unmatched volume", async () => {
       element.game = createMockGameState({
         seats: [
           { ...mockOccupiedSeat, isCurrentPlayer: true },
@@ -370,6 +370,7 @@ describe("phg-game", () => {
           { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
         ],
       });
+      element.volume = 0.5;
       element.showSettings = true;
       await element.updateComplete;
 
@@ -381,13 +382,13 @@ describe("phg-game", () => {
       const input = element.querySelector("#name-input");
       input.value = "TestPlayer";
 
-      const saveBtn = element.querySelector('phg-button[variant="action"]');
+      const saveBtn = element.querySelector("button.button--action");
       saveBtn.click();
 
       expect(sentMessage).to.exist;
       expect(sentMessage.name).to.equal("TestPlayer");
       expect(sentMessage.settings).to.deep.equal({
-        volume: 0.75,
+        volume: 0.5,
         vibration: true,
       });
     });
@@ -402,7 +403,7 @@ describe("phg-game", () => {
         toast = e.detail;
       });
 
-      const saveBtn = element.querySelector('phg-button[variant="action"]');
+      const saveBtn = element.querySelector("button.button--action");
       saveBtn.click();
       await element.updateComplete;
 
@@ -429,7 +430,7 @@ describe("phg-game", () => {
       );
       input.value = "player@example.com";
 
-      element.requestSignIn();
+      element.querySelector(".sign-in-content").requestSubmit();
       await element.updateComplete;
 
       expect(request).to.deep.equal({ email: "player@example.com" });
@@ -457,7 +458,7 @@ describe("phg-game", () => {
         element.querySelector("#sign-in-email")
       );
 
-      element.requestSignIn();
+      element.querySelector(".sign-in-content").requestSubmit();
       await element.updateComplete;
 
       expect(element._signInInvalid).to.equal(true);

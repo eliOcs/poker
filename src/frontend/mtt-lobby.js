@@ -13,7 +13,6 @@ import {
   renderStandingsTable,
   renderTooltipIcon,
 } from "./mtt-lobby-render.js";
-import "./button.js";
 import "./edit-label.js";
 
 class MttLobby extends LitElement {

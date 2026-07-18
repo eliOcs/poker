@@ -41,7 +41,7 @@ describe("phg-edit-label", () => {
     expect(element.querySelector("input")).to.exist;
   });
 
-  it("submits with Enter and emits value-changed", async () => {
+  it("submits through the form and emits value-changed", async () => {
     const element = await fixture(
       html`<phg-edit-label value="Old name"></phg-edit-label>`,
     );
@@ -53,13 +53,7 @@ describe("phg-edit-label", () => {
     input.value = "New name";
     input.dispatchEvent(new Event("input"));
     const eventPromise = oneEvent(element, "value-changed");
-    input.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key: "Enter",
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    element.querySelector("form").requestSubmit();
 
     const event = await eventPromise;
     await element.updateComplete;

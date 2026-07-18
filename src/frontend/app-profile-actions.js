@@ -9,16 +9,23 @@ export const appProfileActions = {
     this._showProfileSettings = false;
   },
 
-  async saveProfileSettings() {
-    const input = /** @type {HTMLInputElement|undefined} */ (
-      this.querySelector("#profile-settings-name-input")
-    );
-    const name = input?.value.trim() ?? "";
+  async saveProfileSettings(form) {
+    const formData = new FormData(form);
+    const nameValue = formData.get("name");
+    const volumeValue = formData.get("volume");
+    const vibrationValue = formData.get("vibration");
+    const name = typeof nameValue === "string" ? nameValue.trim() : "";
     await this._updateUser({
       name,
       settings: {
-        volume: this._settingsVolume,
-        vibration: this._settingsVibration,
+        volume:
+          typeof volumeValue === "string"
+            ? Number(volumeValue)
+            : this._settingsVolume,
+        vibration:
+          typeof vibrationValue === "string"
+            ? vibrationValue === "true"
+            : this._settingsVibration,
       },
     });
     this._showProfileSettings = false;

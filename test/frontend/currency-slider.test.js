@@ -141,7 +141,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("button.button");
     const plusButton = buttons[1]; // Second button is +
     plusButton.click();
 
@@ -163,7 +163,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("button.button");
     const minusButton = buttons[0]; // First button is -
     minusButton.click();
 
@@ -185,7 +185,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("button.button");
     const minusButton = buttons[0];
     minusButton.click();
 
@@ -208,7 +208,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("button.button");
     const plusButton = buttons[1];
     plusButton.click();
 

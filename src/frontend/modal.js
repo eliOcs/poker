@@ -119,6 +119,7 @@ class Modal extends LitElement {
         <div class="header">
           <h3>${this.title}</h3>
           <button
+            type="button"
             class="close-btn"
             @click=${() => {
               this.close();

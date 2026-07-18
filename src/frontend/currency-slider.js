@@ -1,6 +1,5 @@
 import { html, LitElement } from "lit";
 import { formatDollars } from "./currency.js";
-import "./button.js";
 
 /**
  * Reusable currency slider component
@@ -87,9 +86,13 @@ class CurrencySlider extends LitElement {
         .value="${displayValue}"
         @input=${this._handleNumberInput}
       />
-      <phg-button variant="muted" size="compact" @click=${this._handleDecrement}
-        >-</phg-button
+      <button
+        type="button"
+        class="button button--muted button--compact"
+        @click=${this._handleDecrement}
       >
+        -
+      </button>
       <input
         type="range"
         min="${this.min}"
@@ -98,9 +101,13 @@ class CurrencySlider extends LitElement {
         .value="${this.value}"
         @input=${this._handleRangeInput}
       />
-      <phg-button variant="muted" size="compact" @click=${this._handleIncrement}
-        >+</phg-button
+      <button
+        type="button"
+        class="button button--muted button--compact"
+        @click=${this._handleIncrement}
       >
+        +
+      </button>
     `;
   }
 }

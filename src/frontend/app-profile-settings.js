@@ -17,55 +17,75 @@ export function renderProfileSettingsModal(app) {
     .title=${"Settings"}
     @close=${app.closeProfileSettings}
   >
-    <div class="settings-content">
-      <label>Name</label>
+    <form
+      class="settings-content"
+      @submit=${(event) => {
+        event.preventDefault();
+        app.saveProfileSettings(event.currentTarget);
+      }}
+    >
+      <label for="profile-settings-name-input">Name</label>
       <input
         id="profile-settings-name-input"
+        name="name"
         type="text"
         placeholder="Enter your name"
         maxlength="20"
         autofocus
         .value=${app.user?.name ?? ""}
-        @keydown=${(e) => e.key === "Enter" && app.saveProfileSettings()}
       />
-      <label>Sound Volume</label>
-      <div class="volume-slider">
-        ${SETTINGS_VOLUME_STEPS.map(
-          (value, index) => html`
-            <button
-              class=${app._settingsVolume === value ? "active" : ""}
-              @click=${() => {
-                app._settingsVolume = value;
-              }}
-            >
-              ${SETTINGS_VOLUME_LABELS[index]}
-            </button>
-          `,
-        )}
-      </div>
-      <label>Vibration</label>
-      <div class="volume-slider">
-        ${SETTINGS_TURN_VIBRATION_OPTIONS.map(
-          ({ label, value }) => html`
-            <button
-              class=${app._settingsVibration === value ? "active" : ""}
-              @click=${() => {
-                app._settingsVibration = value;
-              }}
-            >
-              ${label}
-            </button>
-          `,
-        )}
-      </div>
+      <fieldset>
+        <legend>Sound Volume</legend>
+        <div class="volume-slider">
+          ${SETTINGS_VOLUME_STEPS.map(
+            (value, index) => html`
+              <label class=${app._settingsVolume === value ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="volume"
+                  value=${value}
+                  .checked=${app._settingsVolume === value}
+                  @change=${() => {
+                    app._settingsVolume = value;
+                  }}
+                />
+                ${SETTINGS_VOLUME_LABELS[index]}
+              </label>
+            `,
+          )}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Vibration</legend>
+        <div class="volume-slider">
+          ${SETTINGS_TURN_VIBRATION_OPTIONS.map(
+            ({ label, value }) => html`
+              <label class=${app._settingsVibration === value ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="vibration"
+                  value=${String(value)}
+                  .checked=${app._settingsVibration === value}
+                  @change=${() => {
+                    app._settingsVibration = value;
+                  }}
+                />
+                ${label}
+              </label>
+            `,
+          )}
+        </div>
+      </fieldset>
       <div class="buttons">
-        <phg-button variant="muted" @click=${app.closeProfileSettings}
-          >Cancel</phg-button
+        <button
+          type="button"
+          class="button button--muted"
+          @click=${app.closeProfileSettings}
         >
-        <phg-button variant="action" @click=${app.saveProfileSettings}
-          >Save</phg-button
-        >
+          Cancel
+        </button>
+        <button type="submit" class="button button--action">Save</button>
       </div>
-    </div>
+    </form>
   </phg-modal>`;
 }

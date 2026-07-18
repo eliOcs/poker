@@ -8,7 +8,7 @@ describe("phg-tournaments", () => {
 
     expect(element.querySelector(".panel")).to.exist;
     expect(element.querySelector('input[name="gameType"]')).to.not.exist;
-    expect(element.querySelector("phg-button").textContent).to.include(
+    expect(element.querySelector("button.button").textContent).to.include(
       "Create Tournament",
     );
   });
@@ -29,7 +29,7 @@ describe("phg-tournaments", () => {
     await element.updateComplete;
 
     setTimeout(() => {
-      element.querySelector("phg-button").click();
+      element.querySelector("button.button").click();
     });
 
     const event = await oneEvent(element, "navigate");
@@ -51,7 +51,7 @@ describe("phg-tournaments", () => {
     );
 
     setTimeout(() => {
-      element.querySelector("phg-button").click();
+      element.querySelector("button.button").click();
     });
 
     const event = await oneEvent(element, "open-sign-up");
