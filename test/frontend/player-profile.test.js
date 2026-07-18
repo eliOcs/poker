@@ -6,7 +6,6 @@ describe("phg-player-profile", () => {
     const element = await fixture(html`
       <phg-player-profile></phg-player-profile>
     `);
-    expect(element.shadowRoot).to.be.null;
 
     expect(element.querySelector(".main .content")).to.exist;
     expect(element.querySelector(".panel")).to.not.exist;

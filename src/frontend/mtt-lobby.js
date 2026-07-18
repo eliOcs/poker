@@ -68,7 +68,6 @@ class MttLobby extends LitElement {
     this.dispatchEvent(
       new CustomEvent("open-settings", {
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -77,7 +76,6 @@ class MttLobby extends LitElement {
     this.dispatchEvent(
       new CustomEvent("open-sign-in", {
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -86,7 +84,6 @@ class MttLobby extends LitElement {
     this.dispatchEvent(
       new CustomEvent("open-sign-up", {
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -109,7 +106,6 @@ class MttLobby extends LitElement {
       new CustomEvent("mtt-action", {
         detail: { action },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -147,7 +143,6 @@ class MttLobby extends LitElement {
       new CustomEvent("mtt-rename", {
         detail: { name: event.detail.value },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -157,7 +152,6 @@ class MttLobby extends LitElement {
       new CustomEvent("navigate", {
         detail: { path },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -171,7 +165,6 @@ class MttLobby extends LitElement {
           allowMttLobby: true,
         },
         bubbles: true,
-        composed: true,
       }),
     );
   }

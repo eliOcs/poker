@@ -87,7 +87,6 @@ class ActionPanel extends LitElement {
       new CustomEvent("game-action", {
         detail: action,
         bubbles: true,
-        composed: true,
       }),
     );
   }

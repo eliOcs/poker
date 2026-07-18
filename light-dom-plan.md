@@ -523,18 +523,18 @@ would collide.
 
 ### Phase 6: Cleanup
 
-- [ ] Remove every remaining `static get styles()` definition.
-- [ ] Remove all Lit `css` imports and CSS template modules.
-- [ ] Remove all production `shadowRoot` accesses.
-- [ ] Remove all test `shadowRoot` accesses.
-- [ ] Remove `composed: true` from custom events.
-- [ ] Remove `baseStyles` and other JavaScript CSS exports.
-- [ ] Point Stylelint at normal CSS files.
-- [ ] Remove `postcss-lit` and update the lockfile.
-- [ ] Re-enable appropriate standard Stylelint rules.
-- [ ] Regenerate dependency graphs.
-- [ ] Update UI catalog snapshots.
-- [ ] Run the complete validation suite.
+- [x] Remove every remaining `static get styles()` definition.
+- [x] Remove all Lit `css` imports and CSS template modules.
+- [x] Remove all production `shadowRoot` accesses.
+- [x] Remove all test `shadowRoot` accesses.
+- [x] Remove `composed: true` from custom events.
+- [x] Remove `baseStyles` and other JavaScript CSS exports.
+- [x] Point Stylelint at normal CSS files.
+- [x] Remove `postcss-lit` and update the lockfile.
+- [x] Re-enable appropriate standard Stylelint rules.
+- [x] Regenerate dependency graphs.
+- [x] Update UI catalog snapshots.
+- [x] Run the complete validation suite.
 
 ## Risks and Mitigations
 

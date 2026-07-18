@@ -332,7 +332,6 @@ function renderEmoteButton(panel) {
       panel.dispatchEvent(
         new CustomEvent("open-emote-picker", {
           bubbles: true,
-          composed: true,
         }),
       )}
   >
@@ -348,7 +347,6 @@ function renderChatButton(panel) {
       panel.dispatchEvent(
         new CustomEvent("open-chat", {
           bubbles: true,
-          composed: true,
         }),
       )}
   >

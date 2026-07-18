@@ -43,9 +43,7 @@ class EditLabel extends LitElement {
   cancel() {
     this.draftValue = this.value;
     this.editing = false;
-    this.dispatchEvent(
-      new CustomEvent("edit-cancelled", { bubbles: true, composed: true }),
-    );
+    this.dispatchEvent(new CustomEvent("edit-cancelled", { bubbles: true }));
   }
 
   submit() {
@@ -56,7 +54,6 @@ class EditLabel extends LitElement {
       new CustomEvent("value-changed", {
         detail: { value },
         bubbles: true,
-        composed: true,
       }),
     );
   }

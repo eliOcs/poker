@@ -10,8 +10,8 @@
     border: 6px solid var(--color-bg-dark);
     border-radius: 9999px;
     box-shadow:
-      inset 4px 4px 0 rgba(255, 255, 255, 0.1),
-      inset -4px -4px 0 rgba(0, 0, 0, 0.2),
+      inset 4px 4px 0 rgb(255 255 255 / 10%),
+      inset -4px -4px 0 rgb(0 0 0 / 20%),
       8px 8px 0 var(--color-bg-dark);
     box-sizing: border-box;
   }
@@ -78,7 +78,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgb(0 0 0 / 80%);
     border-radius: 9999px;
     z-index: 10;
   }

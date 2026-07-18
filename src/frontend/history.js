@@ -181,7 +181,6 @@ export class History extends LitElement {
       new CustomEvent("hand-select", {
         detail: { handNumber },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -211,7 +210,6 @@ export class History extends LitElement {
     this.dispatchEvent(
       new CustomEvent("close", {
         bubbles: true,
-        composed: true,
       }),
     );
     // Go back in browser history for standalone mode (direct URL access)

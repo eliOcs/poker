@@ -26,7 +26,6 @@ describe("phg-app", () => {
       };
 
       const element = await fixture(html`<phg-app></phg-app>`);
-      expect(element.shadowRoot).to.be.null;
       await element.updateComplete;
 
       expect(MockWebSocket.instances).to.have.length(0);
@@ -262,7 +261,6 @@ describe("phg-app", () => {
         new CustomEvent("navigate", {
           detail: { path: "/mtt/mtt123", allowMttLobby: true },
           bubbles: true,
-          composed: true,
         }),
       );
       await element.updateComplete;

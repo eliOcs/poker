@@ -12,8 +12,9 @@
   th,
   td {
     padding: var(--space-md) var(--space-lg);
-    text-align: left;
     font-size: var(--font-sm);
+    text-align: left;
+    white-space: nowrap;
   }
 
   th {
@@ -38,13 +39,9 @@
 
   :where(:scope) {
     display: block;
+
     --modal-table-min-width: 340px;
     --modal-table-mobile-min-width: 300px;
-  }
-
-  th,
-  td {
-    white-space: nowrap;
   }
 
   tr.past td {

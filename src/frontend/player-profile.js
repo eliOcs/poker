@@ -30,7 +30,6 @@ class PlayerProfile extends LitElement {
         new CustomEvent("navigate", {
           detail: { path: getMttPath(tournamentId) },
           bubbles: true,
-          composed: true,
         }),
       );
       return;
@@ -45,7 +44,6 @@ class PlayerProfile extends LitElement {
           path: getHistoryPath(tableId, game.lastHandNumber),
         },
         bubbles: true,
-        composed: true,
       }),
     );
   }

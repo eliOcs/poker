@@ -161,7 +161,6 @@ phg-app .volume-slider label {
   color: var(--color-fg-medium);
   font: inherit;
   font-size: var(--font-md);
-  cursor: pointer;
   background: var(--color-bg-medium);
   border: 3px solid var(--color-bg-dark);
   text-align: center;

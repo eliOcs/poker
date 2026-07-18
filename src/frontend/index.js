@@ -172,7 +172,6 @@ export class Game extends LitElement {
       new CustomEvent("game-action", {
         detail: message,
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -249,7 +248,6 @@ export class Game extends LitElement {
           new CustomEvent("toast", {
             detail: { message: "You will sit out after this hand" },
             bubbles: true,
-            composed: true,
           }),
         );
       }
@@ -264,7 +262,6 @@ export class Game extends LitElement {
           path: getHistoryPath(this.gameId),
         },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -282,7 +279,6 @@ export class Game extends LitElement {
           allowMttLobby: true,
         },
         bubbles: true,
-        composed: true,
       }),
     );
   }
@@ -293,7 +289,6 @@ export class Game extends LitElement {
       new CustomEvent("navigate", {
         detail: { path: getTablePath("mtt", tableId, this.tournamentId) },
         bubbles: true,
-        composed: true,
       }),
     );
   }

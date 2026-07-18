@@ -16,7 +16,6 @@ describe("phg-history", () => {
       element = await fixture(
         html`<phg-history .gameId=${"test123"}></phg-history>`,
       );
-      expect(element.shadowRoot).to.be.null;
 
       const loading = element.querySelector(".loading");
       const empty = element.querySelector(".empty");

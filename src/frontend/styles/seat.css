@@ -241,14 +241,17 @@
       opacity: 0;
       transform: translateX(-50%) scale(0.5);
     }
+
     10% {
       opacity: 1;
       transform: translateX(-50%) scale(1);
     }
+
     70% {
       opacity: 1;
       transform: translateX(-50%) translateY(0) scale(1);
     }
+
     100% {
       opacity: 0;
       transform: translateX(-50%) translateY(-1.5em) scale(1);
@@ -273,8 +276,8 @@
     border: 3px solid var(--color-bg-dark);
     box-shadow:
       3px 3px 0 var(--color-bg-dark),
-      inset -2px -2px 0 rgba(0, 0, 0, 0.1),
-      inset 2px 2px 0 rgba(255, 255, 255, 0.4);
+      inset -2px -2px 0 rgb(0 0 0 / 10%),
+      inset 2px 2px 0 rgb(255 255 255 / 40%);
   }
 
   .chat-bubble::after {
@@ -297,14 +300,17 @@
       opacity: 0;
       transform: translateX(-50%) scale(0.5);
     }
+
     10% {
       opacity: 1;
       transform: translateX(-50%) scale(1);
     }
+
     70% {
       opacity: 1;
       transform: translateX(-50%) translateY(0) scale(1);
     }
+
     100% {
       opacity: 0;
       transform: translateX(-50%) translateY(-1em) scale(1);
@@ -452,6 +458,7 @@
       inset: auto 0 -2em auto;
       transform: none;
     }
+
     :scope[data-table-size="6"][data-seat="2"] .bet-indicator,
     :scope[data-table-size="6"][data-seat="3"] .bet-indicator {
       inset: auto auto -2em 0;

@@ -40,7 +40,6 @@ describe("phg-app sign in", () => {
       new CustomEvent("request-sign-in", {
         detail: { email: "player@example.com" },
         bubbles: true,
-        composed: true,
       }),
     );
 
@@ -173,7 +172,6 @@ describe("phg-app sign in", () => {
       new CustomEvent("request-sign-in", {
         detail: { email: "player@example.com" },
         bubbles: true,
-        composed: true,
       }),
     );
 
@@ -385,7 +383,6 @@ describe("phg-app sign in", () => {
     profile.dispatchEvent(
       new CustomEvent("open-sign-in", {
         bubbles: true,
-        composed: true,
       }),
     );
     await element.updateComplete;
@@ -420,7 +417,6 @@ describe("phg-app sign in", () => {
     home.dispatchEvent(
       new CustomEvent("open-sign-in", {
         bubbles: true,
-        composed: true,
       }),
     );
     await element.updateComplete;
@@ -450,7 +446,6 @@ describe("phg-app sign in", () => {
     element.dispatchEvent(
       new CustomEvent("open-sign-up", {
         bubbles: true,
-        composed: true,
       }),
     );
     await element.updateComplete;

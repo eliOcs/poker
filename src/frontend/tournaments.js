@@ -40,7 +40,6 @@ class Tournaments extends LitElement {
     this.dispatchEvent(
       new CustomEvent("open-sign-up", {
         bubbles: true,
-        composed: true,
       }),
     );
   }

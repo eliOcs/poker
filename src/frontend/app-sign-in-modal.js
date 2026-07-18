@@ -73,7 +73,6 @@ class AppSignInModal extends LitElement {
       new CustomEvent("request-sign-in", {
         detail: this.mode === "sign-up" ? { email, name } : { email },
         bubbles: true,
-        composed: true,
       }),
     );
     this.close();

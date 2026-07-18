@@ -11,12 +11,10 @@
   --font-sm: 10px;
   --font-md: 12px;
   --font-lg: 14px;
-
   --space-xs: 2px;
   --space-sm: 4px;
   --space-md: 8px;
   --space-lg: 16px;
-
   --color-primary: #f4a020;
   --color-secondary: #84a;
   --color-accent: #36c;
@@ -49,7 +47,7 @@
 
 html,
 body {
-  margin: 0px;
+  margin: 0;
   height: 100%;
   background-color: var(--color-bg-dark, #0f0f1a);
   overscroll-behavior: none;
@@ -66,7 +64,6 @@ body {
     --font-sm: 9px;
     --font-md: 10px;
     --font-lg: 12px;
-
     --space-xs: 2px;
     --space-sm: 3px;
     --space-md: 6px;

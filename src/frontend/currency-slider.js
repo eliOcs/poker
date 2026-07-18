@@ -40,7 +40,6 @@ class CurrencySlider extends LitElement {
         new CustomEvent("value-changed", {
           detail: { value: clamped },
           bubbles: true,
-          composed: true,
         }),
       );
     }

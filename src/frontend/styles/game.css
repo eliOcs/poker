@@ -339,11 +339,13 @@
       top: 14%;
       left: 11%;
     }
+
     phg-seat[data-seat="1"] {
       top: 12%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     phg-seat[data-seat="2"] {
       top: 14%;
       right: 11%;
@@ -354,6 +356,7 @@
       top: 45%;
       right: 0;
     }
+
     phg-seat[data-seat="4"] {
       bottom: 15%;
       right: 1%;
@@ -363,6 +366,7 @@
       bottom: 3%;
       right: 26%;
     }
+
     phg-seat[data-seat="6"] {
       bottom: 3%;
       left: 26%;
@@ -373,6 +377,7 @@
       bottom: 15%;
       left: 1%;
     }
+
     phg-seat[data-seat="8"] {
       top: 45%;
       left: 0;
@@ -385,6 +390,7 @@
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="2"] phg-seat[data-seat="1"] {
       top: 12%;
       left: 50%;
@@ -396,26 +402,31 @@
       top: 25%;
       left: 8%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="1"] {
       top: 15%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="2"] {
       top: 25%;
       right: 8%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="3"] {
       top: auto;
       bottom: 16%;
       right: 8%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="4"] {
       top: auto;
       bottom: 4%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="5"] {
       top: auto;
       bottom: 16%;
@@ -429,11 +440,13 @@
       top: 22%;
       left: 0;
     }
+
     phg-seat[data-seat="1"] {
       top: 10%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     phg-seat[data-seat="2"] {
       top: 22%;
       right: 0;
@@ -444,6 +457,7 @@
       top: 38%;
       right: 0;
     }
+
     phg-seat[data-seat="4"] {
       bottom: 28%;
       right: 0;
@@ -453,6 +467,7 @@
       bottom: 5%;
       right: 8%;
     }
+
     phg-seat[data-seat="6"] {
       bottom: 5%;
       left: 8%;
@@ -463,6 +478,7 @@
       bottom: 28%;
       left: 0;
     }
+
     phg-seat[data-seat="8"] {
       top: 38%;
       left: 0;
@@ -475,6 +491,7 @@
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="2"] phg-seat[data-seat="1"] {
       top: 10%;
       left: 50%;
@@ -486,26 +503,31 @@
       top: 30%;
       left: 2%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="1"] {
       top: 10%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="2"] {
       top: 30%;
       right: 2%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="3"] {
       top: auto;
       bottom: 24%;
       right: 2%;
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="4"] {
       top: auto;
       bottom: 1%;
       left: 50%;
       transform: translateX(-50%);
     }
+
     #seats[data-table-size="6"] phg-seat[data-seat="5"] {
       top: auto;
       bottom: 24%;

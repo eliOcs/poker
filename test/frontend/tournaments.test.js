@@ -4,7 +4,6 @@ import "../../src/frontend/tournaments.js";
 describe("phg-tournaments", () => {
   it("renders the tournament creation form without a game type selector", async () => {
     const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
-    expect(element.shadowRoot).to.be.null;
 
     expect(element.querySelector(".panel")).to.exist;
     expect(element.querySelector('input[name="gameType"]')).to.not.exist;

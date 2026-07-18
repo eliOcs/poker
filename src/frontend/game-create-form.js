@@ -89,7 +89,6 @@ export function dispatchNavigate(target, path) {
     new CustomEvent("navigate", {
       detail: { path },
       bubbles: true,
-      composed: true,
     }),
   );
 }

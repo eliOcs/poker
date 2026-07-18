@@ -101,7 +101,6 @@ describe("phg-edit-label", () => {
       new KeyboardEvent("keydown", {
         key: "Escape",
         bubbles: true,
-        composed: true,
       }),
     );
     await element.updateComplete;

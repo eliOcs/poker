@@ -3,7 +3,6 @@ function dispatchToast(host, detail) {
     new CustomEvent("toast", {
       detail,
       bubbles: true,
-      composed: true,
     }),
   );
 }
@@ -32,7 +31,6 @@ export const gameModalActions = {
       new CustomEvent("navigate", {
         detail: { path: `/players/${this.user.id}` },
         bubbles: true,
-        composed: true,
       }),
     );
   },
@@ -128,7 +126,6 @@ export const gameModalActions = {
           },
         },
         bubbles: true,
-        composed: true,
       }),
     );
     dispatchToast(this, { message: "Settings saved", variant: "success" });
@@ -147,7 +144,6 @@ export const gameModalActions = {
       new CustomEvent("request-sign-in", {
         detail: { email },
         bubbles: true,
-        composed: true,
       }),
     );
     this.showSignIn = false;
@@ -169,7 +165,6 @@ export const gameModalActions = {
       new CustomEvent("request-sign-in", {
         detail: { email, name },
         bubbles: true,
-        composed: true,
       }),
     );
     this.showSignUp = false;

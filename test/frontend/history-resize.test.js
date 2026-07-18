@@ -19,7 +19,6 @@ describe("phg-history timeline resizing", () => {
         bubbles: true,
         cancelable: true,
         clientY,
-        composed: true,
       }),
     );
   }

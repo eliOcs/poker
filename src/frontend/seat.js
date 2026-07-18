@@ -47,7 +47,6 @@ class Seat extends LitElement {
       this.dispatchEvent(
         new CustomEvent("seat-settings", {
           bubbles: true,
-          composed: true,
         }),
       );
     };
@@ -144,7 +143,6 @@ class Seat extends LitElement {
         new CustomEvent("seat-action", {
           detail: sitAction,
           bubbles: true,
-          composed: true,
         }),
       );
     }

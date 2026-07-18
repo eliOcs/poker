@@ -111,7 +111,6 @@ describe("phg-mtt-lobby", () => {
     const element = await fixture(html`
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
-    expect(element.shadowRoot).to.be.null;
 
     const lateRegister = [
       ...element.querySelectorAll(".action-row button.button"),
@@ -460,7 +459,6 @@ describe("phg-mtt-lobby", () => {
         new CustomEvent("value-changed", {
           detail: { value: "Saturday Major" },
           bubbles: true,
-          composed: true,
         }),
       );
     });

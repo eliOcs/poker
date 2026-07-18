@@ -4,7 +4,6 @@ import "../../src/frontend/home.js";
 describe("phg-home", () => {
   it("renders the game creation form", async () => {
     const element = await fixture(html`<phg-home></phg-home>`);
-    expect(element.shadowRoot).to.be.null;
     expect(element.querySelector(".panel")).to.exist;
     expect(element.querySelector("button.button")).to.exist;
   });
