@@ -388,9 +388,7 @@ const guestCleanupTimer = setInterval(
   runGuestUserCleanup,
   GUEST_CLEANUP_INTERVAL_MS,
 );
-if (typeof guestCleanupTimer.unref === "function") {
-  guestCleanupTimer.unref();
-}
+guestCleanupTimer.unref();
 
 const evictInactiveGames = createInactiveGameEvictor();
 const evictionTimer = setInterval(() => {
