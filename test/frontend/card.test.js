@@ -21,13 +21,13 @@ describe("phg-card", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
     expect(cardElements.length).to.be.greaterThan(0);
 
     const cardTexts = Array.from(cardElements).map((c) => {
-      const card = c.shadowRoot.querySelector(".card.front");
+      const card = c.querySelector(".card.front");
       return card ? card.textContent.trim() : "";
     });
     expect(cardTexts.some((t) => t.includes("♥"))).to.be.true;
@@ -38,13 +38,13 @@ describe("phg-card", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundHidden = false;
     for (const seat of seats) {
       await seat.updateComplete;
-      const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+      const cardElements = seat.querySelectorAll("phg-card");
       for (const cardEl of cardElements) {
-        const hiddenCard = cardEl.shadowRoot.querySelector(".card.back");
+        const hiddenCard = cardEl.querySelector(".card.back");
         if (hiddenCard) foundHidden = true;
       }
     }
@@ -55,13 +55,13 @@ describe("phg-card", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
 
     let foundRed = false;
     for (const cardEl of cardElements) {
-      const redCard = cardEl.shadowRoot.querySelector(".card.red");
+      const redCard = cardEl.querySelector(".card.red");
       if (redCard) foundRed = true;
     }
     expect(foundRed).to.be.true;
@@ -71,13 +71,13 @@ describe("phg-card", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
 
     let foundBlack = false;
     for (const cardEl of cardElements) {
-      const blackCard = cardEl.shadowRoot.querySelector(".card.black");
+      const blackCard = cardEl.querySelector(".card.black");
       if (blackCard) foundBlack = true;
     }
     expect(foundBlack).to.be.true;
@@ -93,12 +93,12 @@ describe("phg-card", () => {
     element.game = gameWithRanks;
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
 
     const cardTexts = Array.from(cardElements).map((c) => {
-      const card = c.shadowRoot.querySelector(".card.front");
+      const card = c.querySelector(".card.front");
       return card ? card.textContent.trim() : "";
     });
     expect(cardTexts.some((t) => t.includes("A"))).to.be.true;
@@ -149,15 +149,15 @@ describe("phg-card", () => {
     element.game = gameWithWinner;
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     const playerSeat = seats[0];
     await playerSeat.updateComplete;
 
-    const cardElements = playerSeat.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = playerSeat.querySelectorAll("phg-card");
     let foundWinning = false;
     for (const cardEl of cardElements) {
       await cardEl.updateComplete;
-      const winningCard = cardEl.shadowRoot.querySelector(".card.winning");
+      const winningCard = cardEl.querySelector(".card.winning");
       if (winningCard) foundWinning = true;
     }
     expect(foundWinning).to.be.true;
@@ -167,13 +167,13 @@ describe("phg-card", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
 
     let foundWinning = false;
     for (const cardEl of cardElements) {
-      const winningCard = cardEl.shadowRoot.querySelector(".card.winning");
+      const winningCard = cardEl.querySelector(".card.winning");
       if (winningCard) foundWinning = true;
     }
     expect(foundWinning).to.be.false;

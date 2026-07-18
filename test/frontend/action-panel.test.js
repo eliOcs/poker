@@ -33,12 +33,10 @@ function findButtonByExactText(root, text) {
 
 // Helper to get currency slider's internal range input
 async function getCurrencySliderRange(actionPanel) {
-  const currencySlider = actionPanel.shadowRoot.querySelector(
-    "phg-currency-slider",
-  );
+  const currencySlider = actionPanel.querySelector("phg-currency-slider");
   if (!currencySlider) return null;
   await currencySlider.updateComplete;
-  return currencySlider.shadowRoot.querySelector('input[type="range"]');
+  return currencySlider.querySelector('input[type="range"]');
 }
 
 describe("phg-action-panel", () => {
@@ -66,18 +64,16 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
-      expect(actionPanel.shadowRoot.textContent).to.include(
-        "Waiting for your turn",
-      );
+      expect(actionPanel.textContent).to.include("Waiting for your turn");
     });
 
     it("renders buyIn slider with min/max from action", async () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
       const slider = await getCurrencySliderRange(actionPanel);
@@ -86,7 +82,7 @@ describe("phg-action-panel", () => {
       expect(slider.min).to.equal("100000");
       expect(slider.max).to.equal("500000");
 
-      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
+      const buyInButton = findButtonByText(actionPanel, "Buy In");
       expect(buyInButton).to.exist;
       expect(buyInButton.textContent).to.include("Buy In");
     });
@@ -95,10 +91,10 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
+      const buyInButton = findButtonByText(actionPanel, "Buy In");
       expect(buyInButton).to.exist;
       // default=80 BB, bigBlind=50, so initial display should be $4,000
       expect(buyInButton.textContent).to.include("$4,000");
@@ -108,19 +104,17 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const currencySlider = actionPanel.shadowRoot.querySelector(
-        "phg-currency-slider",
-      );
+      const currencySlider = actionPanel.querySelector("phg-currency-slider");
       // 50 BB * 5000 cents = 250000 cents = $2,500
       currencySlider.dispatchEvent(
         new CustomEvent("value-changed", { detail: { value: 250000 } }),
       );
       await actionPanel.updateComplete;
 
-      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
+      const buyInButton = findButtonByText(actionPanel, "Buy In");
       expect(buyInButton.textContent).to.include("$2,500");
     });
 
@@ -130,7 +124,7 @@ describe("phg-action-panel", () => {
       element.game.seats[0].actions = [{ action: "buyIn" }];
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
       const slider = await getCurrencySliderRange(actionPanel);
@@ -139,7 +133,7 @@ describe("phg-action-panel", () => {
       expect(slider.min).to.equal("100000");
       expect(slider.max).to.equal("500000");
 
-      const buyInButton = findButtonByText(actionPanel.shadowRoot, "Buy In");
+      const buyInButton = findButtonByText(actionPanel, "Buy In");
       // fallback: default=80 BB * $50 = $4,000
       expect(buyInButton.textContent).to.include("$4,000");
     });
@@ -148,10 +142,10 @@ describe("phg-action-panel", () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const checkButton = findButtonByText(actionPanel.shadowRoot, "Check");
+      const checkButton = findButtonByText(actionPanel, "Check");
       expect(checkButton).to.exist;
       expect(checkButton.textContent).to.include("Check");
     });
@@ -160,10 +154,10 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const callButton = findButtonByText(actionPanel.shadowRoot, "Call");
+      const callButton = findButtonByText(actionPanel, "Call");
       expect(callButton).to.exist;
       expect(callButton.textContent).to.include("Call");
       expect(callButton.textContent).to.include("$25"); // $25 from 2500 cents
@@ -202,11 +196,11 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const callButton = findButtonByText(actionPanel.shadowRoot, "Call");
-      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
+      const callButton = findButtonByText(actionPanel, "Call");
+      const allInButton = findButtonByText(actionPanel, "All-In");
 
       expect(callButton).to.exist;
       expect(callButton.textContent).to.include("$3,000");
@@ -218,10 +212,10 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const foldButton = findButtonByText(actionPanel.shadowRoot, "Fold");
+      const foldButton = findButtonByText(actionPanel, "Fold");
       expect(foldButton).to.exist;
       expect(foldButton.textContent).to.include("Fold");
     });
@@ -246,23 +240,22 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      expect(findButtonByExactText(actionPanel.shadowRoot, "Rebuy")).to.exist;
-      expect(findButtonByExactText(actionPanel.shadowRoot, "Leave")).to.exist;
-      expect(findButtonByExactText(actionPanel.shadowRoot, "Leave Table")).to
-        .not.exist;
+      expect(findButtonByExactText(actionPanel, "Rebuy")).to.exist;
+      expect(findButtonByExactText(actionPanel, "Leave")).to.exist;
+      expect(findButtonByExactText(actionPanel, "Leave Table")).to.not.exist;
     });
 
     it("renders Bet slider and button", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const betButton = findButtonByText(actionPanel.shadowRoot, "Bet");
+      const betButton = findButtonByText(actionPanel, "Bet");
       expect(betButton).to.exist;
       expect(betButton.textContent).to.include("Bet");
       expect(betButton.textContent).to.include("$"); // Now shows amount
@@ -275,10 +268,10 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const raiseButton = findButtonByText(actionPanel.shadowRoot, "Raise");
+      const raiseButton = findButtonByText(actionPanel, "Raise");
       expect(raiseButton).to.exist;
       expect(raiseButton.textContent).to.include("Raise");
     });
@@ -287,11 +280,11 @@ describe("phg-action-panel", () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       actionPanel.betAmount = 100000; // Set to max ($1,000 in cents)
       await actionPanel.updateComplete;
 
-      const allInButton = findButtonByText(actionPanel.shadowRoot, "All-In");
+      const allInButton = findButtonByText(actionPanel, "All-In");
       expect(allInButton).to.exist;
       expect(allInButton.textContent).to.include("All-In");
     });
@@ -300,13 +293,13 @@ describe("phg-action-panel", () => {
       element.game = createMockGameAtFlop(); // pot: 20000
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      expect(findButtonByText(actionPanel.shadowRoot, "Min")).to.exist;
-      expect(findButtonByText(actionPanel.shadowRoot, "½ Pot")).to.exist;
-      expect(findButtonByExactText(actionPanel.shadowRoot, "Pot")).to.exist;
-      expect(findButtonByText(actionPanel.shadowRoot, "Max")).to.exist;
+      expect(findButtonByText(actionPanel, "Min")).to.exist;
+      expect(findButtonByText(actionPanel, "½ Pot")).to.exist;
+      expect(findButtonByExactText(actionPanel, "Pot")).to.exist;
+      expect(findButtonByText(actionPanel, "Max")).to.exist;
     });
 
     it("renders BB-based preset labels when pot is 0", async () => {
@@ -329,13 +322,13 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      expect(findButtonByText(actionPanel.shadowRoot, "Min")).to.exist;
-      expect(findButtonByText(actionPanel.shadowRoot, "2.5 BB")).to.exist;
-      expect(findButtonByText(actionPanel.shadowRoot, "3 BB")).to.exist;
-      expect(findButtonByText(actionPanel.shadowRoot, "Max")).to.exist;
+      expect(findButtonByText(actionPanel, "Min")).to.exist;
+      expect(findButtonByText(actionPanel, "2.5 BB")).to.exist;
+      expect(findButtonByText(actionPanel, "3 BB")).to.exist;
+      expect(findButtonByText(actionPanel, "Max")).to.exist;
     });
 
     it("disables ½ Pot and Pot presets when they exceed the player stack", async () => {
@@ -360,17 +353,13 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      expect(findButtonByText(actionPanel.shadowRoot, "½ Pot").disabled).to.be
-        .true;
-      expect(findButtonByExactText(actionPanel.shadowRoot, "Pot").disabled).to
-        .be.true;
-      expect(findButtonByText(actionPanel.shadowRoot, "Min").disabled).to.not.be
-        .true;
-      expect(findButtonByText(actionPanel.shadowRoot, "Max").disabled).to.not.be
-        .true;
+      expect(findButtonByText(actionPanel, "½ Pot").disabled).to.be.true;
+      expect(findButtonByExactText(actionPanel, "Pot").disabled).to.be.true;
+      expect(findButtonByText(actionPanel, "Min").disabled).to.not.be.true;
+      expect(findButtonByText(actionPanel, "Max").disabled).to.not.be.true;
     });
 
     it("renders show-card buttons with card components", async () => {
@@ -394,17 +383,15 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
       const showButtons = [
-        ...actionPanel.shadowRoot.querySelectorAll("phg-button"),
+        ...actionPanel.querySelectorAll("phg-button"),
       ].filter((btn) => btn.textContent.includes("Show"));
       expect(showButtons.length).to.equal(3);
 
-      const cards = actionPanel.shadowRoot.querySelectorAll(
-        ".show-cards phg-card",
-      );
+      const cards = actionPanel.querySelectorAll(".show-cards phg-card");
       expect(cards.length).to.equal(4);
     });
 
@@ -431,20 +418,16 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const socialRow =
-        actionPanel.shadowRoot.querySelector(".social-action-row");
+      const socialRow = actionPanel.querySelector(".social-action-row");
       expect(socialRow).to.exist;
       expect(socialRow.textContent).to.include("Emote");
       expect(socialRow.textContent).to.include("Chat");
       expect(socialRow.textContent).to.not.include("Call the clock");
 
-      const callClockButton = findButtonByText(
-        actionPanel.shadowRoot,
-        "Call the clock",
-      );
+      const callClockButton = findButtonByText(actionPanel, "Call the clock");
       expect(callClockButton).to.exist;
       expect(callClockButton.getAttribute("icon")).to.equal("clock");
       const callClockIcon =
@@ -484,19 +467,15 @@ describe("phg-action-panel", () => {
       });
       await element.updateComplete;
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
 
-      const startButton = findButtonByText(
-        actionPanel.shadowRoot,
-        "Start Game",
-      );
+      const startButton = findButtonByText(actionPanel, "Start Game");
       expect(startButton).to.exist;
       const startRow = startButton.closest(".action-row");
       expect(startRow).to.exist;
 
-      const socialRow =
-        actionPanel.shadowRoot.querySelector(".social-action-row");
+      const socialRow = actionPanel.querySelector(".social-action-row");
       expect(socialRow).to.exist;
       expect(startRow).to.not.equal(socialRow);
       expect(socialRow.textContent).to.include("Emote");

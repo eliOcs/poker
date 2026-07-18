@@ -27,7 +27,7 @@ describe("phg-seat", () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     expect(seats.length).to.equal(6);
 
     let emptyCount = 0;
@@ -35,7 +35,7 @@ describe("phg-seat", () => {
     for (const seat of seats) {
       await seat.updateComplete;
       if (seat.classList.contains("empty")) emptyCount++;
-      const sitBtn = seat.shadowRoot.querySelector("phg-button");
+      const sitBtn = seat.querySelector("phg-button");
       if (sitBtn && sitBtn.textContent.trim() === "Sit") sitButtonCount++;
     }
     expect(emptyCount).to.equal(6);
@@ -46,16 +46,16 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundOccupied = false;
     for (const seat of seats) {
       await seat.updateComplete;
       if (!seat.classList.contains("empty")) {
         foundOccupied = true;
-        const playerName = seat.shadowRoot.querySelector(".player-name");
+        const playerName = seat.querySelector(".player-name");
         expect(playerName.textContent).to.include("Seat 1");
 
-        const stack = seat.shadowRoot.querySelector(".stack");
+        const stack = seat.querySelector(".stack");
         expect(stack.textContent).to.include("$1,000");
         break;
       }
@@ -67,12 +67,12 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seat = element.shadowRoot.querySelector("phg-seat.current-player");
+    const seat = element.querySelector("phg-seat.current-player");
     await seat.updateComplete;
     seat.click();
     await element.updateComplete;
 
-    const input = element.shadowRoot.querySelector("#name-input");
+    const input = element.querySelector("#name-input");
     expect(input).to.exist;
   });
 
@@ -80,7 +80,7 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seat = element.shadowRoot.querySelector("phg-seat.current-player");
+    const seat = element.querySelector("phg-seat.current-player");
     await seat.updateComplete;
     const eventPromise = oneEvent(seat, "seat-settings");
 
@@ -94,7 +94,7 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundOpponent = false;
     for (const seat of seats) {
       await seat.updateComplete;
@@ -103,7 +103,7 @@ describe("phg-seat", () => {
         !seat.classList.contains("current-player")
       ) {
         foundOpponent = true;
-        const playerName = seat.shadowRoot.querySelector(".player-name");
+        const playerName = seat.querySelector(".player-name");
         expect(playerName.textContent).to.include("Seat 2");
         break;
       }
@@ -124,9 +124,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const playerName = seats[0].shadowRoot.querySelector(".player-name");
+    const playerName = seats[0].querySelector(".player-name");
     expect(playerName.textContent).to.include("Alice");
   });
 
@@ -134,11 +134,11 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let betIndicator = null;
     for (const seat of seats) {
       await seat.updateComplete;
-      betIndicator = seat.shadowRoot.querySelector(".bet-indicator");
+      betIndicator = seat.querySelector(".bet-indicator");
       if (betIndicator) break;
     }
     expect(betIndicator).to.exist;
@@ -159,9 +159,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const dealerButton = seats[0].shadowRoot.querySelector(".dealer-button");
+    const dealerButton = seats[0].querySelector(".dealer-button");
     expect(dealerButton).to.exist;
     expect(dealerButton.textContent.trim()).to.equal("D");
   });
@@ -186,9 +186,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const clock = seats[0].shadowRoot.querySelector(".clock-countdown");
+    const clock = seats[0].querySelector(".clock-countdown");
     expect(clock).to.exist;
     expect(clock.textContent).to.include("45s");
     expect(clock.querySelector("svg")).to.exist;
@@ -198,18 +198,16 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundCurrentPlayer = false;
     for (const seat of seats) {
       await seat.updateComplete;
       if (seat.classList.contains("current-player")) {
         foundCurrentPlayer = true;
-        const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+        const cardElements = seat.querySelectorAll("phg-card");
         let visibleCount = 0;
         for (const cardEl of cardElements) {
-          const visibleCard = cardEl.shadowRoot.querySelector(
-            ".card-wrapper.flipped",
-          );
+          const visibleCard = cardEl.querySelector(".card-wrapper.flipped");
           if (visibleCard) visibleCount++;
         }
         expect(visibleCount).to.equal(2);
@@ -223,17 +221,17 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     for (const seat of seats) {
       await seat.updateComplete;
       if (
         !seat.classList.contains("empty") &&
         !seat.classList.contains("current-player")
       ) {
-        const cardElements = seat.shadowRoot.querySelectorAll("phg-card");
+        const cardElements = seat.querySelectorAll("phg-card");
         let hiddenCount = 0;
         for (const cardEl of cardElements) {
-          const hiddenCard = cardEl.shadowRoot.querySelector(
+          const hiddenCard = cardEl.querySelector(
             ".card-wrapper:not(.flipped)",
           );
           if (hiddenCard) hiddenCount++;
@@ -256,9 +254,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[1].updateComplete;
-    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    const holeCards = seats[1].querySelector(".hole-cards");
     expect(holeCards.classList.contains("revealed")).to.be.false;
   });
 
@@ -275,9 +273,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[1].updateComplete;
-    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    const holeCards = seats[1].querySelector(".hole-cards");
     expect(holeCards.classList.contains("revealed")).to.be.true;
   });
 
@@ -294,9 +292,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[1].updateComplete;
-    const holeCards = seats[1].shadowRoot.querySelector(".hole-cards");
+    const holeCards = seats[1].querySelector(".hole-cards");
     expect(holeCards.classList.contains("revealed")).to.be.true;
   });
 
@@ -313,7 +311,7 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("folded")).to.be.true;
   });
@@ -322,7 +320,7 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundActing = false;
     for (const seat of seats) {
       await seat.updateComplete;
@@ -347,7 +345,7 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await Promise.all([...seats].map((seat) => seat.updateComplete));
 
     expect(
@@ -368,7 +366,7 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("all-in")).to.be.true;
   });
@@ -377,7 +375,7 @@ describe("phg-seat", () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     let foundCurrentPlayer = false;
     for (const seat of seats) {
       await seat.updateComplete;
@@ -398,9 +396,9 @@ describe("phg-seat", () => {
       sentMessage = e.detail;
     });
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitButton = seats[0].shadowRoot.querySelector("phg-button");
+    const sitButton = seats[0].querySelector("phg-button");
     sitButton.click();
 
     expect(sentMessage).to.exist;
@@ -412,9 +410,9 @@ describe("phg-seat", () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitBtn = seats[0].shadowRoot.querySelector("phg-button");
+    const sitBtn = seats[0].querySelector("phg-button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit");
   });
@@ -423,9 +421,9 @@ describe("phg-seat", () => {
     element.game = createMockTournamentGameState();
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const sitBtn = seats[0].shadowRoot.querySelector("phg-button");
+    const sitBtn = seats[0].querySelector("phg-button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit $5");
   });
@@ -443,9 +441,9 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    const lastAction = seats[0].querySelector(".last-action");
     expect(lastAction).to.exist;
     expect(lastAction.textContent.toLowerCase()).to.include("check");
   });
@@ -463,12 +461,12 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    const lastAction = seats[0].querySelector(".last-action");
     expect(lastAction).to.not.exist;
     // But FOLDED status label should still show
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel.textContent).to.include("FOLDED");
   });
 
@@ -485,12 +483,12 @@ describe("phg-seat", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    const lastAction = seats[0].querySelector(".last-action");
     expect(lastAction).to.not.exist;
     // But ALL-IN status label should still show
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel.textContent).to.include("ALL-IN");
   });
 });

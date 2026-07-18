@@ -48,6 +48,17 @@ const routes = {
   "/styles/mtt-lobby.css": "src/frontend/styles/mtt-lobby.css",
   "/styles/player-profile.css": "src/frontend/styles/player-profile.css",
   "/styles/history.css": "src/frontend/styles/history.css",
+  "/styles/game.css": "src/frontend/styles/game.css",
+  "/styles/board.css": "src/frontend/styles/board.css",
+  "/styles/seat.css": "src/frontend/styles/seat.css",
+  "/styles/card.css": "src/frontend/styles/card.css",
+  "/styles/chips.css": "src/frontend/styles/chips.css",
+  "/styles/action-panel.css": "src/frontend/styles/action-panel.css",
+  "/styles/currency-slider.css": "src/frontend/styles/currency-slider.css",
+  "/styles/ranking-panel.css": "src/frontend/styles/ranking-panel.css",
+  "/styles/tournament-levels-panel.css":
+    "src/frontend/styles/tournament-levels-panel.css",
+  "/styles/edit-label.css": "src/frontend/styles/edit-label.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/release-notes": "src/frontend/index.html",
 };

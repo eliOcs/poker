@@ -1,5 +1,4 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 /** @typedef {import("../backend/poker/types.js").Cents} Cents */
 
 const MAX_PER_COLUMN = 8;
@@ -113,37 +112,8 @@ function getChipInlineStyle(denom) {
 }
 
 class Chips extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      css`
-        :host {
-          display: inline-flex;
-          align-items: flex-end;
-          gap: var(--space-md);
-        }
-
-        .column {
-          display: flex;
-          flex-direction: column-reverse;
-        }
-
-        .chip {
-          width: 16px;
-          height: 4px;
-          border: 1px solid color-mix(in srgb, var(--c), var(--s) 40%);
-          background: linear-gradient(
-            to right,
-            var(--s) 0 2px,
-            var(--c) 2px 6px,
-            var(--s) 6px 9px,
-            var(--c) 9px 13px,
-            var(--s) 13px 15px
-          );
-          box-sizing: border-box;
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

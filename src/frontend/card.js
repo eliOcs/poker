@@ -1,5 +1,4 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 
 const SUIT_SYMBOLS = {
   h: "♥",
@@ -25,152 +24,8 @@ const RANK_DISPLAY = {
 };
 
 class Card extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      css`
-        :host {
-          display: inline-block;
-        }
-
-        .card-wrapper {
-          display: inline-block;
-          position: relative;
-          width: 42px;
-          height: 56px;
-          perspective: 600px;
-        }
-
-        .card {
-          position: absolute;
-          inset: 0;
-          display: inline-flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background-color: var(--color-fg-white);
-          border: 3px solid var(--color-bg-dark);
-          line-height: 1;
-          font-size: 14px;
-          backface-visibility: hidden;
-          box-sizing: border-box;
-        }
-
-        .card .rank {
-          font-size: 14px;
-        }
-
-        .card .suit {
-          font-family: serif;
-          font-size: 20px;
-          margin-top: -2px;
-        }
-
-        .card.red {
-          color: var(--color-error);
-        }
-
-        .card.black {
-          color: var(--color-bg-dark);
-        }
-
-        .card.back {
-          background-color: var(--color-accent);
-          background-image:
-            repeating-linear-gradient(
-              0deg,
-              transparent,
-              transparent 4px,
-              var(--color-secondary) 4px,
-              var(--color-secondary) 8px
-            ),
-            repeating-linear-gradient(
-              90deg,
-              transparent,
-              transparent 4px,
-              var(--color-secondary) 4px,
-              var(--color-secondary) 8px
-            );
-        }
-
-        .card.static {
-          position: static;
-          width: 42px;
-          height: 56px;
-        }
-
-        .card.front {
-          transform: rotateY(180deg);
-        }
-
-        .flipped .card.back {
-          transform: rotateY(-180deg);
-        }
-
-        .flipped .card.front {
-          transform: rotateY(0);
-        }
-
-        .flipping .card {
-          transition: transform 0.4s ease-in-out;
-        }
-
-        @keyframes deal-in {
-          from {
-            transform: rotateY(90deg);
-          }
-        }
-
-        .dealing .card.back {
-          animation: deal-in 0.3s ease-out;
-        }
-
-        .dealing.flipped .card.front {
-          animation: deal-in 0.3s ease-out;
-        }
-
-        .card.placeholder {
-          position: static;
-          width: 42px;
-          height: 56px;
-          background-color: var(--color-bg-light);
-          border-color: var(--color-bg-disabled);
-          border-style: dashed;
-          box-sizing: border-box;
-        }
-
-        .card.winning {
-          border-color: var(--color-primary);
-          box-shadow: 0 0 6px var(--color-primary);
-        }
-
-        /* Larger cards on desktop */
-        @media (width >= 800px) {
-          .card-wrapper {
-            width: 63px;
-            height: 83px;
-          }
-
-          .card {
-            font-size: 18px;
-          }
-
-          .card.placeholder,
-          .card.static {
-            width: 63px;
-            height: 83px;
-          }
-
-          .card .rank {
-            font-size: 20px;
-          }
-
-          .card .suit {
-            font-size: 28px;
-          }
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {
@@ -208,7 +63,7 @@ class Card extends LitElement {
   updated() {
     if (this._flipping) {
       const front = /** @type {HTMLElement|undefined} */ (
-        this.shadowRoot?.querySelector(".card.front")
+        this.querySelector(".card.front")
       );
       if (front) {
         const handler = () => {
@@ -221,7 +76,7 @@ class Card extends LitElement {
     if (this._dealing) {
       const isFlipped = this.card && this.card !== "??";
       const face = /** @type {HTMLElement|undefined} */ (
-        this.shadowRoot?.querySelector(isFlipped ? ".card.front" : ".card.back")
+        this.querySelector(isFlipped ? ".card.front" : ".card.back")
       );
       if (face) {
         const handler = () => {

@@ -1,61 +1,9 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles, modalTableStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 
 class RankingPanel extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      modalTableStyles,
-      css`
-        :host {
-          display: block;
-        }
-
-        th .tooltip {
-          font-size: var(--font-xs);
-          color: var(--color-fg-muted);
-          display: block;
-          font-weight: normal;
-          margin-top: var(--space-sm);
-        }
-
-        .player-name {
-          color: var(--color-fg-white);
-          max-width: 200px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        @media (width < 800px) {
-          .player-name {
-            max-width: 120px;
-          }
-        }
-
-        .positive {
-          color: var(--color-success);
-        }
-
-        .negative {
-          color: var(--color-error);
-        }
-
-        .neutral {
-          color: var(--color-fg-medium);
-        }
-
-        .na {
-          color: var(--color-fg-muted);
-        }
-
-        .rank-col {
-          width: 20px;
-          color: var(--color-primary);
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

@@ -244,7 +244,7 @@ export function renderChatModal(game) {
         variant="action"
         full-width
         @click=${() => {
-          const input = game.shadowRoot.querySelector("#chat-input");
+          const input = game.querySelector("#chat-input");
           game.sendChat(input?.value ?? "");
         }}
         >Send</phg-button

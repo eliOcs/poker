@@ -40,7 +40,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const rows = el.shadowRoot.querySelectorAll("tbody tr");
+    const rows = el.querySelectorAll("tbody tr");
     expect(rows.length).to.equal(3);
   });
 
@@ -49,7 +49,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const names = el.shadowRoot.querySelectorAll(".player-name");
+    const names = el.querySelectorAll(".player-name");
     expect(names[0].textContent.trim()).to.equal("Alice");
     expect(names[1].textContent.trim()).to.equal("Seat 3"); // seatIndex 2 + 1
   });
@@ -59,7 +59,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const firstRow = el.shadowRoot.querySelector("tbody tr");
+    const firstRow = el.querySelector("tbody tr");
     const netCell = firstRow.querySelectorAll("td")[2];
     expect(netCell.classList.contains("positive")).to.be.true;
     expect(netCell.textContent).to.include("+$2");
@@ -70,7 +70,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const rows = el.shadowRoot.querySelectorAll("tbody tr");
+    const rows = el.querySelectorAll("tbody tr");
     const netCell = rows[1].querySelectorAll("td")[2];
     expect(netCell.classList.contains("negative")).to.be.true;
     expect(netCell.textContent).to.include("-$2");
@@ -81,7 +81,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const rows = el.shadowRoot.querySelectorAll("tbody tr");
+    const rows = el.querySelectorAll("tbody tr");
     const winRateCell = rows[2].querySelectorAll("td")[3];
     expect(winRateCell.textContent.trim()).to.equal("-");
     expect(winRateCell.classList.contains("na")).to.be.true;
@@ -92,14 +92,14 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${[]}></phg-ranking-panel>
     `);
 
-    const table = el.shadowRoot.querySelector("table");
+    const table = el.querySelector("table");
     expect(table).to.be.null;
   });
 
   it("renders nothing when rankings is undefined", async () => {
     const el = await fixture(html` <phg-ranking-panel></phg-ranking-panel> `);
 
-    const table = el.shadowRoot.querySelector("table");
+    const table = el.querySelector("table");
     expect(table).to.be.null;
   });
 
@@ -108,7 +108,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const rows = el.shadowRoot.querySelectorAll("tbody tr");
+    const rows = el.querySelectorAll("tbody tr");
     expect(rows[0].querySelectorAll("td")[0].textContent.trim()).to.equal("1");
     expect(rows[1].querySelectorAll("td")[0].textContent.trim()).to.equal("2");
     expect(rows[2].querySelectorAll("td")[0].textContent.trim()).to.equal("3");
@@ -119,7 +119,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const firstRow = el.shadowRoot.querySelector("tbody tr");
+    const firstRow = el.querySelector("tbody tr");
     const winRateCell = firstRow.querySelectorAll("td")[3];
     expect(winRateCell.textContent.trim()).to.equal("+8.0");
   });
@@ -129,7 +129,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const rows = el.shadowRoot.querySelectorAll("tbody tr");
+    const rows = el.querySelectorAll("tbody tr");
     const netCell = rows[2].querySelectorAll("td")[2];
     expect(netCell.classList.contains("neutral")).to.be.true;
     expect(netCell.textContent).to.include("$0");
@@ -140,7 +140,7 @@ describe("phg-ranking-panel", () => {
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
-    const headers = el.shadowRoot.querySelectorAll("th");
+    const headers = el.querySelectorAll("th");
     expect(headers[2].textContent).to.include("Net");
     expect(headers[2].textContent).to.include("profit/loss");
     expect(headers[3].textContent).to.include("BB/100");
@@ -158,7 +158,7 @@ describe("phg-ranking-panel", () => {
         ></phg-ranking-panel>
       `);
 
-      const headers = el.shadowRoot.querySelectorAll("th");
+      const headers = el.querySelectorAll("th");
       expect(headers.length).to.equal(4);
       expect(headers[2].textContent.trim()).to.equal("Stack");
       expect(headers[3].textContent.trim()).to.equal("Net");
@@ -172,7 +172,7 @@ describe("phg-ranking-panel", () => {
         ></phg-ranking-panel>
       `);
 
-      const firstRow = el.shadowRoot.querySelector("tbody tr");
+      const firstRow = el.querySelector("tbody tr");
       const cells = firstRow.querySelectorAll("td");
       expect(cells.length).to.equal(4);
       expect(cells[2].textContent).to.include("$12");

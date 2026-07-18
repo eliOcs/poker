@@ -21,9 +21,9 @@ describe("phg-board", () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const phase = board.shadowRoot.querySelector(".phase");
+    const phase = board.querySelector(".phase");
     expect(phase.textContent.toLowerCase()).to.include("waiting");
   });
 
@@ -31,9 +31,9 @@ describe("phg-board", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const phase = board.shadowRoot.querySelector(".phase");
+    const phase = board.querySelector(".phase");
     expect(phase.textContent.toLowerCase()).to.include("flop");
   });
 
@@ -41,9 +41,9 @@ describe("phg-board", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
     expect(cardElements.length).to.equal(3);
   });
 
@@ -51,9 +51,9 @@ describe("phg-board", () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+    const cardElements = board.querySelectorAll("phg-card");
     expect(cardElements.length).to.equal(0);
   });
 
@@ -61,9 +61,9 @@ describe("phg-board", () => {
     element.game = createMockGameAtFlop();
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const pot = board.shadowRoot.querySelector(".pot");
+    const pot = board.querySelector(".pot");
     expect(pot.textContent).to.include("200");
   });
 
@@ -73,9 +73,9 @@ describe("phg-board", () => {
     });
     await element.updateComplete;
 
-    const board = element.shadowRoot.querySelector("phg-board");
+    const board = element.querySelector("phg-board");
     await board.updateComplete;
-    const pot = board.shadowRoot.querySelector(".pot");
+    const pot = board.querySelector(".pot");
     expect(pot).to.be.null;
   });
 
@@ -88,9 +88,9 @@ describe("phg-board", () => {
       });
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const winnerName = board.shadowRoot.querySelector(".winner-name");
+      const winnerName = board.querySelector(".winner-name");
       expect(winnerName).to.exist;
       expect(winnerName.textContent).to.include("player1");
       expect(winnerName.textContent).to.include("wins");
@@ -104,9 +104,9 @@ describe("phg-board", () => {
       });
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const winnerHand = board.shadowRoot.querySelector(".winner-hand");
+      const winnerHand = board.querySelector(".winner-hand");
       expect(winnerHand).to.exist;
       expect(winnerHand.textContent).to.include("Straight Flush");
     });
@@ -119,9 +119,9 @@ describe("phg-board", () => {
       });
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const winnerAmount = board.shadowRoot.querySelector(".winner-amount");
+      const winnerAmount = board.querySelector(".winner-amount");
       expect(winnerAmount).to.exist;
       expect(winnerAmount.textContent).to.include("$300");
     });
@@ -134,9 +134,9 @@ describe("phg-board", () => {
       });
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const winnerHand = board.shadowRoot.querySelector(".winner-hand");
+      const winnerHand = board.querySelector(".winner-hand");
       expect(winnerHand).to.not.exist;
     });
 
@@ -148,9 +148,9 @@ describe("phg-board", () => {
       });
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const cardElements = board.shadowRoot.querySelectorAll("phg-card");
+      const cardElements = board.querySelectorAll("phg-card");
       expect(cardElements.length).to.equal(5);
     });
   });

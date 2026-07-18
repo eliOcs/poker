@@ -56,10 +56,10 @@ describe("emote picker", () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
-    const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+    const actionPanel = element.querySelector("phg-action-panel");
     await actionPanel.updateComplete;
 
-    const emoteButton = findButtonByText(actionPanel.shadowRoot, "Emote");
+    const emoteButton = findButtonByText(actionPanel, "Emote");
     expect(emoteButton).to.exist;
   });
 
@@ -67,14 +67,14 @@ describe("emote picker", () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
-    const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+    const actionPanel = element.querySelector("phg-action-panel");
     await actionPanel.updateComplete;
 
-    const emoteButton = findButtonByText(actionPanel.shadowRoot, "Emote");
+    const emoteButton = findButtonByText(actionPanel, "Emote");
     emoteButton.click();
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal("Emote");
     const grid = modal.querySelector(".emote-grid");
@@ -87,11 +87,11 @@ describe("emote picker", () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
-    const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+    const actionPanel = element.querySelector("phg-action-panel");
     await actionPanel.updateComplete;
 
     // Open picker
-    const emoteButton = findButtonByText(actionPanel.shadowRoot, "Emote");
+    const emoteButton = findButtonByText(actionPanel, "Emote");
     emoteButton.click();
     await element.updateComplete;
 
@@ -100,7 +100,7 @@ describe("emote picker", () => {
       sentMessage = e.detail;
     });
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     const emojiButtons = modal.querySelectorAll(".emote-grid button");
     emojiButtons[0].click();
 
@@ -113,19 +113,19 @@ describe("emote picker", () => {
     element.game = createEmoteGame();
     await element.updateComplete;
 
-    const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+    const actionPanel = element.querySelector("phg-action-panel");
     await actionPanel.updateComplete;
 
     // Open picker
-    findButtonByText(actionPanel.shadowRoot, "Emote").click();
+    findButtonByText(actionPanel, "Emote").click();
     await element.updateComplete;
 
     // Click an emoji
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     modal.querySelectorAll(".emote-grid button")[0].click();
     await element.updateComplete;
 
-    const closedModal = element.shadowRoot.querySelector("phg-modal");
+    const closedModal = element.querySelector("phg-modal");
     expect(closedModal).to.not.exist;
   });
 });
@@ -140,7 +140,7 @@ describe("emote seat bubble", () => {
     seatEl.requestUpdate();
     await seatEl.updateComplete;
 
-    const emoteBubble = seatEl.shadowRoot.querySelector(".emote-bubble");
+    const emoteBubble = seatEl.querySelector(".emote-bubble");
     expect(emoteBubble).to.exist;
     expect(emoteBubble.textContent.trim()).to.equal("😎");
   });
@@ -161,13 +161,13 @@ describe("emote seat bubble", () => {
     seatEl.requestUpdate();
     await seatEl.updateComplete;
 
-    expect(seatEl.shadowRoot.querySelector(".emote-bubble")).to.exist;
+    expect(seatEl.querySelector(".emote-bubble")).to.exist;
 
     // Wait for 3s timeout to clear it
     await new Promise((r) => setTimeout(r, 3100));
     await seatEl.updateComplete;
 
-    expect(seatEl.shadowRoot.querySelector(".emote-bubble")).to.not.exist;
+    expect(seatEl.querySelector(".emote-bubble")).to.not.exist;
   });
 
   it("updates emote when a new one arrives", async () => {
@@ -180,16 +180,16 @@ describe("emote seat bubble", () => {
     seatEl.requestUpdate();
     await seatEl.updateComplete;
 
-    expect(
-      seatEl.shadowRoot.querySelector(".emote-bubble").textContent.trim(),
-    ).to.equal("😎");
+    expect(seatEl.querySelector(".emote-bubble").textContent.trim()).to.equal(
+      "😎",
+    );
 
     // Simulate second emote
     seatEl._activeEmote = "🤣";
     seatEl.requestUpdate();
     await seatEl.updateComplete;
 
-    const bubble = seatEl.shadowRoot.querySelector(".emote-bubble");
+    const bubble = seatEl.querySelector(".emote-bubble");
     expect(bubble).to.exist;
     expect(bubble.textContent.trim()).to.equal("🤣");
   });

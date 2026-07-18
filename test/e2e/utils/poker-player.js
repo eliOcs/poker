@@ -201,8 +201,8 @@ export class PokerPlayer extends PokerPlayerActions {
       .evaluate(
         (el) =>
           el.tournamentFinishPosition != null ||
-          !!el.shadowRoot
-            ?.querySelector("phg-seat.current-player")
+          !!el
+            .querySelector("phg-seat.current-player")
             ?.classList.contains("busted"),
       )
       .catch(() => false);

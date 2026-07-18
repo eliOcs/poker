@@ -94,7 +94,7 @@ describe("phg-history", () => {
       const names = [];
       for (const seat of seats) {
         await seat.updateComplete;
-        const nameEl = seat.shadowRoot.querySelector(".player-name");
+        const nameEl = seat.querySelector(".player-name");
         if (nameEl) names.push(nameEl.textContent.trim());
       }
       // player1 is current player (styled with purple), player2 is "Bob"
@@ -111,7 +111,7 @@ describe("phg-history", () => {
       const board = element.querySelector("phg-board");
       await board.updateComplete;
       // When there's a winner, the board shows winner message instead of pot
-      const winnerAmount = board.shadowRoot.querySelector(".winner-amount");
+      const winnerAmount = board.querySelector(".winner-amount");
       expect(winnerAmount).to.exist;
       expect(winnerAmount.textContent).to.include("400");
     });
@@ -123,7 +123,7 @@ describe("phg-history", () => {
 
       const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const communityCards = board.shadowRoot.querySelector(".community-cards");
+      const communityCards = board.querySelector(".community-cards");
       expect(communityCards).to.exist;
 
       const cards = communityCards.querySelectorAll("phg-card");
@@ -142,7 +142,7 @@ describe("phg-history", () => {
 
       const board = element.querySelector("phg-board");
       await board.updateComplete;
-      const communityCards = board.shadowRoot.querySelector(".community-cards");
+      const communityCards = board.querySelector(".community-cards");
       const cards = communityCards.querySelectorAll("phg-card");
       expect(cards.length).to.equal(0);
     });
@@ -504,7 +504,7 @@ describe("phg-history", () => {
       let foundVisibleCard = false;
       for (const card of cards) {
         await card.updateComplete;
-        const visibleCard = card.shadowRoot.querySelector(".card.static");
+        const visibleCard = card.querySelector(".card.static");
         if (visibleCard) foundVisibleCard = true;
       }
       expect(foundVisibleCard).to.be.true;
@@ -534,10 +534,10 @@ describe("phg-history", () => {
       let foundHidden = false;
       for (const seat of seats) {
         await seat.updateComplete;
-        const cards = seat.shadowRoot.querySelectorAll("phg-card");
+        const cards = seat.querySelectorAll("phg-card");
         for (const card of cards) {
           await card.updateComplete;
-          const hiddenCard = card.shadowRoot.querySelector(".card.back");
+          const hiddenCard = card.querySelector(".card.back");
           if (hiddenCard) foundHidden = true;
         }
       }

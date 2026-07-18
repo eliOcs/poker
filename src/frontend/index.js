@@ -1,7 +1,4 @@
 import { html, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
-import { seatPositions } from "./game-layout.js";
-import { gameStyles } from "./game.styles.js";
 import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
@@ -35,8 +32,8 @@ import { renderActionPanel } from "./game-action-panel.js";
 /** @typedef {import("../shared/routes.js").LiveTableKind} GameKind */
 
 export class Game extends LitElement {
-  static get styles() {
-    return [baseStyles, seatPositions, gameStyles];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {
@@ -351,7 +348,7 @@ export class Game extends LitElement {
         .map((s, i) => ({ index: i, bet: s.empty ? 0 : (s.bet ?? 0) }))
         .filter((b) => b.bet > 0);
       if (bets.length > 0) {
-        this._pendingCollection = snapshotBetPositions(this.shadowRoot, bets);
+        this._pendingCollection = snapshotBetPositions(this, bets);
       }
     }
   }
@@ -361,7 +358,7 @@ export class Game extends LitElement {
     if (!sources) return;
     this._pendingCollection = undefined;
     const container = /** @type {HTMLElement|undefined} */ (
-      this.shadowRoot?.querySelector("#container")
+      this.querySelector("#container")
     );
     if (container) animateBetCollection(container, sources);
   }
@@ -372,7 +369,7 @@ export class Game extends LitElement {
     if (!Number.isInteger(seatIndex)) return;
 
     const seatEl = /** @type {SeatElement|undefined} */ (
-      this.shadowRoot?.querySelector(`phg-seat[data-seat="${seatIndex}"]`)
+      this.querySelector(`phg-seat[data-seat="${seatIndex}"]`)
     );
     if (!seatEl) return;
 

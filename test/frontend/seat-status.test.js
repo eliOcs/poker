@@ -34,9 +34,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    const handResult = seats[0].querySelector(".hand-result");
     expect(handResult).to.exist;
     expect(handResult.textContent).to.include("+$150");
     expect(handResult.classList.contains("won")).to.be.true;
@@ -55,9 +55,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
+    const handResult = seats[0].querySelector(".hand-result");
     expect(handResult).to.exist;
     expect(handResult.textContent).to.include("-$100");
     expect(handResult.classList.contains("lost")).to.be.true;
@@ -76,10 +76,10 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
-    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
+    const handResult = seats[0].querySelector(".hand-result");
+    const lastAction = seats[0].querySelector(".last-action");
     expect(handResult).to.exist;
     expect(lastAction).to.not.exist;
   });
@@ -97,10 +97,10 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const handResult = seats[0].shadowRoot.querySelector(".hand-result");
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const handResult = seats[0].querySelector(".hand-result");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(handResult).to.exist;
     expect(handResult.textContent).to.include("-$50");
     expect(statusLabel).to.not.exist;
@@ -119,7 +119,7 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("sitting-out")).to.be.true;
   });
@@ -137,9 +137,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("SITTING OUT");
   });
@@ -157,10 +157,10 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const lastAction = seats[0].shadowRoot.querySelector(".last-action");
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const lastAction = seats[0].querySelector(".last-action");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(lastAction).to.not.exist;
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("SITTING OUT");
@@ -179,7 +179,7 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("disconnected")).to.be.true;
   });
@@ -197,9 +197,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("DISCONNECTED");
   });
@@ -217,9 +217,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("DISCONNECTED");
     expect(statusLabel.textContent).to.not.include("SITTING OUT");
@@ -238,7 +238,7 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("disconnected")).to.be.false;
   });
@@ -256,7 +256,7 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("busted")).to.be.true;
     expect(seats[0].classList.contains("sitting-out")).to.be.false;
@@ -275,9 +275,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("3rd");
   });
@@ -295,9 +295,9 @@ describe("phg-seat status", () => {
     });
     await element.updateComplete;
 
-    const seats = element.shadowRoot.querySelectorAll("phg-seat");
+    const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
-    const statusLabel = seats[0].shadowRoot.querySelector(".status-label");
+    const statusLabel = seats[0].querySelector(".status-label");
     expect(statusLabel).to.exist;
     expect(statusLabel.textContent).to.include("3rd");
   });

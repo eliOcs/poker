@@ -40,24 +40,24 @@ describe("phg-game", () => {
       element.game = null;
       await element.updateComplete;
 
-      expect(element.shadowRoot.textContent).to.include("Loading");
-      expect(element.shadowRoot.querySelector("#wrapper")).to.exist;
+      expect(element.textContent).to.include("Loading");
+      expect(element.querySelector("#wrapper")).to.exist;
     });
 
     it("updates UI when game property changes", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const board = element.shadowRoot.querySelector("phg-board");
+      const board = element.querySelector("phg-board");
       await board.updateComplete;
-      let pot = board.shadowRoot.querySelector(".pot");
+      let pot = board.querySelector(".pot");
       expect(pot).to.be.null;
 
       element.game = createMockGameAtFlop();
       await element.updateComplete;
       await board.updateComplete;
 
-      pot = board.shadowRoot.querySelector(".pot");
+      pot = board.querySelector(".pot");
       expect(pot.textContent).to.include("200");
     });
 
@@ -80,9 +80,9 @@ describe("phg-game", () => {
       });
 
       // Trigger a seat action via the phg-seat component
-      const seats = element.shadowRoot.querySelectorAll("phg-seat");
+      const seats = element.querySelectorAll("phg-seat");
       await seats[0].updateComplete;
-      const sitButton = seats[0].shadowRoot.querySelector("phg-button");
+      const sitButton = seats[0].querySelector("phg-button");
       sitButton.click();
 
       // Should receive exactly one event, not two
@@ -98,9 +98,9 @@ describe("phg-game", () => {
         eventCount++;
       });
 
-      const actionPanel = element.shadowRoot.querySelector("phg-action-panel");
+      const actionPanel = element.querySelector("phg-action-panel");
       await actionPanel.updateComplete;
-      const checkButton = findButtonByText(actionPanel.shadowRoot, "Check");
+      const checkButton = findButtonByText(actionPanel, "Check");
       checkButton.click();
 
       // Should receive exactly one event, not two
@@ -113,7 +113,7 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const drawer = element.shadowRoot.querySelector("phg-navigation-drawer");
+      const drawer = element.querySelector("phg-navigation-drawer");
       const drawerNav = drawer.shadowRoot.querySelector("nav");
       const firstItem = drawerNav.firstElementChild;
       expect(firstItem).to.exist;
@@ -127,9 +127,9 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Settings"));
+      const settingsBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Settings"),
+      );
       expect(settingsBtn).to.exist;
     });
 
@@ -137,9 +137,7 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsIcon = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      )
+      const settingsIcon = Array.from(element.querySelectorAll("button"))
         .find((button) => button.textContent.includes("Settings"))
         ?.querySelector("svg");
       expect(settingsIcon).to.exist;
@@ -181,7 +179,7 @@ describe("phg-game", () => {
       };
       await element.updateComplete;
 
-      const drawerText = element.shadowRoot.textContent;
+      const drawerText = element.textContent;
       expect(drawerText).to.include("Table 1");
       expect(drawerText).to.include("Table 2");
       expect(drawerText).to.not.include("Rankings");
@@ -191,13 +189,13 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const settingsBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Settings"));
+      const settingsBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Settings"),
+      );
       settingsBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       expect(modal).to.exist;
     });
 
@@ -205,13 +203,13 @@ describe("phg-game", () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
-      const signInBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Sign in"));
+      const signInBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Sign in"),
+      );
       signInBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       expect(modal).to.exist;
       expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
         "Sign in",
@@ -228,15 +226,15 @@ describe("phg-game", () => {
       };
       await element.updateComplete;
 
-      const accountLink = Array.from(
-        element.shadowRoot.querySelectorAll("a"),
-      ).find((link) => link.textContent.includes("Elio"));
+      const accountLink = Array.from(element.querySelectorAll("a")).find(
+        (link) => link.textContent.includes("Elio"),
+      );
       expect(accountLink).to.exist;
       expect(accountLink.classList.contains("drawer-account")).to.equal(true);
 
-      const signInBtn = Array.from(
-        element.shadowRoot.querySelectorAll("button"),
-      ).find((button) => button.textContent.includes("Sign in"));
+      const signInBtn = Array.from(element.querySelectorAll("button")).find(
+        (button) => button.textContent.includes("Sign in"),
+      );
       expect(signInBtn).to.not.exist;
     });
 
@@ -250,9 +248,9 @@ describe("phg-game", () => {
       };
       await element.updateComplete;
 
-      const accountLink = Array.from(
-        element.shadowRoot.querySelectorAll("a"),
-      ).find((link) => link.textContent.includes("Elio"));
+      const accountLink = Array.from(element.querySelectorAll("a")).find(
+        (link) => link.textContent.includes("Elio"),
+      );
       expect(accountLink).to.exist;
       expect(accountLink.getAttribute("href")).to.equal("/players/player123");
       expect(accountLink.getAttribute("target")).to.equal("_blank");
@@ -269,9 +267,9 @@ describe("phg-game", () => {
       };
       await element.updateComplete;
 
-      const accountLink = Array.from(
-        element.shadowRoot.querySelectorAll("a"),
-      ).find((link) => link.textContent.includes("player123"));
+      const accountLink = Array.from(element.querySelectorAll("a")).find(
+        (link) => link.textContent.includes("player123"),
+      );
       expect(accountLink).to.exist;
       expect(accountLink.classList.contains("drawer-account")).to.equal(true);
     });
@@ -280,7 +278,7 @@ describe("phg-game", () => {
       element.game = createMockGameState({ handNumber: 0 });
       await element.updateComplete;
 
-      const buttons = Array.from(element.shadowRoot.querySelectorAll("button"));
+      const buttons = Array.from(element.querySelectorAll("button"));
       const rankingsBtn = buttons.find((button) =>
         button.textContent.includes("Rankings"),
       );
@@ -302,7 +300,7 @@ describe("phg-game", () => {
       historyBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       expect(modal).to.not.exist;
       expect(navigated).to.equal(false);
     });
@@ -312,7 +310,7 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const input = element.shadowRoot.querySelector("#name-input");
+      const input = element.querySelector("#name-input");
       expect(input).to.exist;
       expect(input.getAttribute("placeholder")).to.include("name");
     });
@@ -322,8 +320,8 @@ describe("phg-game", () => {
       element.showSignIn = true;
       await element.updateComplete;
 
-      const input = element.shadowRoot.querySelector("#sign-in-email");
-      const modalText = element.shadowRoot
+      const input = element.querySelector("#sign-in-email");
+      const modalText = element
         .querySelector("phg-modal")
         .textContent.replace(/\s+/g, " ");
 
@@ -339,13 +337,11 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const cancelBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="muted"]',
-      );
+      const cancelBtn = element.querySelector('phg-button[variant="muted"]');
       cancelBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       expect(modal).to.not.exist;
     });
 
@@ -354,12 +350,12 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       const overlay = modal.shadowRoot.querySelector(".overlay");
       overlay.click();
       await element.updateComplete;
 
-      const closedModal = element.shadowRoot.querySelector("phg-modal");
+      const closedModal = element.querySelector("phg-modal");
       expect(closedModal).to.not.exist;
     });
 
@@ -382,12 +378,10 @@ describe("phg-game", () => {
         sentMessage = e.detail;
       });
 
-      const input = element.shadowRoot.querySelector("#name-input");
+      const input = element.querySelector("#name-input");
       input.value = "TestPlayer";
 
-      const saveBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="action"]',
-      );
+      const saveBtn = element.querySelector('phg-button[variant="action"]');
       saveBtn.click();
 
       expect(sentMessage).to.exist;
@@ -408,13 +402,11 @@ describe("phg-game", () => {
         toast = e.detail;
       });
 
-      const saveBtn = element.shadowRoot.querySelector(
-        'phg-button[variant="action"]',
-      );
+      const saveBtn = element.querySelector('phg-button[variant="action"]');
       saveBtn.click();
       await element.updateComplete;
 
-      const modal = element.shadowRoot.querySelector("phg-modal");
+      const modal = element.querySelector("phg-modal");
       expect(modal).to.not.exist;
       expect(toast).to.deep.equal({
         message: "Settings saved",
@@ -433,7 +425,7 @@ describe("phg-game", () => {
       });
 
       const input = /** @type {HTMLInputElement} */ (
-        element.shadowRoot.querySelector("#sign-in-email")
+        element.querySelector("#sign-in-email")
       );
       input.value = "player@example.com";
 
@@ -441,7 +433,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       expect(request).to.deep.equal({ email: "player@example.com" });
-      expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
+      expect(element.querySelector("phg-modal")).to.not.exist;
     });
 
     it("shows the vibration toggle in settings", async () => {
@@ -449,7 +441,7 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const modalText = element.shadowRoot
+      const modalText = element
         .querySelector("phg-modal")
         .textContent.replace(/\s+/g, " ");
 
@@ -462,7 +454,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const input = /** @type {HTMLInputElement} */ (
-        element.shadowRoot.querySelector("#sign-in-email")
+        element.querySelector("#sign-in-email")
       );
 
       element.requestSignIn();
@@ -470,8 +462,8 @@ describe("phg-game", () => {
 
       expect(element._signInInvalid).to.equal(true);
       expect(input.getAttribute("aria-invalid")).to.equal("true");
-      expect(element.shadowRoot.activeElement).to.equal(input);
-      expect(element.shadowRoot.querySelector("phg-modal")).to.exist;
+      expect(document.activeElement).to.equal(input);
+      expect(element.querySelector("phg-modal")).to.exist;
     });
 
     it("pre-fills input with current user name", async () => {
@@ -484,7 +476,7 @@ describe("phg-game", () => {
       element.showSettings = true;
       await element.updateComplete;
 
-      const input = element.shadowRoot.querySelector("#name-input");
+      const input = element.querySelector("#name-input");
       expect(input.value).to.equal("CurrentName");
     });
   });

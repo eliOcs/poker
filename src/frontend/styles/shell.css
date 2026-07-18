@@ -69,9 +69,9 @@
   border-bottom: 0;
 }
 
-.feedback,
-.empty,
-.error {
+.shell-page .feedback,
+.shell-page .empty,
+.shell-page .error {
   margin: 0;
   padding: 18px;
   color: var(--color-fg-muted);
@@ -81,12 +81,12 @@
   border: 2px solid var(--color-bg-dark);
 }
 
-.error {
+.shell-page .error {
   color: var(--color-error);
 }
 
-.status,
-.status-pill {
+.shell-page .status,
+.shell-page .status-pill {
   display: inline-flex;
   align-items: center;
   justify-self: start;

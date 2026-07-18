@@ -4,11 +4,9 @@ import "./chips.js";
  * Snapshots the positions of bet indicators and the pot target,
  * relative to a container element. Must be called before Lit re-renders.
  */
-export function snapshotBetPositions(shadowRoot, bets) {
-  const container = shadowRoot?.querySelector("#container");
-  const potEl = shadowRoot
-    ?.querySelector("phg-board")
-    ?.shadowRoot?.querySelector(".pot");
+export function snapshotBetPositions(root, bets) {
+  const container = root.querySelector("#container");
+  const potEl = root.querySelector("phg-board .pot");
   if (!container || !potEl) return;
 
   const cRect = container.getBoundingClientRect();
@@ -18,9 +16,9 @@ export function snapshotBetPositions(shadowRoot, bets) {
 
   const sources = bets
     .map(({ index, bet }) => {
-      const betEl = shadowRoot
-        .querySelector(`phg-seat[data-seat="${index}"]`)
-        ?.shadowRoot?.querySelector(".bet-indicator");
+      const betEl = root.querySelector(
+        `phg-seat[data-seat="${index}"] .bet-indicator`,
+      );
       if (!betEl) return;
       const r = betEl.getBoundingClientRect();
       return {

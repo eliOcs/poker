@@ -1,5 +1,4 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 import { formatDollars } from "./currency.js";
 import "./button.js";
 
@@ -10,65 +9,8 @@ import "./button.js";
  * - Emits value-changed events with cents
  */
 class CurrencySlider extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      css`
-        :host {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: var(--space-md);
-        }
-
-        input[type="number"] {
-          width: 80px;
-          padding: var(--space-sm);
-          font-family: inherit;
-          font-size: var(--font-sm);
-          text-align: center;
-          border: 2px solid var(--color-bg-dark);
-          background: var(--color-bg-disabled);
-          color: var(--color-fg-white);
-          appearance: textfield;
-          align-self: stretch;
-          box-sizing: border-box;
-          box-shadow:
-            inset 2px 2px 0 rgba(0, 0, 0, 0.3),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
-          appearance: none;
-          margin: 0;
-        }
-
-        input[type="range"] {
-          flex: 1;
-          height: var(--space-md);
-          appearance: none;
-          background: var(--color-bg-disabled);
-          border: 2px solid var(--color-bg-dark);
-          min-width: 80px;
-          box-shadow:
-            inset 2px 2px 0 rgba(0, 0, 0, 0.3),
-            inset -2px -2px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-          appearance: none;
-          width: 24px;
-          height: 24px;
-          background: var(--color-primary);
-          border: 2px solid var(--color-bg-dark);
-          cursor: pointer;
-          box-shadow:
-            inset -2px -2px 0 rgba(0, 0, 0, 0.2),
-            inset 2px 2px 0 rgba(255, 255, 255, 0.2);
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

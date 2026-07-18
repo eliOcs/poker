@@ -11,7 +11,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    const numberInput = el.querySelector('input[type="number"]');
     expect(numberInput.value).to.equal("150");
   });
 
@@ -24,7 +24,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    const numberInput = el.querySelector('input[type="number"]');
     expect(numberInput.value).to.equal("150.50");
   });
 
@@ -37,7 +37,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    const numberInput = el.querySelector('input[type="number"]');
     expect(numberInput.min).to.equal("100");
     expect(numberInput.max).to.equal("1000");
   });
@@ -51,7 +51,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    const rangeInput = el.querySelector('input[type="range"]');
     expect(rangeInput.min).to.equal("10000");
     expect(rangeInput.max).to.equal("100000");
   });
@@ -66,7 +66,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    const rangeInput = el.querySelector('input[type="range"]');
     expect(rangeInput.step).to.equal("2500");
   });
 
@@ -80,7 +80,7 @@ describe("phg-currency-slider", () => {
       ></phg-currency-slider>`,
     );
 
-    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    const numberInput = el.querySelector('input[type="number"]');
     expect(numberInput.step).to.equal("25");
   });
 
@@ -98,7 +98,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const numberInput = el.shadowRoot.querySelector('input[type="number"]');
+    const numberInput = el.querySelector('input[type="number"]');
     numberInput.value = "200.50";
     numberInput.dispatchEvent(new Event("input"));
 
@@ -119,7 +119,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    const rangeInput = el.querySelector('input[type="range"]');
     rangeInput.value = "25000";
     rangeInput.dispatchEvent(new Event("input"));
 
@@ -141,7 +141,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.shadowRoot.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("phg-button");
     const plusButton = buttons[1]; // Second button is +
     plusButton.click();
 
@@ -163,7 +163,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.shadowRoot.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("phg-button");
     const minusButton = buttons[0]; // First button is -
     minusButton.click();
 
@@ -185,7 +185,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.shadowRoot.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("phg-button");
     const minusButton = buttons[0];
     minusButton.click();
 
@@ -208,7 +208,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const buttons = el.shadowRoot.querySelectorAll("phg-button");
+    const buttons = el.querySelectorAll("phg-button");
     const plusButton = buttons[1];
     plusButton.click();
 
@@ -232,7 +232,7 @@ describe("phg-currency-slider", () => {
       emittedValue = e.detail.value;
     });
 
-    const rangeInput = el.shadowRoot.querySelector('input[type="range"]');
+    const rangeInput = el.querySelector('input[type="range"]');
     // Slider can only reach 1210000 due to step, but should snap to max
     rangeInput.value = "1210000";
     rangeInput.dispatchEvent(new Event("input"));

@@ -109,7 +109,7 @@ export const gameModalActions = {
 
   saveSettings() {
     const input = /** @type {HTMLInputElement|undefined} */ (
-      this.shadowRoot?.querySelector("#name-input")
+      this.querySelector("#name-input")
     );
     const name = input?.value.trim() ?? "";
     this.dispatchEvent(
@@ -130,7 +130,7 @@ export const gameModalActions = {
   },
 
   requestSignIn() {
-    const input = readInput(this.shadowRoot, "#sign-in-email");
+    const input = readInput(this, "#sign-in-email");
     const email = input?.value.trim() ?? "";
     if (!validateEmailInput(input)) {
       this._signInInvalid = true;
@@ -148,8 +148,8 @@ export const gameModalActions = {
   },
 
   requestSignUp() {
-    const nameInput = readInput(this.shadowRoot, "#sign-up-name");
-    const emailInput = readInput(this.shadowRoot, "#sign-up-email");
+    const nameInput = readInput(this, "#sign-up-name");
+    const emailInput = readInput(this, "#sign-up-email");
     const name = nameInput?.value.trim() ?? "";
     const email = emailInput?.value.trim() ?? "";
 

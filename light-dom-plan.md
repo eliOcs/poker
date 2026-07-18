@@ -480,20 +480,20 @@ would collide.
 
 ### Phase 3: Poker Table Tree
 
-- [ ] Convert `phg-game` before its descendants.
-- [ ] Move live-game layout and modal CSS into normal stylesheets.
-- [ ] Convert `phg-board`.
-- [ ] Convert `phg-seat`.
-- [ ] Convert `phg-card`.
-- [ ] Convert `phg-chips`.
-- [ ] Convert `phg-action-panel`.
-- [ ] Convert `phg-currency-slider`.
-- [ ] Convert `phg-ranking-panel`.
-- [ ] Convert `phg-tournament-levels-panel`.
-- [ ] Convert `phg-edit-label`.
-- [ ] Flatten bet-collection and card-animation DOM queries.
-- [ ] Verify 2-seat, 6-seat, and 9-seat layouts visually.
-- [ ] Verify game and history card/seat styles do not leak into one another.
+- [x] Convert `phg-game` before its descendants.
+- [x] Move live-game layout and modal CSS into normal stylesheets.
+- [x] Convert `phg-board`.
+- [x] Convert `phg-seat`.
+- [x] Convert `phg-card`.
+- [x] Convert `phg-chips`.
+- [x] Convert `phg-action-panel`.
+- [x] Convert `phg-currency-slider`.
+- [x] Convert `phg-ranking-panel`.
+- [x] Convert `phg-tournament-levels-panel`.
+- [x] Convert `phg-edit-label`.
+- [x] Flatten bet-collection and card-animation DOM queries.
+- [x] Verify 2-seat, 6-seat, and 9-seat layouts visually.
+- [x] Verify game and history card/seat styles do not leak into one another.
 
 ### Phase 4: Native Controls and Forms
 

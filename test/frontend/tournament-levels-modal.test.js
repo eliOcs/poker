@@ -27,18 +27,18 @@ describe("tournament levels modal", () => {
     });
     await game.updateComplete;
 
-    const infoBar = game.shadowRoot.querySelector("#info-bar");
+    const infoBar = game.querySelector("#info-bar");
     expect(infoBar).to.exist;
     expect(infoBar.getAttribute("role")).to.equal("button");
 
-    const timer = game.shadowRoot.querySelector(".info-timer");
+    const timer = game.querySelector(".info-timer");
     expect(timer).to.exist;
     expect(timer.textContent.trim()).to.equal("Level 3: 3:05");
 
     infoBar.click();
     await game.updateComplete;
 
-    const modal = game.shadowRoot.querySelector("phg-modal");
+    const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Tournament Levels",
@@ -47,7 +47,7 @@ describe("tournament levels modal", () => {
     const panel = modal.querySelector("phg-tournament-levels-panel");
     expect(panel).to.exist;
     await panel.updateComplete;
-    expect(panel.shadowRoot.querySelectorAll("tbody tr").length).to.equal(
+    expect(panel.querySelectorAll("tbody tr").length).to.equal(
       BLIND_LEVELS.length + 1,
     );
   });
@@ -58,13 +58,13 @@ describe("tournament levels modal", () => {
     game.showTournamentLevels = true;
     await game.updateComplete;
 
-    const modal = game.shadowRoot.querySelector("phg-modal");
+    const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
 
     modal.shadowRoot.querySelector(".close-btn").click();
     await game.updateComplete;
 
-    expect(game.shadowRoot.querySelector("phg-modal")).to.not.exist;
+    expect(game.querySelector("phg-modal")).to.not.exist;
   });
 
   it("opens from the Levels drawer item", async () => {
@@ -72,11 +72,11 @@ describe("tournament levels modal", () => {
     game.game = createMockTournamentGameState();
     await game.updateComplete;
 
-    const entries = game.shadowRoot.querySelectorAll("a, button");
+    const entries = game.querySelectorAll("a, button");
     const historyIndex = [...entries].findIndex((entry) =>
       entry.textContent.includes("History"),
     );
-    const levelsButton = findButtonByText(game.shadowRoot, "Levels");
+    const levelsButton = findButtonByText(game, "Levels");
 
     expect(levelsButton).to.exist;
     expect([...entries].indexOf(levelsButton)).to.equal(historyIndex + 1);
@@ -84,7 +84,7 @@ describe("tournament levels modal", () => {
     levelsButton.click();
     await game.updateComplete;
 
-    const modal = game.shadowRoot.querySelector("phg-modal");
+    const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Tournament Levels",
@@ -108,13 +108,13 @@ describe("tournament levels modal", () => {
     };
     await game.updateComplete;
 
-    const levelsButton = findButtonByText(game.shadowRoot, "Levels");
+    const levelsButton = findButtonByText(game, "Levels");
     expect(levelsButton).to.exist;
 
     levelsButton.click();
     await game.updateComplete;
 
-    const modal = game.shadowRoot.querySelector("phg-modal");
+    const modal = game.querySelector("phg-modal");
     expect(modal).to.exist;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Tournament Levels",
@@ -130,7 +130,7 @@ describe("phg-tournament-levels-panel", () => {
       ></phg-tournament-levels-panel>
     `);
 
-    const headers = [...panel.shadowRoot.querySelectorAll("th")].map((th) =>
+    const headers = [...panel.querySelectorAll("th")].map((th) =>
       th.textContent.trim(),
     );
     expect(headers).to.deep.equal(["Level", "Blinds", "Time"]);
@@ -144,7 +144,7 @@ describe("phg-tournament-levels-panel", () => {
       ></phg-tournament-levels-panel>
     `);
 
-    const rows = [...panel.shadowRoot.querySelectorAll("tbody tr")].map((row) =>
+    const rows = [...panel.querySelectorAll("tbody tr")].map((row) =>
       [...row.querySelectorAll("td")].map((td) => td.textContent.trim()),
     );
     const breakIndex = rows.findIndex((cells) => cells[0] === "Break");
@@ -161,7 +161,7 @@ describe("phg-tournament-levels-panel", () => {
       ></phg-tournament-levels-panel>
     `);
 
-    const rows = panel.shadowRoot.querySelectorAll("tbody tr");
+    const rows = panel.querySelectorAll("tbody tr");
     expect(rows[0].classList.contains("past")).to.be.true;
     expect(rows[1].classList.contains("past")).to.be.true;
     expect(rows[2].classList.contains("current")).to.be.true;
@@ -175,7 +175,7 @@ describe("phg-tournament-levels-panel", () => {
       ></phg-tournament-levels-panel>
     `);
 
-    const rows = [...panel.shadowRoot.querySelectorAll("tbody tr")];
+    const rows = [...panel.querySelectorAll("tbody tr")];
     const breakRow = rows.find((row) =>
       row.querySelector("td").textContent.includes("Break"),
     );

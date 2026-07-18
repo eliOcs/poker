@@ -1,11 +1,10 @@
-import { html, css, LitElement } from "lit";
+import { html, LitElement } from "lit";
 import {
   BLIND_LEVELS,
   BREAK_AFTER_LEVEL,
   BREAK_DURATION_TICKS,
   LEVEL_DURATION_TICKS,
 } from "../shared/tournament.js";
-import { baseStyles, modalTableStyles } from "./styles.js";
 import { formatCurrency } from "./currency.js";
 
 function formatDuration(seconds) {
@@ -31,35 +30,8 @@ function getScheduleRows() {
 }
 
 class TournamentLevelsPanel extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      modalTableStyles,
-      css`
-        :host {
-          display: block;
-          --modal-table-min-width: 340px;
-          --modal-table-mobile-min-width: 300px;
-        }
-
-        th,
-        td {
-          white-space: nowrap;
-        }
-
-        tr.past td {
-          color: var(--color-fg-muted);
-        }
-
-        tr.current td {
-          color: var(--color-primary);
-        }
-
-        tr.next td {
-          color: var(--color-fg-medium);
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

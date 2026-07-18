@@ -25,13 +25,13 @@ describe("phg-game sign up", () => {
   it("opens sign-up modal when sign-up button clicked", async () => {
     await element.updateComplete;
 
-    const signUpBtn = Array.from(
-      element.shadowRoot.querySelectorAll("button"),
-    ).find((button) => button.textContent.includes("Sign up"));
+    const signUpBtn = Array.from(element.querySelectorAll("button")).find(
+      (button) => button.textContent.includes("Sign up"),
+    );
     signUpBtn.click();
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Sign up",
@@ -42,14 +42,14 @@ describe("phg-game sign up", () => {
     element.showSignIn = true;
     await element.updateComplete;
 
-    let modal = element.shadowRoot.querySelector("phg-modal");
-    let switchLink = element.shadowRoot.querySelector(".sign-in-switch-link");
+    let modal = element.querySelector("phg-modal");
+    let switchLink = element.querySelector(".sign-in-switch-link");
     expect(modal.textContent.replace(/\s+/g, " ")).to.include("New? Sign up");
 
     switchLink.click();
     await element.updateComplete;
 
-    modal = element.shadowRoot.querySelector("phg-modal");
+    modal = element.querySelector("phg-modal");
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Sign up",
@@ -58,11 +58,11 @@ describe("phg-game sign up", () => {
       "Have an account? Sign in",
     );
 
-    switchLink = element.shadowRoot.querySelector(".sign-in-switch-link");
+    switchLink = element.querySelector(".sign-in-switch-link");
     switchLink.click();
     await element.updateComplete;
 
-    modal = element.shadowRoot.querySelector("phg-modal");
+    modal = element.querySelector("phg-modal");
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
       "Sign in",
@@ -78,9 +78,9 @@ describe("phg-game sign up", () => {
     element.showSignUp = true;
     await element.updateComplete;
 
-    const nameInput = element.shadowRoot.querySelector("#sign-up-name");
-    const emailInput = element.shadowRoot.querySelector("#sign-up-email");
-    const modalText = element.shadowRoot
+    const nameInput = element.querySelector("#sign-up-name");
+    const emailInput = element.querySelector("#sign-up-email");
+    const modalText = element
       .querySelector("phg-modal")
       .textContent.replace(/\s+/g, " ");
 
@@ -102,10 +102,10 @@ describe("phg-game sign up", () => {
     });
 
     const nameInput = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector("#sign-up-name")
+      element.querySelector("#sign-up-name")
     );
     const emailInput = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector("#sign-up-email")
+      element.querySelector("#sign-up-email")
     );
     nameInput.value = "Table Captain";
     emailInput.value = "player@example.com";
@@ -117,7 +117,7 @@ describe("phg-game sign up", () => {
       email: "player@example.com",
       name: "Table Captain",
     });
-    expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
+    expect(element.querySelector("phg-modal")).to.not.exist;
   });
 
   it("marks the name invalid and focuses it when submitted empty", async () => {
@@ -125,10 +125,10 @@ describe("phg-game sign up", () => {
     await element.updateComplete;
 
     const nameInput = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector("#sign-up-name")
+      element.querySelector("#sign-up-name")
     );
     const emailInput = /** @type {HTMLInputElement} */ (
-      element.shadowRoot.querySelector("#sign-up-email")
+      element.querySelector("#sign-up-email")
     );
     nameInput.value = "";
     emailInput.value = "player@example.com";
@@ -138,7 +138,7 @@ describe("phg-game sign up", () => {
 
     expect(element._signUpNameInvalid).to.equal(true);
     expect(nameInput.getAttribute("aria-invalid")).to.equal("true");
-    expect(element.shadowRoot.activeElement).to.equal(nameInput);
-    expect(element.shadowRoot.querySelector("phg-modal")).to.exist;
+    expect(document.activeElement).to.equal(nameInput);
+    expect(element.querySelector("phg-modal")).to.exist;
   });
 });

@@ -1,0 +1,487 @@
+@scope (phg-game) {
+  phg-modal input {
+    width: 100%;
+    padding: var(--space-md);
+    font-family: inherit;
+    font-size: var(--font-md);
+    border: 3px solid var(--color-bg-dark);
+    background: var(--color-bg-medium);
+    color: var(--color-fg-white);
+    box-sizing: border-box;
+    outline: none;
+  }
+
+  phg-modal input:focus {
+    border-color: var(--modal-input-focus-color, var(--color-secondary));
+    box-shadow: var(
+      --modal-input-focus-shadow,
+      0 0 0 1px var(--modal-input-focus-color, var(--color-secondary))
+    );
+  }
+
+  phg-modal input[aria-invalid="true"] {
+    border-color: var(--color-error);
+    box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
+  }
+
+  phg-modal input[aria-invalid="true"]:focus {
+    border-color: var(--color-error);
+    box-shadow: var(
+      --modal-input-error-focus-shadow,
+      var(--modal-input-error-shadow, 0 0 0 1px var(--color-error))
+    );
+  }
+
+  .settings-content .buttons,
+  .sign-in-content .buttons {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+  }
+
+  .settings-content label {
+    display: block;
+    margin-bottom: var(--space-md);
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+  }
+
+  .sign-in-content label {
+    display: block;
+    margin-bottom: 0;
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+  }
+
+  .sign-in-switch {
+    margin: var(--space-md) 0 0;
+    color: var(--color-fg-medium);
+    font-size: var(--font-sm);
+    text-align: center;
+  }
+
+  .sign-in-switch-link {
+    appearance: none;
+    padding: 0;
+    font: inherit;
+    color: var(--color-fg-white);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  .sign-in-switch-link:hover {
+    color: var(--color-primary);
+  }
+
+  .volume-slider {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+  }
+
+  .volume-slider button {
+    flex: 1;
+    padding: var(--space-md);
+    font-family: inherit;
+    font-size: var(--font-md);
+    border: 3px solid var(--color-bg-dark);
+    background: var(--color-bg-medium);
+    color: var(--color-fg-medium);
+    cursor: pointer;
+  }
+
+  .volume-slider button:hover {
+    background: var(--color-bg-dark);
+  }
+
+  .volume-slider button.active {
+    background: var(--modal-slider-active-color);
+    color: var(--color-fg-white);
+    border-color: var(--modal-slider-active-color);
+  }
+
+  :where(:scope) {
+    --modal-input-error-focus-shadow: 0 0 0 2px rgb(204 51 51 / 22%);
+    --modal-input-error-shadow: 0 0 0 2px rgb(204 51 51 / 18%);
+    --modal-input-focus-shadow: 0 0 0 2px rgb(136 68 170 / 20%);
+    --modal-slider-active-color: var(--color-secondary);
+
+    height: 100%;
+    display: block;
+    background-color: var(--color-bg-medium);
+    box-sizing: border-box;
+    color: var(--color-fg-medium);
+    user-select: none;
+  }
+
+  @media (width >= 800px) {
+    :scope {
+      display: flex;
+    }
+  }
+
+  :scope * {
+    box-sizing: inherit;
+  }
+
+  #wrapper {
+    position: relative;
+    height: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  @media (width >= 800px) {
+    #wrapper {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  #container {
+    position: absolute;
+    inset: 0 var(--space-sm) 160px;
+  }
+
+  @media (width >= 800px) {
+    #container {
+      inset: 0 0 160px;
+    }
+  }
+
+  @media (width >= 800px) and (height >= 840px) {
+    #container {
+      max-height: 700px;
+      margin: auto 0;
+    }
+  }
+
+  phg-board {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+  }
+
+  @media (width >= 800px) {
+    phg-board {
+      top: 50%;
+      left: 50%;
+      width: 76%;
+      height: 68%;
+    }
+  }
+
+  @media (width < 800px) {
+    phg-board {
+      top: 52%;
+      width: 80%;
+      height: 80%;
+    }
+  }
+
+  #seats {
+    position: absolute;
+    inset: 0;
+  }
+
+  .loading-state {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--color-fg-muted);
+    font-size: var(--font-md);
+  }
+
+  phg-action-panel {
+    position: absolute;
+    bottom: var(--space-md);
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+
+  #info-bar {
+    position: absolute;
+    right: var(--space-md);
+    top: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-sm);
+    color: var(--color-fg-medium);
+  }
+
+  .info-cell {
+    white-space: nowrap;
+  }
+
+  #info-bar.clickable {
+    cursor: pointer;
+  }
+
+  #info-bar.clickable:hover {
+    color: var(--color-fg-light);
+  }
+
+  #info-bar.clickable:focus-visible {
+    outline: 2px solid var(--color-fg-muted);
+    outline-offset: var(--space-sm);
+  }
+
+  @media (width < 800px) {
+    .info-size {
+      display: none;
+    }
+  }
+
+  .info-cell + .info-cell::before {
+    content: "|";
+    margin-right: var(--space-sm);
+    color: var(--color-bg-disabled);
+  }
+
+  .settings-content input,
+  .sign-in-content input {
+    margin-bottom: var(--space-lg);
+  }
+
+  .sign-in-intro {
+    margin: 0 0 var(--space-lg);
+    color: var(--color-fg-light);
+    font-size: var(--font-sm);
+    line-height: 1.8;
+  }
+
+  .collecting-chip {
+    position: absolute;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .chat-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .chat-input-container textarea {
+    width: 100%;
+    min-height: 2.8em;
+    padding: var(--space-md);
+    font-family: inherit;
+    font-size: var(--font-md);
+    line-height: 2;
+    background: var(--color-bg-medium);
+    color: var(--color-fg-white);
+    border: 2px solid var(--color-fg-muted);
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
+  .emote-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .emote-grid button {
+    font-size: 2rem;
+    padding: var(--space-md);
+    background: none;
+    border: 2px solid transparent;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .emote-grid button:hover {
+    border-color: var(--color-fg-muted);
+  }
+
+  phg-seat {
+    position: absolute;
+    z-index: 1;
+  }
+
+  /* === DESKTOP LAYOUT (9 seats evenly distributed around oval) === */
+  @media (width >= 800px) {
+    phg-seat[data-seat="0"] {
+      top: 14%;
+      left: 11%;
+    }
+    phg-seat[data-seat="1"] {
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    phg-seat[data-seat="2"] {
+      top: 14%;
+      right: 11%;
+    }
+
+    /* Right side - 2 seats */
+    phg-seat[data-seat="3"] {
+      top: 45%;
+      right: 0;
+    }
+    phg-seat[data-seat="4"] {
+      bottom: 15%;
+      right: 1%;
+    }
+
+    phg-seat[data-seat="5"] {
+      bottom: 3%;
+      right: 26%;
+    }
+    phg-seat[data-seat="6"] {
+      bottom: 3%;
+      left: 26%;
+    }
+
+    /* Left side - 2 seats */
+    phg-seat[data-seat="7"] {
+      bottom: 15%;
+      left: 1%;
+    }
+    phg-seat[data-seat="8"] {
+      top: 45%;
+      left: 0;
+    }
+
+    /* === HEADS UP (2 seats) === */
+    #seats[data-table-size="2"] phg-seat[data-seat="0"] {
+      top: auto;
+      bottom: 3%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="2"] phg-seat[data-seat="1"] {
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* === 6-MAX (6 seats) === */
+    #seats[data-table-size="6"] phg-seat[data-seat="0"] {
+      top: 25%;
+      left: 8%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="1"] {
+      top: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="2"] {
+      top: 25%;
+      right: 8%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="3"] {
+      top: auto;
+      bottom: 16%;
+      right: 8%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="4"] {
+      top: auto;
+      bottom: 4%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="5"] {
+      top: auto;
+      bottom: 16%;
+      left: 8%;
+    }
+  }
+
+  /* === MOBILE LAYOUT === */
+  @media (width < 800px) {
+    phg-seat[data-seat="0"] {
+      top: 22%;
+      left: 0;
+    }
+    phg-seat[data-seat="1"] {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    phg-seat[data-seat="2"] {
+      top: 22%;
+      right: 0;
+    }
+
+    /* Right side */
+    phg-seat[data-seat="3"] {
+      top: 38%;
+      right: 0;
+    }
+    phg-seat[data-seat="4"] {
+      bottom: 28%;
+      right: 0;
+    }
+
+    phg-seat[data-seat="5"] {
+      bottom: 5%;
+      right: 8%;
+    }
+    phg-seat[data-seat="6"] {
+      bottom: 5%;
+      left: 8%;
+    }
+
+    /* Left side */
+    phg-seat[data-seat="7"] {
+      bottom: 28%;
+      left: 0;
+    }
+    phg-seat[data-seat="8"] {
+      top: 38%;
+      left: 0;
+    }
+
+    /* === HEADS UP (2 seats) === */
+    #seats[data-table-size="2"] phg-seat[data-seat="0"] {
+      top: auto;
+      bottom: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="2"] phg-seat[data-seat="1"] {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* === 6-MAX (6 seats) === */
+    #seats[data-table-size="6"] phg-seat[data-seat="0"] {
+      top: 30%;
+      left: 2%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="1"] {
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="2"] {
+      top: 30%;
+      right: 2%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="3"] {
+      top: auto;
+      bottom: 24%;
+      right: 2%;
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="4"] {
+      top: auto;
+      bottom: 1%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    #seats[data-table-size="6"] phg-seat[data-seat="5"] {
+      top: auto;
+      bottom: 24%;
+      left: 2%;
+    }
+  }
+}

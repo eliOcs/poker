@@ -1,112 +1,11 @@
-import { html, css, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
+import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import "./card.js";
 import "./chips.js";
 
 class Board extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      css`
-        :host {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          width: 100%;
-          background-color: var(--board-bg, var(--color-table));
-          border: 6px solid var(--color-bg-dark);
-          border-radius: 9999px;
-          box-shadow:
-            inset 4px 4px 0 rgba(255, 255, 255, 0.1),
-            inset -4px -4px 0 rgba(0, 0, 0, 0.2),
-            8px 8px 0 var(--color-bg-dark);
-          box-sizing: border-box;
-        }
-
-        .board-info {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: var(--space-lg);
-        }
-
-        .community-cards {
-          display: flex;
-          gap: var(--space-md);
-        }
-
-        .pot {
-          display: flex;
-          align-items: center;
-          gap: var(--space-md);
-          font-size: var(--font-md);
-          color: var(--color-primary);
-        }
-
-        .phase {
-          font-size: var(--font-sm);
-          color: var(--color-fg-white);
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        }
-
-        .countdown {
-          font-size: calc(var(--font-lg) * 2);
-          color: var(--color-primary);
-          text-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
-        }
-
-        .winner-message {
-          text-align: center;
-        }
-
-        .winner-name {
-          font-size: var(--font-md);
-          color: var(--color-primary);
-          text-shadow: 2px 2px 0 var(--color-bg-dark);
-          margin-bottom: var(--space-md);
-        }
-
-        .winner-hand {
-          font-size: var(--font-md);
-          color: var(--color-fg-white);
-        }
-
-        .winner-amount {
-          font-size: var(--font-md);
-          color: var(--color-success);
-          margin-top: var(--space-md);
-        }
-
-        .tournament-winner-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: rgba(0, 0, 0, 0.8);
-          border-radius: 9999px;
-          z-index: 10;
-        }
-
-        .tournament-winner-title {
-          font-size: calc(var(--font-lg) * 1.5);
-          color: var(--color-primary);
-          text-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
-          margin-bottom: var(--space-md);
-          text-align: center;
-        }
-
-        .tournament-winner-name {
-          font-size: var(--font-lg);
-          color: var(--color-fg-white);
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

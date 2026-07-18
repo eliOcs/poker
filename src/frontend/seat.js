@@ -1,8 +1,6 @@
 import { html, LitElement } from "lit";
-import { baseStyles, seatBetStyles } from "./styles.js";
 import { formatCurrency } from "./currency.js";
 import { ICONS } from "./icons.js";
-import { seatStyles } from "./seat.styles.js";
 import {
   formatPosition,
   formatHandResult,
@@ -14,8 +12,8 @@ import "./chips.js";
 /** @typedef {(seat: any) => boolean} SeatClassCondition */
 
 class Seat extends LitElement {
-  static get styles() {
-    return [baseStyles, seatStyles, seatBetStyles];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {
