@@ -18,7 +18,6 @@ class ReleaseNotes extends LitElement {
 
         :host * {
           box-sizing: inherit;
-          user-select: text;
         }
 
         .main {

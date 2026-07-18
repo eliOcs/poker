@@ -15,6 +15,7 @@ export const gameStyles = [
       background-color: var(--color-bg-medium);
       box-sizing: border-box;
       color: var(--color-fg-medium);
+      user-select: none;
     }
 
     @media (width >= 800px) {
