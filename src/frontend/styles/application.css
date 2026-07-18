@@ -1,0 +1,163 @@
+phg-app {
+  display: block;
+  height: 100%;
+}
+
+phg-app .auth-status {
+  display: grid;
+  min-height: 100vh;
+  padding: var(--space-lg);
+  color: var(--color-fg-white);
+  text-align: center;
+  background: var(--color-bg-medium);
+  place-items: center;
+}
+
+phg-app .auth-status-card {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 28rem;
+  padding: var(--space-lg);
+  background: var(--color-bg-light);
+  border: 2px solid var(--color-fg-muted);
+  box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+}
+
+phg-app .auth-status-card h1 {
+  margin: 0;
+  font-size: var(--font-md);
+  line-height: 1.6;
+}
+
+phg-app .auth-status-card p {
+  margin: 0;
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+  line-height: 1.8;
+}
+
+phg-app .settings-content,
+phg-app .sign-in-content {
+  --modal-slider-active-color: var(--color-secondary);
+}
+
+phg-app :is(.settings-content, .sign-in-content) input {
+  width: 100%;
+  padding: var(--space-md);
+  color: var(--color-fg-white);
+  font: inherit;
+  font-size: var(--font-md);
+  background: var(--color-bg-medium);
+  border: 3px solid var(--color-bg-dark);
+  outline: none;
+}
+
+phg-app :is(.settings-content, .sign-in-content) input:focus {
+  border-color: var(--modal-input-focus-color, var(--color-secondary));
+  box-shadow: var(
+    --modal-input-focus-shadow,
+    0 0 0 1px var(--modal-input-focus-color, var(--color-secondary))
+  );
+}
+
+phg-app :is(.settings-content, .sign-in-content) input[aria-invalid="true"] {
+  border-color: var(--color-error);
+  box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
+}
+
+phg-app
+  :is(.settings-content, .sign-in-content)
+  input[aria-invalid="true"]:focus {
+  border-color: var(--color-error);
+  box-shadow: var(
+    --modal-input-error-focus-shadow,
+    var(--modal-input-error-shadow, 0 0 0 1px var(--color-error))
+  );
+}
+
+phg-app .settings-content input {
+  margin-bottom: var(--space-lg);
+}
+
+phg-app .settings-content .buttons,
+phg-app .sign-in-content .buttons {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+}
+
+phg-app .settings-content label {
+  display: block;
+  margin-bottom: var(--space-md);
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+}
+
+phg-app .sign-in-content label {
+  display: block;
+  margin-bottom: 0;
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+}
+
+phg-app .sign-in-content {
+  display: grid;
+  gap: var(--space-md);
+  min-width: min(420px, 100%);
+}
+
+phg-app .sign-in-intro {
+  margin: 0 0 var(--space-md);
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+  line-height: 1.8;
+}
+
+phg-app .sign-in-switch {
+  margin: var(--space-md) 0 0;
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+  text-align: center;
+}
+
+phg-app .sign-in-switch-link {
+  padding: 0;
+  color: var(--color-fg-white);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  appearance: none;
+}
+
+phg-app .sign-in-switch-link:hover {
+  color: var(--color-primary);
+}
+
+phg-app .volume-slider {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+phg-app .volume-slider button {
+  flex: 1;
+  padding: var(--space-md);
+  color: var(--color-fg-medium);
+  font: inherit;
+  font-size: var(--font-md);
+  cursor: pointer;
+  background: var(--color-bg-medium);
+  border: 3px solid var(--color-bg-dark);
+}
+
+phg-app .volume-slider button:hover {
+  background: var(--color-bg-dark);
+}
+
+phg-app .volume-slider button.active {
+  color: var(--color-fg-white);
+  background: var(--modal-slider-active-color);
+  border-color: var(--modal-slider-active-color);
+}

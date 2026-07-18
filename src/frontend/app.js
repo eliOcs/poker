@@ -1,8 +1,5 @@
-import { css, LitElement } from "lit";
+import { LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
-import { baseStyles } from "./styles.js";
-import { appModalStyles } from "./app-modal-styles.js";
-import { appAuthStatusStyles } from "./app-auth-status.js";
 import "./home.js";
 import "./tournaments.js";
 import "./index.js";
@@ -45,18 +42,8 @@ import { appProfileActions } from "./app-profile-actions.js";
 import { navigateApp } from "./app-navigation.js";
 
 class App extends LitElement {
-  static get styles() {
-    return [
-      baseStyles,
-      appModalStyles,
-      appAuthStatusStyles,
-      css`
-        :host {
-          display: block;
-          height: 100%;
-        }
-      `,
-    ];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

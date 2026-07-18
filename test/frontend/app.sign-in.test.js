@@ -99,7 +99,7 @@ describe("phg-app sign in", () => {
     element.openProfileSignUp();
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    const modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
     const nameInput = modal.querySelector("#profile-sign-up-name");
     const emailInput = modal.querySelector("#profile-sign-in-email");
@@ -354,13 +354,10 @@ describe("phg-app sign in", () => {
     element.path = "/players/player2";
     await element.updateComplete;
 
-    await waitUntil(
-      () => element.shadowRoot.querySelector("phg-player-profile"),
-      {
-        timeout: 2000,
-      },
-    );
-    const profile = element.shadowRoot.querySelector("phg-player-profile");
+    await waitUntil(() => element.querySelector("phg-player-profile"), {
+      timeout: 2000,
+    });
+    const profile = element.querySelector("phg-player-profile");
     profile.dispatchEvent(
       new CustomEvent("open-sign-in", {
         bubbles: true,
@@ -369,7 +366,7 @@ describe("phg-app sign in", () => {
     );
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
@@ -393,11 +390,11 @@ describe("phg-app sign in", () => {
     };
 
     const element = await fixture(html`<phg-app></phg-app>`);
-    await waitUntil(() => element.shadowRoot.querySelector("phg-home"), {
+    await waitUntil(() => element.querySelector("phg-home"), {
       timeout: 2000,
     });
 
-    const home = element.shadowRoot.querySelector("phg-home");
+    const home = element.querySelector("phg-home");
     home.dispatchEvent(
       new CustomEvent("open-sign-in", {
         bubbles: true,
@@ -406,7 +403,7 @@ describe("phg-app sign in", () => {
     );
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
@@ -438,7 +435,7 @@ describe("phg-app sign in", () => {
     );
     await element.updateComplete;
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
@@ -468,24 +465,23 @@ describe("phg-app sign in", () => {
 
     element.path = "/mtt";
     await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
-    expect(
-      element.shadowRoot?.querySelector("phg-app-sign-in-modal")?.mode,
-    ).to.equal("sign-up");
+    expect(element?.querySelector("phg-app-sign-in-modal")?.mode).to.equal(
+      "sign-up",
+    );
 
     element.closeProfileSignUp();
     await element.updateComplete;
-    expect(element.shadowRoot?.querySelector("phg-app-sign-in-modal")).to.not
-      .exist;
+    expect(element?.querySelector("phg-app-sign-in-modal")).to.not.exist;
 
-    element.shadowRoot
+    element
       ?.querySelector("phg-tournaments")
       ?.shadowRoot?.querySelector("phg-button")
       ?.click();
     await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
 
-    expect(
-      element.shadowRoot?.querySelector("phg-app-sign-in-modal")?.mode,
-    ).to.equal("sign-up");
+    expect(element?.querySelector("phg-app-sign-in-modal")?.mode).to.equal(
+      "sign-up",
+    );
   });
 
   it("switches between sign-in and sign-up modals from the footer links", async () => {
@@ -507,12 +503,12 @@ describe("phg-app sign in", () => {
     element.openProfileSignIn();
     await element.updateComplete;
 
-    let modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    let modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
     modal.querySelector(".sign-in-switch-link").click();
     await element.updateComplete;
 
-    modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
     expect(modal.mode).to.equal("sign-up");
     expect(modal.querySelector(".sign-in-switch").textContent).to.include(
@@ -522,7 +518,7 @@ describe("phg-app sign in", () => {
     modal.querySelector(".sign-in-switch-link").click();
     await element.updateComplete;
 
-    modal = element.shadowRoot.querySelector("phg-app-sign-in-modal");
+    modal = element.querySelector("phg-app-sign-in-modal");
     expect(modal.mode).to.equal("sign-in");
     expect(modal.querySelector(".sign-in-switch").textContent).to.include(
       "New?",

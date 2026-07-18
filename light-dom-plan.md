@@ -466,8 +466,8 @@ would collide.
 
 ### Phase 2: Application and Page Roots
 
-- [ ] Convert `phg-app` to light DOM.
-- [ ] Move app modal and authentication-status CSS into normal stylesheets.
+- [x] Convert `phg-app` to light DOM.
+- [x] Move app modal and authentication-status CSS into normal stylesheets.
 - [ ] Convert `phg-home`.
 - [ ] Convert `phg-tournaments`.
 - [ ] Convert `phg-mtt-lobby`.

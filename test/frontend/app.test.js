@@ -26,6 +26,7 @@ describe("phg-app", () => {
       };
 
       const element = await fixture(html`<phg-app></phg-app>`);
+      expect(element.shadowRoot).to.be.null;
       await element.updateComplete;
 
       expect(MockWebSocket.instances).to.have.length(0);
@@ -86,8 +87,7 @@ describe("phg-app", () => {
       element.path = "/release-notes";
       await element.updateComplete;
 
-      const releaseNotes =
-        element.shadowRoot?.querySelector("phg-release-notes");
+      const releaseNotes = element?.querySelector("phg-release-notes");
       expect(releaseNotes).to.exist;
     });
 
@@ -106,7 +106,7 @@ describe("phg-app", () => {
       element.path = "/mtt";
       await element.updateComplete;
 
-      const tournaments = element.shadowRoot?.querySelector("phg-tournaments");
+      const tournaments = element?.querySelector("phg-tournaments");
       expect(tournaments).to.exist;
     });
 
@@ -124,7 +124,7 @@ describe("phg-app", () => {
       const element = await fixture(html`<phg-app></phg-app>`);
       await element.updateComplete;
 
-      const shell = element.shadowRoot?.querySelector("phg-app-shell");
+      const shell = element?.querySelector("phg-app-shell");
       if (!shell) throw new Error("Expected app shell");
       const releaseNotesLink = Array.from(
         shell.shadowRoot.querySelectorAll("a"),
@@ -138,7 +138,7 @@ describe("phg-app", () => {
       });
 
       expect(window.location.pathname).to.equal("/release-notes");
-      expect(element.shadowRoot?.querySelector("phg-release-notes")).to.exist;
+      expect(element?.querySelector("phg-release-notes")).to.exist;
     });
 
     it("uses replace history for app links marked as replace", async () => {
@@ -163,7 +163,7 @@ describe("phg-app", () => {
       link.href = "/history/testgame/2";
       link.dataset.appHistory = "replace";
       link.textContent = "Hand 2";
-      element.shadowRoot?.append(link);
+      element?.append(link);
 
       link.click();
 
@@ -205,12 +205,11 @@ describe("phg-app", () => {
         type: "tournamentState",
         tournament: createMockTournamentView(),
       });
-      await waitUntil(
-        () => element.shadowRoot?.querySelector("phg-mtt-lobby"),
-        { timeout: 2000 },
-      );
+      await waitUntil(() => element?.querySelector("phg-mtt-lobby"), {
+        timeout: 2000,
+      });
 
-      expect(element.shadowRoot?.querySelector("phg-mtt-lobby")).to.exist;
+      expect(element?.querySelector("phg-mtt-lobby")).to.exist;
       expect(ws.url).to.include("/mtt/mtt123");
       expect(fetchedUrls).to.not.include("/api/mtt/mtt123");
     });

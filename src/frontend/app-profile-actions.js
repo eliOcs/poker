@@ -11,7 +11,7 @@ export const appProfileActions = {
 
   async saveProfileSettings() {
     const input = /** @type {HTMLInputElement|undefined} */ (
-      this.shadowRoot?.querySelector("#profile-settings-name-input")
+      this.querySelector("#profile-settings-name-input")
     );
     const name = input?.value.trim() ?? "";
     await this._updateUser({

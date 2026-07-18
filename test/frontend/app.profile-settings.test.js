@@ -61,19 +61,16 @@ describe("phg-app profile settings", () => {
     element.path = "/players/user1";
     await element.updateComplete;
 
-    await waitUntil(
-      () => element.shadowRoot.querySelector("phg-player-profile"),
-      {
-        timeout: 2000,
-      },
-    );
+    await waitUntil(() => element.querySelector("phg-player-profile"), {
+      timeout: 2000,
+    });
 
-    const profile = element.shadowRoot.querySelector("phg-player-profile");
+    const profile = element.querySelector("phg-player-profile");
     await waitUntil(() => profile.profile?.id === "user1", {
       timeout: 2000,
     });
     await profile.updateComplete;
-    const shell = element.shadowRoot.querySelector("phg-app-shell");
+    const shell = element.querySelector("phg-app-shell");
     shell.drawerOpen = true;
     await shell.updateComplete;
     const settingsBtn = Array.from(
@@ -88,7 +85,7 @@ describe("phg-app profile settings", () => {
   it("opens settings modal from your own profile", async () => {
     const element = await openOwnProfileSettings();
 
-    const modal = element.shadowRoot.querySelector("phg-modal");
+    const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
     await modal.updateComplete;
     expect(modal.shadowRoot.querySelector("h3").textContent).to.equal(
@@ -99,20 +96,16 @@ describe("phg-app profile settings", () => {
   it("shows a success toast after saving profile settings", async () => {
     const element = await openOwnProfileSettings("Updated");
 
-    const input = element.shadowRoot.querySelector(
-      "#profile-settings-name-input",
-    );
+    const input = element.querySelector("#profile-settings-name-input");
     input.value = "Updated";
 
-    const saveBtn = element.shadowRoot.querySelector(
-      'phg-button[variant="action"]',
-    );
+    const saveBtn = element.querySelector('phg-button[variant="action"]');
     saveBtn.click();
     await waitUntil(() => element.toast?.message === "Settings saved", {
       timeout: 2000,
     });
 
-    expect(element.shadowRoot.querySelector("phg-modal")).to.not.exist;
+    expect(element.querySelector("phg-modal")).to.not.exist;
     expect(element.toast).to.deep.include({
       message: "Settings saved",
       variant: "success",
@@ -125,16 +118,14 @@ describe("phg-app profile settings", () => {
     const element = await openOwnProfileSettings("Test", false, (body) => {
       requestBody = body;
     });
-    const vibrationOffButton = element.shadowRoot
+    const vibrationOffButton = element
       .querySelectorAll(".volume-slider")[1]
       ?.querySelector("button");
 
     expect(vibrationOffButton).to.exist;
     vibrationOffButton.click();
 
-    const saveBtn = element.shadowRoot.querySelector(
-      'phg-button[variant="action"]',
-    );
+    const saveBtn = element.querySelector('phg-button[variant="action"]');
     saveBtn.click();
     await waitUntil(() => element.toast?.message === "Settings saved", {
       timeout: 2000,
