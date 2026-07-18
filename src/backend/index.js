@@ -378,7 +378,7 @@ function runGuestUserCleanup() {
     cleanupOrphanGuestUsers(users);
   } catch (err) {
     logger.error("guest cleanup failed", {
-      error: { message: err instanceof Error ? err.message : String(err) },
+      error: err,
     });
   }
 }

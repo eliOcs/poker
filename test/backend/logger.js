@@ -123,6 +123,29 @@ describe("logger", function () {
       assert.strictEqual(parsed.count, 42);
       assert.ok(parsed.timestamp);
     });
+
+    it("serializes error details, causes, and custom properties", async function () {
+      process.env.LOG_FORMAT = "json";
+
+      const { error } = await import(
+        `../../src/backend/logger.js?t=${Date.now()}-7`
+      );
+      const cause = new Error("database locked");
+      const caught = Object.assign(new Error("cleanup failed", { cause }), {
+        code: "SQLITE_BUSY",
+      });
+
+      error("guest cleanup failed", { error: caught });
+
+      const output = consoleError.mock.calls[0].arguments[0];
+      const parsed = JSON.parse(output);
+      assert.strictEqual(parsed.error.name, "Error");
+      assert.strictEqual(parsed.error.message, "cleanup failed");
+      assert.match(parsed.error.stack, /cleanup failed/);
+      assert.strictEqual(parsed.error.code, "SQLITE_BUSY");
+      assert.strictEqual(parsed.error.cause.message, "database locked");
+      assert.match(parsed.error.cause.stack, /database locked/);
+    });
   });
 
   describe("console method routing", function () {

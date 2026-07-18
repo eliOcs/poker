@@ -22,6 +22,27 @@ const ANSI = {
 const useColor = format === "text";
 
 /**
+ * Makes native Error details available to JSON.stringify().
+ * @param {string} _key
+ * @param {unknown} value
+ * @returns {unknown}
+ */
+function serializeError(_key, value) {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    name: value.name,
+    message: value.message,
+    stack: value.stack,
+    ...(value.cause !== undefined ? { cause: value.cause } : {}),
+    ...(value instanceof AggregateError ? { errors: value.errors } : {}),
+  };
+}
+
+/**
  * @typedef {object} Log
  * @property {string} level - Log level
  * @property {string} message - Log message
@@ -65,7 +86,7 @@ function formatText({ timestamp, level, message, context }) {
   const contextStr = Object.entries(context)
     .map(
       ([k, v]) =>
-        `${colorizeContextKey(k)}=${typeof v === "object" && v ? JSON.stringify(v) : String(v)}`,
+        `${colorizeContextKey(k)}=${typeof v === "object" && v ? JSON.stringify(v, serializeError) : String(v)}`,
     )
     .join(" ");
   const prefix = `${colorizeTimestamp(timestamp)} ${colorizeLevel(levelLabel, level)}`;
@@ -115,12 +136,15 @@ function colorizeContextKey(key) {
  * @returns {string}
  */
 function formatJson({ timestamp, level, message, context }) {
-  return JSON.stringify({
-    timestamp: new Date(timestamp).toISOString(),
-    level,
-    message,
-    ...context,
-  });
+  return JSON.stringify(
+    {
+      timestamp: new Date(timestamp).toISOString(),
+      level,
+      message,
+      ...context,
+    },
+    serializeError,
+  );
 }
 
 /**
