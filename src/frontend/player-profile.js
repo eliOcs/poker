@@ -91,12 +91,6 @@ class PlayerProfile extends LitElement {
           color: var(--color-error);
         }
 
-        .loading {
-          text-align: center;
-          font-size: var(--font-md);
-          color: var(--color-fg-medium);
-        }
-
         h2 {
           margin: 0;
           font-size: var(--font-md);
@@ -214,9 +208,11 @@ class PlayerProfile extends LitElement {
 
   render() {
     if (!this.profile) {
-      return html`<div class="panel">
-        <div class="loading">Loading player...</div>
-      </div>`;
+      return html`
+        <div class="main">
+          <div class="content"></div>
+        </div>
+      `;
     }
 
     return html`

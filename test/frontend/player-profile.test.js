@@ -2,6 +2,16 @@ import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import "../../src/frontend/player-profile.js";
 
 describe("phg-player-profile", () => {
+  it("shows only the page background while loading", async () => {
+    const element = await fixture(html`
+      <phg-player-profile></phg-player-profile>
+    `);
+
+    expect(element.shadowRoot.querySelector(".main .content")).to.exist;
+    expect(element.shadowRoot.querySelector(".panel")).to.not.exist;
+    expect(element.shadowRoot.textContent).to.not.include("Loading player");
+  });
+
   it("renders recent games sorted data", async () => {
     const element = await fixture(html`
       <phg-player-profile
