@@ -1,7 +1,11 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
+import { once } from "node:events";
+import { Writable } from "node:stream";
 import {
+  createRoutes,
   getOrCreateUser,
+  handleRequest,
   logFrontendErrorReport,
 } from "../../src/backend/http-routes.js";
 import * as Store from "../../src/backend/store.js";
@@ -77,6 +81,31 @@ describe("http-routes", () => {
     assert.ok(log.context.userCreateRateLimit);
     assert.strictEqual(headers[0][0], "Set-Cookie");
     assert.match(headers[0][1], /Max-Age=2592000/);
+  });
+
+  it("does not create a guest for an SPA page request", async () => {
+    const users = {};
+    const routes = createRoutes(users, new Map(), () => {});
+    const response = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback();
+      },
+    });
+    const headers = {};
+    response.writeHead = (_status, values = {}) =>
+      Object.assign(headers, values);
+
+    const finished = once(response, "finish");
+    await handleRequest(
+      { method: "GET", url: "/", headers: {} },
+      response,
+      routes,
+    );
+    await finished;
+
+    assert.equal(headers["set-cookie"], undefined);
+    assert.equal(Store.count(), 0);
+    assert.deepStrictEqual(users, {});
   });
 
   it("logs frontend errors with session and client context", () => {

@@ -14,6 +14,36 @@ describe("phg-app", () => {
   });
 
   describe("SPA routes", () => {
+    it("establishes the user session before connecting to a direct game route", async () => {
+      history.replaceState({}, "", "/cash/testgame");
+      let resolveUser = () => {};
+      const userResponse = new Promise((resolve) => {
+        resolveUser = resolve;
+      });
+      globalThis.fetch = async (url) => {
+        if (url === "/api/users/me") return userResponse;
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await element.updateComplete;
+
+      expect(MockWebSocket.instances).to.have.length(0);
+
+      resolveUser({
+        ok: true,
+        json: async () => createMockUser({ id: "u1", name: "Test" }),
+      });
+      await waitUntil(() => MockWebSocket.instances.length === 1, {
+        timeout: 2000,
+      });
+
+      expect(MockWebSocket.instances[0].url).to.include("/cash/testgame");
+
+      element.path = "/release-notes";
+      await element.updateComplete;
+    });
+
     it("redirects from the landing page into the active game from the user payload", async () => {
       MockWebSocket.instances = [];
       globalThis.fetch = async (url) => {

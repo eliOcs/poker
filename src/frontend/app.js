@@ -473,7 +473,10 @@ class App extends LitElement {
     const currentPath = this._getHomeRedirectPath() ?? this.path;
     const route = parseAppPath(currentPath);
 
-    ws.manageConnection(this, this._getConnectionResourcePath(route));
+    ws.manageConnection(
+      this,
+      this.user ? this._getConnectionResourcePath(route) : undefined,
+    );
 
     if (this._isSignInCallbackRoute()) {
       return renderAuthStatusView(this);

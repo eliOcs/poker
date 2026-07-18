@@ -48,17 +48,14 @@ export { logFrontendErrorReport } from "./client-error-reporting.js";
 /**
  * Creates a SPA page route that serves index.html
  * @param {string|RegExp} path
- * @param {Record<string, UserType>} users
  * @returns {Route}
  */
-function spaPageRoute(path, users) {
+function spaPageRoute(path) {
   return {
     method: "GET",
     path,
-    handler: ({ req, res, log }) => {
-      getOrCreateUser(req, res, users, log);
-      respondWithFile(req, res, "src/frontend/index.html");
-    },
+    handler: ({ req, res }) =>
+      respondWithFile(req, res, "src/frontend/index.html"),
   };
 }
 
@@ -79,7 +76,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
         res.end("OK");
       },
     },
-    spaPageRoute("/", users),
+    spaPageRoute("/"),
     ...createGameRoutes(users, games, broadcast, services),
     ...createSignInRoutes({
       sendSignInEmail: services.sendSignInEmail,
@@ -93,15 +90,15 @@ export function createRoutes(users, games, broadcast, services = {}) {
           parseBody,
         }),
     })),
-    spaPageRoute(LIVE_CASH_ROUTE, users),
-    spaPageRoute(LIVE_SITNGO_ROUTE, users),
-    spaPageRoute(LIVE_MTT_ROUTE, users),
-    spaPageRoute(LIVE_MTT_TABLE_ROUTE, users),
-    spaPageRoute(HISTORY_ROUTE, users),
-    spaPageRoute(/^\/players\/([a-z0-9]+)$/, users),
-    spaPageRoute("/mtt", users),
-    spaPageRoute("/release-notes", users),
-    spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/, users),
+    spaPageRoute(LIVE_CASH_ROUTE),
+    spaPageRoute(LIVE_SITNGO_ROUTE),
+    spaPageRoute(LIVE_MTT_ROUTE),
+    spaPageRoute(LIVE_MTT_TABLE_ROUTE),
+    spaPageRoute(HISTORY_ROUTE),
+    spaPageRoute(/^\/players\/([a-z0-9]+)$/),
+    spaPageRoute("/mtt"),
+    spaPageRoute("/release-notes"),
+    spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/),
     ...createHistoryRoutes(users),
   ];
 }
