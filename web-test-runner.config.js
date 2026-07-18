@@ -3,7 +3,7 @@ import path from "node:path";
 
 const FRONTEND_ROOT = path.resolve("src/frontend");
 const TOP_LEVEL_ASSET = /^\/[^/]+\.[a-z0-9]+$/i;
-const FONT_ASSET = /^\/fonts\/[^/]+\.[a-z0-9]+$/i;
+const NESTED_ASSET = /^\/(?:fonts|styles)\/[^/]+\.[a-z0-9]+$/i;
 
 export default {
   files: "test/frontend/**/*.test.js",
@@ -11,7 +11,7 @@ export default {
     <!doctype html>
     <html>
       <head>
-        <link rel="stylesheet" href="/base.css" />
+        <link rel="stylesheet" href="/app.css" />
       </head>
       <body>
         <script type="module" src="${testFrameworkImport}"></script>
@@ -28,10 +28,10 @@ export default {
         if (fs.existsSync(path.join(FRONTEND_ROOT, fileName))) {
           ctx.url = `/src/frontend/${fileName}`;
         }
-      } else if (FONT_ASSET.test(ctx.path)) {
-        const fileName = ctx.path.slice("/fonts/".length);
-        if (fs.existsSync(path.join(FRONTEND_ROOT, "fonts", fileName))) {
-          ctx.url = `/src/frontend/fonts/${fileName}`;
+      } else if (NESTED_ASSET.test(ctx.path)) {
+        const fileName = ctx.path.slice(1);
+        if (fs.existsSync(path.join(FRONTEND_ROOT, fileName))) {
+          ctx.url = `/src/frontend/${fileName}`;
         }
       }
       await next();

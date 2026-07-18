@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
-import { baseStyles, formatCurrency, modalTableStyles } from "./styles.js";
+import { baseStyles, modalTableStyles } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 
 class RankingPanel extends LitElement {
   static get styles() {

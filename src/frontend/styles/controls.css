@@ -1,0 +1,110 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--button-content-gap, var(--space-sm));
+  min-height: 44px;
+  padding: var(--space-md) var(--space-lg);
+  color: var(--color-fg-white);
+  font: inherit;
+  font-size: var(--font-md);
+  cursor: pointer;
+  background-color: var(--color-secondary);
+  border: 3px solid var(--color-bg-dark);
+  box-shadow:
+    3px 3px 0 var(--color-bg-dark),
+    inset -2px -2px 0 rgb(0 0 0 / 20%),
+    inset 2px 2px 0 rgb(255 255 255 / 20%);
+}
+
+.button:hover {
+  filter: brightness(1.1);
+}
+
+.button:active {
+  box-shadow:
+    1px 1px 0 var(--color-bg-dark),
+    inset 2px 2px 0 rgb(0 0 0 / 20%),
+    inset -2px -2px 0 rgb(255 255 255 / 20%);
+  transform: translate(2px, 2px);
+}
+
+.button:disabled {
+  color: var(--color-fg-muted);
+  cursor: not-allowed;
+  background-color: var(--color-bg-disabled);
+}
+
+.button:disabled:hover {
+  filter: none;
+}
+
+.button--primary {
+  background-color: var(--color-primary);
+}
+
+.button--success {
+  background-color: var(--color-success);
+}
+
+.button--danger {
+  background-color: var(--color-error);
+}
+
+.button--action {
+  background-color: var(--color-accent);
+}
+
+.button--muted {
+  background-color: var(--color-bg-disabled);
+}
+
+.button--warning {
+  background-color: var(--color-warning);
+}
+
+.button--compact {
+  min-height: 38px;
+}
+
+.button--large {
+  min-height: 56px;
+  padding: calc(var(--space-lg) * 1.25) calc(var(--space-lg) * 2.5);
+  font-size: var(--font-lg);
+  border-width: var(--space-sm);
+  box-shadow:
+    4px 4px 0 var(--color-bg-dark),
+    inset -2px -2px 0 rgb(0 0 0 / 20%),
+    inset 2px 2px 0 rgb(255 255 255 / 20%);
+}
+
+.button--full-width {
+  width: 100%;
+  height: 100%;
+}
+
+.form-control {
+  width: 100%;
+  padding: var(--space-md);
+  color: var(--color-fg-white);
+  font: inherit;
+  font-size: var(--font-md);
+  background: var(--color-bg-medium);
+  border: 3px solid var(--color-bg-dark);
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: var(--form-control-focus-color, var(--color-secondary));
+  box-shadow: 0 0 0 1px var(--form-control-focus-color, var(--color-secondary));
+}
+
+.form-control[aria-invalid="true"] {
+  border-color: var(--color-error);
+  box-shadow: 0 0 0 1px var(--color-error);
+}
+
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

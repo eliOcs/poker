@@ -1,4 +1,4 @@
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 
 export function formatPosition(position) {
   const suffixes = ["th", "st", "nd", "rd"];

@@ -6,8 +6,8 @@ import {
   shellContentStyles,
   shellPageStyles,
   statusBadgeStyles,
-  formatCurrency,
 } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { formatPlayerLabel } from "./player-label.js";
 import { getHistoryPath, getMttPath } from "../shared/routes.js";
 

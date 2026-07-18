@@ -39,7 +39,10 @@ const routes = {
   "/history.js": "test/frontend/fixtures/history.js",
   "/logo.png": "src/frontend/logo.png",
   "/logo.webp": "src/frontend/logo.webp",
+  "/app.css": "src/frontend/app.css",
   "/base.css": "src/frontend/base.css",
+  "/styles/controls.css": "src/frontend/styles/controls.css",
+  "/styles/shell.css": "src/frontend/styles/shell.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/release-notes": "src/frontend/index.html",
 };

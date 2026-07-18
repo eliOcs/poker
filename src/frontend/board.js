@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
-import { baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import "./card.js";
 import "./chips.js";
 

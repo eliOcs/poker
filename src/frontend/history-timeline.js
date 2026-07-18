@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 
 /**
  * @param {import("./history.js").History} history

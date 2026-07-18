@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
-import { baseStyles, formatCurrency } from "./styles.js";
+import { baseStyles } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { historyStyles } from "./history-styles.js";
 import { renderHistoryTimeline } from "./history-timeline.js";
 import { seatPositions } from "./game-layout.js";

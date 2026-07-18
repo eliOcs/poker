@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { renderRebuyDecision } from "./action-panel-rebuy.js";
 
 function formatPosition(position) {

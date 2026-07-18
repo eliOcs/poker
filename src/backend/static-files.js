@@ -24,6 +24,27 @@ export function collectJsFiles(dir, baseUrl) {
   return files;
 }
 
+/**
+ * Recursively collects browser assets from a directory.
+ * @param {string} dir
+ * @param {string} baseUrl
+ * @returns {Record<string, string>}
+ */
+export function collectStaticFiles(dir, baseUrl) {
+  /** @type {Record<string, string>} */
+  const files = {};
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const filePath = path.join(dir, entry.name);
+    const urlPath = baseUrl + "/" + entry.name;
+    if (entry.isDirectory()) {
+      Object.assign(files, collectStaticFiles(filePath, urlPath));
+    } else if (path.extname(entry.name) in mimeTypes) {
+      files[urlPath] = filePath;
+    }
+  }
+  return files;
+}
+
 /** @type {Record<string, string>} */
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -37,19 +58,7 @@ const mimeTypes = {
 };
 
 /** @type {Record<string, string>} */
-const staticFiles = {};
-for (const file of fs.readdirSync("src/frontend")) {
-  const ext = path.extname(file);
-  if (ext in mimeTypes) {
-    staticFiles["/" + file] = "src/frontend/" + file;
-  }
-}
-for (const file of fs.readdirSync("src/frontend/fonts")) {
-  const ext = path.extname(file);
-  if (ext in mimeTypes) {
-    staticFiles["/fonts/" + file] = "src/frontend/fonts/" + file;
-  }
-}
+const staticFiles = collectStaticFiles("src/frontend", "");
 
 // Source JS entry paths (used by module script loading from /src/frontend/*).
 const frontendSourceFiles = collectJsFiles("src/frontend", "/src/frontend");

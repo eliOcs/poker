@@ -5,7 +5,8 @@ import {
   BREAK_DURATION_TICKS,
   LEVEL_DURATION_TICKS,
 } from "../shared/tournament.js";
-import { baseStyles, formatCurrency, modalTableStyles } from "./styles.js";
+import { baseStyles, modalTableStyles } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 
 function formatDuration(seconds) {
   const minutes = Math.round(seconds / 60);

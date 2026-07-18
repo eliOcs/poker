@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
-import { baseStyles, formatCurrency, seatBetStyles } from "./styles.js";
+import { baseStyles, seatBetStyles } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { ICONS } from "./icons.js";
 import { seatStyles } from "./seat.styles.js";
 import {

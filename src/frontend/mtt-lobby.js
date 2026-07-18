@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { getMttPath, getTablePath } from "../shared/routes.js";
 import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
 import { mttLobbyStyles } from "./mtt-lobby-styles.js";

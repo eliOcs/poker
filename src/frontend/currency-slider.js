@@ -1,5 +1,6 @@
 import { html, css, LitElement } from "lit";
-import { baseStyles, formatDollars } from "./styles.js";
+import { baseStyles } from "./styles.js";
+import { formatDollars } from "./currency.js";
 import "./button.js";
 
 /**

@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 import { getHistoryPath, getTablePath } from "../shared/routes.js";
 import { calculatePrizesFromPool } from "../shared/tournament.js";
 

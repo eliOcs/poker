@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { formatCurrency } from "./styles.js";
+import { formatCurrency } from "./currency.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
