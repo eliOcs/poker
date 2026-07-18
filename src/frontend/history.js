@@ -1,9 +1,6 @@
 import { html, LitElement } from "lit";
-import { baseStyles } from "./styles.js";
 import { formatCurrency } from "./currency.js";
-import { historyStyles } from "./history-styles.js";
 import { renderHistoryTimeline } from "./history-timeline.js";
-import { seatPositions } from "./game-layout.js";
 import { getHistoryPath } from "../shared/routes.js";
 import "./card.js";
 import "./button.js";
@@ -26,8 +23,8 @@ function clampTimelineHeight(height, mainHeight) {
 }
 
 export class History extends LitElement {
-  static get styles() {
-    return [baseStyles, historyStyles, seatPositions];
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

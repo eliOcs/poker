@@ -5,11 +5,9 @@ describe("phg-history timeline resizing", () => {
   let element;
 
   function setupTimelineLayout(timelineHeight = 220, mainHeight = 600) {
-    const timelinePanel = element.shadowRoot.querySelector(".timeline-panel");
-    const main = element.shadowRoot.querySelector(".main");
-    const resizeHandle = element.shadowRoot.querySelector(
-      ".timeline-resize-handle",
-    );
+    const timelinePanel = element.querySelector(".timeline-panel");
+    const main = element.querySelector(".main");
+    const resizeHandle = element.querySelector(".timeline-resize-handle");
     timelinePanel.getBoundingClientRect = () => ({ height: timelineHeight });
     main.getBoundingClientRect = () => ({ height: mainHeight });
     return { timelinePanel, resizeHandle };
@@ -40,12 +38,9 @@ describe("phg-history timeline resizing", () => {
   });
 
   it("keeps the resize handle in place when the timeline scrolls", () => {
-    const timeline = element.shadowRoot.querySelector(".timeline");
-    const resizeHandle = element.shadowRoot.querySelector(
-      ".timeline-resize-handle",
-    );
-    const timelineContent =
-      element.shadowRoot.querySelector(".timeline-content");
+    const timeline = element.querySelector(".timeline");
+    const resizeHandle = element.querySelector(".timeline-resize-handle");
+    const timelineContent = element.querySelector(".timeline-content");
     timeline.style.height = "60px";
     timelineContent.style.minHeight = "300px";
     const handleTop = resizeHandle.getBoundingClientRect().top;

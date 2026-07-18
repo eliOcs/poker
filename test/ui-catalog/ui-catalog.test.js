@@ -114,7 +114,7 @@ function getComponentSelector(testCase) {
 async function prepareTestCase(testCase, component) {
   if (testCase !== "mtt-lobby-running-late-register-tooltip") return;
   await component.evaluate((element) => {
-    const trigger = element.shadowRoot?.querySelector(
+    const trigger = element.querySelector(
       '[aria-label="Late registration details"]',
     );
     if (!(trigger instanceof HTMLElement)) {

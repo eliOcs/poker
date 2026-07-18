@@ -83,15 +83,15 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.querySelector("phg-edit-label").value).to.equal(
+    expect(element.querySelector("phg-edit-label").value).to.equal(
       "Friday Deepstack",
     );
-    expect(element.shadowRoot.textContent).to.include("#mtt123");
-    expect(element.shadowRoot.textContent).to.include("Open My Table");
-    expect(element.shadowRoot.textContent).to.include("Table 1");
-    expect(element.shadowRoot.textContent).to.include("Standings");
-    expect(element.shadowRoot.textContent).to.include("Lobby");
-    const rebuyStat = [...element.shadowRoot.querySelectorAll(".stat")].find(
+    expect(element.textContent).to.include("#mtt123");
+    expect(element.textContent).to.include("Open My Table");
+    expect(element.textContent).to.include("Table 1");
+    expect(element.textContent).to.include("Standings");
+    expect(element.textContent).to.include("Lobby");
+    const rebuyStat = [...element.querySelectorAll(".stat")].find(
       (stat) =>
         stat.querySelector(".label > span")?.textContent.trim() === "Rebuys",
     );
@@ -111,19 +111,12 @@ describe("phg-mtt-lobby", () => {
     const element = await fixture(html`
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
+    expect(element.shadowRoot).to.be.null;
 
     const lateRegister = [
-      ...element.shadowRoot.querySelectorAll(".action-row phg-button"),
+      ...element.querySelectorAll(".action-row phg-button"),
     ].find((button) => button.textContent.includes("Late Register"));
     expect(lateRegister).to.exist;
-    const componentStyles = element.shadowRoot.adoptedStyleSheets
-      .flatMap((sheet) => [...sheet.cssRules])
-      .map((rule) => rule.cssText)
-      .join("\n");
-    expect(componentStyles).to.match(
-      /\.tooltip-control:hover \.tooltip[^}]*visibility: visible/,
-    );
-
     const tooltipCases = [
       {
         triggerLabel: "Rebuy period details",
@@ -138,12 +131,10 @@ describe("phg-mtt-lobby", () => {
     ];
 
     for (const tooltipCase of tooltipCases) {
-      const trigger = element.shadowRoot.querySelector(
+      const trigger = element.querySelector(
         `[aria-label="${tooltipCase.triggerLabel}"]`,
       );
-      const tooltip = element.shadowRoot.querySelector(
-        `#${tooltipCase.tooltipId}`,
-      );
+      const tooltip = element.querySelector(`#${tooltipCase.tooltipId}`);
       expect(trigger.tagName).to.equal("BUTTON");
       expect(trigger.getAttribute("aria-describedby")).to.equal(
         tooltipCase.tooltipId,
@@ -159,8 +150,7 @@ describe("phg-mtt-lobby", () => {
       expect(getComputedStyle(tooltip).visibility).to.equal("hidden");
 
       trigger.focus();
-      expect(document.activeElement).to.equal(element);
-      expect(element.shadowRoot.activeElement).to.equal(trigger);
+      expect(document.activeElement).to.equal(trigger);
       expect(trigger.parentElement.matches(":focus-within")).to.equal(true);
       await aTimeout(150);
       expect(getComputedStyle(tooltip).visibility).to.equal("visible");
@@ -183,10 +173,8 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).not.to.include("Late Register");
-    expect(element.shadowRoot.textContent).not.to.include(
-      "Late registration is allowed",
-    );
+    expect(element.textContent).not.to.include("Late Register");
+    expect(element.textContent).not.to.include("Late registration is allowed");
   });
 
   it("shows a queued running entrant as waiting for a table", async () => {
@@ -214,7 +202,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Waiting for table");
+    expect(element.textContent).to.include("Waiting for table");
   });
 
   it("renders payouts from the backend-provided prize pool", async () => {
@@ -228,7 +216,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("1st: $24, 2nd: $6");
+    expect(element.textContent).to.include("1st: $24, 2nd: $6");
   });
 
   it("does not show a history drawer item in the lobby", async () => {
@@ -240,9 +228,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     const drawerItems = Array.from(
-      element.shadowRoot.querySelectorAll(
-        "phg-navigation-drawer [slot='main']",
-      ),
+      element.querySelectorAll("phg-navigation-drawer [slot='main']"),
     );
     expect(
       drawerItems.some((item) => item.textContent.includes("History")),
@@ -267,7 +253,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("#mp9hladed7d1");
+    expect(element.textContent).to.include("#mp9hladed7d1");
   });
 
   it("shows the owner name in the lobby header when available", async () => {
@@ -278,8 +264,8 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Owner: Owner");
-    expect(element.shadowRoot.textContent).not.to.include("Owner: owner");
+    expect(element.textContent).to.include("Owner: Owner");
+    expect(element.textContent).not.to.include("Owner: owner");
   });
 
   it("prefixes the owner id in the lobby header when no name is available", async () => {
@@ -302,7 +288,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Owner: #mp9hladed7d1");
+    expect(element.textContent).to.include("Owner: #mp9hladed7d1");
   });
 
   it("uses the backend-provided owner name when available", async () => {
@@ -329,7 +315,7 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    expect(element.shadowRoot.textContent).to.include("Owner: Mika");
+    expect(element.textContent).to.include("Owner: Mika");
   });
 
   it("links players in the MTT player table to their profile", async () => {
@@ -340,7 +326,7 @@ describe("phg-mtt-lobby", () => {
       ></phg-mtt-lobby>
     `);
 
-    const playerLink = element.shadowRoot.querySelector(".player-link");
+    const playerLink = element.querySelector(".player-link");
     expect(playerLink.getAttribute("href")).to.equal("/players/owner");
   });
 
@@ -353,9 +339,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      const buttons = Array.from(
-        element.shadowRoot.querySelectorAll("phg-button"),
-      );
+      const buttons = Array.from(element.querySelectorAll("phg-button"));
       const openButton = buttons.find((b) =>
         b.textContent.includes("Open My Table"),
       );
@@ -388,9 +372,7 @@ describe("phg-mtt-lobby", () => {
       <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
     `);
 
-    const buttons = element.shadowRoot.querySelectorAll(
-      ".action-row phg-button",
-    );
+    const buttons = element.querySelectorAll(".action-row phg-button");
     setTimeout(() => {
       buttons[0].click();
     });
@@ -424,7 +406,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.shadowRoot.querySelector(".action-row phg-button").click();
+      element.querySelector(".action-row phg-button").click();
     });
 
     const event = await oneEvent(element, "open-sign-up");
@@ -458,7 +440,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.shadowRoot.querySelector(".action-row phg-button").click();
+      element.querySelector(".action-row phg-button").click();
     });
 
     const event = await oneEvent(element, "mtt-action");
@@ -474,7 +456,7 @@ describe("phg-mtt-lobby", () => {
     `);
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("phg-edit-label").dispatchEvent(
+      element.querySelector("phg-edit-label").dispatchEvent(
         new CustomEvent("value-changed", {
           detail: { value: "Saturday Major" },
           bubbles: true,

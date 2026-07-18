@@ -107,3 +107,133 @@
     );
   }
 }
+
+@scope (:is(phg-mtt-lobby, phg-player-profile)) {
+  :scope {
+    display: flex;
+    flex-direction: column;
+    color: var(--color-fg-medium);
+    background: var(--color-bg-medium);
+  }
+
+  .main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    padding: clamp(12px, 3vw, 32px);
+    overflow-y: auto;
+    background: var(--color-bg-medium);
+  }
+
+  .content {
+    display: grid;
+    gap: 16px;
+    width: min(var(--shell-content-width, 1080px), 100%);
+    max-width: 100%;
+  }
+
+  .panel {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    padding: clamp(18px, 4vw, 28px);
+    background: var(--color-bg-light);
+    border: var(--space-sm) solid var(--color-fg-muted);
+    box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+  }
+
+  .section {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stat {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    padding: 14px;
+    background: var(--color-bg-medium);
+    border: 2px solid var(--color-bg-dark);
+  }
+
+  .label {
+    color: var(--color-fg-muted);
+    font-size: var(--font-sm);
+    line-height: 1.6;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    min-width: var(--data-table-min-width, 0);
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: var(--data-table-cell-padding, var(--space-md) var(--space-lg));
+    font-size: var(--font-sm);
+    text-align: left;
+  }
+
+  th {
+    color: var(--color-fg-muted);
+    white-space: nowrap;
+    border-bottom: 2px solid
+      var(--data-table-header-border-color, var(--color-fg-muted));
+  }
+
+  td {
+    color: var(--color-fg-medium);
+    border-bottom: 1px solid var(--color-bg-dark);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .empty,
+  .error {
+    padding: 18px;
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-size: var(--font-sm);
+    line-height: 1.8;
+    background: var(--color-bg-medium);
+    border: 2px solid var(--color-bg-dark);
+  }
+
+  .error {
+    color: var(--color-error);
+  }
+
+  .status,
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-self: start;
+    width: fit-content;
+    padding: 10px 12px;
+    font-size: var(--font-sm);
+    white-space: nowrap;
+    background: var(--color-bg-medium);
+    border: 2px solid var(--color-fg-muted);
+  }
+
+  @media (width < 800px) {
+    th,
+    td {
+      padding: var(
+        --data-table-mobile-cell-padding,
+        var(--space-sm) var(--space-md)
+      );
+    }
+  }
+}

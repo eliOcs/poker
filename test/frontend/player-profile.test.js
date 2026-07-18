@@ -6,10 +6,11 @@ describe("phg-player-profile", () => {
     const element = await fixture(html`
       <phg-player-profile></phg-player-profile>
     `);
+    expect(element.shadowRoot).to.be.null;
 
-    expect(element.shadowRoot.querySelector(".main .content")).to.exist;
-    expect(element.shadowRoot.querySelector(".panel")).to.not.exist;
-    expect(element.shadowRoot.textContent).to.not.include("Loading player");
+    expect(element.querySelector(".main .content")).to.exist;
+    expect(element.querySelector(".panel")).to.not.exist;
+    expect(element.textContent).to.not.include("Loading player");
   });
 
   it("renders recent games sorted data", async () => {
@@ -45,7 +46,7 @@ describe("phg-player-profile", () => {
       ></phg-player-profile>
     `);
 
-    const rows = element.shadowRoot.querySelectorAll("tbody tr");
+    const rows = element.querySelectorAll("tbody tr");
     expect(rows.length).to.equal(2);
     expect(rows[0].textContent).to.include("Sit n Go");
     expect(rows[0].textContent).to.include("-$5");
@@ -79,7 +80,7 @@ describe("phg-player-profile", () => {
     `);
 
     setTimeout(() => {
-      element.shadowRoot.querySelector("tbody tr").click();
+      element.querySelector("tbody tr").click();
     });
 
     const event = await oneEvent(element, "navigate");

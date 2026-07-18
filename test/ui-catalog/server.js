@@ -45,6 +45,9 @@ const routes = {
   "/styles/shell.css": "src/frontend/styles/shell.css",
   "/styles/application.css": "src/frontend/styles/application.css",
   "/styles/pages.css": "src/frontend/styles/pages.css",
+  "/styles/mtt-lobby.css": "src/frontend/styles/mtt-lobby.css",
+  "/styles/player-profile.css": "src/frontend/styles/player-profile.css",
+  "/styles/history.css": "src/frontend/styles/history.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/release-notes": "src/frontend/index.html",
 };

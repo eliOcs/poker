@@ -2,7 +2,6 @@ import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import { getMttPath, getTablePath } from "../shared/routes.js";
 import { renderMttNavigationDrawer } from "./mtt-navigation-drawer.js";
-import { mttLobbyStyles } from "./mtt-lobby-styles.js";
 import {
   formatStatus,
   formatLevel,
@@ -18,8 +17,8 @@ import "./button.js";
 import "./edit-label.js";
 
 class MttLobby extends LitElement {
-  static get styles() {
-    return mttLobbyStyles;
+  createRenderRoot() {
+    return this;
   }
 
   static get properties() {

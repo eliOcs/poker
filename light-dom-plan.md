@@ -470,13 +470,13 @@ would collide.
 - [x] Move app modal and authentication-status CSS into normal stylesheets.
 - [x] Convert `phg-home`.
 - [x] Convert `phg-tournaments`.
-- [ ] Convert `phg-mtt-lobby`.
-- [ ] Convert `phg-player-profile`.
+- [x] Convert `phg-mtt-lobby`.
+- [x] Convert `phg-player-profile`.
 - [x] Convert `phg-release-notes`.
-- [ ] Convert `phg-history` while leaving its nested poker components shadowed
+- [x] Convert `phg-history` while leaving its nested poker components shadowed
       temporarily.
-- [ ] Update unit tests for each component as it moves.
-- [ ] Check the UI catalog at desktop and mobile widths.
+- [x] Update unit tests for each component as it moves.
+- [x] Check the UI catalog at desktop and mobile widths.
 
 ### Phase 3: Poker Table Tree
 
