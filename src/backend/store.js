@@ -411,6 +411,36 @@ export function deleteUser(id) {
 }
 
 /**
+ * Deletes anonymous users created before a cutoff when they have no recorded play.
+ * @param {string} cutoff
+ * @returns {Id[]}
+ */
+export function deleteOrphanGuestUsersCreatedBefore(cutoff) {
+  if (!db) throw new Error("Store not initialized");
+
+  const rows = db
+    .prepare(
+      `
+      DELETE FROM users
+      WHERE users.email IS NULL
+        AND datetime(users.created_at) < datetime(?)
+        AND NOT EXISTS (
+          SELECT 1 FROM player_tables
+          WHERE player_tables.player_id = users.id
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM player_tournaments
+          WHERE player_tournaments.player_id = users.id
+        )
+      RETURNING id
+    `,
+    )
+    .all(cutoff);
+
+  return rows.map((row) => /** @type {Id} */ (row.id));
+}
+
+/**
  * @param {any} row
  * @returns {User|void}
  */

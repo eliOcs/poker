@@ -21,6 +21,10 @@ import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
 import { createMttManager } from "./mtt.js";
 import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
+import {
+  cleanupOrphanGuestUsers,
+  GUEST_CLEANUP_INTERVAL_MS,
+} from "./guest-user-cleanup.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -369,6 +373,25 @@ createWebSocketServer({
 
 Store.initialize();
 
+function runGuestUserCleanup() {
+  try {
+    cleanupOrphanGuestUsers(users);
+  } catch (err) {
+    logger.error("guest cleanup failed", {
+      error: { message: err instanceof Error ? err.message : String(err) },
+    });
+  }
+}
+
+runGuestUserCleanup();
+const guestCleanupTimer = setInterval(
+  runGuestUserCleanup,
+  GUEST_CLEANUP_INTERVAL_MS,
+);
+if (typeof guestCleanupTimer.unref === "function") {
+  guestCleanupTimer.unref();
+}
+
 const evictInactiveGames = createInactiveGameEvictor();
 const evictionTimer = setInterval(() => {
   evictInactiveGames({
@@ -390,6 +413,7 @@ async function gracefulShutdown(signal) {
     logger.info("http server closed");
   });
   clearInterval(evictionTimer);
+  clearInterval(guestCleanupTimer);
 
   for (const [ws] of clientConnections) {
     ws.close(1001, "Server shutting down");

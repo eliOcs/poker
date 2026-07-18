@@ -323,6 +323,64 @@ describe("store", function () {
     });
   });
 
+  describe("deleteOrphanGuestUsersCreatedBefore", function () {
+    it("deletes only old anonymous users without recorded play", function () {
+      Store.initialize();
+      const users = [
+        { id: "old-orphan", name: "Named guest" },
+        { id: "registered", email: "player@example.com" },
+        { id: "table-player" },
+        { id: "tournament-player" },
+        { id: "recent-orphan" },
+      ];
+      for (const user of users) {
+        Store.saveUser({
+          ...user,
+          settings: { volume: 0.75, vibration: true },
+        });
+      }
+      Store.recordPlayerTableActivity([
+        {
+          playerId: "table-player",
+          tableId: "table-1",
+          lastHandNumber: 1,
+          lastPlayedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ]);
+      Store.recordPlayerTournamentActivity([
+        {
+          playerId: "tournament-player",
+          tournamentId: "tournament-1",
+          lastTableId: "table-2",
+          lastHandNumber: 1,
+          lastPlayedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ]);
+      Store.close();
+
+      const database = new DatabaseSync(`${testDataDir}/poker.db`);
+      database
+        .prepare("UPDATE users SET created_at = ? WHERE id != 'recent-orphan'")
+        .run("2026-01-01 00:00:00");
+      database
+        .prepare("UPDATE users SET created_at = ? WHERE id = 'recent-orphan'")
+        .run("2026-06-15 00:00:00");
+      database.close();
+      Store.initialize();
+
+      const deletedIds = Store.deleteOrphanGuestUsersCreatedBefore(
+        "2026-06-01T00:00:00.000Z",
+      );
+
+      assert.deepStrictEqual(deletedIds, ["old-orphan"]);
+      assert.strictEqual(Store.loadUser("old-orphan"), undefined);
+      assert.ok(Store.loadUser("registered"));
+      assert.ok(Store.loadUser("table-player"));
+      assert.ok(Store.loadUser("tournament-player"));
+      assert.ok(Store.loadUser("recent-orphan"));
+    });
+  });
+
   describe("close", function () {
     it("can be called safely when not initialized", function () {
       Store.close();
