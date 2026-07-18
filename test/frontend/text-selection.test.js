@@ -14,4 +14,12 @@ describe("text selection", () => {
 
     expect(getComputedStyle(lobby).userSelect).to.not.equal("none");
   });
+
+  it("uses theme colors for selected text", async () => {
+    const lobby = await fixture(html`<phg-mtt-lobby></phg-mtt-lobby>`);
+    const selection = getComputedStyle(lobby, "::selection");
+
+    expect(selection.color).to.equal("rgb(240, 240, 240)");
+    expect(selection.backgroundColor).to.equal("rgb(136, 68, 170)");
+  });
 });

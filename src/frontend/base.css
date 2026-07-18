@@ -49,6 +49,11 @@ body {
   overscroll-behavior: none;
 }
 
+::selection {
+  color: var(--color-fg-white);
+  background-color: var(--color-secondary);
+}
+
 @media (width < 800px) {
   :root {
     --font-xs: 7px;

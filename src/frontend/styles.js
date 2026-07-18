@@ -10,6 +10,11 @@ export const baseStyles = css`
     font-family: "Press Start 2P", monospace;
     image-rendering: pixelated;
   }
+
+  ::selection {
+    color: var(--color-fg-white);
+    background-color: var(--color-secondary);
+  }
 `;
 
 /**
