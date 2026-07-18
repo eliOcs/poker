@@ -64,9 +64,9 @@ async function delay(ms) {
 }
 
 /**
- * Pre-create guest sessions on the quick-play route so later tournament-lobby
- * navigations reuse an existing player cookie instead of hitting the shared
- * pre-cookie IP limiter.
+ * Pre-create guest sessions through the user API so later tournament-lobby
+ * navigations reuse an existing player cookie instead of loading every static
+ * asset against the shared pre-cookie IP limiter.
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  */
 async function initializeGuestSessions(players) {
@@ -74,8 +74,8 @@ async function initializeGuestSessions(players) {
     if (index === USER_CREATION_BATCH_LIMIT) {
       await delay(USER_CREATION_WINDOW_BUFFER_MS);
     }
-    await player.page.goto("/");
-    await player.page.locator("phg-home").waitFor();
+    const response = await player.page.request.get("/api/users/me");
+    if (!response.ok()) throw new Error("Guest session creation failed");
   });
 }
 
