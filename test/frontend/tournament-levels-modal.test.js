@@ -30,6 +30,10 @@ describe("tournament levels modal", () => {
     const infoBar = game.querySelector("#info-bar");
     expect(infoBar).to.exist;
     expect(infoBar.tagName.toLowerCase()).to.equal("button");
+    const infoBarStyle = getComputedStyle(infoBar);
+    expect(infoBarStyle.fontSize).to.equal(
+      infoBarStyle.getPropertyValue("--font-sm").trim(),
+    );
 
     const timer = game.querySelector(".info-timer");
     expect(timer).to.exist;

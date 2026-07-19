@@ -236,7 +236,7 @@
 
   button#info-bar {
     padding: 0;
-    font: inherit;
+    font-family: inherit;
     background: none;
     border: 0;
   }
