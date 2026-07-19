@@ -64,8 +64,8 @@
     top: 50%;
     left: 50%;
     z-index: 200;
-    box-sizing: content-box;
-    min-width: 280px;
+    box-sizing: border-box;
+    min-width: min(280px, 90vw);
     max-width: min(600px, 90vw);
     max-height: 90vh;
     padding: var(--space-lg);
