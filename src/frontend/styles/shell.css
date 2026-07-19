@@ -8,6 +8,7 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  background: var(--color-bg-medium);
 }
 
 @scope (phg-toast) {
@@ -188,6 +189,7 @@
     flex-direction: column;
     width: clamp(180px, 16vw, 240px);
     height: 100%;
+    min-height: 100dvh;
     overflow: hidden;
     pointer-events: auto;
     background: var(--color-bg-dark);
@@ -202,6 +204,7 @@
 
   nav {
     display: flex;
+    flex: 1;
     flex-direction: column;
     min-width: 0;
     height: 100%;

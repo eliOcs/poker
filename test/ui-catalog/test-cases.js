@@ -13,6 +13,7 @@ import "/src/frontend/tournaments.js";
 import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
+import "/src/frontend/app-shell.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import { EMAIL_TEST_CASES } from "./test-cases-email.js";
 import {
@@ -34,23 +35,29 @@ import { MTT_LOBBY_TEST_CASES } from "./test-cases/mtt-lobby.js";
 
 // === GAME TEST CASES ===
 
+function appShellView(path, content) {
+  return html`<phg-app-shell
+    .path=${path}
+    .user=${null}
+    .content=${content}
+  ></phg-app-shell>`;
+}
+
 const GAME_TEST_CASES = {
   // === LANDING PAGE ===
-  "landing-page": () => html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-home></phg-home>
-    </div>
-  `,
+  "landing-page": () => appShellView("/", html`<phg-home></phg-home>`),
 
-  "tournaments-page": () => html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-tournaments></phg-tournaments>
-    </div>
-  `,
+  "tournaments-page": () =>
+    appShellView(
+      "/mtt",
+      html`<phg-tournaments .user=${null}></phg-tournaments>`,
+    ),
 
-  "player-profile-summary": () => html`
-    <div style="height: 100%; width: 100%;">
-      <phg-player-profile
+  "player-profile-summary": () =>
+    appShellView(
+      "/players/lz1abc12x9k2",
+      html`<phg-player-profile
+        .user=${null}
         .profile=${{
           id: "lz1abc12x9k2",
           name: "Cañas y tapas",
@@ -86,9 +93,8 @@ const GAME_TEST_CASES = {
             },
           ],
         }}
-      ></phg-player-profile>
-    </div>
-  `,
+      ></phg-player-profile>`,
+    ),
 
   // === LOBBY STATES ===
   "game-empty-table": () => gameView(createGame()),

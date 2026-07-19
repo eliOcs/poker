@@ -102,16 +102,44 @@ const TEST_CASES = [
 
 function getComponentSelector(testCase) {
   if (testCase.startsWith("email-")) return ".email-preview";
-  if (testCase === "landing-page") return "phg-home";
-  if (testCase === "tournaments-page") return "phg-tournaments";
+  if (testCase === "landing-page") return "phg-app-shell";
+  if (testCase === "player-profile-summary") return "phg-app-shell";
+  if (testCase === "tournaments-page") return "phg-app-shell";
   if (testCase.startsWith("history-")) return "phg-history";
-  if (testCase.startsWith("player-profile-")) return "phg-player-profile";
   if (testCase.startsWith("mtt-lobby-")) return "phg-mtt-lobby";
   // game-*, table-* all use phg-game
   return "phg-game";
 }
 
-async function prepareTestCase(testCase, component) {
+async function prepareTestCase(testCase, page, component) {
+  const shellContentSelector = {
+    "landing-page": "phg-home",
+    "player-profile-summary": "phg-player-profile",
+    "tournaments-page": "phg-tournaments",
+  }[testCase];
+  if (shellContentSelector) {
+    await expect(component.locator("phg-navigation-drawer")).toHaveCount(1);
+    await component
+      .locator(shellContentSelector)
+      .evaluate((element) => /** @type {any} */ (element).updateComplete);
+  }
+
+  if (testCase.startsWith("mtt-lobby-")) {
+    const viewport = page.viewportSize();
+    if (!viewport) {
+      throw new Error("UI catalog tests require a configured viewport");
+    }
+    const viewportHeight = viewport.height;
+    const lobbyHeight = await component.evaluate(
+      (element) => element.getBoundingClientRect().height,
+    );
+    const drawerHeight = await component
+      .locator(".drawer-panel")
+      .evaluate((element) => element.getBoundingClientRect().height);
+    expect(lobbyHeight).toBeGreaterThanOrEqual(viewportHeight);
+    expect(drawerHeight).toBeGreaterThanOrEqual(viewportHeight);
+  }
+
   if (testCase !== "mtt-lobby-running-late-register-tooltip") return;
   await component.evaluate((element) => {
     const trigger = element.querySelector(
@@ -136,7 +164,7 @@ for (const testCase of TEST_CASES) {
     // Wait for Lit component to fully render
     await component.evaluate((el) => el.updateComplete);
 
-    await prepareTestCase(testCase, component);
+    await prepareTestCase(testCase, page, component);
 
     // Capture content that extends below the viewport as well.
     await expect(page).toHaveScreenshot(`${testCase}.png`, {
