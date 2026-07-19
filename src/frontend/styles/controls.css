@@ -131,3 +131,171 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+
+:is(.settings-content, .sign-in-content) {
+  --modal-slider-active-color: var(--color-secondary);
+}
+
+:is(.settings-content, .sign-in-content) input:not([type="radio"]) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--space-md);
+  color: var(--color-fg-white);
+  font: inherit;
+  font-size: var(--font-md);
+  background: var(--color-bg-medium);
+  border: 3px solid var(--color-bg-dark);
+  outline: none;
+}
+
+:is(.settings-content, .sign-in-content) input:not([type="radio"]):focus {
+  border-color: var(--modal-input-focus-color, var(--color-secondary));
+  box-shadow: var(
+    --modal-input-focus-shadow,
+    0 0 0 1px var(--modal-input-focus-color, var(--color-secondary))
+  );
+}
+
+:is(.settings-content, .sign-in-content)
+  input:not([type="radio"])[aria-invalid="true"] {
+  border-color: var(--color-error);
+  box-shadow: var(--modal-input-error-shadow, 0 0 0 1px var(--color-error));
+}
+
+:is(.settings-content, .sign-in-content)
+  input:not([type="radio"])[aria-invalid="true"]:focus {
+  border-color: var(--color-error);
+  box-shadow: var(
+    --modal-input-error-focus-shadow,
+    var(--modal-input-error-shadow, 0 0 0 1px var(--color-error))
+  );
+}
+
+:is(.settings-content, .sign-in-content) .buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.settings-content > label,
+.settings-content legend {
+  display: block;
+  margin-bottom: var(--space-md);
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+}
+
+.sign-in-content label {
+  display: block;
+  margin-bottom: 0;
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+}
+
+.sign-in-switch {
+  margin: var(--space-md) 0 0;
+  color: var(--color-fg-medium);
+  font-size: var(--font-sm);
+  text-align: center;
+}
+
+.sign-in-switch-link {
+  padding: 0;
+  color: var(--color-fg-white);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  appearance: none;
+}
+
+.sign-in-switch-link:hover {
+  color: var(--color-primary);
+}
+
+.volume-slider {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.settings-content fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.volume-slider label {
+  position: relative;
+  box-sizing: border-box;
+  flex: 1;
+  padding: var(--space-md);
+  color: var(--color-fg-medium);
+  font: inherit;
+  font-size: var(--font-md);
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-bg-medium);
+  border: 3px solid var(--color-bg-dark);
+}
+
+.volume-slider input {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.volume-slider label:hover {
+  background: var(--color-bg-dark);
+}
+
+.volume-slider label.active {
+  color: var(--color-fg-white);
+  background: var(--modal-slider-active-color);
+  border-color: var(--modal-slider-active-color);
+}
+
+@scope (:is(phg-ranking-panel, phg-tournament-levels-panel)) {
+  :where(:scope) {
+    display: block;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    min-width: var(--modal-table-min-width, 0);
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--font-sm);
+    text-align: left;
+  }
+
+  th {
+    color: var(--color-fg-muted);
+    border-bottom: 2px solid var(--color-fg-muted);
+  }
+
+  td {
+    color: var(--color-fg-medium);
+  }
+
+  @media (width < 800px) {
+    table {
+      min-width: var(--modal-table-mobile-min-width, 0);
+    }
+
+    th,
+    td {
+      padding: var(--space-sm) var(--space-md);
+    }
+  }
+}

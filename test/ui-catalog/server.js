@@ -42,6 +42,7 @@ const routes = {
   "/app.css": "src/frontend/app.css",
   "/base.css": "src/frontend/base.css",
   "/styles/controls.css": "src/frontend/styles/controls.css",
+  "/styles/table-layout.css": "src/frontend/styles/table-layout.css",
   "/styles/shell.css": "src/frontend/styles/shell.css",
   "/styles/application.css": "src/frontend/styles/application.css",
   "/styles/pages.css": "src/frontend/styles/pages.css",
