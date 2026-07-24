@@ -174,11 +174,17 @@ for (const testCase of TEST_CASES) {
   });
 }
 
-// Static pages (non-Lit components)
-test("release-notes", async ({ page }) => {
-  await page.goto("/release-notes");
+// Static article pages
+for (const [path, selector] of [
+  ["about", "phg-about"],
+  ["release-notes", "phg-release-notes"],
+]) {
+  // eslint-disable-next-line playwright/valid-title
+  test(path, async ({ page }) => {
+    await page.goto(`/${path}`);
 
-  await page.locator("phg-release-notes").waitFor();
+    await page.locator(selector).waitFor();
 
-  await expect(page).toHaveScreenshot("release-notes.png", { fullPage: true });
-});
+    await expect(page).toHaveScreenshot(`${path}.png`, { fullPage: true });
+  });
+}

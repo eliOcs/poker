@@ -80,6 +80,12 @@ export function renderHomeView() {
 }
 
 /**
+ */
+export function renderAboutView() {
+  return html`<phg-about></phg-about>`;
+}
+
+/**
  * @param {any} app
  */
 export function renderTournamentsView(app) {

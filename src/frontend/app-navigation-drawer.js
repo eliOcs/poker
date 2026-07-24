@@ -18,6 +18,16 @@ const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
   <rect x="10" y="16" width="4" height="2" />
 </svg>`;
 
+const iconAbout = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  fill="currentColor"
+  viewBox="0 0 24 24"
+>
+  <path
+    d="M18 22H6V20H18V22ZM6 20H4V18H6V20ZM20 20H18V18H20V20ZM4 18H2V6H4V18ZM22 18H20V6H22V18ZM13 17H11V11H13V17ZM13 9H11V7H13V9ZM6 6H4V4H6V6ZM20 6H18V4H20V6ZM18 4H6V2H18V4Z"
+  ></path>
+</svg>`;
+
 /**
  * @param {boolean} active
  */
@@ -28,6 +38,7 @@ function drawerItemClass(active) {
 export function renderAppNavigationDrawer({
   view,
   playActive,
+  aboutActive = false,
   tournamentsActive = false,
   releaseNotesActive = false,
   accountActive = false,
@@ -51,6 +62,10 @@ export function renderAppNavigationDrawer({
     <a class=${drawerItemClass(releaseNotesActive)} href="/release-notes">
       ${iconReleaseNotes}
       <span>Release Notes</span>
+    </a>
+    <a class=${drawerItemClass(aboutActive)} href="/about">
+      ${iconAbout}
+      <span>About</span>
     </a>
   `;
   const footerItems = html`

@@ -8,7 +8,7 @@ class ReleaseNotes extends LitElement {
   render() {
     return html`
       <main class="main">
-        <div class="container">
+        <article class="static-article">
           <h1>Release Notes</h1>
 
           <h2>July 17, 2026</h2>
@@ -414,7 +414,7 @@ class ReleaseNotes extends LitElement {
               Fixed action timeline not grouping actions by street correctly
             </li>
           </ul>
-        </div>
+        </article>
       </main>
     `;
   }

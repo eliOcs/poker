@@ -1,6 +1,7 @@
 import { LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import "./home.js";
+import "./about.js";
 import "./tournaments.js";
 import "./index.js";
 import "./history.js";
@@ -19,6 +20,7 @@ import {
   renderGameView,
   renderHistoryView,
   renderPlayerProfileView,
+  renderAboutView,
   renderHomeView,
   renderTournamentsView,
   renderMttLobbyView,
@@ -425,6 +427,7 @@ class App extends LitElement {
 
   _renderShellPage(route) {
     const shellViews = {
+      about: () => renderAboutView(),
       home: () => renderHomeView(),
       mtt_lobby: () => renderMttLobbyView(this),
       player_profile: () => renderPlayerProfileView(this),

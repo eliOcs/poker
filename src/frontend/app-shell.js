@@ -66,6 +66,7 @@ class AppShell extends LitElement {
 
   render() {
     const playActive = this.path === "/";
+    const aboutActive = this.path === "/about";
     const tournamentsActive = this.path === "/mtt";
     const releaseNotesActive = this.path === "/release-notes";
     const accountActive =
@@ -75,6 +76,7 @@ class AppShell extends LitElement {
       : renderAppNavigationDrawer({
           view: this,
           playActive,
+          aboutActive,
           tournamentsActive,
           releaseNotesActive,
           accountActive,

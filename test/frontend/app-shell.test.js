@@ -33,6 +33,22 @@ describe("phg-app-shell", () => {
     expect(releaseNotesLink.classList.contains("active")).to.equal(true);
   });
 
+  it("shows an active about link when path is /about", async () => {
+    const element = await fixture(
+      html`<phg-app-shell path="/about"></phg-app-shell>`,
+    );
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    const aboutLink = Array.from(element.querySelectorAll("a")).find((link) =>
+      link.textContent.includes("About"),
+    );
+    expect(aboutLink).to.exist;
+    expect(aboutLink.getAttribute("href")).to.equal("/about");
+    expect(aboutLink.classList.contains("active")).to.equal(true);
+  });
+
   it("shows an active tournaments link when path is /mtt", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/mtt"></phg-app-shell>`,

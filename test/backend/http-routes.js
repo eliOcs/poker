@@ -108,6 +108,31 @@ describe("http-routes", () => {
     assert.deepStrictEqual(users, {});
   });
 
+  it("serves the about page through the SPA", async () => {
+    const routes = createRoutes({}, new Map(), () => {});
+    const response = new Writable({
+      write(_chunk, _encoding, callback) {
+        callback();
+      },
+    });
+    const headers = {};
+    response.writeHead = (status, values = {}) => {
+      headers.status = status;
+      Object.assign(headers, values);
+    };
+
+    const finished = once(response, "finish");
+    await handleRequest(
+      { method: "GET", url: "/about", headers: {} },
+      response,
+      routes,
+    );
+    await finished;
+
+    assert.equal(headers.status, 200);
+    assert.match(headers["content-type"], /text\/html/);
+  });
+
   it("logs frontend errors with session and client context", () => {
     /** @type {string[]} */
     const lines = [];
