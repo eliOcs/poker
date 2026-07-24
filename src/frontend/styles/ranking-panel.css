@@ -38,6 +38,7 @@
   }
 
   .rank-col {
+    box-sizing: content-box;
     width: 20px;
     color: var(--color-primary);
   }

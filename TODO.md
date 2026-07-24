@@ -1,5 +1,6 @@
 # To do
 
+- Ideas from: https://plaspokerleague.blogspot.com/, add to poker tournament summary the number of knockouts, the number of rebuys, announce next scheduled tournament, poll to select the best date.
 - Bounty option: (+10% buyin)
 - graph of the evolution
 - background on pot numbers
