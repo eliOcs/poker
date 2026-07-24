@@ -82,7 +82,6 @@ src/
     ├── index.html            # Entry point with importmap
     ├── base.css              # Shared base styles (font, body reset)
     ├── manifest.json         # PWA manifest
-    ├── release-notes.html    # Release notes page
     ├── app.js                # Main app router
     ├── app-shell.js          # App shell (top-level chrome, header, nav)
     ├── app-auth.js           # Auth state management (guest → registered flow)
