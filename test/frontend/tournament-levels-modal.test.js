@@ -1,7 +1,7 @@
 import { fixture, expect, html } from "@open-wc/testing";
 import {
   BLIND_LEVELS,
-  BREAK_AFTER_LEVEL,
+  BREAK_AFTER_LEVELS,
 } from "../../src/shared/tournament.js";
 import { createMockTournamentGameState } from "./setup.js";
 import "../../src/frontend/tournament-levels-panel.js";
@@ -50,7 +50,7 @@ describe("tournament levels modal", () => {
     expect(panel).to.exist;
     await panel.updateComplete;
     expect(panel.querySelectorAll("tbody tr").length).to.equal(
-      BLIND_LEVELS.length + 1,
+      BLIND_LEVELS.length + BREAK_AFTER_LEVELS.length,
     );
   });
 
@@ -133,9 +133,12 @@ describe("phg-tournament-levels-panel", () => {
     );
     expect(headers).to.deep.equal(["Level", "Blinds", "Time"]);
     expect(headers).to.not.include("Ante");
+    expect(
+      panel.querySelector("tbody tr td:last-child").textContent.trim(),
+    ).to.equal("20 min");
   });
 
-  it("renders the scheduled break after the configured level", async () => {
+  it("renders each scheduled break after its configured level", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
         .tournament=${{ level: 3 }}
@@ -145,11 +148,17 @@ describe("phg-tournament-levels-panel", () => {
     const rows = [...panel.querySelectorAll("tbody tr")].map((row) =>
       [...row.querySelectorAll("td")].map((td) => td.textContent.trim()),
     );
-    const breakIndex = rows.findIndex((cells) => cells[0] === "Break");
+    const breakIndexes = rows.flatMap((cells, index) =>
+      cells[0] === "Break" ? [index] : [],
+    );
 
-    expect(breakIndex).to.be.greaterThan(0);
-    expect(rows[breakIndex - 1][0]).to.equal(String(BREAK_AFTER_LEVEL));
-    expect(rows[breakIndex]).to.deep.equal(["Break", "-", "5 min"]);
+    expect(breakIndexes).to.have.length(BREAK_AFTER_LEVELS.length);
+    expect(
+      breakIndexes.map((index) => Number(rows[index - 1][0])),
+    ).to.deep.equal(BREAK_AFTER_LEVELS);
+    for (const index of breakIndexes) {
+      expect(rows[index]).to.deep.equal(["Break", "-", "5 min"]);
+    }
   });
 
   it("marks past, current, and next levels", async () => {
@@ -169,23 +178,22 @@ describe("phg-tournament-levels-panel", () => {
   it("marks the break as current while the tournament is on break", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
-        .tournament=${{ level: BREAK_AFTER_LEVEL, onBreak: true }}
+        .tournament=${{ level: BREAK_AFTER_LEVELS[1], onBreak: true }}
       ></phg-tournament-levels-panel>
     `);
 
     const rows = [...panel.querySelectorAll("tbody tr")];
-    const breakRow = rows.find((row) =>
-      row.querySelector("td").textContent.includes("Break"),
-    );
-    const levelBeforeBreakRow = rows.find(
+    const levelBeforeBreakIndex = rows.findIndex(
       (row) =>
         row.querySelector("td").textContent.trim() ===
-        String(BREAK_AFTER_LEVEL),
+        String(BREAK_AFTER_LEVELS[1]),
     );
+    const levelBeforeBreakRow = rows[levelBeforeBreakIndex];
+    const breakRow = rows[levelBeforeBreakIndex + 1];
     const levelAfterBreakRow = rows.find(
       (row) =>
         row.querySelector("td").textContent.trim() ===
-        String(BREAK_AFTER_LEVEL + 1),
+        String(BREAK_AFTER_LEVELS[1] + 1),
     );
 
     expect(levelBeforeBreakRow.classList.contains("past")).to.be.true;

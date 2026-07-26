@@ -234,7 +234,7 @@ describe("mtt-manager", () => {
     const table = ctx.games.get(tournament.tables[0].tableId);
     assert.ok(table);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     table.hand.phase = "turn";
 
@@ -262,7 +262,7 @@ describe("mtt-manager", () => {
     const table = ctx.games.get(tournament.tables[0].tableId);
     assert.ok(table);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     table.hand.phase = "turn";
 
@@ -303,7 +303,7 @@ describe("mtt-manager", () => {
     assert.ok(firstTable);
     assert.ok(secondTable);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     firstTable.hand.phase = "turn";
     secondTable.hand.phase = "waiting";
@@ -338,7 +338,7 @@ describe("mtt-manager", () => {
     const table = ctx.games.get(tournament.tables[0].tableId);
     assert.ok(table);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.onBreak = true;
     tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
     table.hand.phase = "waiting";
@@ -347,7 +347,7 @@ describe("mtt-manager", () => {
     ctx.manager.tickTournament(tournamentId);
 
     assert.equal(tournament.onBreak, false);
-    assert.equal(tournament.level, Tournament.BREAK_AFTER_LEVEL + 1);
+    assert.equal(tournament.level, Tournament.BREAK_AFTER_LEVELS[0] + 1);
     assert.equal(table.countdown, 5);
   });
 });

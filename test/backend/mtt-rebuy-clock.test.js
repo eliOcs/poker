@@ -138,7 +138,7 @@ describe("mtt rebuy clocks", () => {
     ctx.manager.handleHandFinalized(game);
     const decision = game.pendingRebuyDecision;
     assert.ok(decision);
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
 
     ctx.manager.tickTournament(tournamentId);
@@ -173,7 +173,7 @@ describe("mtt rebuy clocks", () => {
     const decision = game.pendingRebuyDecision;
     assert.ok(decision);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     ctx.manager.tickTournament(tournamentId);
 
@@ -200,7 +200,7 @@ describe("mtt rebuy clocks", () => {
     assert.ok(earlierDecision);
     assert.equal(earlierDecision.clock.countdownTicks, 0);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     ctx.manager.tickTournament(tournamentId);
     assert.equal(tournament.pendingBreak, true);
@@ -236,7 +236,7 @@ describe("mtt rebuy clocks", () => {
     ctx.manager.handleHandFinalized(bustedGame);
     assert.ok(bustedGame.pendingRebuyDecision);
 
-    tournament.level = Tournament.BREAK_AFTER_LEVEL;
+    tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
     tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
     ctx.manager.tickTournament(tournamentId);
     assert.equal(bustedGame.pendingRebuyDecision?.clock.countdownTicks, 1);

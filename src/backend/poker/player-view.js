@@ -197,7 +197,7 @@ import { HIDDEN, getRank } from "./deck.js";
 
 /**
  * @typedef {object} TournamentView
- * @property {number} level - Current blind level (1-7)
+ * @property {number} level - Current blind level (1-12)
  * @property {number} timeToNextLevel - Seconds until next level or break ends
  * @property {boolean} onBreak - Whether currently on break
  * @property {boolean} pendingBreak - Whether break will start after current hand

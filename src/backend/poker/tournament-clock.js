@@ -88,7 +88,7 @@ function tickLevel(clock, canStartBreak) {
   clock.levelTicks = 0;
   result.completedLevel = clock.level;
 
-  if (clock.level !== Tournament.BREAK_AFTER_LEVEL) {
+  if (!Tournament.BREAK_AFTER_LEVELS.includes(clock.level)) {
     advanceLevel(clock);
     result.levelChanged = true;
     return result;

@@ -1,7 +1,7 @@
 import { html, LitElement } from "lit";
 import {
   BLIND_LEVELS,
-  BREAK_AFTER_LEVEL,
+  BREAK_AFTER_LEVELS,
   BREAK_DURATION_TICKS,
   LEVEL_DURATION_TICKS,
 } from "../shared/tournament.js";
@@ -15,14 +15,14 @@ function formatDuration(seconds) {
 function getScheduleRows() {
   return BLIND_LEVELS.flatMap((level) => {
     const levelRow = { kind: "level", ...level };
-    if (level.level !== BREAK_AFTER_LEVEL) return [levelRow];
+    if (!BREAK_AFTER_LEVELS.includes(level.level)) return [levelRow];
 
     return [
       levelRow,
       {
         kind: "break",
-        id: "break",
-        afterLevel: BREAK_AFTER_LEVEL,
+        id: `break-${level.level}`,
+        afterLevel: level.level,
         duration: BREAK_DURATION_TICKS,
       },
     ];
@@ -48,7 +48,7 @@ class TournamentLevelsPanel extends LitElement {
   getLevelRowClass(level) {
     const currentLevel = this.tournament?.level ?? 1;
     const isBreakAfterThisLevel =
-      this.tournament?.onBreak && level === BREAK_AFTER_LEVEL;
+      this.tournament?.onBreak && level === currentLevel;
     if (isBreakAfterThisLevel || level < currentLevel) return "past";
     if (level === currentLevel) return "current";
     return "next";

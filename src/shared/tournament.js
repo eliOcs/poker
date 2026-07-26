@@ -5,7 +5,7 @@
 
 /**
  * @typedef {object} BlindLevel
- * @property {number} level - Level number (1-7)
+ * @property {number} level - Level number (1-12)
  * @property {Cents} small - Small blind amount
  * @property {Cents} big - Big blind amount
  * @property {Cents} ante - Ante amount
@@ -21,16 +21,28 @@ export const BLIND_LEVELS = [
   { level: 5, small: 20000, big: 40000, ante: 0 },
   { level: 6, small: 30000, big: 60000, ante: 0 },
   { level: 7, small: 50000, big: 100000, ante: 0 },
+  { level: 8, small: 75000, big: 150000, ante: 0 },
+  // Break after level 8
+  { level: 9, small: 100000, big: 200000, ante: 0 },
+  { level: 10, small: 150000, big: 300000, ante: 0 },
+  { level: 11, small: 200000, big: 400000, ante: 0 },
+  { level: 12, small: 300000, big: 600000, ante: 0 },
 ];
 
-/** Level duration in ticks (seconds) - 15 minutes */
-export const LEVEL_DURATION_TICKS = 15 * 60;
+/** Level duration in ticks (seconds) - 20 minutes */
+export const LEVEL_DURATION_TICKS = 20 * 60;
 
 /** Break duration in ticks (seconds) - 5 minutes */
 export const BREAK_DURATION_TICKS = 5 * 60;
 
-/** Break occurs after this level */
-export const BREAK_AFTER_LEVEL = 4;
+/** Number of playing levels between breaks */
+export const BREAK_INTERVAL_LEVELS = 4;
+
+/** Break levels, excluding the final level because no play follows it */
+export const BREAK_AFTER_LEVELS = BLIND_LEVELS.filter(
+  ({ level }) =>
+    level % BREAK_INTERVAL_LEVELS === 0 && level < BLIND_LEVELS.length,
+).map(({ level }) => level);
 
 /** @type {Cents} Starting stack for tournament players */
 export const INITIAL_STACK = 500000;
@@ -40,7 +52,7 @@ export const DEFAULT_SEATS = 6;
 
 /**
  * Get blinds for a specific level
- * @param {number} level - Level number (1-7)
+ * @param {number} level - Level number (1-12)
  * @returns {BlindLevel}
  */
 export function getBlindsForLevel(level) {

@@ -104,28 +104,33 @@ describe("tournament-tick", () => {
       assert.equal(game.tournament.levelTicks, 0);
     });
 
-    it("should trigger break after level 4 when in waiting phase", () => {
-      game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
-      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
-      game.hand.phase = "waiting";
+    it("should trigger a break after every four levels", () => {
+      assert.deepEqual(Tournament.BREAK_AFTER_LEVELS, [4, 8]);
 
-      const result = TournamentTick.tick(game);
+      for (const level of Tournament.BREAK_AFTER_LEVELS) {
+        game.tournament.level = level;
+        game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+        game.tournament.onBreak = false;
+        game.hand.phase = "waiting";
 
-      assert.equal(result.breakStarted, true);
-      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVEL);
-      assert.equal(game.tournament.onBreak, true);
-      assert.equal(game.tournament.pendingBreak, false);
+        const result = TournamentTick.tick(game);
+
+        assert.equal(result.breakStarted, true);
+        assert.equal(result.completedLevel, level);
+        assert.equal(game.tournament.onBreak, true);
+        assert.equal(game.tournament.pendingBreak, false);
+      }
     });
 
     it("should set pendingBreak when level 4 ends during active hand", () => {
-      game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
+      game.tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
       game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
       game.hand.phase = "flop"; // Hand in progress
 
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakStarted, false, "break should not start yet");
-      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVEL);
+      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVELS[0]);
       assert.equal(game.tournament.onBreak, false, "should not be on break");
       assert.equal(
         game.tournament.pendingBreak,
@@ -135,7 +140,7 @@ describe("tournament-tick", () => {
     });
 
     it("should advance after a break without completing another playing level", () => {
-      game.tournament.level = Tournament.BREAK_AFTER_LEVEL;
+      game.tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
       game.tournament.onBreak = true;
       game.tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
 
@@ -143,10 +148,11 @@ describe("tournament-tick", () => {
 
       assert.equal(result.breakEnded, true);
       assert.equal(result.completedLevel, undefined);
-      assert.equal(game.tournament.level, Tournament.BREAK_AFTER_LEVEL + 1);
+      assert.equal(game.tournament.level, Tournament.BREAK_AFTER_LEVELS[0] + 1);
     });
 
     it("should report completion of the maximum playing level", () => {
+      assert.equal(Tournament.getMaxLevel(), 12);
       game.tournament.level = Tournament.getMaxLevel();
       game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
 

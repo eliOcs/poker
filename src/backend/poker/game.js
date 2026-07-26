@@ -69,7 +69,7 @@ export {
  * @property {"sitngo"|"mtt"} kind - Tournament mode
  * @property {import('../id.js').Id} competitionId - Sit & Go id or parent MTT id
  * @property {string} name - Human-readable tournament name
- * @property {number} level - Current blind level (1-7)
+ * @property {number} level - Current blind level (1-12)
  * @property {number} levelTicks - Ticks elapsed in current level
  * @property {boolean} onBreak - Currently in break period
  * @property {boolean} pendingBreak - Break will start after current hand ends
