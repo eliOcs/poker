@@ -325,6 +325,7 @@ export {
   mockOhhHandWithShowdown,
   createMockHandList,
   createMockView,
+  createMockReplay,
   mockOhhHandView,
   mockOhhHandWithShowdownView,
 } from "./history.js";

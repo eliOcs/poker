@@ -1,6 +1,15 @@
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import { renderHistoryTimeline } from "./history-timeline.js";
+import {
+  advancePlayback,
+  getCurrentReplayStep,
+  renderReplayControls,
+  resetReplay,
+  stepReplay,
+  stopPlayback,
+  togglePlayback,
+} from "./history-replay.js";
 import { getHistoryPath } from "../shared/routes.js";
 import "./card.js";
 import "./seat.js";
@@ -32,10 +41,13 @@ export class History extends LitElement {
       handNumber: { type: Number },
       hand: { type: Object },
       view: { type: Object },
+      replay: { type: Object },
       handList: { type: Array },
       error: { type: String },
       playerId: { type: String },
       timelineHeight: { state: true },
+      replayIndex: { state: true },
+      isPlaying: { state: true },
     };
   }
 
@@ -45,10 +57,14 @@ export class History extends LitElement {
     this.handNumber = undefined;
     this.hand = undefined;
     this.view = undefined;
+    this.replay = undefined;
     this.handList = undefined;
     this.error = undefined;
     this.playerId = undefined;
     this.timelineHeight = undefined;
+    this.replayIndex = 0;
+    this.isPlaying = false;
+    this.replayTimer = undefined;
     this.touchStartX = undefined;
     this.timelineResizeStartY = undefined;
     this.timelineResizeStartHeight = undefined;
@@ -72,6 +88,30 @@ export class History extends LitElement {
     this.removeEventListener("touchstart", this.boundHandleTouchStart);
     this.removeEventListener("touchend", this.boundHandleTouchEnd);
     this.stopTimelineResize();
+    this.stopPlayback();
+  }
+
+  willUpdate(changedProperties) {
+    if (changedProperties.has("handNumber")) stopPlayback(this);
+    if (changedProperties.has("replay") && this.replay) {
+      resetReplay(this);
+    }
+  }
+
+  stopPlayback() {
+    stopPlayback(this);
+  }
+
+  advancePlayback() {
+    advancePlayback(this);
+  }
+
+  togglePlayback() {
+    togglePlayback(this);
+  }
+
+  stepReplay(direction) {
+    stepReplay(this, direction);
   }
 
   handleKeydown(e) {
@@ -310,25 +350,25 @@ export class History extends LitElement {
   }
 
   renderTableState() {
-    if (!this.view) return html``;
+    const view = getCurrentReplayStep(this).view;
 
-    const hand = { pot: this.view.pot, phase: this.view.board.phase };
+    const hand = { pot: view.pot, phase: view.board.phase };
 
-    const tableSize = this.view.seats.length;
+    const tableSize = view.seats.length;
 
     return html`
       <div class="table-state">
         <phg-board
-          .board=${this.view.board}
+          .board=${view.board}
           .hand=${hand}
-          .winnerMessage=${this.view.winnerMessage}
-          .winningCards=${this.view.winningCards}
+          .winnerMessage=${view.winnerMessage}
+          .winningCards=${view.winningCards}
           noAnimation
         ></phg-board>
         <div id="seats" data-table-size="${tableSize}">
-          ${this.view.seats.map((seat, index) => {
+          ${view.seats.map((seat, index) => {
             if (seat.empty) return html``;
-            const isButton = index === this.view.button;
+            const isButton = index === view.button;
 
             return html`
               <phg-seat
@@ -347,6 +387,10 @@ export class History extends LitElement {
     `;
   }
 
+  renderReplayControls() {
+    return renderReplayControls(this);
+  }
+
   renderTimeline() {
     const { minHeight: ariaMinHeight, maxHeight: ariaMaxHeight } =
       getTimelineHeightBounds(this.clientHeight);
@@ -360,39 +404,6 @@ export class History extends LitElement {
         ),
       ),
     });
-  }
-
-  renderShowdownResult() {
-    const mainPot = this.hand?.pots[0];
-    if (!mainPot) return "";
-
-    const winningHand = mainPot.winning_hand;
-    const winningCards = mainPot.winning_cards;
-    const winnerIds = mainPot.player_wins.map((w) => w.player_id);
-    const winAmount = mainPot.player_wins[0]?.win_amount ?? mainPot.amount;
-
-    return html`
-      ${winnerIds.map((winnerId) => {
-        const isYou = winnerId === this.playerId;
-        const playerName = this.getPlayerName(winnerId);
-        return html`
-          <div class="showdown-winner ${isYou ? "you" : ""}">
-            <span class="winner-name">${playerName}</span> won
-            <span class="winner-amount">${formatCurrency(winAmount)}</span>
-          </div>
-        `;
-      })}
-      ${winningHand
-        ? html`<div class="showdown-hand">${winningHand}</div>`
-        : ""}
-      ${winningCards?.length
-        ? html`<div class="showdown-cards">
-            ${winningCards.map(
-              (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
-            )}
-          </div>`
-        : ""}
-    `;
   }
 
   renderHandListResult(item) {
@@ -508,7 +519,7 @@ export class History extends LitElement {
     }
 
     // Waiting for selected hand details; avoid replacing UI with a loading screen.
-    if (!this.hand || !this.view) {
+    if (!this.hand || !this.replay) {
       return html``;
     }
 
@@ -517,7 +528,8 @@ export class History extends LitElement {
         ${this.renderNavBar()}
         <div class="main">
           <div class="table-area">
-            ${this.renderTableState()} ${this.renderTimeline()}
+            ${this.renderTableState()} ${this.renderReplayControls()}
+            ${this.renderTimeline()}
           </div>
           ${this.renderSidebar()}
         </div>

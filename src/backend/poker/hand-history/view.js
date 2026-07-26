@@ -5,6 +5,7 @@ import HandRankings from "../hand-rankings.js";
  * @typedef {import('../types.js').Cents} Cents
  * @typedef {import('../deck.js').Card} Card
  * @typedef {import('./index.js').OHHHand} OHHHand
+ * @typedef {"Post SB" | "Post BB" | "Post Ante" | "Check" | "Call" | "Bet" | "Raise" | "Fold" | "Shows Cards" | "Mucks Cards"} HistoryLastAction
  */
 
 /**
@@ -82,7 +83,9 @@ import HandRankings from "../hand-rankings.js";
  * @property {boolean} empty
  * @property {{ id: string, name: string }} [player]
  * @property {Cents} [stack]
+ * @property {Cents} [bet]
  * @property {string[]} [cards]
+ * @property {HistoryLastAction} [lastAction]
  * @property {Cents} [handResult]
  * @property {Cents} [netResult] - Net gain/loss for this hand (winnings - contributions)
  * @property {Cents} [endingStack] - Stack after the hand completed
@@ -247,19 +250,17 @@ function getBoardCards(hand) {
   return boardCards;
 }
 
-const contributionActions = new Set([
+const incrementalContributionActions = new Set([
   "Post SB",
   "Post BB",
   "Post Ante",
-  "Bet",
-  "Raise",
-  "Call",
 ]);
+const cumulativeContributionActions = new Set(["Bet", "Raise", "Call"]);
 
 /**
- * Builds contributions map from cumulative per-round action amounts.
- * OHH actions store a player's total committed amount for the round, so we
- * sum only the per-action delta within each round.
+ * Builds contributions from incremental forced bets and cumulative betting
+ * actions. OHH Bet/Raise/Call amounts store the player's total committed for
+ * the round, while posted blinds and antes are individual increments.
  * @param {HandRound[]} rounds
  * @param {(amount: number) => Cents} normalizeAmount
  * @returns {Map<string, Cents>}
@@ -273,17 +274,25 @@ function buildContributionsByPlayer(rounds, normalizeAmount) {
     const roundTotals = new Map();
 
     for (const action of round.actions) {
-      if (
-        !contributionActions.has(action.action) ||
-        action.amount === undefined
-      ) {
+      if (action.amount === undefined) {
         continue;
       }
 
       const actionAmount = normalizeAmount(action.amount);
       const previousTotal = roundTotals.get(action.player_id) ?? 0;
-      const delta = Math.max(0, actionAmount - previousTotal);
-      roundTotals.set(action.player_id, Math.max(previousTotal, actionAmount));
+      let delta;
+      if (incrementalContributionActions.has(action.action)) {
+        delta = actionAmount;
+        roundTotals.set(action.player_id, previousTotal + actionAmount);
+      } else if (cumulativeContributionActions.has(action.action)) {
+        delta = Math.max(0, actionAmount - previousTotal);
+        roundTotals.set(
+          action.player_id,
+          Math.max(previousTotal, actionAmount),
+        );
+      } else {
+        continue;
+      }
 
       const current = contributions.get(action.player_id) ?? 0;
       contributions.set(action.player_id, current + delta);

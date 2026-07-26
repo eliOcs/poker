@@ -98,6 +98,20 @@ describe("phg-app history data fetching", () => {
     expect(fetchedUrls.length).to.be.greaterThan(afterFirstFetch);
   });
 
+  it("passes the server replay payload to the history view", async () => {
+    globalThis.fetch = createMockFetch();
+    const element = await fixture(html`<phg-app></phg-app>`);
+
+    element.path = "/history/testgame123/1";
+    await waitUntil(
+      () => element.querySelector("phg-history")?.replay?.steps?.length > 1,
+      { timeout: 2000 },
+    );
+
+    const historyView = element.querySelector("phg-history");
+    expect(historyView.replay.steps.at(-1).view).to.deep.equal(mockOhhHandView);
+  });
+
   it("refetches when re-entering history that was previously empty", async () => {
     let handsToReturn = [];
     const fetchedUrls = [];

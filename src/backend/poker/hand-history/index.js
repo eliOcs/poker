@@ -8,6 +8,7 @@ export { getHand, getAllHands, clearCache, getCacheSize } from "./io.js";
 // Re-export types and functions from view.js
 // All currency values in these exports are in Cents
 export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
+export { getHandReplay } from "./replay.js";
 
 /**
  * Re-export types for external use
@@ -15,6 +16,7 @@ export { filterHandForPlayer, getHandSummary, getHandView } from "./view.js";
  * @typedef {import('./view.js').HandSummary} HandSummary
  * @typedef {import('./view.js').HistoryView} HistoryView
  * @typedef {import('./view.js').HistoryViewSeat} HistoryViewSeat
+ * @typedef {import('./replay.js').HandReplay} HandReplay
  */
 
 /**

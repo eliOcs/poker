@@ -21,6 +21,7 @@ import {
   mockOhhHandWithShowdown,
   createMockHandList,
   createMockView,
+  createMockReplay,
   mockOhhHandView,
   mockOhhHandWithShowdownView,
 } from "./fixtures/index.js";
@@ -81,6 +82,7 @@ export {
   mockOhhHandWithShowdown,
   createMockHandList,
   createMockView,
+  createMockReplay,
   mockOhhHandView,
   mockOhhHandWithShowdownView,
 };

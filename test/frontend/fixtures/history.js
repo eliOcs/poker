@@ -404,3 +404,99 @@ export const mockOhhHandWithShowdownView = createMockView(
   mockOhhHandWithShowdown,
   "player1",
 );
+
+function resetMockReplaySeat(seat, hand, playerId, dealtCards) {
+  if (seat.empty) return;
+  const player = hand.players.find(
+    (candidate) => candidate.id === seat.player.id,
+  );
+  seat.stack = player?.starting_stack ?? seat.stack;
+  seat.bet = 0;
+  seat.cards = (dealtCards.get(seat.player.id) ?? []).map((card) =>
+    seat.player.id === playerId ? card : "??",
+  );
+  delete seat.handResult;
+  delete seat.netResult;
+  delete seat.endingStack;
+  delete seat.handRank;
+  delete seat.winningCards;
+  delete seat.isWinner;
+  delete seat.lastAction;
+  seat.folded = false;
+  seat.allIn = false;
+}
+
+function createMockReplayStartView(hand, playerId, finalView) {
+  const dealtCards = buildMockPlayerCardsMap(hand);
+  const view = structuredClone(finalView);
+  view.board = { cards: [], phase: hand.rounds[0]?.street ?? "Preflop" };
+  view.pot = 0;
+  delete view.winnerMessage;
+  delete view.winningCards;
+  for (const seat of view.seats) {
+    resetMockReplaySeat(seat, hand, playerId, dealtCards);
+  }
+  return view;
+}
+
+function findRepresentativeReplayAction(hand) {
+  for (const round of hand.rounds) {
+    const action = round.actions.find(
+      (candidate) => candidate.action !== "Dealt Cards",
+    );
+    if (action) return { round, action };
+  }
+  return {};
+}
+
+function createMockReplayActionView(startView, round, action) {
+  const view = structuredClone(startView);
+  if (round?.cards) {
+    view.board = { cards: [...round.cards], phase: round.street };
+  }
+  if (!action) return view;
+
+  const seat = view.seats.find(
+    (candidate) => !candidate.empty && candidate.player.id === action.player_id,
+  );
+  if (!seat) return view;
+  seat.lastAction = action.action;
+  if (action.amount) {
+    seat.bet = action.amount;
+    seat.stack = Math.max(0, seat.stack - action.amount);
+    view.pot = action.amount;
+  }
+  return view;
+}
+
+/**
+ * Creates a compact replay fixture with distinct start, action, and final
+ * snapshots. Backend replay behavior has its own exhaustive tests; frontend
+ * fixtures only need representative render states.
+ * @param {object} hand
+ * @param {string} playerId
+ * @param {object} [finalView]
+ */
+export function createMockReplay(
+  hand,
+  playerId,
+  finalView = createMockView(hand, playerId),
+) {
+  const startView = createMockReplayStartView(hand, playerId, finalView);
+  const { round, action } = findRepresentativeReplayAction(hand);
+  const actionView = createMockReplayActionView(startView, round, action);
+  const actionStreet = round?.street ?? startView.board.phase;
+
+  return {
+    steps: [
+      { kind: "start", street: startView.board.phase, view: startView },
+      {
+        kind: "action",
+        street: actionStreet,
+        actionNumber: action?.action_number,
+        view: actionView,
+      },
+      { kind: "result", street: finalView.board.phase, view: finalView },
+    ],
+  };
+}

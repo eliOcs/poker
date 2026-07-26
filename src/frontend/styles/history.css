@@ -5,6 +5,9 @@
     background-color: var(--color-bg-medium);
     box-sizing: border-box;
     color: var(--color-fg-medium);
+
+    --history-panel-card-scale: 0.7;
+    --history-panel-card-bottom-overlap: -17px;
   }
 
   :scope * {
@@ -97,6 +100,11 @@
 
   /* Desktop: table + sidebar layout */
   @media (width >= 800px) {
+    :scope {
+      --history-panel-card-scale: 0.63;
+      --history-panel-card-bottom-overlap: -31px;
+    }
+
     .main {
       flex-direction: row;
     }
@@ -137,6 +145,18 @@
     inset: 0;
   }
 
+  .replay-controls {
+    min-height: 52px;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
+
+    --button-icon-size: 1.5em;
+  }
+
   phg-board {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -144,6 +164,11 @@
   }
 
   @media (width >= 800px) {
+    .replay-controls {
+      justify-content: flex-end;
+      margin-bottom: var(--space-md);
+    }
+
     phg-board {
       top: 50%;
       width: 78%;
@@ -269,19 +294,25 @@
     margin-bottom: var(--space-md);
   }
 
+  .street-cards,
+  .showdown-cards,
+  .action-cards {
+    gap: 2px;
+  }
+
   .street-cards phg-card,
   .showdown-cards phg-card,
   .action-cards phg-card {
-    transform: scale(0.7);
+    transform: scale(var(--history-panel-card-scale));
     transform-origin: top left;
-    margin-right: -10px;
+    margin-right: -12px;
   }
 
   @media (width >= 800px) {
     .street-cards phg-card,
     .showdown-cards phg-card,
     .action-cards phg-card {
-      margin-right: -12px;
+      margin-right: -21px;
     }
   }
 
@@ -295,6 +326,38 @@
     font-size: var(--font-sm);
     color: var(--color-fg-medium);
     line-height: 1.5;
+    padding-left: var(--space-sm);
+    border-left: 2px solid transparent;
+    scroll-margin: var(--space-lg);
+  }
+
+  .action-item.future,
+  .result-entry.future,
+  .street.future {
+    opacity: 0.42;
+  }
+
+  .action-item.completed,
+  .result-entry.completed {
+    opacity: 0.72;
+  }
+
+  .action-item.active,
+  .result-entry.active {
+    border-left-color: var(--color-primary);
+    background-color: rgb(255 193 7 / 8%);
+    opacity: 1;
+  }
+
+  .street-header.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+  }
+
+  .result-entry {
+    padding-left: var(--space-sm);
+    border-left: 2px solid transparent;
+    scroll-margin: var(--space-lg);
   }
 
   .action-player {
@@ -336,7 +399,13 @@
 
   .showdown-cards {
     display: flex;
+    flex-wrap: wrap;
+    row-gap: var(--space-sm);
     margin-top: var(--space-sm);
+  }
+
+  .showdown-cards phg-card {
+    margin-bottom: var(--history-panel-card-bottom-overlap);
   }
 
   .winner-name {
@@ -441,7 +510,7 @@
   /* Use smaller cards in sidebar on desktop */
   @media (width >= 800px) {
     .hand-cards phg-card {
-      transform: scale(0.63);
+      transform: scale(var(--history-panel-card-scale));
       transform-origin: top left;
       margin-right: -21px;
       margin-bottom: -29px;

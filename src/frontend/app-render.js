@@ -58,6 +58,7 @@ export function renderHistoryView(app, historyRoute) {
       .handNumber=${app._historyHandNumber}
       .hand=${handData?.hand}
       .view=${handData?.view}
+      .replay=${handData?.replay}
       .handList=${listData?.hands}
       .playerId=${listData?.playerId}
     ></phg-history>`;

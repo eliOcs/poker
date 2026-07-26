@@ -5,7 +5,13 @@
  */
 
 import { html } from "lit";
-import { createMockView } from "/fixtures.js";
+import {
+  createMockHandList,
+  createMockReplay,
+  createMockView,
+  mockOhhHandWithShowdown,
+  mockOhhHandWithShowdownView,
+} from "/fixtures.js";
 import {
   HISTORY_EXTENDED_TEST_CASES,
   HISTORY_EXTENDED_IDS,
@@ -71,6 +77,10 @@ export function historyView(props) {
         .handList=${props.handList || []}
         .hand=${props.hand}
         .view=${props.view}
+        .replay=${props.replay ??
+        (props.hand && props.view
+          ? createMockReplay(props.hand, props.playerId, props.view)
+          : undefined)}
       ></phg-history>
     </div>
   `;
@@ -328,6 +338,30 @@ const BASE_HISTORY_TEST_CASES = {
       view: createMockView(hand, "player1"),
     });
   },
+  "history-replay-start": () =>
+    historyView({
+      handNumber: 2,
+      playerId: "player1",
+      handList: createMockHandList(),
+      hand: mockOhhHandWithShowdown,
+      view: mockOhhHandWithShowdownView,
+    }),
+  "history-replay-mid-action": () =>
+    historyView({
+      handNumber: 2,
+      playerId: "player1",
+      handList: createMockHandList(),
+      hand: mockOhhHandWithShowdown,
+      view: mockOhhHandWithShowdownView,
+    }),
+  "history-replay-final": () =>
+    historyView({
+      handNumber: 2,
+      playerId: "player1",
+      handList: createMockHandList(),
+      hand: mockOhhHandWithShowdown,
+      view: mockOhhHandWithShowdownView,
+    }),
 };
 
 // Merge base and extended test cases
@@ -342,6 +376,9 @@ export const HISTORY_CATEGORY = {
     "history-empty",
     "history-preflop-fold",
     "history-showdown-win",
+    "history-replay-start",
+    "history-replay-mid-action",
+    "history-replay-final",
     ...HISTORY_EXTENDED_IDS,
   ],
 };

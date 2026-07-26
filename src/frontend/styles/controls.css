@@ -30,6 +30,11 @@
   transform: translate(2px, 2px);
 }
 
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .button:disabled {
   color: var(--color-fg-muted);
   cursor: not-allowed;

@@ -1,4 +1,9 @@
-import { createMockHandList, mockOhhHand, mockOhhHandView } from "./setup.js";
+import {
+  createMockHandList,
+  createMockReplay,
+  mockOhhHand,
+  mockOhhHandView,
+} from "./setup.js";
 
 export function createMockUser(overrides = {}) {
   const { settings: overrideSettings = {}, ...restOverrides } = overrides;
@@ -42,7 +47,11 @@ export function createMockFetch(options = {}) {
     if (url.match(/\/api\/history\/[^/]+\/\d+$/)) {
       return {
         ok: true,
-        json: async () => ({ hand: mockOhhHand, view: mockOhhHandView }),
+        json: async () => ({
+          hand: mockOhhHand,
+          view: mockOhhHandView,
+          replay: createMockReplay(mockOhhHand, "player1", mockOhhHandView),
+        }),
       };
     }
     return { ok: false };

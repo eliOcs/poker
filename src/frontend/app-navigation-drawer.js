@@ -52,7 +52,7 @@ export function renderAppNavigationDrawer({
   );
   const mainItems = html`
     <a class=${drawerItemClass(playActive)} href="/">
-      ${ICONS.play}
+      ${ICONS.quickPlay}
       <span>Quick play</span>
     </a>
     <a class=${drawerItemClass(tournamentsActive)} href="/mtt">

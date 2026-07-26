@@ -1,5 +1,10 @@
 import { fixture, expect, html } from "@open-wc/testing";
-import { createMockHandList, mockOhhHand, mockOhhHandView } from "./setup.js";
+import {
+  createMockHandList,
+  createMockReplay,
+  mockOhhHand,
+  mockOhhHandView,
+} from "./setup.js";
 
 describe("phg-history timeline resizing", () => {
   let element;
@@ -32,6 +37,7 @@ describe("phg-history timeline resizing", () => {
         .handList=${createMockHandList()}
         .hand=${mockOhhHand}
         .view=${mockOhhHandView}
+        .replay=${createMockReplay(mockOhhHand, "player1", mockOhhHandView)}
       ></phg-history>
     `);
   });

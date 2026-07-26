@@ -98,6 +98,9 @@ const TEST_CASES = [
   "history-showdown-win",
   "history-showdown-lose",
   "history-multiple-hands",
+  "history-replay-start",
+  "history-replay-mid-action",
+  "history-replay-final",
 ];
 
 function getComponentSelector(testCase) {
@@ -112,6 +115,18 @@ function getComponentSelector(testCase) {
 }
 
 async function prepareTestCase(testCase, page, component) {
+  const replayIndex = {
+    "history-replay-start": 0,
+    "history-replay-mid-action": 1,
+  }[testCase];
+  if (replayIndex !== undefined) {
+    await component.evaluate(async (element, index) => {
+      element.stopPlayback();
+      element.replayIndex = index;
+      await element.updateComplete;
+    }, replayIndex);
+  }
+
   const shellContentSelector = {
     "landing-page": "phg-home",
     "player-profile-summary": "phg-player-profile",

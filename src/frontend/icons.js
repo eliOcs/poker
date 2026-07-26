@@ -218,7 +218,7 @@ export const ICONS = {
       d="M6 22H4v-4h2v4Zm14-4h2v2h-2v2h-2v-2h-2v-2h2v-2h2v2ZM8 18H6v-2h2v2Zm8-2H8v-2h8v2Zm-1-4H9v-2h6v2Zm-6-2H7V4h2v6Zm8 0h-2V4h2v6Zm-2-6H9V2h6v2Z"
     />
   </svg>`,
-  play: svg`<svg
+  quickPlay: svg`<svg
     width="1em"
     height="1em"
     viewBox="0 0 24 24"
@@ -263,6 +263,54 @@ export const ICONS = {
     <rect x="13" y="8" width="2" height="6" fill="currentColor" />
     <rect x="7" y="8" width="2" height="4" fill="currentColor" />
     <rect x="15" y="8" width="2" height="4" fill="currentColor" />
+  </svg>`,
+  play: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M9 5h2v2H9v10h2v2H9v2H7V3h2v2Zm4 12h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2v-2h2v2Zm-2-2h-2V9h2v2Zm-2-2h-2V7h2v2Z"
+    />
+  </svg>`,
+  pause: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M10 20H4V4h6v16Zm8-16v16h-6V4h6Zm-4 2v12h2V6h-2ZM6 18h2V6H6v12Z"
+    />
+  </svg>`,
+  previousStep: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M11 19H9V17H7V15H9V9H7V7H9V5H11V19ZM21 19H19V17H17V15H19V9H17V7H19V5H21V19ZM7 15H5V13H7V15ZM17 15H15V13H17V15ZM5 13H3V11H5V13ZM15 13H13V11H15V13ZM7 11H5V9H7V11ZM17 11H15V9H17V11Z"
+    />
+  </svg>`,
+  nextStep: svg`<svg
+    width="1em"
+    height="1em"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M5 7H7V9H5V15H7V17H5V19H3V5H5V7ZM15 5V7H17V9H15V15H17V17H15V19H13V5H15ZM9 15H7V13H9V15ZM19 15H17V13H19V15ZM11 13H9V11H11V13ZM21 13H19V11H21V13ZM9 11H7V9H9V11ZM19 11H17V9H19V11Z"
+    />
   </svg>`,
   tournament: svg`<svg
     width="1em"

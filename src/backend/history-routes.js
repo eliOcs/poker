@@ -49,9 +49,15 @@ export function createHistoryRoutes(users) {
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);
         const view = HandHistory.getHandView(filteredHand, user.id);
+        const replay = HandHistory.getHandReplay(filteredHand, user.id, view);
         res.writeHead(200, { "content-type": "application/json" });
         res.end(
-          JSON.stringify({ hand: filteredHand, view, playerId: user.id }),
+          JSON.stringify({
+            hand: filteredHand,
+            view,
+            replay,
+            playerId: user.id,
+          }),
         );
       },
     },
