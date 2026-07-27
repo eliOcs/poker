@@ -86,6 +86,7 @@ import { calculatePrizePool } from "../mtt-rebuy-policy.js";
  * @property {string[]} flags
  * @property {number} playerCount
  * @property {OTSFinish[]} finishes
+ * @property {number} [roundTimeTicks]
  * @property {Cents} [rebuyCost]
  * @property {OTSRebuy[]} [rebuys]
  */
@@ -157,7 +158,7 @@ function buildSummary(input) {
     flags: input.flags,
     speed: {
       type: "normal",
-      round_time: Tournament.LEVEL_DURATION_TICKS,
+      round_time: input.roundTimeTicks ?? Tournament.LEVEL_DURATION_TICKS,
     },
     prize_pool: toDollars(input.prizePool),
     player_count: input.playerCount,
@@ -265,8 +266,8 @@ function buildWinnerFinish(game, prizeByPosition) {
 function buildOTSSummary(recorder, game) {
   const endTime = new Date().toISOString();
   const tournament = game.tournament;
-  if (!tournament) {
-    throw new Error("tournament summary requires tournament state");
+  if (tournament?.kind !== "sitngo") {
+    throw new Error("Sit & Go summary requires Sit & Go tournament state");
   }
 
   const buyIn = tournament.buyIn;
@@ -294,6 +295,7 @@ function buildOTSSummary(recorder, game) {
     flags: ["SNG"],
     playerCount,
     finishes,
+    roundTimeTicks: tournament.levelDurationTicks,
   });
 }
 
@@ -338,6 +340,7 @@ function buildManagedTournamentSummary(tournament) {
     initialStack: tournament.initialStack,
     type: "MTT",
     flags: rebuysEnabled ? ["MTT", "Re-Entry"] : ["MTT"],
+    roundTimeTicks: tournament.levelDurationTicks,
     playerCount,
     finishes: buildManagedTournamentFinishes(tournament, prizeByPosition),
     ...(rebuysEnabled ? { rebuyCost: tournament.buyIn, rebuys } : {}),

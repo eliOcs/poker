@@ -202,11 +202,39 @@ describe("mtt-manager", () => {
     assert.ok(secondTable);
     assert.equal(countActivePlayers(firstTable), 4);
     assert.equal(countActivePlayers(secondTable), 3);
+    assert.deepStrictEqual(tournament.blindLevels, Tournament.BLIND_LEVELS);
+    assert.notStrictEqual(tournament.blindLevels, Tournament.BLIND_LEVELS);
+    assert.equal(
+      tournament.levelDurationTicks,
+      Tournament.LEVEL_DURATION_TICKS,
+    );
+    assert.deepStrictEqual(
+      tournament.breakAfterLevels,
+      Tournament.BREAK_AFTER_LEVELS,
+    );
+    assert.notStrictEqual(
+      tournament.breakAfterLevels,
+      Tournament.BREAK_AFTER_LEVELS,
+    );
+    assert.equal(
+      tournament.durationMinutes,
+      Tournament.DEFAULT_TOURNAMENT_DURATION_MINUTES,
+    );
+    assert.deepStrictEqual(
+      firstTable.tournament?.blindLevels,
+      tournament.blindLevels,
+    );
+    assert.notStrictEqual(
+      firstTable.tournament?.blindLevels,
+      tournament.blindLevels,
+    );
+    assert.deepStrictEqual(view.blindLevels, tournament.blindLevels);
+    assert.notStrictEqual(view.blindLevels, tournament.blindLevels);
 
-    tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+    tournament.levelTicks = tournament.levelDurationTicks - 1;
     ctx.manager.tickTournament(tournamentId);
 
-    const levelTwoBlinds = Tournament.getBlindsForLevel(2);
+    const levelTwoBlinds = tournament.blindLevels[1];
     assert.equal(tournament.level, 2);
     assert.deepStrictEqual(firstTable.blinds, {
       ante: levelTwoBlinds.ante,

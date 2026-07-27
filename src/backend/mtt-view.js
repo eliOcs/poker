@@ -175,6 +175,7 @@ export function buildTournamentView(tournament, games, playerId) {
     timeToNextLevel: getTimeToNextLevel(tournament),
     onBreak: tournament.onBreak,
     pendingBreak: tournament.pendingBreak,
+    ...Tournament.copyTournamentSchedule(tournament),
     createdAt: tournament.createdAt,
     startedAt: tournament.startedAt,
     endedAt: tournament.endedAt,

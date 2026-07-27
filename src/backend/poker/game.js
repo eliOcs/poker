@@ -3,6 +3,7 @@ import * as ActionClock from "./action-clock.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Tournament from "../../shared/tournament.js";
+import { calculateBlindStructure } from "./blind-calculator.js";
 export {
   gameStateSnapshot,
   stopGameTick,
@@ -64,9 +65,8 @@ export {
  */
 
 /**
- * @typedef {object} TournamentState
+ * @typedef {object} TournamentStateBase
  * @property {boolean} active - Whether this is a tournament game
- * @property {"sitngo"|"mtt"} kind - Tournament mode
  * @property {import('../id.js').Id} competitionId - Sit & Go id or parent MTT id
  * @property {string} name - Human-readable tournament name
  * @property {number} level - Current blind level (1-12)
@@ -78,6 +78,17 @@ export {
  * @property {number} initialStack - Starting stack for each player
  * @property {number|undefined} winner - Seat index of tournament winner (undefined if ongoing)
  * @property {Cents} buyIn - Buy-in amount in cents
+ * @property {import('../../shared/tournament.js').BlindLevel[]} blindLevels
+ * @property {number} levelDurationTicks
+ * @property {number[]} breakAfterLevels
+ * @property {number} breakDurationTicks
+ * @property {number} durationMinutes
+ */
+
+/**
+ * @typedef {TournamentStateBase & { kind: "sitngo" }} SitAndGoTournamentState
+ * @typedef {TournamentStateBase & { kind: "mtt" }} MttTournamentState
+ * @typedef {SitAndGoTournamentState|MttTournamentState} TournamentState
  */
 
 /**
@@ -183,6 +194,7 @@ export function create(options = {}) {
  * @typedef {object} TournamentOptions
  * @property {number} [seats] - Number of seats (default: 6)
  * @property {Cents} [buyIn] - Buy-in amount in cents
+ * @property {number} [durationMinutes] - Requested approximate duration
  */
 
 /**
@@ -193,8 +205,26 @@ export function create(options = {}) {
 export function createTournament({
   seats: numberOfSeats = Tournament.DEFAULT_SEATS,
   buyIn = Tournament.DEFAULT_BUYIN.amount,
+  durationMinutes = Tournament.DEFAULT_SITNGO_LENGTH.minutes,
 } = {}) {
-  const level1Blinds = Tournament.getBlindsForLevel(1);
+  const levelDurationMinutes = Tournament.SITNGO_LEVEL_DURATION_TICKS / 60;
+  const structure = calculateBlindStructure({
+    playerCount: numberOfSeats,
+    startingStack: Tournament.INITIAL_STACK,
+    tournamentDurationMinutes: durationMinutes,
+    levelDurationMinutes,
+    smallestChip: Tournament.getBlindsForLevel(1).small,
+  });
+  const blindLevels = structure.levels.map(({ level, ante, small, big }) => ({
+    level,
+    ante,
+    small,
+    big,
+  }));
+  const level1Blinds =
+    /** @type {import('../../shared/tournament.js').BlindLevel} */ (
+      blindLevels[0]
+    );
   const blinds = {
     ante: level1Blinds.ante,
     small: level1Blinds.small,
@@ -222,6 +252,11 @@ export function createTournament({
     initialStack: Tournament.INITIAL_STACK,
     winner: undefined,
     buyIn,
+    blindLevels,
+    levelDurationTicks: Tournament.SITNGO_LEVEL_DURATION_TICKS,
+    breakAfterLevels: Tournament.getBreaksForLevelCount(blindLevels.length),
+    breakDurationTicks: Tournament.BREAK_DURATION_TICKS,
+    durationMinutes,
   };
 
   return game;
@@ -229,7 +264,7 @@ export function createTournament({
 
 /**
  * Creates a new multi-table tournament table
- * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|undefined, level?: number }} options
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|undefined, level?: number, schedule?: import('../../shared/tournament.js').TournamentSchedule }} options
  * @returns {Game}
  */
 export function createMttTable({
@@ -240,8 +275,15 @@ export function createMttTable({
   tableName,
   startTime,
   level = 1,
+  schedule = Tournament.createDefaultTournamentSchedule(),
 }) {
-  const initialBlinds = Tournament.getBlindsForLevel(level);
+  const tournamentSchedule = Tournament.copyTournamentSchedule(schedule);
+  const initialBlinds = tournamentSchedule.blindLevels.find(
+    (blindLevel) => blindLevel.level === level,
+  );
+  if (!initialBlinds) {
+    throw new Error(`Tournament blind schedule has no level ${level}`);
+  }
   const blinds = {
     ante: initialBlinds.ante,
     small: initialBlinds.small,
@@ -270,6 +312,7 @@ export function createMttTable({
     initialStack: Tournament.INITIAL_STACK,
     winner: undefined,
     buyIn,
+    ...tournamentSchedule,
   };
 
   return game;

@@ -363,14 +363,31 @@ function getTournamentStartTime(lastHand, summary) {
  * @param {{ ante: number, small: number, big: number }} blinds
  * @returns {number}
  */
-function getTournamentLevelFromBlinds(blinds) {
-  const level = Tournament.BLIND_LEVELS.find(
+function getTournamentLevelFromBlinds(blinds, blindLevels) {
+  const level = blindLevels.find(
     (entry) =>
       entry.ante === blinds.ante &&
       entry.small === blinds.small &&
       entry.big === blinds.big,
   );
-  return level?.level ?? 1;
+  if (!level) {
+    throw new Error(
+      `Sit & Go blind schedule does not contain ${blinds.small}/${blinds.big}`,
+    );
+  }
+  return level.level;
+}
+
+/**
+ * @param {OHHHand} lastHand
+ * @returns {number}
+ */
+function getTournamentDuration(lastHand) {
+  const speedType = lastHand.tournament_info?.speed.type;
+  if (speedType === "Turbo") return 60;
+  if (speedType === "Semi-Turbo") return 120;
+  if (speedType === "Normal") return 180;
+  throw new Error(`unsupported Sit & Go speed: ${String(speedType)}`);
 }
 
 /**
@@ -454,6 +471,7 @@ function createGameShell(gameId, lastHand, summary) {
     ? Game.createTournament({
         seats: tableSize,
         buyIn: getTournamentBuyIn(lastHand, summary),
+        durationMinutes: getTournamentDuration(lastHand),
       })
     : Game.create({ seats: tableSize, blinds });
 
@@ -471,7 +489,7 @@ function createGameShell(gameId, lastHand, summary) {
  * @param {{ ante: number, small: number, big: number }} blinds
  */
 function applyTournamentState(game, lastHand, summary, blinds) {
-  if (!game.tournament) return;
+  if (game.tournament?.kind !== "sitngo") return;
 
   const startTime = getTournamentStartTime(lastHand, summary);
   if (startTime) {
@@ -480,7 +498,10 @@ function applyTournamentState(game, lastHand, summary, blinds) {
     delete game.tournament.startTime;
   }
   game.tournament.initialStack = getTournamentInitialStack(lastHand, summary);
-  game.tournament.level = getTournamentLevelFromBlinds(blinds);
+  game.tournament.level = getTournamentLevelFromBlinds(
+    blinds,
+    game.tournament.blindLevels,
+  );
   game.tournament.levelTicks = 0;
   game.tournament.onBreak = false;
   game.tournament.pendingBreak = false;

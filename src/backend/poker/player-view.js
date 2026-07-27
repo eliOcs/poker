@@ -203,6 +203,11 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {boolean} pendingBreak - Whether break will start after current hand
  * @property {number} [winner] - Seat index of tournament winner
  * @property {Cents} buyIn - Buy-in amount in cents
+ * @property {import('../../shared/tournament.js').BlindLevel[]} blindLevels - Blind schedule
+ * @property {number} levelDurationTicks - Playing level duration
+ * @property {number[]} breakAfterLevels - Levels followed by a break
+ * @property {number} breakDurationTicks - Break duration
+ * @property {number} durationMinutes - Requested approximate duration
  */
 
 /**
@@ -809,6 +814,29 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
 }
 
 /**
+ * @param {Game} game
+ * @returns {TournamentView|undefined}
+ */
+function createTournamentView(game) {
+  const tournament = game.tournament;
+  if (!tournament?.active) return;
+
+  return {
+    level: tournament.level,
+    timeToNextLevel: TournamentTick.getTimeToNextLevel(game) ?? 0,
+    onBreak: tournament.onBreak,
+    pendingBreak: tournament.pendingBreak,
+    winner: tournament.winner,
+    buyIn: tournament.buyIn,
+    blindLevels: tournament.blindLevels.map((level) => ({ ...level })),
+    levelDurationTicks: tournament.levelDurationTicks,
+    breakAfterLevels: [...tournament.breakAfterLevels],
+    breakDurationTicks: tournament.breakDurationTicks,
+    durationMinutes: tournament.durationMinutes,
+  };
+}
+
+/**
  * Creates a player-specific view of the game state
  * - Hides opponent cards (unless showdown)
  * - Generates available actions
@@ -827,17 +855,7 @@ export default function playerView(game, player) {
     : undefined;
   const actionClock = decisionClock ?? game.actionClock;
 
-  /** @type {TournamentView|undefined} */
-  const tournament = game.tournament?.active
-    ? {
-        level: game.tournament.level,
-        timeToNextLevel: TournamentTick.getTimeToNextLevel(game) ?? 0,
-        onBreak: game.tournament.onBreak,
-        pendingBreak: game.tournament.pendingBreak,
-        winner: game.tournament.winner,
-        buyIn: game.tournament.buyIn,
-      }
-    : undefined;
+  const tournament = createTournamentView(game);
 
   return {
     running: game.running,

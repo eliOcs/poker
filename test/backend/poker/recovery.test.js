@@ -224,7 +224,7 @@ describe("game recovery", () => {
           fee_amount: 0,
           initial_stack: 5000,
           type: "SnG",
-          speed: "Regular",
+          speed: { type: "Normal", round_time: 15 },
         },
         players: [
           { id: "p1", seat: 1, name: "Alice", starting_stack: 5000 },
@@ -299,6 +299,7 @@ describe("game recovery", () => {
     assert.equal(game.tournament.buyIn, 1000);
     assert.equal(game.tournament.initialStack, 500000);
     assert.equal(game.tournament.startTime, "2026-02-07T08:00:00.000Z");
+    assert.equal(game.tournament.durationMinutes, 180);
     assert.equal(game.tournament.level, 2);
     assert.equal(game.tournament.winner, 0);
     assert.equal(game.button, 0);
@@ -337,7 +338,7 @@ describe("game recovery", () => {
           fee_amount: 0,
           initial_stack: 5000,
           type: "SnG",
-          speed: "Regular",
+          speed: { type: "Semi-Turbo", round_time: 15 },
         },
         players: [
           { id: "p1", seat: 1, name: "Alice", starting_stack: 5000 },
@@ -357,6 +358,43 @@ describe("game recovery", () => {
 
     assert.equal(game.handNumber, 2);
     assert.equal(game.button, 1);
+  });
+
+  it("rejects an unsupported structured Sit & Go speed", async () => {
+    const gameId = "tourrecover3";
+    await writeOHH(gameId, [
+      {
+        game_number: `${gameId}-1`,
+        table_size: 2,
+        dealer_seat: 1,
+        small_blind_amount: 25,
+        big_blind_amount: 50,
+        ante_amount: 0,
+        tournament: true,
+        tournament_info: {
+          tournament_number: gameId,
+          name: "Sit & Go",
+          start_date_utc: "2026-02-07T08:00:00.000Z",
+          currency: "USD",
+          buyin_amount: 10,
+          fee_amount: 0,
+          initial_stack: 5000,
+          type: "SnG",
+          speed: { type: "Unknown", round_time: 15 },
+        },
+        players: [
+          { id: "p1", seat: 1, name: "Alice", starting_stack: 5000 },
+          { id: "p2", seat: 2, name: "Bob", starting_stack: 5000 },
+        ],
+        rounds: [],
+        pots: [],
+      },
+    ]);
+
+    await assert.rejects(
+      () => recoverGameFromHistory(gameId),
+      /unsupported Sit & Go speed: Unknown/,
+    );
   });
 
   it("returns undefined when no hand history exists", async () => {

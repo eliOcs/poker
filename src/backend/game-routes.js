@@ -2,7 +2,12 @@ import * as PokerGame from "./poker/game.js";
 import * as Store from "./store.js";
 import { getPlayerProfile } from "./player-profile.js";
 import { HttpError } from "./http-error.js";
-import { parseBlinds, parseBuyIn, parseSeats } from "./game-route-parsers.js";
+import {
+  parseBlinds,
+  parseBuyIn,
+  parseSeats,
+  parseSitAndGoLength,
+} from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
 import {
@@ -199,7 +204,12 @@ export function createGameRoutes(users, games, broadcast, services) {
         const data = await parseBody(req);
         const seats = parseSeats(data, 6);
         const buyIn = parseBuyIn(data);
-        const game = PokerGame.createTournament({ seats, buyIn });
+        const durationMinutes = parseSitAndGoLength(data);
+        const game = PokerGame.createTournament({
+          seats,
+          buyIn,
+          durationMinutes,
+        });
         games.set(game.id, game);
         Object.assign(log.context, {
           game: {
@@ -207,6 +217,7 @@ export function createGameRoutes(users, games, broadcast, services) {
             id: game.id,
             seats,
             buyIn,
+            durationMinutes,
             initialStack: game.tournament?.initialStack,
           },
         });

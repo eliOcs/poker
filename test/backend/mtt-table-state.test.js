@@ -2,7 +2,9 @@ import { describe, it } from "node:test";
 import assert from "node:assert";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import * as Seat from "../../src/backend/poker/seat.js";
+import * as Tournament from "../../src/shared/tournament.js";
 import {
+  applyTournamentStateToTable,
   getOpenTables,
   getPopulatedOpenTables,
   hasSettledWaitingHand,
@@ -14,6 +16,18 @@ import {
 } from "../../src/backend/mtt-table-state.js";
 
 describe("mtt table state", () => {
+  it("rejects applying managed state to a non-MTT table", () => {
+    const tournament =
+      /** @type {import("../../src/backend/mtt.js").ManagedTournament} */ (
+        /** @type {unknown} */ ({})
+      );
+
+    assert.throws(
+      () => applyTournamentStateToTable(tournament, PokerGame.create()),
+      /requires an MTT table/,
+    );
+  });
+
   it("distinguishes a settled hand from next-hand and rebalance readiness", () => {
     const game = PokerGame.create();
 
@@ -138,6 +152,7 @@ describe("mtt table state", () => {
           pendingBreak: false,
           pendingRebalance: true,
           breakTicks: 0,
+          ...Tournament.createDefaultTournamentSchedule(),
         })
       );
 

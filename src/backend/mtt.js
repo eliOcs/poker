@@ -99,6 +99,11 @@ import {
  * @property {boolean} pendingBreak
  * @property {boolean} pendingRebalance
  * @property {number} breakTicks
+ * @property {import('../shared/tournament.js').BlindLevel[]} blindLevels
+ * @property {number} levelDurationTicks
+ * @property {number[]} breakAfterLevels
+ * @property {number} breakDurationTicks
+ * @property {number} durationMinutes
  * @property {string} createdAt
  * @property {string} [startedAt]
  * @property {string} [endedAt]
@@ -143,6 +148,11 @@ import {
  * @property {number} timeToNextLevel
  * @property {boolean} onBreak
  * @property {boolean} pendingBreak
+ * @property {import('../shared/tournament.js').BlindLevel[]} blindLevels
+ * @property {number} levelDurationTicks
+ * @property {number[]} breakAfterLevels
+ * @property {number} breakDurationTicks
+ * @property {number} durationMinutes
  * @property {string} createdAt
  * @property {string} [startedAt]
  * @property {string} [endedAt]
@@ -281,6 +291,7 @@ export function createMttManager({
       tableName,
       startTime: tournament.startedAt,
       level: tournament.level,
+      schedule: tournament,
     });
 
     applyTournamentStateToTable(tournament, game);
@@ -595,6 +606,7 @@ export function createMttManager({
         pendingBreak: false,
         pendingRebalance: false,
         breakTicks: 0,
+        ...Tournament.createDefaultTournamentSchedule(),
         createdAt,
         entrants: new Map(),
         tables: [],

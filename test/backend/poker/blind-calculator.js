@@ -28,7 +28,11 @@ describe("blind-calculator", () => {
     assert.equal(structure.levels[12].startsAtMinutes, 240);
     assert.deepEqual(
       structure.levels.map(({ small }) => small),
-      [25, 50, 75, 100, 175, 300, 500, 800, 1250, 2000, 3000, 6000, 10_000],
+      [25, 50, 75, 100, 150, 200, 300, 500, 800, 1250, 2000, 3000, 5000],
+    );
+    assert.equal(
+      structure.totalChips / structure.levels[structure.targetLevel - 1].big,
+      20,
     );
 
     for (let index = 1; index < structure.levels.length; index += 1) {

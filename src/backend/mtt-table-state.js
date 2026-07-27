@@ -13,9 +13,18 @@ import * as Tournament from "../shared/tournament.js";
  * @param {Game} game
  */
 export function applyTournamentStateToTable(tournament, game) {
-  if (!game.tournament) return;
+  if (game.kind !== "mtt" || game.tournament?.kind !== "mtt") {
+    throw new Error("managed tournament state requires an MTT table");
+  }
 
-  const blinds = Tournament.getBlindsForLevel(tournament.level);
+  const blinds = tournament.blindLevels.find(
+    ({ level }) => level === tournament.level,
+  );
+  if (!blinds) {
+    throw new Error(
+      `Tournament blind schedule has no level ${tournament.level}`,
+    );
+  }
   game.blinds = {
     ante: blinds.ante,
     small: blinds.small,
@@ -31,6 +40,7 @@ export function applyTournamentStateToTable(tournament, game) {
   game.tournament.buyIn = tournament.buyIn;
   game.tournament.initialStack = tournament.initialStack;
   game.tournament.competitionId = tournament.id;
+  Object.assign(game.tournament, Tournament.copyTournamentSchedule(tournament));
 }
 
 /**
@@ -210,9 +220,9 @@ export function getPopulatedOpenTables(tournament, games) {
  */
 export function getTimeToNextLevel(tournament) {
   if (tournament.onBreak) {
-    return Tournament.BREAK_DURATION_TICKS - tournament.breakTicks;
+    return tournament.breakDurationTicks - tournament.breakTicks;
   }
-  return Tournament.LEVEL_DURATION_TICKS - tournament.levelTicks;
+  return tournament.levelDurationTicks - tournament.levelTicks;
 }
 
 /**

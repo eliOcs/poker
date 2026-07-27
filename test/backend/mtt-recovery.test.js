@@ -72,7 +72,7 @@ describe("mtt recovery", () => {
         fee_amount: 0,
         initial_stack: 5000,
         type: "MTT",
-        speed: "Regular",
+        speed: { type: "Normal", round_time: 20 },
       },
     };
     await writeHandToFile("table123", hand);

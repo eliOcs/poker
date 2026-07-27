@@ -142,13 +142,13 @@ describe("player-profile", function () {
       bet_limit: { bet_type: "NL" },
       table_size: 3,
       dealer_seat: 1,
-      small_blind_amount: 0.25,
-      big_blind_amount: 0.5,
+      small_blind_amount: 25,
+      big_blind_amount: 50,
       ante_amount: 0,
       players: [
-        { id: "player1", seat: 1, name: null, starting_stack: 50 },
-        { id: "player2", seat: 2, name: null, starting_stack: 50 },
-        { id: "player3", seat: 3, name: null, starting_stack: 50 },
+        { id: "player1", seat: 1, name: null, starting_stack: 5000 },
+        { id: "player2", seat: 2, name: null, starting_stack: 5000 },
+        { id: "player3", seat: 3, name: null, starting_stack: 5000 },
       ],
       rounds: [
         {
@@ -159,20 +159,20 @@ describe("player-profile", function () {
               action_number: 1,
               player_id: "player2",
               action: "Post SB",
-              amount: 0.25,
+              amount: 25,
             },
             {
               action_number: 2,
               player_id: "player1",
               action: "Post BB",
-              amount: 0.5,
+              amount: 50,
             },
             { action_number: 3, player_id: "player3", action: "Fold" },
             {
               action_number: 4,
               player_id: "player2",
               action: "Call",
-              amount: 0.5,
+              amount: 50,
             },
             { action_number: 5, player_id: "player1", action: "Check" },
           ],
@@ -185,7 +185,7 @@ describe("player-profile", function () {
               action_number: 6,
               player_id: "player2",
               action: "Bet",
-              amount: 0.5,
+              amount: 50,
             },
             { action_number: 7, player_id: "player1", action: "Fold" },
           ],
@@ -194,10 +194,10 @@ describe("player-profile", function () {
       pots: [
         {
           number: 1,
-          amount: 1.75,
+          amount: 175,
           winning_hand: null,
           player_wins: [
-            { player_id: "player2", win_amount: 1.75, contributed_rake: 0 },
+            { player_id: "player2", win_amount: 175, contributed_rake: 0 },
           ],
         },
       ],
@@ -209,9 +209,9 @@ describe("player-profile", function () {
         currency: "USD",
         buyin_amount: 5,
         fee_amount: 0,
-        initial_stack: 50,
+        initial_stack: 5000,
         type: "SnG",
-        speed: "Regular",
+        speed: { type: "Semi-Turbo", round_time: 15 },
       },
     };
     await writeHandToFile("tour123", tournamentHand);

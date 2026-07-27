@@ -1,10 +1,4 @@
 import { html, LitElement } from "lit";
-import {
-  BLIND_LEVELS,
-  BREAK_AFTER_LEVELS,
-  BREAK_DURATION_TICKS,
-  LEVEL_DURATION_TICKS,
-} from "../shared/tournament.js";
 import { formatCurrency } from "./currency.js";
 
 function formatDuration(seconds) {
@@ -12,10 +6,10 @@ function formatDuration(seconds) {
   return `${minutes} min`;
 }
 
-function getScheduleRows() {
-  return BLIND_LEVELS.flatMap((level) => {
+function getScheduleRows(tournament) {
+  return tournament.blindLevels.flatMap((level) => {
     const levelRow = { kind: "level", ...level };
-    if (!BREAK_AFTER_LEVELS.includes(level.level)) return [levelRow];
+    if (!tournament.breakAfterLevels.includes(level.level)) return [levelRow];
 
     return [
       levelRow,
@@ -23,7 +17,7 @@ function getScheduleRows() {
         kind: "break",
         id: `break-${level.level}`,
         afterLevel: level.level,
-        duration: BREAK_DURATION_TICKS,
+        duration: tournament.breakDurationTicks,
       },
     ];
   });
@@ -83,12 +77,14 @@ class TournamentLevelsPanel extends LitElement {
       <tr class=${this.getRowClass(row)}>
         <td>${row.level}</td>
         <td>${formatCurrency(row.small)}/${formatCurrency(row.big)}</td>
-        <td>${formatDuration(LEVEL_DURATION_TICKS)}</td>
+        <td>${formatDuration(this.tournament.levelDurationTicks)}</td>
       </tr>
     `;
   }
 
   render() {
+    if (!this.tournament) return html``;
+
     return html`
       <div class="table-wrap">
         <table>
@@ -100,7 +96,9 @@ class TournamentLevelsPanel extends LitElement {
             </tr>
           </thead>
           <tbody>
-            ${getScheduleRows().map((row) => this.renderRow(row))}
+            ${getScheduleRows(this.tournament).map((row) =>
+              this.renderRow(row),
+            )}
           </tbody>
         </table>
       </div>

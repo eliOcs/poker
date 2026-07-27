@@ -303,6 +303,7 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     pendingBreak: false,
     pendingRebalance: false,
     breakTicks: 0,
+    ...Tournament.createDefaultTournamentSchedule(),
     createdAt: summary.start_date_utc,
     startedAt: summary.start_date_utc,
     endedAt: summary.end_date_utc,

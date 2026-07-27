@@ -2,6 +2,7 @@ import { fixture, expect, html } from "@open-wc/testing";
 import {
   BLIND_LEVELS,
   BREAK_AFTER_LEVELS,
+  createDefaultTournamentSchedule,
 } from "../../src/shared/tournament.js";
 import { createMockTournamentGameState } from "./setup.js";
 import "../../src/frontend/tournament-levels-panel.js";
@@ -17,6 +18,7 @@ describe("tournament levels modal", () => {
     const game = await fixture(html`<phg-game game-id="test123"></phg-game>`);
     game.game = createMockTournamentGameState({
       tournament: {
+        ...createDefaultTournamentSchedule(),
         level: 3,
         timeToNextLevel: 185,
         onBreak: false,
@@ -121,10 +123,38 @@ describe("tournament levels modal", () => {
 });
 
 describe("phg-tournament-levels-panel", () => {
+  const defaultSchedule = createDefaultTournamentSchedule();
+
+  it("renders a Sit & Go's generated schedule", async () => {
+    const panel = await fixture(html`
+      <phg-tournament-levels-panel
+        .tournament=${{
+          level: 1,
+          blindLevels: [
+            { level: 1, ante: 0, small: 2500, big: 5000 },
+            { level: 2, ante: 0, small: 7500, big: 15000 },
+          ],
+          levelDurationTicks: 15 * 60,
+          breakAfterLevels: [],
+          breakDurationTicks: 5 * 60,
+          durationMinutes: 30,
+        }}
+      ></phg-tournament-levels-panel>
+    `);
+
+    const rows = [...panel.querySelectorAll("tbody tr")].map((row) =>
+      [...row.querySelectorAll("td")].map((cell) => cell.textContent.trim()),
+    );
+    expect(rows).to.deep.equal([
+      ["1", "$25/$50", "15 min"],
+      ["2", "$75/$150", "15 min"],
+    ]);
+  });
+
   it("renders level, blinds, and time columns without ante", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
-        .tournament=${{ level: 3 }}
+        .tournament=${{ ...defaultSchedule, level: 3 }}
       ></phg-tournament-levels-panel>
     `);
 
@@ -141,7 +171,7 @@ describe("phg-tournament-levels-panel", () => {
   it("renders each scheduled break after its configured level", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
-        .tournament=${{ level: 3 }}
+        .tournament=${{ ...defaultSchedule, level: 3 }}
       ></phg-tournament-levels-panel>
     `);
 
@@ -164,7 +194,7 @@ describe("phg-tournament-levels-panel", () => {
   it("marks past, current, and next levels", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
-        .tournament=${{ level: 3 }}
+        .tournament=${{ ...defaultSchedule, level: 3 }}
       ></phg-tournament-levels-panel>
     `);
 
@@ -178,7 +208,11 @@ describe("phg-tournament-levels-panel", () => {
   it("marks the break as current while the tournament is on break", async () => {
     const panel = await fixture(html`
       <phg-tournament-levels-panel
-        .tournament=${{ level: BREAK_AFTER_LEVELS[1], onBreak: true }}
+        .tournament=${{
+          ...defaultSchedule,
+          level: BREAK_AFTER_LEVELS[1],
+          onBreak: true,
+        }}
       ></phg-tournament-levels-panel>
     `);
 

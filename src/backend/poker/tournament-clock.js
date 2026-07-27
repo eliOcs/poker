@@ -3,8 +3,6 @@
  * Used by both sit-n-go (tournament-tick.js) and MTT (mtt.js).
  */
 
-import * as Tournament from "../../shared/tournament.js";
-
 /**
  * @typedef {object} ClockState
  * @property {number} level
@@ -12,6 +10,10 @@ import * as Tournament from "../../shared/tournament.js";
  * @property {number} breakTicks
  * @property {boolean} onBreak
  * @property {boolean} pendingBreak
+ * @property {import('../../shared/tournament.js').BlindLevel[]} blindLevels
+ * @property {number} levelDurationTicks
+ * @property {number[]} breakAfterLevels
+ * @property {number} breakDurationTicks
  */
 
 /**
@@ -38,7 +40,7 @@ function emptyResult() {
  * @param {ClockState} clock
  */
 function advanceLevel(clock) {
-  if (clock.level < Tournament.getMaxLevel()) {
+  if (clock.level < clock.blindLevels.length) {
     clock.level += 1;
   }
 }
@@ -50,7 +52,7 @@ function advanceLevel(clock) {
 function tickBreak(clock) {
   const result = emptyResult();
   clock.breakTicks += 1;
-  if (clock.breakTicks >= Tournament.BREAK_DURATION_TICKS) {
+  if (clock.breakTicks >= clock.breakDurationTicks) {
     clock.onBreak = false;
     clock.breakTicks = 0;
     clock.pendingBreak = false;
@@ -81,14 +83,14 @@ function tickLevel(clock, canStartBreak) {
 
   clock.levelTicks += 1;
 
-  if (clock.levelTicks < Tournament.LEVEL_DURATION_TICKS) {
+  if (clock.levelTicks < clock.levelDurationTicks) {
     return result;
   }
 
   clock.levelTicks = 0;
   result.completedLevel = clock.level;
 
-  if (!Tournament.BREAK_AFTER_LEVELS.includes(clock.level)) {
+  if (!clock.breakAfterLevels.includes(clock.level)) {
     advanceLevel(clock);
     result.levelChanged = true;
     return result;

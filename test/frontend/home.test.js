@@ -13,11 +13,23 @@ describe("phg-home", () => {
     expect(element.querySelector('input[value="mtt"]')).to.not.exist;
   });
 
+  it("rejects an invalid Sit & Go length selection", async () => {
+    const element = await fixture(html`<phg-home></phg-home>`);
+
+    expect(() =>
+      element.handleSitAndGoLengthChange({ target: { value: "99" } }),
+    ).to.throw("invalid Sit & Go length selection");
+  });
+
   it("creates a Sit & Go and navigates to the table", async () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
       expect(url).to.equal("/sitngo");
-      expect(JSON.parse(options.body)).to.include({ type: "sitngo" });
+      expect(JSON.parse(options.body)).to.include({
+        type: "sitngo",
+        seats: 6,
+        durationMinutes: 180,
+      });
       return {
         ok: true,
         json: async () => ({ id: "sitngo123", type: "sitngo" }),
@@ -29,6 +41,13 @@ describe("phg-home", () => {
       element.querySelector('input[value="sitngo"]')
     );
     radio.click();
+    await element.updateComplete;
+
+    const lengthSelect = [...element.querySelectorAll("select")].find(
+      (select) => select.previousElementSibling?.textContent === "Length",
+    );
+    lengthSelect.value = "2";
+    lengthSelect.dispatchEvent(new Event("change"));
     await element.updateComplete;
 
     setTimeout(() => {

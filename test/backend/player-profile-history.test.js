@@ -68,7 +68,7 @@ describe("player-profile history", function () {
         fee_amount: 0,
         initial_stack: 50,
         type: "SnG",
-        speed: "Regular",
+        speed: { type: "Semi-Turbo", round_time: 15 },
       },
     };
     await writeHandToFile("tour456", tournamentHand);
@@ -248,7 +248,7 @@ describe("player-profile history", function () {
       fee_amount: 1,
       initial_stack: 50,
       type: "MTT",
-      speed: "Regular",
+      speed: { type: "Normal", round_time: 20 },
     };
     tableOneHand.start_date_utc = "2026-03-10T12:00:00.000Z";
 

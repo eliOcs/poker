@@ -92,8 +92,8 @@ describe("tournament-tick", () => {
       );
     });
 
-    it("should trigger level change after LEVEL_DURATION_TICKS", () => {
-      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+    it("should trigger a level change after the Sit & Go level duration", () => {
+      game.tournament.levelTicks = game.tournament.levelDurationTicks - 1;
       game.hand.phase = "preflop";
 
       const result = TournamentTick.tick(game);
@@ -105,11 +105,11 @@ describe("tournament-tick", () => {
     });
 
     it("should trigger a break after every four levels", () => {
-      assert.deepEqual(Tournament.BREAK_AFTER_LEVELS, [4, 8]);
+      assert.deepEqual(game.tournament.breakAfterLevels.slice(0, 2), [4, 8]);
 
-      for (const level of Tournament.BREAK_AFTER_LEVELS) {
+      for (const level of game.tournament.breakAfterLevels.slice(0, 2)) {
         game.tournament.level = level;
-        game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+        game.tournament.levelTicks = game.tournament.levelDurationTicks - 1;
         game.tournament.onBreak = false;
         game.hand.phase = "waiting";
 
@@ -123,14 +123,14 @@ describe("tournament-tick", () => {
     });
 
     it("should set pendingBreak when level 4 ends during active hand", () => {
-      game.tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
-      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+      game.tournament.level = game.tournament.breakAfterLevels[0];
+      game.tournament.levelTicks = game.tournament.levelDurationTicks - 1;
       game.hand.phase = "flop"; // Hand in progress
 
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakStarted, false, "break should not start yet");
-      assert.equal(result.completedLevel, Tournament.BREAK_AFTER_LEVELS[0]);
+      assert.equal(result.completedLevel, game.tournament.breakAfterLevels[0]);
       assert.equal(game.tournament.onBreak, false, "should not be on break");
       assert.equal(
         game.tournament.pendingBreak,
@@ -140,27 +140,41 @@ describe("tournament-tick", () => {
     });
 
     it("should advance after a break without completing another playing level", () => {
-      game.tournament.level = Tournament.BREAK_AFTER_LEVELS[0];
+      game.tournament.level = game.tournament.breakAfterLevels[0];
       game.tournament.onBreak = true;
-      game.tournament.breakTicks = Tournament.BREAK_DURATION_TICKS - 1;
+      game.tournament.breakTicks = game.tournament.breakDurationTicks - 1;
 
       const result = TournamentTick.tick(game);
 
       assert.equal(result.breakEnded, true);
       assert.equal(result.completedLevel, undefined);
-      assert.equal(game.tournament.level, Tournament.BREAK_AFTER_LEVELS[0] + 1);
+      assert.equal(
+        game.tournament.level,
+        game.tournament.breakAfterLevels[0] + 1,
+      );
     });
 
     it("should report completion of the maximum playing level", () => {
-      assert.equal(Tournament.getMaxLevel(), 12);
-      game.tournament.level = Tournament.getMaxLevel();
-      game.tournament.levelTicks = Tournament.LEVEL_DURATION_TICKS - 1;
+      const maxLevel = game.tournament.blindLevels.length;
+      game.tournament.level = maxLevel;
+      game.tournament.levelTicks = game.tournament.levelDurationTicks - 1;
 
       const result = TournamentTick.tick(game);
 
-      assert.equal(result.completedLevel, Tournament.getMaxLevel());
-      assert.equal(game.tournament.level, Tournament.getMaxLevel());
+      assert.equal(result.completedLevel, maxLevel);
+      assert.equal(game.tournament.level, maxLevel);
       assert.equal(game.tournament.levelTicks, 0);
+    });
+
+    it("rejects a current level missing from a custom schedule", () => {
+      game.tournament.blindLevels = game.tournament.blindLevels.slice(0, 1);
+      game.tournament.level = 2;
+      game.tournament.levelTicks = game.tournament.levelDurationTicks - 1;
+
+      assert.throws(
+        () => TournamentTick.tick(game),
+        /blind schedule has no level 2/,
+      );
     });
 
     it("should not increment levelTicks before tournament starts", () => {
@@ -215,7 +229,7 @@ describe("tournament-tick", () => {
   describe("getTimeToNextLevel", () => {
     it("should return remaining ticks until level change", () => {
       game.tournament.levelTicks = 100;
-      const expected = Tournament.LEVEL_DURATION_TICKS - 100;
+      const expected = game.tournament.levelDurationTicks - 100;
 
       assert.equal(TournamentTick.getTimeToNextLevel(game), expected);
     });
@@ -293,5 +307,29 @@ describe("tournament-tick", () => {
       );
       assert.equal(result.tournamentEnded, false);
     });
+  });
+});
+
+describe("Sit & Go blind schedule", () => {
+  it("uses duration and table size to generate the schedule", () => {
+    const short = Game.createTournament({ seats: 6, durationMinutes: 60 });
+    const long = Game.createTournament({ seats: 6, durationMinutes: 180 });
+    const headsUp = Game.createTournament({ seats: 2, durationMinutes: 120 });
+    const fullRing = Game.createTournament({ seats: 9, durationMinutes: 120 });
+
+    assert.equal(short.tournament.durationMinutes, 60);
+    assert.equal(
+      short.tournament.levelDurationTicks,
+      Tournament.SITNGO_LEVEL_DURATION_TICKS,
+    );
+    assert.ok(
+      short.tournament.blindLevels[2].big > long.tournament.blindLevels[2].big,
+      "shorter tournaments should increase blinds faster",
+    );
+    assert.ok(
+      fullRing.tournament.blindLevels.at(-4).big >
+        headsUp.tournament.blindLevels.at(-4).big,
+      "larger tables should target a larger finishing big blind",
+    );
   });
 });

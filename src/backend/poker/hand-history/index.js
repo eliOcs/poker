@@ -56,7 +56,7 @@ export { getHandReplay } from "./replay.js";
  * @property {number} fee_amount
  * @property {number} initial_stack
  * @property {string} type
- * @property {string} speed
+ * @property {{ type: string, round_time: number }} speed
  */
 
 /**
@@ -82,15 +82,22 @@ export { getHandReplay } from "./replay.js";
  */
 
 /**
- * @typedef {object} TournamentRecordInfo
+ * @typedef {object} TournamentRecordInfoBase
  * @property {boolean} active
- * @property {"sitngo"|"mtt"} kind
  * @property {string} tournamentId
  * @property {string} name
  * @property {string} [startTime]
  * @property {number} initialStack
  * @property {number} level
  * @property {Cents} buyIn
+ * @property {number} durationMinutes
+ * @property {number} levelDurationTicks
+ */
+
+/**
+ * @typedef {TournamentRecordInfoBase & { kind: "sitngo" }} SitAndGoRecordInfo
+ * @typedef {TournamentRecordInfoBase & { kind: "mtt" }} MttRecordInfo
+ * @typedef {SitAndGoRecordInfo|MttRecordInfo} TournamentRecordInfo
  */
 
 /**
@@ -138,6 +145,26 @@ export function getRecorder(gameId) {
 }
 
 /**
+ * @param {import('../game.js').TournamentState} tournament
+ * @returns {TournamentRecordInfo}
+ */
+function createTournamentRecordInfo(tournament) {
+  const common = {
+    active: true,
+    tournamentId: tournament.competitionId,
+    name: tournament.name,
+    startTime: tournament.startTime,
+    initialStack: tournament.initialStack,
+    level: tournament.level,
+    buyIn: tournament.buyIn,
+    durationMinutes: tournament.durationMinutes,
+    levelDurationTicks: tournament.levelDurationTicks,
+  };
+
+  return { ...common, kind: tournament.kind };
+}
+
+/**
  * Starts recording a new hand
  * @param {Game} game
  */
@@ -157,16 +184,7 @@ export function startHand(game) {
   if (game.tournament?.active) {
     // Set tournament start time on first hand
     game.tournament.startTime ??= /** @type {string} */ (recorder.startTime);
-    recorder.tournament = {
-      active: true,
-      kind: game.tournament.kind,
-      tournamentId: game.tournament.competitionId,
-      name: game.tournament.name,
-      startTime: game.tournament.startTime,
-      initialStack: game.tournament.initialStack,
-      level: game.tournament.level,
-      buyIn: game.tournament.buyIn,
-    };
+    recorder.tournament = createTournamentRecordInfo(game.tournament);
   } else {
     delete recorder.tournament;
   }
@@ -385,7 +403,17 @@ function buildTournamentInfo(tournament, fallbackStartTime) {
     fee_amount: 0,
     initial_stack: toDollars(tournament.initialStack),
     type: tournament.kind === "mtt" ? "MTT" : "SnG",
-    speed: "Regular",
+    speed: {
+      type:
+        tournament.kind === "mtt"
+          ? "Normal"
+          : tournament.durationMinutes === 60
+            ? "Turbo"
+            : tournament.durationMinutes === 120
+              ? "Semi-Turbo"
+              : "Normal",
+      round_time: tournament.levelDurationTicks / 60,
+    },
   };
 }
 

@@ -3,7 +3,6 @@
  * Delegates clock progression to the shared tournament-clock module.
  */
 
-import * as Tournament from "../../shared/tournament.js";
 import { tickClock } from "./tournament-clock.js";
 
 /**
@@ -37,8 +36,15 @@ function createEmptyResult() {
  * @param {Game} game
  */
 function syncBlinds(game) {
-  if (!game.tournament) return;
-  const blinds = Tournament.getBlindsForLevel(game.tournament.level);
+  if (game.tournament?.kind !== "sitngo") return;
+  const blinds = game.tournament.blindLevels.find(
+    ({ level }) => level === game.tournament?.level,
+  );
+  if (!blinds) {
+    throw new Error(
+      `Sit & Go blind schedule has no level ${game.tournament.level}`,
+    );
+  }
   game.blinds = { ante: blinds.ante, small: blinds.small, big: blinds.big };
 }
 
@@ -109,10 +115,10 @@ export function getTimeToNextLevel(game) {
   if (!game.tournament?.active) return;
 
   if (game.tournament.onBreak) {
-    return Tournament.BREAK_DURATION_TICKS - game.tournament.breakTicks;
+    return game.tournament.breakDurationTicks - game.tournament.breakTicks;
   }
 
-  return Tournament.LEVEL_DURATION_TICKS - game.tournament.levelTicks;
+  return game.tournament.levelDurationTicks - game.tournament.levelTicks;
 }
 
 /**

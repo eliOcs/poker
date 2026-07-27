@@ -186,6 +186,14 @@ export function createMockTournamentGameState(overrides = {}) {
       pendingBreak: false,
       winner: null,
       buyIn: 500,
+      blindLevels: [
+        { level: 1, ante: 0, small: 2500, big: 5000 },
+        { level: 2, ante: 0, small: 5000, big: 10000 },
+      ],
+      levelDurationTicks: 20 * 60,
+      breakAfterLevels: [],
+      breakDurationTicks: 5 * 60,
+      durationMinutes: 40,
     },
     ...overrides,
   });

@@ -266,6 +266,10 @@ describe("hand-history", () => {
         toDollars(1000),
         "buyin_amount should match tournament buy-in",
       );
+      assert.deepEqual(hand.tournament_info.speed, {
+        type: "Semi-Turbo",
+        round_time: 15,
+      });
     });
   });
 });

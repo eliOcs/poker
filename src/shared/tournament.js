@@ -32,6 +32,9 @@ export const BLIND_LEVELS = [
 /** Level duration in ticks (seconds) - 20 minutes */
 export const LEVEL_DURATION_TICKS = 20 * 60;
 
+/** Sit & Go level duration in ticks (seconds) - 15 minutes */
+export const SITNGO_LEVEL_DURATION_TICKS = 15 * 60;
+
 /** Break duration in ticks (seconds) - 5 minutes */
 export const BREAK_DURATION_TICKS = 5 * 60;
 
@@ -44,11 +47,86 @@ export const BREAK_AFTER_LEVELS = BLIND_LEVELS.filter(
     level % BREAK_INTERVAL_LEVELS === 0 && level < BLIND_LEVELS.length,
 ).map(({ level }) => level);
 
+/** Default playing time represented by the static tournament structure */
+export const DEFAULT_TOURNAMENT_DURATION_MINUTES =
+  (BLIND_LEVELS.length * LEVEL_DURATION_TICKS) / 60;
+
+/**
+ * @typedef {object} TournamentSchedule
+ * @property {BlindLevel[]} blindLevels
+ * @property {number} levelDurationTicks
+ * @property {number[]} breakAfterLevels
+ * @property {number} breakDurationTicks
+ * @property {number} durationMinutes
+ */
+
+/**
+ * Copies a schedule so each tournament owns its mutable arrays and level data.
+ * @param {TournamentSchedule} schedule
+ * @returns {TournamentSchedule}
+ */
+export function copyTournamentSchedule(schedule) {
+  return {
+    blindLevels: schedule.blindLevels.map((level) => ({ ...level })),
+    levelDurationTicks: schedule.levelDurationTicks,
+    breakAfterLevels: [...schedule.breakAfterLevels],
+    breakDurationTicks: schedule.breakDurationTicks,
+    durationMinutes: schedule.durationMinutes,
+  };
+}
+
+/**
+ * Creates the default schedule used by MTTs until they support length presets.
+ * @returns {TournamentSchedule}
+ */
+export function createDefaultTournamentSchedule() {
+  return copyTournamentSchedule({
+    blindLevels: BLIND_LEVELS,
+    levelDurationTicks: LEVEL_DURATION_TICKS,
+    breakAfterLevels: BREAK_AFTER_LEVELS,
+    breakDurationTicks: BREAK_DURATION_TICKS,
+    durationMinutes: DEFAULT_TOURNAMENT_DURATION_MINUTES,
+  });
+}
+
 /** @type {Cents} Starting stack for tournament players */
 export const INITIAL_STACK = 500000;
 
 /** Default number of seats for Sit & Go */
 export const DEFAULT_SEATS = 6;
+
+/** @typedef {{ label: string, minutes: number }} SitAndGoLengthPreset */
+
+/** @type {SitAndGoLengthPreset[]} */
+export const SITNGO_LENGTH_PRESETS = [
+  { label: "1 hour", minutes: 60 },
+  { label: "2 hours", minutes: 120 },
+  { label: "3 hours", minutes: 180 },
+];
+
+/** @type {SitAndGoLengthPreset} */
+export const DEFAULT_SITNGO_LENGTH = /** @type {SitAndGoLengthPreset} */ (
+  SITNGO_LENGTH_PRESETS[1]
+);
+
+/**
+ * @param {number} minutes
+ * @returns {boolean}
+ */
+export function isValidSitAndGoLength(minutes) {
+  return SITNGO_LENGTH_PRESETS.some((preset) => preset.minutes === minutes);
+}
+
+/**
+ * @param {number} levelCount
+ * @returns {number[]}
+ */
+export function getBreaksForLevelCount(levelCount) {
+  return Array.from(
+    { length: Math.floor((levelCount - 1) / BREAK_INTERVAL_LEVELS) },
+    (_, index) => (index + 1) * BREAK_INTERVAL_LEVELS,
+  );
+}
 
 /**
  * Get blinds for a specific level

@@ -11,6 +11,7 @@ import {
   createGame,
   createPlayer,
 } from "./game-helpers.js";
+import { createDefaultTournamentSchedule } from "../../../src/shared/tournament.js";
 
 // === SPECIAL GAME STATE TEST CASES ===
 
@@ -407,7 +408,12 @@ export const RANKING_MODAL_TEST_CASES = {
   "game-rankings-modal-tournament": () =>
     gameView(
       createGame({
-        tournament: { level: 3, timeToNextLevel: 180, onBreak: false },
+        tournament: {
+          ...createDefaultTournamentSchedule(),
+          level: 3,
+          timeToNextLevel: 180,
+          onBreak: false,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -458,7 +464,12 @@ export const RANKING_MODAL_TEST_CASES = {
       createGame({
         handNumber: 12,
         blinds: { ante: 0, small: 10000, big: 20000 },
-        tournament: { level: 3, timeToNextLevel: 180, onBreak: false },
+        tournament: {
+          ...createDefaultTournamentSchedule(),
+          level: 3,
+          timeToNextLevel: 180,
+          onBreak: false,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,

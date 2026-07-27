@@ -1,5 +1,6 @@
 import * as Stakes from "./poker/stakes.js";
 import * as Tournament from "../shared/tournament.js";
+import { HttpError } from "./http-error.js";
 
 /**
  * Parses seat count from request data
@@ -60,4 +61,24 @@ export function parseBuyIn(data) {
     return data.buyIn;
   }
   return Tournament.DEFAULT_BUYIN.amount;
+}
+
+/**
+ * Parses the requested approximate Sit & Go duration.
+ * @param {unknown} data
+ * @returns {number}
+ */
+export function parseSitAndGoLength(data) {
+  if (!data || typeof data !== "object" || !("durationMinutes" in data)) {
+    return Tournament.DEFAULT_SITNGO_LENGTH.minutes;
+  }
+
+  if (
+    typeof data.durationMinutes !== "number" ||
+    !Tournament.isValidSitAndGoLength(data.durationMinutes)
+  ) {
+    throw new HttpError(400, "invalid Sit & Go duration");
+  }
+
+  return data.durationMinutes;
 }

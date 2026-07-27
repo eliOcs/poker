@@ -1,21 +1,21 @@
 /**
  * Generates gradual tournament blind structures from the expected chip pool.
  *
- * The model follows the useful parts of PokerSoup's calculator:
+ * The model follows common PokerChipForum guidance for home tournaments:
  * - blind growth is geometric, so percentage increases stay broadly consistent;
  * - the requested duration is the estimated finish point, not the last level;
  * - rebuys and add-ons contribute to the expected chip pool;
- * - antes start after four levels and reduce the blinds needed at the finish.
+ * - the finish is estimated when about 20 big blinds remain in play;
+ * - optional antes start after four levels and reduce the finishing blinds.
  *
  * @typedef {import('./types.js').Cents} Cents
  */
 
 const RUNOUT_LEVELS = 3;
 const ANTE_FREE_LEVELS = 4;
-const CHIPS_TO_FORCED_BETS_AT_FINISH = 8;
+const BIG_BLINDS_IN_PLAY_AT_FINISH = 20;
 const EXPECTED_PLAYERS_AT_FINISH = 6;
 const ANTE_SMALL_BLIND_RATIO = 1 / 4;
-const BLINDS_PER_ORBIT_IN_SMALL_BLINDS = 3;
 
 /**
  * Conventional blind values within each power of ten. Quarter values keep
@@ -215,10 +215,8 @@ function calculateFinishPressure(antes) {
   const antePressure = antes
     ? EXPECTED_PLAYERS_AT_FINISH * ANTE_SMALL_BLIND_RATIO
     : 0;
-  return (
-    CHIPS_TO_FORCED_BETS_AT_FINISH *
-    (BLINDS_PER_ORBIT_IN_SMALL_BLINDS + antePressure)
-  );
+  const bigBlindPressure = BIG_BLINDS_IN_PLAY_AT_FINISH * 2;
+  return bigBlindPressure + BIG_BLINDS_IN_PLAY_AT_FINISH * antePressure;
 }
 
 /**
