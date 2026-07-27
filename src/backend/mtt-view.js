@@ -171,6 +171,7 @@ export function buildTournamentView(tournament, games, playerId) {
     entryPeriodLevels: tournament.entryPeriodLevels,
     entryPeriodOpen: tournament.entryPeriodOpen,
     tableSize: tournament.tableSize,
+    speed: tournament.speed,
     level: tournament.level,
     timeToNextLevel: getTimeToNextLevel(tournament),
     onBreak: tournament.onBreak,

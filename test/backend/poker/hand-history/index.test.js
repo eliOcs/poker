@@ -117,6 +117,7 @@ describe("hand-history", function () {
         tableName: "Table 1",
         startTime: "2026-03-14T12:00:00.000Z",
         level: 2,
+        speed: "semi-turbo",
       });
       game.seats[0] = Seat.occupied(players[0], Tournament.INITIAL_STACK);
       game.seats[1] = Seat.occupied(players[1], Tournament.INITIAL_STACK);
@@ -129,6 +130,10 @@ describe("hand-history", function () {
       assert.equal(hand.tournament_info?.tournament_number, "mtt123");
       assert.equal(hand.tournament_info?.name, "Friday Deepstack");
       assert.equal(hand.tournament_info?.type, "MTT");
+      assert.deepEqual(hand.tournament_info?.speed, {
+        type: "Semi-Turbo",
+        round_time: 15,
+      });
     });
   });
 

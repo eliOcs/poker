@@ -10,6 +10,8 @@ import {
   renderActions,
   renderTables,
   renderEntrantsTable,
+  formatEstimatedDuration,
+  formatMttSpeed,
   renderStandingsTable,
   renderTooltipIcon,
 } from "./mtt-lobby-render.js";
@@ -352,6 +354,18 @@ class MttLobby extends LitElement {
                     <article class="stat">
                       <div class="label">Table Size</div>
                       <div class="value">${tournament.tableSize}-Max</div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Speed</div>
+                      <div class="value">
+                        ${formatMttSpeed(tournament.speed)}
+                      </div>
+                    </article>
+                    <article class="stat">
+                      <div class="label">Estimated Duration</div>
+                      <div class="value">
+                        ${formatEstimatedDuration(tournament)}
+                      </div>
                     </article>
                     <article class="stat">
                       <div class="label">Clock</div>

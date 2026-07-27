@@ -16,7 +16,10 @@ describe("phg-tournaments", () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (url, options) => {
       expect(url).to.equal("/mtt");
-      expect(JSON.parse(options.body)).to.include({ type: "mtt" });
+      expect(JSON.parse(options.body)).to.include({
+        type: "mtt",
+        speed: "normal",
+      });
       return {
         ok: true,
         json: async () => ({ id: "mtt123", type: "mtt" }),
@@ -35,6 +38,42 @@ describe("phg-tournaments", () => {
     expect(event.detail).to.deep.equal({ path: "/mtt/mtt123" });
 
     globalThis.fetch = originalFetch;
+  });
+
+  it("selects and submits a tournament speed", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (_url, options) => {
+      expect(JSON.parse(options.body).speed).to.equal("turbo");
+      return {
+        ok: true,
+        json: async () => ({ id: "mtt123", type: "mtt" }),
+      };
+    };
+
+    const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
+    element.user = { email: "player@example.com" };
+    await element.updateComplete;
+    const speedSelect = [...element.querySelectorAll("select")].find(
+      (select) =>
+        select.parentElement.querySelector(".stakes-label").textContent ===
+        "Speed",
+    );
+    speedSelect.value = "2";
+    speedSelect.dispatchEvent(new Event("change"));
+
+    setTimeout(() => element.querySelector("button.button").click());
+    await oneEvent(element, "navigate");
+
+    globalThis.fetch = originalFetch;
+  });
+
+  it("rejects an invalid tournament speed selection", async () => {
+    const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
+
+    expect(() =>
+      element.handleSpeedChange({ target: { value: "unknown" } }),
+    ).to.throw("Unsupported tournament speed option: unknown");
+    expect(element.selectedSpeed).to.equal("normal");
   });
 
   it("opens sign-up instead of creating when the user has no email", async () => {

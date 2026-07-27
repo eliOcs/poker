@@ -65,7 +65,7 @@ import { calculatePrizePool } from "../mtt-rebuy-policy.js";
  * @property {number} initial_stack
  * @property {string} type
  * @property {string[]} flags
- * @property {{ type: string, round_time: number }} speed
+ * @property {{ type: string, round_time: number }} [speed]
  * @property {number} prize_pool
  * @property {number} player_count
  * @property {OTSFinish[]} tournament_finishes_and_winnings
@@ -87,6 +87,7 @@ import { calculatePrizePool } from "../mtt-rebuy-policy.js";
  * @property {number} playerCount
  * @property {OTSFinish[]} finishes
  * @property {number} [roundTimeTicks]
+ * @property {import('../../shared/tournament.js').MttSpeed} [speed]
  * @property {Cents} [rebuyCost]
  * @property {OTSRebuy[]} [rebuys]
  */
@@ -157,7 +158,7 @@ function buildSummary(input) {
     type: input.type,
     flags: input.flags,
     speed: {
-      type: "normal",
+      type: input.speed ?? Tournament.DEFAULT_MTT_SPEED,
       round_time: input.roundTimeTicks ?? Tournament.LEVEL_DURATION_TICKS,
     },
     prize_pool: toDollars(input.prizePool),
@@ -296,6 +297,7 @@ function buildOTSSummary(recorder, game) {
     playerCount,
     finishes,
     roundTimeTicks: tournament.levelDurationTicks,
+    speed: tournament.speed,
   });
 }
 
@@ -341,6 +343,7 @@ function buildManagedTournamentSummary(tournament) {
     type: "MTT",
     flags: rebuysEnabled ? ["MTT", "Re-Entry"] : ["MTT"],
     roundTimeTicks: tournament.levelDurationTicks,
+    speed: tournament.speed,
     playerCount,
     finishes: buildManagedTournamentFinishes(tournament, prizeByPosition),
     ...(rebuysEnabled ? { rebuyCost: tournament.buyIn, rebuys } : {}),

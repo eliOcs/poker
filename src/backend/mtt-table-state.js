@@ -39,6 +39,7 @@ export function applyTournamentStateToTable(tournament, game) {
   game.tournament.name = tournament.name;
   game.tournament.buyIn = tournament.buyIn;
   game.tournament.initialStack = tournament.initialStack;
+  game.tournament.speed = tournament.speed;
   game.tournament.competitionId = tournament.id;
   Object.assign(game.tournament, Tournament.copyTournamentSchedule(tournament));
 }

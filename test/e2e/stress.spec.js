@@ -564,6 +564,7 @@ test.describe("Tournament E2E", () => {
     const tournamentUrl = await createGame(player1, {
       type: "mtt",
       tableSize: 6,
+      speed: "turbo",
     });
     await expect(
       player1.mttLobby.getByText("Rebuys", { exact: true }),
@@ -586,7 +587,6 @@ test.describe("Tournament E2E", () => {
     await runSequentially(joiningPlayers, async (player) => {
       await player.joinTournamentLobbyByUrl(tournamentUrl);
     });
-    console.log("All players reached the MTT lobby");
 
     await runSequentially(preStartRegistrants, async (player, index) => {
       await signUpTournamentRegistrant(

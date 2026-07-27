@@ -1,6 +1,9 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { parseSitAndGoLength } from "../../src/backend/game-route-parsers.js";
+import {
+  parseMttSpeed,
+  parseSitAndGoLength,
+} from "../../src/backend/game-route-parsers.js";
 
 describe("parseSitAndGoLength", () => {
   it("accepts the supported approximate durations", () => {
@@ -23,5 +26,27 @@ describe("parseSitAndGoLength", () => {
       () => parseSitAndGoLength({ durationMinutes: "60" }),
       (error) => error.status === 400,
     );
+  });
+});
+
+describe("parseMttSpeed", () => {
+  it("accepts every speed wire value", () => {
+    for (const speed of ["normal", "semi-turbo", "turbo"]) {
+      assert.equal(parseMttSpeed({ speed }), speed);
+    }
+  });
+
+  it("defaults an omitted speed to normal", () => {
+    assert.equal(parseMttSpeed(undefined), "normal");
+    assert.equal(parseMttSpeed({}), "normal");
+  });
+
+  it("rejects explicitly unsupported values", () => {
+    for (const speed of ["fast", "Normal", 20, null]) {
+      assert.throws(
+        () => parseMttSpeed({ speed }),
+        (error) => error.status === 400,
+      );
+    }
   });
 });

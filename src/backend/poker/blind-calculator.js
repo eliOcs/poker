@@ -27,7 +27,7 @@ const NICE_MANTISSAS = [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 8, 10];
  * @typedef {object} BlindStructureOptions
  * @property {number} playerCount
  * @property {Cents} startingStack
- * @property {number} tournamentDurationMinutes
+ * @property {number} [tournamentDurationMinutes]
  * @property {number} levelDurationMinutes
  * @property {Cents} smallestChip
  * @property {Cents} [startingSmallBlind]
@@ -36,6 +36,18 @@ const NICE_MANTISSAS = [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 6, 8, 10];
  * @property {number} [expectedAddOns]
  * @property {Cents} [addOnStack]
  * @property {boolean} [antes]
+ * @property {number} [targetAverageGrowth] - Desired average increase per level (for example 0.4 for 40%)
+ */
+
+/**
+ * @typedef {BlindStructureOptions & {
+ *   startingSmallBlind: Cents,
+ *   expectedRebuys: number,
+ *   rebuyStack: Cents,
+ *   expectedAddOns: number,
+ *   addOnStack: Cents,
+ *   antes: boolean
+ * }} ResolvedBlindStructureOptions
  */
 
 /**
@@ -68,9 +80,9 @@ function requirePositiveSafeInteger(name, value) {
  * @param {string} name
  * @param {number} value
  */
-function requireNonNegativeSafeInteger(name, value) {
-  if (!Number.isSafeInteger(value) || value < 0) {
-    throw new RangeError(`${name} must be a non-negative safe integer`);
+function requireNonNegativeNumber(name, value) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new RangeError(`${name} must be a non-negative number`);
   }
 }
 
@@ -94,20 +106,24 @@ function requireStackWhenExpected(name, expectedCount, stack) {
 }
 
 /**
- * @param {Required<BlindStructureOptions>} options
+ * @param {ResolvedBlindStructureOptions} options
  */
 function validateOptions(options) {
   requirePositiveSafeInteger("playerCount", options.playerCount);
   requirePositiveSafeInteger("startingStack", options.startingStack);
-  requirePositiveNumber(
-    "tournamentDurationMinutes",
-    options.tournamentDurationMinutes,
-  );
+  if (options.targetAverageGrowth === undefined) {
+    requirePositiveNumber(
+      "tournamentDurationMinutes",
+      /** @type {number} */ (options.tournamentDurationMinutes),
+    );
+  } else {
+    requirePositiveNumber("targetAverageGrowth", options.targetAverageGrowth);
+  }
   requirePositiveNumber("levelDurationMinutes", options.levelDurationMinutes);
   requirePositiveSafeInteger("smallestChip", options.smallestChip);
   requirePositiveSafeInteger("startingSmallBlind", options.startingSmallBlind);
-  requireNonNegativeSafeInteger("expectedRebuys", options.expectedRebuys);
-  requireNonNegativeSafeInteger("expectedAddOns", options.expectedAddOns);
+  requireNonNegativeNumber("expectedRebuys", options.expectedRebuys);
+  requireNonNegativeNumber("expectedAddOns", options.expectedAddOns);
   requireStackWhenExpected(
     "rebuyStack",
     options.expectedRebuys,
@@ -128,7 +144,7 @@ function validateOptions(options) {
 
 /**
  * @param {BlindStructureOptions} options
- * @returns {Required<BlindStructureOptions>}
+ * @returns {ResolvedBlindStructureOptions}
  */
 function withDefaults(options) {
   return {
@@ -195,7 +211,7 @@ function roundBlind(amount, smallestChip, greaterThan = 0) {
 }
 
 /**
- * @param {Required<BlindStructureOptions>} options
+ * @param {ResolvedBlindStructureOptions} options
  * @returns {Cents}
  */
 function calculateTotalChips(options) {
@@ -234,7 +250,7 @@ function calculateAnte(antes, index, small, smallestChip) {
 /**
  * @param {number} index
  * @param {Cents} previousSmall
- * @param {Required<BlindStructureOptions>} options
+ * @param {ResolvedBlindStructureOptions} options
  * @param {number} growthFactor
  * @returns {CalculatedBlindLevel}
  */
@@ -245,13 +261,50 @@ function calculateLevel(index, previousSmall, options, growthFactor) {
       ? options.startingSmallBlind
       : roundBlind(rawSmall, options.smallestChip, previousSmall);
 
+  const big = small * 2;
+  requirePositiveSafeInteger("big blind", big);
+
   return {
     level: index + 1,
     small,
-    big: small * 2,
+    big,
     ante: calculateAnte(options.antes, index, small, options.smallestChip),
     startsAtMinutes: index * options.levelDurationMinutes,
   };
+}
+
+/**
+ * Builds a structure whose unrounded blinds grow by the requested percentage,
+ * stopping at the first conventionally rounded level that reaches the
+ * 20-big-blind finish estimate.
+ * @param {ResolvedBlindStructureOptions & { targetAverageGrowth: number }} options
+ * @param {Cents} totalChips
+ * @returns {{ targetLevel: number, levels: CalculatedBlindLevel[] }}
+ */
+function calculateGrowthTargetStructure(options, totalChips) {
+  const growthFactor = 1 + options.targetAverageGrowth;
+  const targetBigBlind = totalChips / BIG_BLINDS_IN_PLAY_AT_FINISH;
+  /** @type {CalculatedBlindLevel[]} */
+  const levels = [];
+  let targetLevel;
+
+  for (let index = 0; index < 100; index += 1) {
+    const previousSmall = levels[index - 1]?.small ?? 0;
+    const level = calculateLevel(index, previousSmall, options, growthFactor);
+    levels.push(level);
+
+    if (targetLevel === undefined && index > 0 && level.big >= targetBigBlind) {
+      targetLevel = level.level;
+    }
+    if (
+      targetLevel !== undefined &&
+      levels.length >= targetLevel + RUNOUT_LEVELS
+    ) {
+      return { targetLevel, levels };
+    }
+  }
+
+  throw new RangeError("blind structure exceeds the supported level count");
 }
 
 /**
@@ -263,8 +316,20 @@ export function calculateBlindStructure(options) {
   validateOptions(resolvedOptions);
   const totalChips = calculateTotalChips(resolvedOptions);
 
+  if (resolvedOptions.targetAverageGrowth !== undefined) {
+    return {
+      totalChips,
+      ...calculateGrowthTargetStructure(
+        /** @type {ResolvedBlindStructureOptions & { targetAverageGrowth: number }} */ (
+          resolvedOptions
+        ),
+        totalChips,
+      ),
+    };
+  }
+
   const targetIntervals = Math.ceil(
-    resolvedOptions.tournamentDurationMinutes /
+    /** @type {number} */ (resolvedOptions.tournamentDurationMinutes) /
       resolvedOptions.levelDurationMinutes,
   );
   const targetLevel = targetIntervals + 1;

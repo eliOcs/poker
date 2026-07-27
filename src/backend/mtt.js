@@ -1,12 +1,7 @@
-import * as Id from "./id.js";
 import * as PokerGame from "./poker/game.js";
-import * as Tournament from "../shared/tournament.js";
 import { TIMER_INTERVAL } from "./poker/game-constants.js";
 import { tickClock } from "./poker/tournament-clock.js";
-import {
-  DEFAULT_TOURNAMENT_NAME,
-  normalizeTournamentName,
-} from "./mtt-metadata.js";
+import { normalizeTournamentName } from "./mtt-metadata.js";
 import {
   applyTournamentStateToTable,
   isHandSettled,
@@ -35,12 +30,11 @@ import {
 } from "./mtt-table-names.js";
 import { addTournamentEntrant } from "./mtt-registration.js";
 import { createStartingTables } from "./mtt-start.js";
-import { DEFAULT_MAX_REBUYS } from "./mtt-rebuy-policy.js";
+import { recalculateMttSchedule } from "./mtt-schedule.js";
+import { createManagedTournament } from "./mtt-creation.js";
 import {
   applyEntryPeriodCutoff,
-  DEFAULT_ENTRY_PERIOD_LEVELS,
   isEntryPeriodOpen,
-  validateEntryPeriodLevels,
 } from "./mtt-entry-policy.js";
 import {
   finalizeRebuyDecision,
@@ -90,6 +84,7 @@ import {
  * @property {number} buyIn
  * @property {number} tableSize
  * @property {number} initialStack
+ * @property {import('../shared/tournament.js').MttSpeed} speed
  * @property {number} maxRebuys
  * @property {number} entryPeriodLevels
  * @property {boolean} entryPeriodOpen
@@ -144,6 +139,7 @@ import {
  * @property {number} entryPeriodLevels
  * @property {boolean} entryPeriodOpen
  * @property {number} tableSize
+ * @property {import('../shared/tournament.js').MttSpeed} speed
  * @property {number} level
  * @property {number} timeToNextLevel
  * @property {boolean} onBreak
@@ -291,6 +287,7 @@ export function createMttManager({
       tableName,
       startTime: tournament.startedAt,
       level: tournament.level,
+      speed: tournament.speed,
       schedule: tournament,
     });
 
@@ -556,9 +553,12 @@ export function createMttManager({
   function registerPlayer(tournamentId, user) {
     const tournament = requireTournament(tournamentId);
     addTournamentEntrant(tournament, user, now);
+    recalculateMttSchedule(tournament);
 
     if (tournament.status === "running") {
-      reconcileTournament(tournament, new Set());
+      reconcileTournament(tournament, new Set(), {
+        broadcastAllOpenTables: true,
+      });
     } else {
       broadcastTournamentState(tournament.id);
     }
@@ -567,51 +567,25 @@ export function createMttManager({
 
   return {
     /**
-     * @param {{ owner: User, buyIn: number, tableSize: number, maxRebuys?: unknown, entryPeriodLevels?: unknown }} options
+     * @param {{ owner: User, buyIn: number, tableSize: number, speed?: unknown, maxRebuys?: unknown, entryPeriodLevels?: unknown }} options
      */
     createTournament({
       owner,
       buyIn,
       tableSize,
-      maxRebuys = DEFAULT_MAX_REBUYS,
-      entryPeriodLevels = DEFAULT_ENTRY_PERIOD_LEVELS,
+      speed,
+      maxRebuys,
+      entryPeriodLevels,
     }) {
-      if (!Tournament.isValidBuyin(buyIn)) {
-        throw new Error("invalid tournament buy-in");
-      }
-      if (
-        typeof maxRebuys !== "number" ||
-        !Number.isInteger(maxRebuys) ||
-        maxRebuys < 0
-      ) {
-        throw new Error("invalid maximum rebuys");
-      }
-      const createdAt = now();
-      /** @type {ManagedTournament} */
-      const tournament = {
-        id: Id.generate(),
-        name: DEFAULT_TOURNAMENT_NAME,
-        status: "registration",
-        ownerId: owner.id,
-        ownerName: owner.name,
+      const tournament = createManagedTournament({
+        owner,
         buyIn,
         tableSize,
-        initialStack: Tournament.INITIAL_STACK,
+        createdAt: now(),
+        speed,
         maxRebuys,
-        entryPeriodLevels: validateEntryPeriodLevels(entryPeriodLevels),
-        entryPeriodOpen: false,
-        level: 1,
-        levelTicks: 0,
-        onBreak: false,
-        pendingBreak: false,
-        pendingRebalance: false,
-        breakTicks: 0,
-        ...Tournament.createDefaultTournamentSchedule(),
-        createdAt,
-        entrants: new Map(),
-        tables: [],
-        nextRegistrationOrder: 0,
-      };
+        entryPeriodLevels,
+      });
 
       tournaments.set(tournament.id, tournament);
       registerPlayer(tournament.id, owner);
@@ -671,6 +645,7 @@ export function createMttManager({
       }
 
       tournament.entrants.delete(playerId);
+      recalculateMttSchedule(tournament);
       broadcastTournamentState(tournament.id);
       return buildTournamentView(tournament, games, actorId);
     },

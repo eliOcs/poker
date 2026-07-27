@@ -14,6 +14,9 @@ function createTournamentView() {
     entryPeriodLevels: 4,
     entryPeriodOpen: true,
     tableSize: 6,
+    speed: "normal",
+    durationMinutes: 260,
+    levelDurationTicks: 1200,
     level: 2,
     timeToNextLevel: 90,
     onBreak: false,
@@ -96,6 +99,10 @@ describe("phg-mtt-lobby", () => {
         stat.querySelector(".label > span")?.textContent.trim() === "Rebuys",
     );
     expect(rebuyStat.querySelector(".value").textContent.trim()).to.equal("1");
+    expect(element.textContent).to.include("Normal");
+    expect(element.textContent.replace(/\s+/g, " ")).to.include(
+      "4h 20m play + 15m breaks",
+    );
   });
 
   it("shows late registration with accessible dynamic tooltips", async () => {

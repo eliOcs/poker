@@ -60,6 +60,47 @@ describe("blind-calculator", () => {
     assert.deepEqual(withRebuys, withAddOns);
   });
 
+  it("permits fractional expected rebuys when the chip pool stays integral", () => {
+    const structure = calculateBlindStructure({
+      ...BASE_OPTIONS,
+      expectedRebuys: 2.5,
+      rebuyStack: 5000,
+    });
+
+    assert.equal(structure.totalChips, 62_500);
+    assert.throws(
+      () =>
+        calculateBlindStructure({
+          ...BASE_OPTIONS,
+          expectedRebuys: 0.5,
+          rebuyStack: 5001,
+        }),
+      /totalChips must be a positive safe integer/,
+    );
+  });
+
+  it("supports a blind-growth target instead of a fixed duration", () => {
+    const structure = calculateBlindStructure({
+      playerCount: 8,
+      startingStack: 500_000,
+      levelDurationMinutes: 20,
+      smallestChip: 2500,
+      expectedRebuys: 4,
+      rebuyStack: 500_000,
+      targetAverageGrowth: 0.4,
+    });
+
+    assert.equal(structure.totalChips, 6_000_000);
+    assert.equal(structure.targetLevel, 13);
+    assert.equal(structure.levels.length, 16);
+    assert.equal(structure.levels[12].big, 300_000);
+    assert.equal(structure.totalChips / structure.levels[12].big, 20);
+    assert.deepEqual(
+      structure.levels.map(({ ante }) => ante),
+      Array(16).fill(0),
+    );
+  });
+
   it("uses more gradual increases for a longer tournament", () => {
     const short = calculateBlindStructure({
       ...BASE_OPTIONS,

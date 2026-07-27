@@ -83,11 +83,12 @@ export {
  * @property {number[]} breakAfterLevels
  * @property {number} breakDurationTicks
  * @property {number} durationMinutes
+ * @property {import('../../shared/tournament.js').MttSpeed} [speed] - MTT speed preset
  */
 
 /**
  * @typedef {TournamentStateBase & { kind: "sitngo" }} SitAndGoTournamentState
- * @typedef {TournamentStateBase & { kind: "mtt" }} MttTournamentState
+ * @typedef {TournamentStateBase & { kind: "mtt", speed: import('../../shared/tournament.js').MttSpeed }} MttTournamentState
  * @typedef {SitAndGoTournamentState|MttTournamentState} TournamentState
  */
 
@@ -264,7 +265,7 @@ export function createTournament({
 
 /**
  * Creates a new multi-table tournament table
- * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|undefined, level?: number, schedule?: import('../../shared/tournament.js').TournamentSchedule }} options
+ * @param {{ seats?: number, buyIn?: Cents, tournamentId: import('../id.js').Id, tournamentName?: string, tableName: string, startTime: string|undefined, level?: number, speed?: import('../../shared/tournament.js').MttSpeed, schedule?: import('../../shared/tournament.js').TournamentSchedule }} options
  * @returns {Game}
  */
 export function createMttTable({
@@ -275,9 +276,12 @@ export function createMttTable({
   tableName,
   startTime,
   level = 1,
-  schedule = Tournament.createDefaultTournamentSchedule(),
+  speed = Tournament.DEFAULT_MTT_SPEED,
+  schedule,
 }) {
-  const tournamentSchedule = Tournament.copyTournamentSchedule(schedule);
+  const tournamentSchedule = Tournament.copyTournamentSchedule(
+    schedule ?? Tournament.createDefaultTournamentSchedule(speed),
+  );
   const initialBlinds = tournamentSchedule.blindLevels.find(
     (blindLevel) => blindLevel.level === level,
   );
@@ -312,6 +316,7 @@ export function createMttTable({
     initialStack: Tournament.INITIAL_STACK,
     winner: undefined,
     buyIn,
+    speed,
     ...tournamentSchedule,
   };
 

@@ -72,7 +72,7 @@ describe("mtt recovery", () => {
         fee_amount: 0,
         initial_stack: 5000,
         type: "MTT",
-        speed: { type: "Normal", round_time: 20 },
+        speed: { type: "sEmI-tUrBo", round_time: 15 },
       },
     };
     await writeHandToFile("table123", hand);
@@ -99,7 +99,6 @@ describe("mtt recovery", () => {
       initial_stack: 5000,
       type: "MTT",
       flags: ["MTT"],
-      speed: { type: "normal", round_time: 900 },
       prize_pool: 10,
       player_count: 2,
       tournament_finishes_and_winnings: [
@@ -155,6 +154,8 @@ describe("mtt recovery", () => {
     const recoveredTournament = manager.getTournament("mtt123");
     assert.ok(recoveredTournament);
     assert.equal(recoveredTournament.maxRebuys, 0);
+    assert.equal(recoveredTournament.speed, "semi-turbo");
+    assert.equal(view.speed, "semi-turbo");
     assert.equal(
       recoveredTournament.entryPeriodLevels,
       DEFAULT_ENTRY_PERIOD_LEVELS,
@@ -186,7 +187,7 @@ describe("mtt recovery", () => {
       initial_stack: 5000,
       type: "MTT",
       flags: ["MTT", "Re-Entry"],
-      speed: { type: "normal", round_time: 900 },
+      speed: { type: "unknown", round_time: 900 },
       prize_pool: 30,
       player_count: 3,
       rebuy_cost: 5,
@@ -222,6 +223,8 @@ describe("mtt recovery", () => {
     assert.ok(recoveredTournament);
 
     assert.equal(recoveredTournament.maxRebuys, 2);
+    assert.equal(recoveredTournament.speed, "semi-turbo");
+    assert.equal(view.speed, "semi-turbo");
     assert.equal(recoveredTournament.entrants.get("p1")?.rebuysUsed, 1);
     assert.equal(recoveredTournament.entrants.get("p2")?.rebuysUsed, 0);
     assert.equal(recoveredTournament.entrants.get("p3")?.rebuysUsed, 2);

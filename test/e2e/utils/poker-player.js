@@ -229,6 +229,7 @@ export class PokerPlayer extends PokerPlayerActions {
    *   entrantCount: number,
    *   prizePool: number,
    *   buyIn: number,
+   *   speed: string,
    *   currentPlayer: { status: string, tableId: string|null },
    * }|null>}
    */
@@ -245,6 +246,7 @@ export class PokerPlayer extends PokerPlayerActions {
           entrantCount: view.entrants.length,
           prizePool: view.prizePool,
           buyIn: view.buyIn,
+          speed: view.speed,
           currentPlayer: {
             status: view.currentPlayer?.status ?? "not_registered",
             tableId: view.currentPlayer?.tableId ?? null,

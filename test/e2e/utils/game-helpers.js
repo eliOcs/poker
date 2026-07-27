@@ -1,3 +1,9 @@
+const MTT_SPEED_LABELS = {
+  normal: "Normal",
+  "semi-turbo": "Semi-Turbo",
+  turbo: "Turbo",
+};
+
 /**
  * @param {'cash' | 'sitngo' | 'mtt' | 'tournament' | undefined} type
  * @returns {'cash' | 'sitngo' | 'mtt'}
@@ -11,13 +17,20 @@ function normalizeGameType(type) {
  * @param {'cash' | 'sitngo' | 'mtt'} type
  * @param {number|undefined} stakesIndex
  * @param {number|undefined} buyInIndex
+ * @param {'normal' | 'semi-turbo' | 'turbo' | undefined} speed
  */
-async function configureGameType(page, type, stakesIndex, buyInIndex) {
+async function configureGameType(page, type, stakesIndex, buyInIndex, speed) {
   if (type === "mtt") {
     await page.goto("/mtt");
     await page.locator("phg-tournaments").waitFor();
     if (buyInIndex !== undefined) {
       await page.locator("select").first().selectOption(String(buyInIndex));
+    }
+    if (speed !== undefined) {
+      await page
+        .locator(".stakes-selector", { hasText: "Speed" })
+        .locator("select")
+        .selectOption({ label: MTT_SPEED_LABELS[speed] });
     }
     return;
   }
@@ -76,11 +89,11 @@ async function waitForCreatedGame(player, type) {
 /**
  * Create a new game via the UI home page
  * @param {import('./poker-player.js').PokerPlayer} player - Player who creates the game
- * @param {{ type?: 'cash' | 'sitngo' | 'mtt' | 'tournament', stakesIndex?: number, buyInIndex?: number, tableSize?: number }} [options]
+ * @param {{ type?: 'cash' | 'sitngo' | 'mtt' | 'tournament', stakesIndex?: number, buyInIndex?: number, tableSize?: number, speed?: 'normal' | 'semi-turbo' | 'turbo' }} [options]
  * @returns {Promise<string>}
  */
 export async function createGame(player, options = {}) {
-  const { stakesIndex, buyInIndex, tableSize } = options;
+  const { stakesIndex, buyInIndex, tableSize, speed } = options;
   const type = normalizeGameType(options.type);
   const page = player.page;
 
@@ -88,10 +101,13 @@ export async function createGame(player, options = {}) {
     await page.goto("/");
     await page.locator("phg-home").waitFor();
   }
-  await configureGameType(page, type, stakesIndex, buyInIndex);
+  await configureGameType(page, type, stakesIndex, buyInIndex, speed);
 
   if (tableSize !== undefined) {
-    await page.locator("select").last().selectOption(String(tableSize));
+    await page
+      .locator(".stakes-selector", { hasText: "Table Size" })
+      .locator("select")
+      .selectOption(String(tableSize));
   }
 
   await page
@@ -99,5 +115,14 @@ export async function createGame(player, options = {}) {
     .click();
   await page.waitForURL(getCreatedGameUrlPattern(type));
   await waitForCreatedGame(player, type);
+  if (type === "mtt" && speed !== undefined) {
+    await player.mttLobby
+      .getByText(MTT_SPEED_LABELS[speed], { exact: true })
+      .waitFor();
+    const tournament = await player.getTournamentViewSnapshot();
+    if (tournament?.speed !== speed) {
+      throw new Error(`Expected ${speed} MTT, received ${tournament?.speed}`);
+    }
+  }
   return page.url();
 }

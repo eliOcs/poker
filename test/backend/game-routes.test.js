@@ -70,7 +70,7 @@ describe("game-routes", () => {
     assert.strictEqual(path, undefined);
   });
 
-  it("does not forward a client entry-period override when creating an MTT", async () => {
+  it("defaults speed and rejects invalid speed when creating an MTT", async () => {
     const ctx = createMttContext();
     ctx.setup();
     try {
@@ -79,8 +79,21 @@ describe("game-routes", () => {
       const routes = createGameRoutes(users, ctx.games, () => {}, {
         mttManager: ctx.manager,
       });
-      const server = http.createServer((req, res) => {
-        handleRequest(req, res, routes).catch((error) => res.destroy(error));
+      const server = http.createServer(async (req, res) => {
+        try {
+          await handleRequest(req, res, routes);
+        } catch (error) {
+          if (!(error instanceof HttpError)) {
+            res.destroy(error instanceof Error ? error : undefined);
+            return;
+          }
+          res.writeHead(error.status, { "content-type": "application/json" });
+          res.end(
+            JSON.stringify(
+              error.body ?? { error: error.message, status: error.status },
+            ),
+          );
+        }
       });
       server.listen(0, "127.0.0.1");
       await once(server, "listening");
@@ -106,6 +119,24 @@ describe("game-routes", () => {
         const tournament = ctx.manager.getTournament(id);
         assert.ok(tournament);
         assert.equal(tournament.entryPeriodLevels, DEFAULT_ENTRY_PERIOD_LEVELS);
+        assert.equal(tournament.speed, "normal");
+
+        const invalidResponse = await fetch(
+          `http://127.0.0.1:${address.port}/mtt`,
+          {
+            method: "POST",
+            headers: {
+              cookie: `phg=${owner.id}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ speed: "hyper" }),
+          },
+        );
+        assert.equal(invalidResponse.status, 400);
+        assert.deepEqual(await invalidResponse.json(), {
+          error: "invalid tournament speed",
+          status: 400,
+        });
       } finally {
         server.close();
         await once(server, "close");

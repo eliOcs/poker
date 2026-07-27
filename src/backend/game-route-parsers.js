@@ -82,3 +82,18 @@ export function parseSitAndGoLength(data) {
 
   return data.durationMinutes;
 }
+
+/**
+ * @param {unknown} data
+ * @returns {Tournament.MttSpeed}
+ */
+export function parseMttSpeed(data) {
+  if (!data || typeof data !== "object" || !("speed" in data)) {
+    return Tournament.DEFAULT_MTT_SPEED;
+  }
+  const { speed } = /** @type {{ speed?: unknown }} */ (data);
+  if (!Tournament.isValidMttSpeed(speed)) {
+    throw new HttpError(400, "invalid tournament speed");
+  }
+  return speed;
+}

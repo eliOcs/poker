@@ -41,6 +41,74 @@ export const BREAK_DURATION_TICKS = 5 * 60;
 /** Number of playing levels between breaks */
 export const BREAK_INTERVAL_LEVELS = 4;
 
+/** @typedef {"normal"|"semi-turbo"|"turbo"} MttSpeed */
+
+/** @typedef {{ label: string, value: MttSpeed, levelDurationMinutes: number }} MttSpeedPreset */
+
+/** @type {MttSpeedPreset[]} */
+export const MTT_SPEED_PRESETS = [
+  { label: "Normal", value: "normal", levelDurationMinutes: 20 },
+  { label: "Semi-Turbo", value: "semi-turbo", levelDurationMinutes: 15 },
+  { label: "Turbo", value: "turbo", levelDurationMinutes: 10 },
+];
+
+/** @type {MttSpeed} */
+export const DEFAULT_MTT_SPEED = "normal";
+
+/** Average per-level blind growth used by entrant-responsive MTT schedules. */
+export const MTT_BLIND_GROWTH = 0.4;
+
+/** Expected rebuys per entrant when rebuys are enabled. */
+export const MTT_EXPECTED_REBUY_RATE = 0.5;
+
+/**
+ * @param {unknown} speed
+ * @returns {speed is MttSpeed}
+ */
+export function isValidMttSpeed(speed) {
+  return MTT_SPEED_PRESETS.some((preset) => preset.value === speed);
+}
+
+/**
+ * @param {MttSpeed} speed
+ * @returns {MttSpeedPreset}
+ */
+export function getMttSpeedPreset(speed) {
+  const preset = MTT_SPEED_PRESETS.find(
+    (candidate) => candidate.value === speed,
+  );
+  if (!preset) throw new RangeError(`unsupported MTT speed: ${String(speed)}`);
+  return preset;
+}
+
+/**
+ * Recovers a stable MTT speed from metadata without depending on its casing.
+ * Round durations may be expressed in minutes (OHH) or seconds (OTS).
+ * @param {unknown} type
+ * @param {unknown} roundDuration
+ * @returns {MttSpeed}
+ */
+export function recoverMttSpeed(type, roundDuration) {
+  if (typeof type === "string") {
+    const normalized = type.trim().toLowerCase();
+    const preset = MTT_SPEED_PRESETS.find(
+      ({ value, label }) =>
+        value === normalized || label.toLowerCase() === normalized,
+    );
+    if (preset) return preset.value;
+  }
+
+  if (typeof roundDuration === "number" && Number.isFinite(roundDuration)) {
+    const minutes = roundDuration > 60 ? roundDuration / 60 : roundDuration;
+    const preset = MTT_SPEED_PRESETS.find(
+      (candidate) => candidate.levelDurationMinutes === minutes,
+    );
+    if (preset) return preset.value;
+  }
+
+  return DEFAULT_MTT_SPEED;
+}
+
 /** Break levels, excluding the final level because no play follows it */
 export const BREAK_AFTER_LEVELS = BLIND_LEVELS.filter(
   ({ level }) =>
@@ -76,16 +144,19 @@ export function copyTournamentSchedule(schedule) {
 }
 
 /**
- * Creates the default schedule used by MTTs until they support length presets.
+ * Creates a static fallback schedule for an MTT speed. Managed tournaments
+ * replace it with an entrant-responsive schedule before play.
+ * @param {MttSpeed} [speed]
  * @returns {TournamentSchedule}
  */
-export function createDefaultTournamentSchedule() {
+export function createDefaultTournamentSchedule(speed = DEFAULT_MTT_SPEED) {
+  const levelDurationTicks = getMttSpeedPreset(speed).levelDurationMinutes * 60;
   return copyTournamentSchedule({
     blindLevels: BLIND_LEVELS,
-    levelDurationTicks: LEVEL_DURATION_TICKS,
+    levelDurationTicks,
     breakAfterLevels: BREAK_AFTER_LEVELS,
     breakDurationTicks: BREAK_DURATION_TICKS,
-    durationMinutes: DEFAULT_TOURNAMENT_DURATION_MINUTES,
+    durationMinutes: (BLIND_LEVELS.length * levelDurationTicks) / 60,
   });
 }
 
@@ -125,6 +196,43 @@ export function getBreaksForLevelCount(levelCount) {
   return Array.from(
     { length: Math.floor((levelCount - 1) / BREAK_INTERVAL_LEVELS) },
     (_, index) => (index + 1) * BREAK_INTERVAL_LEVELS,
+  );
+}
+
+/**
+ * Estimates scheduled break time before the finishing level. Breaks after the
+ * finishing level, which exist only for runout play, are deliberately omitted.
+ * @param {number} finishingLevel
+ * @returns {number}
+ */
+export function estimateBreakDurationMinutes(finishingLevel) {
+  return (
+    getBreaksForLevelCount(finishingLevel).length * (BREAK_DURATION_TICKS / 60)
+  );
+}
+
+/**
+ * @param {number} durationMinutes
+ * @param {number} levelDurationTicks
+ * @returns {number}
+ */
+export function estimateScheduleBreakDurationMinutes(
+  durationMinutes,
+  levelDurationTicks,
+) {
+  const levelDurationMinutes = levelDurationTicks / 60;
+  if (
+    !Number.isFinite(durationMinutes) ||
+    !Number.isFinite(levelDurationMinutes) ||
+    durationMinutes <= 0 ||
+    levelDurationMinutes <= 0
+  ) {
+    throw new RangeError(
+      "Tournament duration and level duration must be positive finite numbers",
+    );
+  }
+  return estimateBreakDurationMinutes(
+    Math.round(durationMinutes / levelDurationMinutes),
   );
 }
 

@@ -1,7 +1,12 @@
 import { html } from "lit";
 import { formatCurrency } from "./currency.js";
 import { getHistoryPath, getTablePath } from "../shared/routes.js";
-import { calculatePrizesFromPool } from "../shared/tournament.js";
+import {
+  calculatePrizesFromPool,
+  DEFAULT_MTT_SPEED,
+  estimateScheduleBreakDurationMinutes,
+  getMttSpeedPreset,
+} from "../shared/tournament.js";
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -59,6 +64,29 @@ export function formatPayoutTier(tournament) {
   return prizes
     .map((p) => `${ordinal(p.position)}: ${formatCurrency(p.amount)}`)
     .join(", ");
+}
+
+export function formatMttSpeed(speed) {
+  return getMttSpeedPreset(speed ?? DEFAULT_MTT_SPEED).label;
+}
+
+function formatMinutes(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours === 0) return `${remainingMinutes}m`;
+  if (remainingMinutes === 0) return `${hours}h`;
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+export function formatEstimatedDuration(tournament) {
+  const playMinutes = tournament.durationMinutes;
+  const breakMinutes = estimateScheduleBreakDurationMinutes(
+    playMinutes,
+    tournament.levelDurationTicks,
+  );
+  return `${formatMinutes(playMinutes)} play + ${formatMinutes(
+    breakMinutes,
+  )} breaks`;
 }
 
 export function formatLevel(tournament) {

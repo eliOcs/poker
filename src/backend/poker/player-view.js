@@ -208,6 +208,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number[]} breakAfterLevels - Levels followed by a break
  * @property {number} breakDurationTicks - Break duration
  * @property {number} durationMinutes - Requested approximate duration
+ * @property {import('../../shared/tournament.js').MttSpeed} [speed] - MTT speed preset
  */
 
 /**
@@ -833,6 +834,7 @@ function createTournamentView(game) {
     breakAfterLevels: [...tournament.breakAfterLevels],
     breakDurationTicks: tournament.breakDurationTicks,
     durationMinutes: tournament.durationMinutes,
+    ...(tournament.kind === "mtt" ? { speed: tournament.speed } : {}),
   };
 }
 

@@ -28,12 +28,13 @@ describe("mtt rebuy accounting", () => {
   /**
    * @param {number} maxRebuys
    */
-  function createFinishedTournament(maxRebuys) {
+  function createFinishedTournament(maxRebuys, speed = "normal") {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner"),
       buyIn: 500,
       tableSize: 6,
       ...(maxRebuys === undefined ? {} : { maxRebuys }),
+      speed,
     });
     ctx.manager.registerPlayer(tournamentId, createUser("p2"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3"));
@@ -66,7 +67,7 @@ describe("mtt rebuy accounting", () => {
   });
 
   it("records accepted rebuys and enlarges MTT awards", async () => {
-    const tournament = createFinishedTournament(2);
+    const tournament = createFinishedTournament(2, "turbo");
     const owner = tournament.entrants.get("owner");
     const p3 = tournament.entrants.get("p3");
     assert.ok(owner);
@@ -79,6 +80,7 @@ describe("mtt rebuy accounting", () => {
     const summary = await readTournamentSummary(tournament.id);
     assert.ok(summary);
     assert.deepEqual(summary.flags, ["MTT", "Re-Entry"]);
+    assert.deepEqual(summary.speed, { type: "turbo", round_time: 600 });
     assert.equal(summary.rebuy_cost, 5);
     assert.equal(summary.prize_pool, 30);
     assert.deepEqual(summary.tournament_rebuys, [

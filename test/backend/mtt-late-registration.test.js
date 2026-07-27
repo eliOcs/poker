@@ -62,6 +62,31 @@ describe("mtt late registration", () => {
     assert.deepEqual(ctx.tableBroadcasts, [view.currentPlayer.tableId]);
   });
 
+  it("preserves elapsed blinds and synchronizes revised future levels", () => {
+    const tournamentId = startTournament(ctx);
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    tournament.level = 4;
+    const completedAndCurrent = tournament.blindLevels
+      .slice(0, tournament.level)
+      .map((level) => ({ ...level }));
+    const oldDuration = tournament.durationMinutes;
+    const table = ctx.games.get(tournament.tables[0].tableId);
+    assert.ok(table?.tournament?.kind === "mtt");
+
+    ctx.tableBroadcasts = [];
+    ctx.manager.registerPlayer(tournamentId, createUser("p3"));
+
+    assert.deepEqual(
+      tournament.blindLevels.slice(0, tournament.level),
+      completedAndCurrent,
+    );
+    assert.ok(tournament.durationMinutes > oldDuration);
+    assert.deepEqual(table.tournament.blindLevels, tournament.blindLevels);
+    assert.notStrictEqual(table.tournament.blindLevels, tournament.blindLevels);
+    assert.deepEqual(ctx.tableBroadcasts, [table.id]);
+  });
+
   it("queues an entrant while every table is mid-hand and seats them on retry", () => {
     const tournamentId = startTournament(ctx);
     const tournament = ctx.manager.getTournament(tournamentId);
@@ -81,7 +106,7 @@ describe("mtt late registration", () => {
     assert.equal(queuedView.currentPlayer.status, "registered");
     assert.equal(queuedView.currentPlayer.tableId, undefined);
     assert.equal(tournament.pendingRebalance, true);
-    assert.deepEqual(ctx.tableBroadcasts, []);
+    assert.deepEqual(ctx.tableBroadcasts, [table.id]);
     assert.deepEqual(ctx.tournamentBroadcasts, [tournamentId]);
     assert.deepEqual(ctx.playerMoves, []);
     assert.throws(

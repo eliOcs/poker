@@ -1,5 +1,6 @@
 # To do
 
+- unify speed selector in MTTs and Sit n Gos add a tooltip to explain the differences and estimated time based on the number of players
 - improve styles from: https://www.pokerstarsreplayer.com/hands/090eb7d816
 - Ideas from: https://plaspokerleague.blogspot.com/, add to poker tournament summary the number of knockouts, the number of rebuys, announce next scheduled tournament, poll to select the best date.
 - Bounty option: (+10% buyin)

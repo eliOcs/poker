@@ -7,6 +7,7 @@ import {
   parseBuyIn,
   parseSeats,
   parseSitAndGoLength,
+  parseMttSpeed,
 } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
@@ -232,11 +233,13 @@ export function createGameRoutes(users, games, broadcast, services) {
         const data = await parseBody(req);
         const tableSize = parseSeats(data, 6);
         const buyIn = parseBuyIn(data);
+        const speed = parseMttSpeed(data);
         try {
           const id = services.mttManager?.createTournament({
             owner: user,
             buyIn,
             tableSize,
+            speed,
           });
           if (!id) {
             throw new Error("tournament service unavailable");
@@ -248,6 +251,7 @@ export function createGameRoutes(users, games, broadcast, services) {
               ownerId: user.id,
               buyIn,
               tableSize,
+              speed,
             },
           });
           respondWithJson(res, { id, type: "mtt" });

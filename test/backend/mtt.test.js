@@ -26,6 +26,7 @@ describe("mtt-manager", () => {
     assert.equal(view.entrants.length, 1);
     assert.equal(view.prizePool, 500);
     assert.equal(view.maxRebuys, 1);
+    assert.equal(view.speed, "normal");
     assert.equal(view.currentPlayer.status, "registered");
     assert.equal(view.actions.canStart, false);
 
@@ -40,6 +41,63 @@ describe("mtt-manager", () => {
     assert.equal(view.entrants.length, 1);
     assert.equal(view.prizePool, 500);
     assert.equal(view.actions.canStart, false);
+  });
+
+  it("rebuilds and broadcasts the full pre-start schedule as entrants change", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const onePlayerLevels = tournament.blindLevels;
+    assert.equal(tournament.durationMinutes, 140);
+
+    ctx.tournamentBroadcasts = [];
+    ctx.manager.registerPlayer(tournamentId, createUser("p2"));
+    assert.notStrictEqual(tournament.blindLevels, onePlayerLevels);
+    assert.equal(tournament.durationMinutes, 180);
+    assert.deepEqual(ctx.tournamentBroadcasts, [tournamentId]);
+
+    ctx.tournamentBroadcasts = [];
+    ctx.manager.unregisterPlayer(tournamentId, "p2", "p2");
+    assert.equal(tournament.durationMinutes, 140);
+    assert.deepEqual(ctx.tournamentBroadcasts, [tournamentId]);
+  });
+
+  it("uses the selected speed in the tournament, lobby, and table state", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner"),
+      buyIn: 500,
+      tableSize: 6,
+      speed: "turbo",
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2"));
+    const view = ctx.manager.startTournament(tournamentId, "owner");
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const game = ctx.games.get(tournament.tables[0].tableId);
+    assert.ok(game?.tournament?.kind === "mtt");
+
+    assert.equal(tournament.speed, "turbo");
+    assert.equal(tournament.levelDurationTicks, 600);
+    assert.equal(tournament.durationMinutes, 90);
+    assert.equal(view.speed, "turbo");
+    assert.equal(game.tournament.speed, "turbo");
+  });
+
+  it("rejects unsupported speeds at the manager boundary", () => {
+    assert.throws(
+      () =>
+        ctx.manager.createTournament({
+          owner: createUser("owner"),
+          buyIn: 500,
+          tableSize: 6,
+          speed: "hyper",
+        }),
+      /invalid tournament speed/,
+    );
   });
 
   it("syncs owner and entrant names in memory", () => {
@@ -202,24 +260,21 @@ describe("mtt-manager", () => {
     assert.ok(secondTable);
     assert.equal(countActivePlayers(firstTable), 4);
     assert.equal(countActivePlayers(secondTable), 3);
-    assert.deepStrictEqual(tournament.blindLevels, Tournament.BLIND_LEVELS);
-    assert.notStrictEqual(tournament.blindLevels, Tournament.BLIND_LEVELS);
+    assert.equal(tournament.speed, "normal");
+    assert.equal(tournament.blindLevels.length, 16);
+    assert.deepStrictEqual(tournament.blindLevels[0], {
+      level: 1,
+      small: 2500,
+      big: 5000,
+      ante: 0,
+    });
     assert.equal(
       tournament.levelDurationTicks,
       Tournament.LEVEL_DURATION_TICKS,
     );
-    assert.deepStrictEqual(
-      tournament.breakAfterLevels,
-      Tournament.BREAK_AFTER_LEVELS,
-    );
-    assert.notStrictEqual(
-      tournament.breakAfterLevels,
-      Tournament.BREAK_AFTER_LEVELS,
-    );
-    assert.equal(
-      tournament.durationMinutes,
-      Tournament.DEFAULT_TOURNAMENT_DURATION_MINUTES,
-    );
+    assert.deepStrictEqual(tournament.breakAfterLevels, [4, 8, 12]);
+    assert.equal(tournament.durationMinutes, 260);
+    assert.equal(view.speed, "normal");
     assert.deepStrictEqual(
       firstTable.tournament?.blindLevels,
       tournament.blindLevels,

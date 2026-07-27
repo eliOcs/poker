@@ -7,6 +7,7 @@ import {
 import { DEFAULT_ENTRY_PERIOD_LEVELS } from "./mtt-entry-policy.js";
 import * as Store from "./store.js";
 import * as Tournament from "../shared/tournament.js";
+import { calculateMttSchedule } from "./mtt-schedule.js";
 
 /**
  * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
@@ -23,6 +24,8 @@ import * as Tournament from "../shared/tournament.js";
  * @property {number} tableSize
  * @property {number} handNumber
  * @property {string} lastPlayedAt
+ * @property {string} [speedType]
+ * @property {number} [roundDuration]
  */
 
 /**
@@ -80,6 +83,8 @@ function recoverTable(tableId) {
     tableSize: lastHand.table_size,
     handNumber: readHandNumber(lastHand, tableId),
     lastPlayedAt: lastHand.start_date_utc,
+    speedType: lastHand.tournament_info?.speed.type,
+    roundDuration: lastHand.tournament_info?.speed.round_time,
   };
 }
 
@@ -176,6 +181,22 @@ function buildRebuysByPlayer(summary) {
     );
   }
   return rebuysByPlayer;
+}
+
+/**
+ * @param {OTSSummary} summary
+ * @param {RecoveredTable[]} tables
+ * @returns {Tournament.MttSpeed}
+ */
+function recoverSpeed(summary, tables) {
+  const tableWithSpeed = tables.find(
+    (table) =>
+      table.speedType !== undefined || table.roundDuration !== undefined,
+  );
+  return Tournament.recoverMttSpeed(
+    summary.speed?.type ?? tableWithSpeed?.speedType,
+    summary.speed?.round_time ?? tableWithSpeed?.roundDuration,
+  );
 }
 
 /**
@@ -286,6 +307,15 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     tournamentId,
     rebuysByPlayer,
   );
+  const maxRebuys = recoverMaxRebuys(summary, rebuysByPlayer);
+  const speed = recoverSpeed(summary, tables);
+  const initialStack = toCents(summary.initial_stack || 0);
+  const schedule = calculateMttSchedule({
+    entrantCount: Math.max(1, entrants.length),
+    initialStack,
+    rebuysEnabled: maxRebuys > 0,
+    speed,
+  });
   return {
     id: tournamentId,
     name: summary.tournament_name || tournamentId,
@@ -293,8 +323,9 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     ownerId: "unknown",
     buyIn: toCents(summary.buyin_amount || 0),
     tableSize: recoverTableSize(summary, tables),
-    initialStack: toCents(summary.initial_stack || 0),
-    maxRebuys: recoverMaxRebuys(summary, rebuysByPlayer),
+    initialStack,
+    speed,
+    maxRebuys,
     entryPeriodLevels: DEFAULT_ENTRY_PERIOD_LEVELS,
     entryPeriodOpen: false,
     level: 1,
@@ -303,7 +334,7 @@ export function recoverFinishedMttFromSummary(tournamentId) {
     pendingBreak: false,
     pendingRebalance: false,
     breakTicks: 0,
-    ...Tournament.createDefaultTournamentSchedule(),
+    ...schedule,
     createdAt: summary.start_date_utc,
     startedAt: summary.start_date_utc,
     endedAt: summary.end_date_utc,

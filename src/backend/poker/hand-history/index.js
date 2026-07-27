@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax -- OHH requires explicit null for selected absent fields. */
 import HandRankings from "../hand-rankings.js";
 import { toDollars, writeHandToFile, addToCache } from "./io.js";
+import * as Tournament from "../../../shared/tournament.js";
 
 // Re-export from io.js (only non-currency-conversion functions)
 export { getHand, getAllHands, clearCache, getCacheSize } from "./io.js";
@@ -96,7 +97,7 @@ export { getHandReplay } from "./replay.js";
 
 /**
  * @typedef {TournamentRecordInfoBase & { kind: "sitngo" }} SitAndGoRecordInfo
- * @typedef {TournamentRecordInfoBase & { kind: "mtt" }} MttRecordInfo
+ * @typedef {TournamentRecordInfoBase & { kind: "mtt", speed: import('../../../shared/tournament.js').MttSpeed }} MttRecordInfo
  * @typedef {SitAndGoRecordInfo|MttRecordInfo} TournamentRecordInfo
  */
 
@@ -161,7 +162,9 @@ function createTournamentRecordInfo(tournament) {
     levelDurationTicks: tournament.levelDurationTicks,
   };
 
-  return { ...common, kind: tournament.kind };
+  return tournament.kind === "mtt"
+    ? { ...common, kind: tournament.kind, speed: tournament.speed }
+    : { ...common, kind: tournament.kind };
 }
 
 /**
@@ -406,7 +409,7 @@ function buildTournamentInfo(tournament, fallbackStartTime) {
     speed: {
       type:
         tournament.kind === "mtt"
-          ? "Normal"
+          ? Tournament.getMttSpeedPreset(tournament.speed).label
           : tournament.durationMinutes === 60
             ? "Turbo"
             : tournament.durationMinutes === 120

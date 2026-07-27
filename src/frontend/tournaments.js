@@ -1,5 +1,10 @@
 import { html, LitElement } from "lit";
-import { BUYIN_PRESETS, DEFAULT_BUYIN } from "../shared/tournament.js";
+import {
+  BUYIN_PRESETS,
+  DEFAULT_BUYIN,
+  DEFAULT_MTT_SPEED,
+  MTT_SPEED_PRESETS,
+} from "../shared/tournament.js";
 import { getMttPath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
@@ -21,6 +26,7 @@ class Tournaments extends LitElement {
       user: { type: Object },
       selectedBuyIn: { type: Object },
       selectedTableSize: { type: Number },
+      selectedSpeed: { type: String },
     };
   }
 
@@ -30,6 +36,7 @@ class Tournaments extends LitElement {
     this.user = undefined;
     this.selectedBuyIn = DEFAULT_BUYIN;
     this.selectedTableSize = DEFAULT_TABLE_SIZE;
+    this.selectedSpeed = DEFAULT_MTT_SPEED;
   }
 
   isSignedUp() {
@@ -55,6 +62,18 @@ class Tournaments extends LitElement {
     this.selectedTableSize = parseInt(target.value, 10);
   }
 
+  handleSpeedChange(e) {
+    const target = /** @type {HTMLSelectElement} */ (e.target);
+    const index = parseInt(target.value, 10);
+    const speed = MTT_SPEED_PRESETS[index];
+    if (!speed) {
+      throw new RangeError(
+        `Unsupported tournament speed option: ${target.value}`,
+      );
+    }
+    this.selectedSpeed = speed.value;
+  }
+
   async createTournament() {
     if (!this.isSignedUp()) {
       this.requestSignUp();
@@ -67,6 +86,7 @@ class Tournaments extends LitElement {
         type: "mtt",
         seats: this.selectedTableSize,
         buyIn: this.selectedBuyIn.amount,
+        speed: this.selectedSpeed,
       });
       dispatchNavigate(this, getMttPath(id));
     } catch (err) {
@@ -78,6 +98,9 @@ class Tournaments extends LitElement {
   render() {
     const buyInIndex = BUYIN_PRESETS.findIndex(
       (preset) => preset.amount === this.selectedBuyIn.amount,
+    );
+    const speedIndex = MTT_SPEED_PRESETS.findIndex(
+      (preset) => preset.value === this.selectedSpeed,
     );
 
     return renderCreatePage(
@@ -92,6 +115,12 @@ class Tournaments extends LitElement {
         ${renderTableSizeSelect({
           selectedTableSize: this.selectedTableSize,
           onChange: this.handleTableSizeChange,
+        })}
+        ${renderPresetSelect({
+          label: "Speed",
+          options: MTT_SPEED_PRESETS,
+          selectedIndex: speedIndex,
+          onChange: this.handleSpeedChange,
         })}
         <div class="create-button-row">
           <button
