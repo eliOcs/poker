@@ -380,14 +380,33 @@ function getTournamentLevelFromBlinds(blinds, blindLevels) {
 
 /**
  * @param {OHHHand} lastHand
- * @returns {number}
+ * @returns {Tournament.TournamentSpeed}
  */
-function getTournamentDuration(lastHand) {
+function getTournamentSpeed(lastHand) {
   const speedType = lastHand.tournament_info?.speed.type;
-  if (speedType === "Turbo") return 60;
-  if (speedType === "Semi-Turbo") return 120;
-  if (speedType === "Normal") return 180;
-  throw new Error(`unsupported Sit & Go speed: ${String(speedType)}`);
+  if (!Tournament.isValidTournamentSpeed(speedType)) {
+    const preset = Tournament.TOURNAMENT_SPEED_PRESETS.find(
+      ({ label }) => label === speedType,
+    );
+    if (preset) return preset.value;
+    throw new Error(`unsupported Sit & Go speed: ${String(speedType)}`);
+  }
+  return speedType;
+}
+
+/**
+ * @param {OHHHand} lastHand
+ * @param {Tournament.TournamentSpeed} speed
+ * @returns {number|undefined}
+ */
+function getLegacyTournamentDuration(lastHand, speed) {
+  const roundTime = lastHand.tournament_info?.speed.round_time;
+  const currentRoundTime =
+    Tournament.getTournamentSpeedPreset(speed).levelDurationMinutes;
+  if (roundTime === currentRoundTime) return;
+  if (speed === "turbo") return 60;
+  if (speed === "semi-turbo") return 120;
+  return 180;
 }
 
 /**
@@ -467,13 +486,18 @@ function createGameShell(gameId, lastHand, summary) {
   );
   const tournamentInitialStack = getTournamentInitialStack(lastHand, summary);
 
-  const game = isTournament
-    ? Game.createTournament({
-        seats: tableSize,
-        buyIn: getTournamentBuyIn(lastHand, summary),
-        durationMinutes: getTournamentDuration(lastHand),
-      })
-    : Game.create({ seats: tableSize, blinds });
+  let game;
+  if (isTournament) {
+    const speed = getTournamentSpeed(lastHand);
+    game = Game.createTournament({
+      seats: tableSize,
+      buyIn: getTournamentBuyIn(lastHand, summary),
+      speed,
+      durationMinutes: getLegacyTournamentDuration(lastHand, speed),
+    });
+  } else {
+    game = Game.create({ seats: tableSize, blinds });
+  }
 
   game.id = gameId;
   game.handNumber = parseHandNumber(lastHand.game_number);

@@ -13,12 +13,12 @@ describe("phg-home", () => {
     expect(element.querySelector('input[value="mtt"]')).to.not.exist;
   });
 
-  it("rejects an invalid Sit & Go length selection", async () => {
+  it("rejects an invalid tournament speed selection", async () => {
     const element = await fixture(html`<phg-home></phg-home>`);
 
     expect(() =>
-      element.handleSitAndGoLengthChange({ target: { value: "99" } }),
-    ).to.throw("invalid Sit & Go length selection");
+      element.handleSpeedChange({ target: { value: "99" } }),
+    ).to.throw("Unsupported tournament speed option: 99");
   });
 
   it("creates a Sit & Go and navigates to the table", async () => {
@@ -28,7 +28,7 @@ describe("phg-home", () => {
       expect(JSON.parse(options.body)).to.include({
         type: "sitngo",
         seats: 6,
-        durationMinutes: 180,
+        speed: "turbo",
       });
       return {
         ok: true,
@@ -43,11 +43,11 @@ describe("phg-home", () => {
     radio.click();
     await element.updateComplete;
 
-    const lengthSelect = [...element.querySelectorAll("select")].find(
-      (select) => select.previousElementSibling?.textContent === "Length",
+    const speedSelect = [...element.querySelectorAll("select")].find((select) =>
+      select.closest(".stakes-selector")?.textContent.includes("Speed"),
     );
-    lengthSelect.value = "2";
-    lengthSelect.dispatchEvent(new Event("change"));
+    speedSelect.value = "2";
+    speedSelect.dispatchEvent(new Event("change"));
     await element.updateComplete;
 
     setTimeout(() => {
@@ -58,5 +58,28 @@ describe("phg-home", () => {
     expect(event.detail).to.deep.equal({ path: "/sitngo/sitngo123" });
 
     globalThis.fetch = originalFetch;
+  });
+
+  it("explains speeds and player-based Sit & Go duration estimates", async () => {
+    const element = await fixture(html`<phg-home></phg-home>`);
+    element.querySelector('input[value="sitngo"]').click();
+    await element.updateComplete;
+
+    const trigger = element.querySelector(
+      '[aria-label="Tournament speed details"]',
+    );
+    const tooltip = element.querySelector("#sitngo-speed-tooltip");
+    expect(trigger.getAttribute("aria-describedby")).to.equal(
+      "sitngo-speed-tooltip",
+    );
+    expect(tooltip.getAttribute("role")).to.equal("tooltip");
+    const text = tooltip.textContent.replace(/\s+/g, " ").trim();
+    expect(text).to.include("Normal: 20 minutes");
+    expect(text).to.include("Semi-Turbo: 15 minutes");
+    expect(text).to.include("Turbo: 10 minutes");
+    expect(text).to.include("Estimated typical time by number of players");
+    expect(text).to.include("2 ~40m ~30m ~20m");
+    expect(text).to.include("6 ~1h ~45m ~30m");
+    expect(text).to.include("9 ~1h 20m ~1h ~40m");
   });
 });

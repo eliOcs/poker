@@ -1,4 +1,4 @@
-const MTT_SPEED_LABELS = {
+const TOURNAMENT_SPEED_LABELS = {
   normal: "Normal",
   "semi-turbo": "Semi-Turbo",
   turbo: "Turbo",
@@ -30,7 +30,7 @@ async function configureGameType(page, type, stakesIndex, buyInIndex, speed) {
       await page
         .locator(".stakes-selector", { hasText: "Speed" })
         .locator("select")
-        .selectOption({ label: MTT_SPEED_LABELS[speed] });
+        .selectOption({ label: TOURNAMENT_SPEED_LABELS[speed] });
     }
     return;
   }
@@ -45,6 +45,12 @@ async function configureGameType(page, type, stakesIndex, buyInIndex, speed) {
   await page.getByLabel("Sit & Go").click();
   if (buyInIndex !== undefined) {
     await page.locator("select").first().selectOption(String(buyInIndex));
+  }
+  if (speed !== undefined) {
+    await page
+      .locator(".stakes-selector", { hasText: "Speed" })
+      .locator("select")
+      .selectOption({ label: TOURNAMENT_SPEED_LABELS[speed] });
   }
 }
 
@@ -117,7 +123,7 @@ export async function createGame(player, options = {}) {
   await waitForCreatedGame(player, type);
   if (type === "mtt" && speed !== undefined) {
     await player.mttLobby
-      .getByText(MTT_SPEED_LABELS[speed], { exact: true })
+      .getByText(TOURNAMENT_SPEED_LABELS[speed], { exact: true })
       .waitFor();
     const tournament = await player.getTournamentViewSnapshot();
     if (tournament?.speed !== speed) {

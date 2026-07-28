@@ -3,6 +3,7 @@ import * as ActionClock from "./action-clock.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Tournament from "../../shared/tournament.js";
+import { calculateTournamentSchedule } from "../tournament-schedule.js";
 import { calculateBlindStructure } from "./blind-calculator.js";
 export {
   gameStateSnapshot,
@@ -83,12 +84,12 @@ export {
  * @property {number[]} breakAfterLevels
  * @property {number} breakDurationTicks
  * @property {number} durationMinutes
- * @property {import('../../shared/tournament.js').MttSpeed} [speed] - MTT speed preset
+ * @property {import('../../shared/tournament.js').TournamentSpeed} speed
  */
 
 /**
  * @typedef {TournamentStateBase & { kind: "sitngo" }} SitAndGoTournamentState
- * @typedef {TournamentStateBase & { kind: "mtt", speed: import('../../shared/tournament.js').MttSpeed }} MttTournamentState
+ * @typedef {TournamentStateBase & { kind: "mtt" }} MttTournamentState
  * @typedef {SitAndGoTournamentState|MttTournamentState} TournamentState
  */
 
@@ -195,7 +196,8 @@ export function create(options = {}) {
  * @typedef {object} TournamentOptions
  * @property {number} [seats] - Number of seats (default: 6)
  * @property {Cents} [buyIn] - Buy-in amount in cents
- * @property {number} [durationMinutes] - Requested approximate duration
+ * @property {import('../../shared/tournament.js').TournamentSpeed} [speed]
+ * @property {number} [durationMinutes] - Legacy recovery duration
  */
 
 /**
@@ -206,25 +208,20 @@ export function create(options = {}) {
 export function createTournament({
   seats: numberOfSeats = Tournament.DEFAULT_SEATS,
   buyIn = Tournament.DEFAULT_BUYIN.amount,
-  durationMinutes = Tournament.DEFAULT_SITNGO_LENGTH.minutes,
+  speed = Tournament.DEFAULT_TOURNAMENT_SPEED,
+  durationMinutes,
 } = {}) {
-  const levelDurationMinutes = Tournament.SITNGO_LEVEL_DURATION_TICKS / 60;
-  const structure = calculateBlindStructure({
-    playerCount: numberOfSeats,
-    startingStack: Tournament.INITIAL_STACK,
-    tournamentDurationMinutes: durationMinutes,
-    levelDurationMinutes,
-    smallestChip: Tournament.getBlindsForLevel(1).small,
-  });
-  const blindLevels = structure.levels.map(({ level, ante, small, big }) => ({
-    level,
-    ante,
-    small,
-    big,
-  }));
+  const schedule =
+    durationMinutes !== undefined
+      ? createLegacySitAndGoSchedule(numberOfSeats, durationMinutes)
+      : calculateTournamentSchedule({
+          playerCount: numberOfSeats,
+          initialStack: Tournament.INITIAL_STACK,
+          speed,
+        });
   const level1Blinds =
     /** @type {import('../../shared/tournament.js').BlindLevel} */ (
-      blindLevels[0]
+      schedule.blindLevels[0]
     );
   const blinds = {
     ante: level1Blinds.ante,
@@ -253,14 +250,35 @@ export function createTournament({
     initialStack: Tournament.INITIAL_STACK,
     winner: undefined,
     buyIn,
+    speed,
+    ...schedule,
+  };
+
+  return game;
+}
+
+function createLegacySitAndGoSchedule(numberOfSeats, durationMinutes) {
+  const levelDurationMinutes = Tournament.SITNGO_LEVEL_DURATION_TICKS / 60;
+  const structure = calculateBlindStructure({
+    playerCount: numberOfSeats,
+    startingStack: Tournament.INITIAL_STACK,
+    tournamentDurationMinutes: durationMinutes,
+    levelDurationMinutes,
+    smallestChip: Tournament.getBlindsForLevel(1).small,
+  });
+  const blindLevels = structure.levels.map(({ level, ante, small, big }) => ({
+    level,
+    ante,
+    small,
+    big,
+  }));
+  return {
     blindLevels,
     levelDurationTicks: Tournament.SITNGO_LEVEL_DURATION_TICKS,
     breakAfterLevels: Tournament.getBreaksForLevelCount(blindLevels.length),
     breakDurationTicks: Tournament.BREAK_DURATION_TICKS,
     durationMinutes,
   };
-
-  return game;
 }
 
 /**

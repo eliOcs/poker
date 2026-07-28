@@ -70,7 +70,7 @@ describe("game-routes", () => {
     assert.strictEqual(path, undefined);
   });
 
-  it("defaults speed and rejects invalid speed when creating an MTT", async () => {
+  it("validates speed when creating Sit & Go and MTT tournaments", async () => {
     const ctx = createMttContext();
     ctx.setup();
     try {
@@ -137,6 +137,23 @@ describe("game-routes", () => {
           error: "invalid tournament speed",
           status: 400,
         });
+
+        const sitAndGoResponse = await fetch(
+          `http://127.0.0.1:${address.port}/sitngo`,
+          {
+            method: "POST",
+            headers: {
+              cookie: `phg=${owner.id}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ seats: 2, speed: "turbo" }),
+          },
+        );
+        assert.equal(sitAndGoResponse.status, 200);
+        const { id: sitAndGoId } = await sitAndGoResponse.json();
+        const sitAndGo = ctx.games.get(sitAndGoId);
+        assert.equal(sitAndGo?.tournament?.speed, "turbo");
+        assert.equal(sitAndGo?.tournament?.durationMinutes, 80);
       } finally {
         server.close();
         await once(server, "close");

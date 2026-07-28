@@ -41,19 +41,24 @@ export const BREAK_DURATION_TICKS = 5 * 60;
 /** Number of playing levels between breaks */
 export const BREAK_INTERVAL_LEVELS = 4;
 
-/** @typedef {"normal"|"semi-turbo"|"turbo"} MttSpeed */
+/** @typedef {"normal"|"semi-turbo"|"turbo"} TournamentSpeed */
+/** @typedef {TournamentSpeed} MttSpeed */
 
-/** @typedef {{ label: string, value: MttSpeed, levelDurationMinutes: number }} MttSpeedPreset */
+/** @typedef {{ label: string, value: TournamentSpeed, levelDurationMinutes: number }} TournamentSpeedPreset */
 
-/** @type {MttSpeedPreset[]} */
-export const MTT_SPEED_PRESETS = [
+/** @type {TournamentSpeedPreset[]} */
+export const TOURNAMENT_SPEED_PRESETS = [
   { label: "Normal", value: "normal", levelDurationMinutes: 20 },
   { label: "Semi-Turbo", value: "semi-turbo", levelDurationMinutes: 15 },
   { label: "Turbo", value: "turbo", levelDurationMinutes: 10 },
 ];
 
-/** @type {MttSpeed} */
-export const DEFAULT_MTT_SPEED = "normal";
+/** @type {TournamentSpeed} */
+export const DEFAULT_TOURNAMENT_SPEED = "normal";
+
+// Backward-compatible names for stored MTT data and existing integrations.
+export const MTT_SPEED_PRESETS = TOURNAMENT_SPEED_PRESETS;
+export const DEFAULT_MTT_SPEED = DEFAULT_TOURNAMENT_SPEED;
 
 /** Average per-level blind growth used by entrant-responsive MTT schedules. */
 export const MTT_BLIND_GROWTH = 0.4;
@@ -63,23 +68,28 @@ export const MTT_EXPECTED_REBUY_RATE = 0.5;
 
 /**
  * @param {unknown} speed
- * @returns {speed is MttSpeed}
+ * @returns {speed is TournamentSpeed}
  */
-export function isValidMttSpeed(speed) {
-  return MTT_SPEED_PRESETS.some((preset) => preset.value === speed);
+export function isValidTournamentSpeed(speed) {
+  return TOURNAMENT_SPEED_PRESETS.some((preset) => preset.value === speed);
 }
 
 /**
- * @param {MttSpeed} speed
- * @returns {MttSpeedPreset}
+ * @param {TournamentSpeed} speed
+ * @returns {TournamentSpeedPreset}
  */
-export function getMttSpeedPreset(speed) {
-  const preset = MTT_SPEED_PRESETS.find(
+export function getTournamentSpeedPreset(speed) {
+  const preset = TOURNAMENT_SPEED_PRESETS.find(
     (candidate) => candidate.value === speed,
   );
-  if (!preset) throw new RangeError(`unsupported MTT speed: ${String(speed)}`);
+  if (!preset) {
+    throw new RangeError(`unsupported tournament speed: ${String(speed)}`);
+  }
   return preset;
 }
+
+export const isValidMttSpeed = isValidTournamentSpeed;
+export const getMttSpeedPreset = getTournamentSpeedPreset;
 
 /**
  * Recovers a stable MTT speed from metadata without depending on its casing.
@@ -91,7 +101,7 @@ export function getMttSpeedPreset(speed) {
 export function recoverMttSpeed(type, roundDuration) {
   if (typeof type === "string") {
     const normalized = type.trim().toLowerCase();
-    const preset = MTT_SPEED_PRESETS.find(
+    const preset = TOURNAMENT_SPEED_PRESETS.find(
       ({ value, label }) =>
         value === normalized || label.toLowerCase() === normalized,
     );
@@ -100,13 +110,13 @@ export function recoverMttSpeed(type, roundDuration) {
 
   if (typeof roundDuration === "number" && Number.isFinite(roundDuration)) {
     const minutes = roundDuration > 60 ? roundDuration / 60 : roundDuration;
-    const preset = MTT_SPEED_PRESETS.find(
+    const preset = TOURNAMENT_SPEED_PRESETS.find(
       (candidate) => candidate.levelDurationMinutes === minutes,
     );
     if (preset) return preset.value;
   }
 
-  return DEFAULT_MTT_SPEED;
+  return DEFAULT_TOURNAMENT_SPEED;
 }
 
 /** Break levels, excluding the final level because no play follows it */
@@ -149,8 +159,11 @@ export function copyTournamentSchedule(schedule) {
  * @param {MttSpeed} [speed]
  * @returns {TournamentSchedule}
  */
-export function createDefaultTournamentSchedule(speed = DEFAULT_MTT_SPEED) {
-  const levelDurationTicks = getMttSpeedPreset(speed).levelDurationMinutes * 60;
+export function createDefaultTournamentSchedule(
+  speed = DEFAULT_TOURNAMENT_SPEED,
+) {
+  const levelDurationTicks =
+    getTournamentSpeedPreset(speed).levelDurationMinutes * 60;
   return copyTournamentSchedule({
     blindLevels: BLIND_LEVELS,
     levelDurationTicks,
@@ -166,26 +179,39 @@ export const INITIAL_STACK = 500000;
 /** Default number of seats for Sit & Go */
 export const DEFAULT_SEATS = 6;
 
-/** @typedef {{ label: string, minutes: number }} SitAndGoLengthPreset */
-
-/** @type {SitAndGoLengthPreset[]} */
-export const SITNGO_LENGTH_PRESETS = [
-  { label: "1 hour", minutes: 60 },
-  { label: "2 hours", minutes: 120 },
-  { label: "3 hours", minutes: 180 },
-];
-
-/** @type {SitAndGoLengthPreset} */
-export const DEFAULT_SITNGO_LENGTH = /** @type {SitAndGoLengthPreset} */ (
-  SITNGO_LENGTH_PRESETS[1]
-);
+/**
+ * Typical natural finishing levels for the offered table sizes. The blind
+ * schedule deliberately runs much longer, but real tournaments usually finish
+ * through eliminations before the structure's forced-finish point.
+ */
+const ESTIMATED_FINISH_LEVELS = {
+  withoutRebuys: { 2: 2, 6: 3, 9: 4 },
+  withRebuys: { 2: 3, 6: 4, 9: 5, 10: 6, 20: 8, 30: 9 },
+};
 
 /**
- * @param {number} minutes
- * @returns {boolean}
+ * Estimates total tournament time, including scheduled breaks.
+ * @param {number} playerCount
+ * @param {TournamentSpeed} speed
+ * @param {{ rebuysEnabled?: boolean }} [options]
+ * @returns {number}
  */
-export function isValidSitAndGoLength(minutes) {
-  return SITNGO_LENGTH_PRESETS.some((preset) => preset.minutes === minutes);
+export function estimateTournamentDurationMinutes(
+  playerCount,
+  speed,
+  { rebuysEnabled = false } = {},
+) {
+  const finishLevels = rebuysEnabled
+    ? ESTIMATED_FINISH_LEVELS.withRebuys
+    : ESTIMATED_FINISH_LEVELS.withoutRebuys;
+  const finishingLevel = finishLevels[playerCount];
+  if (!finishingLevel) {
+    throw new RangeError(`unsupported estimated player count: ${playerCount}`);
+  }
+  return (
+    finishingLevel * getTournamentSpeedPreset(speed).levelDurationMinutes +
+    estimateBreakDurationMinutes(finishingLevel)
+  );
 }
 
 /**

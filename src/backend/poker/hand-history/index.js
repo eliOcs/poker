@@ -93,11 +93,12 @@ export { getHandReplay } from "./replay.js";
  * @property {Cents} buyIn
  * @property {number} durationMinutes
  * @property {number} levelDurationTicks
+ * @property {import('../../../shared/tournament.js').TournamentSpeed} speed
  */
 
 /**
  * @typedef {TournamentRecordInfoBase & { kind: "sitngo" }} SitAndGoRecordInfo
- * @typedef {TournamentRecordInfoBase & { kind: "mtt", speed: import('../../../shared/tournament.js').MttSpeed }} MttRecordInfo
+ * @typedef {TournamentRecordInfoBase & { kind: "mtt" }} MttRecordInfo
  * @typedef {SitAndGoRecordInfo|MttRecordInfo} TournamentRecordInfo
  */
 
@@ -160,6 +161,7 @@ function createTournamentRecordInfo(tournament) {
     buyIn: tournament.buyIn,
     durationMinutes: tournament.durationMinutes,
     levelDurationTicks: tournament.levelDurationTicks,
+    speed: tournament.speed,
   };
 
   return tournament.kind === "mtt"
@@ -407,14 +409,7 @@ function buildTournamentInfo(tournament, fallbackStartTime) {
     initial_stack: toDollars(tournament.initialStack),
     type: tournament.kind === "mtt" ? "MTT" : "SnG",
     speed: {
-      type:
-        tournament.kind === "mtt"
-          ? Tournament.getMttSpeedPreset(tournament.speed).label
-          : tournament.durationMinutes === 60
-            ? "Turbo"
-            : tournament.durationMinutes === 120
-              ? "Semi-Turbo"
-              : "Normal",
+      type: Tournament.getTournamentSpeedPreset(tournament.speed).label,
       round_time: tournament.levelDurationTicks / 60,
     },
   };

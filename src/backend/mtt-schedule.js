@@ -1,5 +1,5 @@
 import * as Tournament from "../shared/tournament.js";
-import { calculateBlindStructure } from "./poker/blind-calculator.js";
+import { calculateTournamentSchedule } from "./tournament-schedule.js";
 
 /**
  * @param {{ buyIn: number, speed: unknown, maxRebuys: unknown }} options
@@ -9,7 +9,7 @@ export function validateMttConfiguration({ buyIn, speed, maxRebuys }) {
   if (!Tournament.isValidBuyin(buyIn)) {
     throw new Error("invalid tournament buy-in");
   }
-  if (!Tournament.isValidMttSpeed(speed)) {
+  if (!Tournament.isValidTournamentSpeed(speed)) {
     throw new Error("invalid tournament speed");
   }
   if (
@@ -32,35 +32,12 @@ export function calculateMttSchedule({
   rebuysEnabled,
   speed,
 }) {
-  const preset = Tournament.getMttSpeedPreset(speed);
-  const startingSmallBlind = Tournament.getBlindsForLevel(1).small;
-  const structure = calculateBlindStructure({
+  return calculateTournamentSchedule({
     playerCount: entrantCount,
-    startingStack: initialStack,
-    levelDurationMinutes: preset.levelDurationMinutes,
-    smallestChip: startingSmallBlind,
-    startingSmallBlind,
-    expectedRebuys: rebuysEnabled
-      ? entrantCount * Tournament.MTT_EXPECTED_REBUY_RATE
-      : 0,
-    rebuyStack: initialStack,
-    antes: false,
-    targetAverageGrowth: Tournament.MTT_BLIND_GROWTH,
+    initialStack,
+    rebuysEnabled,
+    speed,
   });
-  const blindLevels = structure.levels.map(({ level, small, big, ante }) => ({
-    level,
-    small,
-    big,
-    ante,
-  }));
-
-  return {
-    blindLevels,
-    levelDurationTicks: preset.levelDurationMinutes * 60,
-    breakAfterLevels: Tournament.getBreaksForLevelCount(blindLevels.length),
-    breakDurationTicks: Tournament.BREAK_DURATION_TICKS,
-    durationMinutes: structure.targetLevel * preset.levelDurationMinutes,
-  };
 }
 
 /**

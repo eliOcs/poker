@@ -8,6 +8,17 @@ import * as Seat from "../../../src/backend/poker/seat.js";
 describe("tournament-tick", () => {
   let game;
 
+  it("rejects invalid legacy tournament durations", () => {
+    assert.throws(
+      () => Game.createTournament({ durationMinutes: 0 }),
+      /tournamentDurationMinutes must be a positive number/,
+    );
+    assert.throws(
+      () => Game.createTournament({ durationMinutes: Number.NaN }),
+      /tournamentDurationMinutes must be a positive number/,
+    );
+  });
+
   beforeEach(() => {
     game = Game.createTournament();
     // Add players
@@ -311,20 +322,17 @@ describe("tournament-tick", () => {
 });
 
 describe("Sit & Go blind schedule", () => {
-  it("uses duration and table size to generate the schedule", () => {
-    const short = Game.createTournament({ seats: 6, durationMinutes: 60 });
-    const long = Game.createTournament({ seats: 6, durationMinutes: 180 });
-    const headsUp = Game.createTournament({ seats: 2, durationMinutes: 120 });
-    const fullRing = Game.createTournament({ seats: 9, durationMinutes: 120 });
+  it("uses speed and table size to generate the schedule", () => {
+    const turbo = Game.createTournament({ seats: 6, speed: "turbo" });
+    const normal = Game.createTournament({ seats: 6, speed: "normal" });
+    const headsUp = Game.createTournament({ seats: 2, speed: "semi-turbo" });
+    const fullRing = Game.createTournament({ seats: 9, speed: "semi-turbo" });
 
-    assert.equal(short.tournament.durationMinutes, 60);
-    assert.equal(
-      short.tournament.levelDurationTicks,
-      Tournament.SITNGO_LEVEL_DURATION_TICKS,
-    );
+    assert.equal(turbo.tournament.speed, "turbo");
+    assert.equal(turbo.tournament.levelDurationTicks, 10 * 60);
     assert.ok(
-      short.tournament.blindLevels[2].big > long.tournament.blindLevels[2].big,
-      "shorter tournaments should increase blinds faster",
+      normal.tournament.durationMinutes > turbo.tournament.durationMinutes,
+      "slower tournaments should take longer",
     );
     assert.ok(
       fullRing.tournament.blindLevels.at(-4).big >

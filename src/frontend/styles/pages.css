@@ -76,6 +76,115 @@ phg-home .game-type-selector {
   background: var(--color-bg-light);
 }
 
+:is(phg-home, phg-tournaments) .speed-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+:is(phg-home, phg-tournaments) .speed-label .tooltip-trigger {
+  width: 20px;
+  height: 20px;
+}
+
+:is(phg-home, phg-tournaments) .tooltip-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+:is(phg-home, phg-tournaments) .tooltip-trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: var(--color-fg-white);
+  font: inherit;
+  cursor: help;
+  background: transparent;
+  border: 0;
+}
+
+:is(phg-home, phg-tournaments) .tooltip-trigger:hover {
+  color: var(--color-primary);
+}
+
+:is(phg-home, phg-tournaments) .tooltip-trigger:focus-visible {
+  color: var(--color-primary);
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+:is(phg-home, phg-tournaments) .tooltip-trigger svg {
+  width: 16px;
+  height: 16px;
+}
+
+:is(phg-home, phg-tournaments) .tooltip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--space-sm));
+  right: 0;
+  box-sizing: border-box;
+  width: min(380px, calc(100vw - 96px));
+  padding: var(--space-md);
+  color: var(--color-fg-white);
+  font-size: var(--font-xs);
+  line-height: 1.5;
+  pointer-events: none;
+  visibility: hidden;
+  background: var(--color-bg-dark);
+  border: 2px solid var(--color-bg-light);
+  box-shadow: var(--space-xs) var(--space-xs) 0 var(--color-bg-dark);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+:is(phg-home, phg-tournaments) .tooltip p {
+  margin: 0 0 var(--space-md);
+}
+
+:is(phg-home, phg-tournaments) .tooltip p:last-child {
+  margin: var(--space-lg) 0 0;
+}
+
+:is(phg-home, phg-tournaments) .tooltip ul {
+  padding-left: var(--space-lg);
+  margin: 0 0 var(--space-lg);
+}
+
+:is(phg-home, phg-tournaments) .tooltip table {
+  width: 100%;
+  margin-top: var(--space-sm);
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+:is(phg-home, phg-tournaments) .tooltip :is(th, td) {
+  padding: var(--space-sm) var(--space-xs);
+  text-align: right;
+  border-top: 1px solid var(--color-bg-light);
+}
+
+:is(phg-home, phg-tournaments) .tooltip thead th {
+  border-top: 0;
+}
+
+:is(phg-home, phg-tournaments) .tooltip :is(th, td):first-child {
+  text-align: left;
+}
+
+:is(phg-home, phg-tournaments)
+  .tooltip-anchor:is(:hover, :focus-within)
+  .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 :is(phg-home, phg-tournaments) .create-button-row {
   display: flex;
   justify-content: center;
@@ -223,6 +332,10 @@ phg-home .radio-group input[type="radio"]:checked {
 }
 
 @media (width < 800px) {
+  :is(phg-home, phg-tournaments) .tooltip {
+    right: -72px;
+  }
+
   :is(phg-home, phg-tournaments) > .main {
     padding: 56px var(--space-md) var(--space-md);
   }

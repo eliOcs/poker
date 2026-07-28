@@ -4,6 +4,7 @@ import { calculateMttSchedule } from "../../src/backend/mtt-schedule.js";
 import {
   estimateBreakDurationMinutes,
   estimateScheduleBreakDurationMinutes,
+  estimateTournamentDurationMinutes,
   recoverMttSpeed,
 } from "../../src/shared/tournament.js";
 
@@ -72,5 +73,48 @@ describe("mtt schedule", () => {
     assert.equal(recoverMttSpeed("TuRbO", 20), "turbo");
     assert.equal(recoverMttSpeed("unknown", 900), "semi-turbo");
     assert.equal(recoverMttSpeed(undefined, undefined), "normal");
+  });
+
+  it("estimates typical natural finishes instead of schedule runout", () => {
+    assert.deepEqual(
+      [2, 6, 9].map((players) =>
+        ["normal", "semi-turbo", "turbo"].map((speed) =>
+          estimateTournamentDurationMinutes(players, speed),
+        ),
+      ),
+      [
+        [40, 30, 20],
+        [60, 45, 30],
+        [80, 60, 40],
+      ],
+    );
+    assert.deepEqual(
+      [2, 6, 9].map((players) =>
+        ["normal", "semi-turbo", "turbo"].map((speed) =>
+          estimateTournamentDurationMinutes(players, speed, {
+            rebuysEnabled: true,
+          }),
+        ),
+      ),
+      [
+        [60, 45, 30],
+        [80, 60, 40],
+        [105, 80, 55],
+      ],
+    );
+    assert.deepEqual(
+      [10, 20, 30].map((players) =>
+        ["normal", "semi-turbo", "turbo"].map((speed) =>
+          estimateTournamentDurationMinutes(players, speed, {
+            rebuysEnabled: true,
+          }),
+        ),
+      ),
+      [
+        [125, 95, 65],
+        [165, 125, 85],
+        [190, 145, 100],
+      ],
+    );
   });
 });

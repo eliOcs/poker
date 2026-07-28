@@ -6,7 +6,9 @@ test.describe.configure({ mode: "parallel" });
 const TEST_CASES = [
   // Landing page
   "landing-page",
+  "sitngo-creation-speed-tooltip",
   "tournaments-page",
+  "tournaments-speed-tooltip",
   "player-profile-summary",
 
   // Lobby states
@@ -105,9 +107,17 @@ const TEST_CASES = [
 
 function getComponentSelector(testCase) {
   if (testCase.startsWith("email-")) return ".email-preview";
-  if (testCase === "landing-page") return "phg-app-shell";
+  if (
+    [
+      "landing-page",
+      "sitngo-creation-speed-tooltip",
+      "tournaments-page",
+      "tournaments-speed-tooltip",
+    ].includes(testCase)
+  ) {
+    return "phg-app-shell";
+  }
   if (testCase === "player-profile-summary") return "phg-app-shell";
-  if (testCase === "tournaments-page") return "phg-app-shell";
   if (testCase.startsWith("history-")) return "phg-history";
   if (testCase.startsWith("mtt-lobby-")) return "phg-mtt-lobby";
   // game-*, table-* all use phg-game
@@ -129,8 +139,10 @@ async function prepareTestCase(testCase, page, component) {
 
   const shellContentSelector = {
     "landing-page": "phg-home",
+    "sitngo-creation-speed-tooltip": "phg-home",
     "player-profile-summary": "phg-player-profile",
     "tournaments-page": "phg-tournaments",
+    "tournaments-speed-tooltip": "phg-tournaments",
   }[testCase];
   if (shellContentSelector) {
     await expect(component.locator("phg-navigation-drawer")).toHaveCount(1);
@@ -155,16 +167,19 @@ async function prepareTestCase(testCase, page, component) {
     expect(drawerHeight).toBeGreaterThanOrEqual(viewportHeight);
   }
 
-  if (testCase !== "mtt-lobby-running-late-register-tooltip") return;
-  await component.evaluate((element) => {
-    const trigger = element.querySelector(
-      '[aria-label="Late registration details"]',
-    );
+  const tooltipLabel = {
+    "mtt-lobby-running-late-register-tooltip": "Late registration details",
+    "sitngo-creation-speed-tooltip": "Tournament speed details",
+    "tournaments-speed-tooltip": "Tournament speed details",
+  }[testCase];
+  if (!tooltipLabel) return;
+  await component.evaluate((element, label) => {
+    const trigger = element.querySelector(`[aria-label="${label}"]`);
     if (!(trigger instanceof HTMLElement)) {
       throw new Error("Late registration tooltip trigger was not rendered");
     }
     trigger.focus({ preventScroll: true });
-  });
+  }, tooltipLabel);
 }
 
 for (const testCase of TEST_CASES) {

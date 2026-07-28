@@ -6,17 +6,18 @@ import {
 import {
   BUYIN_PRESETS,
   DEFAULT_BUYIN,
-  DEFAULT_SITNGO_LENGTH,
-  SITNGO_LENGTH_PRESETS,
+  DEFAULT_TOURNAMENT_SPEED,
 } from "../shared/tournament.js";
 import { getTablePath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
   dispatchNavigate,
+  getSelectedTournamentSpeed,
   postCreate,
   renderCreatePage,
   renderPresetSelect,
   renderTableSizeSelect,
+  renderTournamentSpeedSelect,
 } from "./game-create-form.js";
 
 class Home extends LitElement {
@@ -30,7 +31,7 @@ class Home extends LitElement {
       selectedGameType: { type: String },
       selectedStakes: { type: Object },
       selectedBuyIn: { type: Object },
-      selectedSitAndGoLength: { type: Object },
+      selectedSpeed: { type: String },
       selectedTableSize: { type: Number },
     };
   }
@@ -41,7 +42,7 @@ class Home extends LitElement {
     this.selectedGameType = "cash";
     this.selectedStakes = DEFAULT_STAKES;
     this.selectedBuyIn = DEFAULT_BUYIN;
-    this.selectedSitAndGoLength = DEFAULT_SITNGO_LENGTH;
+    this.selectedSpeed = DEFAULT_TOURNAMENT_SPEED;
     this.selectedTableSize = DEFAULT_TABLE_SIZE;
   }
 
@@ -68,14 +69,8 @@ class Home extends LitElement {
     this.selectedTableSize = parseInt(target.value, 10);
   }
 
-  handleSitAndGoLengthChange(e) {
-    const target = /** @type {HTMLSelectElement} */ (e.target);
-    const index = parseInt(target.value, 10);
-    const length = SITNGO_LENGTH_PRESETS[index];
-    if (!length) {
-      throw new Error("invalid Sit & Go length selection");
-    }
-    this.selectedSitAndGoLength = length;
+  handleSpeedChange(e) {
+    this.selectedSpeed = getSelectedTournamentSpeed(e);
   }
 
   async createGame() {
@@ -95,7 +90,7 @@ class Home extends LitElement {
               type: "sitngo",
               seats: this.selectedTableSize,
               buyIn: this.selectedBuyIn.amount,
-              durationMinutes: this.selectedSitAndGoLength.minutes,
+              speed: this.selectedSpeed,
             },
       );
       dispatchNavigate(
@@ -118,10 +113,6 @@ class Home extends LitElement {
       (preset) => preset.amount === this.selectedBuyIn.amount,
     );
     const isCash = this.selectedGameType === "cash";
-    const sitAndGoLengthIndex = SITNGO_LENGTH_PRESETS.findIndex(
-      (preset) => preset.minutes === this.selectedSitAndGoLength.minutes,
-    );
-
     return renderCreatePage(
       "Invite your friends to play a poker game, no sign up required.",
       html`
@@ -165,11 +156,10 @@ class Home extends LitElement {
             })}
         ${isCash
           ? ""
-          : renderPresetSelect({
-              label: "Length",
-              options: SITNGO_LENGTH_PRESETS,
-              selectedIndex: sitAndGoLengthIndex,
-              onChange: this.handleSitAndGoLengthChange,
+          : renderTournamentSpeedSelect({
+              selectedSpeed: this.selectedSpeed,
+              onChange: this.handleSpeedChange,
+              tooltipId: "sitngo-speed-tooltip",
             })}
         ${renderTableSizeSelect({
           selectedTableSize: this.selectedTableSize,

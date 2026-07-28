@@ -64,36 +64,18 @@ export function parseBuyIn(data) {
 }
 
 /**
- * Parses the requested approximate Sit & Go duration.
  * @param {unknown} data
- * @returns {number}
+ * @returns {Tournament.TournamentSpeed}
  */
-export function parseSitAndGoLength(data) {
-  if (!data || typeof data !== "object" || !("durationMinutes" in data)) {
-    return Tournament.DEFAULT_SITNGO_LENGTH.minutes;
-  }
-
-  if (
-    typeof data.durationMinutes !== "number" ||
-    !Tournament.isValidSitAndGoLength(data.durationMinutes)
-  ) {
-    throw new HttpError(400, "invalid Sit & Go duration");
-  }
-
-  return data.durationMinutes;
-}
-
-/**
- * @param {unknown} data
- * @returns {Tournament.MttSpeed}
- */
-export function parseMttSpeed(data) {
+export function parseTournamentSpeed(data) {
   if (!data || typeof data !== "object" || !("speed" in data)) {
-    return Tournament.DEFAULT_MTT_SPEED;
+    return Tournament.DEFAULT_TOURNAMENT_SPEED;
   }
   const { speed } = /** @type {{ speed?: unknown }} */ (data);
-  if (!Tournament.isValidMttSpeed(speed)) {
+  if (!Tournament.isValidTournamentSpeed(speed)) {
     throw new HttpError(400, "invalid tournament speed");
   }
   return speed;
 }
+
+export const parseMttSpeed = parseTournamentSpeed;

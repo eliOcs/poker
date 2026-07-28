@@ -2,17 +2,18 @@ import { html, LitElement } from "lit";
 import {
   BUYIN_PRESETS,
   DEFAULT_BUYIN,
-  DEFAULT_MTT_SPEED,
-  MTT_SPEED_PRESETS,
+  DEFAULT_TOURNAMENT_SPEED,
 } from "../shared/tournament.js";
 import { getMttPath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
   dispatchNavigate,
+  getSelectedTournamentSpeed,
   postCreate,
   renderCreatePage,
   renderPresetSelect,
   renderTableSizeSelect,
+  renderTournamentSpeedSelect,
 } from "./game-create-form.js";
 
 class Tournaments extends LitElement {
@@ -36,7 +37,7 @@ class Tournaments extends LitElement {
     this.user = undefined;
     this.selectedBuyIn = DEFAULT_BUYIN;
     this.selectedTableSize = DEFAULT_TABLE_SIZE;
-    this.selectedSpeed = DEFAULT_MTT_SPEED;
+    this.selectedSpeed = DEFAULT_TOURNAMENT_SPEED;
   }
 
   isSignedUp() {
@@ -63,15 +64,7 @@ class Tournaments extends LitElement {
   }
 
   handleSpeedChange(e) {
-    const target = /** @type {HTMLSelectElement} */ (e.target);
-    const index = parseInt(target.value, 10);
-    const speed = MTT_SPEED_PRESETS[index];
-    if (!speed) {
-      throw new RangeError(
-        `Unsupported tournament speed option: ${target.value}`,
-      );
-    }
-    this.selectedSpeed = speed.value;
+    this.selectedSpeed = getSelectedTournamentSpeed(e);
   }
 
   async createTournament() {
@@ -99,10 +92,6 @@ class Tournaments extends LitElement {
     const buyInIndex = BUYIN_PRESETS.findIndex(
       (preset) => preset.amount === this.selectedBuyIn.amount,
     );
-    const speedIndex = MTT_SPEED_PRESETS.findIndex(
-      (preset) => preset.value === this.selectedSpeed,
-    );
-
     return renderCreatePage(
       "Create a multi-table tournament and invite your friends to play",
       html`
@@ -116,11 +105,12 @@ class Tournaments extends LitElement {
           selectedTableSize: this.selectedTableSize,
           onChange: this.handleTableSizeChange,
         })}
-        ${renderPresetSelect({
-          label: "Speed",
-          options: MTT_SPEED_PRESETS,
-          selectedIndex: speedIndex,
+        ${renderTournamentSpeedSelect({
+          selectedSpeed: this.selectedSpeed,
           onChange: this.handleSpeedChange,
+          tooltipId: "mtt-speed-tooltip",
+          rebuysEnabled: true,
+          estimatePlayerCounts: [10, 20, 30],
         })}
         <div class="create-button-row">
           <button

@@ -6,8 +6,7 @@ import {
   parseBlinds,
   parseBuyIn,
   parseSeats,
-  parseSitAndGoLength,
-  parseMttSpeed,
+  parseTournamentSpeed,
 } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
@@ -205,11 +204,11 @@ export function createGameRoutes(users, games, broadcast, services) {
         const data = await parseBody(req);
         const seats = parseSeats(data, 6);
         const buyIn = parseBuyIn(data);
-        const durationMinutes = parseSitAndGoLength(data);
+        const speed = parseTournamentSpeed(data);
         const game = PokerGame.createTournament({
           seats,
           buyIn,
-          durationMinutes,
+          speed,
         });
         games.set(game.id, game);
         Object.assign(log.context, {
@@ -218,7 +217,8 @@ export function createGameRoutes(users, games, broadcast, services) {
             id: game.id,
             seats,
             buyIn,
-            durationMinutes,
+            speed,
+            durationMinutes: game.tournament?.durationMinutes,
             initialStack: game.tournament?.initialStack,
           },
         });
@@ -233,7 +233,7 @@ export function createGameRoutes(users, games, broadcast, services) {
         const data = await parseBody(req);
         const tableSize = parseSeats(data, 6);
         const buyIn = parseBuyIn(data);
-        const speed = parseMttSpeed(data);
+        const speed = parseTournamentSpeed(data);
         try {
           const id = services.mttManager?.createTournament({
             owner: user,

@@ -47,7 +47,19 @@ const GAME_TEST_CASES = {
   // === LANDING PAGE ===
   "landing-page": () => appShellView("/", html`<phg-home></phg-home>`),
 
+  "sitngo-creation-speed-tooltip": () =>
+    appShellView(
+      "/",
+      html`<phg-home .selectedGameType=${"sitngo"}></phg-home>`,
+    ),
+
   "tournaments-page": () =>
+    appShellView(
+      "/mtt",
+      html`<phg-tournaments .user=${null}></phg-tournaments>`,
+    ),
+
+  "tournaments-speed-tooltip": () =>
     appShellView(
       "/mtt",
       html`<phg-tournaments .user=${null}></phg-tournaments>`,

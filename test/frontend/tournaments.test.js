@@ -53,10 +53,8 @@ describe("phg-tournaments", () => {
     const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
     element.user = { email: "player@example.com" };
     await element.updateComplete;
-    const speedSelect = [...element.querySelectorAll("select")].find(
-      (select) =>
-        select.parentElement.querySelector(".stakes-label").textContent ===
-        "Speed",
+    const speedSelect = [...element.querySelectorAll("select")].find((select) =>
+      select.closest(".stakes-selector")?.textContent.includes("Speed"),
     );
     speedSelect.value = "2";
     speedSelect.dispatchEvent(new Event("change"));
@@ -74,6 +72,27 @@ describe("phg-tournaments", () => {
       element.handleSpeedChange({ target: { value: "unknown" } }),
     ).to.throw("Unsupported tournament speed option: unknown");
     expect(element.selectedSpeed).to.equal("normal");
+  });
+
+  it("explains speeds and player-based MTT duration estimates", async () => {
+    const element = await fixture(html`<phg-tournaments></phg-tournaments>`);
+    const trigger = element.querySelector(
+      '[aria-label="Tournament speed details"]',
+    );
+    const tooltip = element.querySelector("#mtt-speed-tooltip");
+
+    expect(trigger.getAttribute("aria-describedby")).to.equal(
+      "mtt-speed-tooltip",
+    );
+    expect(tooltip.getAttribute("role")).to.equal("tooltip");
+    const text = tooltip.textContent.replace(/\s+/g, " ").trim();
+    expect(text).to.include("Actual time varies with play and rebuys.");
+    expect(text).to.include(
+      "Estimated typical time by number of players, including rebuys",
+    );
+    expect(text).to.include("10 ~2h 5m ~1h 35m ~1h 5m");
+    expect(text).to.include("20 ~2h 45m ~2h 5m ~1h 25m");
+    expect(text).to.include("30 ~3h 10m ~2h 25m ~1h 40m");
   });
 
   it("opens sign-up instead of creating when the user has no email", async () => {
