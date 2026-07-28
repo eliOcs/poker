@@ -1,33 +1,33 @@
 # To do
 
-- improve styles from: https://www.pokerstarsreplayer.com/hands/090eb7d816
-- Ideas from: https://plaspokerleague.blogspot.com/, add to poker tournament summary the number of knockouts, the number of rebuys, announce next scheduled tournament, poll to select the best date.
-- Bounty option: (+10% buyin)
-- graph of the evolution
+- Avatar creator: wii style but pixel art
+- hand strength modal
+- muck button, show at the end of the hand
+- always show player on same seat
+- setting to show amount of big blinds instead of cash
+- Poker club: invite members, members notified of events.
+- Seasons: allow grouping games into a seasson to get aggregate results
+- Events: schedule, track assistance, notify
 - background on pot numbers
 - allow sit in in the middle of the hand
-- muck button, show at the end of the hand
+- when sit out shows waiting for your turn
 - keyboard short cuts for buttons on desktop: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/kbd, inspiration fizzy
 - on your turn player card border animated
 - Dealer button out of player card
-- Vibrate API if availble to announce turn
 - Ready button to skip the break
 - Larger suit icon
-- Announcements chat
 - Ready button and then start
-- history in a new tab (in desktop)
-- when sit out shows waiting for your turn
-- show the level structure and other tournament details (next break)
-- Allow different currencys USD, EUR and BTC
-- Avatar creator: wii style but pixel art
-- show past games on home page, hands played and net win/loss
-- In cash games add option to refill/top up
-- Poker club: invite members, members notified of events.
-- Seasons: allow grouping games into a seasson to get aggregate results
+- show recent and active games on home page to easily rejoin
+- In cash games add option to refill/top up without having to be busted
 - Inspiration Chess.com - "Learn poker"
 - Inspiration Chess.com - "Hand review"
 - Inspiration Chess.com - "Play coach"
 - Inspiration Chess.com - "Ranked Poker"
+- Allow different currencys USD, EUR and BTC
+- graph of the evolution on tournament
+- Bounty option: (+10% buyin)
+- Ideas from: https://plaspokerleague.blogspot.com/, add to poker tournament summary the number of knockouts, the number of rebuys, announce next scheduled tournament, poll to select the best date.
+- improve styles from: https://www.pokerstarsreplayer.com/hands/090eb7d816
 - use SSE instead of websockets when we are only communicating updates from the backend to the frontend (eg: hand history)
 - OLAP db to store logs (DuckDB)
 
