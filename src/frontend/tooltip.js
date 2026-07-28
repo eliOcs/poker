@@ -20,7 +20,7 @@ export function renderTooltipIcon() {
  * @param {import("lit").TemplateResult} params.content
  */
 export function renderTooltip({ id, triggerLabel, content }) {
-  return html`<div class="tooltip-control tooltip-anchor">
+  return html`<div class="tooltip-control">
     <button
       class="tooltip-trigger"
       type="button"

@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
+import { renderTooltip } from "./tooltip.js";
 
 class RankingPanel extends LitElement {
   createRenderRoot() {
@@ -57,12 +58,24 @@ class RankingPanel extends LitElement {
                   <th>Net</th>`
               : html`
                   <th>
-                    Net
-                    <span class="tooltip">(profit/loss)</span>
+                    <div class="ranking-heading">
+                      Net
+                      ${renderTooltip({
+                        id: "net-winnings-tooltip",
+                        triggerLabel: "Net winnings details",
+                        content: html`Total profit or loss at this table.`,
+                      })}
+                    </div>
                   </th>
                   <th>
-                    BB/100
-                    <span class="tooltip">(win rate)</span>
+                    <div class="ranking-heading">
+                      BB/100
+                      ${renderTooltip({
+                        id: "win-rate-tooltip",
+                        triggerLabel: "BB per 100 details",
+                        content: html`Big blinds won or lost per 100 hands.`,
+                      })}
+                    </div>
                   </th>
                 `}
           </tr>

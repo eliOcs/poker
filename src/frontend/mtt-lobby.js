@@ -330,7 +330,7 @@ class MttLobby extends LitElement {
                       </div>
                     </article>
                     <article class="stat">
-                      <div class="label tooltip-control stat-tooltip-control">
+                      <div class="label label-with-tooltip">
                         <span>Rebuys</span>
                         ${renderTooltip({
                           id: "rebuy-period-tooltip",

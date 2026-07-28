@@ -135,16 +135,39 @@ describe("phg-ranking-panel", () => {
     expect(netCell.textContent).to.include("$0");
   });
 
-  it("displays table header with tooltips", async () => {
+  it("displays table headers with accessible tooltips", async () => {
     const el = await fixture(html`
       <phg-ranking-panel .rankings=${mockRankings}></phg-ranking-panel>
     `);
 
     const headers = el.querySelectorAll("th");
     expect(headers[2].textContent).to.include("Net");
-    expect(headers[2].textContent).to.include("profit/loss");
     expect(headers[3].textContent).to.include("BB/100");
-    expect(headers[3].textContent).to.include("win rate");
+
+    const tooltipCases = [
+      {
+        triggerLabel: "Net winnings details",
+        tooltipId: "net-winnings-tooltip",
+        text: "Total profit or loss at this table.",
+      },
+      {
+        triggerLabel: "BB per 100 details",
+        tooltipId: "win-rate-tooltip",
+        text: "Big blinds won or lost per 100 hands.",
+      },
+    ];
+
+    for (const tooltipCase of tooltipCases) {
+      const trigger = el.querySelector(
+        `[aria-label="${tooltipCase.triggerLabel}"]`,
+      );
+      const tooltip = el.querySelector(`#${tooltipCase.tooltipId}`);
+      expect(trigger.getAttribute("aria-describedby")).to.equal(
+        tooltipCase.tooltipId,
+      );
+      expect(tooltip.getAttribute("role")).to.equal("tooltip");
+      expect(tooltip.textContent.trim()).to.equal(tooltipCase.text);
+    }
   });
 
   describe("tournament mode", () => {

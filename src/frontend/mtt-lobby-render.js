@@ -163,7 +163,7 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
   return html`
     ${actions.canRegister
       ? isLateRegistration
-        ? html`<div class="tooltip-control late-registration-control">
+        ? html`<div class="late-registration-control">
             <button
               type="button"
               class="button button--primary"

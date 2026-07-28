@@ -137,6 +137,106 @@
   outline-offset: 2px;
 }
 
+.tooltip-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-trigger {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--color-fg-white);
+  font: inherit;
+  line-height: 1;
+  cursor: help;
+  background: transparent;
+  border: 0;
+}
+
+.tooltip-trigger:hover {
+  color: var(--color-primary);
+}
+
+.tooltip-trigger:focus-visible {
+  color: var(--color-primary);
+}
+
+.tooltip-trigger svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--space-sm));
+  left: 0;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-fg-white);
+  font-size: var(--font-xs);
+  font-weight: normal;
+  line-height: 1.6;
+  text-align: left;
+  pointer-events: none;
+  visibility: hidden;
+  background: var(--color-bg-dark);
+  border: 2px solid var(--color-bg-light);
+  box-shadow: var(--space-xs) var(--space-xs) 0 var(--color-bg-dark);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.tooltip p {
+  margin: 0 0 var(--space-md);
+}
+
+.tooltip p:last-child {
+  margin: var(--space-lg) 0 0;
+}
+
+.tooltip ul {
+  padding-left: var(--space-lg);
+  margin: 0 0 var(--space-lg);
+}
+
+.tooltip table {
+  width: 100%;
+  margin-top: var(--space-sm);
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltip :is(th, td) {
+  padding: var(--space-sm) var(--space-xs);
+  text-align: right;
+  border-top: 1px solid var(--color-bg-light);
+}
+
+.tooltip thead th {
+  border-top: 0;
+}
+
+.tooltip :is(th, td):first-child {
+  text-align: left;
+}
+
+.tooltip-control:is(:hover, :focus-within) > .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 :is(.settings-content, .sign-in-content) {
   --modal-slider-active-color: var(--color-secondary);
 }

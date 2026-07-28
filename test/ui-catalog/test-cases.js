@@ -476,6 +476,8 @@ const TEST_CASES = {
   ...GAME_TEST_CASES,
   ...SPECIAL_GAME_TEST_CASES,
   ...RANKING_MODAL_TEST_CASES,
+  "game-rankings-modal-tooltip":
+    RANKING_MODAL_TEST_CASES["game-rankings-modal"],
   ...TABLE_SIZE_TEST_CASES,
   ...ACTION_PANEL_TEST_CASES,
   ...EMAIL_TEST_CASES,

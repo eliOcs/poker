@@ -1,10 +1,14 @@
 @scope (phg-ranking-panel) {
-  th .tooltip {
-    font-size: var(--font-xs);
-    color: var(--color-fg-muted);
-    display: block;
-    font-weight: normal;
-    margin-top: var(--space-sm);
+  .ranking-heading {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .ranking-heading .tooltip {
+    right: 0;
+    left: auto;
+    width: min(260px, 55vw);
   }
 
   .player-name {

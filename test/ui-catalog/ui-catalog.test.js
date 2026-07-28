@@ -70,6 +70,7 @@ const TEST_CASES = [
 
   // Modal states
   "game-rankings-modal",
+  "game-rankings-modal-tooltip",
   "game-rankings-modal-tournament",
   "game-tournament-levels-modal",
   "game-settings-modal",
@@ -168,6 +169,7 @@ async function prepareTestCase(testCase, page, component) {
   }
 
   const tooltipLabel = {
+    "game-rankings-modal-tooltip": "Net winnings details",
     "mtt-lobby-running-late-register-tooltip": "Late registration details",
     "sitngo-creation-speed-tooltip": "Tournament speed details",
     "tournaments-speed-tooltip": "Tournament speed details",
@@ -176,7 +178,7 @@ async function prepareTestCase(testCase, page, component) {
   await component.evaluate((element, label) => {
     const trigger = element.querySelector(`[aria-label="${label}"]`);
     if (!(trigger instanceof HTMLElement)) {
-      throw new Error("Late registration tooltip trigger was not rendered");
+      throw new Error(`${label} tooltip trigger was not rendered`);
     }
     trigger.focus({ preventScroll: true });
   }, tooltipLabel);
