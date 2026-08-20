@@ -36,6 +36,25 @@ describe("phg-modal", () => {
       const overlay = element.querySelector(".modal-overlay");
       expect(overlay).to.exist;
     });
+
+    it("keeps the close button visible while long content scrolls", async () => {
+      const element = await fixture(
+        html`<phg-modal
+          title="Test"
+          .content=${html`<div style="height: 200vh">Long content</div>`}
+        ></phg-modal>`,
+      );
+      const modal = element.querySelector(".modal");
+      const content = element.querySelector(".modal-content");
+      const closeButton = element.querySelector(".modal-close");
+      const closeButtonTop = closeButton.getBoundingClientRect().top;
+
+      content.scrollTop = content.scrollHeight;
+
+      expect(content.scrollTop).to.be.greaterThan(0);
+      expect(modal.scrollTop).to.equal(0);
+      expect(closeButton.getBoundingClientRect().top).to.equal(closeButtonTop);
+    });
   });
 
   describe("close behavior", () => {

@@ -66,12 +66,14 @@
     left: 50%;
     z-index: 200;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     min-width: min(280px, 90vw);
     max-width: min(600px, 90vw);
     max-height: 90vh;
     padding: var(--space-lg);
     margin: 0;
-    overflow: auto;
+    overflow: hidden;
     color: inherit;
     font: inherit;
     background: var(--color-bg-light);
@@ -81,10 +83,16 @@
   }
 
   .modal-header {
+    flex: none;
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: var(--space-lg);
+  }
+
+  .modal-content {
+    min-height: 0;
+    overflow: auto;
   }
 
   h3 {
