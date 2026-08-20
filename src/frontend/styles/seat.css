@@ -42,10 +42,28 @@
   }
 
   :scope.acting::before {
-    border-color: var(--color-primary);
-    box-shadow:
-      3px 3px 0 var(--color-bg-dark),
-      0 0 0 3px var(--color-primary);
+    animation: acting-border-pulse 2s step-end infinite;
+  }
+
+  @keyframes acting-border-pulse {
+    0% {
+      border-color: var(--color-primary);
+    }
+
+    50% {
+      border-color: color-mix(
+        in srgb,
+        var(--color-primary) 50%,
+        var(--color-bg-dark)
+      );
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :scope.acting::before {
+      animation: none;
+      border-color: var(--color-primary);
+    }
   }
 
   :scope.sitting-out::before {
