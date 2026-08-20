@@ -231,7 +231,9 @@ async function takeAvailableActions(players, activePlayers) {
         if (availableActions.length > 0) {
           const action = selectRandomAction(availableActions);
           attemptedAction = action;
-          await player.act(action);
+          await (action === "bet" || action === "raise"
+            ? player.actWithRandomPreset(action)
+            : player.act(action));
           return { seatIdx, action };
         }
         console.log(
