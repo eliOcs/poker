@@ -172,7 +172,11 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
     return;
   }
 
-  if (tournament.onBreak || tournament.pendingRebalance) {
+  if (
+    tournament.onBreak ||
+    tournament.pendingBreak ||
+    tournament.pendingRebalance
+  ) {
     delete game.countdown;
   } else if (
     countActivePlayers(game) >= 2 &&
