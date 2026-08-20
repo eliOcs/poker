@@ -102,9 +102,6 @@
 
   :scope.winner::before {
     border-color: var(--color-primary);
-    box-shadow:
-      3px 3px 0 var(--color-bg-dark),
-      0 0 0 3px var(--color-primary);
   }
 
   .player-name {
