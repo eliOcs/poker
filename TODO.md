@@ -2,7 +2,7 @@
 
 - Avatar creator: wii style but pixel art
 - hand strength modal
-- muck button, show at the end of the hand
+- delayed showed cards to end of the hand
 - always show player on same seat
 - setting to show amount of big blinds instead of cash
 - Poker club: invite members, members notified of events.

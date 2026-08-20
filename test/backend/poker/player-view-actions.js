@@ -187,6 +187,7 @@ describe("Player View", function () {
       };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[0].folded = true;
+      g.seats[0].muckDecision = { remainingTicks: 5 };
 
       const view = playerView(g, p1);
       const p1Actions = view.seats[0].actions;
@@ -194,6 +195,27 @@ describe("Player View", function () {
       assert.ok(p1Actions.some((a) => a.action === "showCard1"));
       assert.ok(p1Actions.some((a) => a.action === "showCard2"));
       assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
+      assert.ok(p1Actions.some((a) => a.action === "muck"));
+    });
+
+    it("removes reveal and muck actions after the decision resolves", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+
+      g.hand.phase = "flop";
+      g.hand.actingSeat = 1;
+      g.seats[0].cards = ["As", "Kh"];
+      g.seats[0].folded = true;
+
+      const actions = playerView(g, p1).seats[0].actions;
+
+      assert.ok(!actions.some((action) => action.action === "muck"));
+      assert.ok(!actions.some((action) => action.action === "showCard1"));
+      assert.ok(!actions.some((action) => action.action === "showCard2"));
+      assert.ok(!actions.some((action) => action.action === "showBothCards"));
     });
 
     it("does not show reveal actions when cards were already revealed at showdown", function () {

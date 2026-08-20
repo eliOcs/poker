@@ -369,6 +369,7 @@ describe("phg-action-panel", () => {
           {
             ...mockOccupiedSeat,
             actions: [
+              { action: "muck" },
               { action: "showCard1", cards: ["As"] },
               { action: "showCard2", cards: ["Kh"] },
               { action: "showBothCards", cards: ["As", "Kh"] },
@@ -390,6 +391,7 @@ describe("phg-action-panel", () => {
         ...actionPanel.querySelectorAll("button.button"),
       ].filter((btn) => btn.textContent.includes("Show"));
       expect(showButtons.length).to.equal(3);
+      expect(findButtonByExactText(actionPanel, "Muck")).to.exist;
 
       const cards = actionPanel.querySelectorAll(".show-cards phg-card");
       expect(cards.length).to.equal(4);

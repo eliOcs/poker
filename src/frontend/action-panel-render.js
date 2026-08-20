@@ -3,6 +3,7 @@ import { formatCurrency } from "./currency.js";
 import { renderRebuyDecision } from "./action-panel-rebuy.js";
 import { ICONS } from "./icons.js";
 import { formatPosition } from "./action-panel-format.js";
+import { renderShowButtons } from "./action-panel-show.js";
 
 function buildActionMap(actions) {
   const actionMap = {};
@@ -288,40 +289,6 @@ function renderCallClockButton(panel) {
   >
     <span class="button__icon">${ICONS.clock}</span>Call the clock
   </button>`;
-}
-
-function renderShowButtons(panel, actionMap) {
-  const showActions = [
-    { key: "showCard1", cards: actionMap.showCard1?.cards },
-    { key: "showCard2", cards: actionMap.showCard2?.cards },
-    { key: "showBothCards", cards: actionMap.showBothCards?.cards },
-  ].filter((entry) => entry.cards?.length);
-
-  if (showActions.length === 0) return;
-
-  return html`
-    <div class="action-row game-action-row">
-      ${showActions.map(
-        (entry) => html`
-          <button
-            type="button"
-            class="button button--action button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: entry.key, seat: panel.seatIndex })}
-          >
-            <span class="show-action">
-              <span>Show</span>
-              <span class="show-cards">
-                ${entry.cards.map(
-                  (card) => html`<phg-card .card=${card}></phg-card>`,
-                )}
-              </span>
-            </span>
-          </button>
-        `,
-      )}
-    </div>
-  `;
 }
 
 function renderEmoteButton(panel) {

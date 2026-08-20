@@ -131,6 +131,7 @@ describe("phg-action-panel", () => {
           {
             ...mockOccupiedSeat,
             actions: [
+              { action: "muck" },
               { action: "showCard1", cards: ["As"] },
               { action: "showCard2", cards: ["Kh"] },
               { action: "showBothCards", cards: ["As", "Kh"] },
@@ -161,6 +162,42 @@ describe("phg-action-panel", () => {
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("showCard1");
       expect(sentMessage.seat).to.be.a("number");
+    });
+
+    it("calls send() with seat when Muck is clicked", async () => {
+      element.game = createMockGameState({
+        hand: { phase: "flop", pot: 0, currentBet: 0, actingSeat: 1 },
+        seats: [
+          {
+            ...mockOccupiedSeat,
+            folded: true,
+            actions: [
+              { action: "muck" },
+              { action: "showCard1", cards: ["As"] },
+              { action: "showCard2", cards: ["Kh"] },
+              { action: "showBothCards", cards: ["As", "Kh"] },
+            ],
+          },
+          { ...mockOpponentSeat, isActing: true },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
+          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
+        ],
+      });
+      await element.updateComplete;
+
+      const actionPanel = element.querySelector("phg-action-panel");
+      await actionPanel.updateComplete;
+
+      let sentMessage = null;
+      element.addEventListener("game-action", (event) => {
+        sentMessage = event.detail;
+      });
+
+      findButtonByExactText(actionPanel, "Muck").click();
+
+      expect(sentMessage).to.deep.equal({ action: "muck", seat: 0 });
     });
 
     it("calls send() with seat and amount when Bet clicked", async () => {

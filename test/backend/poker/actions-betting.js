@@ -180,13 +180,20 @@ describe("betting actions", () => {
   describe("fold", () => {
     it("should mark player as folded and keep cards", () => {
       game.hand.actingSeat = 2;
-      game.seats[2].cards = [{ rank: "ace", suit: "spades" }];
+      game.seats[2].cards = [
+        { rank: "ace", suit: "spades" },
+        { rank: "king", suit: "hearts" },
+      ];
 
       Actions.fold(game, { seat: 2 });
 
       assert.equal(game.seats[2].folded, true);
+      assert.deepEqual(game.seats[2].muckDecision, { remainingTicks: 5 });
       // Cards are kept so player can review their hand
-      assert.deepEqual(game.seats[2].cards, [{ rank: "ace", suit: "spades" }]);
+      assert.deepEqual(game.seats[2].cards, [
+        { rank: "ace", suit: "spades" },
+        { rank: "king", suit: "hearts" },
+      ]);
     });
 
     it("should throw when not player turn", () => {
@@ -208,6 +215,29 @@ describe("betting actions", () => {
       assert.equal(game.seats[2].shownCards[0], true);
       assert.equal(game.seats[2].shownCards[1], false);
       assert.equal(game.seats[2].cardsRevealed, false);
+      assert.equal(game.seats[2].muckDecision, undefined);
+    });
+
+    it("should allow mucking during the post-fold decision window", () => {
+      game.hand.actingSeat = 2;
+      game.seats[2].cards = ["As", "Kh"];
+      Actions.fold(game, { seat: 2 });
+
+      assert.deepEqual(game.seats[2].muckDecision, { remainingTicks: 5 });
+
+      Actions.muck(game, { seat: 2 });
+
+      assert.equal(game.seats[2].muckDecision, undefined);
+      assert.throws(
+        () => Actions.showCard1(game, { seat: 2 }),
+        /after folding or hand ends/,
+      );
+
+      game.hand.phase = "waiting";
+      assert.throws(
+        () => Actions.showCard1(game, { seat: 2 }),
+        /after folding or hand ends/,
+      );
     });
 
     it("should allow showing both cards after hand ends", () => {

@@ -3,3 +3,5 @@ export const TIMER_INTERVAL = process.env.TIMER_SPEED
   : 1000;
 
 export const RUNOUT_DELAY_TICKS = 2;
+
+export const MUCK_TIMEOUT_TICKS = 5;

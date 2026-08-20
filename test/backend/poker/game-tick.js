@@ -175,6 +175,36 @@ describe("game-tick", () => {
         assert.strictEqual(result.shouldBroadcast, false);
       });
     });
+
+    describe("post-fold muck countdown", () => {
+      it("auto-mucks after exactly five ticks", () => {
+        game.hand.actingSeat = -1;
+        game.seats[0].muckDecision = { remainingTicks: 5 };
+
+        for (let tickNumber = 1; tickNumber < 5; tickNumber += 1) {
+          const result = tick(game);
+          assert.strictEqual(result.autoMuckSeats, undefined);
+          assert.strictEqual(
+            game.seats[0].muckDecision.remainingTicks,
+            5 - tickNumber,
+          );
+        }
+
+        const result = tick(game);
+
+        assert.deepStrictEqual(result.autoMuckSeats, [0]);
+        assert.strictEqual(game.seats[0].muckDecision, undefined);
+        assert.strictEqual(result.shouldBroadcast, true);
+      });
+
+      it("keeps the timer running when muck is the only pending work", () => {
+        game.countdown = null;
+        game.hand.actingSeat = -1;
+        game.seats[0].muckDecision = { remainingTicks: 5 };
+
+        assert.strictEqual(shouldTickBeRunning(game), true);
+      });
+    });
   });
 
   describe("shouldTickBeRunning", () => {

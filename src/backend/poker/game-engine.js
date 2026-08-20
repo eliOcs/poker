@@ -67,6 +67,26 @@ function emitHandEnded(game, onBroadcast, handData) {
 }
 
 /**
+ * Records a timed-out post-fold decision as a muck.
+ * @param {Game} game
+ * @param {number} seatIndex
+ */
+export function recordAutoMuck(game, seatIndex) {
+  const seat = /** @type {import('./seat.js').OccupiedSeat} */ (
+    game.seats[seatIndex]
+  );
+  HandHistory.recordShowdown(game.id, seat.player.id, seat.cards, false);
+}
+
+/**
+ * @param {Game} game
+ * @param {number[]} seatIndexes
+ */
+function recordAutoMucks(game, seatIndexes) {
+  for (const seatIndex of seatIndexes) recordAutoMuck(game, seatIndex);
+}
+
+/**
  * @param {Game} game
  * @param {BroadcastHandler} onBroadcast
  */
@@ -89,6 +109,7 @@ export function startGameTick(game, onBroadcast) {
     if (game.kind === "mtt") gameContext.tournamentId = game.tournamentId;
     Object.assign(timerLog.context, { game: gameContext });
 
+    recordAutoMucks(game, result.autoMuckSeats ?? []);
     if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));
     if (result.autoActionSeat !== undefined) {
       emitHandEnded(
