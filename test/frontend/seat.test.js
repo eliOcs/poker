@@ -205,6 +205,8 @@ describe("phg-seat", () => {
       if (seat.classList.contains("current-player")) {
         foundCurrentPlayer = true;
         const cardElements = seat.querySelectorAll("phg-card");
+        expect([...cardElements].every((card) => card.size === "large")).to.be
+          .true;
         let visibleCount = 0;
         for (const cardEl of cardElements) {
           const visibleCard = cardEl.querySelector(".card-wrapper.flipped");

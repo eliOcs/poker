@@ -41,7 +41,12 @@ function renderResult(history, status) {
     ${winningCards?.length
       ? html`<div class="showdown-cards">
           ${winningCards.map(
-            (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+            (card) =>
+              html`<phg-card
+                .card=${card}
+                noAnimation
+                size="medium"
+              ></phg-card>`,
           )}
         </div>`
       : ""}
@@ -68,7 +73,12 @@ function renderAction(history, action) {
       ${action.cards?.length
         ? html`<span class="action-cards"
             >${action.cards.map(
-              (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+              (card) =>
+                html`<phg-card
+                  .card=${card}
+                  noAnimation
+                  size="medium"
+                ></phg-card>`,
             )}</span
           >`
         : ""}
@@ -85,7 +95,8 @@ function renderStreetCards(cards) {
   if (!cards) return "";
   return html`<div class="street-cards">
     ${cards.map(
-      (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+      (card) =>
+        html`<phg-card .card=${card} noAnimation size="medium"></phg-card>`,
     )}
   </div>`;
 }

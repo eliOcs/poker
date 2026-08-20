@@ -395,6 +395,14 @@ describe("phg-action-panel", () => {
 
       const cards = actionPanel.querySelectorAll(".show-cards phg-card");
       expect(cards.length).to.equal(4);
+      await Promise.all([...cards].map((card) => card.updateComplete));
+      expect([...cards].every((card) => card.noAnimation)).to.be.true;
+      expect([...cards].every((card) => card.size === "small")).to.be.true;
+      expect(
+        [...cards].every((card) => getComputedStyle(card).transform === "none"),
+      ).to.be.true;
+      expect([...cards].every((card) => card.querySelector(".card.static"))).to
+        .be.true;
     });
 
     it("keeps Call the clock in a game-action row separate from social actions", async () => {

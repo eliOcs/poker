@@ -118,6 +118,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             actions: [
               { action: "emote" },
               { action: "sitOut" },
+              { action: "muck" },
               { action: "showCard1", cards: ["Qs"] },
               { action: "showCard2", cards: ["Jd"] },
               { action: "showBothCards", cards: ["Qs", "Jd"] },

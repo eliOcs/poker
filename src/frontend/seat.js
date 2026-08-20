@@ -265,6 +265,7 @@ class Seat extends LitElement {
               .card=${card}
               ?winning=${this.seat.winningCards?.includes(card)}
               ?noAnimation=${this.noAnimation}
+              size="large"
             ></phg-card>`,
         )}
       </div>

@@ -178,4 +178,32 @@ describe("phg-card", () => {
     }
     expect(foundWinning).to.be.false;
   });
+
+  it("renders all three sizes with native integer dimensions", async () => {
+    const cards = ["large", "medium", "small"].map((size) => {
+      const card = document.createElement("phg-card");
+      card.card = "As";
+      card.noAnimation = true;
+      card.size = size;
+      return card;
+    });
+    element.replaceChildren(...cards);
+    await Promise.all(cards.map((card) => card.updateComplete));
+
+    expect(cards.map((card) => card.size)).to.deep.equal([
+      "large",
+      "medium",
+      "small",
+    ]);
+    for (const card of cards) {
+      const face = card.querySelector(".card.static");
+      const { width, height } = face.getBoundingClientRect();
+      const borderWidth = Number.parseFloat(getComputedStyle(face).borderWidth);
+      expect(Number.isInteger(width)).to.be.true;
+      expect(Number.isInteger(height)).to.be.true;
+      expect(Number.isInteger(borderWidth)).to.be.true;
+      expect(getComputedStyle(face).backgroundClip).to.equal("padding-box");
+      expect(getComputedStyle(card).transform).to.equal("none");
+    }
+  });
 });

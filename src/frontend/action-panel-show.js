@@ -33,7 +33,12 @@ export function renderShowButtons(panel, actionMap) {
               <span>Show</span>
               <span class="show-cards">
                 ${entry.cards.map(
-                  (card) => html`<phg-card .card=${card}></phg-card>`,
+                  (card) =>
+                    html`<phg-card
+                      .card=${card}
+                      noAnimation
+                      size="small"
+                    ></phg-card>`,
                 )}
               </span>
             </span>

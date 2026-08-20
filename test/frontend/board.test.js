@@ -45,6 +45,7 @@ describe("phg-board", () => {
     await board.updateComplete;
     const cardElements = board.querySelectorAll("phg-card");
     expect(cardElements.length).to.equal(3);
+    expect([...cardElements].every((card) => card.size === "large")).to.be.true;
   });
 
   it("shows no cards when board is empty", async () => {

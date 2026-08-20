@@ -68,6 +68,7 @@ class Board extends LitElement {
               .card=${card}
               ?winning=${this.isWinningCard(card)}
               ?noAnimation=${this.noAnimation}
+              size="large"
             ></phg-card>`,
         )}
       </div>

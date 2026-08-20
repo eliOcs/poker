@@ -1,13 +1,41 @@
 @scope (phg-card) {
   :where(:scope) {
     display: inline-block;
+
+    --card-width: 42px;
+    --card-height: 56px;
+    --card-border-width: 3px;
+    --card-font-size: 14px;
+    --card-rank-size: 14px;
+    --card-suit-size: 22px;
+    --card-suit-margin-top: -2px;
+  }
+
+  :scope[size="medium"] {
+    --card-width: 30px;
+    --card-height: 39px;
+    --card-border-width: 2px;
+    --card-font-size: 10px;
+    --card-rank-size: 10px;
+    --card-suit-size: 16px;
+    --card-suit-margin-top: -1px;
+  }
+
+  :scope[size="small"] {
+    --card-width: 20px;
+    --card-height: 26px;
+    --card-border-width: 1px;
+    --card-font-size: 7px;
+    --card-rank-size: 7px;
+    --card-suit-size: 11px;
+    --card-suit-margin-top: -1px;
   }
 
   .card-wrapper {
     display: inline-block;
     position: relative;
-    width: 42px;
-    height: 56px;
+    width: var(--card-width);
+    height: var(--card-height);
     perspective: 600px;
   }
 
@@ -19,21 +47,22 @@
     align-items: center;
     justify-content: center;
     background-color: var(--color-fg-white);
-    border: 3px solid var(--color-bg-dark);
+    background-clip: padding-box;
+    border: var(--card-border-width) solid var(--color-bg-dark);
     line-height: 1;
-    font-size: 14px;
+    font-size: var(--card-font-size);
     backface-visibility: hidden;
     box-sizing: border-box;
   }
 
   .card .rank {
-    font-size: 14px;
+    font-size: var(--card-rank-size);
   }
 
   .card .suit {
     font-family: serif;
-    font-size: 20px;
-    margin-top: -2px;
+    font-size: var(--card-suit-size);
+    margin-top: var(--card-suit-margin-top);
   }
 
   .card.red {
@@ -65,8 +94,8 @@
 
   .card.static {
     position: static;
-    width: 42px;
-    height: 56px;
+    width: var(--card-width);
+    height: var(--card-height);
   }
 
   .card.front {
@@ -101,8 +130,8 @@
 
   .card.placeholder {
     position: static;
-    width: 42px;
-    height: 56px;
+    width: var(--card-width);
+    height: var(--card-height);
     background-color: var(--color-bg-light);
     border-color: var(--color-bg-disabled);
     border-style: dashed;
@@ -116,27 +145,34 @@
 
   /* Larger cards on desktop */
   @media (width >= 800px) {
-    .card-wrapper {
-      width: 63px;
-      height: 83px;
+    :scope {
+      --card-width: 63px;
+      --card-height: 83px;
+      --card-border-width: 3px;
+      --card-font-size: 18px;
+      --card-rank-size: 20px;
+      --card-suit-size: 30px;
+      --card-suit-margin-top: -2px;
     }
 
-    .card {
-      font-size: 18px;
+    :scope[size="medium"] {
+      --card-width: 40px;
+      --card-height: 52px;
+      --card-border-width: 2px;
+      --card-font-size: 12px;
+      --card-rank-size: 13px;
+      --card-suit-size: 20px;
+      --card-suit-margin-top: -1px;
     }
 
-    .card.placeholder,
-    .card.static {
-      width: 63px;
-      height: 83px;
-    }
-
-    .card .rank {
-      font-size: 20px;
-    }
-
-    .card .suit {
-      font-size: 28px;
+    :scope[size="small"] {
+      --card-width: 38px;
+      --card-height: 50px;
+      --card-border-width: 2px;
+      --card-font-size: 12px;
+      --card-rank-size: 12px;
+      --card-suit-size: 19px;
+      --card-suit-margin-top: -1px;
     }
   }
 }
