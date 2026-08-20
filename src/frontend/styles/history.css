@@ -64,6 +64,7 @@
 
   .nav-cards {
     display: flex;
+    align-items: center;
     gap: var(--space-sm);
     min-height: 56px;
   }
