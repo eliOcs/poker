@@ -133,6 +133,24 @@ export function renderShellView(app, content, options = {}) {
 /**
  * @param {any} app
  */
+export function renderShellPageView(app, page) {
+  const pageViews = {
+    about: () => renderAboutView(),
+    home: () => renderHomeView(),
+    mtt_lobby: () => renderMttLobbyView(app),
+    player_profile: () => renderPlayerProfileView(app),
+    release_notes: () => renderReleaseNotesView(),
+    tournaments: () => renderTournamentsView(app),
+  };
+  const content = (pageViews[page] ?? pageViews.home)();
+  return renderShellView(app, content, {
+    navigationRenderer: page === "mtt_lobby" ? () => "" : undefined,
+  });
+}
+
+/**
+ * @param {any} app
+ */
 export function renderAuthStatusView(app) {
   return html`${renderToast(app)}${renderAuthStatus()}`;
 }

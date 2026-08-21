@@ -5,8 +5,8 @@
  * Separated from test-cases.js to keep file sizes under 500 lines.
  */
 
-import { html } from "lit";
 import { mockEmptySeat } from "/fixtures.js";
+import { renderGameView } from "/src/frontend/app-render.js";
 
 // === HELPER FACTORIES ===
 
@@ -24,25 +24,17 @@ export const emptyTableSeats = () =>
   }));
 
 // Helper to create a game component with mock data
-export function gameView(gameState, options = {}) {
-  const {
-    showRanking = false,
-    showSettings = false,
-    showTournamentLevels = false,
-    volume = 0.75,
-  } = options;
-  return html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-game
-        .game=${gameState}
-        .socket=${{ readyState: 1 }}
-        .showRanking=${showRanking}
-        .showSettings=${showSettings}
-        .showTournamentLevels=${showTournamentLevels}
-        .volume=${volume}
-      ></phg-game>
-    </div>
-  `;
+export function gameView(gameState) {
+  const gameKind = gameState.tournament ? "sitngo" : "cash";
+  return renderGameView(
+    {
+      game: gameState,
+      gameConnectionStatus: "connected",
+      socialAction: undefined,
+      user: undefined,
+    },
+    { kind: gameKind, tableId: "test123" },
+  );
 }
 
 // Helper to show a game with a toast overlay
@@ -51,16 +43,17 @@ export function gameViewWithToast(
   toastMessage,
   toastVariant = "error",
 ) {
-  return html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-toast
-        variant=${toastVariant}
-        .duration=${0}
-        message=${toastMessage}
-      ></phg-toast>
-      <phg-game .game=${gameState} .socket=${{ readyState: 1 }}></phg-game>
-    </div>
-  `;
+  const gameKind = gameState.tournament ? "sitngo" : "cash";
+  return renderGameView(
+    {
+      toast: { message: toastMessage, variant: toastVariant, duration: 0 },
+      game: gameState,
+      gameConnectionStatus: "connected",
+      socialAction: undefined,
+      user: undefined,
+    },
+    { kind: gameKind, tableId: "test123" },
+  );
 }
 
 // Base game state factory

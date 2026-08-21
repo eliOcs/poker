@@ -6,7 +6,7 @@
  * URL format: ?test=<test-id>
  */
 
-import { html, render } from "lit";
+import { render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/tournaments.js";
@@ -14,6 +14,7 @@ import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
 import "/src/frontend/app-shell.js";
+import { renderShellPageView } from "/src/frontend/app-render.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import { EMAIL_TEST_CASES } from "./test-cases-email.js";
 import {
@@ -35,42 +36,24 @@ import { MTT_LOBBY_TEST_CASES } from "./test-cases/mtt-lobby.js";
 
 // === GAME TEST CASES ===
 
-function appShellView(path, content) {
-  return html`<phg-app-shell
-    .path=${path}
-    .user=${null}
-    .content=${content}
-  ></phg-app-shell>`;
+function shellPageView(path, page, appState = {}) {
+  return renderShellPageView({ path, user: null, ...appState }, page);
 }
 
 const GAME_TEST_CASES = {
   // === LANDING PAGE ===
-  "landing-page": () => appShellView("/", html`<phg-home></phg-home>`),
+  "landing-page": () => shellPageView("/", "home"),
 
-  "sitngo-creation-speed-tooltip": () =>
-    appShellView(
-      "/",
-      html`<phg-home .selectedGameType=${"sitngo"}></phg-home>`,
-    ),
+  "sitngo-creation-speed-tooltip": () => shellPageView("/", "home"),
 
-  "tournaments-page": () =>
-    appShellView(
-      "/mtt",
-      html`<phg-tournaments .user=${null}></phg-tournaments>`,
-    ),
+  "tournaments-page": () => shellPageView("/mtt", "tournaments"),
 
-  "tournaments-speed-tooltip": () =>
-    appShellView(
-      "/mtt",
-      html`<phg-tournaments .user=${null}></phg-tournaments>`,
-    ),
+  "tournaments-speed-tooltip": () => shellPageView("/mtt", "tournaments"),
 
   "player-profile-summary": () =>
-    appShellView(
-      "/players/lz1abc12x9k2",
-      html`<phg-player-profile
-        .user=${null}
-        .profile=${{
+    shellPageView("/players/lz1abc12x9k2", "player_profile", {
+      _playerProfileTask: {
+        value: {
           id: "lz1abc12x9k2",
           name: "Cañas y tapas",
           online: false,
@@ -104,9 +87,9 @@ const GAME_TEST_CASES = {
               lastHandNumber: 9,
             },
           ],
-        }}
-      ></phg-player-profile>`,
-    ),
+        },
+      },
+    }),
 
   // === LOBBY STATES ===
   "game-empty-table": () => gameView(createGame()),
@@ -467,7 +450,6 @@ const GAME_TEST_CASES = {
           ...emptySeats(7),
         ],
       }),
-      { showSettings: true },
     ),
 };
 

@@ -69,7 +69,12 @@ export const MTT_LOBBY_TEST_CASES = {
           seatIndex: null,
           finishPosition: null,
         },
-        actions: { canRegister: false, canUnregister: true, canStart: true },
+        actions: {
+          canRegister: false,
+          canUnregister: true,
+          canStart: true,
+          canRename: true,
+        },
       }),
     }),
 

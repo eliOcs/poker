@@ -1,4 +1,4 @@
-import { html } from "lit";
+import { renderShellPageView } from "/src/frontend/app-render.js";
 
 export const BASE_CREATED_AT = "2026-01-15T10:00:00.000Z";
 
@@ -7,17 +7,18 @@ export function mttLobbyView({
   loading = false,
   error = "",
 } = {}) {
-  return html`
-    <div style="height: 100%; width: 100%;">
-      <phg-mtt-lobby
-        tournament-id="t1abc123"
-        .tournament=${tournament}
-        .user=${null}
-        ?loading=${loading}
-        .error=${error}
-      ></phg-mtt-lobby>
-    </div>
-  `;
+  return renderShellPageView(
+    {
+      path: "/mtt/t1abc123",
+      user: null,
+      _mttTournamentId: "t1abc123",
+      _mttView: tournament,
+      _mttLoading: loading,
+      _mttError: error,
+      _mttActionPending: false,
+    },
+    "mtt_lobby",
+  );
 }
 
 export function makeEntrant(playerId, name, overrides = {}) {
@@ -49,6 +50,7 @@ export function makeTable(tableId, tableName, overrides = {}) {
 export function makeBaseTournament(overrides = {}) {
   const tournament = {
     id: "t1abc123",
+    name: "Multi-Table Tournament",
     status: "registration",
     ownerId: "owner1",
     buyIn: 500,
@@ -80,6 +82,7 @@ export function makeBaseTournament(overrides = {}) {
       canRegister: true,
       canUnregister: false,
       canStart: false,
+      canRename: false,
     },
     ...overrides,
   };

@@ -358,7 +358,6 @@ export const RANKING_MODAL_TEST_CASES = {
           },
         ],
       }),
-      { showRanking: true },
     ),
 
   "game-rankings-modal-tournament": () =>
@@ -412,7 +411,6 @@ export const RANKING_MODAL_TEST_CASES = {
           },
         ],
       }),
-      { showRanking: true },
     ),
 
   "game-tournament-levels-modal": () =>
@@ -436,7 +434,6 @@ export const RANKING_MODAL_TEST_CASES = {
           ...emptySeats(6),
         ],
       }),
-      { showTournamentLevels: true },
     ),
 };
 
