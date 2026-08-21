@@ -1,6 +1,6 @@
 .app-shell-layout {
   display: flex;
-  height: 100vh;
+  height: 100dvh;
   background: var(--color-bg-dark);
 }
 
