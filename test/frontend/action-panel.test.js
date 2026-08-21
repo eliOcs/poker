@@ -393,11 +393,12 @@ describe("phg-action-panel", () => {
       expect(showButtons.length).to.equal(3);
       const muckButton = findButtonByText(actionPanel, "Muck");
       expect(muckButton).to.exist;
-      expect(muckButton.classList.contains("button--action")).to.be.true;
+      expect(muckButton.classList.contains("button--success")).to.be.true;
+      expect(muckButton.classList.contains("button--action")).to.be.false;
       expect(muckButton.classList.contains("button--muted")).to.be.false;
 
       const cards = actionPanel.querySelectorAll(".show-cards phg-card");
-      expect(cards.length).to.equal(6);
+      expect(cards.length).to.equal(4);
       await Promise.all([...cards].map((card) => card.updateComplete));
       expect([...cards].every((card) => card.noAnimation)).to.be.true;
       expect([...cards].every((card) => card.size === "small")).to.be.true;
@@ -406,11 +407,7 @@ describe("phg-action-panel", () => {
       ).to.be.true;
       expect([...cards].every((card) => card.querySelector(".card.static"))).to
         .be.true;
-      const muckCards = muckButton.querySelectorAll("phg-card");
-      expect(muckCards.length).to.equal(2);
-      expect([...muckCards].every((card) => card.card === "??")).to.be.true;
-      expect([...muckCards].every((card) => card.querySelector(".card.back")))
-        .to.be.true;
+      expect(muckButton.querySelector("phg-card")).to.be.null;
     });
 
     it("keeps Call the clock in a game-action row separate from social actions", async () => {

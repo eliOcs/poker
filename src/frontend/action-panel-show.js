@@ -14,17 +14,11 @@ export function renderShowButtons(panel, actionMap) {
       ${actionMap.muck
         ? html`<button
             type="button"
-            class="button button--action button--full-width"
+            class="button button--success button--full-width"
             @click=${() =>
               panel.sendAction({ action: "muck", seat: panel.seatIndex })}
           >
-            <span class="show-action">
-              <span>Muck</span>
-              <span class="show-cards">
-                <phg-card .card=${"??"} noAnimation size="small"></phg-card>
-                <phg-card .card=${"??"} noAnimation size="small"></phg-card>
-              </span>
-            </span>
+            Muck
           </button>`
         : undefined}
       ${showActions.map(
