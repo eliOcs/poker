@@ -7,6 +7,12 @@ import {
   signUpTournamentCreator,
   signUpTournamentRegistrant,
 } from "./utils/mtt-registration.js";
+import {
+  installUnstableTournamentConnection,
+  UNSTABLE_TOURNAMENT_LATENCY_MS,
+  waitForUnstableTournamentRecovery,
+} from "./utils/websocket-faults.js";
+import * as Stress from "./utils/stress-helpers.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
 
@@ -27,52 +33,15 @@ const USER_CREATION_BATCH_LIMIT = 8;
 const USER_CREATION_WINDOW_BUFFER_MS = 6500;
 
 /**
- * @param {unknown} err
- * @returns {string}
- */
-function formatError(err) {
-  return err instanceof Error ? err.message : String(err);
-}
-
-/**
- * @param {{lastProgressAt: number, lastProgressReason: string}} state
- * @param {string} reason
- */
-function markProgress(state, reason) {
-  state.lastProgressAt = Date.now();
-  state.lastProgressReason = reason;
-}
-
-/**
- * Run async player setup one player at a time to avoid tripping the shared
- * pre-cookie HTTP rate limiter during initial page/bootstrap requests.
- * @template T
- * @param {T[]} items
- * @param {(item: T, index: number) => Promise<void>} task
- */
-async function runSequentially(items, task) {
-  for (let index = 0; index < items.length; index += 1) {
-    await task(items[index], index);
-  }
-}
-
-/**
- * @param {number} ms
- */
-async function delay(ms) {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
  * Pre-create guest sessions through the user API so later tournament-lobby
  * navigations reuse an existing player cookie instead of loading every static
  * asset against the shared pre-cookie IP limiter.
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  */
 async function initializeGuestSessions(players) {
-  await runSequentially(players, async (player, index) => {
+  await Stress.runSequentially(players, async (player, index) => {
     if (index === USER_CREATION_BATCH_LIMIT) {
-      await delay(USER_CREATION_WINDOW_BUFFER_MS);
+      await Stress.delay(USER_CREATION_WINDOW_BUFFER_MS);
     }
     const response = await player.page.request.get("/api/users/me");
     if (!response.ok()) throw new Error("Guest session creation failed");
@@ -242,7 +211,7 @@ async function takeAvailableActions(players, activePlayers) {
       } catch (err) {
         console.log(
           `Seat ${seatIdx + 1} action attempt failed` +
-            `${attemptedAction ? ` (${attemptedAction})` : ""}: ${formatError(err)}`,
+            `${attemptedAction ? ` (${attemptedAction})` : ""}: ${Stress.formatError(err)}`,
         );
       }
       return null;
@@ -279,7 +248,7 @@ async function tryCallClock(players, activePlayers) {
       }
     } catch (err) {
       console.log(
-        `Seat ${seatIdx + 1} call clock attempt failed: ${formatError(err)}`,
+        `Seat ${seatIdx + 1} call clock attempt failed: ${Stress.formatError(err)}`,
       );
     }
   }
@@ -304,7 +273,7 @@ async function waitForAnyTurn(players, activePlayers) {
     if (turnStates.some(Boolean)) {
       return true;
     }
-    await delay(100);
+    await Stress.delay(100);
   }
 
   return false;
@@ -399,7 +368,9 @@ async function collectStallSnapshot(players, activePlayers, state) {
         `Seat ${idx + 1}: path=${path} phase=${phase} level=${level ?? "?"} onBreak=${onBreak} isMyTurn=${isMyTurn} class="${seatClass}" ${serverStr} actions=[${availableActions.join(",")}] buttons=[${compactButtons}]`,
       );
     } catch (err) {
-      lines.push(`Seat ${idx + 1}: snapshot failed (${formatError(err)})`);
+      lines.push(
+        `Seat ${idx + 1}: snapshot failed (${Stress.formatError(err)})`,
+      );
     }
   }
 
@@ -476,16 +447,16 @@ async function runTournamentLoop(players, activePlayers, state) {
     );
     if (loopResult !== undefined) return loopResult;
     if (snapshots.removedCount > 0) {
-      markProgress(state, `removed-${snapshots.removedCount}-busted`);
+      Stress.markProgress(state, `removed-${snapshots.removedCount}-busted`);
     }
     if (trackHandTransition(snapshots.maxHandNumber, state)) {
-      markProgress(state, `hand-${state.handCount}`);
+      Stress.markProgress(state, `hand-${state.handCount}`);
     }
 
     const results = await takeAvailableActions(players, activePlayers);
     if (results.length > 0) {
       for (const result of results) {
-        markProgress(
+        Stress.markProgress(
           state,
           `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
         );
@@ -493,7 +464,7 @@ async function runTournamentLoop(players, activePlayers, state) {
     } else {
       const clockResult = await tryCallClock(players, activePlayers);
       if (clockResult) {
-        markProgress(
+        Stress.markProgress(
           state,
           `seat-${clockResult.seatIdx + 1}-callClock-hand-${state.handCount}`,
         );
@@ -505,8 +476,8 @@ async function runTournamentLoop(players, activePlayers, state) {
           ),
         );
         if (onBreakStates.some(Boolean)) {
-          markProgress(state, `break-hand-${state.handCount}`);
-          await delay(250);
+          Stress.markProgress(state, `break-hand-${state.handCount}`);
+          await Stress.delay(250);
           continue;
         }
 
@@ -516,8 +487,8 @@ async function runTournamentLoop(players, activePlayers, state) {
           ),
         );
         if (connectionStates.some((isConnected) => !isConnected)) {
-          markProgress(state, `reconnecting-hand-${state.handCount}`);
-          await delay(250);
+          Stress.markProgress(state, `reconnecting-hand-${state.handCount}`);
+          await Stress.delay(250);
           continue;
         }
         await waitForAnyTurn(players, activePlayers);
@@ -555,6 +526,10 @@ test.describe("Tournament E2E", () => {
       player10,
       player11,
     ];
+    const connectionFaults = await installUnstableTournamentConnection(player2);
+    console.log(
+      `Player 2 network latency: ${UNSTABLE_TOURNAMENT_LATENCY_MS}ms`,
+    );
 
     const creatorEmail = `stress-creator-${Date.now()}@example.com`;
     await signUpTournamentCreator(player1, creatorEmail);
@@ -583,11 +558,11 @@ test.describe("Tournament E2E", () => {
     await initializeGuestSessions(joiningPlayers);
     console.log("All guest sessions initialized");
 
-    await runSequentially(joiningPlayers, async (player) => {
+    await Stress.runSequentially(joiningPlayers, async (player) => {
       await player.joinTournamentLobbyByUrl(tournamentUrl);
     });
 
-    await runSequentially(preStartRegistrants, async (player, index) => {
+    await Stress.runSequentially(preStartRegistrants, async (player, index) => {
       await signUpTournamentRegistrant(
         player,
         `stress-player-${index + 2}-${Date.now()}@example.com`,
@@ -600,6 +575,9 @@ test.describe("Tournament E2E", () => {
       startingPlayers.map((player) => player.waitForTournamentTable()),
     );
     console.log("Tournament started and nine players reached a table");
+
+    await waitForUnstableTournamentRecovery(player2, connectionFaults);
+    console.log("Player 2 recovered from the injected connection interruption");
 
     const initialTableIds = new Set(
       startingPlayers
@@ -664,6 +642,7 @@ test.describe("Tournament E2E", () => {
       );
     }
     expect(allLateRegistrationsAssigned(state.lateRegistrations)).toBe(true);
+    expect(connectionFaults.forwardedGameActions).toBeGreaterThan(0);
     expect(winnerName).toBeTruthy();
   });
 });
