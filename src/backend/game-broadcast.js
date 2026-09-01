@@ -61,7 +61,8 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
     forEachGameClient(gameId, (ws, conn) => {
       const message = buildMessage(conn);
       if (message !== undefined) {
-        const payloadBytes = sendWebSocketJson(ws, message);
+        const { sent, payloadBytes } = sendWebSocketJson(ws, message);
+        if (!sent) return;
         recipients += 1;
         maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
       }
@@ -191,20 +192,20 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
 
         const playerMove = playerMovesById.get(conn.user.id);
         if (playerMove) {
-          maxPayloadBytes = Math.max(
-            maxPayloadBytes,
-            sendWebSocketJson(ws, {
-              type: "playerMoved",
-              tournamentId: playerMove.tournamentId,
-              tableId: playerMove.tableId,
-              tableName: playerMove.tableName,
-            }),
-          );
+          const moveResult = sendWebSocketJson(ws, {
+            type: "playerMoved",
+            tournamentId: playerMove.tournamentId,
+            tableId: playerMove.tableId,
+            tableName: playerMove.tableName,
+          });
+          if (!moveResult.sent) return;
+          maxPayloadBytes = Math.max(maxPayloadBytes, moveResult.payloadBytes);
         }
-        const payloadBytes = sendWebSocketJson(ws, {
+        const { sent, payloadBytes } = sendWebSocketJson(ws, {
           type: "tournamentState",
           tournament,
         });
+        if (!sent) return;
         recipients += 1;
         maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
       });
