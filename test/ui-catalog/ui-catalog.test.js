@@ -4,6 +4,17 @@ test.describe.configure({ mode: "parallel" });
 
 // Test case IDs (keep in sync with test-cases.js)
 const TEST_CASES = [
+  // Avatar maker
+  "avatar-maker",
+  "avatar-maker-sparkle-eyes",
+  "avatar-maker-eyebrows",
+  "avatar-maker-nose",
+  "avatar-maker-mouth",
+  "avatar-maker-ears",
+  "avatar-maker-hair",
+  "avatar-maker-facial-hair",
+  "avatar-maker-clothes",
+
   // Landing page
   "landing-page",
   "sitngo-creation-speed-tooltip",
@@ -106,6 +117,7 @@ const TEST_CASES = [
 ];
 
 function getComponentSelector(testCase) {
+  if (testCase.startsWith("avatar-maker")) return "phg-avatar-maker";
   if (testCase.startsWith("email-")) return ".email-preview";
   if (
     [
@@ -137,6 +149,29 @@ async function prepareTestCase(testCase, page, component) {
       Object.assign(element, state);
       await element.updateComplete;
     }, componentState);
+  }
+
+  const avatarTab = {
+    "avatar-maker-sparkle-eyes": "eyes",
+    "avatar-maker-eyebrows": "eyebrows",
+    "avatar-maker-nose": "nose",
+    "avatar-maker-mouth": "mouth",
+    "avatar-maker-ears": "ears",
+    "avatar-maker-hair": "hair",
+    "avatar-maker-facial-hair": "facialHair",
+    "avatar-maker-clothes": "clothes",
+  }[testCase];
+  if (avatarTab) {
+    await component.locator(`#avatar-tab-${avatarTab}`).click();
+    await component.evaluate((element) => element.updateComplete);
+  }
+  if (testCase === "avatar-maker-sparkle-eyes") {
+    await component.getByRole("button", { name: "Sparkle" }).click();
+    await component.evaluate((element) => element.updateComplete);
+  }
+  if (testCase === "avatar-maker-facial-hair") {
+    await component.getByRole("button", { name: "Beard", exact: true }).click();
+    await component.evaluate((element) => element.updateComplete);
   }
 
   const replayIndex = {
@@ -249,8 +284,11 @@ for (const testCase of TEST_CASES) {
     const component = page.locator(selector);
     await component.waitFor();
 
-    // Wait for Lit component to fully render
-    await component.evaluate((el) => el.updateComplete);
+    // Wait for Lit and any component-owned visual assets to fully render.
+    await component.evaluate(async (el) => {
+      if ("assetsReady" in el) await el.assetsReady;
+      await el.updateComplete;
+    });
 
     await prepareTestCase(testCase, page, component);
 

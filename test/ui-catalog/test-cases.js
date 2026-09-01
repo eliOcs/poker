@@ -15,6 +15,7 @@ import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
 import "/src/frontend/app-shell.js";
 import { renderShellPageView } from "/src/frontend/app-render.js";
+import "/src/frontend/avatar-maker.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import { EMAIL_TEST_CASES } from "./test-cases-email.js";
 import {
@@ -41,6 +42,18 @@ function shellPageView(path, page, appState = {}) {
 }
 
 const GAME_TEST_CASES = {
+  // === AVATAR MAKER ===
+  "avatar-maker": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-sparkle-eyes": () =>
+    html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-eyebrows": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-nose": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-mouth": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-ears": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-hair": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-facial-hair": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker-clothes": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+
   // === LANDING PAGE ===
   "landing-page": () => shellPageView("/", "home"),
 

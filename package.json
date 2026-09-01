@@ -8,6 +8,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "avatar:sprites": "node scripts/export-avatar-sprites.js",
     "test:coverage": "npm run test:backend:coverage && npm run test:frontend:coverage",
     "test:backend:coverage": "c8 --temp-directory coverage/backend/tmp --reports-dir coverage/backend --include 'src/backend/**/*.js' --reporter text --reporter html --reporter json-summary node --test 'test/backend/**/*.js'",
     "test:frontend:coverage": "web-test-runner --coverage",
