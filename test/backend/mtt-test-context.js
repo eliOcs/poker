@@ -83,11 +83,6 @@ export function createMttContext() {
           ctx.playerMoves.push(...playerMoves);
         },
         ensureTableTick: () => {},
-        finalizePendingTableHand: (game) => {
-          if (!game.pendingHandHistory) return false;
-          delete game.pendingHandHistory;
-          return true;
-        },
         now: () =>
           `2026-03-14T00:00:${String(ctx.tickCount++).padStart(2, "0")}.000Z`,
         setIntervalFn: () => ({ unref() {} }),

@@ -67,6 +67,27 @@ function emitHandEnded(game, onBroadcast, handData) {
 }
 
 /**
+ * Finalizes the previous hand at the next-hand boundary, then lets the MTT
+ * coordinator hold the start if a break, rebalance, or rebuy requires it.
+ * @param {Game} game
+ * @param {BroadcastHandler} onBroadcast
+ */
+export function startHandAfterCountdown(game, onBroadcast) {
+  const coordinatesMttStart =
+    game.kind === "mtt" && game.pendingHandHistory !== undefined;
+  if (coordinatesMttStart) game.startingNextHand = true;
+
+  const handData = game.pendingHandHistory
+    ? finalizePendingHandHistory(game)
+    : undefined;
+  emitHandEnded(game, onBroadcast, handData);
+
+  if (coordinatesMttStart && game.startingNextHand !== true) return;
+  delete game.startingNextHand;
+  startHand(game);
+}
+
+/**
  * Records a timed-out post-fold decision as a muck.
  * @param {Game} game
  * @param {number} seatIndex
@@ -110,7 +131,7 @@ export function startGameTick(game, onBroadcast) {
     Object.assign(timerLog.context, { game: gameContext });
 
     recordAutoMucks(game, result.autoMuckSeats ?? []);
-    if (result.startHand) emitHandEnded(game, onBroadcast, startHand(game));
+    if (result.startHand) startHandAfterCountdown(game, onBroadcast);
     if (result.autoActionSeat !== undefined) {
       emitHandEnded(
         game,

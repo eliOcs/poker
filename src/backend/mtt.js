@@ -8,7 +8,6 @@ import {
   syncWaitingTableState,
   getOpenTables,
   getPopulatedOpenTables,
-  hasSettledWaitingHand,
   clearTableWinner,
   resetClosedTable,
   canStartPendingBreak,
@@ -165,7 +164,6 @@ import {
  *   broadcastTableState?: (tableId: string) => void,
  *   broadcastTournamentState?: (tournamentId: string, playerMoves?: import('./mtt-seating.js').PlayerMovedEvent[]) => void,
  *   ensureTableTick?: (game: Game) => void,
- *   finalizePendingTableHand?: (game: Game) => boolean,
  *   now?: () => string,
  *   setIntervalFn?: typeof setInterval,
  *   clearIntervalFn?: typeof clearInterval,
@@ -176,7 +174,6 @@ export function createMttManager({
   broadcastTableState = () => {},
   broadcastTournamentState = () => {},
   ensureTableTick = () => {},
-  finalizePendingTableHand = () => false,
   now = () => new Date().toISOString(),
   setIntervalFn = setInterval,
   clearIntervalFn = clearInterval,
@@ -378,22 +375,6 @@ export function createMttManager({
   /**
    * @param {ManagedTournament} tournament
    * @param {Set<string>} changedTableIds
-   */
-  function finalizeSettledWaitingTables(tournament, changedTableIds) {
-    for (const entry of getPopulatedOpenTables(tournament, games)) {
-      if (!hasSettledWaitingHand(entry.game)) {
-        continue;
-      }
-      if (finalizePendingTableHand(entry.game)) {
-        processTableAfterHand(tournament, entry.game, now);
-        changedTableIds.add(entry.game.id);
-      }
-    }
-  }
-
-  /**
-   * @param {ManagedTournament} tournament
-   * @param {Set<string>} changedTableIds
    * @returns {boolean}
    */
   function maybeFinishTournament(tournament, changedTableIds) {
@@ -537,8 +518,6 @@ export function createMttManager({
       entryPeriodWasOpen,
       changedTableIds,
     );
-    finalizeSettledWaitingTables(tournament, changedTableIds);
-
     reconcileTournament(tournament, changedTableIds, {
       broadcastAllOpenTables: true,
       detectWinner: finalizedRebuyDecision,
@@ -765,7 +744,6 @@ export function createMttManager({
         entryPeriodWasOpen,
         changedTableIds,
       );
-      finalizeSettledWaitingTables(tournament, changedTableIds);
       processTableAfterHand(tournament, game, now);
       reconcileTournament(tournament, changedTableIds);
     },

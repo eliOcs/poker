@@ -20,7 +20,6 @@ import { createWebSocketServer } from "./ws-server.js";
 import * as HandHistory from "./poker/hand-history/index.js";
 import { getFilePath, respondWithFile } from "./static-files.js";
 import { createMttManager } from "./mtt.js";
-import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
 import {
   cleanupOrphanGuestUsers,
   GUEST_CLEANUP_INTERVAL_MS,
@@ -63,9 +62,8 @@ let mttManager;
 /**
  * @param {Game} game
  * @param {{ handNumber: number, potResults: import("./poker/showdown.js").PotResult[], historyHand?: import("./poker/hand-history/index.js").OHHHand }} handData
- * @param {{ notifyMttManager?: boolean }} [options]
  */
-function recordFinalizedHand(game, handData, { notifyMttManager = true } = {}) {
+function recordFinalizedHand(game, handData) {
   const handPromise = handData.historyHand
     ? HandHistory.persistHand(game.id, handData.historyHand)
     : HandHistory.finalizeHand(game, handData.potResults, handData.handNumber);
@@ -93,9 +91,6 @@ function recordFinalizedHand(game, handData, { notifyMttManager = true } = {}) {
           })),
         );
       }
-      if (notifyMttManager && game.kind === "mtt" && mttManager) {
-        mttManager.handleHandFinalized(game);
-      }
       rawBroadcastGameMessage({
         type: "history",
         gameId: game.id,
@@ -116,6 +111,9 @@ function broadcastGameMessage(message) {
   if (message.type === "handEnded") {
     const game = games.get(message.gameId);
     if (game) {
+      if (game.kind === "mtt" && mttManager) {
+        mttManager.handleHandFinalized(game);
+      }
       recordFinalizedHand(game, {
         handNumber: message.handNumber,
         potResults: message.potResults,
@@ -132,15 +130,6 @@ mttManager = createMttManager({
   broadcastTournamentState: broadcastTournamentStateMessage,
   ensureTableTick: (game) => {
     PokerGame.ensureGameTick(game, broadcastGameMessage);
-  },
-  finalizePendingTableHand: (game) => {
-    if (!game.pendingHandHistory) {
-      return false;
-    }
-    recordFinalizedHand(game, finalizePendingHandHistory(game), {
-      notifyMttManager: false,
-    });
-    return true;
   },
 });
 const routes = createRoutes(users, games, broadcastGameStateMessage, {

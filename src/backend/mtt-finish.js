@@ -75,6 +75,7 @@ export function finishTournament(
     ) {
       game.tournament.winner = resolvedWinner.seatIndex;
     }
+    delete game.startingNextHand;
     delete game.countdown;
     ActionClock.reset(game.actionClock);
     ensureTableTick(game);

@@ -1,6 +1,9 @@
 import { beforeEach, afterEach, describe, it } from "node:test";
 import assert from "node:assert";
 import * as Tournament from "../../src/shared/tournament.js";
+import * as PokerGame from "../../src/backend/poker/game.js";
+import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
+import { processPokerAction } from "../../src/backend/websocket-handler.js";
 import {
   FINAL_TABLE_NAME,
   createUser,
@@ -363,6 +366,103 @@ describe("mtt-manager", () => {
     assert.equal(tournament.onBreak, true);
     assert.equal(tournament.levelTicks, 0);
     assert.equal(tournament.breakTicks, 0);
+  });
+
+  it("keeps hand history open for shows until the next hand starts", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Elio"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    ctx.manager.registerPlayer(tournamentId, createUser("p2", "Clei"));
+    ctx.manager.startTournament(tournamentId, "owner");
+
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    const table = ctx.games.get(tournament.tables[0].tableId);
+    assert.ok(table);
+    const elioSeatIndex = table.seats.findIndex(
+      (seat) => !seat.empty && seat.player.id === "owner",
+    );
+    const cleiSeatIndex = table.seats.findIndex(
+      (seat) => !seat.empty && seat.player.id === "p2",
+    );
+    assert.notEqual(elioSeatIndex, -1);
+    assert.notEqual(cleiSeatIndex, -1);
+    const elioSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        table.seats[elioSeatIndex]
+      );
+    const cleiSeat =
+      /** @type {import("../../src/backend/poker/seat.js").OccupiedSeat} */ (
+        table.seats[cleiSeatIndex]
+      );
+    elioSeat.cards = ["As", "Kh"];
+    elioSeat.totalInvested = 50;
+    elioSeat.folded = true;
+    elioSeat.muckDecision = { remainingTicks: 5 };
+    cleiSeat.cards = ["Qd", "Jd"];
+    cleiSeat.totalInvested = 50;
+    table.handNumber = 18;
+
+    HandHistory.clearRecorder(table.id);
+    HandHistory.startHand(table);
+    HandHistory.recordDealtCards(table.id, elioSeat.player.id, elioSeat.cards);
+    HandHistory.recordDealtCards(table.id, cleiSeat.player.id, cleiSeat.cards);
+
+    const pendingHandHistory = [
+      {
+        potAmount: 100,
+        winners: [cleiSeatIndex],
+        winningHand: undefined,
+        winningCards: undefined,
+        awards: [{ seat: cleiSeatIndex, amount: 100 }],
+      },
+    ];
+    table.hand.phase = "waiting";
+    table.pendingHandHistory = pendingHandHistory;
+    table.countdown = 4;
+
+    ctx.manager.tickTournament(tournamentId);
+
+    assert.strictEqual(table.pendingHandHistory, pendingHandHistory);
+    assert.equal(table.countdown, 4);
+
+    processPokerAction(table, elioSeat.player, "showBothCards", {
+      seat: elioSeatIndex,
+    });
+    processPokerAction(table, cleiSeat.player, "showBothCards", {
+      seat: cleiSeatIndex,
+    });
+
+    /** @type {import("../../src/backend/poker/hand-history/index.js").OHHHand|undefined} */
+    let storedHand;
+    delete table.countdown;
+    PokerGame.startHandAfterCountdown(table, (message) => {
+      if (message.type === "handEnded") {
+        storedHand = message.historyHand;
+        ctx.manager.handleHandFinalized(table);
+      }
+      return { recipients: 0, maxPayloadBytes: 0 };
+    });
+
+    const showActions = storedHand?.rounds.flatMap((round) =>
+      round.actions.filter((action) => action.action === "Shows Cards"),
+    );
+    assert.deepEqual(showActions, [
+      {
+        action_number: 3,
+        player_id: "owner",
+        action: "Shows Cards",
+        cards: ["As", "Kh"],
+      },
+      {
+        action_number: 4,
+        player_id: "p2",
+        action: "Shows Cards",
+        cards: ["Qd", "Jd"],
+      },
+    ]);
   });
 
   it("starts pending breaks on tick once all tables are between hands", () => {

@@ -11,6 +11,7 @@ export {
   startGameTick,
   ensureGameTick,
   startHand,
+  startHandAfterCountdown,
   performAutoAction,
 } from "./game-engine.js";
 export { TIMER_INTERVAL, RUNOUT_DELAY_TICKS } from "./game-constants.js";
@@ -112,6 +113,7 @@ export {
  * @property {Hand} hand - Current hand state
  * @property {number} handNumber - Current hand number (0 before first hand)
  * @property {number} [countdown] - Countdown ticks until hand starts
+ * @property {boolean} [startingNextHand] - MTT coordinator may clear this to hold a requested hand start
  * @property {NodeJS.Timeout} [tickTimer] - Unified game tick timer (1 second interval)
  * @property {WinnerMessage} [winnerMessage] - Winner info to display after hand ends
  * @property {import('./action-clock.js').ActionClock} actionClock - Shared action timing state

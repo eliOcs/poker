@@ -24,6 +24,20 @@ async function waitForTournamentSummary(tournamentId) {
 }
 
 /**
+ * Simulates the synchronous MTT callback after the game captures history at
+ * the next-hand boundary.
+ * @param {ReturnType<typeof createMttContext>} ctx
+ * @param {import("../../src/backend/poker/game.js").Game} game
+ */
+function reachNextHandBoundary(ctx, game) {
+  assert.notEqual(game.pendingHandHistory, undefined);
+  delete game.pendingHandHistory;
+  game.startingNextHand = true;
+  ctx.manager.handleHandFinalized(game);
+  delete game.startingNextHand;
+}
+
+/**
  * @param {ReturnType<typeof createMttContext>} ctx
  * @param {number} tableSize
  */
@@ -296,7 +310,7 @@ describe("mtt-manager table collapse", () => {
     assert.equal(bustedView.currentPlayer.finishPosition, 11);
   });
 
-  it("finalizes waiting destination history before collapsing tables", () => {
+  it("waits for destination history to reach its next-hand boundary before collapsing tables", () => {
     const tournamentId = createNoRebuyTournament(ctx, 2);
     ctx.manager.registerPlayer(tournamentId, createUser("p2", "Bob"));
     ctx.manager.registerPlayer(tournamentId, createUser("p3", "Carol"));
@@ -326,8 +340,14 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.handleHandFinalized(tableA);
 
+    assert.equal(tournament.pendingRebalance, true);
+    assert.ok(tableB.pendingHandHistory);
+    assert.equal(tournament.tables[0].closedAt, undefined);
+    assert.equal(tournament.tables[1].closedAt, undefined);
+
+    reachNextHandBoundary(ctx, tableB);
+
     assert.equal(tournament.pendingRebalance, false);
-    assert.equal(tableB.pendingHandHistory, undefined);
     assert.ok(tournament.tables[0].closedAt);
     assert.ok(tournament.tables[1].closedAt);
     const finalTable = getOpenFinalTable(tournament, ctx.games);
@@ -443,7 +463,7 @@ describe("mtt-manager table collapse", () => {
     assert.equal(countActivePlayers(finalTable), 6);
   });
 
-  it("finalizes a busted table's waiting hand on tick so final-table collapse can happen before restart", () => {
+  it("collapses a busted table when its history reaches the next-hand boundary", () => {
     const tournamentId = createNoRebuyTournament(ctx, 6);
     for (let i = 2; i <= 7; i++) {
       ctx.manager.registerPlayer(
@@ -483,6 +503,11 @@ describe("mtt-manager table collapse", () => {
     tableB.countdown = 2;
 
     ctx.manager.tickTournament(tournamentId);
+
+    assert.ok(tableA.pendingHandHistory);
+    assert.equal(tournament.pendingRebalance, true);
+
+    reachNextHandBoundary(ctx, tableA);
 
     assert.equal(tableA.pendingHandHistory, undefined);
     assert.equal(tournament.pendingRebalance, false);
@@ -536,7 +561,10 @@ describe("mtt-manager table collapse", () => {
 
     ctx.manager.tickTournament(tournamentId);
 
-    assert.equal(tableA.pendingHandHistory, undefined);
+    assert.ok(tableA.pendingHandHistory);
+
+    reachNextHandBoundary(ctx, tableA);
+
     assert.equal(countActivePlayers(tableA), 5);
     assert.equal(countActivePlayers(tableB), 5);
   });

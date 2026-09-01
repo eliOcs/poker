@@ -7,7 +7,6 @@ import {
   applyTournamentStateToTable,
   getOpenTables,
   getPopulatedOpenTables,
-  hasSettledWaitingHand,
   isHandSettled,
   isTableReadyForNextHand,
   isTableReadyForRebalance,
@@ -34,14 +33,12 @@ describe("mtt table state", () => {
     assert.equal(isHandSettled(game), true);
     assert.equal(isTableReadyForNextHand(game), true);
     assert.equal(isTableReadyForRebalance(game), true);
-    assert.equal(hasSettledWaitingHand(game), false);
 
     game.pendingHandHistory = [];
 
     assert.equal(isHandSettled(game), true);
     assert.equal(isTableReadyForNextHand(game), false);
     assert.equal(isTableReadyForRebalance(game), false);
-    assert.equal(hasSettledWaitingHand(game), true);
   });
 
   it("keeps unsettled table activity out of every readiness state", () => {
@@ -139,6 +136,7 @@ describe("mtt table state", () => {
     game.seats[0] = Seat.occupied({ id: "p1" }, 100);
     game.seats[1] = Seat.occupied({ id: "p2" }, 100);
     game.countdown = 5;
+    game.startingNextHand = true;
     const tournament =
       /** @type {import("../../src/backend/mtt.js").ManagedTournament} */ (
         /** @type {unknown} */ ({
@@ -159,6 +157,7 @@ describe("mtt table state", () => {
     syncWaitingTableState(tournament, game, () => {});
 
     assert.equal(game.countdown, undefined);
+    assert.equal(game.startingNextHand, undefined);
   });
 
   it("holds a ready table while a tournament break is pending", () => {
@@ -170,6 +169,7 @@ describe("mtt table state", () => {
     game.seats[0] = Seat.occupied({ id: "p1" }, 100);
     game.seats[1] = Seat.occupied({ id: "p2" }, 100);
     game.countdown = 5;
+    game.startingNextHand = true;
     const tournament =
       /** @type {import("../../src/backend/mtt.js").ManagedTournament} */ (
         /** @type {unknown} */ ({
@@ -190,5 +190,6 @@ describe("mtt table state", () => {
     syncWaitingTableState(tournament, game, () => {});
 
     assert.equal(game.countdown, undefined);
+    assert.equal(game.startingNextHand, undefined);
   });
 });

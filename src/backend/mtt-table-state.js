@@ -80,14 +80,6 @@ export function isTableReadyForRebalance(game) {
 
 /**
  * @param {Game} game
- * @returns {boolean}
- */
-export function hasSettledWaitingHand(game) {
-  return isHandSettled(game) && game.pendingHandHistory !== undefined;
-}
-
-/**
- * @param {Game} game
  * @returns {number}
  */
 export function countActivePlayers(game) {
@@ -152,6 +144,7 @@ export function resetClosedTable(game) {
   delete game.collectingBets;
   delete game.runout;
   delete game.pendingHandHistory;
+  delete game.startingNextHand;
   delete game.winnerMessage;
   ActionClock.reset(game.actionClock);
   for (let i = 0; i < game.seats.length; i += 1) {
@@ -168,6 +161,7 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
   applyTournamentStateToTable(tournament, game);
 
   if (!isTableReadyForNextHand(game)) {
+    delete game.startingNextHand;
     ensureTableTick(game);
     return;
   }
@@ -177,13 +171,16 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
     tournament.pendingBreak ||
     tournament.pendingRebalance
   ) {
+    delete game.startingNextHand;
     delete game.countdown;
   } else if (
     countActivePlayers(game) >= 2 &&
-    typeof game.countdown !== "number"
+    typeof game.countdown !== "number" &&
+    game.startingNextHand !== true
   ) {
     game.countdown = 5;
   } else if (countActivePlayers(game) < 2) {
+    delete game.startingNextHand;
     delete game.countdown;
   }
 
