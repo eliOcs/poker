@@ -47,6 +47,18 @@ function clearSocketHealthCheck(app, socket = app._socket) {
   app._socketHealthCheck = undefined;
 }
 
+function resolveSocketHealthCheck(app, pingId) {
+  const healthCheck = app._socketHealthCheck;
+  if (
+    !healthCheck ||
+    typeof pingId !== "string" ||
+    healthCheck.pingId !== pingId
+  ) {
+    return;
+  }
+  clearSocketHealthCheck(app, healthCheck.socket);
+}
+
 function restartConnection(app) {
   if (!app._activeGamePath) return;
   const path = app._activeGamePath;
@@ -77,6 +89,7 @@ function runSocketHealthCheck(app) {
   clearSocketHealthCheck(app, app._socket);
   const socket = app._socket;
   const path = app._activeGamePath;
+  const pingId = crypto.randomUUID();
   const timeoutId = setTimeout(() => {
     if (app._socket !== socket || app._activeGamePath !== path) {
       return;
@@ -84,9 +97,9 @@ function runSocketHealthCheck(app) {
     restartConnection(app);
   }, RESUME_SOCKET_HEALTH_TIMEOUT_MS);
 
-  app._socketHealthCheck = { socket, timeoutId };
+  app._socketHealthCheck = { socket, timeoutId, pingId };
   try {
-    socket.send(JSON.stringify({ action: "ping" }));
+    socket.send(JSON.stringify({ action: "ping", pingId }));
   } catch {
     clearSocketHealthCheck(app, socket);
     restartConnection(app);
@@ -95,6 +108,7 @@ function runSocketHealthCheck(app) {
 
 function handleTypedSocketMessage(app, data) {
   if (data.type === "pong") {
+    resolveSocketHealthCheck(app, data.pingId);
     return true;
   }
 
@@ -180,7 +194,6 @@ export function connectToGame(app, path) {
 
   socket.onmessage = (event) => {
     if (app._socket !== socket) return;
-    clearSocketHealthCheck(app, socket);
     const data = JSON.parse(event.data);
     if (data.error) {
       if (app._pendingGameActionId) {

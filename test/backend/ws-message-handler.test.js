@@ -71,6 +71,14 @@ describe("ws-message-handler", () => {
     assert.deepEqual(ws.sent, [{ type: "pong" }]);
   });
 
+  it("echoes ping correlation IDs", () => {
+    const ctx = createHandlerContext();
+
+    ctx.handler(JSON.stringify({ action: "ping", pingId: "ping-1" }));
+
+    assert.deepEqual(ctx.ws.sent, [{ type: "pong", pingId: "ping-1" }]);
+  });
+
   it("keeps generic poker actions on their existing path", () => {
     const ctx = createHandlerContext();
 

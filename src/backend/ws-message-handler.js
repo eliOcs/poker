@@ -192,6 +192,21 @@ function parseActionMessage(rawMessage) {
 }
 
 /**
+ * @param {Record<string, unknown>} args
+ * @returns {string|undefined}
+ */
+function parsePingId(args) {
+  const pingId = args.pingId;
+  if (pingId !== undefined && typeof pingId !== "string") {
+    throw new Error("pingId must be a string");
+  }
+  if (typeof pingId === "string" && !pingId.trim()) {
+    throw new Error("pingId must not be empty");
+  }
+  return pingId;
+}
+
+/**
  * @param {import("ws").WebSocket} ws
  * @param {string|undefined} actionId
  * @param {boolean} accepted
@@ -340,7 +355,8 @@ export function createMessageHandler({
       };
 
       if (action === "ping") {
-        sendWebSocketJson(ws, { type: "pong" });
+        const pingId = parsePingId(args);
+        sendWebSocketJson(ws, { type: "pong", ...(pingId && { pingId }) });
         return;
       }
 

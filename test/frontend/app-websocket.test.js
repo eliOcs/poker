@@ -59,7 +59,9 @@ describe("app-websocket", () => {
       const first = MockWebSocket.instances.at(-1);
       resumeConnectionIfNeeded(app);
 
-      expect(first.sent).to.deep.equal([{ action: "ping" }]);
+      expect(first.sent).to.have.length(1);
+      expect(first.sent[0]).to.include({ action: "ping" });
+      expect(first.sent[0].pingId).to.be.a("string");
       expect(scheduledCallbacks).to.have.length(1);
 
       scheduledCallbacks[0]();
@@ -89,11 +91,45 @@ describe("app-websocket", () => {
 
       const first = MockWebSocket.instances.at(-1);
       resumeConnectionIfNeeded(app);
-      first.simulateMessage({ type: "pong" });
+      first.simulateMessage({
+        type: "pong",
+        pingId: first.sent[0].pingId,
+      });
 
       expect(MockWebSocket.instances).to.have.length(1);
       expect(app._socket).to.equal(first);
       expect(clearedTimeouts).to.deep.equal([456]);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    }
+  });
+
+  it("does not treat an unrelated message as a health-check response", () => {
+    const app = createApp();
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    const scheduledCallbacks = [];
+    const clearedTimeouts = [];
+
+    globalThis.setTimeout = (callback) => {
+      scheduledCallbacks.push(callback);
+      return scheduledCallbacks.length;
+    };
+    globalThis.clearTimeout = (timeoutId) => {
+      clearedTimeouts.push(timeoutId);
+    };
+
+    try {
+      connectToGame(app, app.path);
+      const first = MockWebSocket.instances.at(-1);
+      resumeConnectionIfNeeded(app);
+
+      first.simulateMessage({ seats: [] });
+      expect(clearedTimeouts).to.deep.equal([]);
+
+      scheduledCallbacks[0]();
+      expect(MockWebSocket.instances).to.have.length(2);
     } finally {
       globalThis.setTimeout = originalSetTimeout;
       globalThis.clearTimeout = originalClearTimeout;
