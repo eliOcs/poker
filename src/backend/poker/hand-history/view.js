@@ -359,16 +359,12 @@ function getWinnerHoleCards(hand, winnerId) {
 
   const shownCardsByPlayer = collectShownCardsByPlayer(hand);
   const shownCards = shownCardsByPlayer.get(winnerId);
-  if (shownCards) {
-    const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
-    if (dealtCards) {
-      return dealtCards.map((card) => (shownCards.has(card) ? card : "??"));
-    }
-  }
+  if (!shownCards) return [];
 
-  // Fall back to dealt cards (visible if it was a fold win)
   const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
-  if (dealtCards) return dealtCards;
+  if (dealtCards) {
+    return dealtCards.map((card) => (shownCards.has(card) ? card : "??"));
+  }
 
   return [];
 }
