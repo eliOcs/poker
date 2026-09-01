@@ -1,5 +1,7 @@
 # To do
 
+- /home/elio/work/poker/prod-mantainance.md
+- https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
 - Avatar creator: wii style but pixel art
 - hand strength modal
 - muck button, show at the end of the hand
