@@ -175,6 +175,45 @@ function getRawMessageText(rawMessage) {
 }
 
 /**
+ * @param {import("ws").RawData} rawMessage
+ * @returns {{ action: string, actionId: string|undefined, args: Record<string, unknown> }}
+ */
+function parseActionMessage(rawMessage) {
+  /** @type {{ action: string, actionId?: unknown } & Record<string, unknown>} */
+  const messageData = JSON.parse(getRawMessageText(rawMessage));
+  const { action, actionId, ...args } = messageData;
+  if (actionId !== undefined && typeof actionId !== "string") {
+    throw new Error("actionId must be a string");
+  }
+  if (typeof actionId === "string" && !actionId.trim()) {
+    throw new Error("actionId must not be empty");
+  }
+  return { action, actionId, args };
+}
+
+/**
+ * @param {import("ws").WebSocket} ws
+ * @param {string|undefined} actionId
+ * @param {boolean} accepted
+ */
+function sendActionResult(ws, actionId, accepted) {
+  if (!actionId) return;
+  sendWebSocketJson(ws, { type: "actionResult", actionId, accepted });
+}
+
+/**
+ * @param {import("ws").WebSocket} ws
+ * @param {string|undefined} actionId
+ * @param {string} message
+ */
+function sendActionError(ws, actionId, message) {
+  sendWebSocketJson(ws, {
+    ...(actionId && { type: "actionResult", actionId, accepted: false }),
+    error: { message },
+  });
+}
+
+/**
  * Dispatches a WebSocket action and updates the log context accordingly.
  * @param {{
  *   game: Game,
@@ -277,6 +316,8 @@ export function createMessageHandler({
 }) {
   return (rawMessage) => {
     const log = createLog("ws_action");
+    /** @type {string|undefined} */
+    let actionId;
     if (game) {
       assignWsSessionContext(log, game, user);
     } else {
@@ -289,10 +330,14 @@ export function createMessageHandler({
       });
       log.context.rateLimit = rateLimit.context;
 
-      /** @type {{ action: string } & Record<string, unknown>} */
-      const messageData = JSON.parse(getRawMessageText(rawMessage));
-      const { action, ...args } = messageData;
-      log.context.action = { name: action, ...args };
+      const parsed = parseActionMessage(rawMessage);
+      ({ actionId } = parsed);
+      const { action, args } = parsed;
+      log.context.action = {
+        name: action,
+        ...(actionId && { actionId }),
+        ...args,
+      };
 
       if (action === "ping") {
         sendWebSocketJson(ws, { type: "pong" });
@@ -300,12 +345,11 @@ export function createMessageHandler({
       }
 
       if (!game || !gameId) {
-        sendWebSocketJson(ws, {
-          error: {
-            message:
-              "game actions are unavailable on tournament lobby connections",
-          },
-        });
+        sendActionError(
+          ws,
+          actionId,
+          "game actions are unavailable on tournament lobby connections",
+        );
         return;
       }
 
@@ -321,12 +365,13 @@ export function createMessageHandler({
         broadcastGameStateMessage,
         handleManagedTableAction,
       });
+      sendActionResult(ws, actionId, true);
     } catch (err) {
       if (err instanceof RateLimitError) {
         log.context.rateLimit = err.rateLimit;
       }
       log.context.error = { message: err.message };
-      sendWebSocketJson(ws, { error: { message: err.message } });
+      sendActionError(ws, actionId, err.message);
     } finally {
       emitLog(log);
     }

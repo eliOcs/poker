@@ -4,6 +4,24 @@ import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
+const UNCORRELATED_ACTIONS = new Set(["chat", "emote", "ping"]);
+
+function resetPendingGameAction(app) {
+  app._pendingGameActionId = undefined;
+  app.gameActionPending = false;
+}
+
+function resolvePendingGameAction(app, actionId) {
+  if (typeof actionId !== "string" || app._pendingGameActionId !== actionId) {
+    app.toast = {
+      message: "Game connection was out of sync",
+      variant: "error",
+    };
+    restartConnection(app);
+    return;
+  }
+  resetPendingGameAction(app);
+}
 
 function clearSocketHealthCheck(app, socket = app._socket) {
   if (app._socketHealthCheck?.socket !== socket) return;
@@ -25,6 +43,7 @@ function restartConnection(app) {
   app._activeGameId = undefined;
   app._activeGamePath = undefined;
   app.gameConnectionStatus = "disconnected";
+  resetPendingGameAction(app);
   connectToGame(app, path);
 }
 
@@ -58,6 +77,11 @@ function runSocketHealthCheck(app) {
 
 function handleTypedSocketMessage(app, data) {
   if (data.type === "pong") {
+    return true;
+  }
+
+  if (data.type === "actionResult") {
+    resolvePendingGameAction(app, data.actionId);
     return true;
   }
 
@@ -126,6 +150,7 @@ export function connectToGame(app, path) {
   app.game = undefined;
   app.socialAction = undefined;
   app.gameConnectionStatus = "connecting";
+  resetPendingGameAction(app);
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   const socket = new WebSocket(`${protocol}//${window.location.host}${path}`);
   app._socket = socket;
@@ -140,6 +165,9 @@ export function connectToGame(app, path) {
     clearSocketHealthCheck(app, socket);
     const data = JSON.parse(event.data);
     if (data.error) {
+      if (app._pendingGameActionId) {
+        resolvePendingGameAction(app, data.actionId);
+      }
       app.toast = { message: data.error.message, variant: "error" };
       return;
     }
@@ -169,6 +197,7 @@ export function connectToGame(app, path) {
     clearSocketHealthCheck(app, socket);
     app._socket = undefined;
     app.gameConnectionStatus = "disconnected";
+    resetPendingGameAction(app);
     // Code 1006 = abnormal closure (connection rejected before game loaded)
     if (!app.game && !app._mttView && event.code === 1006) {
       handleGameNotFound(app);
@@ -233,6 +262,7 @@ export function disconnectFromGame(app) {
   app.game = undefined;
   app.socialAction = undefined;
   app.gameConnectionStatus = "disconnected";
+  resetPendingGameAction(app);
 }
 
 /**
@@ -241,9 +271,25 @@ export function disconnectFromGame(app) {
  * @param {object} message
  */
 export function sendToGame(app, message) {
-  if (app._socket?.readyState === WebSocket.OPEN) {
-    app._socket.send(JSON.stringify(message));
+  if (app._socket?.readyState !== WebSocket.OPEN) return;
+
+  const correlated = !UNCORRELATED_ACTIONS.has(message.action);
+  if (correlated && app._pendingGameActionId) {
+    app.toast = {
+      message: "Waiting for the previous game action",
+      variant: "info",
+    };
+    return;
   }
+
+  const actionId = correlated ? crypto.randomUUID() : undefined;
+  if (actionId) {
+    app._pendingGameActionId = actionId;
+    app.gameActionPending = true;
+  }
+  app._socket.send(
+    JSON.stringify({ ...message, ...(actionId && { actionId }) }),
+  );
 }
 
 /**

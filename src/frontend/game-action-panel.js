@@ -67,6 +67,7 @@ export function renderActionPanel(
     .isActing=${pre.isActing}
     .inHand=${pre.inHand}
     .connectionStatus=${host.connectionStatus}
+    .actionPending=${host.actionPending}
     @game-action=${host.handleGameAction}
     @open-emote-picker=${host.openEmotePicker}
     @open-chat=${host.openChat}

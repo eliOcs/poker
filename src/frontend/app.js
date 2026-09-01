@@ -52,6 +52,7 @@ class App extends LitElement {
       // Latest social websocket message for live game view
       socialAction: { type: Object },
       gameConnectionStatus: { type: String },
+      gameActionPending: { type: Boolean },
       // History route params (triggers tasks)
       _historyTableId: { state: true },
       _historyHandNumber: { state: true },
@@ -80,6 +81,8 @@ class App extends LitElement {
     this.game = undefined;
     this.socialAction = undefined;
     this.gameConnectionStatus = "disconnected";
+    this.gameActionPending = false;
+    this._pendingGameActionId = undefined;
     this._activeGameId = undefined;
     this._activeGamePath = undefined;
     this._socket = undefined;

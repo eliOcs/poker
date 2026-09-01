@@ -83,6 +83,45 @@ describe("ws-message-handler", () => {
     assert.deepEqual(ctx.ws.sent, []);
   });
 
+  it("acknowledges correlated actions after dispatch", () => {
+    const ctx = createHandlerContext();
+
+    ctx.handler(
+      JSON.stringify({ action: "sit", seat: 2, actionId: "action-1" }),
+    );
+
+    assert.equal(ctx.game.seats[2].empty, false);
+    assert.deepEqual(ctx.ws.sent, [
+      { type: "actionResult", actionId: "action-1", accepted: true },
+    ]);
+  });
+
+  it("correlates rejected actions", () => {
+    const ctx = createHandlerContext();
+
+    ctx.handler(
+      JSON.stringify({ action: "unknownAction", actionId: "action-2" }),
+    );
+
+    assert.deepEqual(ctx.ws.sent[0], {
+      type: "actionResult",
+      actionId: "action-2",
+      accepted: false,
+      error: { message: ctx.ws.sent[0].error.message },
+    });
+  });
+
+  it("rejects empty action correlation IDs at the boundary", () => {
+    const ctx = createHandlerContext();
+
+    ctx.handler(JSON.stringify({ action: "sit", seat: 2, actionId: "" }));
+
+    assert.equal(ctx.game.seats[2].empty, true);
+    assert.deepEqual(ctx.ws.sent, [
+      { error: { message: "actionId must not be empty" } },
+    ]);
+  });
+
   it("keeps social actions on their existing path", () => {
     const ctx = createHandlerContext();
     ctx.game.seats[0] = Seat.occupied(ctx.player, 1_000);

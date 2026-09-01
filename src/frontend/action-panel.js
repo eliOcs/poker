@@ -29,6 +29,7 @@ class ActionPanel extends LitElement {
       isActing: { type: Boolean },
       inHand: { type: Boolean },
       connectionStatus: { type: String },
+      actionPending: { type: Boolean },
     };
   }
 
@@ -52,6 +53,7 @@ class ActionPanel extends LitElement {
     this.isActing = false;
     this.inHand = false;
     this.connectionStatus = "connected";
+    this.actionPending = false;
     this._lastActionType = undefined;
     this._lastActionTime = 0;
   }

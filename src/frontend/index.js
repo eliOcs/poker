@@ -43,6 +43,7 @@ export class Game extends LitElement {
       mttTournament: { type: Object },
       tournamentFinishPosition: { type: Number },
       connectionStatus: { type: String },
+      actionPending: { type: Boolean },
       game: { type: Object },
       socialAction: { type: Object },
       user: { type: Object },
@@ -72,6 +73,7 @@ export class Game extends LitElement {
     this.mttTournament = undefined;
     this.tournamentFinishPosition = undefined;
     this.connectionStatus = "connected";
+    this.actionPending = false;
     this.game = undefined;
     this.socialAction = undefined;
     /** @type {User | undefined} */

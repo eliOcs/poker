@@ -486,6 +486,10 @@ export function renderActionPanel(panel) {
     >`;
   }
 
+  if (panel.actionPending) {
+    return html`<span class="waiting">Waiting for server...</span>`;
+  }
+
   if (!panel.actions || panel.actions.length === 0) {
     if (panel.seatedCount < 2) return renderWaitingForPlayers(panel);
     if (panel.seatIndex === -1) return html``;
