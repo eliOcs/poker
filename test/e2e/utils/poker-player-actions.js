@@ -228,8 +228,35 @@ export class PokerPlayerActions extends PokerPlayerBase {
       .locator(".bet-presets")
       .getByRole("button", { name: preset, exact: true })
       .click();
-    const name = action === "bet" ? /^Bet/ : /^Raise to/;
-    await this.actionPanel.getByRole("button", { name }).click();
+    await this._submitBettingAction(action);
+  }
+
+  /**
+   * Select a random enabled bet preset, then click the bet/raise button
+   * @param {'bet' | 'raise'} action
+   */
+  async actWithRandomPreset(action) {
+    const presets = this.actionPanel.locator(
+      ".bet-presets button:not([disabled])",
+    );
+    const presetCount = await presets.count();
+    if (presetCount === 0) throw new Error("No betting presets available");
+
+    await presets.nth(Math.floor(Math.random() * presetCount)).click();
+    await this._submitBettingAction(action);
+  }
+
+  /**
+   * Submit a bet or raise after selecting its amount. The Max preset changes
+   * the button label to All-In.
+   * @param {'bet' | 'raise'} action
+   */
+  async _submitBettingAction(action) {
+    const name = action === "bet" ? /^(Bet|All-In)/ : /^(Raise to|All-In)/;
+    await this.actionPanel
+      .locator(".betting-panel > .action-row")
+      .getByRole("button", { name })
+      .click();
   }
 
   /**

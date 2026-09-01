@@ -33,6 +33,7 @@ class Card extends LitElement {
       card: { type: Object },
       winning: { type: Boolean },
       noAnimation: { type: Boolean },
+      size: { type: String, reflect: true },
       _flipping: { state: true },
       _dealing: { state: true },
     };
@@ -43,6 +44,7 @@ class Card extends LitElement {
     this.card = undefined;
     this.winning = false;
     this.noAnimation = false;
+    this.size = "large";
     this._prevCard = undefined;
     this._flipping = false;
     this._dealing = false;

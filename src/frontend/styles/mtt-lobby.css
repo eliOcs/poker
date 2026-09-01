@@ -32,6 +32,10 @@
     gap: 16px;
   }
 
+  .title-row > div {
+    min-width: 0;
+  }
+
   h1,
   h2 {
     margin: 0;

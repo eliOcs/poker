@@ -20,6 +20,7 @@ import * as TournamentTick from "./tournament-tick.js";
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number} [autoActionSeat] - Seat index to auto-action (check/fold)
  * @property {'clock'} [autoActionReason] - Why auto-action triggered
+ * @property {number[]} [autoMuckSeats] - Seats whose post-fold decision expired
  * @property {boolean} tournamentLevelChanged - Whether tournament blind level changed
  * @property {boolean} tournamentBreakStarted - Whether tournament break started
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
@@ -170,6 +171,27 @@ function handleRunoutTick(game, result) {
 }
 
 /**
+ * Handles post-fold show-or-muck decision windows
+ * @param {Game} game
+ * @param {TickResult} result
+ */
+function handleMuckDecisions(game, result) {
+  for (let seatIndex = 0; seatIndex < game.seats.length; seatIndex += 1) {
+    const seat = /** @type {import('./seat.js').Seat} */ (
+      game.seats[seatIndex]
+    );
+    if (seat.empty || !seat.muckDecision) continue;
+
+    seat.muckDecision.remainingTicks -= 1;
+    result.shouldBroadcast = true;
+    if (seat.muckDecision.remainingTicks <= 0) {
+      delete seat.muckDecision;
+      (result.autoMuckSeats ??= []).push(seatIndex);
+    }
+  }
+}
+
+/**
  * Processes one game tick (called every second, or faster with TIMER_SPEED)
  * @param {Game} game
  * @returns {TickResult}
@@ -177,6 +199,7 @@ function handleRunoutTick(game, result) {
 export function tick(game) {
   const result = createTickResult();
 
+  handleMuckDecisions(game, result);
   if (handleTournamentTick(game, result)) {
     return result;
   }
@@ -200,11 +223,15 @@ export function shouldTickBeRunning(game) {
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
   const isCollectingBets = Boolean(game.collectingBets);
+  const hasMuckDecision = game.seats.some(
+    (seat) => !seat.empty && seat.muckDecision !== undefined,
+  );
   return (
     hasCountdown ||
     hasActingPlayer ||
     isTournamentTicking ||
     isRunningOut ||
-    isCollectingBets
+    isCollectingBets ||
+    hasMuckDecision
   );
 }

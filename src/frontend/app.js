@@ -19,14 +19,8 @@ import {
 import {
   renderGameView,
   renderHistoryView,
-  renderPlayerProfileView,
-  renderAboutView,
-  renderHomeView,
-  renderTournamentsView,
-  renderMttLobbyView,
-  renderReleaseNotesView,
+  renderShellPageView,
   renderAuthStatusView,
-  renderShellView,
 } from "./app-render.js";
 import {
   getHistoryApiBase,
@@ -426,18 +420,7 @@ class App extends LitElement {
   }
 
   _renderShellPage(route) {
-    const shellViews = {
-      about: () => renderAboutView(),
-      home: () => renderHomeView(),
-      mtt_lobby: () => renderMttLobbyView(this),
-      player_profile: () => renderPlayerProfileView(this),
-      release_notes: () => renderReleaseNotesView(),
-      tournaments: () => renderTournamentsView(this),
-    };
-    const shellContent = (shellViews[route.page] ?? shellViews.home)();
-    return renderShellView(this, shellContent, {
-      navigationRenderer: route.page === "mtt_lobby" ? () => "" : undefined,
-    });
+    return renderShellPageView(this, route.page);
   }
 
   _renderRoute(route) {

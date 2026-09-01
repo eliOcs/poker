@@ -265,6 +265,11 @@ describe("phg-history", () => {
 
       const streetCards = element.querySelectorAll(".street-cards");
       expect(streetCards.length).to.be.greaterThan(0);
+      const cards = element.querySelectorAll(".street-cards phg-card");
+      expect([...cards].every((card) => card.size === "medium")).to.be.true;
+      expect(
+        [...cards].every((card) => getComputedStyle(card).transform === "none"),
+      ).to.be.true;
     });
 
     it("renders showdown actions", async () => {
@@ -331,6 +336,8 @@ describe("phg-history", () => {
     it("shows hole cards for each hand", async () => {
       const handCards = element.querySelectorAll(".hand-cards");
       expect(handCards.length).to.equal(3);
+      const cards = element.querySelectorAll(".hand-cards phg-card");
+      expect([...cards].every((card) => card.size === "medium")).to.be.true;
     });
 
     it("has back button in sidebar header", async () => {
@@ -461,6 +468,7 @@ describe("phg-history", () => {
 
       const cards = navCards.querySelectorAll("phg-card");
       expect(cards.length).to.equal(2);
+      expect([...cards].every((card) => card.size === "medium")).to.be.true;
     });
 
     it("shows net result in nav bar", async () => {

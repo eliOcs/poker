@@ -101,50 +101,6 @@ export const SPECIAL_GAME_TEST_CASES = {
       }),
     ),
 
-  // Post-fold reveal window with manual show-card actions in the action panel
-  "game-show-card-actions": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "river", pot: 1200, currentBet: 0, actingSeat: 1 },
-        board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            folded: true,
-            stack: 4700,
-            cards: ["Qs", "Jd"],
-            handRank: "Pair of Jacks",
-            actions: [
-              { action: "emote" },
-              { action: "sitOut" },
-              { action: "showCard1", cards: ["Qs"] },
-              { action: "showCard2", cards: ["Jd"] },
-              { action: "showBothCards", cards: ["Qs", "Jd"] },
-            ],
-          }),
-          createPlayer("Alice", {
-            isActing: true,
-            stack: 2400,
-            cards: ["??", "??"],
-          }),
-          createPlayer("Bob", {
-            stack: 2300,
-            bet: 0,
-            cards: ["??", "??"],
-            lastAction: "Check",
-          }),
-          createPlayer("Charlie", {
-            folded: true,
-            stack: 3100,
-            cards: ["9h", "??"],
-            lastAction: "Fold",
-          }),
-          ...emptySeats(5),
-        ],
-      }),
-    ),
-
   "game-clock-called": () =>
     gameView(
       createGame({
@@ -402,7 +358,6 @@ export const RANKING_MODAL_TEST_CASES = {
           },
         ],
       }),
-      { showRanking: true },
     ),
 
   "game-rankings-modal-tournament": () =>
@@ -456,7 +411,6 @@ export const RANKING_MODAL_TEST_CASES = {
           },
         ],
       }),
-      { showRanking: true },
     ),
 
   "game-tournament-levels-modal": () =>
@@ -480,7 +434,6 @@ export const RANKING_MODAL_TEST_CASES = {
           ...emptySeats(6),
         ],
       }),
-      { showTournamentLevels: true },
     ),
 };
 
@@ -490,7 +443,6 @@ export const SPECIAL_GAME_IDS = [
   "game-all-in-situation",
   "game-with-folded-players",
   "game-player-folded",
-  "game-show-card-actions",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",

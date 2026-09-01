@@ -287,7 +287,8 @@ export class History extends LitElement {
       ? summary.hole_cards
       : (summary.winner_hole_cards ?? []);
     return cards.map(
-      (card) => html`<phg-card .card=${card} noAnimation></phg-card>`,
+      (card) =>
+        html`<phg-card .card=${card} noAnimation size="medium"></phg-card>`,
     );
   }
 
@@ -463,7 +464,11 @@ export class History extends LitElement {
                   <div class="hand-cards">
                     ${cards.map(
                       (card) =>
-                        html`<phg-card .card=${card} noAnimation></phg-card>`,
+                        html`<phg-card
+                          .card=${card}
+                          noAnimation
+                          size="medium"
+                        ></phg-card>`,
                     )}
                   </div>
                   ${this.renderHandListResult(item)}

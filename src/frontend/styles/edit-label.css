@@ -34,11 +34,7 @@
 
   .label-button {
     min-width: 0;
-    overflow: hidden;
     text-align: left;
-    line-height: 1.5;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     border-bottom: 2px dotted var(--color-fg-muted);
   }
 

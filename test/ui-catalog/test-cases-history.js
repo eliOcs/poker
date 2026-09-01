@@ -4,7 +4,7 @@
  * Separated from main test-cases.js to keep file sizes manageable.
  */
 
-import { html } from "lit";
+import { renderHistoryView } from "/src/frontend/app-render.js";
 import {
   createMockHandList,
   createMockReplay,
@@ -68,32 +68,29 @@ export function createHandListItem(overrides = {}) {
 
 // History component wrapper
 export function historyView(props) {
-  return html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-history
-        .gameId=${props.gameId || "test123"}
-        .handNumber=${props.handNumber}
-        .playerId=${props.playerId}
-        .handList=${props.handList || []}
-        .hand=${props.hand}
-        .view=${props.view}
-        .replay=${props.replay ??
-        (props.hand && props.view
-          ? createMockReplay(props.hand, props.playerId, props.view)
-          : undefined)}
-      ></phg-history>
-    </div>
-  `;
+  const replay =
+    props.replay ??
+    (props.hand && props.view
+      ? createMockReplay(props.hand, props.playerId, props.view)
+      : undefined);
+  return renderHistoryView(
+    {
+      _historyListTask: {
+        value: { hands: props.handList || [], playerId: props.playerId },
+      },
+      _historyHandTask: {
+        value: { hand: props.hand, view: props.view, replay },
+      },
+      _historyHandNumber: props.handNumber,
+    },
+    { tableId: props.gameId || "test123" },
+  );
 }
 
 // === HISTORY TEST CASES ===
 
 const BASE_HISTORY_TEST_CASES = {
-  "history-empty": () => html`
-    <div style="height: 100vh; width: 100%;">
-      <phg-history .gameId=${"test123"} .handList=${[]}></phg-history>
-    </div>
-  `,
+  "history-empty": () => historyView({ handList: [] }),
 
   "history-preflop-fold": () => {
     const hand = createOHHHand({

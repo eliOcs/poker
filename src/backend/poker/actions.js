@@ -5,6 +5,7 @@ import { invalidateCallPreActions } from "./pre-action.js";
 import * as ActionClock from "./action-clock.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
+import { MUCK_TIMEOUT_TICKS } from "./game-constants.js";
 
 // Re-export dealing functions for backward compatibility
 export {
@@ -298,6 +299,7 @@ export function fold(game, { seat }) {
 
   seatObj.folded = true;
   seatObj.lastAction = "fold";
+  seatObj.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
 
   Betting.advanceAction(game);
 }
@@ -336,7 +338,10 @@ function revealHoleCards(game, seat, cardIndexes) {
  * @param {string|undefined} phase
  */
 function assertCanRevealHoleCards(seatObj, phase) {
-  if (!seatObj.folded && phase !== "waiting") {
+  if (
+    (seatObj.folded && !seatObj.muckDecision) ||
+    (!seatObj.folded && phase !== "waiting")
+  ) {
     throw new Error("can only show cards after folding or hand ends");
   }
 
@@ -377,7 +382,28 @@ function revealSelectedHoleCards(seatObj, indexes) {
     }
   }
 
+  delete seatObj.muckDecision;
+
   return newlyShown;
+}
+
+/**
+ * Mucks a folded hand without revealing either card
+ * @param {Game} game
+ * @param {{ seat: number }} options
+ */
+export function muck(game, { seat }) {
+  const seatRaw = /** @type {SeatType} */ (game.seats[seat]);
+  if (seatRaw.empty) {
+    throw new Error("seat is empty");
+  }
+
+  const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
+  if (!seatObj.folded || !seatObj.muckDecision) {
+    throw new Error("can only muck during the post-fold decision window");
+  }
+
+  delete seatObj.muckDecision;
 }
 
 /**

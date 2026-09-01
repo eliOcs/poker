@@ -241,6 +241,7 @@ export const ACTION_PANEL_TEST_CASES = {
             handRank: "Pair of Jacks",
             actions: [
               { action: "emote" },
+              { action: "muck" },
               { action: "showCard1", cards: ["Qs"] },
               { action: "showCard2", cards: ["Jd"] },
               { action: "showBothCards", cards: ["Qs", "Jd"] },

@@ -215,44 +215,41 @@ function selectRandomAction(availableActions) {
 }
 
 /**
- * Try to take one action among active players
+ * Take one action for every table that currently has an acting player
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
- * @returns {Promise<{seatIdx: number, action: string}|null>}
+ * @returns {Promise<{seatIdx: number, action: string}[]>}
  */
-async function tryTakeAction(players, activePlayers) {
-  const seatOrder = [...activePlayers].sort(() => Math.random() - 0.5);
-  const turnStates = await Promise.all(
-    seatOrder.map(async (seatIdx) => ({
-      seatIdx,
-      isMyTurn: await players[seatIdx].isMyTurn().catch(() => false),
-    })),
-  );
-
-  for (const { seatIdx, isMyTurn } of turnStates) {
-    let attemptedAction = null;
-    try {
+async function takeAvailableActions(players, activePlayers) {
+  const results = await Promise.all(
+    [...activePlayers].map(async (seatIdx) => {
       const player = players[seatIdx];
-      if (isMyTurn) {
+      if (!(await player.isMyTurn().catch(() => false))) return null;
+      let attemptedAction = null;
+      try {
         const availableActions = await getAvailableActions(player);
         if (availableActions.length > 0) {
           const action = selectRandomAction(availableActions);
           attemptedAction = action;
-          await player.act(action);
+          await (action === "bet" || action === "raise"
+            ? player.actWithRandomPreset(action)
+            : player.act(action));
           return { seatIdx, action };
         }
         console.log(
           `Seat ${seatIdx + 1} appears to be acting but has no legal action buttons`,
         );
+      } catch (err) {
+        console.log(
+          `Seat ${seatIdx + 1} action attempt failed` +
+            `${attemptedAction ? ` (${attemptedAction})` : ""}: ${formatError(err)}`,
+        );
       }
-    } catch (err) {
-      console.log(
-        `Seat ${seatIdx + 1} action attempt failed` +
-          `${attemptedAction ? ` (${attemptedAction})` : ""}: ${formatError(err)}`,
-      );
-    }
-  }
-  return null;
+      return null;
+    }),
+  );
+
+  return results.filter((result) => result !== null);
 }
 
 /**
@@ -485,12 +482,14 @@ async function runTournamentLoop(players, activePlayers, state) {
       markProgress(state, `hand-${state.handCount}`);
     }
 
-    const result = await tryTakeAction(players, activePlayers);
-    if (result) {
-      markProgress(
-        state,
-        `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
-      );
+    const results = await takeAvailableActions(players, activePlayers);
+    if (results.length > 0) {
+      for (const result of results) {
+        markProgress(
+          state,
+          `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
+        );
+      }
     } else {
       const clockResult = await tryCallClock(players, activePlayers);
       if (clockResult) {

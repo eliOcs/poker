@@ -141,5 +141,10 @@ export function processPokerAction(game, player, action, args) {
     HandHistory.recordShowdown(game.id, player.id, actionResult, true);
   }
 
+  if (action === "muck") {
+    const muckedSeat = /** @type {OccupiedSeat} */ (seatBefore);
+    HandHistory.recordShowdown(game.id, player.id, muckedSeat.cards, false);
+  }
+
   return handlePostAction(action, game);
 }

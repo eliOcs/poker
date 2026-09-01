@@ -76,6 +76,11 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
+ * @typedef {object} ActionMuck
+ * @property {'muck'} action
+ */
+
+/**
  * @typedef {object} ActionShowCard1
  * @property {'showCard1'} action
  * @property {Card[]} cards
@@ -140,7 +145,7 @@ import { HIDDEN, getRank } from "./deck.js";
  */
 
 /**
- * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionRebuy|ActionLeave|ActionEmote|ActionShare|ActionChat} PlayerAction
+ * @typedef {ActionSit|ActionBuyIn|ActionCheck|ActionCall|ActionBet|ActionRaise|ActionAllIn|ActionFold|ActionMuck|ActionShowCard1|ActionShowCard2|ActionShowBothCards|ActionStart|ActionSitOut|ActionSitIn|ActionCallClock|ActionRebuy|ActionLeave|ActionEmote|ActionShare|ActionChat} PlayerAction
  */
 
 /**
@@ -320,7 +325,11 @@ function getShowCardsActions(seat, game) {
     return [];
   }
 
-  return buildShowCardActions(seat.cards, shownCards);
+  const actions = buildShowCardActions(seat.cards, shownCards);
+  if (seat.folded && seat.muckDecision) {
+    actions.unshift({ action: "muck" });
+  }
+  return actions;
 }
 
 /**
@@ -332,7 +341,10 @@ function canShowCards(seat, phase) {
   if (seat.cards.length < 2) {
     return false;
   }
-  return seat.folded || phase === "waiting";
+  if (seat.folded) {
+    return seat.muckDecision !== undefined;
+  }
+  return phase === "waiting";
 }
 
 /**

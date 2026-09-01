@@ -66,7 +66,7 @@ class Modal extends LitElement {
             ✕
           </button>
         </div>
-        ${this.content}
+        <div class="modal-content">${this.content}</div>
       </dialog>
     `;
   }

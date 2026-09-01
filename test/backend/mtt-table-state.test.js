@@ -160,4 +160,35 @@ describe("mtt table state", () => {
 
     assert.equal(game.countdown, undefined);
   });
+
+  it("holds a ready table while a tournament break is pending", () => {
+    const game = PokerGame.createMttTable({
+      tournamentId: "mtt",
+      tableName: "Table 1",
+      startTime: "2026-01-01T00:00:00.000Z",
+    });
+    game.seats[0] = Seat.occupied({ id: "p1" }, 100);
+    game.seats[1] = Seat.occupied({ id: "p2" }, 100);
+    game.countdown = 5;
+    const tournament =
+      /** @type {import("../../src/backend/mtt.js").ManagedTournament} */ (
+        /** @type {unknown} */ ({
+          id: "mtt",
+          name: "Tournament",
+          buyIn: 500,
+          initialStack: 500_000,
+          level: Tournament.BREAK_AFTER_LEVELS[0],
+          levelTicks: 0,
+          onBreak: false,
+          pendingBreak: true,
+          pendingRebalance: false,
+          breakTicks: 0,
+          ...Tournament.createDefaultTournamentSchedule(),
+        })
+      );
+
+    syncWaitingTableState(tournament, game, () => {});
+
+    assert.equal(game.countdown, undefined);
+  });
 });

@@ -187,6 +187,7 @@ describe("websocket-handler", () => {
         ...Seat.occupied(player, 1000),
         cards: ["As", "Kh"],
         folded: true,
+        muckDecision: { remainingTicks: 5 },
       };
       game.seats[1] = Seat.occupied(opponent, 1000);
       game.hand = {
@@ -210,6 +211,35 @@ describe("websocket-handler", () => {
       );
       assert.ok(showAction);
       assert.deepStrictEqual(showAction.cards, ["As"]);
+
+      HandHistory.clearRecorder(game.id);
+    });
+
+    it("records an explicit muck in hand history", () => {
+      const game = createTestGame({ seats: 2 });
+      const player = { id: "p1", name: "Alice" };
+      const opponent = { id: "p2", name: "Bob" };
+      game.seats[0] = {
+        ...Seat.occupied(player, 1000),
+        cards: ["As", "Kh"],
+        folded: true,
+        muckDecision: { remainingTicks: 5 },
+      };
+      game.seats[1] = Seat.occupied(opponent, 1000);
+      game.hand.phase = "flop";
+      game.hand.actingSeat = 1;
+      game.handNumber = 1;
+
+      HandHistory.clearRecorder(game.id);
+      HandHistory.startHand(game);
+
+      processPokerAction(game, player, "muck", { seat: 0 });
+
+      const muckAction = HandHistory.getRecorder(game.id).actions.find(
+        (action) => action.action === "Mucks Cards",
+      );
+      assert.ok(muckAction);
+      assert.strictEqual(game.seats[0].muckDecision, undefined);
 
       HandHistory.clearRecorder(game.id);
     });

@@ -40,7 +40,6 @@ const TEST_CASES = [
   "game-all-in-situation",
   "game-with-folded-players",
   "game-player-folded",
-  "game-show-card-actions",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
@@ -126,6 +125,20 @@ function getComponentSelector(testCase) {
 }
 
 async function prepareTestCase(testCase, page, component) {
+  const componentState = {
+    "game-rankings-modal": { showRanking: true },
+    "game-rankings-modal-tooltip": { showRanking: true },
+    "game-rankings-modal-tournament": { showRanking: true },
+    "game-tournament-levels-modal": { showTournamentLevels: true },
+    "game-settings-modal": { showSettings: true },
+  }[testCase];
+  if (componentState) {
+    await component.evaluate(async (element, state) => {
+      Object.assign(element, state);
+      await element.updateComplete;
+    }, componentState);
+  }
+
   const replayIndex = {
     "history-replay-start": 0,
     "history-replay-mid-action": 1,
@@ -152,12 +165,24 @@ async function prepareTestCase(testCase, page, component) {
       .evaluate((element) => /** @type {any} */ (element).updateComplete);
   }
 
+  if (testCase === "sitngo-creation-speed-tooltip") {
+    await component.locator("phg-home").evaluate(async (element) => {
+      element.selectedGameType = "sitngo";
+      await element.updateComplete;
+    });
+  }
+
   if (testCase.startsWith("mtt-lobby-")) {
     const viewport = page.viewportSize();
     if (!viewport) {
       throw new Error("UI catalog tests require a configured viewport");
     }
     const viewportHeight = viewport.height;
+    await expect(
+      page.locator(
+        "phg-app-shell > .app-shell-layout > .app-shell-content > phg-mtt-lobby",
+      ),
+    ).toHaveCount(1);
     const lobbyHeight = await component.evaluate(
       (element) => element.getBoundingClientRect().height,
     );
@@ -166,6 +191,37 @@ async function prepareTestCase(testCase, page, component) {
       .evaluate((element) => element.getBoundingClientRect().height);
     expect(lobbyHeight).toBeGreaterThanOrEqual(viewportHeight);
     expect(drawerHeight).toBeGreaterThanOrEqual(viewportHeight);
+
+    if (testCase === "mtt-lobby-running") {
+      const layout = await component.evaluate((element) => {
+        const main = element.querySelector(".main");
+        if (!(main instanceof HTMLElement)) {
+          throw new Error("Expected the MTT lobby main content element");
+        }
+        return {
+          documentScrollHeight: document.documentElement.scrollHeight,
+          mainClientHeight: main.clientHeight,
+          mainScrollHeight: main.scrollHeight,
+        };
+      });
+      expect(layout.documentScrollHeight).toBe(viewportHeight);
+      expect(layout.mainScrollHeight).toBeGreaterThan(layout.mainClientHeight);
+    }
+
+    if (testCase === "mtt-lobby-registration-owner-can-start") {
+      await expect(component.locator("h1 phg-edit-label")).toHaveCount(1);
+      const width = await component.evaluate((element) => {
+        const main = element.querySelector(".main");
+        if (!(main instanceof HTMLElement)) {
+          throw new Error("Expected the MTT lobby main content element");
+        }
+        return {
+          client: main.clientWidth,
+          scroll: main.scrollWidth,
+        };
+      });
+      expect(width.scroll).toBe(width.client);
+    }
   }
 
   const tooltipLabel = {
