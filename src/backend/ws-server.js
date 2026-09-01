@@ -13,6 +13,7 @@ import {
   sendInitialGameView,
 } from "./ws-connection.js";
 import { createMessageHandler } from "./ws-message-handler.js";
+import { startWebSocketHeartbeat } from "./ws-heartbeat.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -331,6 +332,19 @@ export function createWebSocketServer(params) {
     handleManagedTableAction,
   } = params;
   const wss = new WebSocketServer({ noServer: true, maxPayload: 4096 });
+
+  startWebSocketHeartbeat(wss, {
+    onTimeout(ws) {
+      const conn = clientConnections.get(ws);
+      logger.warn("ws heartbeat timeout", {
+        game: {
+          tableId: conn?.gameId,
+          ...(conn?.tournamentId && { tournamentId: conn.tournamentId }),
+        },
+        ...(conn ? getSessionPlayerLogContext(conn.user) : {}),
+      });
+    },
+  });
 
   server.on("upgrade", (request, socket, head) => {
     void handleUpgrade(request, socket, head, { ...params, wss }).catch(
