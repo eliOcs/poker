@@ -170,7 +170,7 @@ describe("Player View", function () {
   });
 
   describe("show card actions", function () {
-    it("shows 3 reveal actions immediately after folding", function () {
+    it("only shows reveal actions after an invested fold", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
       const p2 = createPlayer();
@@ -187,6 +187,7 @@ describe("Player View", function () {
       };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[0].folded = true;
+      g.seats[0].totalInvested = 100;
       g.seats[0].muckDecision = { remainingTicks: 5 };
 
       const view = playerView(g, p1);
@@ -196,6 +197,16 @@ describe("Player View", function () {
       assert.ok(p1Actions.some((a) => a.action === "showCard2"));
       assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
       assert.ok(p1Actions.some((a) => a.action === "muck"));
+
+      g.hand.phase = "preflop";
+      g.seats[0].totalInvested = 0;
+
+      const actions = playerView(g, p1).seats[0].actions;
+
+      assert.ok(!actions.some((action) => action.action === "muck"));
+      assert.ok(!actions.some((action) => action.action === "showCard1"));
+      assert.ok(!actions.some((action) => action.action === "showCard2"));
+      assert.ok(!actions.some((action) => action.action === "showBothCards"));
     });
 
     it("removes reveal and muck actions after the decision resolves", function () {
@@ -261,6 +272,7 @@ describe("Player View", function () {
       };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[0].folded = false;
+      g.seats[0].totalInvested = 100;
 
       const view = playerView(g, p1);
       const p1Actions = view.seats[0].actions;

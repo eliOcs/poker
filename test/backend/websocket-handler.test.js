@@ -187,6 +187,7 @@ describe("websocket-handler", () => {
         ...Seat.occupied(player, 1000),
         cards: ["As", "Kh"],
         folded: true,
+        totalInvested: 25,
         muckDecision: { remainingTicks: 5 },
       };
       game.seats[1] = Seat.occupied(opponent, 1000);

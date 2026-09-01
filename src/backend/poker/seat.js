@@ -139,3 +139,13 @@ export function canAct(seat) {
 export function canPostBlinds(seat) {
   return !seat.empty && !seat.folded && seat.stack > 0;
 }
+
+/**
+ * Checks whether a player has committed chips to the current hand.
+ * Includes both chips still displayed as a bet and chips already collected.
+ * @param {OccupiedSeat} seat
+ * @returns {boolean}
+ */
+export function hasInvestedInPot(seat) {
+  return seat.bet > 0 || seat.totalInvested > 0;
+}

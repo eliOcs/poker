@@ -180,6 +180,7 @@ describe("betting actions", () => {
   describe("fold", () => {
     it("should mark player as folded and keep cards", () => {
       game.hand.actingSeat = 2;
+      game.seats[2].totalInvested = 100;
       game.seats[2].cards = [
         { rank: "ace", suit: "spades" },
         { rank: "king", suit: "hearts" },
@@ -196,6 +197,17 @@ describe("betting actions", () => {
       ]);
     });
 
+    it("should not offer a show-or-muck decision after a free preflop fold", () => {
+      game.hand.phase = "preflop";
+      game.hand.actingSeat = 2;
+      game.seats[2].cards = ["As", "Kh"];
+
+      Actions.fold(game, { seat: 2 });
+
+      assert.equal(game.seats[2].folded, true);
+      assert.equal(game.seats[2].muckDecision, undefined);
+    });
+
     it("should throw when not player turn", () => {
       game.hand.actingSeat = 2;
 
@@ -206,6 +218,7 @@ describe("betting actions", () => {
   describe("show cards", () => {
     it("should allow showing one card after folding", () => {
       game.hand.actingSeat = 2;
+      game.seats[2].bet = 50;
       game.seats[2].cards = ["As", "Kh"];
       Actions.fold(game, { seat: 2 });
 
@@ -220,6 +233,7 @@ describe("betting actions", () => {
 
     it("should allow mucking during the post-fold decision window", () => {
       game.hand.actingSeat = 2;
+      game.seats[2].totalInvested = 100;
       game.seats[2].cards = ["As", "Kh"];
       Actions.fold(game, { seat: 2 });
 
@@ -242,6 +256,7 @@ describe("betting actions", () => {
 
     it("should allow showing both cards after hand ends", () => {
       game.hand.phase = "waiting";
+      game.seats[2].totalInvested = 100;
       game.seats[2].cards = ["As", "Kh"];
 
       const shown = Actions.showBothCards(game, { seat: 2 });
@@ -250,6 +265,16 @@ describe("betting actions", () => {
       assert.equal(game.seats[2].shownCards[0], true);
       assert.equal(game.seats[2].shownCards[1], true);
       assert.equal(game.seats[2].cardsRevealed, true);
+    });
+
+    it("should reject showing cards without investing in the pot", () => {
+      game.hand.phase = "waiting";
+      game.seats[2].cards = ["As", "Kh"];
+
+      assert.throws(
+        () => Actions.showBothCards(game, { seat: 2 }),
+        /must invest chips/,
+      );
     });
 
     it("should reject showing cards while still active in hand", () => {

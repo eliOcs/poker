@@ -299,7 +299,9 @@ export function fold(game, { seat }) {
 
   seatObj.folded = true;
   seatObj.lastAction = "fold";
-  seatObj.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
+  if (Seat.hasInvestedInPot(seatObj)) {
+    seatObj.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
+  }
 
   Betting.advanceAction(game);
 }
@@ -343,6 +345,10 @@ function assertCanRevealHoleCards(seatObj, phase) {
     (!seatObj.folded && phase !== "waiting")
   ) {
     throw new Error("can only show cards after folding or hand ends");
+  }
+
+  if (!Seat.hasInvestedInPot(seatObj)) {
+    throw new Error("must invest chips before showing cards");
   }
 
   if (seatObj.cards.length < 2) {

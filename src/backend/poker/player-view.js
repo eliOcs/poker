@@ -1,4 +1,5 @@
 import * as Betting from "./betting.js";
+import * as Seat from "./seat.js";
 import * as ActionClock from "./action-clock.js";
 import {
   countAlivePlayersWithChips,
@@ -338,7 +339,7 @@ function getShowCardsActions(seat, game) {
  * @returns {boolean}
  */
 function canShowCards(seat, phase) {
-  if (seat.cards.length < 2) {
+  if (seat.cards.length < 2 || !Seat.hasInvestedInPot(seat)) {
     return false;
   }
   if (seat.folded) {
