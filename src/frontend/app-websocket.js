@@ -4,11 +4,29 @@ import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
+const ACTION_RESULT_TIMEOUT_MS = 3000;
 const UNCORRELATED_ACTIONS = new Set(["chat", "emote", "ping"]);
 
 function resetPendingGameAction(app) {
+  if (app._pendingGameActionTimeoutId !== undefined) {
+    clearTimeout(app._pendingGameActionTimeoutId);
+  }
+  app._pendingGameActionTimeoutId = undefined;
   app._pendingGameActionId = undefined;
   app.gameActionPending = false;
+}
+
+function startPendingGameActionTimeout(app, socket, actionId) {
+  app._pendingGameActionTimeoutId = setTimeout(() => {
+    if (app._socket !== socket || app._pendingGameActionId !== actionId) {
+      return;
+    }
+    app.toast = {
+      message: "Reconnecting to sync the game",
+      variant: "error",
+    };
+    restartConnection(app);
+  }, ACTION_RESULT_TIMEOUT_MS);
 }
 
 function resolvePendingGameAction(app, actionId) {
@@ -287,9 +305,20 @@ export function sendToGame(app, message) {
     app._pendingGameActionId = actionId;
     app.gameActionPending = true;
   }
-  app._socket.send(
-    JSON.stringify({ ...message, ...(actionId && { actionId }) }),
-  );
+  const socket = app._socket;
+  try {
+    socket.send(JSON.stringify({ ...message, ...(actionId && { actionId }) }));
+  } catch {
+    app.toast = {
+      message: "Reconnecting to sync the game",
+      variant: "error",
+    };
+    restartConnection(app);
+    return;
+  }
+  if (actionId) {
+    startPendingGameActionTimeout(app, socket, actionId);
+  }
 }
 
 /**

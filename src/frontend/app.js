@@ -83,6 +83,7 @@ class App extends LitElement {
     this.gameConnectionStatus = "disconnected";
     this.gameActionPending = false;
     this._pendingGameActionId = undefined;
+    this._pendingGameActionTimeoutId = undefined;
     this._activeGameId = undefined;
     this._activeGamePath = undefined;
     this._socket = undefined;

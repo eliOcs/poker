@@ -15,6 +15,7 @@ function createApp(path = "/cash/testgame") {
     gameConnectionStatus: "disconnected",
     gameActionPending: false,
     _pendingGameActionId: null,
+    _pendingGameActionTimeoutId: undefined,
     _activeGameId: null,
     _activeGamePath: null,
     _socket: null,
@@ -143,6 +144,41 @@ describe("app-websocket", () => {
       message: "Game connection was out of sync",
       variant: "error",
     });
+  });
+
+  it("reconnects visibly when an action acknowledgement times out", () => {
+    const app = createApp();
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    const scheduledCallbacks = [];
+
+    globalThis.setTimeout = (callback) => {
+      scheduledCallbacks.push(callback);
+      return scheduledCallbacks.length;
+    };
+    globalThis.clearTimeout = () => {};
+
+    try {
+      connectToGame(app, app.path);
+      const first = MockWebSocket.instances.at(-1);
+
+      sendToGame(app, { action: "call", seat: 0 });
+      expect(scheduledCallbacks).to.have.length(1);
+
+      scheduledCallbacks[0]();
+
+      expect(MockWebSocket.instances).to.have.length(2);
+      expect(app._socket).to.equal(MockWebSocket.instances[1]);
+      expect(app.gameActionPending).to.equal(false);
+      expect(app.toast).to.deep.equal({
+        message: "Reconnecting to sync the game",
+        variant: "error",
+      });
+      expect(first.readyState).to.equal(MockWebSocket.CLOSED);
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+      globalThis.clearTimeout = originalClearTimeout;
+    }
   });
 
   it("redirects to the new tournament table when the backend sends a player move event", () => {
