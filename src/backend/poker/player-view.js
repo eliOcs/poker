@@ -654,7 +654,10 @@ function canCallClock(game, playerSeatIndex) {
     );
   }
 
+  const playerSeat = game.seats[playerSeatIndex];
   return (
+    playerSeat !== undefined &&
+    Seat.isActive(playerSeat) &&
     game.hand.actingSeat !== -1 &&
     game.hand.actingSeat !== playerSeatIndex &&
     ActionClock.canStart(game.actionClock)

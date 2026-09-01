@@ -96,6 +96,24 @@ describe("call the clock", () => {
       });
     });
 
+    it("should throw if the caller has folded", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      drainGenerator(dealGen);
+      Betting.startBettingRound(game, "preflop");
+
+      const nonActingSeat = game.hand.actingSeat === 0 ? 1 : 0;
+      game.seats[nonActingSeat].folded = true;
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
+
+      assert.throws(() => Actions.callClock(game, { seat: nonActingSeat }), {
+        message: "must be active in hand to call clock",
+      });
+    });
+
     it("should throw if not enough ticks have passed", () => {
       Actions.startHand(game);
       const blindsGen = Actions.blinds(game);
@@ -218,6 +236,28 @@ describe("call the clock", () => {
       // The callClock action should not be available
       const seatActions = view.seats[nonActingSeatIndex].actions;
       const hasCallClock = seatActions.some((a) => a.action === "callClock");
+      assert.strictEqual(hasCallClock, false);
+    });
+
+    it("should hide callClock action after the player has folded", () => {
+      Actions.startHand(game);
+      const blindsGen = Actions.blinds(game);
+      blindsGen.next();
+      blindsGen.next();
+      const dealGen = Actions.dealPreflop(game);
+      drainGenerator(dealGen);
+      Betting.startBettingRound(game, "preflop");
+
+      const nonActingPlayer = game.hand.actingSeat === 0 ? player2 : player1;
+      const nonActingSeatIndex = game.hand.actingSeat === 0 ? 1 : 0;
+      game.seats[nonActingSeatIndex].folded = true;
+      game.actionClock.waitTicks = ActionClock.CLOCK_WAIT_TICKS;
+
+      const view = playerView(game, nonActingPlayer);
+      const hasCallClock = view.seats[nonActingSeatIndex].actions.some(
+        (action) => action.action === "callClock",
+      );
+
       assert.strictEqual(hasCallClock, false);
     });
 

@@ -718,6 +718,10 @@ export function callClock(game, { seat }) {
     throw new Error("seat is empty");
   }
 
+  if (!Seat.isActive(seatObj)) {
+    throw new Error("must be active in hand to call clock");
+  }
+
   if (game.hand.actingSeat === -1) {
     throw new Error("no one is acting");
   }
