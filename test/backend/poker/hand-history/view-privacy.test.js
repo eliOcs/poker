@@ -66,7 +66,7 @@ describe("hand-history summary privacy", () => {
     const summary = getHandSummary(createFoldWinHand(false), "spectator");
 
     assert.deepEqual(summary.hole_cards, ["??", "??"]);
-    assert.deepEqual(summary.winner_hole_cards, []);
+    assert.deepEqual(summary.winner_hole_cards, ["??", "??"]);
     assert.equal(summary.was_dealt, false);
   });
 

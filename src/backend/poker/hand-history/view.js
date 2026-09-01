@@ -349,7 +349,7 @@ function findPlayerCards(hand, playerId, actionType) {
 }
 
 /**
- * Gets winner's hole cards if shown at showdown
+ * Gets the winner's hole cards, masking any cards not shown at showdown
  * @param {OHHHand} hand
  * @param {string} [winnerId]
  * @returns {string[]}
@@ -357,16 +357,14 @@ function findPlayerCards(hand, playerId, actionType) {
 function getWinnerHoleCards(hand, winnerId) {
   if (!winnerId) return [];
 
+  const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
+  if (!dealtCards) return [];
+
   const shownCardsByPlayer = collectShownCardsByPlayer(hand);
   const shownCards = shownCardsByPlayer.get(winnerId);
-  if (!shownCards) return [];
+  if (!shownCards) return dealtCards.map(() => "??");
 
-  const dealtCards = findPlayerCards(hand, winnerId, "Dealt Cards");
-  if (dealtCards) {
-    return dealtCards.map((card) => (shownCards.has(card) ? card : "??"));
-  }
-
-  return [];
+  return dealtCards.map((card) => (shownCards.has(card) ? card : "??"));
 }
 
 /**
