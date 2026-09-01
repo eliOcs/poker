@@ -75,7 +75,7 @@ describe("mtt schedule", () => {
     assert.equal(recoverMttSpeed(undefined, undefined), "normal");
   });
 
-  it("estimates typical natural finishes instead of schedule runout", () => {
+  it("estimates the generated schedule finish including breaks", () => {
     assert.deepEqual(
       [2, 6, 9].map((players) =>
         ["normal", "semi-turbo", "turbo"].map((speed) =>
@@ -83,9 +83,9 @@ describe("mtt schedule", () => {
         ),
       ),
       [
-        [40, 30, 20],
-        [60, 45, 30],
-        [80, 60, 40],
+        [165, 125, 85],
+        [230, 175, 120],
+        [275, 210, 145],
       ],
     );
     assert.deepEqual(
@@ -97,9 +97,9 @@ describe("mtt schedule", () => {
         ),
       ),
       [
-        [60, 45, 30],
-        [80, 60, 40],
-        [105, 80, 55],
+        [190, 145, 100],
+        [275, 210, 145],
+        [295, 225, 155],
       ],
     );
     assert.deepEqual(
@@ -111,10 +111,27 @@ describe("mtt schedule", () => {
         ),
       ),
       [
-        [125, 95, 65],
-        [165, 125, 85],
-        [190, 145, 100],
+        [295, 225, 155],
+        [335, 255, 175],
+        [380, 290, 200],
       ],
+    );
+
+    const lobbySchedule = calculateMttSchedule({
+      ...BASE_OPTIONS,
+      entrantCount: 4,
+      speed: "normal",
+    });
+    assert.equal(lobbySchedule.durationMinutes, 220);
+    assert.equal(
+      estimateTournamentDurationMinutes(4, "normal", {
+        rebuysEnabled: true,
+      }),
+      lobbySchedule.durationMinutes +
+        estimateScheduleBreakDurationMinutes(
+          lobbySchedule.durationMinutes,
+          lobbySchedule.levelDurationTicks,
+        ),
     );
   });
 });

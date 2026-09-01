@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { calculateBlindStructure } from "../../../src/backend/poker/blind-calculator.js";
+import { calculateBlindStructure } from "../../../src/shared/blind-calculator.js";
 
 const BASE_OPTIONS = {
   playerCount: 10,

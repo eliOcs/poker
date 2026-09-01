@@ -4,7 +4,7 @@ import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
 import * as Tournament from "../../shared/tournament.js";
 import { calculateTournamentSchedule } from "../tournament-schedule.js";
-import { calculateBlindStructure } from "./blind-calculator.js";
+import { calculateBlindStructure } from "../../shared/blind-calculator.js";
 export {
   gameStateSnapshot,
   stopGameTick,

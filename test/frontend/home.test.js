@@ -78,8 +78,8 @@ describe("phg-home", () => {
     expect(text).to.include("Semi-Turbo: 15 minutes");
     expect(text).to.include("Turbo: 10 minutes");
     expect(text).to.include("Estimated typical time by number of players");
-    expect(text).to.include("2 ~40m ~30m ~20m");
-    expect(text).to.include("6 ~1h ~45m ~30m");
-    expect(text).to.include("9 ~1h 20m ~1h ~40m");
+    expect(text).to.include("2 ~2h 45m ~2h 5m ~1h 25m");
+    expect(text).to.include("6 ~3h 50m ~2h 55m ~2h");
+    expect(text).to.include("9 ~4h 35m ~3h 30m ~2h 25m");
   });
 });

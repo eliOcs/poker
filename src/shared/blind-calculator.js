@@ -8,7 +8,7 @@
  * - the finish is estimated when about 20 big blinds remain in play;
  * - optional antes start after four levels and reduce the finishing blinds.
  *
- * @typedef {import('./types.js').Cents} Cents
+ * @typedef {number} Cents
  */
 
 const RUNOUT_LEVELS = 3;

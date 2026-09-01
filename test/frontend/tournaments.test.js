@@ -90,9 +90,9 @@ describe("phg-tournaments", () => {
     expect(text).to.include(
       "Estimated typical time by number of players, including rebuys",
     );
-    expect(text).to.include("10 ~2h 5m ~1h 35m ~1h 5m");
-    expect(text).to.include("20 ~2h 45m ~2h 5m ~1h 25m");
-    expect(text).to.include("30 ~3h 10m ~2h 25m ~1h 40m");
+    expect(text).to.include("10 ~4h 55m ~3h 45m ~2h 35m");
+    expect(text).to.include("20 ~5h 35m ~4h 15m ~2h 55m");
+    expect(text).to.include("30 ~6h 20m ~4h 50m ~3h 20m");
   });
 
   it("opens sign-up instead of creating when the user has no email", async () => {

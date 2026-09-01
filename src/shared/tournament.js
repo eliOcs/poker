@@ -1,3 +1,5 @@
+import { calculateBlindStructure } from "./blind-calculator.js";
+
 /**
  * Tournament configuration for Sit & Go tournaments
  * @typedef {import('../backend/poker/types.js').Cents} Cents
@@ -180,14 +182,31 @@ export const INITIAL_STACK = 500000;
 export const DEFAULT_SEATS = 6;
 
 /**
- * Typical natural finishing levels for the offered table sizes. The blind
- * schedule deliberately runs much longer, but real tournaments usually finish
- * through eliminations before the structure's forced-finish point.
+ * Calculates the blind structure used by new Sit & Go and MTT schedules.
+ * Keeping this in shared code makes creation-page estimates use the same model
+ * as the server-created tournament.
+ * @param {{ playerCount: number, initialStack: Cents, rebuysEnabled?: boolean, speed: TournamentSpeed }} options
  */
-const ESTIMATED_FINISH_LEVELS = {
-  withoutRebuys: { 2: 2, 6: 3, 9: 4 },
-  withRebuys: { 2: 3, 6: 4, 9: 5, 10: 6, 20: 8, 30: 9 },
-};
+export function calculateTournamentStructure({
+  playerCount,
+  initialStack,
+  rebuysEnabled = false,
+  speed,
+}) {
+  const preset = getTournamentSpeedPreset(speed);
+  const startingSmallBlind = getBlindsForLevel(1).small;
+  return calculateBlindStructure({
+    playerCount,
+    startingStack: initialStack,
+    levelDurationMinutes: preset.levelDurationMinutes,
+    smallestChip: startingSmallBlind,
+    startingSmallBlind,
+    expectedRebuys: rebuysEnabled ? playerCount * MTT_EXPECTED_REBUY_RATE : 0,
+    rebuyStack: initialStack,
+    antes: false,
+    targetAverageGrowth: MTT_BLIND_GROWTH,
+  });
+}
 
 /**
  * Estimates total tournament time, including scheduled breaks.
@@ -201,15 +220,15 @@ export function estimateTournamentDurationMinutes(
   speed,
   { rebuysEnabled = false } = {},
 ) {
-  const finishLevels = rebuysEnabled
-    ? ESTIMATED_FINISH_LEVELS.withRebuys
-    : ESTIMATED_FINISH_LEVELS.withoutRebuys;
-  const finishingLevel = finishLevels[playerCount];
-  if (!finishingLevel) {
-    throw new RangeError(`unsupported estimated player count: ${playerCount}`);
-  }
+  const preset = getTournamentSpeedPreset(speed);
+  const { targetLevel: finishingLevel } = calculateTournamentStructure({
+    playerCount,
+    initialStack: INITIAL_STACK,
+    rebuysEnabled,
+    speed,
+  });
   return (
-    finishingLevel * getTournamentSpeedPreset(speed).levelDurationMinutes +
+    finishingLevel * preset.levelDurationMinutes +
     estimateBreakDurationMinutes(finishingLevel)
   );
 }

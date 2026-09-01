@@ -1,5 +1,4 @@
 import * as Tournament from "../shared/tournament.js";
-import { calculateBlindStructure } from "./poker/blind-calculator.js";
 
 /**
  * Builds a player-responsive tournament schedule for either a Sit & Go or MTT.
@@ -13,19 +12,11 @@ export function calculateTournamentSchedule({
   speed,
 }) {
   const preset = Tournament.getTournamentSpeedPreset(speed);
-  const startingSmallBlind = Tournament.getBlindsForLevel(1).small;
-  const structure = calculateBlindStructure({
+  const structure = Tournament.calculateTournamentStructure({
     playerCount,
-    startingStack: initialStack,
-    levelDurationMinutes: preset.levelDurationMinutes,
-    smallestChip: startingSmallBlind,
-    startingSmallBlind,
-    expectedRebuys: rebuysEnabled
-      ? playerCount * Tournament.MTT_EXPECTED_REBUY_RATE
-      : 0,
-    rebuyStack: initialStack,
-    antes: false,
-    targetAverageGrowth: Tournament.MTT_BLIND_GROWTH,
+    initialStack,
+    rebuysEnabled,
+    speed,
   });
 
   return {
