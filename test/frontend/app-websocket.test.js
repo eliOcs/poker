@@ -217,6 +217,21 @@ describe("app-websocket", () => {
     }
   });
 
+  it("keeps a game active when the socket reports a transport error", () => {
+    const app = createApp();
+    connectToGame(app, app.path);
+    const socket = MockWebSocket.instances.at(-1);
+    app.game = { seats: [] };
+
+    socket.simulateError(new Error("network interrupted"));
+
+    expect(app.path).to.equal("/cash/testgame");
+    expect(app._activeGamePath).to.equal("/cash/testgame");
+    expect(app._socket).to.equal(socket);
+    expect(app.gameConnectionStatus).to.equal("connecting");
+    expect(app.toast).to.equal(null);
+  });
+
   it("redirects to the new tournament table when the backend sends a player move event", () => {
     const app = createApp("/mtt/mtt123/tables/table1");
     connectToGame(app, app.path);

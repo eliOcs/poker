@@ -212,7 +212,7 @@ export function connectToGame(app, path) {
 
   socket.onerror = () => {
     if (app._socket !== socket) return;
-    handleGameNotFound(app);
+    app.gameConnectionStatus = "connecting";
   };
 
   socket.onclose = (event) => {
@@ -236,6 +236,7 @@ export function connectToGame(app, path) {
     }
     // Reconnect automatically unless we closed intentionally
     if (!intentionallyClosed && app._activeGamePath === path) {
+      app.gameConnectionStatus = "connecting";
       setTimeout(() => {
         if (!app._socket && app._activeGamePath === path) {
           reconnectIfNeeded(app);
