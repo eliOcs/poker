@@ -70,27 +70,24 @@ function recordFinalizedHand(game, handData) {
 
   handPromise
     .then((hand) => {
-      Store.recordPlayerTableActivity(
-        hand.players.map((player) => ({
-          playerId: player.id,
-          tableId: game.id,
-          ...(game.kind === "mtt" ? { tournamentId: game.tournamentId } : {}),
-          lastHandNumber: handData.handNumber,
-          lastPlayedAt: hand.start_date_utc,
-        })),
-      );
-      if (game.kind === "mtt") {
-        const tournamentId = game.tournamentId;
-        Store.recordPlayerTournamentActivity(
-          hand.players.map((player) => ({
-            playerId: player.id,
-            tournamentId,
-            lastTableId: game.id,
-            lastHandNumber: handData.handNumber,
-            lastPlayedAt: hand.start_date_utc,
-          })),
-        );
-      }
+      const tableEntries = hand.players.map((player) => ({
+        playerId: player.id,
+        tableId: game.id,
+        ...(game.kind === "mtt" ? { tournamentId: game.tournamentId } : {}),
+        lastHandNumber: handData.handNumber,
+        lastPlayedAt: hand.start_date_utc,
+      }));
+      const tournamentEntries =
+        game.kind === "mtt"
+          ? hand.players.map((player) => ({
+              playerId: player.id,
+              tournamentId: game.tournamentId,
+              lastTableId: game.id,
+              lastHandNumber: handData.handNumber,
+              lastPlayedAt: hand.start_date_utc,
+            }))
+          : [];
+      Store.recordHandActivity(tableEntries, tournamentEntries);
       rawBroadcastGameMessage({
         type: "history",
         gameId: game.id,

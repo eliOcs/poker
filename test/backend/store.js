@@ -308,6 +308,65 @@ describe("store", function () {
     });
   });
 
+  describe("recordHandActivity", function () {
+    it("records table and tournament activity together", function () {
+      Store.initialize();
+
+      Store.recordHandActivity(
+        [
+          {
+            playerId: "player-1",
+            tableId: "table-1",
+            tournamentId: "tournament-1",
+            lastHandNumber: 3,
+            lastPlayedAt: "2026-01-03T00:00:00.000Z",
+          },
+        ],
+        [
+          {
+            playerId: "player-1",
+            tournamentId: "tournament-1",
+            lastTableId: "table-1",
+            lastHandNumber: 3,
+            lastPlayedAt: "2026-01-03T00:00:00.000Z",
+          },
+        ],
+      );
+
+      assert.strictEqual(Store.listPlayerTables("player-1").length, 1);
+      assert.strictEqual(Store.listPlayerTournaments("player-1").length, 1);
+    });
+
+    it("rolls back all activity when an update fails", function () {
+      Store.initialize();
+
+      assert.throws(() =>
+        Store.recordHandActivity(
+          [
+            {
+              playerId: "player-1",
+              tableId: "table-1",
+              lastHandNumber: 3,
+              lastPlayedAt: "2026-01-03T00:00:00.000Z",
+            },
+          ],
+          [
+            {
+              playerId: "player-1",
+              tournamentId: "tournament-1",
+              lastTableId: "table-1",
+              lastHandNumber: /** @type {any} */ (null),
+              lastPlayedAt: "2026-01-03T00:00:00.000Z",
+            },
+          ],
+        ),
+      );
+
+      assert.deepStrictEqual(Store.listPlayerTables("player-1"), []);
+      assert.deepStrictEqual(Store.listPlayerTournaments("player-1"), []);
+    });
+  });
+
   describe("deleteUser", function () {
     it("removes an existing user", function () {
       Store.initialize();

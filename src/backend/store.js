@@ -2,6 +2,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
+import { runInTransaction } from "./sqlite-transaction.js";
 import { DEFAULT_SETTINGS } from "./user.js";
 import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js";
 
@@ -162,10 +163,9 @@ export function loadUserProfile(id) {
  * @param {PlayerTableInput[]} entries
  */
 export function recordPlayerTableActivity(entries) {
-  if (!db) throw new Error("Store not initialized");
-  for (const entry of entries) {
-    if (!entry.playerId || !entry.tableId) continue;
-    const stmt = db.prepare(`
+  const database = /** @type {DatabaseSync} */ (db);
+  runInTransaction(database, () => {
+    const stmt = database.prepare(`
       INSERT INTO player_tables (
         player_id, table_id, tournament_id, last_hand_number, last_played_at
       )
@@ -179,24 +179,26 @@ export function recordPlayerTableActivity(entries) {
           ELSE excluded.last_played_at
         END
     `);
-    stmt.run(
-      entry.playerId,
-      entry.tableId,
-      entry.tournamentId ?? null,
-      entry.lastHandNumber,
-      entry.lastPlayedAt,
-    );
-  }
+    for (const entry of entries) {
+      if (!entry.playerId || !entry.tableId) continue;
+      stmt.run(
+        entry.playerId,
+        entry.tableId,
+        entry.tournamentId ?? null,
+        entry.lastHandNumber,
+        entry.lastPlayedAt,
+      );
+    }
+  });
 }
 
 /**
  * @param {PlayerTournamentInput[]} entries
  */
 export function recordPlayerTournamentActivity(entries) {
-  if (!db) throw new Error("Store not initialized");
-  for (const entry of entries) {
-    if (!entry.playerId || !entry.tournamentId || !entry.lastTableId) continue;
-    const stmt = db.prepare(`
+  const database = /** @type {DatabaseSync} */ (db);
+  runInTransaction(database, () => {
+    const stmt = database.prepare(`
       INSERT INTO player_tournaments (
         player_id, tournament_id, last_table_id, last_hand_number, last_played_at
       )
@@ -218,14 +220,30 @@ export function recordPlayerTournamentActivity(entries) {
           ELSE excluded.last_played_at
         END
     `);
-    stmt.run(
-      entry.playerId,
-      entry.tournamentId,
-      entry.lastTableId,
-      entry.lastHandNumber,
-      entry.lastPlayedAt,
-    );
-  }
+    for (const entry of entries) {
+      if (!entry.playerId || !entry.tournamentId || !entry.lastTableId)
+        continue;
+      stmt.run(
+        entry.playerId,
+        entry.tournamentId,
+        entry.lastTableId,
+        entry.lastHandNumber,
+        entry.lastPlayedAt,
+      );
+    }
+  });
+}
+
+/**
+ * @param {PlayerTableInput[]} tableEntries
+ * @param {PlayerTournamentInput[]} [tournamentEntries]
+ */
+export function recordHandActivity(tableEntries, tournamentEntries = []) {
+  if (!db) throw new Error("Store not initialized");
+  runInTransaction(db, () => {
+    recordPlayerTableActivity(tableEntries);
+    recordPlayerTournamentActivity(tournamentEntries);
+  });
 }
 
 /**
