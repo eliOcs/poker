@@ -15,7 +15,7 @@ src/backend/
 ├── static-files.js           # Static file serving
 ├── logger.js                 # Logging utilities
 ├── store.js                  # SQLite database, session and history management
-├── store-history-backfill.js # Migrate legacy .ohh files to DB indices
+├── store-migrations.js       # Versioned SQLite schema migrations and validation
 ├── user.js                   # User identity and creation
 ├── id.js                     # ID generation utilities
 ├── http-error.js             # Structured HTTP error class
@@ -65,6 +65,8 @@ src/shared/                   # Code shared between frontend and backend
 ## Database
 
 SQLite in WAL mode, stored at `/app/data/poker.db`. Accessed via Node.js `node:sqlite`.
+Schema migrations are applied atomically at startup and tracked with SQLite's
+`user_version` pragma.
 
 ### Entity Relationship Diagram
 
@@ -77,10 +79,6 @@ erDiagram
         text settings
         text created_at
         text updated_at
-    }
-    store_meta {
-        text key PK
-        text value
     }
     player_tables {
         text player_id FK
@@ -108,7 +106,6 @@ erDiagram
 | Table                | Purpose                                                      |
 | -------------------- | ------------------------------------------------------------ |
 | `users`              | Registered player accounts (name, email, settings JSON)      |
-| `store_meta`         | Internal metadata (e.g. backfill tracking)                   |
 | `player_tables`      | Player activity per table (last hand, last played timestamp) |
 | `player_tournaments` | Player participation per MTT (last table, last hand)         |
 

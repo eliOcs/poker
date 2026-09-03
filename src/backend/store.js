@@ -2,9 +2,8 @@
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
+import { migrateStore } from "./store-migrations.js";
 import { runInTransaction } from "./sqlite-transaction.js";
-import { DEFAULT_SETTINGS } from "./user.js";
-import { backfillPlayerTableLinksFromHistory } from "./store-history-backfill.js";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -27,44 +26,10 @@ function getDataDir() {
   return process.env.DATA_DIR ?? "data";
 }
 
-/**
- * Checks if a column exists in a table
- * @param {string} table
- * @param {string} column
- * @returns {boolean}
- */
-function columnExists(table, column) {
-  const stmt = /** @type {DatabaseSync} */ (db).prepare(
-    `PRAGMA table_info(${table})`,
-  );
-  const columns = stmt.all();
-  return columns.some((col) => col.name === column);
-}
-
-/**
- * @param {string} key
- * @returns {string|void}
- */
-function loadMetaValue(key) {
-  const stmt = /** @type {DatabaseSync} */ (db).prepare(
-    "SELECT value FROM store_meta WHERE key = ?",
-  );
-  const row = stmt.get(key);
-  if (!row) return;
-  return /** @type {string} */ (row.value);
-}
-
-/**
- * @param {string} key
- * @param {string} value
- */
-function saveMetaValue(key, value) {
-  const stmt = /** @type {DatabaseSync} */ (db).prepare(`
-    INSERT INTO store_meta (key, value)
-    VALUES (?, ?)
-    ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `);
-  stmt.run(key, value);
+/** @returns {DatabaseSync} */
+function getDatabase() {
+  if (!db) throw new Error("Store not initialized");
+  return db;
 }
 
 /**
@@ -73,11 +38,13 @@ function saveMetaValue(key, value) {
 export function initialize(dbPath = undefined) {
   if (db) return;
   const isInMemory = dbPath === ":memory:";
-  dbPath = openDatabase(isInMemory, dbPath);
-  ensureUsersTable();
-  ensureStoreTables();
-  runHistoryBackfills(isInMemory);
-  migrateUserSchema();
+  try {
+    dbPath = openDatabase(isInMemory, dbPath);
+    migrateStore(getDatabase());
+  } catch (error) {
+    close();
+    throw error;
+  }
 
   logger.info("store initialized", { path: dbPath });
 }
@@ -473,32 +440,6 @@ function hydrateUserRow(row) {
   };
 }
 
-function migrateUserTimestamps() {
-  if (!db) throw new Error("Store not initialized");
-
-  if (!columnExists("users", "created_at")) {
-    db.exec(
-      "ALTER TABLE users ADD COLUMN created_at TEXT NOT NULL DEFAULT (datetime('now'))",
-    );
-  }
-
-  if (!columnExists("users", "updated_at")) {
-    db.exec(
-      "ALTER TABLE users ADD COLUMN updated_at TEXT NOT NULL DEFAULT (datetime('now'))",
-    );
-  }
-
-  db.exec(`
-    UPDATE users
-    SET
-      created_at = COALESCE(NULLIF(created_at, ''), datetime('now')),
-      updated_at = COALESCE(NULLIF(updated_at, ''), COALESCE(NULLIF(created_at, ''), datetime('now')))
-    WHERE
-      created_at IS NULL OR created_at = '' OR
-      updated_at IS NULL OR updated_at = ''
-  `);
-}
-
 export function close() {
   if (db) {
     db.close();
@@ -544,128 +485,4 @@ function openDatabase(isInMemory, dbPath) {
   db = new DatabaseSync(resolvedPath);
   db.exec("PRAGMA journal_mode=WAL");
   return resolvedPath;
-}
-
-function ensureUsersTable() {
-  const database = /** @type {DatabaseSync} */ (db);
-  const hasUsersTable = database
-    .prepare(
-      "SELECT 1 FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1",
-    )
-    .get();
-  if (hasUsersTable) return;
-
-  database.exec(`
-    CREATE TABLE users (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      email TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-    )
-  `);
-}
-
-function ensureStoreTables() {
-  const database = /** @type {DatabaseSync} */ (db);
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS store_meta (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    )
-  `);
-
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS player_tables (
-      player_id TEXT NOT NULL,
-      table_id TEXT NOT NULL,
-      tournament_id TEXT,
-      last_hand_number INTEGER NOT NULL DEFAULT 0,
-      last_played_at TEXT NOT NULL,
-      PRIMARY KEY (player_id, table_id)
-    )
-  `);
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_player_tables_player_id ON player_tables (player_id)",
-  );
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_player_tables_tournament_id ON player_tables (tournament_id)",
-  );
-
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS player_tournaments (
-      player_id TEXT NOT NULL,
-      tournament_id TEXT NOT NULL,
-      last_table_id TEXT NOT NULL,
-      last_hand_number INTEGER NOT NULL DEFAULT 0,
-      last_played_at TEXT NOT NULL,
-      PRIMARY KEY (player_id, tournament_id)
-    )
-  `);
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_player_tournaments_player_id ON player_tournaments (player_id)",
-  );
-}
-
-/**
- * @param {boolean} isInMemory
- */
-function runHistoryBackfills(isInMemory) {
-  if (isInMemory) return;
-
-  runBackfill("player_table_links_backfilled_at", () => {
-    backfillPlayerTableLinksFromHistory(
-      getDataDir(),
-      recordPlayerTableActivity,
-      recordPlayerTournamentActivity,
-    );
-  });
-}
-
-/**
- * @param {string} key
- * @param {() => void} callback
- */
-function runBackfill(key, callback) {
-  if (loadMetaValue(key) !== undefined) return;
-  callback();
-  saveMetaValue(key, new Date().toISOString());
-}
-
-function migrateUserSchema() {
-  const database = /** @type {DatabaseSync} */ (db);
-  migrateUserTimestamps();
-  if (!columnExists("users", "settings")) {
-    database.exec("ALTER TABLE users ADD COLUMN settings TEXT DEFAULT '{}'");
-  }
-  if (!columnExists("users", "email")) {
-    database.exec("ALTER TABLE users ADD COLUMN email TEXT");
-  }
-  runBackfill("user_settings_backfilled_at", () => {
-    const selectStmt = database.prepare("SELECT id, settings FROM users");
-    const updateStmt = database.prepare(
-      "UPDATE users SET settings = ? WHERE id = ?",
-    );
-
-    for (const row of selectStmt.all()) {
-      const savedSettings = row.settings
-        ? JSON.parse(/** @type {string} */ (row.settings))
-        : {};
-      const normalizedSettings = {
-        ...DEFAULT_SETTINGS,
-        ...savedSettings,
-      };
-
-      if (
-        JSON.stringify(savedSettings) === JSON.stringify(normalizedSettings)
-      ) {
-        continue;
-      }
-
-      updateStmt.run(
-        JSON.stringify(normalizedSettings),
-        /** @type {Id} */ (row.id),
-      );
-    }
-  });
 }

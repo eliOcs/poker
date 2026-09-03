@@ -33,37 +33,36 @@ describe("store", function () {
 
     it("can be called multiple times safely", function () {
       Store.initialize();
+      Store.close();
       Store.initialize();
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      const row = db.prepare("PRAGMA user_version").get();
+      db.close();
+
       assert.ok(existsSync(`${testDataDir}/poker.db`));
+      assert.strictEqual(row.user_version, 1);
     });
 
-    it("migrates legacy users to always have joined and last seen dates", function () {
+    it("rejects an incompatible legacy schema without marking it migrated", function () {
       mkdirSync(testDataDir, { recursive: true });
       const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
-      legacyDb.exec(`
-        CREATE TABLE users (
-          id TEXT PRIMARY KEY,
-          name TEXT,
-          created_at TEXT,
-          updated_at TEXT
-        );
-      `);
-      legacyDb
-        .prepare(
-          "INSERT INTO users (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)",
-        )
-        .run("legacy-user", "Legacy", "", null);
+      legacyDb.exec("CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT)");
       legacyDb.close();
 
-      Store.initialize();
+      assert.throws(
+        () => Store.initialize(),
+        /users is missing email, settings, created_at, updated_at/,
+      );
+      assert.throws(() => Store.count(), /Store not initialized/);
 
-      const profile = Store.loadUserProfile("legacy-user");
-      assert.ok(profile);
-      assert.match(profile.createdAt, /^\d{4}-\d{2}-\d{2} /);
-      assert.match(profile.updatedAt, /^\d{4}-\d{2}-\d{2} /);
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      const row = db.prepare("PRAGMA user_version").get();
+      db.close();
+      assert.strictEqual(row.user_version, 0);
     });
 
-    it("backfills missing vibration settings for existing users", function () {
+    it("rejects invalid legacy user data without marking it migrated", function () {
       mkdirSync(testDataDir, { recursive: true });
       const legacyDb = new DatabaseSync(`${testDataDir}/poker.db`);
       legacyDb.exec(`
@@ -71,33 +70,107 @@ describe("store", function () {
           id TEXT PRIMARY KEY,
           name TEXT,
           email TEXT,
-          settings TEXT DEFAULT '{}',
-          created_at TEXT NOT NULL DEFAULT (datetime('now')),
-          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+          settings TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
       `);
       legacyDb
-        .prepare("INSERT INTO users (id, name, settings) VALUES (?, ?, ?)")
-        .run("legacy-user", "Legacy", JSON.stringify({ volume: 0.5 }));
+        .prepare(
+          "INSERT INTO users (id, name, settings, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        )
+        .run(
+          "legacy-user",
+          "Legacy",
+          "null",
+          "2026-01-01T00:00:00.000Z",
+          "2026-01-01T00:00:00.000Z",
+        );
       legacyDb.close();
 
+      assert.throws(
+        () => Store.initialize(),
+        /Database schema is incompatible: invalid user data/,
+      );
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      const row = db.prepare("PRAGMA user_version").get();
+      db.close();
+      assert.strictEqual(row.user_version, 0);
+    });
+
+    it("rejects activity tables without their required primary key", function () {
       Store.initialize();
       Store.close();
 
       const db = new DatabaseSync(`${testDataDir}/poker.db`);
-      const row = db
-        .prepare("SELECT settings FROM users WHERE id = ?")
-        .get("legacy-user");
-      const meta = db
-        .prepare("SELECT value FROM store_meta WHERE key = ?")
-        .get("user_settings_backfilled_at");
+      db.exec(`
+        PRAGMA user_version = 0;
+        DROP TABLE player_tables;
+        CREATE TABLE player_tables (
+          player_id TEXT,
+          table_id TEXT,
+          tournament_id TEXT,
+          last_hand_number INTEGER,
+          last_played_at TEXT
+        )
+      `);
       db.close();
 
-      assert.deepStrictEqual(JSON.parse(row.settings), {
-        volume: 0.5,
-        vibration: true,
-      });
-      assert.ok(meta?.value);
+      assert.throws(
+        () => Store.initialize(),
+        /player_tables primary key must be \(player_id, table_id\)/,
+      );
+    });
+
+    it("rejects schemas without required column defaults", function () {
+      Store.initialize();
+      Store.close();
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      db.exec(`
+        PRAGMA user_version = 0;
+        DROP TABLE users;
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          email TEXT,
+          settings TEXT,
+          created_at TEXT,
+          updated_at TEXT
+        )
+      `);
+      db.close();
+
+      assert.throws(
+        () => Store.initialize(),
+        /users.created_at has an invalid default/,
+      );
+    });
+
+    it("rejects databases created by a newer app version", function () {
+      Store.initialize();
+      Store.close();
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      db.exec("PRAGMA user_version = 2");
+      db.close();
+
+      assert.throws(
+        () => Store.initialize(),
+        /schema version 2 is newer than supported version 1/,
+      );
+    });
+
+    it("rejects an invalid schema version", function () {
+      Store.initialize();
+      Store.close();
+
+      const db = new DatabaseSync(`${testDataDir}/poker.db`);
+      db.exec("PRAGMA user_version = -1");
+      db.close();
+
+      assert.throws(() => Store.initialize(), /schema version -1 is invalid/);
     });
   });
 
