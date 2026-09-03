@@ -239,8 +239,62 @@ resource "aws_ebs_volume" "data" {
   encrypted         = true
 
   tags = {
-    Name = "poker-data"
+    Name         = "poker-data"
+    BackupPolicy = "weekly-4"
   }
+}
+
+# Keep the four latest weekly snapshots of the persistent data volume.
+resource "aws_iam_role" "ebs_backup" {
+  name = "poker-ebs-backup"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "dlm.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_backup" {
+  role       = aws_iam_role.ebs_backup.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"
+}
+
+resource "aws_dlm_lifecycle_policy" "data_backup" {
+  description        = "Weekly snapshots of the poker data volume"
+  execution_role_arn = aws_iam_role.ebs_backup.arn
+  state              = "ENABLED"
+
+  policy_details {
+    resource_types = ["VOLUME"]
+    target_tags = {
+      BackupPolicy = "weekly-4"
+    }
+
+    schedule {
+      name      = "Weekly backups"
+      copy_tags = true
+
+      create_rule {
+        cron_expression = "cron(0 3 ? * SUN *)"
+      }
+
+      retain_rule {
+        count = 4
+      }
+
+      tags_to_add = {
+        Name = "poker-data-weekly-backup"
+      }
+    }
+  }
+
+  depends_on = [aws_iam_role_policy_attachment.ebs_backup]
 }
 
 resource "aws_volume_attachment" "data" {
