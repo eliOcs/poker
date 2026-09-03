@@ -70,6 +70,8 @@ export function createMockTournamentView(overrides = {}) {
     entryPeriodLevels: 4,
     entryPeriodOpen: false,
     tableSize: 6,
+    levelDurationTicks: 20 * 60,
+    durationMinutes: 260,
     level: 1,
     timeToNextLevel: 300,
     onBreak: false,

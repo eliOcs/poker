@@ -43,7 +43,7 @@ export default {
       timeout: 5000,
     },
   },
-  browserStartTimeout: 30000,
+  browserStartTimeout: 60000,
   testsStartTimeout: 30000,
   testsFinishTimeout: 30000,
   coverageConfig: {
