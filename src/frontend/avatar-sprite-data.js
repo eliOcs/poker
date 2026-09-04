@@ -33,7 +33,6 @@ export const AVATAR_SPRITE_PARTS = {
     category: "Eyes",
     splitHorizontally: true,
     styles: {
-      none: undefined,
       beady: singleLayer("Beans"),
       lines: singleLayer("Lines"),
       happy: singleLayer("Happy"),
@@ -75,7 +74,6 @@ export const AVATAR_SPRITE_PARTS = {
   mouth: {
     category: "Mouths",
     styles: {
-      none: undefined,
       happy: singleLayer("Happy"),
       smile: layeredMouth("Smile", { tongue: "Tongue" }),
       straight: singleLayer("Straight"),

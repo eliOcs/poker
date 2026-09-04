@@ -88,14 +88,12 @@ export function drawSpritePartPreview(context, avatar, partId, type) {
   const { sprite } = getSpriteConfig(partId, type);
 
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-  context.fillStyle = "#181827";
-  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
   if (!sprite) {
     drawEmptyPreview(context);
     return true;
   }
-  if (partId !== "face" && !OVAL_FACE_PREVIEW_PARTS.has(partId)) {
-    drawPreviewSkin(context, avatar.face.color, partId);
+  if (FULL_SKIN_PREVIEW_PARTS.has(partId)) {
+    drawPreviewSkin(context, avatar.face.color);
   }
 
   const previewContext = previewCanvas.getContext("2d");
@@ -146,7 +144,12 @@ export function drawSpritePartPreview(context, avatar, partId, type) {
 }
 
 function getPreviewScale(partId, bounds) {
-  const fittedScale = Math.min(86 / bounds.width, 52 / bounds.height);
+  const fitWidth = partId === "face" ? 92 : 86;
+  const fitHeight = partId === "face" ? 60 : 52;
+  const fittedScale = Math.min(
+    fitWidth / bounds.width,
+    fitHeight / bounds.height,
+  );
   if (!SHARED_PREVIEW_SCALE_PARTS.has(partId) || !spritesReady) {
     return fittedScale;
   }
@@ -157,8 +160,8 @@ function getPreviewScale(partId, bounds) {
   if (!context) {
     throw new Error("Avatar sprite bounds canvas context unavailable");
   }
-  let maxWidth = 0;
-  let maxHeight = 0;
+  let spriteMaxWidth = 0;
+  let spriteMaxHeight = 0;
   const part = AVATAR_SPRITE_PARTS[partId];
   for (const [type, sprite] of Object.entries(part.styles)) {
     if (!sprite) continue;
@@ -168,10 +171,13 @@ function getPreviewScale(partId, bounds) {
     if (!styleBounds) {
       throw new Error(`Avatar sprite has no visible pixels: ${partId}/${type}`);
     }
-    maxWidth = Math.max(maxWidth, styleBounds.width);
-    maxHeight = Math.max(maxHeight, styleBounds.height);
+    spriteMaxWidth = Math.max(spriteMaxWidth, styleBounds.width);
+    spriteMaxHeight = Math.max(spriteMaxHeight, styleBounds.height);
   }
-  const scale = Math.min(86 / maxWidth, 52 / maxHeight);
+  const scale = Math.min(
+    fitWidth / spriteMaxWidth,
+    fitHeight / spriteMaxHeight,
+  );
   sharedPreviewScales.set(partId, scale);
   return scale;
 }
@@ -453,15 +459,9 @@ function getContourLayerColor(avatar, partId) {
   return DARK;
 }
 
-function drawPreviewSkin(context, color, partId) {
+function drawPreviewSkin(context, color) {
   context.fillStyle = color;
-  if (FULL_SKIN_PREVIEW_PARTS.has(partId)) {
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-    return;
-  }
-  context.beginPath();
-  context.ellipse(48, 32, 45, 28, 0, 0, Math.PI * 2);
-  context.fill();
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 }
 
 function drawEmptyPreview(context) {

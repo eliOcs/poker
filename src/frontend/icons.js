@@ -336,4 +336,67 @@ export const ICONS = {
       d="M3 20h2v-2h2v4H1v-4h2v2Zm8 0h2V10h4v2h-2v10H9V12H7v-2h4v10Zm8 0h2v-4h2v6h-6v-6h2v4ZM5 18H3v-2h2v2Zm16-2h-2v-2h2v2ZM7 10H5V8h2v2Zm12 0h-2V8h2v2ZM9 8H7V6h2v2Zm8 0h-2V6h2v2Zm-6-2H9V4h2v2Zm4 0h-2V4h2v2Zm-2-2h-2V2h2v2Z"
     />
   </svg>`,
+  plus: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M13 11h7v2h-7v7h-2v-7H4v-2h7V4h2v7Z" />
+  </svg>`,
+  minus: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M4 11h16v2H4z" />
+  </svg>`,
+  up: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M11 20h2V4h-2zm2-12h2V6h-2zm2 2h2V8h-2zm2 2h2v-2h-2zm-6-4H9V6h2z" />
+    <path d="M15 10H7V8h8zm2 2H5v-2h12z" />
+  </svg>`,
+  down: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M13 12h6v2h-2v2h-2v2h-2v2h-2v-2H9v-2H7v-2H5v-2h6V4h2v8Z" />
+  </svg>`,
+  right: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M4 11v2h16v-2zm12 2v2h2v-2zm-2 2v2h2v-2zm-2 2v2h2v-2zm4-6V9h2v2z" />
+    <path d="M14 15V7h2v8zm-2 2V5h2v12z" />
+  </svg>`,
+  left: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path d="M20 11v2H4v-2zM8 13v2H6v-2zm2 2v2H8v-2zm2 2v2h-2v-2zm-4-6V9H6v2z" />
+    <path d="M10 15V7H8v8zm2 2V5h-2v12z" />
+  </svg>`,
 };

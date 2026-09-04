@@ -116,7 +116,6 @@ describe("phg-avatar-maker", () => {
         "Gaunt",
       ],
       eyes: [
-        "None",
         "Beady",
         "Lines",
         "Happy",
@@ -130,7 +129,6 @@ describe("phg-avatar-maker", () => {
       eyebrows: ["None", "Soft", "Straight", "Hairy", "Thick", "Slanted"],
       nose: ["None", "L", "C", "D", "V", "Holes", "Big", "U", "Thick", "Pig"],
       mouth: [
-        "None",
         "Happy",
         "Smile",
         "Straight",
@@ -409,7 +407,7 @@ describe("phg-avatar-maker", () => {
     }
   });
 
-  it("allows facial features to be removed", async () => {
+  it("allows optional facial features to be removed", async () => {
     const maker = await fixture(html`<phg-avatar-maker></phg-avatar-maker>`);
 
     maker.querySelector("#avatar-tab-ears").click();
@@ -429,7 +427,7 @@ describe("phg-avatar-maker", () => {
 
     expect(maker.avatar.ears.type).to.equal("none");
 
-    for (const partId of ["eyes", "eyebrows", "nose", "mouth"]) {
+    for (const partId of ["eyebrows", "nose"]) {
       maker.querySelector(`#avatar-tab-${partId}`).click();
       await maker.updateComplete;
       [...maker.querySelectorAll(".avatar-maker__option")]

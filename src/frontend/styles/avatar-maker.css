@@ -100,26 +100,30 @@ phg-avatar-maker {
 
 .avatar-maker__tabs button[aria-selected="true"] {
   color: var(--color-primary);
-  background: rgb(244 160 32 / 8%);
   border-bottom-color: var(--color-primary);
 }
 
 .avatar-maker__controls {
+  --avatar-maker-section-gap: clamp(16px, 2.5vw, 28px);
+
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding-top: clamp(16px, 2.5vw, 28px);
+  gap: var(--avatar-maker-section-gap);
+  padding-top: var(--avatar-maker-section-gap);
 }
 
 .avatar-maker__options {
   display: grid;
   grid-template-columns: repeat(5, minmax(82px, 1fr));
   gap: var(--space-md);
-  padding-bottom: clamp(16px, 2.5vw, 28px);
   overflow-x: auto;
 }
 
 .avatar-maker__option {
+  display: grid;
+  grid-template-rows: auto minmax(16px, 1fr);
+  gap: var(--space-md);
   min-width: 82px;
   padding: var(--space-md);
   color: var(--color-fg-muted);
@@ -140,33 +144,38 @@ phg-avatar-maker {
   color: var(--color-fg-white);
   background: #302941;
   border-color: var(--color-primary);
-  box-shadow: 3px 3px 0 #805014;
 }
 
 .avatar-maker__option-icon {
   display: grid;
-  height: 58px;
-  margin-bottom: var(--space-md);
-  background: #181827;
+  place-items: center;
+}
+
+.avatar-maker__option > span:last-child {
+  display: grid;
   place-items: center;
 }
 
 .avatar-maker__option-icon canvas {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
   image-rendering: pixelated;
 }
 
 .avatar-maker__fine-tuning {
-  padding-top: clamp(16px, 2.5vw, 28px);
-  border-top: 2px solid var(--color-bg-light);
+  display: grid;
+  gap: var(--avatar-maker-section-gap);
 }
 
 .avatar-maker__adjustments {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--space-md);
+}
+
+.avatar-maker__adjustments:empty {
+  display: none;
 }
 
 .avatar-maker__adjustment {
@@ -191,25 +200,30 @@ phg-avatar-maker {
   gap: var(--space-sm);
 }
 
-.avatar-maker__stepper button {
+.avatar-maker__stepper > button {
   display: grid;
   width: 36px;
   height: 36px;
   padding: 0;
   color: var(--color-fg-white);
   font: inherit;
-  font-size: var(--font-md);
+  font-size: 18px;
   cursor: pointer;
   background: var(--color-bg-disabled);
   border: 2px solid var(--color-bg-dark);
   place-items: center;
 }
 
-.avatar-maker__stepper button:hover:not(:disabled) {
+.avatar-maker__stepper > button:hover:not(:disabled) {
   background: var(--color-secondary);
 }
 
-.avatar-maker__stepper button:disabled {
+.avatar-maker__stepper > button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.avatar-maker__stepper > button:disabled {
   color: var(--color-fg-muted);
   cursor: not-allowed;
   opacity: 0.45;
@@ -218,23 +232,39 @@ phg-avatar-maker {
 .avatar-maker__meter {
   display: flex;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
 }
 
-.avatar-maker__meter i {
-  width: 5px;
-  height: 5px;
+.avatar-maker__meter button {
+  display: grid;
+  flex: 1;
+  min-width: 14px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  place-items: center;
+}
+
+.avatar-maker__meter button::before {
+  width: 10px;
+  height: 10px;
   background: #4a4a5e;
+  content: "";
 }
 
-.avatar-maker__meter i.is-active {
+.avatar-maker__meter button:hover::before {
+  background: var(--color-fg-muted);
+}
+
+.avatar-maker__meter button.is-active::before {
   background: var(--color-primary);
-  box-shadow: 0 0 5px var(--color-primary);
 }
 
 .avatar-maker__colors {
   padding: 0;
-  margin: var(--space-lg) 0 0;
+  margin: 0;
   border: 0;
 }
 
@@ -342,7 +372,7 @@ phg-avatar-maker {
     grid-template-columns: 42px 1fr 42px;
   }
 
-  .avatar-maker__stepper button {
+  .avatar-maker__stepper > button {
     width: 42px;
     height: 42px;
   }

@@ -6,6 +6,7 @@ import {
   getAvatarColors as getColors,
 } from "./avatar-maker-data.js";
 import { configureAvatarMaker } from "./avatar-maker-controller.js";
+import { ICONS } from "./icons.js";
 import {
   COLORABLE_EYE_TYPES,
   getAvatarSpriteTypes,
@@ -116,11 +117,11 @@ const ADJUSTMENTS = {
 };
 
 const ADJUSTMENT_SYMBOLS = {
-  position: ["↑", "↓"],
-  horizontalPosition: ["←", "→"],
+  position: [ICONS.up, ICONS.down],
+  horizontalPosition: [ICONS.left, ICONS.right],
   spacing: ["→←", "←→"],
   rotation: ["↺", "↻"],
-  size: ["−", "+"],
+  size: [ICONS.minus, ICONS.plus],
 };
 
 class AvatarMaker extends LitElement {
@@ -313,15 +314,24 @@ class AvatarMaker extends LitElement {
           >
             ${getAdjustmentSymbol(partId, adjustment.key, -1)}
           </button>
-          <span
+          <div
             class="avatar-maker__meter"
+            role="group"
             aria-label=${`${adjustment.label}: ${value}`}
           >
             ${[-2, -1, 0, 1, 2].map(
               (step) =>
-                html`<i class=${step === value ? "is-active" : ""}></i>`,
+                html`<button
+                  type="button"
+                  class=${step === value ? "is-active" : ""}
+                  aria-label=${`Set ${getTabLabel(partId)} ${adjustment.label.toLowerCase()} to ${step}`}
+                  aria-pressed=${step === value}
+                  @click=${() => {
+                    this.updatePart(partId, adjustment.key, step);
+                  }}
+                ></button>`,
             )}
-          </span>
+          </div>
           <button
             type="button"
             aria-label=${`${adjustment.high} ${getTabLabel(partId)}`}
