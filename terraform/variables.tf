@@ -45,3 +45,14 @@ variable "ses_dns_ttl" {
   type        = number
   default     = 600
 }
+
+variable "site_health_notification_email" {
+  description = "Email address notified when the public site becomes unavailable or recovers"
+  type        = string
+  sensitive   = true
+
+  validation {
+    condition     = can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.site_health_notification_email))
+    error_message = "The site health notification email must be a valid email address."
+  }
+}

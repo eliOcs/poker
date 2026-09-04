@@ -2,6 +2,11 @@ terraform {
   required_version = ">= 1.0"
 
   required_providers {
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2"
+    }
+
     aws = {
       source  = "hashicorp/aws"
       version = "~> 6"
@@ -161,6 +166,16 @@ resource "aws_iam_instance_profile" "poker" {
   role = aws_iam_role.poker_ec2.name
 }
 
+resource "aws_iam_role_policy_attachment" "poker_ec2_ssm" {
+  role       = aws_iam_role.poker_ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "poker_ec2_cloudwatch_agent" {
+  role       = aws_iam_role.poker_ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
 resource "aws_iam_role_policy" "poker_ec2_ses" {
   name = "ses-send"
   role = aws_iam_role.poker_ec2.id
@@ -183,6 +198,7 @@ resource "aws_iam_role_policy" "poker_ec2_ses" {
 resource "aws_instance" "poker" {
   ami                    = "ami-052b310a8f0d76968"
   instance_type          = "t4g.micro"
+  monitoring             = true
   iam_instance_profile   = aws_iam_instance_profile.poker.name
   key_name               = aws_key_pair.poker.key_name
   vpc_security_group_ids = [aws_security_group.poker.id]
