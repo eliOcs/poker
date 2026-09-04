@@ -3,7 +3,8 @@ import path from "node:path";
 
 const FRONTEND_ROOT = path.resolve("src/frontend");
 const TOP_LEVEL_ASSET = /^\/[^/]+\.[a-z0-9]+$/i;
-const NESTED_ASSET = /^\/(?:fonts|styles)\/[^/]+\.[a-z0-9]+$/i;
+const NESTED_ASSET =
+  /^\/(?:assets|fonts|styles)\/(?:[a-z0-9_-]+\/)*[a-z0-9_.-]+$/i;
 
 export default {
   files: "test/frontend/**/*.test.js",

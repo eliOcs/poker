@@ -98,6 +98,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute(/^\/players\/([a-z0-9]+)$/),
     spaPageRoute("/mtt"),
     spaPageRoute("/about"),
+    spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),
     spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/),
     ...createHistoryRoutes(users),

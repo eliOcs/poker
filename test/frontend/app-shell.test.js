@@ -112,6 +112,28 @@ describe("phg-app-shell", () => {
     expect(accountLink.classList.contains("active")).to.equal(true);
   });
 
+  it("keeps the account link active on the avatar page", async () => {
+    const element = await fixture(html`
+      <phg-app-shell
+        path="/avatar"
+        .user=${{
+          id: "player2",
+          name: "Elio",
+          email: "elio@example.com",
+          settings: { volume: 0.75, vibration: true },
+        }}
+      ></phg-app-shell>
+    `);
+
+    element.drawerOpen = true;
+    await element.updateComplete;
+
+    const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
+      link.textContent.includes("Elio"),
+    );
+    expect(accountLink.classList.contains("active")).to.equal(true);
+  });
+
   it("dispatches open-sign-in when sign-in button is clicked (signed out)", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/"></phg-app-shell>`,

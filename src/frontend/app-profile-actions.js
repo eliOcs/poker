@@ -31,4 +31,23 @@ export const appProfileActions = {
     this._showProfileSettings = false;
     this.toast = { message: "Settings saved", variant: "success" };
   },
+
+  closeAvatarMaker() {
+    window.history.back();
+  },
+
+  async saveAvatar(avatar) {
+    if (this._avatarSaving) return;
+    this._avatarSaving = true;
+    const saved = await this._updateUser({ settings: { avatar } });
+    this._avatarSaving = false;
+
+    if (!saved) {
+      this.toast = { message: "Unable to save avatar", variant: "error" };
+      return;
+    }
+
+    this.toast = { message: "Avatar saved", variant: "success" };
+    window.history.back();
+  },
 };

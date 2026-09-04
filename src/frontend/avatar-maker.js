@@ -1,4 +1,5 @@
 import { html, LitElement } from "lit";
+import { renderAvatarMakerActions } from "./avatar-maker-actions.js";
 import { drawAvatar, drawAvatarPartPreview } from "./avatar-drawing.js";
 import {
   BACKGROUND_COLORS,
@@ -23,8 +24,6 @@ const TABS = [
   { id: "facialHair", label: "Facial hair" },
   { id: "clothes", label: "Clothes", showStyles: false },
 ].map((tab) => ({ ...tab, types: getAvatarSpriteTypes(tab.id) }));
-
-export { DEFAULT_AVATAR };
 
 const ADJUSTMENTS = {
   face: [
@@ -134,6 +133,7 @@ class AvatarMaker extends LitElement {
       activeTab: { type: String },
       avatar: { type: Object },
       canvasSize: { state: true },
+      saving: { type: Boolean },
     };
   }
 
@@ -142,6 +142,7 @@ class AvatarMaker extends LitElement {
     this.activeTab = "face";
     this.avatar = cloneAvatar(DEFAULT_AVATAR);
     this.canvasSize = 360;
+    this.saving = false;
     this.assetsReady = configureAvatarMaker(this);
   }
 
@@ -177,8 +178,8 @@ class AvatarMaker extends LitElement {
     const part = this.avatar[tab.id];
 
     return html`
-      <main class="avatar-maker">
-        <div class="avatar-maker__workspace">
+      <main class="main">
+        <div class="content avatar-maker__workspace">
           <section class="avatar-maker__preview" aria-label="Avatar preview">
             <div class="avatar-maker__canvas-frame">
               <canvas
@@ -188,57 +189,48 @@ class AvatarMaker extends LitElement {
                 aria-label="Preview of your customized avatar"
               ></canvas>
             </div>
-            <div class="avatar-maker__preview-actions">
-              <button
-                class="button button--muted button--compact"
-                type="button"
-                @click=${this.reset}
-              >
-                Reset
-              </button>
-              <button
-                class="button button--action button--compact"
-                type="button"
-                @click=${this.randomize}
-              >
-                Randomize
-              </button>
-            </div>
           </section>
 
-          <section
-            class="avatar-maker__editor"
-            aria-label="Avatar customization"
-          >
-            ${this.renderTabs()}
-            <div
-              class="avatar-maker__controls"
-              role="tabpanel"
-              aria-labelledby=${`avatar-tab-${tab.id}`}
+          <section class="avatar-maker__customizer">
+            <section
+              class="panel avatar-maker__editor"
+              aria-label="Avatar customization"
             >
-              ${tab.showStyles === false
-                ? ""
-                : html`
-                    <div class="avatar-maker__options">
-                      ${tab.types.map((type) =>
-                        this.renderTypeOption(tab, type, part.type === type),
-                      )}
-                    </div>
-                  `}
-              <div class="avatar-maker__fine-tuning">
-                <div class="avatar-maker__adjustments">
-                  ${ADJUSTMENTS[tab.id].map((adjustment) =>
-                    this.renderAdjustment(
-                      tab.id,
-                      adjustment,
-                      part[adjustment.key],
-                    ),
-                  )}
+              ${this.renderTabs()}
+              <div
+                class="avatar-maker__controls"
+                role="tabpanel"
+                aria-labelledby=${`avatar-tab-${tab.id}`}
+              >
+                ${tab.showStyles === false
+                  ? ""
+                  : html`
+                      <div class="avatar-maker__options">
+                        ${tab.types.map((type) =>
+                          this.renderTypeOption(tab, type, part.type === type),
+                        )}
+                      </div>
+                    `}
+                <div class="avatar-maker__fine-tuning">
+                  ${ADJUSTMENTS[tab.id].length === 0
+                    ? ""
+                    : html`
+                        <div class="avatar-maker__adjustments">
+                          ${ADJUSTMENTS[tab.id].map((adjustment) =>
+                            this.renderAdjustment(
+                              tab.id,
+                              adjustment,
+                              part[adjustment.key],
+                            ),
+                          )}
+                        </div>
+                      `}
+                  ${this.renderColors(tab.id, part.color, part.type)}
+                  ${tab.id === "clothes" ? this.renderBackgroundColors() : ""}
                 </div>
-                ${this.renderColors(tab.id, part.color, part.type)}
-                ${tab.id === "clothes" ? this.renderBackgroundColors() : ""}
               </div>
-            </div>
+            </section>
+            ${renderAvatarMakerActions(this)}
           </section>
         </div>
       </main>
@@ -305,6 +297,7 @@ class AvatarMaker extends LitElement {
         <span>${adjustment.label}</span>
         <div class="avatar-maker__stepper">
           <button
+            class="button button--muted button--compact"
             type="button"
             aria-label=${`${adjustment.low} ${getTabLabel(partId)}`}
             ?disabled=${value <= -2}
@@ -312,7 +305,9 @@ class AvatarMaker extends LitElement {
               this.updatePart(partId, adjustment.key, Math.max(-2, value - 1));
             }}
           >
-            ${getAdjustmentSymbol(partId, adjustment.key, -1)}
+            <span class="button__icon"
+              >${getAdjustmentSymbol(partId, adjustment.key, -1)}</span
+            >
           </button>
           <div
             class="avatar-maker__meter"
@@ -333,6 +328,7 @@ class AvatarMaker extends LitElement {
             )}
           </div>
           <button
+            class="button button--muted button--compact"
             type="button"
             aria-label=${`${adjustment.high} ${getTabLabel(partId)}`}
             ?disabled=${value >= 2}
@@ -340,7 +336,9 @@ class AvatarMaker extends LitElement {
               this.updatePart(partId, adjustment.key, Math.min(2, value + 1));
             }}
           >
-            ${getAdjustmentSymbol(partId, adjustment.key, 1)}
+            <span class="button__icon"
+              >${getAdjustmentSymbol(partId, adjustment.key, 1)}</span
+            >
           </button>
         </div>
       </div>
@@ -388,7 +386,7 @@ class AvatarMaker extends LitElement {
             (color, index) => html`
               <button
                 type="button"
-                class=${color === selectedColor ? "is-selected" : ""}
+                class=${`button ${color === selectedColor ? "is-selected" : ""}`}
                 style=${`--swatch-color: ${color}`}
                 aria-label=${label === "Background color" ||
                 label === "Clothes color"

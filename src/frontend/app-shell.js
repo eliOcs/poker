@@ -70,7 +70,8 @@ class AppShell extends LitElement {
     const tournamentsActive = this.path === "/mtt";
     const releaseNotesActive = this.path === "/release-notes";
     const accountActive =
-      !!this.user?.id && this.path === `/players/${this.user.id}`;
+      !!this.user?.id &&
+      (this.path === `/players/${this.user.id}` || this.path === "/avatar");
     const navigation = this.navigationRenderer
       ? this.navigationRenderer(this)
       : renderAppNavigationDrawer({

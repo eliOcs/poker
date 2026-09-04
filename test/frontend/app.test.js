@@ -108,6 +108,26 @@ describe("phg-app", () => {
       expect(element?.querySelector("phg-about")).to.exist;
     });
 
+    it("renders the avatar maker on its app route", async () => {
+      globalThis.fetch = async (url) => {
+        if (url.match(/\/api\/users\/me$/)) {
+          return {
+            ok: true,
+            json: async () => createMockUser({ id: "u1", name: "Test" }),
+          };
+        }
+        return { ok: false };
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      element.path = "/avatar";
+      await element.updateComplete;
+
+      expect(element?.querySelector("phg-avatar-maker")).to.exist;
+      expect(element?.querySelector("phg-app-shell")).to.exist;
+      expect(element?.querySelector("phg-navigation-drawer")).to.not.exist;
+    });
+
     it("renders tournaments on the app route", async () => {
       globalThis.fetch = async (url) => {
         if (url.match(/\/api\/users\/me$/)) {

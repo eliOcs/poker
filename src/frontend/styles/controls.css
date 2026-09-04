@@ -9,6 +9,7 @@
   color: var(--color-fg-white);
   font: inherit;
   font-size: var(--font-md);
+  text-decoration: none;
   cursor: pointer;
   background-color: var(--color-secondary);
   border: 3px solid var(--color-bg-dark);

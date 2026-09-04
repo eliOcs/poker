@@ -91,6 +91,18 @@ describe("phg-app profile settings", () => {
     expect(modal.querySelector("h3").textContent).to.equal("Settings");
   });
 
+  it("navigates from settings to the avatar maker page", async () => {
+    const element = await openOwnProfileSettings();
+    const changeAvatarLink = element.querySelector('a[href="/avatar"]');
+
+    expect(changeAvatarLink).to.exist;
+    changeAvatarLink.click();
+
+    await waitUntil(() => element.path === "/avatar", { timeout: 2000 });
+    expect(element.querySelector("phg-avatar-maker")).to.exist;
+    expect(element.querySelector("phg-modal")).to.not.exist;
+  });
+
   it("shows a success toast after saving profile settings", async () => {
     const element = await openOwnProfileSettings("Updated");
 

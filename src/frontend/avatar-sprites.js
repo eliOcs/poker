@@ -38,8 +38,8 @@ export const avatarSpritesReady = Promise.all(
           const directory = toKebabCase(partId);
           const side = getDirectionSuffix(direction);
           const url = new URL(
-            `./assets/avatar/${directory}/${type}-${role}${side}.png`,
-            import.meta.url,
+            `/assets/avatar/${directory}/${type}-${role}${side}.png`,
+            window.location.origin,
           );
           spriteImages.set(id, await loadImage(url));
         }),

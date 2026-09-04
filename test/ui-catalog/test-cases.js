@@ -6,7 +6,7 @@
  * URL format: ?test=<test-id>
  */
 
-import { render } from "lit";
+import { html, render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/tournaments.js";
@@ -41,18 +41,25 @@ function shellPageView(path, page, appState = {}) {
   return renderShellPageView({ path, user: null, ...appState }, page);
 }
 
+function avatarMakerView() {
+  return html`<phg-app-shell
+    path="/avatar"
+    .navigationRenderer=${() => ""}
+    .content=${html`<phg-avatar-maker></phg-avatar-maker>`}
+  ></phg-app-shell>`;
+}
+
 const GAME_TEST_CASES = {
   // === AVATAR MAKER ===
-  "avatar-maker": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-sparkle-eyes": () =>
-    html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-eyebrows": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-nose": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-mouth": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-ears": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-hair": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-facial-hair": () => html`<phg-avatar-maker></phg-avatar-maker>`,
-  "avatar-maker-clothes": () => html`<phg-avatar-maker></phg-avatar-maker>`,
+  "avatar-maker": avatarMakerView,
+  "avatar-maker-sparkle-eyes": avatarMakerView,
+  "avatar-maker-eyebrows": avatarMakerView,
+  "avatar-maker-nose": avatarMakerView,
+  "avatar-maker-mouth": avatarMakerView,
+  "avatar-maker-ears": avatarMakerView,
+  "avatar-maker-hair": avatarMakerView,
+  "avatar-maker-facial-hair": avatarMakerView,
+  "avatar-maker-clothes": avatarMakerView,
 
   // === LANDING PAGE ===
   "landing-page": () => shellPageView("/", "home"),

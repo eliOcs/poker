@@ -35,6 +35,15 @@ export function renderProfileSettingsModal(app) {
         .value=${app.user?.name ?? ""}
       />
       <fieldset>
+        <legend>Avatar</legend>
+        <a
+          class="button button--muted button--full-width"
+          href="/avatar"
+          @click=${() => app.closeProfileSettings()}
+          >Change avatar</a
+        >
+      </fieldset>
+      <fieldset>
         <legend>Sound Volume</legend>
         <div class="volume-slider">
           ${SETTINGS_VOLUME_STEPS.map(

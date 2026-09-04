@@ -68,6 +68,7 @@ class App extends LitElement {
       _showProfileSignUp: { state: true },
       _settingsVolume: { state: true },
       _settingsVibration: { state: true },
+      _avatarSaving: { state: true },
     };
   }
 
@@ -106,6 +107,7 @@ class App extends LitElement {
     this._tournamentSignUpPrompted = false;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
+    this._avatarSaving = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -252,10 +254,12 @@ class App extends LitElement {
         this.user = await res.json();
         this._settingsVolume = this.user.settings.volume;
         this._settingsVibration = this.user.settings.vibration;
+        return true;
       }
     } catch {
       // Ignore update errors
     }
+    return false;
   }
 
   // --- Game WebSocket Management ---
@@ -351,7 +355,9 @@ class App extends LitElement {
 
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
-      syncAppRouteState(this, parseAppPath(this.path));
+      const route = parseAppPath(this.path);
+      syncAppRouteState(this, route);
+      if (route.page === "avatar") void import("./avatar-maker.js");
     }
   }
 

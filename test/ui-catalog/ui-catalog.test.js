@@ -136,21 +136,7 @@ function getComponentSelector(testCase) {
   return "phg-game";
 }
 
-async function prepareTestCase(testCase, page, component) {
-  const componentState = {
-    "game-rankings-modal": { showRanking: true },
-    "game-rankings-modal-tooltip": { showRanking: true },
-    "game-rankings-modal-tournament": { showRanking: true },
-    "game-tournament-levels-modal": { showTournamentLevels: true },
-    "game-settings-modal": { showSettings: true },
-  }[testCase];
-  if (componentState) {
-    await component.evaluate(async (element, state) => {
-      Object.assign(element, state);
-      await element.updateComplete;
-    }, componentState);
-  }
-
+async function prepareAvatarMakerTestCase(testCase, component) {
   const avatarTab = {
     "avatar-maker-sparkle-eyes": "eyes",
     "avatar-maker-eyebrows": "eyebrows",
@@ -173,6 +159,25 @@ async function prepareTestCase(testCase, page, component) {
     await component.getByRole("button", { name: "Beard", exact: true }).click();
     await component.evaluate((element) => element.updateComplete);
   }
+  await verifyAvatarMakerScrollIsContained(testCase, component);
+}
+
+async function prepareTestCase(testCase, page, component) {
+  const componentState = {
+    "game-rankings-modal": { showRanking: true },
+    "game-rankings-modal-tooltip": { showRanking: true },
+    "game-rankings-modal-tournament": { showRanking: true },
+    "game-tournament-levels-modal": { showTournamentLevels: true },
+    "game-settings-modal": { showSettings: true },
+  }[testCase];
+  if (componentState) {
+    await component.evaluate(async (element, state) => {
+      Object.assign(element, state);
+      await element.updateComplete;
+    }, componentState);
+  }
+
+  await prepareAvatarMakerTestCase(testCase, component);
 
   const replayIndex = {
     "history-replay-start": 0,
@@ -273,6 +278,51 @@ async function prepareTestCase(testCase, page, component) {
     }
     trigger.focus({ preventScroll: true });
   }, tooltipLabel);
+}
+
+async function verifyAvatarMakerScrollIsContained(testCase, component) {
+  if (testCase !== "avatar-maker") return;
+
+  const preview = component.locator(".avatar-maker__preview");
+  const tabs = component.locator(".avatar-maker__tabs");
+  const actions = component.locator(".avatar-maker__page-actions");
+  const editor = component.locator(".avatar-maker__editor");
+  const initialPositions = await Promise.all(
+    [preview, actions].map((locator) =>
+      locator.evaluate((element) => element.getBoundingClientRect().top),
+    ),
+  );
+  const initialTabsTop = await tabs.evaluate(
+    (element) => element.getBoundingClientRect().top,
+  );
+  const scrollTop = await editor.evaluate((element) => {
+    element.scrollTop = 100;
+    return element.scrollTop;
+  });
+  expect(scrollTop).toBeGreaterThan(0);
+  expect(
+    await Promise.all(
+      [preview, actions].map((locator) =>
+        locator.evaluate((element) => element.getBoundingClientRect().top),
+      ),
+    ),
+  ).toEqual(initialPositions);
+  expect(
+    await tabs.evaluate((element) => element.getBoundingClientRect().top),
+  ).toBeLessThan(initialTabsTop);
+  const bottomGap = await editor.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+    const content = element.querySelector(".avatar-maker__fine-tuning");
+    if (!content) throw new Error("Avatar controls content was not rendered");
+    return (
+      element.getBoundingClientRect().bottom -
+      content.getBoundingClientRect().bottom
+    );
+  });
+  expect(bottomGap).toBeGreaterThan(0);
+  await editor.evaluate((element) => {
+    element.scrollTop = 0;
+  });
 }
 
 for (const testCase of TEST_CASES) {

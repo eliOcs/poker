@@ -63,6 +63,7 @@ const routes = {
   "/styles/avatar-maker.css": "src/frontend/styles/avatar-maker.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/about": "src/frontend/index.html",
+  "/avatar": "src/frontend/index.html",
   "/release-notes": "src/frontend/index.html",
 };
 
@@ -77,6 +78,15 @@ function handleRequest(req, res) {
     console.log(`[200] ${pathname} -> ${routes[pathname]}`);
     respondWithFile(req, res, routes[pathname], { noCache: true });
     return;
+  }
+
+  if (pathname.startsWith("/assets/")) {
+    const filePath = `src/frontend${pathname}`;
+    if (fs.existsSync(filePath)) {
+      console.log(`[200] ${pathname} -> ${filePath}`);
+      respondWithFile(req, res, filePath, { noCache: true });
+      return;
+    }
   }
 
   // Serve frontend and shared source files

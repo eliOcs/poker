@@ -326,7 +326,7 @@
   }
 }
 
-@scope (:is(phg-mtt-lobby, phg-player-profile)) {
+@scope (:is(phg-mtt-lobby, phg-player-profile, phg-avatar-maker)) {
   :scope {
     display: flex;
     flex-direction: column;

@@ -224,6 +224,7 @@ describe("phg-avatar-maker", () => {
     await maker.updateComplete;
 
     expect(maker.querySelector(".avatar-maker__option")).to.not.exist;
+    expect(maker.querySelector(".avatar-maker__adjustments")).to.not.exist;
     expect(
       [...maker.querySelectorAll(".avatar-maker__colors legend")].map(
         (legend) => legend.textContent.trim(),

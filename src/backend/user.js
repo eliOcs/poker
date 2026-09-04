@@ -8,6 +8,7 @@ import * as Id from "./id.js";
  * @typedef {object} UserSettings
  * @property {number} volume - Sound volume (0, 0.25, 0.75, or 1)
  * @property {boolean} vibration - Whether the device should vibrate
+ * @property {Record<string, unknown>|undefined} [avatar] - Saved avatar configuration
  */
 
 /**

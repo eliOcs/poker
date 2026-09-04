@@ -5,6 +5,7 @@ import {
   renderProfileSignInModal,
   renderProfileSignUpModal,
 } from "./app-sign-in-modal.js";
+import { DEFAULT_AVATAR } from "./avatar-maker-data.js";
 
 /**
  * @param {any} app
@@ -116,6 +117,18 @@ export function renderReleaseNotesView() {
 
 /**
  * @param {any} app
+ */
+export function renderAvatarMakerView(app) {
+  return html`<phg-avatar-maker
+    .avatar=${app.user?.settings.avatar ?? DEFAULT_AVATAR}
+    .saving=${app._avatarSaving}
+    @avatar-cancel=${app.closeAvatarMaker}
+    @avatar-save=${(event) => app.saveAvatar(event.detail.avatar)}
+  ></phg-avatar-maker>`;
+}
+
+/**
+ * @param {any} app
  * @param {import("lit").TemplateResult} content
  * @param {{ navigationRenderer?: ((shell: any) => import("lit").TemplateResult|string) }} [options]
  */
@@ -137,6 +150,7 @@ export function renderShellView(app, content, options = {}) {
 export function renderShellPageView(app, page) {
   const pageViews = {
     about: () => renderAboutView(),
+    avatar: () => renderAvatarMakerView(app),
     home: () => renderHomeView(),
     mtt_lobby: () => renderMttLobbyView(app),
     player_profile: () => renderPlayerProfileView(app),
@@ -145,7 +159,9 @@ export function renderShellPageView(app, page) {
   };
   const content = (pageViews[page] ?? pageViews.home)();
   return renderShellView(app, content, {
-    navigationRenderer: page === "mtt_lobby" ? () => "" : undefined,
+    navigationRenderer: ["avatar", "mtt_lobby"].includes(page)
+      ? () => ""
+      : undefined,
   });
 }
 

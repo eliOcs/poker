@@ -13,8 +13,8 @@ export const avatarEyeSpritesReady = Promise.all(
     SPRITE_LAYERS.map(async (layer) => {
       const id = `${side}-${layer}`;
       const url = new URL(
-        `./assets/avatar/eyes/sparkle-${id}.png`,
-        import.meta.url,
+        `/assets/avatar/eyes/sparkle-${id}.png`,
+        window.location.origin,
       );
       spriteImages.set(id, await loadImage(url));
     }),
