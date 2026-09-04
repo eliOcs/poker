@@ -55,6 +55,22 @@ kamal app exec -i 'sh'      # Shell into container
 kamal proxy logs            # View proxy logs
 ```
 
+Application containers use Docker's `json-file` logging driver with ten 100 MB
+files, limiting retained logs to approximately 1 GB per container. Kamal limits
+the proxy container log to 10 MB separately.
+
+Logging options apply when a container is created. Roll out a policy change with
+`kamal deploy` (or `kamal redeploy` for an already-published image), then verify
+the running application container:
+
+```bash
+kamal server exec 'docker inspect --format "{{json .HostConfig.LogConfig}}" $(docker ps -q --filter label=service=poker --filter label=role=web | head -n 1)'
+```
+
+The expected application log configuration is `json-file` with `max-size=100m`
+and `max-file=10`. No Docker daemon restart or manual log deletion is required
+for this per-container policy.
+
 ### Infrastructure Management
 
 ```bash
