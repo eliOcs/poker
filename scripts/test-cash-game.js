@@ -1,0 +1,231 @@
+import { chromium } from "@playwright/test";
+import { existsSync } from "node:fs";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
+import { getTablePath } from "../src/shared/routes.js";
+import { DEFAULT as DEFAULT_STAKES } from "../src/shared/stakes.js";
+import { PokerPlayer } from "../test/e2e/utils/poker-player.js";
+import {
+  getAvailableActions,
+  selectRandomAction,
+} from "../test/e2e/utils/random-actions.js";
+import { delay, formatError } from "../test/e2e/utils/stress-helpers.js";
+
+const BOT_COUNT = 5;
+const TABLE_SIZE = 6;
+const BUY_IN_BIG_BLINDS = 100;
+const LOOP_DELAY_MS = 100;
+const BOT_STATE_DIR = path.join(process.cwd(), "test-data", "cash-game-bots");
+
+let stopping = false;
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.once(signal, () => {
+    stopping = true;
+    console.log("\nStopping cash-game bots...");
+  });
+}
+
+function getServerOrigin() {
+  const configuredOrigin = process.env.APP_ORIGIN;
+  if (configuredOrigin) return new URL(configuredOrigin).origin;
+  const host = process.env.DOMAIN || "localhost";
+  const port = process.env.PORT || "3000";
+  return `http://${host}:${port}`;
+}
+
+async function assertServerIsRunning(origin) {
+  try {
+    const response = await fetch(origin);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  } catch (error) {
+    throw new Error(
+      `Poker server is not reachable at ${origin}. Run npm start first. (${formatError(error)})`,
+    );
+  }
+}
+
+/**
+ * @param {import('@playwright/test').Browser} browser
+ * @param {string} origin
+ * @param {number} index
+ * @param {string} statePath
+ */
+async function createBot(browser, origin, index, statePath) {
+  const context = await browser.newContext({
+    baseURL: origin,
+    storageState: existsSync(statePath) ? statePath : undefined,
+  });
+  const page = await context.newPage();
+  return new PokerPlayer(context, page, `Bot ${index + 1}`);
+}
+
+/**
+ * Ensure regular app requests are keyed by the bot's guest session rather than
+ * the shared local IP, then retain that session for later runs.
+ * @param {PokerPlayer} bot
+ * @param {string} statePath
+ */
+async function initializeGuestSession(bot, statePath) {
+  const response = await bot.page.request.get("/api/users/me");
+  if (!response.ok()) {
+    const retryAfter = response.headers()["retry-after"];
+    const retryMessage = retryAfter ? `; retry after ${retryAfter}s` : "";
+    throw new Error(
+      `Guest session initialization failed with HTTP ${response.status()}${retryMessage}`,
+    );
+  }
+  await bot.context.storageState({ path: statePath });
+}
+
+/**
+ * Create a fresh table without visiting the home page, which may redirect a
+ * persisted bot session back to its previous active game.
+ * @param {PokerPlayer} creator
+ * @param {string} origin
+ */
+async function createCashGame(creator, origin) {
+  const response = await creator.page.request.post("/cash", {
+    data: {
+      type: "cash",
+      small: DEFAULT_STAKES.small,
+      big: DEFAULT_STAKES.big,
+      seats: TABLE_SIZE,
+    },
+  });
+  if (!response.ok()) {
+    throw new Error(`Cash game creation failed with HTTP ${response.status()}`);
+  }
+
+  const data = await response.json();
+  if (!data || typeof data.id !== "string" || data.type !== "cash") {
+    throw new Error("Cash game creation returned an invalid response");
+  }
+  return new URL(getTablePath("cash", data.id), origin).href;
+}
+
+/** @param {PokerPlayer} bot */
+async function replenishBot(bot) {
+  const buyInButton = bot.actionPanel.getByRole("button", {
+    name: /^Buy In/,
+  });
+  if (!(await buyInButton.isVisible())) return false;
+  await bot.buyIn(BUY_IN_BIG_BLINDS);
+  return true;
+}
+
+/**
+ * @param {PokerPlayer} bot
+ * @param {number} index
+ * @returns {Promise<string|null>}
+ */
+async function takeRandomAction(bot, index) {
+  let attemptedAction;
+  try {
+    if (!(await bot.isMyTurn())) return null;
+    const availableActions = await getAvailableActions(bot);
+    if (availableActions.length === 0) {
+      throw new Error("turn is active but no player actions are available");
+    }
+    attemptedAction = selectRandomAction(availableActions);
+    await (attemptedAction === "bet" || attemptedAction === "raise"
+      ? bot.actWithRandomPreset(attemptedAction)
+      : bot.act(attemptedAction));
+    return attemptedAction;
+  } catch (error) {
+    const action = attemptedAction ? ` (${attemptedAction})` : "";
+    console.log(
+      `Bot ${index + 1} action failed${action}: ${formatError(error)}`,
+    );
+    return null;
+  }
+}
+
+/** @param {PokerPlayer[]} bots */
+async function callClockIfAvailable(bots) {
+  for (const [index, bot] of bots.entries()) {
+    if (await bot.hasAction("callClock")) {
+      try {
+        await bot.callClock();
+        return;
+      } catch (error) {
+        console.log(
+          `Bot ${index + 1} call clock failed: ${formatError(error)}`,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * @param {PokerPlayer} bot
+ * @param {number} index
+ */
+async function replenishBotSafely(bot, index) {
+  try {
+    return await replenishBot(bot);
+  } catch (error) {
+    console.log(`Bot ${index + 1} buy-in failed: ${formatError(error)}`);
+    return false;
+  }
+}
+
+/** @param {PokerPlayer[]} bots */
+async function runBots(bots) {
+  while (!stopping) {
+    const replenished = await Promise.all(
+      bots.map((bot, index) => replenishBotSafely(bot, index)),
+    );
+    replenished.forEach((didReplenish, index) => {
+      if (didReplenish) console.log(`Bot ${index + 1} bought back in`);
+    });
+
+    const actions = await Promise.all(
+      bots.map((bot, index) => takeRandomAction(bot, index)),
+    );
+    if (!actions.some(Boolean)) await callClockIfAvailable(bots);
+    await delay(LOOP_DELAY_MS);
+  }
+}
+
+async function main() {
+  const origin = getServerOrigin();
+  await assertServerIsRunning(origin);
+
+  const browser = await chromium.launch({ headless: true });
+  /** @type {PokerPlayer[]} */
+  const bots = [];
+
+  try {
+    await mkdir(BOT_STATE_DIR, { recursive: true });
+    for (let index = 0; index < BOT_COUNT; index++) {
+      const statePath = path.join(BOT_STATE_DIR, `bot-${index + 1}.json`);
+      const bot = await createBot(browser, origin, index, statePath);
+      await initializeGuestSession(bot, statePath);
+      bots.push(bot);
+    }
+
+    const gameUrl = await createCashGame(bots[0], origin);
+    for (const bot of bots) await bot.joinGameByUrl(gameUrl);
+
+    for (const [index, bot] of bots.entries()) {
+      await bot.sit(index);
+      await bot.buyIn(BUY_IN_BIG_BLINDS);
+      await bot.setName(`Bot ${index + 1}`);
+    }
+
+    await bots[0].startGame();
+    console.log(`\nCash game ready: ${gameUrl}`);
+    console.log("Five headless bots are playing. Seat 6 is open for you.");
+    console.log("Press Ctrl+C to stop.\n");
+
+    await runBots(bots);
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch((error) => {
+  console.error(formatError(error));
+  process.exitCode = 1;
+});

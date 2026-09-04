@@ -12,6 +12,10 @@ import {
   UNSTABLE_TOURNAMENT_LATENCY_MS,
   waitForUnstableTournamentRecovery,
 } from "./utils/websocket-faults.js";
+import {
+  getAvailableActions,
+  selectRandomAction,
+} from "./utils/random-actions.js";
 import * as Stress from "./utils/stress-helpers.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
@@ -19,14 +23,6 @@ import * as Stress from "./utils/stress-helpers.js";
 // Tournament E2E test - plays many hands with aggressive/passive mix strategy
 test.setTimeout(20 * 60 * 1000);
 
-const WEIGHTED_ACTIONS = [
-  { threshold: 0.02, action: "allIn" },
-  { threshold: 0.25, action: "raise" },
-  { threshold: 0.25, action: "bet" },
-  { threshold: 0.6, action: "call" },
-];
-
-const PASSIVE_FALLBACKS = ["check", "fold"];
 const STALL_TIMEOUT_MS = 15000;
 const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
 const USER_CREATION_BATCH_LIMIT = 8;
@@ -145,42 +141,6 @@ async function collectGameSnapshots(
   }
 
   return { winnerName, removedCount, maxHandNumber };
-}
-
-/**
- * Get available actions for a player
- * @param {import('./utils/poker-player.js').PokerPlayer} player
- * @returns {Promise<string[]>}
- */
-async function getAvailableActions(player) {
-  const actions = [];
-  if (await player.hasAction("rebuy")) actions.push("rebuy");
-  if (await player.hasAction("leave")) actions.push("leave");
-  if (await player.hasAction("check")) actions.push("check");
-  if (await player.hasAction("call")) actions.push("call");
-  if (await player.hasAction("fold")) actions.push("fold");
-  if (await player.hasAction("bet")) actions.push("bet");
-  if (await player.hasAction("raise")) actions.push("raise");
-  if (await player.hasAction("allIn")) actions.push("allIn");
-  if (await player.hasAction("callClock")) actions.push("callClock");
-  return actions;
-}
-
-/**
- * Select an action using random weighted strategy
- * @param {string[]} availableActions
- * @returns {string}
- */
-function selectRandomAction(availableActions) {
-  if (availableActions.includes("rebuy")) {
-    return Math.random() < 0.5 ? "rebuy" : "leave";
-  }
-  const roll = Math.random();
-  for (const { threshold, action } of WEIGHTED_ACTIONS) {
-    if (roll < threshold && availableActions.includes(action)) return action;
-  }
-  const fallback = PASSIVE_FALLBACKS.find((a) => availableActions.includes(a));
-  return fallback || availableActions[0];
 }
 
 /**
