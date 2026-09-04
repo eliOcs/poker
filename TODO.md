@@ -1,6 +1,8 @@
 # To do
 
-- /home/elio/work/poker/prod-mantainance.md
+- People don't notice who won the hand
+- Send notification when MTT starts
+- Sidepot bets
 - https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
 - Avatar creator: wii style but pixel art
 - hand strength modal
