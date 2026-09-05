@@ -1,5 +1,4 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
-import { sendKeys } from "@web/test-runner-commands";
 import { OriginalFetch } from "./setup.js";
 import { createMockTournamentView } from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
@@ -118,29 +117,6 @@ describe("phg-app sign in", () => {
     expect(signInRequestBody).to.deep.equal({
       email: "player@example.com",
       returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
-    });
-  });
-
-  it("submits sign up when Enter is pressed in the email input", async () => {
-    const modal = await fixture(html`
-      <phg-app-sign-in-modal
-        mode="sign-up"
-        prefill-name="Table Captain"
-      ></phg-app-sign-in-modal>
-    `);
-    let request = null;
-    modal.addEventListener("request-sign-in", (event) => {
-      request = event.detail;
-    });
-
-    const emailInput = modal.querySelector("#profile-sign-in-email");
-    emailInput.value = "player@example.com";
-    emailInput.focus();
-    await sendKeys({ press: "Enter" });
-
-    expect(request).to.deep.equal({
-      email: "player@example.com",
-      name: "Table Captain",
     });
   });
 
@@ -479,14 +455,14 @@ describe("phg-app sign in", () => {
     element.path = "/mtt";
     await element.updateComplete;
     await element.querySelector("phg-tournaments")?.updateComplete;
-    expect(element._showProfileSignUp).to.be.false;
+    expect(element._modal).to.be.undefined;
     expect(element?.querySelector("phg-app-sign-in-modal")).to.not.exist;
 
     element
       ?.querySelector("phg-tournaments")
       ?.querySelector("button.button")
       ?.click();
-    await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
+    await waitUntil(() => element._modal === "sign-up", { timeout: 2000 });
 
     expect(element?.querySelector("phg-app-sign-in-modal")?.mode).to.equal(
       "sign-up",
@@ -511,6 +487,9 @@ describe("phg-app sign in", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     element.openProfileSignIn();
     await element.updateComplete;
+    expect(new URL(window.location.href).searchParams.get("modal")).to.equal(
+      "sign-in",
+    );
 
     let modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
@@ -520,6 +499,9 @@ describe("phg-app sign in", () => {
     modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
     expect(modal.mode).to.equal("sign-up");
+    expect(new URL(window.location.href).searchParams.get("modal")).to.equal(
+      "sign-up",
+    );
     expect(modal.querySelector(".sign-in-switch").textContent).to.include(
       "Have an account?",
     );
@@ -530,6 +512,9 @@ describe("phg-app sign in", () => {
     modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;
     expect(modal.mode).to.equal("sign-in");
+    expect(new URL(window.location.href).searchParams.get("modal")).to.equal(
+      "sign-in",
+    );
     expect(modal.querySelector(".sign-in-switch").textContent).to.include(
       "New?",
     );

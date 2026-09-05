@@ -44,7 +44,10 @@ export function renderGameView(app, liveRoute) {
       .game=${app.game}
       .socialAction=${app.socialAction}
       .user=${app.user}
-    ></phg-game>`;
+    ></phg-game
+    >${renderProfileSettingsModal(app)}${renderProfileSignInModal(
+      app,
+    )}${renderProfileSignUpModal(app)}`;
 }
 
 /**
@@ -120,7 +123,7 @@ export function renderReleaseNotesView() {
  */
 export function renderAvatarMakerView(app) {
   return html`<phg-avatar-maker
-    .avatar=${app._reopenProfileSettingsAfterAvatar
+    .avatar=${app._avatarUsesSettingsDraft
       ? (app._settingsAvatar ?? DEFAULT_AVATAR)
       : (app.user?.settings.avatar ?? DEFAULT_AVATAR)}
     @avatar-cancel=${app.closeAvatarMaker}

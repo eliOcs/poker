@@ -1,5 +1,4 @@
-import { fixture, expect, html } from "@open-wc/testing";
-import { sendKeys } from "@web/test-runner-commands";
+import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import {
   OriginalWebSocket,
   MockWebSocket,
@@ -23,139 +22,17 @@ describe("phg-game sign up", () => {
     globalThis.WebSocket = OriginalWebSocket;
   });
 
-  it("opens sign-up modal when sign-up button clicked", async () => {
+  it("requests the shared sign-up modal when sign-up is clicked", async () => {
     await element.updateComplete;
 
+    const openSignUp = oneEvent(element, "open-sign-up");
     const signUpBtn = Array.from(element.querySelectorAll("button")).find(
       (button) => button.textContent.includes("Sign up"),
     );
     signUpBtn.click();
-    await element.updateComplete;
+    const event = await openSignUp;
 
-    const modal = element.querySelector("phg-modal");
-    expect(modal).to.exist;
-    expect(modal.querySelector("h3").textContent).to.equal("Sign up");
-  });
-
-  it("switches between sign-in and sign-up modals from the footer links", async () => {
-    element.showSignIn = true;
-    await element.updateComplete;
-
-    let modal = element.querySelector("phg-modal");
-    let switchLink = element.querySelector(".sign-in-switch-link");
-    expect(modal.textContent.replace(/\s+/g, " ")).to.include("New? Sign up");
-
-    switchLink.click();
-    await element.updateComplete;
-
-    modal = element.querySelector("phg-modal");
-    await modal.updateComplete;
-    expect(modal.querySelector("h3").textContent).to.equal("Sign up");
-    expect(modal.textContent.replace(/\s+/g, " ")).to.include(
-      "Have an account? Sign in",
-    );
-
-    switchLink = element.querySelector(".sign-in-switch-link");
-    switchLink.click();
-    await element.updateComplete;
-
-    modal = element.querySelector("phg-modal");
-    await modal.updateComplete;
-    expect(modal.querySelector("h3").textContent).to.equal("Sign in");
-  });
-
-  it("prefills the required name and includes the email input", async () => {
-    element.user = {
-      id: "test",
-      name: "CurrentName",
-      settings: { volume: 0.75, vibration: true },
-    };
-    element.showSignUp = true;
-    await element.updateComplete;
-
-    const nameInput = element.querySelector("#sign-up-name");
-    const emailInput = element.querySelector("#sign-up-email");
-    const modalText = element
-      .querySelector("phg-modal")
-      .textContent.replace(/\s+/g, " ");
-
-    expect(nameInput).to.exist;
-    expect(nameInput.value).to.equal("CurrentName");
-    expect(nameInput.hasAttribute("required")).to.equal(true);
-    expect(emailInput).to.exist;
-    expect(emailInput.getAttribute("type")).to.equal("email");
-    expect(modalText).to.include("complete the sign up");
-  });
-
-  it("dispatches request-sign-in event with the email and name", async () => {
-    element.showSignUp = true;
-    await element.updateComplete;
-
-    let request = null;
-    element.addEventListener("request-sign-in", (e) => {
-      request = e.detail;
-    });
-
-    const nameInput = /** @type {HTMLInputElement} */ (
-      element.querySelector("#sign-up-name")
-    );
-    const emailInput = /** @type {HTMLInputElement} */ (
-      element.querySelector("#sign-up-email")
-    );
-    nameInput.value = "Table Captain";
-    emailInput.value = "player@example.com";
-
-    element.querySelector(".sign-in-content").requestSubmit();
-    await element.updateComplete;
-
-    expect(request).to.deep.equal({
-      email: "player@example.com",
-      name: "Table Captain",
-    });
+    expect(event.type).to.equal("open-sign-up");
     expect(element.querySelector("phg-modal")).to.not.exist;
-  });
-
-  it("submits when Enter is pressed in the email input", async () => {
-    element.showSignUp = true;
-    await element.updateComplete;
-
-    let request = null;
-    element.addEventListener("request-sign-in", (event) => {
-      request = event.detail;
-    });
-
-    const nameInput = element.querySelector("#sign-up-name");
-    const emailInput = element.querySelector("#sign-up-email");
-    nameInput.value = "Table Captain";
-    emailInput.value = "player@example.com";
-    emailInput.focus();
-    await sendKeys({ press: "Enter" });
-
-    expect(request).to.deep.equal({
-      email: "player@example.com",
-      name: "Table Captain",
-    });
-  });
-
-  it("marks the name invalid and focuses it when submitted empty", async () => {
-    element.showSignUp = true;
-    await element.updateComplete;
-
-    const nameInput = /** @type {HTMLInputElement} */ (
-      element.querySelector("#sign-up-name")
-    );
-    const emailInput = /** @type {HTMLInputElement} */ (
-      element.querySelector("#sign-up-email")
-    );
-    nameInput.value = "";
-    emailInput.value = "player@example.com";
-
-    element.querySelector(".sign-in-content").requestSubmit();
-    await element.updateComplete;
-
-    expect(element._signUpNameInvalid).to.equal(true);
-    expect(nameInput.getAttribute("aria-invalid")).to.equal("true");
-    expect(document.activeElement).to.equal(nameInput);
-    expect(element.querySelector("phg-modal")).to.exist;
   });
 });

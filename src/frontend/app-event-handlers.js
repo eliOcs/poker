@@ -12,7 +12,9 @@ import {
 } from "./app-navigation.js";
 
 function getCurrentReturnPath() {
-  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const url = new URL(window.location.href);
+  url.searchParams.delete("modal");
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 /**

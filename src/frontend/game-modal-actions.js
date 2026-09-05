@@ -1,29 +1,3 @@
-function dispatchToast(host, detail) {
-  host.dispatchEvent(
-    new CustomEvent("toast", {
-      detail,
-      bubbles: true,
-    }),
-  );
-}
-
-function readInput(form, name) {
-  const control = form.elements.namedItem(name);
-  return control instanceof HTMLInputElement ? control : undefined;
-}
-
-function validateRequiredInput(input) {
-  if (input?.value.trim()) return true;
-  input?.focus();
-  return false;
-}
-
-function validateEmailInput(input) {
-  if (input?.value.trim() && input.checkValidity()) return true;
-  input?.focus();
-  return false;
-}
-
 export const gameModalActions = {
   openAccount() {
     if (!this.user?.id) return;
@@ -36,54 +10,15 @@ export const gameModalActions = {
   },
 
   openSettings() {
-    this._syncSettingsFromUser();
-    this.showSettings = true;
-  },
-
-  closeSettings() {
-    this._syncSettingsFromUser();
-    this.showSettings = false;
+    this.dispatchEvent(new CustomEvent("open-settings", { bubbles: true }));
   },
 
   openSignIn() {
-    this._signInInvalid = false;
-    this.showSignIn = true;
-  },
-
-  closeSignIn() {
-    this._signInInvalid = false;
-    this.showSignIn = false;
-  },
-
-  switchToSignUp() {
-    this.closeSignIn();
-    this.openSignUp();
-  },
-
-  clearSignInValidation() {
-    this._signInInvalid = false;
+    this.dispatchEvent(new CustomEvent("open-sign-in", { bubbles: true }));
   },
 
   openSignUp() {
-    this._signUpEmailInvalid = false;
-    this._signUpNameInvalid = false;
-    this.showSignUp = true;
-  },
-
-  closeSignUp() {
-    this._signUpEmailInvalid = false;
-    this._signUpNameInvalid = false;
-    this.showSignUp = false;
-  },
-
-  switchToSignIn() {
-    this.closeSignUp();
-    this.openSignIn();
-  },
-
-  clearSignUpValidation() {
-    this._signUpEmailInvalid = false;
-    this._signUpNameInvalid = false;
+    this.dispatchEvent(new CustomEvent("open-sign-up", { bubbles: true }));
   },
 
   openRanking() {
@@ -102,71 +37,5 @@ export const gameModalActions = {
 
   closeTournamentLevels() {
     this.showTournamentLevels = false;
-  },
-
-  saveSettings(form) {
-    const formData = new FormData(form);
-    const nameValue = formData.get("name");
-    const volumeValue = formData.get("volume");
-    const vibrationValue = formData.get("vibration");
-    const name = typeof nameValue === "string" ? nameValue.trim() : "";
-    this.dispatchEvent(
-      new CustomEvent("update-user", {
-        detail: {
-          name,
-          settings: {
-            volume:
-              typeof volumeValue === "string"
-                ? Number(volumeValue)
-                : this.volume,
-            vibration:
-              typeof vibrationValue === "string"
-                ? vibrationValue === "true"
-                : this.vibration,
-          },
-        },
-        bubbles: true,
-      }),
-    );
-    dispatchToast(this, { message: "Settings saved", variant: "success" });
-    this.showSettings = false;
-  },
-
-  requestSignIn(form) {
-    const input = readInput(form, "email");
-    const email = input?.value.trim() ?? "";
-    if (!validateEmailInput(input)) {
-      this._signInInvalid = true;
-      return;
-    }
-    this._signInInvalid = false;
-    this.dispatchEvent(
-      new CustomEvent("request-sign-in", {
-        detail: { email },
-        bubbles: true,
-      }),
-    );
-    this.showSignIn = false;
-  },
-
-  requestSignUp(form) {
-    const nameInput = readInput(form, "name");
-    const emailInput = readInput(form, "email");
-    const name = nameInput?.value.trim() ?? "";
-    const email = emailInput?.value.trim() ?? "";
-
-    this._signUpNameInvalid = !validateRequiredInput(nameInput);
-    if (this._signUpNameInvalid) return;
-
-    this._signUpEmailInvalid = !validateEmailInput(emailInput);
-    if (this._signUpEmailInvalid) return;
-
-    this.dispatchEvent(
-      new CustomEvent("request-sign-in", {
-        detail: { email, name },
-        bubbles: true,
-      }),
-    );
-    this.showSignUp = false;
   },
 };

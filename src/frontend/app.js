@@ -34,7 +34,7 @@ import * as ws from "./app-websocket.js";
 import * as mttRouting from "./app-mtt-routing.js";
 import { appSignInActions } from "./app-sign-in-actions.js";
 import { appProfileActions } from "./app-profile-actions.js";
-import { navigateApp } from "./app-navigation.js";
+import { getAppModal, navigateApp } from "./app-navigation.js";
 
 class App extends LitElement {
   createRenderRoot() {
@@ -63,9 +63,7 @@ class App extends LitElement {
       _mttError: { state: true },
       _mttActionPending: { state: true },
       _playerProfileId: { state: true },
-      _showProfileSettings: { state: true },
-      _showProfileSignIn: { state: true },
-      _showProfileSignUp: { state: true },
+      _modal: { state: true },
       _settingsVolume: { state: true },
       _settingsVibration: { state: true },
       _settingsName: { state: true },
@@ -102,14 +100,13 @@ class App extends LitElement {
     this._mttActionPending = false;
     this._allowMttLobby = false;
     this._playerProfileId = undefined;
-    this._showProfileSettings = false;
-    this._showProfileSignIn = false;
-    this._showProfileSignUp = false;
+    this._modal = getAppModal(window.location.href);
+    this._modalHistoryEntry = history.state?.modalEntry === true;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
     this._settingsName = "";
     this._settingsAvatar = undefined;
-    this._reopenProfileSettingsAfterAvatar = false;
+    this._avatarUsesSettingsDraft = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -224,6 +221,10 @@ class App extends LitElement {
         this.user = await res.json();
         this._settingsVolume = this.user.settings.volume;
         this._settingsVibration = this.user.settings.vibration;
+        if (this._modal === "settings") {
+          this._settingsName = this.user.name ?? "";
+          this._settingsAvatar = this.user.settings.avatar;
+        }
       }
     } catch {
       // Ignore fetch errors - user will be created on next request
@@ -361,13 +362,8 @@ class App extends LitElement {
       const route = parseAppPath(this.path);
       syncAppRouteState(this, route);
       if (route.page === "avatar") void import("./avatar-maker.js");
-      if (
-        previousPath === "/avatar" &&
-        route.page !== "avatar" &&
-        this._reopenProfileSettingsAfterAvatar
-      ) {
-        this._reopenProfileSettingsAfterAvatar = false;
-        this._showProfileSettings = true;
+      if (previousPath === "/avatar" && route.page !== "avatar") {
+        this._avatarUsesSettingsDraft = false;
       }
     }
   }

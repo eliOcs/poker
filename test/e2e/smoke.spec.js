@@ -39,7 +39,7 @@ test.describe("Poker Game Smoke Test", () => {
     ).toBeVisible();
 
     await avatarMaker.getByRole("button", { name: "Done" }).click();
-    await expect(player1.page).toHaveURL(/\/$/);
+    await expect(player1.page).toHaveURL(/\/\?modal=settings$/);
     await expect(
       player1.page.getByRole("heading", { name: "Settings" }),
     ).toBeVisible();
@@ -309,7 +309,7 @@ test.describe("Poker Game Smoke Test", () => {
     // === VERIFY SIGNED-IN ACCOUNT LINK ===
     await player1.joinGame(gameId);
     await expect(player1.game.locator(".drawer-account")).toContainText(
-      "Player 1",
+      "Profile",
     );
     const accountPath = await player1.game
       .locator(".drawer-account")

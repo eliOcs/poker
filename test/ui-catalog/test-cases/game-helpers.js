@@ -24,7 +24,7 @@ export const emptyTableSeats = () =>
   }));
 
 // Helper to create a game component with mock data
-export function gameView(gameState) {
+export function gameView(gameState, appOverrides = {}) {
   const gameKind = gameState.tournament ? "sitngo" : "cash";
   return renderGameView(
     {
@@ -32,6 +32,7 @@ export function gameView(gameState) {
       gameConnectionStatus: "connected",
       socialAction: undefined,
       user: undefined,
+      ...appOverrides,
     },
     { kind: gameKind, tableId: "test123" },
   );

@@ -470,6 +470,21 @@ const GAME_TEST_CASES = {
           ...emptySeats(7),
         ],
       }),
+      {
+        user: {
+          id: "player-you",
+          name: "You",
+          settings: { volume: 0.75, vibration: true },
+        },
+        _modal: "settings",
+        _settingsName: "You",
+        _settingsVolume: 0.75,
+        _settingsVibration: true,
+        _settingsAvatar: undefined,
+        closeProfileSettings() {},
+        saveProfileSettings() {},
+        openAvatarMakerFromSettings() {},
+      },
     ),
 };
 

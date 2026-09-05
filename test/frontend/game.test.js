@@ -1,12 +1,10 @@
-import { fixture, expect, html } from "@open-wc/testing";
+import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import {
   OriginalWebSocket,
   MockWebSocket,
   createMockGameState,
   createMockGameAtFlop,
   createMockTournamentGameState,
-  mockOccupiedSeat,
-  mockEmptySeat,
 } from "./setup.js";
 
 // Helper to find button.button by text content
@@ -185,39 +183,40 @@ describe("phg-game", () => {
       expect(drawerText).to.not.include("Rankings");
     });
 
-    it("opens settings modal when settings button clicked", async () => {
+    it("requests the shared settings modal when settings is clicked", async () => {
       element.game = createMockGameState();
       element._mql = { matches: false, removeEventListener() {} };
       element._drawerOpen = true;
       await element.updateComplete;
 
+      const openSettings = oneEvent(element, "open-settings");
       const settingsBtn = Array.from(element.querySelectorAll("button")).find(
         (button) => button.textContent.includes("Settings"),
       );
       settingsBtn.click();
+      await openSettings;
       await element.updateComplete;
 
-      const modal = element.querySelector("phg-modal");
-      expect(modal).to.exist;
+      expect(element.querySelector("phg-modal")).to.not.exist;
       expect(element._drawerOpen).to.be.false;
     });
 
-    it("opens sign-in modal when sign-in button clicked", async () => {
+    it("requests the shared sign-in modal when sign-in is clicked", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
 
+      const openSignIn = oneEvent(element, "open-sign-in");
       const signInBtn = Array.from(element.querySelectorAll("button")).find(
         (button) => button.textContent.includes("Sign in"),
       );
       signInBtn.click();
-      await element.updateComplete;
+      const event = await openSignIn;
 
-      const modal = element.querySelector("phg-modal");
-      expect(modal).to.exist;
-      expect(modal.querySelector("h3").textContent).to.equal("Sign in");
+      expect(event.type).to.equal("open-sign-in");
+      expect(element.querySelector("phg-modal")).to.not.exist;
     });
 
-    it("shows signed-in account item with player name", async () => {
+    it("shows a Profile item when signed in", async () => {
       element.game = createMockGameState();
       element.user = {
         id: "player123",
@@ -228,7 +227,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const accountLink = Array.from(element.querySelectorAll("a")).find(
-        (link) => link.textContent.includes("Elio"),
+        (link) => link.textContent.includes("Profile"),
       );
       expect(accountLink).to.exist;
       expect(accountLink.classList.contains("drawer-account")).to.equal(true);
@@ -250,7 +249,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const accountLink = Array.from(element.querySelectorAll("a")).find(
-        (link) => link.textContent.includes("Elio"),
+        (link) => link.textContent.includes("Profile"),
       );
       expect(accountLink).to.exist;
       expect(accountLink.getAttribute("href")).to.equal("/players/player123");
@@ -258,7 +257,7 @@ describe("phg-game", () => {
       expect(accountLink.getAttribute("rel")).to.equal("noopener noreferrer");
     });
 
-    it("falls back to player id for signed-in account item without name", async () => {
+    it("uses the Profile label when the signed-in player has no name", async () => {
       element.game = createMockGameState();
       element.user = {
         id: "player123",
@@ -269,7 +268,7 @@ describe("phg-game", () => {
       await element.updateComplete;
 
       const accountLink = Array.from(element.querySelectorAll("a")).find(
-        (link) => link.textContent.includes("player123"),
+        (link) => link.textContent.includes("Profile"),
       );
       expect(accountLink).to.exist;
       expect(accountLink.classList.contains("drawer-account")).to.equal(true);
@@ -304,182 +303,6 @@ describe("phg-game", () => {
       const modal = element.querySelector("phg-modal");
       expect(modal).to.not.exist;
       expect(navigated).to.equal(false);
-    });
-
-    it("settings modal contains name input", async () => {
-      element.game = createMockGameState();
-      element.showSettings = true;
-      await element.updateComplete;
-
-      const input = element.querySelector("#name-input");
-      expect(input).to.exist;
-      expect(input.getAttribute("placeholder")).to.include("name");
-    });
-
-    it("sign-in modal contains email input and intro copy", async () => {
-      element.game = createMockGameState();
-      element.showSignIn = true;
-      await element.updateComplete;
-
-      const input = element.querySelector("#sign-in-email");
-      const modalText = element
-        .querySelector("phg-modal")
-        .textContent.replace(/\s+/g, " ");
-
-      expect(input).to.exist;
-      expect(input.getAttribute("type")).to.equal("email");
-      expect(modalText).to.include("complete the sign in");
-      expect(modalText).to.not.include("Keep your setup");
-      expect(modalText).to.not.include("Review previous games");
-    });
-
-    it("closes modal when cancel button clicked", async () => {
-      element.game = createMockGameState();
-      element.showSettings = true;
-      await element.updateComplete;
-
-      const cancelBtn = element.querySelector("button.button--muted");
-      cancelBtn.click();
-      await element.updateComplete;
-
-      const modal = element.querySelector("phg-modal");
-      expect(modal).to.not.exist;
-    });
-
-    it("closes modal when overlay clicked", async () => {
-      element.game = createMockGameState();
-      element.showSettings = true;
-      await element.updateComplete;
-
-      const modal = element.querySelector("phg-modal");
-      const overlay = modal.querySelector(".modal-overlay");
-      overlay.click();
-      await element.updateComplete;
-
-      const closedModal = element.querySelector("phg-modal");
-      expect(closedModal).to.not.exist;
-    });
-
-    it("sends update-user and preserves an unmatched volume", async () => {
-      element.game = createMockGameState({
-        seats: [
-          { ...mockOccupiedSeat, isCurrentPlayer: true },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 2 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 3 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 4 }] },
-          { ...mockEmptySeat, actions: [{ action: "sit", seat: 5 }] },
-        ],
-      });
-      element.volume = 0.5;
-      element.showSettings = true;
-      await element.updateComplete;
-
-      let sentMessage = null;
-      element.addEventListener("update-user", (e) => {
-        sentMessage = e.detail;
-      });
-
-      const input = element.querySelector("#name-input");
-      input.value = "TestPlayer";
-
-      const saveBtn = element.querySelector("button.button--action");
-      saveBtn.click();
-
-      expect(sentMessage).to.exist;
-      expect(sentMessage.name).to.equal("TestPlayer");
-      expect(sentMessage.settings).to.deep.equal({
-        volume: 0.5,
-        vibration: true,
-      });
-    });
-
-    it("closes modal after saving", async () => {
-      element.game = createMockGameState();
-      element.showSettings = true;
-      await element.updateComplete;
-
-      let toast = null;
-      element.addEventListener("toast", (e) => {
-        toast = e.detail;
-      });
-
-      const saveBtn = element.querySelector("button.button--action");
-      saveBtn.click();
-      await element.updateComplete;
-
-      const modal = element.querySelector("phg-modal");
-      expect(modal).to.not.exist;
-      expect(toast).to.deep.equal({
-        message: "Settings saved",
-        variant: "success",
-      });
-    });
-
-    it("dispatches request-sign-in event with the email", async () => {
-      element.game = createMockGameState();
-      element.showSignIn = true;
-      await element.updateComplete;
-
-      let request = null;
-      element.addEventListener("request-sign-in", (e) => {
-        request = e.detail;
-      });
-
-      const input = /** @type {HTMLInputElement} */ (
-        element.querySelector("#sign-in-email")
-      );
-      input.value = "player@example.com";
-
-      element.querySelector(".sign-in-content").requestSubmit();
-      await element.updateComplete;
-
-      expect(request).to.deep.equal({ email: "player@example.com" });
-      expect(element.querySelector("phg-modal")).to.not.exist;
-    });
-
-    it("shows the vibration toggle in settings", async () => {
-      element.game = createMockGameState();
-      element.showSettings = true;
-      await element.updateComplete;
-
-      const modalText = element
-        .querySelector("phg-modal")
-        .textContent.replace(/\s+/g, " ");
-
-      expect(modalText).to.include("Vibration");
-    });
-
-    it("marks sign-in email invalid and focuses it when submitted empty", async () => {
-      element.game = createMockGameState();
-      element.showSignIn = true;
-      await element.updateComplete;
-
-      const input = /** @type {HTMLInputElement} */ (
-        element.querySelector("#sign-in-email")
-      );
-
-      element.querySelector(".sign-in-content").requestSubmit();
-      await element.updateComplete;
-
-      expect(element._signInInvalid).to.equal(true);
-      expect(input.getAttribute("aria-invalid")).to.equal("true");
-      expect(document.activeElement).to.equal(input);
-      expect(element.querySelector("phg-modal")).to.exist;
-    });
-
-    it("pre-fills input with current user name", async () => {
-      element.game = createMockGameState();
-      element.user = {
-        id: "test",
-        name: "CurrentName",
-        settings: { volume: 0.75, vibration: true },
-      };
-      element.showSettings = true;
-      await element.updateComplete;
-
-      const input = element.querySelector("#name-input");
-      expect(input.value).to.equal("CurrentName");
     });
   });
 

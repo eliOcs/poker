@@ -63,17 +63,17 @@ describe("phg-seat", () => {
     expect(foundOccupied).to.be.true;
   });
 
-  it("opens settings modal when current player seat is clicked", async () => {
+  it("requests the shared settings modal when current player seat is clicked", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
     const seat = element.querySelector("phg-seat.current-player");
     await seat.updateComplete;
+    const eventPromise = oneEvent(element, "open-settings");
     seat.click();
-    await element.updateComplete;
 
-    const input = element.querySelector("#name-input");
-    expect(input).to.exist;
+    const event = await eventPromise;
+    expect(event.type).to.equal("open-settings");
   });
 
   it("opens settings from keyboard on current player seat", async () => {

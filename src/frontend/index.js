@@ -16,9 +16,6 @@ import { renderDrawer } from "./drawer.js";
 import {
   renderRankingModal,
   renderTournamentLevelsModal,
-  renderSettingsModal,
-  renderSignInModal,
-  renderSignUpModal,
   renderEmoteModal,
   renderChatModal,
 } from "./game-modals.js";
@@ -47,9 +44,6 @@ export class Game extends LitElement {
       game: { type: Object },
       socialAction: { type: Object },
       user: { type: Object },
-      showSettings: { type: Boolean },
-      showSignIn: { type: Boolean },
-      showSignUp: { type: Boolean },
       showRanking: { type: Boolean },
       showTournamentLevels: { type: Boolean },
       showEmotePicker: { type: Boolean },
@@ -58,9 +52,6 @@ export class Game extends LitElement {
       vibration: { type: Boolean },
       _drawerOpen: { type: Boolean, state: true },
       _copied: { type: Boolean, state: true },
-      _signInInvalid: { type: Boolean, state: true },
-      _signUpEmailInvalid: { type: Boolean, state: true },
-      _signUpNameInvalid: { type: Boolean, state: true },
     };
   }
 
@@ -78,9 +69,6 @@ export class Game extends LitElement {
     this.socialAction = undefined;
     /** @type {User | undefined} */
     this.user = undefined;
-    this.showSettings = false;
-    this.showSignIn = false;
-    this.showSignUp = false;
     this.showRanking = false;
     this.showTournamentLevels = false;
     this.showEmotePicker = false;
@@ -89,9 +77,6 @@ export class Game extends LitElement {
     this.vibration = true;
     this._drawerOpen = false;
     this._copied = false;
-    this._signInInvalid = false;
-    this._signUpEmailInvalid = false;
-    this._signUpNameInvalid = false;
     this._onMediaChange = (e) => {
       this._drawerOpen = e.matches;
     };
@@ -157,16 +142,6 @@ export class Game extends LitElement {
       this.vibration = userVibration;
       Audio.setVibrationEnabled(this.vibration);
     }
-  }
-
-  setVolume(v) {
-    this.volume = v;
-    Audio.setVolume(v);
-  }
-
-  setVibration(enabled) {
-    this.vibration = enabled;
-    Audio.setVibrationEnabled(enabled);
   }
 
   send(message) {
@@ -484,9 +459,7 @@ export class Game extends LitElement {
           this.openTournamentLevels();
         })}
         ${renderRankingModal(this)} ${renderTournamentLevelsModal(this)}
-        ${renderSettingsModal(this)} ${renderSignInModal(this)}
-        ${renderSignUpModal(this)} ${renderEmoteModal(this)}
-        ${renderChatModal(this)}
+        ${renderEmoteModal(this)} ${renderChatModal(this)}
       </div>
     `;
   }

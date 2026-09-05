@@ -16,7 +16,7 @@ export class PokerPlayer extends PokerPlayerActions {
       .getByRole("button", { name: "Settings" });
     await settingsButton.waitFor();
     await settingsButton.evaluate((button) => button.click());
-    await this.game.locator("#name-input").waitFor();
+    await this.page.locator("#profile-settings-name-input").waitFor();
   }
 
   /**
@@ -27,19 +27,26 @@ export class PokerPlayer extends PokerPlayerActions {
     await this.openSettings();
 
     if (options.name !== undefined) {
-      const input = this.game.locator("#name-input");
+      const input = this.page.locator("#profile-settings-name-input");
       await input.fill(options.name);
     }
 
     if (options.volumeLabel) {
-      await this.game
+      await this.page
+        .locator("phg-modal")
         .locator(".volume-slider")
+        .first()
         .locator("label", { hasText: options.volumeLabel })
         .click();
     }
 
-    await this.game.getByRole("button", { name: "Save" }).click();
-    await this.game.locator("#name-input").waitFor({ state: "hidden" });
+    await this.page
+      .locator("phg-modal")
+      .getByRole("button", { name: "Save" })
+      .click();
+    await this.page
+      .locator("#profile-settings-name-input")
+      .waitFor({ state: "hidden" });
   }
 
   /**
@@ -60,7 +67,7 @@ export class PokerPlayer extends PokerPlayerActions {
       .getByRole("button", { name: "Sign in", exact: true });
     await signInButton.waitFor();
     await signInButton.evaluate((button) => button.click());
-    await this.game.locator("#sign-in-email").waitFor();
+    await this.page.locator("#profile-sign-in-email").waitFor();
   }
 
   /**
@@ -69,8 +76,11 @@ export class PokerPlayer extends PokerPlayerActions {
    */
   async requestSignIn(email) {
     await this.openSignIn();
-    await this.game.locator("#sign-in-email").fill(email);
-    await this.game.getByRole("button", { name: "Send sign-in link" }).click();
+    await this.page.locator("#profile-sign-in-email").fill(email);
+    await this.page
+      .locator("phg-app-sign-in-modal")
+      .getByRole("button", { name: "Send sign-in link" })
+      .click();
   }
 
   /**

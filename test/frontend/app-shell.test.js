@@ -82,7 +82,7 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
-      link.textContent.includes("Elio"),
+      link.textContent.includes("Profile"),
     );
     expect(accountLink).to.exist;
     expect(accountLink.getAttribute("href")).to.equal("/players/player2");
@@ -105,7 +105,7 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
-      link.textContent.includes("Elio"),
+      link.textContent.includes("Profile"),
     );
     expect(accountLink).to.exist;
     expect(accountLink.classList.contains("drawer-account")).to.equal(true);
@@ -129,7 +129,7 @@ describe("phg-app-shell", () => {
     await element.updateComplete;
 
     const accountLink = Array.from(element.querySelectorAll("a")).find((link) =>
-      link.textContent.includes("Elio"),
+      link.textContent.includes("Profile"),
     );
     expect(accountLink.classList.contains("active")).to.equal(true);
   });

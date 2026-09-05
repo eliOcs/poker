@@ -1,17 +1,19 @@
+import { closeAppModal, openAppModal } from "./app-navigation.js";
+
 export const appSignInActions = {
-  openProfileSignIn() {
-    this._showProfileSignIn = true;
+  openProfileSignIn(options = {}) {
+    openAppModal(this, "sign-in", options);
   },
 
   closeProfileSignIn() {
-    this._showProfileSignIn = false;
+    closeAppModal(this);
   },
 
-  openProfileSignUp() {
-    this._showProfileSignUp = true;
+  openProfileSignUp(options = {}) {
+    openAppModal(this, "sign-up", options);
   },
 
   closeProfileSignUp() {
-    this._showProfileSignUp = false;
+    closeAppModal(this);
   },
 };

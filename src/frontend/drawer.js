@@ -1,7 +1,6 @@
 import { html } from "lit";
 import { getHistoryPath } from "../shared/routes.js";
 import { ICONS } from "./icons.js";
-import { formatPlayerLabel } from "./player-label.js";
 import {
   renderHistoryItem,
   renderMttNavigationDrawer,
@@ -137,11 +136,6 @@ function renderMttDrawer(game) {
 function renderCashDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
   const historyPath = getHistoryPath(game.gameId);
-  const accountLabel = formatPlayerLabel(
-    game.user?.name,
-    game.user?.id,
-    "Sign in",
-  );
   const isSignedIn = !!game.user?.email;
   const mainItems = html`
     <button
@@ -184,7 +178,7 @@ function renderCashDrawer(game) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          ${ICONS.signIn} ${accountLabel}
+          ${ICONS.signIn} Profile
         </a>`
       : html`<button
             type="button"

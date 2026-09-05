@@ -13,7 +13,7 @@ const SETTINGS_TURN_VIBRATION_OPTIONS = [
  * @param {any} app
  */
 export function renderProfileSettingsModal(app) {
-  if (!app._showProfileSettings) return "";
+  if (app._modal !== "settings") return "";
 
   return renderModal(
     "Settings",

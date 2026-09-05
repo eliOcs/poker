@@ -179,13 +179,12 @@ customElements.define("phg-app-sign-in-modal", AppSignInModal);
  * @param {any} app
  */
 export function renderProfileSignInModal(app) {
-  if (!app._showProfileSignIn) return "";
+  if (app._modal !== "sign-in") return "";
   return html`<phg-app-sign-in-modal
     mode="sign-in"
     @close=${() => app.closeProfileSignIn()}
     @switch-mode=${() => {
-      app.closeProfileSignIn();
-      app.openProfileSignUp();
+      app.openProfileSignUp({ replace: true });
     }}
   ></phg-app-sign-in-modal>`;
 }
@@ -194,14 +193,13 @@ export function renderProfileSignInModal(app) {
  * @param {any} app
  */
 export function renderProfileSignUpModal(app) {
-  if (!app._showProfileSignUp) return "";
+  if (app._modal !== "sign-up") return "";
   return html`<phg-app-sign-in-modal
     mode="sign-up"
     .prefillName=${app.user?.name ?? ""}
     @close=${() => app.closeProfileSignUp()}
     @switch-mode=${() => {
-      app.closeProfileSignUp();
-      app.openProfileSignIn();
+      app.openProfileSignIn({ replace: true });
     }}
   ></phg-app-sign-in-modal>`;
 }

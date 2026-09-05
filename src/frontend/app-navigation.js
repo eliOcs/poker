@@ -1,8 +1,9 @@
 /**
- * @typedef {{ allowMttLobby?: boolean }} AppNavigationState
+ * @typedef {{ allowMttLobby?: boolean, modalEntry?: boolean }} AppNavigationState
  * @typedef {{ path: string, allowMttLobby?: boolean }} AppNavigationDetail
  */
 
+const APP_MODALS = new Set(["settings", "sign-in", "sign-up"]);
 const handledNavigationRoutes = new Map();
 
 function browserNavigation() {
@@ -23,6 +24,18 @@ function routeUrl(url) {
 
 function normalizeUrl(path) {
   return new URL(path, window.location.origin);
+}
+
+/**
+ * @param {URL|string} url
+ * @returns {"settings"|"sign-in"|"sign-up"|undefined}
+ */
+export function getAppModal(url) {
+  const parsedUrl = typeof url === "string" ? normalizeUrl(url) : url;
+  const value = parsedUrl.searchParams.get("modal");
+  return value && APP_MODALS.has(value)
+    ? /** @type {any} */ (value)
+    : undefined;
 }
 
 function rememberHandledNavigation(route) {
@@ -47,22 +60,28 @@ function consumeHandledNavigation(route) {
 /**
  * @param {any} app
  * @param {URL|string} url
- * @param {AppNavigationState|undefined} [state]
+ * @param {AppNavigationState|null|undefined} [state]
  */
 export function applyAppRoute(app, url, state = {}) {
   const nextUrl = typeof url === "string" ? normalizeUrl(url) : url;
-  app._setMttLobbyOverride(Boolean(state.allowMttLobby));
+  const navigationState = state ?? {};
+  app._setMttLobbyOverride(Boolean(navigationState.allowMttLobby));
   app.path = nextUrl.pathname;
+  app._modal = getAppModal(nextUrl);
+  app._modalHistoryEntry = navigationState.modalEntry === true;
 }
 
 /**
  * @param {any} app
  * @param {string} path
- * @param {{ replace?: boolean, allowMttLobby?: boolean }} [options]
+ * @param {{ replace?: boolean, allowMttLobby?: boolean, modalEntry?: boolean }} [options]
  */
 export function navigateApp(app, path, options = {}) {
   const url = normalizeUrl(path);
-  const state = { allowMttLobby: options.allowMttLobby === true };
+  const state = {
+    allowMttLobby: options.allowMttLobby === true,
+    modalEntry: options.modalEntry === true,
+  };
 
   if (supportsNavigationApi()) {
     const route = routeUrl(url);
@@ -95,6 +114,43 @@ export function navigateApp(app, path, options = {}) {
     history.pushState(state, "", routeUrl(url));
   }
   applyAppRoute(app, url, state);
+}
+
+/**
+ * @param {any} app
+ * @param {"settings"|"sign-in"|"sign-up"} modal
+ * @param {{ replace?: boolean }} [options]
+ */
+export function openAppModal(app, modal, options = {}) {
+  const url = new URL(window.location.href);
+  const currentModal = getAppModal(url);
+  url.searchParams.set("modal", modal);
+  const replace = options.replace === true || currentModal !== undefined;
+  navigateApp(app, routeUrl(url), {
+    replace,
+    allowMttLobby: app._allowMttLobby,
+    modalEntry: replace ? app._modalHistoryEntry : true,
+  });
+}
+
+/**
+ * @param {any} app
+ */
+export function closeAppModal(app) {
+  if (!app._modal) return;
+
+  if (app._modalHistoryEntry) {
+    app._modalHistoryEntry = false;
+    window.history.back();
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("modal");
+  navigateApp(app, routeUrl(url), {
+    replace: true,
+    allowMttLobby: app._allowMttLobby,
+  });
 }
 
 /**

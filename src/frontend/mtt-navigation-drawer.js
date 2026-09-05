@@ -1,6 +1,5 @@
 import { html } from "lit";
 import { ICONS } from "./icons.js";
-import { formatPlayerLabel } from "./player-label.js";
 import "./navigation-drawer.js";
 
 const iconHistory = html`<svg viewBox="0 0 24 24">
@@ -78,7 +77,6 @@ function handleAction(fn) {
  * @returns {import("lit").TemplateResult}
  */
 function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
-  const accountLabel = formatPlayerLabel(user?.name, user?.id, "Sign in");
   if (user?.email) {
     return html`<a
       class="drawer-account"
@@ -87,7 +85,7 @@ function renderAccountFooterItem(user, onOpenSignIn, onOpenSignUp) {
       rel="noopener noreferrer"
     >
       ${ICONS.signIn}
-      <span>${accountLabel}</span>
+      <span>Profile</span>
     </a>`;
   }
   return html`<button

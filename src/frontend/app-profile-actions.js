@@ -1,19 +1,20 @@
+import { closeAppModal, openAppModal } from "./app-navigation.js";
+
 export const appProfileActions = {
   openProfileSettings() {
     this._settingsName = this.user.name ?? "";
     this._settingsVolume = this.user.settings.volume;
     this._settingsVibration = this.user.settings.vibration;
     this._settingsAvatar = this.user.settings.avatar;
-    this._showProfileSettings = true;
+    openAppModal(this, "settings");
   },
 
   closeProfileSettings() {
-    this._showProfileSettings = false;
+    closeAppModal(this);
   },
 
   openAvatarMakerFromSettings() {
-    this._reopenProfileSettingsAfterAvatar = true;
-    this.closeProfileSettings();
+    this._avatarUsesSettingsDraft = true;
   },
 
   async saveProfileSettings(form) {
@@ -37,7 +38,7 @@ export const appProfileActions = {
         avatar: this._settingsAvatar ?? null,
       },
     });
-    this._showProfileSettings = false;
+    this.closeProfileSettings();
     this.toast = { message: "Settings saved", variant: "success" };
   },
 

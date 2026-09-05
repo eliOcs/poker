@@ -168,7 +168,6 @@ async function prepareTestCase(testCase, page, component) {
     "game-rankings-modal-tooltip": { showRanking: true },
     "game-rankings-modal-tournament": { showRanking: true },
     "game-tournament-levels-modal": { showTournamentLevels: true },
-    "game-settings-modal": { showSettings: true },
   }[testCase];
   if (componentState) {
     await component.evaluate(async (element, state) => {

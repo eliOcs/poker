@@ -38,7 +38,7 @@ describe("phg-app avatar maker", () => {
       const element = await fixture(html`<phg-app></phg-app>`);
       await waitUntil(() => element.user, { timeout: 2000 });
       element._settingsAvatar = savedAvatar;
-      element._reopenProfileSettingsAfterAvatar = true;
+      element._avatarUsesSettingsDraft = true;
       element.path = "/avatar";
       await waitUntil(() => element.querySelector("phg-avatar-maker"), {
         timeout: 2000,
@@ -87,7 +87,7 @@ describe("phg-app avatar maker", () => {
       await waitUntil(() => element.user, { timeout: 2000 });
       const draftAvatar = structuredClone(DEFAULT_AVATAR);
       element._settingsAvatar = draftAvatar;
-      element._reopenProfileSettingsAfterAvatar = true;
+      element._avatarUsesSettingsDraft = true;
       element.path = "/avatar";
       await waitUntil(() => element.querySelector("phg-avatar-maker"), {
         timeout: 2000,

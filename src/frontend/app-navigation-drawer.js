@@ -1,6 +1,5 @@
 import { html } from "lit";
 import { ICONS } from "./icons.js";
-import { formatPlayerLabel } from "./player-label.js";
 import "./navigation-drawer.js";
 
 const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
@@ -45,11 +44,6 @@ export function renderAppNavigationDrawer({
 }) {
   const isSignedIn = !!view.user?.email;
   const accountPath = view.user?.id ? `/players/${view.user.id}` : undefined;
-  const accountLabel = formatPlayerLabel(
-    view.user?.name,
-    view.user?.id,
-    "Sign in",
-  );
   const mainItems = html`
     <a class=${drawerItemClass(playActive)} href="/">
       ${ICONS.quickPlay}
@@ -69,13 +63,7 @@ export function renderAppNavigationDrawer({
     </a>
   `;
   const footerItems = html`
-    ${renderAccountEntry(
-      isSignedIn,
-      accountPath,
-      accountLabel,
-      accountActive,
-      view,
-    )}
+    ${renderAccountEntry(isSignedIn, accountPath, accountActive, view)}
     <button type="button" @click=${() => view.openSettings()}>
       ${ICONS.settings}
       <span>Settings</span>
@@ -90,20 +78,14 @@ export function renderAppNavigationDrawer({
   ></phg-navigation-drawer>`;
 }
 
-function renderAccountEntry(
-  isSignedIn,
-  accountPath,
-  accountLabel,
-  accountActive,
-  view,
-) {
+function renderAccountEntry(isSignedIn, accountPath, accountActive, view) {
   if (isSignedIn && accountPath) {
     return html`<a
       class=${`drawer-item drawer-account${accountActive ? " active" : ""}`}
       href=${accountPath}
     >
       ${ICONS.signIn}
-      <span>${accountLabel}</span>
+      <span>Profile</span>
     </a>`;
   }
 

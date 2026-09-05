@@ -6,6 +6,7 @@ import "../../src/frontend/app.js";
 describe("phg-app profile settings", () => {
   afterEach(() => {
     globalThis.fetch = OriginalFetch;
+    history.replaceState({}, "", "/");
   });
 
   async function openOwnProfileSettings(
@@ -63,9 +64,8 @@ describe("phg-app profile settings", () => {
       return { ok: false };
     };
 
+    history.replaceState({}, "", "/players/user1");
     const element = await fixture(html`<phg-app></phg-app>`);
-    element.path = "/players/user1";
-    await element.updateComplete;
 
     await waitUntil(() => element.querySelector("phg-player-profile"), {
       timeout: 2000,
@@ -93,8 +93,46 @@ describe("phg-app profile settings", () => {
 
     const modal = element.querySelector("phg-modal");
     expect(modal).to.exist;
+    expect(window.location.search).to.equal("?modal=settings");
     await modal.updateComplete;
     expect(modal.querySelector("h3").textContent).to.equal("Settings");
+  });
+
+  it("opens a directly linked settings modal and preserves other query parameters on close", async () => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (url.match(/\/api\/users\/me$/) && !options.method) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user1",
+            name: "Linked user",
+            settings: { volume: 0.75, vibration: true },
+          }),
+        };
+      }
+      return { ok: false };
+    };
+    history.replaceState({}, "", "/about?section=team&modal=settings");
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    await waitUntil(
+      () =>
+        element.querySelector("#profile-settings-name-input")?.value ===
+        "Linked user",
+      { timeout: 2000 },
+    );
+
+    Array.from(element.querySelectorAll(".settings-content button"))
+      .find((button) => button.textContent.trim() === "Cancel")
+      .click();
+    await waitUntil(() => !element.querySelector("phg-modal"), {
+      timeout: 2000,
+    });
+
+    expect(window.location.pathname).to.equal("/about");
+    const searchParams = new URL(window.location.href).searchParams;
+    expect(searchParams.get("section")).to.equal("team");
+    expect(searchParams.has("modal")).to.be.false;
   });
 
   it("navigates from settings to the avatar maker page", async () => {
@@ -118,10 +156,15 @@ describe("phg-app profile settings", () => {
     element.querySelector('a[href="/avatar"]').click();
     await waitUntil(() => element.path === "/avatar", { timeout: 2000 });
 
-    element.path = "/players/user1";
-    await element.updateComplete;
+    history.back();
+    await waitUntil(
+      () =>
+        element.path === "/players/user1" && element.querySelector("phg-modal"),
+      { timeout: 2000 },
+    );
 
     expect(element.querySelector("phg-modal")).to.exist;
+    expect(window.location.search).to.equal("?modal=settings");
     expect(element.querySelector("phg-modal h3").textContent).to.equal(
       "Settings",
     );
