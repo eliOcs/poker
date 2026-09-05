@@ -43,7 +43,9 @@ async function completeSignUp(player, email, name) {
  */
 export async function signUpTournamentCreator(player, email) {
   await player.page.goto("/mtt");
-  await player.page.locator("phg-tournaments").waitFor();
+  await player.page
+    .getByRole("button", { name: "Create Tournament", exact: true })
+    .click();
   await completeSignUp(player, email, "Stress Creator");
   await player.page.locator("phg-tournaments").waitFor();
 }

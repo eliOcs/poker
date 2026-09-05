@@ -518,9 +518,36 @@ test.describe("Tournament E2E", () => {
     await initializeGuestSessions(joiningPlayers);
     console.log("All guest sessions initialized");
 
-    await Stress.runSequentially(joiningPlayers, async (player) => {
+    await Stress.runSequentially(players, async (player) => {
       await player.joinTournamentLobbyByUrl(tournamentUrl);
+      const drawer = player.page.locator("phg-navigation-drawer");
+      if ((await drawer.getAttribute("open")) === null) {
+        await drawer.locator(".drawer-toggle").click();
+      }
+      await player.page
+        .getByRole("button", { name: "Settings", exact: true })
+        .click();
+      await player.page
+        .getByRole("link", { name: "Change", exact: true })
+        .click();
+      await player.page
+        .getByRole("button", { name: "Randomize", exact: true })
+        .click();
+      await player.page
+        .getByRole("button", { name: "Done", exact: true })
+        .click();
+      await player.page
+        .getByRole("button", { name: "Save", exact: true })
+        .click();
+      await expect(player.page).toHaveURL(tournamentUrl);
+      await expect(player.mttLobby).toBeVisible();
+
+      const response = await player.page.request.get("/api/users/me");
+      expect(response.ok()).toBeTruthy();
+      const user = await response.json();
+      expect(user.settings.avatar).toBeTruthy();
     });
+    console.log("All eleven players saved randomized avatars");
 
     await Stress.runSequentially(preStartRegistrants, async (player, index) => {
       await signUpTournamentRegistrant(
