@@ -33,8 +33,9 @@ import {
 import * as ws from "./app-websocket.js";
 import * as mttRouting from "./app-mtt-routing.js";
 import { appSignInActions } from "./app-sign-in-actions.js";
-import { appProfileActions } from "./app-profile-actions.js";
+import { appProfileActions, syncProfileDraft } from "./app-profile-actions.js";
 import { getAppModal, navigateApp } from "./app-navigation.js";
+import { canonicalizeAvatar } from "../shared/avatar.js";
 
 class App extends LitElement {
   createRenderRoot() {
@@ -106,7 +107,7 @@ class App extends LitElement {
     this._settingsVibration = true;
     this._settingsName = "";
     this._settingsAvatar = undefined;
-    this._avatarUsesSettingsDraft = false;
+    this._settingsDraftActive = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -218,16 +219,11 @@ class App extends LitElement {
     try {
       const res = await fetch("/api/users/me");
       if (res.ok) {
-        this.user = await res.json();
-        this._settingsVolume = this.user.settings.volume;
-        this._settingsVibration = this.user.settings.vibration;
-        if (this._modal === "settings") {
-          this._settingsName = this.user.name ?? "";
-          this._settingsAvatar = this.user.settings.avatar;
-        }
+        this.user = await readUserResponse(res);
       }
-    } catch {
-      // Ignore fetch errors - user will be created on next request
+    } catch (error) {
+      this.reportFrontendError(error);
+      this.toast = { message: "Unable to load profile", variant: "error" };
     }
   }
 
@@ -254,13 +250,13 @@ class App extends LitElement {
         body: JSON.stringify(updates),
       });
       if (res.ok) {
-        this.user = await res.json();
+        this.user = await readUserResponse(res);
         this._settingsVolume = this.user.settings.volume;
         this._settingsVibration = this.user.settings.vibration;
         return true;
       }
-    } catch {
-      // Ignore update errors
+    } catch (error) {
+      this.reportFrontendError(error);
     }
     return false;
   }
@@ -357,14 +353,11 @@ class App extends LitElement {
   }
 
   willUpdate(changedProperties) {
+    syncProfileDraft(this);
     if (changedProperties.has("path")) {
-      const previousPath = changedProperties.get("path");
       const route = parseAppPath(this.path);
       syncAppRouteState(this, route);
       if (route.page === "avatar") void import("./avatar-maker.js");
-      if (previousPath === "/avatar" && route.page !== "avatar") {
-        this._avatarUsesSettingsDraft = false;
-      }
     }
   }
 
@@ -465,3 +458,12 @@ Object.assign(App.prototype, appProfileActions);
 Object.assign(App.prototype, appSignInActions);
 
 customElements.define("phg-app", App);
+
+/** @param {Response} response */
+async function readUserResponse(response) {
+  const user = await response.json();
+  if (user.settings.avatar !== undefined) {
+    user.settings.avatar = canonicalizeAvatar(user.settings.avatar);
+  }
+  return user;
+}

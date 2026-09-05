@@ -134,9 +134,13 @@ function parseUserSettings(settings, updates) {
   return nextSettings;
 }
 
+/**
+ * @param {import('node:http').IncomingMessage} req
+ * @param {import('node:http').ServerResponse} res
+ * @param {import('../shared/avatar.js').AvatarConfiguration} avatar
+ */
 function respondWithAvatar(req, res, avatar) {
-  const canonicalAvatar = canonicalizeAvatar(avatar);
-  const revision = getAvatarRevision(canonicalAvatar);
+  const revision = getAvatarRevision(avatar);
   const etag = `"${revision}"`;
   const headers = {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -151,7 +155,7 @@ function respondWithAvatar(req, res, avatar) {
     ...headers,
     "content-type": "application/json",
   });
-  res.end(JSON.stringify({ revision, avatar: canonicalAvatar }));
+  res.end(JSON.stringify({ revision, avatar }));
 }
 
 /**

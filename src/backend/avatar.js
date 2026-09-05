@@ -1,21 +1,19 @@
 import { createHash } from "node:crypto";
-import { canonicalizeAvatar } from "../shared/avatar.js";
 
 const userRevisionCache = new WeakMap();
 
 /**
- * @param {unknown} avatar
+ * @param {import('../shared/avatar.js').AvatarConfiguration} avatar - Canonical configuration from an input boundary.
  * @returns {string}
  */
 export function getAvatarRevision(avatar) {
-  const canonicalAvatar = canonicalizeAvatar(avatar);
   return createHash("sha256")
-    .update(JSON.stringify(canonicalAvatar))
+    .update(JSON.stringify(avatar))
     .digest("base64url");
 }
 
 /**
- * @param {{ settings?: { avatar?: unknown } }} user
+ * @param {{ settings?: { avatar?: import('../shared/avatar.js').AvatarConfiguration } }} user
  * @returns {string|undefined}
  */
 export function getUserAvatarRevision(user) {

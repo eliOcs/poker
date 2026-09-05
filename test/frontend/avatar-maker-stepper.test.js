@@ -1,9 +1,10 @@
-import { expect, fixture, html } from "@open-wc/testing";
+import { expect, fixture, html, waitUntil } from "@open-wc/testing";
 import "../../src/frontend/avatar-maker.js";
 
 describe("avatar maker adjustment stepper", () => {
   it("selects an adjustment value directly", async () => {
     const maker = await fixture(html`<phg-avatar-maker></phg-avatar-maker>`);
+    await waitUntil(() => maker.querySelector(".avatar-maker__meter"));
     const meter = maker.querySelector(".avatar-maker__meter");
     const steps = [...meter.querySelectorAll("button")];
 

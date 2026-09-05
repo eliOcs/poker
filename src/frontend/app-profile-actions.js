@@ -1,11 +1,22 @@
 import { closeAppModal, openAppModal } from "./app-navigation.js";
 
+/** @param {any} app */
+export function syncProfileDraft(app) {
+  const editing = app._modal === "settings" || app.path === "/avatar";
+  if (!editing) {
+    app._settingsDraftActive = false;
+    return;
+  }
+  if (!app.user || app._settingsDraftActive) return;
+  app._settingsName = app.user.name ?? "";
+  app._settingsVolume = app.user.settings.volume;
+  app._settingsVibration = app.user.settings.vibration;
+  app._settingsAvatar = app.user.settings.avatar;
+  app._settingsDraftActive = true;
+}
+
 export const appProfileActions = {
   openProfileSettings() {
-    this._settingsName = this.user.name ?? "";
-    this._settingsVolume = this.user.settings.volume;
-    this._settingsVibration = this.user.settings.vibration;
-    this._settingsAvatar = this.user.settings.avatar;
     openAppModal(this, "settings");
   },
 
@@ -13,16 +24,12 @@ export const appProfileActions = {
     closeAppModal(this);
   },
 
-  openAvatarMakerFromSettings() {
-    this._avatarUsesSettingsDraft = true;
-  },
-
   async saveProfileSettings(form) {
     const formData = new FormData(form);
     const volumeValue = formData.get("volume");
     const vibrationValue = formData.get("vibration");
     const name = this._settingsName.trim();
-    await this._updateUser({
+    const saved = await this._updateUser({
       name,
       settings: {
         volume:
@@ -38,6 +45,10 @@ export const appProfileActions = {
         avatar: this._settingsAvatar ?? null,
       },
     });
+    if (!saved) {
+      this.toast = { message: "Unable to save settings", variant: "error" };
+      return;
+    }
     this.closeProfileSettings();
     this.toast = { message: "Settings saved", variant: "success" };
   },

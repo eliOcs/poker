@@ -20,6 +20,11 @@ renders the avatar in the browser. It does not store a flattened avatar image.
 The Settings preview uses the local draft directly. Removing an avatar also
 remains a draft until Settings is saved.
 
+Settings and the editor share one draft session, including Back/Forward
+navigation between them. Leaving this flow discards the draft; returning starts
+from the saved profile. Reloading starts a new session from the saved profile,
+including the name and other settings.
+
 ## Configuration Schema
 
 The canonical schema, allowed part types, adjustment values, and color palettes
@@ -43,10 +48,13 @@ current `schemaVersion` is `1`.
 }
 ```
 
-`canonicalizeAvatar()` validates configurations at the HTTP boundary, rejects
+`canonicalizeAvatar()` validates configurations at HTTP input and database-read boundaries, rejects
 unknown keys and values, normalizes colors, and returns fields in stable order.
 Legacy configurations without `schemaVersion` are upgraded to the current
 version during canonicalization.
+
+Internal rendering and revision hashing use the shared `AvatarConfiguration`
+JSDoc type and trust these canonical configurations.
 
 ## Persistence and Public API
 
@@ -95,7 +103,9 @@ avatar immediately.
 Remote configurations are cached in memory by `playerId:revision`. After the
 configuration is loaded, only the sprite layers referenced by its selected part
 types are fetched. The editor loads all sprites because every option and preview
-must be available while editing.
+must be available while editing. Drawing starts after loading completes. A failed
+load shows an error with Retry and Cancel actions; retrying or reopening the
+editor requests missing sprites again.
 
 Rendering uses a 128×128 canvas and keeps pixelated scaling in larger UI slots.
 If no revision or local configuration is provided, the component renders the

@@ -484,7 +484,6 @@ const GAME_TEST_CASES = {
         _settingsAvatar: undefined,
         closeProfileSettings() {},
         saveProfileSettings() {},
-        openAvatarMakerFromSettings() {},
       },
     ),
 };

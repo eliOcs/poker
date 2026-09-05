@@ -24,8 +24,8 @@ class Avatar extends LitElement {
     this.playerId = undefined;
     this.revision = undefined;
     this.label = "Player avatar";
+    /** @type {import('../shared/avatar.js').AvatarConfiguration|undefined} */
     this.avatar = undefined;
-    this._renderedKey = undefined;
     this._loadGeneration = 0;
   }
 
@@ -78,13 +78,10 @@ function beginAvatarLoad(avatar) {
     return { avatar: avatar.avatar, generation };
   }
   if (!avatar.playerId || !avatar.revision) return;
-  const key = `${avatar.playerId}:${avatar.revision}`;
-  if (key === avatar._renderedKey) return;
   return {
     playerId: avatar.playerId,
     revision: avatar.revision,
     generation,
-    key,
   };
 }
 
@@ -104,7 +101,6 @@ function drawLoadedAvatar(avatarElement, avatar, request) {
   canvas.dataset.rendered = "";
   if (request.revision) canvas.dataset.revision = request.revision;
   else delete canvas.dataset.revision;
-  avatarElement._renderedKey = request.key;
 }
 
 function reportAvatarError(avatar, error) {

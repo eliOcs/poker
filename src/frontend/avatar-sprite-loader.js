@@ -1,8 +1,8 @@
 import { AVATAR_SPRITE_PARTS } from "./avatar-sprite-data.js";
 
+/** @type {Map<string, HTMLImageElement>} */
 const spriteImages = new Map();
 const spriteImagePromises = new Map();
-let allSpritesReady = false;
 let allSpritesPromise;
 
 export function loadAllAvatarSprites() {
@@ -10,13 +10,16 @@ export function loadAllAvatarSprites() {
     Object.entries(AVATAR_SPRITE_PARTS).flatMap(([partId, part]) =>
       Object.keys(part.styles).flatMap((type) => loadPartSprites(partId, type)),
     ),
-  ).then(() => {
-    allSpritesReady = true;
-  });
+  )
+    .then(() => undefined)
+    .catch((error) => {
+      allSpritesPromise = undefined;
+      throw error;
+    });
   return allSpritesPromise;
 }
 
-/** @param {any} avatar */
+/** @param {import('../shared/avatar.js').AvatarConfiguration} avatar */
 export function loadAvatarSprites(avatar) {
   return Promise.all(
     getAvatarSpriteReferences(avatar).map(({ partId, type, role, direction }) =>
@@ -25,7 +28,7 @@ export function loadAvatarSprites(avatar) {
   ).then(() => undefined);
 }
 
-/** @param {any} avatar */
+/** @param {import('../shared/avatar.js').AvatarConfiguration} avatar */
 export function getAvatarSpritePaths(avatar) {
   return getAvatarSpriteReferences(avatar).map(
     ({ partId, type, role, direction }) =>
@@ -34,21 +37,20 @@ export function getAvatarSpritePaths(avatar) {
 }
 
 export function getAvatarSpriteImage(partId, type, role, direction) {
-  return spriteImages.get(getSpriteId(partId, type, role, direction));
+  // Drawing starts only after the selected sprites have loaded.
+  return /** @type {HTMLImageElement} */ (
+    spriteImages.get(getSpriteId(partId, type, role, direction))
+  );
 }
 
-export function areAllAvatarSpritesReady() {
-  return allSpritesReady;
-}
-
+/** @param {import('../shared/avatar.js').AvatarConfiguration} avatar */
 function getAvatarSpriteReferences(avatar) {
-  return Object.keys(AVATAR_SPRITE_PARTS).flatMap((partId) => {
-    const type = avatar[partId]?.type;
-    if (typeof type !== "string") {
-      throw new Error(`Missing avatar part type: ${partId}`);
-    }
-    return getPartSpriteReferences(partId, type);
-  });
+  const parts = /** @type {import('../shared/avatar.js').AvatarPartId[]} */ (
+    Object.keys(AVATAR_SPRITE_PARTS)
+  );
+  return parts.flatMap((partId) =>
+    getPartSpriteReferences(partId, avatar[partId].type),
+  );
 }
 
 function loadPartSprites(partId, type) {
@@ -59,10 +61,6 @@ function loadPartSprites(partId, type) {
 
 function getPartSpriteReferences(partId, type) {
   const part = AVATAR_SPRITE_PARTS[partId];
-  if (!part) throw new Error(`Unknown avatar sprite part: ${partId}`);
-  if (!(type in part.styles)) {
-    throw new Error(`Unknown ${partId} sprite type: ${type}`);
-  }
   const sprite = part.styles[type];
   if (!sprite) return [];
   return Object.keys(sprite.layers).flatMap((role) =>
@@ -113,7 +111,10 @@ function getSpriteDirections(part) {
   return part.splitHorizontally ? [-1, 1] : [0];
 }
 
-/** @param {URL} url */
+/**
+ * @param {URL} url
+ * @returns {Promise<HTMLImageElement>}
+ */
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image();

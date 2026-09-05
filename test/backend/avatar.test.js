@@ -1,5 +1,10 @@
-import { describe, it } from "node:test";
+import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
+import { rm } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
+import * as Store from "../../src/backend/store.js";
+import { DEFAULT_SETTINGS } from "../../src/backend/user.js";
+import { createTempDataDir } from "./temp-data-dir.js";
 import {
   AVATAR_SCHEMA_VERSION,
   AVATAR_TYPES,
@@ -44,7 +49,10 @@ describe("avatar configuration", () => {
     const changed = structuredClone(DEFAULT_AVATAR);
     changed.face.size = 1;
 
-    assert.equal(getAvatarRevision(legacy), getAvatarRevision(DEFAULT_AVATAR));
+    assert.equal(
+      getAvatarRevision(canonicalizeAvatar(legacy)),
+      getAvatarRevision(DEFAULT_AVATAR),
+    );
     assert.notEqual(
       getAvatarRevision(changed),
       getAvatarRevision(DEFAULT_AVATAR),
@@ -56,5 +64,53 @@ describe("avatar configuration", () => {
     for (const [partId, types] of Object.entries(AVATAR_TYPES)) {
       assert.deepEqual(Object.keys(AVATAR_SPRITE_PARTS[partId].styles), types);
     }
+  });
+});
+
+describe("stored avatar configurations", () => {
+  let directory;
+  const originalDataDir = process.env.DATA_DIR;
+  beforeEach(async () => {
+    directory = await createTempDataDir();
+    process.env.DATA_DIR = directory;
+    Store.initialize();
+  });
+  afterEach(async () => {
+    Store.close();
+    await rm(directory, { recursive: true });
+    if (originalDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = originalDataDir;
+  });
+
+  function insertStoredAvatar(id, avatar) {
+    const db = new DatabaseSync(`${directory}/poker.db`);
+    try {
+      db.prepare("INSERT INTO users (id, settings) VALUES (?, ?)").run(
+        id,
+        JSON.stringify({ ...DEFAULT_SETTINGS, avatar }),
+      );
+    } finally {
+      db.close();
+    }
+  }
+
+  it("normalizes legacy avatars when reading saved users", () => {
+    const avatar = structuredClone(DEFAULT_AVATAR);
+    delete avatar.schemaVersion;
+    avatar.face.color = "#C98255";
+    insertStoredAvatar("legacy-avatar", avatar);
+    assert.deepEqual(
+      Store.loadUser("legacy-avatar").settings.avatar,
+      DEFAULT_AVATAR,
+    );
+    assert.deepEqual(
+      Store.loadUserProfile("legacy-avatar").settings.avatar,
+      DEFAULT_AVATAR,
+    );
+  });
+
+  it("rejects invalid avatars read from storage", () => {
+    insertStoredAvatar("invalid-avatar", { face: {} });
+    assert.throws(() => Store.loadUser("invalid-avatar"), TypeError);
   });
 });

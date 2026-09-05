@@ -135,12 +135,9 @@ const routes = createRoutes(users, games, broadcastGameStateMessage, {
 });
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
-const STATIC_HTTP_RATE_LIMIT_MAX_ACTIONS = 500;
+// HTTP requests and WebSocket actions share a budget per session or IP.
 const actionRateLimiter = createRateLimiter({
-  blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
-});
-const staticFileRateLimiter = createRateLimiter({
-  maxActions: STATIC_HTTP_RATE_LIMIT_MAX_ACTIONS,
+  maxActions: 1_000,
   blockDurationMs: RATE_LIMIT_BLOCK_DURATION_MS,
 });
 
@@ -199,33 +196,12 @@ async function resolveGameForUpgrade(user, gameId) {
 
 /**
  * @param {import('http').IncomingMessage} req
- * @returns {{ limiter: ReturnType<typeof createRateLimiter>, source: string }}
- */
-function getHttpRateLimiter(req) {
-  const method = req.method ?? "GET";
-  const url = req.url ?? "";
-  if (method === "GET" && getFilePath(url)) {
-    return {
-      limiter: staticFileRateLimiter,
-      source: "http-static",
-    };
-  }
-
-  return {
-    limiter: actionRateLimiter,
-    source: "http",
-  };
-}
-
-/**
- * @param {import('http').IncomingMessage} req
  * @param {import('./logger.js').Log} log
  */
 function throwIfRateLimitedHttpRequest(req, log) {
   const key = getRequestRateLimitKey(req);
-  const { limiter, source } = getHttpRateLimiter(req);
   try {
-    const rateLimit = limiter.check(key, { source });
+    const rateLimit = actionRateLimiter.check(key, { source: "http" });
     log.context.rateLimit = rateLimit.context;
   } catch (err) {
     if (err instanceof RateLimitError) {

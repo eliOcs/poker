@@ -1,5 +1,10 @@
 export const AVATAR_SCHEMA_VERSION = 1;
 
+/**
+ * @typedef {typeof DEFAULT_AVATAR} AvatarConfiguration
+ * @typedef {keyof typeof AVATAR_TYPES} AvatarPartId
+ */
+
 export const SKIN_COLORS = [
   "#f2c9a5",
   "#dda578",
@@ -220,7 +225,7 @@ export const DEFAULT_AVATAR = {
  * Legacy configurations without schemaVersion are upgraded to the current schema.
  *
  * @param {unknown} input
- * @returns {typeof DEFAULT_AVATAR}
+ * @returns {AvatarConfiguration}
  */
 export function canonicalizeAvatar(input) {
   assertRecord(input, "avatar");
@@ -253,7 +258,7 @@ export function canonicalizeAvatar(input) {
       avatar[partId][property] = value;
     }
   }
-  return /** @type {typeof DEFAULT_AVATAR} */ (avatar);
+  return /** @type {AvatarConfiguration} */ (avatar);
 }
 
 function adjustmentValues() {

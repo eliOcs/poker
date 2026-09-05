@@ -1,5 +1,6 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import { OriginalFetch } from "./setup.js";
+import { createMockUser } from "./app-test-helpers.js";
 import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 import "../../src/frontend/app.js";
 
@@ -273,4 +274,83 @@ describe("phg-app profile settings", () => {
 
     expect(requestBody.settings.volume).to.equal(0.5);
   });
+});
+
+describe("profile response failures", () => {
+  afterEach(() => {
+    globalThis.fetch = OriginalFetch;
+    history.replaceState({}, "", "/");
+  });
+
+  it("shows an error when the profile contains an invalid avatar", async () => {
+    globalThis.fetch = async (url) => {
+      if (url === "/api/users/me") {
+        return Response.json(
+          createMockUser({ settings: { avatar: { version: 999 } } }),
+        );
+      }
+      return new Response();
+    };
+
+    const element = await fixture(html`<phg-app></phg-app>`);
+    await waitUntil(() =>
+      element
+        .querySelector("phg-toast")
+        ?.textContent.includes("Unable to load profile"),
+    );
+    expect(element.querySelector("phg-toast").variant).to.equal("error");
+  });
+
+  for (const [failure, response] of [
+    ["HTTP error", () => new Response(null, { status: 500 })],
+    [
+      "invalid avatar",
+      () =>
+        Response.json(
+          createMockUser({ settings: { avatar: { version: 999 } } }),
+        ),
+    ],
+  ]) {
+    it(`keeps the settings draft after an ${failure} and allows retrying`, async () => {
+      history.replaceState({}, "", "/?modal=settings");
+      let failUpdate = true;
+      globalThis.fetch = async (url, options = {}) => {
+        if (url !== "/api/users/me") return new Response();
+        if (options.method === "PUT") {
+          return failUpdate
+            ? response()
+            : Response.json(createMockUser({ name: "Draft name" }));
+        }
+        return Response.json(createMockUser({ name: "Alice" }));
+      };
+
+      const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(
+        () => element.querySelector('input[name="name"]')?.value === "Alice",
+      );
+      const input = element.querySelector('input[name="name"]');
+      input.value = "Draft name";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      element.querySelector("form.settings-content").requestSubmit();
+
+      await waitUntil(() =>
+        element
+          .querySelector("phg-toast")
+          ?.textContent.includes("Unable to save settings"),
+      );
+      expect(element.querySelector('input[name="name"]').value).to.equal(
+        "Draft name",
+      );
+      expect(element.querySelector("phg-toast").variant).to.equal("error");
+
+      failUpdate = false;
+      element.querySelector("form.settings-content").requestSubmit();
+      await waitUntil(() =>
+        element
+          .querySelector("phg-toast")
+          ?.textContent.includes("Settings saved"),
+      );
+      expect(element.querySelector("form.settings-content")).to.equal(null);
+    });
+  }
 });

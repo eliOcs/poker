@@ -41,6 +41,35 @@ export function renderAvatarMakerActions(maker) {
   `;
 }
 
-function dispatchAvatarAction(maker, type, detail) {
+export function renderAvatarMakerLoading(maker) {
+  return html`<main class="main">
+    <div class="content">
+      ${maker.assetsError
+        ? html`<p role="alert">Unable to load avatar styles.</p>
+            <button
+              class="button button--action"
+              type="button"
+              @click=${() => {
+                maker.assetsReady = maker.loadAssets();
+              }}
+            >
+              Retry
+            </button>`
+        : html`<p role="status">Loading avatar styles…</p>`}
+      <button
+        class="button button--muted"
+        type="button"
+        @click=${() => {
+          dispatchAvatarAction(maker, "avatar-cancel");
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </main>`;
+}
+
+/** @param {unknown} [detail] */
+function dispatchAvatarAction(maker, type, detail = undefined) {
   maker.dispatchEvent(new CustomEvent(type, { detail, bubbles: true }));
 }

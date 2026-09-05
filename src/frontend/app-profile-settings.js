@@ -58,12 +58,7 @@ export function renderProfileSettingsModal(app) {
             >
               Remove
             </button>
-            <a
-              class="button button--muted"
-              href="/avatar"
-              @click=${() => app.openAvatarMakerFromSettings()}
-              >Change</a
-            >
+            <a class="button button--muted" href="/avatar">Change</a>
           </div>
         </div>
       </fieldset>

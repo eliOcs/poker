@@ -123,9 +123,7 @@ export function renderReleaseNotesView() {
  */
 export function renderAvatarMakerView(app) {
   return html`<phg-avatar-maker
-    .avatar=${app._avatarUsesSettingsDraft
-      ? (app._settingsAvatar ?? DEFAULT_AVATAR)
-      : (app.user?.settings.avatar ?? DEFAULT_AVATAR)}
+    .avatar=${app._settingsAvatar ?? DEFAULT_AVATAR}
     @avatar-cancel=${app.closeAvatarMaker}
     @avatar-done=${(event) => app.applyAvatarDraft(event.detail.avatar)}
   ></phg-avatar-maker>`;

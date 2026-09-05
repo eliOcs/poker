@@ -1,3 +1,6 @@
+import { canonicalizeAvatar } from "../shared/avatar.js";
+
+/** @type {Map<string, Promise<import('../shared/avatar.js').AvatarConfiguration>>} */
 const avatarRequests = new Map();
 
 /**
@@ -5,7 +8,7 @@ const avatarRequests = new Map();
  *
  * @param {string} playerId
  * @param {string} revision
- * @returns {Promise<object>}
+ * @returns {Promise<import('../shared/avatar.js').AvatarConfiguration>}
  */
 export function loadPlayerAvatar(playerId, revision) {
   const key = `${playerId}:${revision}`;
@@ -19,7 +22,7 @@ export function loadPlayerAvatar(playerId, revision) {
       if (data.revision !== revision || !data.avatar) {
         throw new Error("Player avatar revision changed while loading");
       }
-      return data.avatar;
+      return canonicalizeAvatar(data.avatar);
     })
     .catch((error) => {
       avatarRequests.delete(key);

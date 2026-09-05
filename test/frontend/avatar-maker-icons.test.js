@@ -1,9 +1,10 @@
-import { expect, fixture, html } from "@open-wc/testing";
+import { expect, fixture, html, waitUntil } from "@open-wc/testing";
 import "../../src/frontend/avatar-maker.js";
 
 describe("avatar maker adjustment icons", () => {
   it("renders icon paths in the SVG namespace", async () => {
     const maker = await fixture(html`<phg-avatar-maker></phg-avatar-maker>`);
+    await waitUntil(() => maker.querySelector(".avatar-maker__stepper"));
     const paths = [
       ...maker.querySelectorAll(".avatar-maker__stepper svg path"),
     ];

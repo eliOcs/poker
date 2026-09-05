@@ -4,6 +4,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import * as logger from "./logger.js";
 import { migrateStore } from "./store-migrations.js";
 import { runInTransaction } from "./sqlite-transaction.js";
+import { canonicalizeAvatar } from "../shared/avatar.js";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -432,11 +433,15 @@ export function deleteOrphanGuestUsersCreatedBefore(cutoff) {
 function hydrateUserRow(row) {
   if (!row) return;
 
+  const settings = JSON.parse(/** @type {string} */ (row.settings));
+  if (settings.avatar !== undefined) {
+    settings.avatar = canonicalizeAvatar(settings.avatar);
+  }
   return {
     id: /** @type {Id} */ (row.id),
     name: /** @type {string|undefined} */ (row.name ?? undefined),
     email: /** @type {string|undefined} */ (row.email ?? undefined),
-    settings: JSON.parse(/** @type {string} */ (row.settings)),
+    settings,
   };
 }
 

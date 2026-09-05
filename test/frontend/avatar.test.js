@@ -22,13 +22,20 @@ describe("phg-avatar", () => {
     expect(paths.some((path) => path.includes("facial-hair"))).to.be.false;
   });
 
-  it("rejects configurations with missing part types", () => {
+  it("rejects invalid configurations received from the public API", async () => {
     const avatar = structuredClone(DEFAULT_AVATAR);
     delete avatar.face.type;
-
-    expect(() => getAvatarSpritePaths(avatar)).to.throw(
-      "Missing avatar part type: face",
-    );
+    globalThis.fetch = async () => ({
+      ok: true,
+      json: async () => ({ revision: "invalid", avatar }),
+    });
+    let error;
+    try {
+      await loadPlayerAvatar("invalidplayer", "invalid");
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error).to.be.instanceOf(TypeError);
   });
 
   it("fetches a player revision only once", async () => {
@@ -49,8 +56,8 @@ describe("phg-avatar", () => {
       loadPlayerAvatar("player1", "revision-1"),
     ]);
 
-    expect(first).to.equal(DEFAULT_AVATAR);
-    expect(second).to.equal(DEFAULT_AVATAR);
+    expect(first).to.deep.equal(DEFAULT_AVATAR);
+    expect(second).to.equal(first);
     expect(requestCount).to.equal(1);
   });
 
@@ -84,6 +91,38 @@ describe("phg-avatar", () => {
     await waitUntil(() => canvas.hasAttribute("data-rendered"));
 
     expect(canvas.dataset.error).to.be.undefined;
+  });
+
+  it("redraws an avatar restored after removal without fetching it again", async () => {
+    let requests = 0;
+    globalThis.fetch = async () => {
+      requests += 1;
+      return {
+        ok: true,
+        json: async () => ({ revision: "restored", avatar: DEFAULT_AVATAR }),
+      };
+    };
+    const element = await fixture(
+      html`<phg-avatar
+        playerId="restoredplayer"
+        revision="restored"
+      ></phg-avatar>`,
+    );
+    await waitUntil(() =>
+      element.querySelector("canvas")?.hasAttribute("data-rendered"),
+    );
+    const original = element.querySelector("canvas").toDataURL();
+    element.revision = undefined;
+    await element.updateComplete;
+    expect(element.querySelector("canvas")).to.not.exist;
+
+    element.revision = "restored";
+    await element.updateComplete;
+    await waitUntil(() =>
+      element.querySelector("canvas")?.hasAttribute("data-rendered"),
+    );
+    expect(element.querySelector("canvas").toDataURL()).to.equal(original);
+    expect(requests).to.equal(1);
   });
 
   it("renders the sign-in icon when no avatar is configured", async () => {

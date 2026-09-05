@@ -7,10 +7,7 @@ import {
   drawOvalFacePartPreview,
   getAlphaBounds,
 } from "./avatar-sprite-preview.js";
-import {
-  areAllAvatarSpritesReady,
-  getAvatarSpriteImage,
-} from "./avatar-sprite-loader.js";
+import { getAvatarSpriteImage } from "./avatar-sprite-loader.js";
 
 const PIXEL_SIZE = AVATAR_SPRITE_SIZE;
 const DARK = "#151522";
@@ -32,7 +29,7 @@ boundsCanvas.width = boundsCanvas.height = PIXEL_SIZE;
 
 /**
  * @param {CanvasRenderingContext2D} context
- * @param {any} avatar
+ * @param {import('../shared/avatar.js').AvatarConfiguration} avatar
  */
 export function drawSpriteAvatar(context, avatar) {
   drawAdjustedPart(context, avatar, "torso");
@@ -41,7 +38,7 @@ export function drawSpriteAvatar(context, avatar) {
   drawAdjustedPart(context, avatar, "eyes");
   drawAdjustedPart(context, avatar, "eyebrows");
   drawAdjustedPart(context, avatar, "nose");
-  const beardBehindMouth = BEARD_TYPES.has(avatar.facialHair?.type);
+  const beardBehindMouth = BEARD_TYPES.has(avatar.facialHair.type);
   if (beardBehindMouth) drawAdjustedPart(context, avatar, "facialHair");
   drawAdjustedPart(context, avatar, "mouth");
   if (!beardBehindMouth) drawAdjustedPart(context, avatar, "facialHair");
@@ -51,8 +48,8 @@ export function drawSpriteAvatar(context, avatar) {
 
 /**
  * @param {CanvasRenderingContext2D} context
- * @param {any} avatar
- * @param {string} partId
+ * @param {import('../shared/avatar.js').AvatarConfiguration} avatar
+ * @param {import('../shared/avatar.js').AvatarPartId} partId
  */
 export function drawSpritePart(context, avatar, partId) {
   drawAdjustedPart(context, avatar, partId);
@@ -60,12 +57,12 @@ export function drawSpritePart(context, avatar, partId) {
 
 /**
  * @param {CanvasRenderingContext2D} context
- * @param {any} avatar
- * @param {string} partId
+ * @param {import('../shared/avatar.js').AvatarConfiguration} avatar
+ * @param {import('../shared/avatar.js').AvatarPartId} partId
  * @param {string} type
  */
 export function drawSpritePartPreview(context, avatar, partId, type) {
-  const { sprite } = getSpriteConfig(partId, type);
+  const sprite = AVATAR_SPRITE_PARTS[partId].styles[type];
 
   context.clearRect(0, 0, context.canvas.width, context.canvas.height);
   if (!sprite) {
@@ -88,7 +85,6 @@ export function drawSpritePartPreview(context, avatar, partId, type) {
       : avatar.face,
     [partId]: { ...avatar[partId], type },
   };
-  if (!areAllAvatarSpritesReady()) return true;
   if (OVAL_FACE_PREVIEW_PARTS.has(partId)) {
     drawOvalFacePartPreview({
       context,
@@ -130,7 +126,7 @@ function getPreviewScale(partId, bounds) {
     fitWidth / bounds.width,
     fitHeight / bounds.height,
   );
-  if (!SHARED_PREVIEW_SCALE_PARTS.has(partId) || !areAllAvatarSpritesReady()) {
+  if (!SHARED_PREVIEW_SCALE_PARTS.has(partId)) {
     return fittedScale;
   }
   const cachedScale = sharedPreviewScales.get(partId);
@@ -164,12 +160,7 @@ function getPreviewScale(partId, bounds) {
 
 function drawAdjustedPart(context, avatar, partId) {
   const part = avatar[partId];
-  if (!part) throw new Error(`Missing avatar part: ${partId}`);
   const partConfig = AVATAR_SPRITE_PARTS[partId];
-  if (!partConfig) throw new Error(`Unknown avatar sprite part: ${partId}`);
-  if (!(part.type in partConfig.styles)) {
-    throw new Error(`Unknown ${partId} sprite type: ${part.type}`);
-  }
   if (!partConfig.styles[part.type]) return;
   const adjustment = PART_ADJUSTMENTS[partId];
   if (adjustment.paired) {
@@ -200,14 +191,7 @@ function drawSourcePositionedPart(context, avatar, partId, part, adjustment) {
 
 function drawPairedPart(context, avatar, partId, part, adjustment) {
   for (const direction of [-1, 1]) {
-    const fallbackX = direction < 0 ? PIXEL_SIZE / 4 : (PIXEL_SIZE * 3) / 4;
-    const center = getPartCenter(
-      partId,
-      part.type,
-      direction,
-      fallbackX,
-      PIXEL_SIZE / 2,
-    );
+    const center = getPartCenter(partId, part.type, direction);
     context.save();
     context.translate(
       center.x + direction * (part.spacing ?? 0) * adjustment.spacingStep,
@@ -225,13 +209,7 @@ function drawPairedPart(context, avatar, partId, part, adjustment) {
 }
 
 function drawSinglePart(context, avatar, partId, part, adjustment) {
-  const center = getPartCenter(
-    partId,
-    part.type,
-    0,
-    PIXEL_SIZE / 2,
-    PIXEL_SIZE / 2,
-  );
+  const center = getPartCenter(partId, part.type, 0);
   context.save();
   context.translate(
     center.x +
@@ -246,29 +224,21 @@ function drawSinglePart(context, avatar, partId, part, adjustment) {
   context.restore();
 }
 
-function getPartCenter(partId, type, direction, fallbackX, fallbackY) {
+function getPartCenter(partId, type, direction) {
   const id = `${partId}/${type}/${direction}`;
   const cached = spriteCenters.get(id);
   if (cached) return cached;
 
-  const sprite = getDrawableSprite(partId, type);
+  const sprite = AVATAR_SPRITE_PARTS[partId].styles[type];
   const context = getBoundsContext();
   context.clearRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
-  if (!drawSpriteBoundsLayers(context, partId, type, sprite)) {
-    if (areAllAvatarSpritesReady()) {
-      throw new Error(`Avatar sprite images unavailable: ${partId}/${type}`);
-    }
-    return { x: fallbackX, y: fallbackY };
-  }
+  drawSpriteBoundsLayers(context, partId, type, sprite);
 
   const minX = direction > 0 ? PIXEL_SIZE / 2 : 0;
   const maxX = direction < 0 ? PIXEL_SIZE / 2 : PIXEL_SIZE;
   const bounds = getAlphaBounds(context, minX, maxX);
   if (!bounds) {
-    if (areAllAvatarSpritesReady()) {
-      throw new Error(`Avatar sprite has no visible pixels: ${partId}/${type}`);
-    }
-    return { x: fallbackX, y: fallbackY };
+    throw new Error(`Avatar sprite has no visible pixels: ${partId}/${type}`);
   }
   const center = {
     x: bounds.x + bounds.width / 2,
@@ -276,21 +246,6 @@ function getPartCenter(partId, type, direction, fallbackX, fallbackY) {
   };
   spriteCenters.set(id, center);
   return center;
-}
-
-function getSpriteConfig(partId, type) {
-  const partConfig = AVATAR_SPRITE_PARTS[partId];
-  if (!partConfig) throw new Error(`Unknown avatar sprite part: ${partId}`);
-  if (!(type in partConfig.styles)) {
-    throw new Error(`Unknown ${partId} sprite type: ${type}`);
-  }
-  return { partConfig, sprite: partConfig.styles[type] };
-}
-
-function getDrawableSprite(partId, type) {
-  const { sprite } = getSpriteConfig(partId, type);
-  if (!sprite) throw new Error(`Avatar sprite is empty: ${partId}/${type}`);
-  return sprite;
 }
 
 function getBoundsContext() {
@@ -302,22 +257,16 @@ function getBoundsContext() {
 }
 
 function drawSpriteBoundsLayers(context, partId, type, sprite) {
-  let hasImage = false;
   for (const role of Object.keys(sprite.layers)) {
     for (const { image } of getSpriteLayerImages(partId, type, role)) {
       context.drawImage(image, 0, 0);
-      hasImage = true;
     }
   }
-  return hasImage;
 }
 
 function drawPartLayers(context, avatar, partId, direction = 0) {
   const part = avatar[partId];
-  const sprite = AVATAR_SPRITE_PARTS[partId]?.styles[part?.type];
-  if (!sprite) {
-    throw new Error(`Unknown ${partId} sprite type: ${part?.type}`);
-  }
+  const sprite = AVATAR_SPRITE_PARTS[partId].styles[part.type];
   for (const role of Object.keys(sprite.layers)) {
     for (const layer of getSpriteLayerImages(
       partId,
@@ -337,23 +286,15 @@ function drawPartLayers(context, avatar, partId, direction = 0) {
 
 function getSpriteLayerImages(partId, type, role, direction = 0) {
   const part = AVATAR_SPRITE_PARTS[partId];
-  if (!part) throw new Error(`Unknown avatar sprite part: ${partId}`);
   const directions = part.splitHorizontally
     ? direction === 0
       ? [-1, 1]
       : [direction]
     : [0];
-  return directions.flatMap((imageDirection) => {
-    const image = getAvatarSpriteImage(partId, type, role, imageDirection);
-    if (!image && areAllAvatarSpritesReady()) {
-      throw new Error(
-        `Avatar sprite image unavailable: ${partId}/${type}/${role}/${imageDirection}`,
-      );
-    }
-    return image
-      ? [{ image, cropDirection: part.splitHorizontally ? 0 : direction }]
-      : [];
-  });
+  return directions.map((imageDirection) => ({
+    image: getAvatarSpriteImage(partId, type, role, imageDirection),
+    cropDirection: part.splitHorizontally ? 0 : direction,
+  }));
 }
 
 function drawTintedLayer(context, image, color, direction) {

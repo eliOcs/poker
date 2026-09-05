@@ -1,5 +1,8 @@
 import { html, LitElement } from "lit";
-import { renderAvatarMakerActions } from "./avatar-maker-actions.js";
+import {
+  renderAvatarMakerActions,
+  renderAvatarMakerLoading,
+} from "./avatar-maker-actions.js";
 import { drawAvatar, drawAvatarPartPreview } from "./avatar-drawing.js";
 import {
   BACKGROUND_COLORS,
@@ -7,6 +10,7 @@ import {
   getAvatarColors as getColors,
 } from "./avatar-maker-data.js";
 import { configureAvatarMaker } from "./avatar-maker-controller.js";
+import { loadAllAvatarSprites } from "./avatar-sprite-loader.js";
 import { ICONS } from "./icons.js";
 import {
   COLORABLE_EYE_TYPES,
@@ -133,6 +137,8 @@ class AvatarMaker extends LitElement {
       activeTab: { type: String },
       avatar: { type: Object },
       canvasSize: { state: true },
+      assetsLoading: { state: true },
+      assetsError: { state: true },
     };
   }
 
@@ -141,10 +147,26 @@ class AvatarMaker extends LitElement {
     this.activeTab = "face";
     this.avatar = cloneAvatar(DEFAULT_AVATAR);
     this.canvasSize = 360;
-    this.assetsReady = configureAvatarMaker(this);
+    configureAvatarMaker(this);
+    this.assetsLoading = true;
+    this.assetsError = false;
+    this.assetsReady = this.loadAssets();
+  }
+
+  async loadAssets() {
+    this.assetsLoading = true;
+    this.assetsError = false;
+    try {
+      await loadAllAvatarSprites();
+    } catch {
+      this.assetsError = true;
+    } finally {
+      this.assetsLoading = false;
+    }
   }
 
   updated() {
+    if (this.assetsLoading || this.assetsError) return;
     const canvas = this.querySelector("canvas");
     if (!(canvas instanceof HTMLCanvasElement)) {
       throw new Error("Avatar preview canvas not found");
@@ -157,11 +179,10 @@ class AvatarMaker extends LitElement {
       if (!(preview instanceof HTMLCanvasElement)) {
         throw new Error("Avatar style preview canvas not found");
       }
-      const partId = preview.dataset.part;
-      const type = preview.dataset.type;
-      if (!partId || !type) {
-        throw new Error("Avatar style preview is missing part metadata");
-      }
+      const partId = /** @type {import('../shared/avatar.js').AvatarPartId} */ (
+        preview.dataset.part
+      );
+      const type = /** @type {string} */ (preview.dataset.type);
       const previewContext = preview.getContext("2d");
       if (!previewContext) {
         throw new Error("Avatar style preview canvas context unavailable");
@@ -171,6 +192,9 @@ class AvatarMaker extends LitElement {
   }
 
   render() {
+    if (this.assetsLoading || this.assetsError) {
+      return renderAvatarMakerLoading(this);
+    }
     const tab = TABS.find(({ id }) => id === this.activeTab);
     if (!tab) throw new Error(`Unknown avatar maker tab: ${this.activeTab}`);
     const part = this.avatar[tab.id];
