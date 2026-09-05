@@ -25,25 +25,6 @@ test.setTimeout(20 * 60 * 1000);
 
 const STALL_TIMEOUT_MS = 15000;
 const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
-const USER_CREATION_BATCH_LIMIT = 8;
-const USER_CREATION_WINDOW_BUFFER_MS = 6500;
-
-/**
- * Pre-create guest sessions through the user API so later tournament-lobby
- * navigations reuse an existing player cookie instead of loading every static
- * asset against the shared pre-cookie IP limiter.
- * @param {import('./utils/poker-player.js').PokerPlayer[]} players
- */
-async function initializeGuestSessions(players) {
-  await Stress.runSequentially(players, async (player, index) => {
-    if (index === USER_CREATION_BATCH_LIMIT) {
-      await Stress.delay(USER_CREATION_WINDOW_BUFFER_MS);
-    }
-    const response = await player.page.request.get("/api/users/me");
-    if (!response.ok()) throw new Error("Guest session creation failed");
-  });
-}
-
 /**
  * @typedef {Object} SnapshotResult
  * @property {string|null} winnerName - Tournament winner name if detected
@@ -512,49 +493,49 @@ test.describe("Tournament E2E", () => {
     ).toBeVisible();
     console.log(`Tournament created at ${tournamentUrl}`);
 
-    const joiningPlayers = players.slice(1);
     const startingPlayers = players.slice(0, 9);
     const preStartRegistrants = players.slice(1, 9);
-    await initializeGuestSessions(joiningPlayers);
-    console.log("All guest sessions initialized");
+    await Promise.all(
+      players.map(async (player) => {
+        await player.joinTournamentLobbyByUrl(tournamentUrl);
+        const drawer = player.page.locator("phg-navigation-drawer");
+        if ((await drawer.getAttribute("open")) === null) {
+          await drawer.locator(".drawer-toggle").click();
+        }
+        await player.page
+          .getByRole("button", { name: "Settings", exact: true })
+          .click();
+        await player.page
+          .getByRole("link", { name: "Change", exact: true })
+          .click();
+        await player.page
+          .getByRole("button", { name: "Randomize", exact: true })
+          .click();
+        await player.page
+          .getByRole("button", { name: "Done", exact: true })
+          .click();
+        await player.page
+          .getByRole("button", { name: "Save", exact: true })
+          .click();
+        await expect(player.page).toHaveURL(tournamentUrl);
+        await expect(player.mttLobby).toBeVisible();
 
-    await Stress.runSequentially(players, async (player) => {
-      await player.joinTournamentLobbyByUrl(tournamentUrl);
-      const drawer = player.page.locator("phg-navigation-drawer");
-      if ((await drawer.getAttribute("open")) === null) {
-        await drawer.locator(".drawer-toggle").click();
-      }
-      await player.page
-        .getByRole("button", { name: "Settings", exact: true })
-        .click();
-      await player.page
-        .getByRole("link", { name: "Change", exact: true })
-        .click();
-      await player.page
-        .getByRole("button", { name: "Randomize", exact: true })
-        .click();
-      await player.page
-        .getByRole("button", { name: "Done", exact: true })
-        .click();
-      await player.page
-        .getByRole("button", { name: "Save", exact: true })
-        .click();
-      await expect(player.page).toHaveURL(tournamentUrl);
-      await expect(player.mttLobby).toBeVisible();
-
-      const response = await player.page.request.get("/api/users/me");
-      expect(response.ok()).toBeTruthy();
-      const user = await response.json();
-      expect(user.settings.avatar).toBeTruthy();
-    });
+        const response = await player.page.request.get("/api/users/me");
+        expect(response.ok()).toBeTruthy();
+        const user = await response.json();
+        expect(user.settings.avatar).toBeTruthy();
+      }),
+    );
     console.log("All eleven players saved randomized avatars");
 
-    await Stress.runSequentially(preStartRegistrants, async (player, index) => {
-      await signUpTournamentRegistrant(
-        player,
-        `stress-player-${index + 2}-${Date.now()}@example.com`,
-      );
-    });
+    await Promise.all(
+      preStartRegistrants.map(async (player, index) => {
+        await signUpTournamentRegistrant(
+          player,
+          `stress-player-${index + 2}-${Date.now()}@example.com`,
+        );
+      }),
+    );
     console.log("Nine starting players signed up and registered");
 
     await player1.startTournament();

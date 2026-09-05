@@ -1,4 +1,5 @@
 import { test as base, devices } from "@playwright/test";
+import { randomBytes } from "node:crypto";
 import { PokerPlayer } from "./poker-player.js";
 import { attachDebugListeners } from "./page-debug.js";
 import { startCoverage, stopCoverage } from "./coverage.js";
@@ -14,9 +15,11 @@ const DEBUG = process.env.DEBUG_E2E === "1";
  */
 function createPlayerFixture(name, contextOptions = {}) {
   return async ({ browser }, use) => {
+    const clientIp = `2001:db8:${randomBytes(12).toString("hex").match(/.{4}/g).join(":")}`;
     const context = await browser.newContext({
       permissions: ["clipboard-read", "clipboard-write"],
       ...contextOptions,
+      extraHTTPHeaders: { "X-Forwarded-For": clientIp },
     });
     const page = await context.newPage();
     await startCoverage(page);

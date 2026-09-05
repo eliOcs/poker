@@ -15,17 +15,6 @@ export function markProgress(state, reason) {
   state.lastProgressReason = reason;
 }
 
-/**
- * @template T
- * @param {T[]} items
- * @param {(item: T, index: number) => Promise<void>} task
- */
-export async function runSequentially(items, task) {
-  for (let index = 0; index < items.length; index += 1) {
-    await task(items[index], index);
-  }
-}
-
 /** @param {number} ms */
 export async function delay(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));

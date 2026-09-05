@@ -1,5 +1,4 @@
 import { mkdir, readdir, readFile, stat } from "node:fs/promises";
-import { existsSync } from "node:fs";
 
 const EMAIL_DIR = process.env.E2E_EMAIL_DIR;
 
@@ -32,27 +31,42 @@ export async function waitForLatestEmail(
   const emailDir = getEmailDir();
   await ensureEmailSinkDir();
   const deadline = Date.now() + timeoutMs;
+  const safeEmail = toEmail.replaceAll(/[^a-z0-9@._-]+/gi, "-");
 
   while (Date.now() < deadline) {
-    const files = existsSync(emailDir)
-      ? (await readdir(emailDir))
-          .filter((file) => file.endsWith(".json"))
-          .sort()
-          .reverse()
-      : [];
+    // Sink filenames are <timestamp>-<sanitized recipient>-<uuid>.json.
+    const latestFile = (await readdir(emailDir))
+      .filter(
+        (file) =>
+          file.match(/^\d+-(.+)-[\da-f-]{36}\.json$/)?.[1] === safeEmail,
+      )
+      .sort()
+      .at(-1);
 
-    for (const file of files) {
-      const filePath = `${emailDir}/${file}`;
-      const fileStat = await stat(filePath);
-      if (fileStat.mtimeMs < startedAt) continue;
-      const parsed = JSON.parse(await readFile(filePath, "utf8"));
-      if (parsed?.toEmail === toEmail) {
-        return parsed;
-      }
+    if (latestFile) {
+      const email = await readDeliveredEmail(
+        `${emailDir}/${latestFile}`,
+        startedAt,
+      );
+      if (email?.toEmail === toEmail) return email;
     }
 
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
 
   throw new Error(`Timed out waiting for email to ${toEmail}`);
+}
+
+/**
+ * @param {string} filePath
+ * @param {number} startedAt
+ */
+async function readDeliveredEmail(filePath, startedAt) {
+  if ((await stat(filePath)).mtimeMs < startedAt) return;
+  try {
+    return JSON.parse(await readFile(filePath, "utf8"));
+  } catch (error) {
+    // The sink can expose the file before its write has completed.
+    if (!(error instanceof SyntaxError)) throw error;
+  }
 }

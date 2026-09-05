@@ -47,6 +47,8 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       DOMAIN: E2E_HOST,
       APP_ORIGIN: E2E_ORIGIN,
+      // Player contexts simulate separate clients through forwarded IPs.
+      TRUSTED_PROXY_CIDRS: "127.0.0.1/32,::1/128",
       RNG_SEED: process.env.RNG_SEED || "12345",
       TIMER_SPEED: process.env.TIMER_SPEED || "10", // 10x faster for e2e tests
       DATA_DIR: E2E_DATA_DIR,
