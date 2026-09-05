@@ -11,6 +11,34 @@ class ReleaseNotes extends LitElement {
         <article class="static-article">
           <h1>Release Notes</h1>
 
+          <h2>September 5, 2026</h2>
+          <h3>New Features</h3>
+          <h4>Pixel-Art Avatars</h4>
+          <ul>
+            <li>
+              Create a custom avatar with selectable facial features, hair,
+              clothes, colors, and fine position and size controls
+            </li>
+            <li>
+              Use the dedicated avatar editor from Settings, or quickly explore
+              combinations with Randomize
+            </li>
+            <li>
+              Avatars now appear at poker tables and on public player profiles
+            </li>
+          </ul>
+          <h3>Improvements</h3>
+          <ul>
+            <li>
+              Avatar changes return to Settings as a draft and are persisted
+              together with the rest of the profile only after selecting Save
+            </li>
+            <li>
+              Settings, sign-in, and sign-up dialogs now share one app-wide
+              implementation and support browser back navigation
+            </li>
+          </ul>
+
           <h2>July 17, 2026</h2>
           <h3>New Features</h3>
           <h4>Multi-Table Tournaments</h4>

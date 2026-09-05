@@ -4,7 +4,6 @@
 - Send notification when MTT starts
 - Sidepot bets
 - https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
-- Avatar creator: wii style but pixel art
 - hand strength modal
 - delayed showed cards to end of the hand
 - always show player on same seat

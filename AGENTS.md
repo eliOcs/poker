@@ -28,14 +28,19 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 src/
 ├── backend/                  # Server-side code
 │   ├── index.js              # HTTP + WebSocket server entry
-│   ├── http-routes.js        # HTTP route handlers
+│   ├── http-routes.js        # Route composition and SPA routes
+│   ├── game-routes.js        # User, avatar, game, MTT, and profile APIs
+│   ├── history-routes.js     # Hand-history HTTP APIs
+│   ├── http-route-utils.js   # Session, response, and live-user synchronization
 │   ├── websocket-handler.js  # WebSocket message handling
 │   ├── ws-server.js          # WebSocket server and message routing
+│   ├── ws-connection.js      # Player connection lifecycle
 │   ├── static-files.js       # Static file serving
 │   ├── logger.js             # Logging utilities
 │   ├── store.js              # SQLite database, session and history management
-│   ├── store-history-backfill.js # Migrate legacy .ohh files to DB indices
+│   ├── store-migrations.js   # Versioned SQLite schema migrations
 │   ├── user.js               # User identity and creation
+│   ├── avatar.js             # Canonical avatar content revisions
 │   ├── id.js                 # ID generation utilities
 │   ├── http-error.js         # Structured HTTP error class
 │   ├── rate-limit.js         # Rate limiting
@@ -43,6 +48,7 @@ src/
 │   ├── game-broadcast.js     # Broadcasting game/tournament state to clients
 │   ├── game-route-parsers.js # Route parsing for cash/sitngo/mtt URLs
 │   ├── mtt.js                # Multi-table tournament lifecycle and table management
+│   ├── mtt-*.js              # Focused MTT lifecycle and policy modules
 │   ├── player-profile.js     # Public player profile stats and history aggregation
 │   ├── sign-in.js            # Passwordless sign-in token generation and validation
 │   ├── sign-in-routes.js     # HTTP API routes for sign-in flow
@@ -75,6 +81,8 @@ src/
 │       ├── types.js          # TypeScript type definitions
 │       └── circular-array.js
 ├── shared/                   # Code shared between frontend and backend
+│   ├── avatar.js             # Versioned avatar schema and boundary validation
+│   ├── blind-calculator.js   # Tournament blind calculations
 │   ├── stakes.js             # Chip denominations and stake presets
 │   ├── tournament.js         # Tournament configuration constants (blind levels, buy-ins)
 │   └── routes.js             # Route matchers for cash/sitngo/mtt URLs
@@ -84,10 +92,15 @@ src/
     ├── manifest.json         # PWA manifest
     ├── app.js                # Main app router
     ├── app-shell.js          # App shell (top-level chrome, header, nav)
+    ├── app-render.js         # Page and app-level modal rendering
+    ├── app-route-state.js    # Path parsing and page route state
+    ├── app-navigation.js     # History and URL-backed modal navigation
+    ├── app-event-handlers.js # App-level DOM event wiring
     ├── app-auth.js           # Auth state management (guest → registered flow)
     ├── app-auth-status.js    # Auth status indicator
     ├── app-sign-in-modal.js  # Passwordless email sign-in form
     ├── app-profile-settings.js # User profile and settings panel
+    ├── app-profile-actions.js # Settings and avatar draft actions
     ├── app-navigation-drawer.js # Navigation drawer with tournament list
     ├── navigation-drawer.js  # Sliding drawer container component
     ├── drawer.js             # Base drawer primitive
@@ -97,8 +110,16 @@ src/
     ├── game-modals.js        # Create cash / SNG / MTT game modals
     ├── index.js              # Game table component
     ├── history.js            # Hand history viewer
-    ├── history-styles.js     # History page styles
+    ├── history-replay.js     # Hand replay state and transitions
+    ├── history-timeline.js   # Hand action timeline
     ├── home.js               # Landing page
+    ├── avatar-maker.js       # Dedicated avatar customization page
+    ├── avatar.js             # Reusable canvas avatar renderer
+    ├── avatar-loader.js      # Public avatar configuration cache
+    ├── avatar-sprite-loader.js # Selective runtime sprite loading
+    ├── avatar-drawing.js     # Avatar canvas rendering entry point
+    ├── avatar-sprites.js     # Sprite composition and color transforms
+    ├── assets/avatar/        # Exported runtime avatar sprites
     ├── action-panel.js       # Betting action buttons
     ├── audio.js              # Sound effects
     ├── error-reporting.js    # Client-side error reporting to backend
@@ -110,11 +131,10 @@ src/
     ├── game-layout.js        # Game table layout
     ├── icons.js              # SVG icon definitions
     ├── seat.js               # Player seat component
-    ├── button.js             # Generic button component
     ├── modal.js              # Modal dialog
     ├── ranking-panel.js      # Hand rankings display
     ├── toast.js              # Toast notifications
-    └── styles.js             # Design tokens and base styles
+    └── styles/               # Component and page stylesheets
 
 test/
 ├── backend/             # Backend unit tests (mirrors src/backend)
@@ -130,6 +150,10 @@ test/
     └── test-cases/      # Modular test case definitions
 
 doc/
+├── avatar.md             # Avatar schema, persistence, rendering, and assets
+├── backend.md            # Backend architecture and data contracts
+├── frontend.md           # Frontend architecture and components
+├── infrastructure.md     # Deployment and operational documentation
 ├── deps-backend.svg     # Backend dependency graph (generated via npm run deps)
 ├── deps-frontend.svg    # Frontend dependency graph (generated via npm run deps)
 └── lit.md               # Lit framework reference
@@ -281,6 +305,7 @@ npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
 npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
+npm run avatar:sprites          # Export avatar sprites from the source XCF
 ```
 
 ### Git Hooks
@@ -292,8 +317,10 @@ A shared pre-commit hook runs `npm run validate` before each commit. It is confi
 ```
 DOMAIN=localhost
 PORT=3000
-# Optional for local email testing (writes emails to disk instead of sending via SES):
-# EMAIL_SINK_DIR=./tmp/emails
+APP_ORIGIN=http://localhost:3000
+AWS_REGION=eu-central-1
+SES_FROM_EMAIL=no-reply@plutonpoker.com
+EMAIL_SINK_DIR=./data/emails
 ```
 
 ### Frontend Development
@@ -412,6 +439,7 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 
 - `ws` - WebSocket server
 - `lit` - Web components
+- `@lit/task` - Async Lit task controller
 - `@aws-sdk/client-ses` - Passwordless sign-in emails via AWS SES
 
 **Dev**:

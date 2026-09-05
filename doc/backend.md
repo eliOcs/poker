@@ -4,62 +4,45 @@
 
 ![Backend dependency graph](deps-backend.svg)
 
-## Project Structure
+## Key Files and Modules
 
 ```
 src/backend/
-├── index.js                  # HTTP + WebSocket server entry
-├── http-routes.js            # HTTP route handlers
-├── websocket-handler.js      # WebSocket message handling
-├── ws-server.js              # WebSocket server and message routing
-├── static-files.js           # Static file serving
-├── logger.js                 # Logging utilities
-├── store.js                  # SQLite database, session and history management
-├── store-migrations.js       # Versioned SQLite schema migrations and validation
-├── user.js                   # User identity and creation
-├── id.js                     # ID generation utilities
-├── http-error.js             # Structured HTTP error class
-├── rate-limit.js             # Rate limiting
-├── game-eviction.js          # Player eviction/timeout logic
-├── game-broadcast.js         # Broadcasting game/tournament state to clients
-├── game-route-parsers.js     # Route parsing for cash/sitngo/mtt URLs
-├── mtt.js                    # Multi-table tournament lifecycle and table management
-├── player-profile.js         # Public player profile stats and history aggregation
-├── sign-in.js                # Passwordless sign-in token generation and validation
-├── sign-in-routes.js         # HTTP API routes for sign-in flow
-├── sign-in-email.js          # HTML + plain text sign-in email template
-├── email.js                  # AWS SES client with local file-sink fallback
-├── client-error-reporting.js # Frontend error logging endpoint
-└── poker/                    # Game logic (pure functions)
-    ├── game.js               # Game state initialization
-    ├── game-tick.js          # Game tick orchestration
-    ├── actions.js            # Game actions (generators)
-    ├── betting.js            # Betting logic and turn management
-    ├── dealing.js            # Card dealing logic
-    ├── hand-rankings.js      # Hand evaluation & comparison
-    ├── hand-history/         # Hand history (OHH spec: https://hh-specs.handhistory.org/)
-    │   ├── index.js          # History generation
-    │   ├── io.js             # File I/O operations
-    │   └── view.js           # History view formatting
-    ├── player.js             # Player identity
-    ├── player-view.js        # Server-side view filtering
-    ├── pots.js               # Pot calculation and side pots
-    ├── ranking.js            # Hand ranking utilities
-    ├── recovery.js           # Game state recovery from hand history
-    ├── seat.js               # Seat representation
-    ├── showdown.js           # Showdown logic
-    ├── stakes.js             # Blind/ante configuration
-    ├── tournament-summary.js # Tournament summary (OTS spec: https://ts-specs.handhistory.org/)
-    ├── tournament-tick.js    # Tournament blind level progression
-    ├── deck.js               # Card deck management
-    ├── rng.js                # Random number generation
-    ├── types.js              # TypeScript type definitions
-    └── circular-array.js
+├── index.js                   # HTTP and WebSocket server entry
+├── http-routes.js             # Route composition and SPA routes
+├── game-routes.js             # User, avatar, cash, Sit & Go, MTT, and profile APIs
+├── history-routes.js          # Hand-history HTTP APIs
+├── sign-in-routes.js          # Passwordless sign-in APIs
+├── http-route-utils.js        # Session, response, and live-user synchronization
+├── websocket-handler.js       # WebSocket upgrade handling
+├── ws-server.js               # WebSocket server and message routing
+├── ws-connection.js           # Player connection lifecycle
+├── game-broadcast.js          # Player-specific game broadcasts
+├── avatar.js                  # Canonical avatar content revisions
+├── user.js                    # User identity and default settings
+├── store.js                   # SQLite persistence and history indices
+├── store-migrations.js        # Versioned SQLite migrations
+├── player-profile.js          # Public profile and history aggregation
+├── mtt.js                     # MTT manager and orchestration
+├── mtt-*.js                   # Focused MTT lifecycle and policy modules
+├── email.js                   # AWS SES and local email sink
+└── poker/                     # Pure poker rules and state transitions
+    ├── game.js                # Game state initialization
+    ├── game-tick.js           # Game tick orchestration
+    ├── actions.js             # Generator-based player actions
+    ├── betting.js             # Betting rules and turn management
+    ├── player.js              # Public player identity and avatar revision
+    ├── player-view.js         # Per-player state filtering
+    ├── hand-rankings.js       # Hand evaluation and comparison
+    ├── hand-history/          # OHH history generation, I/O, and views
+    └── tournament-summary.js  # OTS tournament summaries
 
-src/shared/                   # Code shared between frontend and backend
-├── stakes.js                 # Chip denominations and stake presets
-├── tournament.js             # Tournament configuration constants (blind levels, buy-ins)
-└── routes.js                 # Route matchers for cash/sitngo/mtt URLs
+src/shared/
+├── avatar.js                  # Versioned avatar schema and boundary validation
+├── blind-calculator.js        # Tournament blind calculations
+├── stakes.js                  # Chip denominations and stake presets
+├── tournament.js              # Shared tournament configuration
+└── routes.js                  # Live-resource and history route helpers
 ```
 
 ## Database
@@ -134,9 +117,16 @@ Passwordless email-based sign-in via one-time tokens.
   id: string,          // UUID
   name: string | undefined,
   email: string | undefined,
-  settings: { volume: number }
+  settings: {
+    volume: number,
+    vibration: boolean,
+    avatar?: AvatarConfiguration
+  }
 }
 ```
+
+Settings are stored as JSON in the `users` table. Avatar input is validated and
+canonicalized before it is assigned to the user; see [Avatars](avatar.md).
 
 ## Player Profiles
 
@@ -151,6 +141,7 @@ Passwordless email-based sign-in via one-time tokens.
   joinedAt: string,
   totalNetWinnings: number,   // cents
   totalHands: number,
+  avatarRevision?: string,
   recentGames: [{
     gameId, tableId, tournamentId,
     gameType, netWinnings, handsPlayed,
@@ -158,6 +149,23 @@ Passwordless email-based sign-in via one-time tokens.
   }]
 }
 ```
+
+## Avatars
+
+The backend stores the canonical avatar configuration in user settings, but
+game, tournament, and profile payloads expose only its content-derived
+`avatarRevision`. This keeps frequently broadcast state small and gives clients
+a stable cache key.
+
+`GET /api/players/:playerId/avatar` returns `{ revision, avatar }`, uses the
+revision as an `ETag`, and returns `304` when `If-None-Match` is current. It
+returns `404` when the player has no configured avatar. `PUT /api/users/me`
+accepts a validated avatar object in `settings.avatar`; JSON `null` explicitly
+removes it.
+
+After a settings update, the backend synchronizes the player's name and avatar
+revision into live seats and MTT entrants before broadcasting the changed state.
+See [Avatars](avatar.md) for the full persistence and rendering flow.
 
 ## Multi-Table Tournaments
 
@@ -190,6 +198,7 @@ Passwordless email-based sign-in via one-time tokens.
 {
   playerId: string,
   name: string,
+  avatarRevision?: string,
   status: "registered" | "seated" | "eliminated" | "winner",
   stack: number,              // cents
   tableId: string | null,

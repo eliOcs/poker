@@ -52,8 +52,9 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 - [Backend](doc/backend.md) — Communication model, game state, patterns, currency convention
 - [Frontend](doc/frontend.md) — Components, development workflow, UI catalog
+- [Avatars](doc/avatar.md) — Configuration, persistence, rendering, and sprite workflow
 - [Infrastructure](doc/infrastructure.md) — Server setup, deployment, storage, secrets
-- [CLAUDE.md](CLAUDE.md) — Full project context for AI assistants and contributors
+- [AGENTS.md](AGENTS.md) — Full project context for AI assistants and contributors
 
 ## Development
 
@@ -65,16 +66,21 @@ npm test                        # Run all tests (backend + frontend)
 npm run test:backend            # Run backend unit tests (node:test)
 npm run test:frontend           # Run frontend component tests (web-test-runner)
 npm run test:e2e                # Run end-to-end tests (Playwright)
+npm run test:e2e:smoke          # Run the main end-to-end smoke flow
 npm run test:ui-catalog         # Run visual regression tests
 npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
-npm run coverage                # Run tests with coverage reporting
+npm run test:coverage           # Run backend + frontend coverage
+npm run test:e2e:coverage       # Run end-to-end coverage
 npm run duplicates              # Check for code duplication (jscpd)
 npm run lint                    # ESLint + Stylelint (check only)
 npm run format                  # Prettier (check only)
+npm run review                  # Semantic review of uncommitted changes
 npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
 npm run validate                # Run all checks (format, lint, typecheck, test)
 npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
+npm run deps:check              # Validate architectural dependency rules
+npm run avatar:sprites          # Export avatar sprites from the source XCF
 ```
 
 ### Git Hooks
@@ -135,6 +141,8 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 
 - `ws` — WebSocket server
 - `lit` — Web components
+- `@lit/task` — Async Lit task controller
+- `@aws-sdk/client-ses` — Passwordless sign-in email delivery
 
 **Dev**:
 
@@ -142,5 +150,6 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `typescript` — Type checking (no compilation)
 - `@open-wc/testing`, `web-test-runner` — Frontend testing
 - `@playwright/test` — E2E and visual regression testing
+- `c8` — Backend and E2E coverage reporting
 - `jscpd` — Code duplication detection
-- `madge` — Dependency graph generation (via npx)
+- `dependency-cruiser` — Dependency rules and graph generation
