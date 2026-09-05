@@ -1,7 +1,14 @@
-import { fixture, expect, html, oneEvent } from "@open-wc/testing";
+import { fixture, expect, html, oneEvent, waitUntil } from "@open-wc/testing";
+import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 import "../../src/frontend/player-profile.js";
 
 describe("phg-player-profile", () => {
+  const originalFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
   it("shows only the page background while loading", async () => {
     const element = await fixture(html`
       <phg-player-profile></phg-player-profile>
@@ -46,11 +53,56 @@ describe("phg-player-profile", () => {
     `);
 
     const rows = element.querySelectorAll("tbody tr");
+    const avatar = element.querySelector("phg-avatar");
+
+    expect(avatar.playerId).to.equal("player1");
+    expect(avatar.revision).to.be.undefined;
+    expect(avatar.querySelector(".avatar-empty")).to.exist;
+    expect(
+      avatar.querySelector(".avatar-empty").getAttribute("aria-label"),
+    ).to.equal("Alice avatar");
     expect(rows.length).to.equal(2);
     expect(rows[0].textContent).to.include("Sit n Go");
     expect(rows[0].textContent).to.include("-$5");
     expect(rows[1].textContent).to.include("Cash");
     expect(rows[1].textContent).to.include("+$80");
+  });
+
+  it("passes the public avatar revision to the avatar renderer", async () => {
+    globalThis.fetch = async (url) => {
+      if (url !== "/api/players/player2/avatar") return originalFetch(url);
+      return {
+        ok: true,
+        json: async () => ({
+          revision: "avatar-revision",
+          avatar: DEFAULT_AVATAR,
+        }),
+      };
+    };
+    const element = await fixture(html`
+      <phg-player-profile
+        .profile=${{
+          id: "player2",
+          name: "Bob",
+          avatarRevision: "avatar-revision",
+          online: true,
+          joinedAt: "2026-03-05T18:42:00.000Z",
+          totalNetWinnings: 0,
+          totalHands: 0,
+          recentGames: [],
+        }}
+      ></phg-player-profile>
+    `);
+
+    const avatar = element.querySelector("phg-avatar");
+
+    expect(avatar.playerId).to.equal("player2");
+    expect(avatar.revision).to.equal("avatar-revision");
+    expect(avatar.label).to.equal("Bob avatar");
+    await waitUntil(
+      () =>
+        avatar.querySelector("canvas")?.dataset.revision === "avatar-revision",
+    );
   });
 
   it("navigates to the player's last hand when a row is clicked", async () => {

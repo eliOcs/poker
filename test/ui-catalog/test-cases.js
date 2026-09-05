@@ -76,6 +76,7 @@ const GAME_TEST_CASES = {
         value: {
           id: "lz1abc12x9k2",
           name: "Cañas y tapas",
+          avatarRevision: "catalog-avatar",
           online: false,
           lastSeenAt: "2026-03-05T18:42:00.000Z",
           joinedAt: "2025-11-14T20:15:00.000Z",

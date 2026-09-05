@@ -162,6 +162,13 @@ async function prepareAvatarMakerTestCase(testCase, component) {
   await verifyAvatarMakerScrollIsContained(testCase, component);
 }
 
+async function preparePlayerProfileTestCase(testCase, component) {
+  if (testCase !== "player-profile-summary") return;
+  await expect(
+    component.locator("phg-player-profile phg-avatar canvas[data-rendered]"),
+  ).toHaveCount(1);
+}
+
 async function prepareTestCase(testCase, page, component) {
   const componentState = {
     "game-rankings-modal": { showRanking: true },
@@ -177,6 +184,7 @@ async function prepareTestCase(testCase, page, component) {
   }
 
   await prepareAvatarMakerTestCase(testCase, component);
+  await preparePlayerProfileTestCase(testCase, component);
 
   const replayIndex = {
     "history-replay-start": 0,

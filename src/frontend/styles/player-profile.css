@@ -10,9 +10,24 @@
 
   .header {
     display: flex;
-    align-items: start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
+  }
+
+  .profile-overview {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: var(--space-lg);
+  }
+
+  .profile-overview phg-avatar {
+    box-sizing: border-box;
+    flex: none;
+    width: 96px;
+    height: 96px;
+    border: 3px solid var(--color-bg-dark);
   }
 
   .identity {
@@ -121,6 +136,15 @@
       white-space: normal;
       text-align: center;
       line-height: 1.6;
+    }
+
+    .profile-overview {
+      gap: var(--space-md);
+    }
+
+    .profile-overview phg-avatar {
+      width: 80px;
+      height: 80px;
     }
 
     .summary {

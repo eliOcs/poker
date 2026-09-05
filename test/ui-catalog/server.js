@@ -11,6 +11,7 @@ import {
   respondWithFile,
   buildNodeModulesMap,
 } from "../../src/backend/static-files.js";
+import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 
 const PORT = process.env.UI_CATALOG_PORT || 8445;
 
@@ -73,6 +74,14 @@ function handleRequest(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = url.pathname;
   console.log(`[REQ] ${pathname}`);
+
+  if (pathname === "/api/players/lz1abc12x9k2/avatar") {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({ revision: "catalog-avatar", avatar: DEFAULT_AVATAR }),
+    );
+    return;
+  }
 
   // Check static routes
   if (routes[pathname]) {

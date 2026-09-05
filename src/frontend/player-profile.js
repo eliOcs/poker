@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import { formatPlayerLabel } from "./player-label.js";
 import { getHistoryPath, getMttPath } from "../shared/routes.js";
+import "./avatar.js";
 
 class PlayerProfile extends LitElement {
   createRenderRoot() {
@@ -63,13 +64,23 @@ class PlayerProfile extends LitElement {
           <section class="panel">
             <div class="eyebrow">Player Profile</div>
             <div class="header">
-              <div class="identity">
-                <h1>
-                  ${formatPlayerLabel(this.profile.name, this.profile.id)}
-                </h1>
-                <div class="player-id">Player ID: ${this.profile.id}</div>
-                <div class="meta">
-                  Joined ${formatDate(this.profile.joinedAt)}
+              <div class="profile-overview">
+                <phg-avatar
+                  .playerId=${this.profile.id}
+                  .revision=${this.profile.avatarRevision}
+                  .label=${`${formatPlayerLabel(
+                    this.profile.name,
+                    this.profile.id,
+                  )} avatar`}
+                ></phg-avatar>
+                <div class="identity">
+                  <h1>
+                    ${formatPlayerLabel(this.profile.name, this.profile.id)}
+                  </h1>
+                  <div class="player-id">Player ID: ${this.profile.id}</div>
+                  <div class="meta">
+                    Joined ${formatDate(this.profile.joinedAt)}
+                  </div>
                 </div>
               </div>
               <div class=${`status ${this.profile.online ? "" : "offline"}`}>
