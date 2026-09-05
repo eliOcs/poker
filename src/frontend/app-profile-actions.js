@@ -1,7 +1,9 @@
 export const appProfileActions = {
   openProfileSettings() {
+    this._settingsName = this.user.name ?? "";
     this._settingsVolume = this.user.settings.volume;
     this._settingsVibration = this.user.settings.vibration;
+    this._settingsAvatar = this.user.settings.avatar;
     this._showProfileSettings = true;
   },
 
@@ -9,12 +11,16 @@ export const appProfileActions = {
     this._showProfileSettings = false;
   },
 
+  openAvatarMakerFromSettings() {
+    this._reopenProfileSettingsAfterAvatar = true;
+    this.closeProfileSettings();
+  },
+
   async saveProfileSettings(form) {
     const formData = new FormData(form);
-    const nameValue = formData.get("name");
     const volumeValue = formData.get("volume");
     const vibrationValue = formData.get("vibration");
-    const name = typeof nameValue === "string" ? nameValue.trim() : "";
+    const name = this._settingsName.trim();
     await this._updateUser({
       name,
       settings: {
@@ -26,6 +32,9 @@ export const appProfileActions = {
           typeof vibrationValue === "string"
             ? vibrationValue === "true"
             : this._settingsVibration,
+        // JSON requires null to explicitly request avatar removal.
+        // eslint-disable-next-line no-restricted-syntax
+        avatar: this._settingsAvatar ?? null,
       },
     });
     this._showProfileSettings = false;
@@ -36,18 +45,8 @@ export const appProfileActions = {
     window.history.back();
   },
 
-  async saveAvatar(avatar) {
-    if (this._avatarSaving) return;
-    this._avatarSaving = true;
-    const saved = await this._updateUser({ settings: { avatar } });
-    this._avatarSaving = false;
-
-    if (!saved) {
-      this.toast = { message: "Unable to save avatar", variant: "error" };
-      return;
-    }
-
-    this.toast = { message: "Avatar saved", variant: "success" };
+  applyAvatarDraft(avatar) {
+    this._settingsAvatar = avatar;
     window.history.back();
   },
 };

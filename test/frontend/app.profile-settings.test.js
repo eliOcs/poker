@@ -1,5 +1,6 @@
 import { fixture, expect, html, waitUntil } from "@open-wc/testing";
 import { OriginalFetch } from "./setup.js";
+import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 import "../../src/frontend/app.js";
 
 describe("phg-app profile settings", () => {
@@ -11,6 +12,7 @@ describe("phg-app profile settings", () => {
     updatedName = "Test",
     updatedVibration = true,
     onUpdateRequest = null,
+    avatar = undefined,
   ) {
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
@@ -20,7 +22,11 @@ describe("phg-app profile settings", () => {
             id: "user1",
             name: "Test",
             email: "test@example.com",
-            settings: { volume: 0.75, vibration: true },
+            settings: {
+              volume: 0.75,
+              vibration: true,
+              ...(avatar ? { avatar } : {}),
+            },
           }),
         };
       }
@@ -103,11 +109,65 @@ describe("phg-app profile settings", () => {
     expect(element.querySelector("phg-modal")).to.not.exist;
   });
 
+  it("reopens settings after returning from the avatar maker", async () => {
+    const element = await openOwnProfileSettings();
+    const nameInput = element.querySelector("#profile-settings-name-input");
+    nameInput.value = "Draft name";
+    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+    element.querySelector('.volume-slider input[value="0.25"]').click();
+    element.querySelector('a[href="/avatar"]').click();
+    await waitUntil(() => element.path === "/avatar", { timeout: 2000 });
+
+    element.path = "/players/user1";
+    await element.updateComplete;
+
+    expect(element.querySelector("phg-modal")).to.exist;
+    expect(element.querySelector("phg-modal h3").textContent).to.equal(
+      "Settings",
+    );
+    expect(
+      element.querySelector("#profile-settings-name-input").value,
+    ).to.equal("Draft name");
+    expect(element._settingsVolume).to.equal(0.25);
+  });
+
+  it("previews and removes the saved avatar", async () => {
+    /** @type {any} */
+    let requestBody;
+    const element = await openOwnProfileSettings(
+      "Test",
+      true,
+      (body) => {
+        requestBody = body;
+      },
+      DEFAULT_AVATAR,
+    );
+    const preview = element.querySelector(".avatar-setting phg-avatar");
+
+    expect(preview.querySelector("canvas")).to.exist;
+    element
+      .getElementsByClassName("avatar-setting__actions")[0]
+      .querySelector("button")
+      .click();
+    await element.updateComplete;
+    await preview.updateComplete;
+
+    expect(preview.querySelector(".avatar-empty")).to.exist;
+    expect(preview.querySelector("canvas")).to.not.exist;
+    expect(element.querySelector(".avatar-setting__actions button").disabled).to
+      .be.true;
+
+    element.querySelector("button.button--action").click();
+    await waitUntil(() => requestBody, { timeout: 2000 });
+    expect(JSON.stringify(requestBody.settings)).to.include('"avatar":null');
+  });
+
   it("shows a success toast after saving profile settings", async () => {
     const element = await openOwnProfileSettings("Updated");
 
     const input = element.querySelector("#profile-settings-name-input");
     input.value = "Updated";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
 
     const saveBtn = element.querySelector("button.button--action");
     saveBtn.click();
@@ -143,7 +203,11 @@ describe("phg-app profile settings", () => {
 
     expect(requestBody).to.deep.equal({
       name: "Test",
-      settings: { volume: 0.75, vibration: false },
+      settings: {
+        volume: 0.75,
+        vibration: false,
+        avatar: JSON.parse("null"),
+      },
     });
     expect(element.user.settings.vibration).to.equal(false);
   });

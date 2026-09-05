@@ -11,7 +11,7 @@ test.describe("Poker Game Smoke Test", () => {
     // === CREATE AVATAR (Player 1) ===
     await player1.page.goto("/");
     await player1.page.getByRole("button", { name: "Settings" }).click();
-    await player1.page.getByRole("link", { name: "Change avatar" }).click();
+    await player1.page.getByRole("link", { name: "Change" }).click();
     await expect(player1.page).toHaveURL(/\/avatar$/);
 
     const avatarMaker = player1.page.locator("phg-avatar-maker");
@@ -38,8 +38,12 @@ test.describe("Poker Game Smoke Test", () => {
       avatarMaker.getByRole("group", { name: "Position: 1" }),
     ).toBeVisible();
 
-    await avatarMaker.getByRole("button", { name: "Save" }).click();
+    await avatarMaker.getByRole("button", { name: "Done" }).click();
     await expect(player1.page).toHaveURL(/\/$/);
+    await expect(
+      player1.page.getByRole("heading", { name: "Settings" }),
+    ).toBeVisible();
+    await player1.page.getByRole("button", { name: "Save" }).click();
 
     // Create game via UI with $0.05/$0.10 stakes (index 2)
     await createGame(player1, { stakesIndex: 2 });

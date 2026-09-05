@@ -240,13 +240,11 @@ class Seat extends LitElement {
   _renderPlayerInfo() {
     const player = this.seat.player;
     return html`<div class="player-info">
-      ${player?.avatarRevision
-        ? html`<phg-avatar
-            .playerId=${player.id}
-            .revision=${player.avatarRevision}
-            .label=${`${player.name ?? "Player"}'s avatar`}
-          ></phg-avatar>`
-        : ""}
+      <phg-avatar
+        .playerId=${player?.id}
+        .revision=${player?.avatarRevision}
+        .label=${`${player?.name ?? "Player"}'s avatar`}
+      ></phg-avatar>
       <span class="player-name"
         >${player?.name ?? `Seat ${this.seatNumber + 1}`}</span
       >

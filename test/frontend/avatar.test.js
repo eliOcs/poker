@@ -74,4 +74,29 @@ describe("phg-avatar", () => {
 
     expect(canvas.dataset.error).to.be.undefined;
   });
+
+  it("draws a local avatar configuration", async () => {
+    const element = await fixture(
+      html`<phg-avatar .avatar=${DEFAULT_AVATAR}></phg-avatar>`,
+    );
+    const canvas = element.querySelector("canvas");
+
+    await waitUntil(() => canvas.hasAttribute("data-rendered"));
+
+    expect(canvas.dataset.error).to.be.undefined;
+  });
+
+  it("renders the sign-in icon when no avatar is configured", async () => {
+    const element = await fixture(
+      html`<phg-avatar label="No avatar selected"></phg-avatar>`,
+    );
+    const emptyAvatar = element.querySelector(".avatar-empty");
+
+    expect(emptyAvatar).to.exist;
+    expect(emptyAvatar.getAttribute("aria-label")).to.equal(
+      "No avatar selected",
+    );
+    expect(emptyAvatar.querySelector("svg")).to.exist;
+    expect(element.querySelector("canvas")).to.not.exist;
+  });
 });

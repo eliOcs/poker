@@ -3,6 +3,7 @@ import { AVATAR_SPRITE_SIZE } from "./avatar-sprite-data.js";
 import { drawAvatar } from "./avatar-drawing.js";
 import { loadPlayerAvatar } from "./avatar-loader.js";
 import { loadAvatarSprites } from "./avatar-sprite-loader.js";
+import { ICONS } from "./icons.js";
 
 class Avatar extends LitElement {
   createRenderRoot() {
@@ -14,6 +15,7 @@ class Avatar extends LitElement {
       playerId: { type: String },
       revision: { type: String },
       label: { type: String },
+      avatar: { type: Object },
     };
   }
 
@@ -22,6 +24,7 @@ class Avatar extends LitElement {
     this.playerId = undefined;
     this.revision = undefined;
     this.label = "Player avatar";
+    this.avatar = undefined;
     this._renderedKey = undefined;
     this._loadGeneration = 0;
   }
@@ -29,7 +32,8 @@ class Avatar extends LitElement {
   updated(changedProperties) {
     if (
       !changedProperties.has("playerId") &&
-      !changedProperties.has("revision")
+      !changedProperties.has("revision") &&
+      !changedProperties.has("avatar")
     ) {
       return;
     }
@@ -41,7 +45,9 @@ class Avatar extends LitElement {
     if (!request) return;
 
     try {
-      const avatar = await loadPlayerAvatar(request.playerId, request.revision);
+      const avatar =
+        request.avatar ??
+        (await loadPlayerAvatar(request.playerId, request.revision));
       await loadAvatarSprites(avatar);
       if (!isCurrentLoad(this, request)) return;
       drawLoadedAvatar(this, avatar, request);
@@ -51,6 +57,12 @@ class Avatar extends LitElement {
   }
 
   render() {
+    if (!this.avatar && (!this.playerId || !this.revision)) {
+      return html`<span class="avatar-empty" role="img" aria-label=${this.label}
+        >${ICONS.signIn}</span
+      >`;
+    }
+
     return html`<canvas
       width=${AVATAR_SPRITE_SIZE}
       height=${AVATAR_SPRITE_SIZE}
@@ -62,6 +74,9 @@ class Avatar extends LitElement {
 
 function beginAvatarLoad(avatar) {
   const generation = ++avatar._loadGeneration;
+  if (avatar.avatar) {
+    return { avatar: avatar.avatar, generation };
+  }
   if (!avatar.playerId || !avatar.revision) return;
   const key = `${avatar.playerId}:${avatar.revision}`;
   if (key === avatar._renderedKey) return;
@@ -86,13 +101,16 @@ function drawLoadedAvatar(avatarElement, avatar, request) {
   if (!context) throw new Error("Avatar canvas context unavailable");
   drawAvatar(context, avatar);
   delete canvas.dataset.error;
-  canvas.dataset.revision = request.revision;
+  canvas.dataset.rendered = "";
+  if (request.revision) canvas.dataset.revision = request.revision;
+  else delete canvas.dataset.revision;
   avatarElement._renderedKey = request.key;
 }
 
 function reportAvatarError(avatar, error) {
   const canvas = avatar.querySelector("canvas");
   if (canvas instanceof HTMLCanvasElement) {
+    delete canvas.dataset.rendered;
     canvas.dataset.error =
       error instanceof Error ? error.message : "Unable to render avatar";
   }

@@ -456,7 +456,7 @@ describe("phg-app sign in", () => {
     expect(modal.querySelector("h3").textContent).to.equal("Sign up");
   });
 
-  it("opens sign-up for guests on the tournament route and again on create", async () => {
+  it("opens sign-up for guests only after they create a tournament", async () => {
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
         return {
@@ -477,13 +477,9 @@ describe("phg-app sign in", () => {
     });
 
     element.path = "/mtt";
-    await waitUntil(() => element._showProfileSignUp, { timeout: 2000 });
-    expect(element?.querySelector("phg-app-sign-in-modal")?.mode).to.equal(
-      "sign-up",
-    );
-
-    element.closeProfileSignUp();
     await element.updateComplete;
+    await element.querySelector("phg-tournaments")?.updateComplete;
+    expect(element._showProfileSignUp).to.be.false;
     expect(element?.querySelector("phg-app-sign-in-modal")).to.not.exist;
 
     element

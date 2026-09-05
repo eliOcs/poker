@@ -10,10 +10,10 @@ describe("phg-app avatar maker", () => {
     history.replaceState({}, "", "/");
   });
 
-  it("loads the saved avatar and persists changes before navigating back", async () => {
+  it("applies changes to the settings draft before navigating back", async () => {
     const savedAvatar = structuredClone(DEFAULT_AVATAR);
     savedAvatar.face.size = 1;
-    let updateBody;
+    let updateRequests = 0;
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
         return {
@@ -23,11 +23,7 @@ describe("phg-app avatar maker", () => {
         };
       }
       if (url.match(/\/api\/users\/me$/) && options.method === "PUT") {
-        updateBody = JSON.parse(String(options.body));
-        return {
-          ok: true,
-          json: async () => createMockUser({ settings: updateBody.settings }),
-        };
+        updateRequests += 1;
       }
       return { ok: false };
     };
@@ -40,6 +36,9 @@ describe("phg-app avatar maker", () => {
 
     try {
       const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => element.user, { timeout: 2000 });
+      element._settingsAvatar = savedAvatar;
+      element._reopenProfileSettingsAfterAvatar = true;
       element.path = "/avatar";
       await waitUntil(() => element.querySelector("phg-avatar-maker"), {
         timeout: 2000,
@@ -51,22 +50,18 @@ describe("phg-app avatar maker", () => {
       maker.querySelector('[aria-label="Smaller Face"]').click();
       await maker.updateComplete;
       [...maker.querySelectorAll(".avatar-maker__page-actions button")]
-        .find((button) => button.textContent.trim() === "Save")
+        .find((button) => button.textContent.trim() === "Done")
         .click();
 
-      await waitUntil(() => updateBody, { timeout: 2000 });
       await waitUntil(() => backCalls === 1, { timeout: 2000 });
-      expect(updateBody.settings.avatar.face.size).to.equal(0);
-      expect(element.toast).to.deep.include({
-        message: "Avatar saved",
-        variant: "success",
-      });
+      expect(element._settingsAvatar.face.size).to.equal(0);
+      expect(updateRequests).to.equal(0);
     } finally {
       window.history.back = originalBack;
     }
   });
 
-  it("cancels avatar changes without saving and navigates back", async () => {
+  it("cancels avatar changes without changing the draft", async () => {
     let updateRequests = 0;
     globalThis.fetch = async (url, options = {}) => {
       if (url.match(/\/api\/users\/me$/) && !options.method) {
@@ -89,11 +84,17 @@ describe("phg-app avatar maker", () => {
 
     try {
       const element = await fixture(html`<phg-app></phg-app>`);
+      await waitUntil(() => element.user, { timeout: 2000 });
+      const draftAvatar = structuredClone(DEFAULT_AVATAR);
+      element._settingsAvatar = draftAvatar;
+      element._reopenProfileSettingsAfterAvatar = true;
       element.path = "/avatar";
       await waitUntil(() => element.querySelector("phg-avatar-maker"), {
         timeout: 2000,
       });
       const maker = element.querySelector("phg-avatar-maker");
+      await maker.updateComplete;
+      maker.querySelector('[aria-label="Bigger Face"]').click();
       await maker.updateComplete;
       [...maker.querySelectorAll(".avatar-maker__page-actions button")]
         .find((button) => button.textContent.trim() === "Cancel")
@@ -101,6 +102,8 @@ describe("phg-app avatar maker", () => {
 
       expect(backCalls).to.equal(1);
       expect(updateRequests).to.equal(0);
+      expect(element._settingsAvatar).to.equal(draftAvatar);
+      expect(element._settingsAvatar.face.size).to.equal(0);
     } finally {
       window.history.back = originalBack;
     }

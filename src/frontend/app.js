@@ -68,7 +68,8 @@ class App extends LitElement {
       _showProfileSignUp: { state: true },
       _settingsVolume: { state: true },
       _settingsVibration: { state: true },
-      _avatarSaving: { state: true },
+      _settingsName: { state: true },
+      _settingsAvatar: { state: true },
     };
   }
 
@@ -104,10 +105,11 @@ class App extends LitElement {
     this._showProfileSettings = false;
     this._showProfileSignIn = false;
     this._showProfileSignUp = false;
-    this._tournamentSignUpPrompted = false;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
-    this._avatarSaving = false;
+    this._settingsName = "";
+    this._settingsAvatar = undefined;
+    this._reopenProfileSettingsAfterAvatar = false;
     this._signInCallbackHandled = false;
     initAppEventHandlers(this);
   }
@@ -355,9 +357,18 @@ class App extends LitElement {
 
   willUpdate(changedProperties) {
     if (changedProperties.has("path")) {
+      const previousPath = changedProperties.get("path");
       const route = parseAppPath(this.path);
       syncAppRouteState(this, route);
       if (route.page === "avatar") void import("./avatar-maker.js");
+      if (
+        previousPath === "/avatar" &&
+        route.page !== "avatar" &&
+        this._reopenProfileSettingsAfterAvatar
+      ) {
+        this._reopenProfileSettingsAfterAvatar = false;
+        this._showProfileSettings = true;
+      }
     }
   }
 
@@ -405,19 +416,6 @@ class App extends LitElement {
     }
   }
 
-  _maybePromptTournamentSignUp() {
-    if (this.path !== "/mtt") {
-      this._tournamentSignUpPrompted = false;
-      return;
-    }
-    if (!this.user || this.user.email || this._tournamentSignUpPrompted) {
-      return;
-    }
-
-    this._tournamentSignUpPrompted = true;
-    this._showProfileSignUp = true;
-  }
-
   updated() {
     if (this._maybeRedirectHomeRoute()) {
       return;
@@ -426,7 +424,6 @@ class App extends LitElement {
     this._redirectToLatestHandIfNeeded();
     this._handleTaskErrors();
     this._maybeRedirectMttRoute();
-    this._maybePromptTournamentSignUp();
   }
 
   _renderShellPage(route) {

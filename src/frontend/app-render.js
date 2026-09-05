@@ -120,10 +120,11 @@ export function renderReleaseNotesView() {
  */
 export function renderAvatarMakerView(app) {
   return html`<phg-avatar-maker
-    .avatar=${app.user?.settings.avatar ?? DEFAULT_AVATAR}
-    .saving=${app._avatarSaving}
+    .avatar=${app._reopenProfileSettingsAfterAvatar
+      ? (app._settingsAvatar ?? DEFAULT_AVATAR)
+      : (app.user?.settings.avatar ?? DEFAULT_AVATAR)}
     @avatar-cancel=${app.closeAvatarMaker}
-    @avatar-save=${(event) => app.saveAvatar(event.detail.avatar)}
+    @avatar-done=${(event) => app.applyAvatarDraft(event.detail.avatar)}
   ></phg-avatar-maker>`;
 }
 

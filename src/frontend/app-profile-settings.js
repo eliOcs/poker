@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { renderModal } from "./modal.js";
+import "./avatar.js";
 
 const SETTINGS_VOLUME_LABELS = ["Off", "25%", "75%", "100%"];
 const SETTINGS_VOLUME_STEPS = [0, 0.25, 0.75, 1];
@@ -32,16 +33,39 @@ export function renderProfileSettingsModal(app) {
         placeholder="Enter your name"
         maxlength="20"
         autofocus
-        .value=${app.user?.name ?? ""}
+        .value=${app._settingsName}
+        @input=${(event) => {
+          app._settingsName = event.currentTarget.value;
+        }}
       />
-      <fieldset>
+      <fieldset class="avatar-setting">
         <legend>Avatar</legend>
-        <a
-          class="button button--muted button--full-width"
-          href="/avatar"
-          @click=${() => app.closeProfileSettings()}
-          >Change avatar</a
-        >
+        <div class="avatar-setting__content">
+          <phg-avatar
+            .avatar=${app._settingsAvatar}
+            .label=${app._settingsAvatar
+              ? "Current avatar"
+              : "No avatar selected"}
+          ></phg-avatar>
+          <div class="avatar-setting__actions">
+            <button
+              class="button button--danger"
+              type="button"
+              ?disabled=${!app._settingsAvatar}
+              @click=${() => {
+                app._settingsAvatar = undefined;
+              }}
+            >
+              Remove
+            </button>
+            <a
+              class="button button--muted"
+              href="/avatar"
+              @click=${() => app.openAvatarMakerFromSettings()}
+              >Change</a
+            >
+          </div>
+        </div>
       </fieldset>
       <fieldset>
         <legend>Sound Volume</legend>

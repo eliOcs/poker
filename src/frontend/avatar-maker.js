@@ -133,7 +133,6 @@ class AvatarMaker extends LitElement {
       activeTab: { type: String },
       avatar: { type: Object },
       canvasSize: { state: true },
-      saving: { type: Boolean },
     };
   }
 
@@ -142,7 +141,6 @@ class AvatarMaker extends LitElement {
     this.activeTab = "face";
     this.avatar = cloneAvatar(DEFAULT_AVATAR);
     this.canvasSize = 360;
-    this.saving = false;
     this.assetsReady = configureAvatarMaker(this);
   }
 
@@ -409,11 +407,6 @@ class AvatarMaker extends LitElement {
       ...this.avatar,
       [partId]: { ...this.avatar[partId], [property]: value },
     };
-    this.emitChange();
-  }
-
-  reset() {
-    this.avatar = cloneAvatar(DEFAULT_AVATAR);
     this.emitChange();
   }
 

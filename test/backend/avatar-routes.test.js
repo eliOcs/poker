@@ -94,6 +94,28 @@ describe("avatar routes", () => {
         },
       );
       assert.equal(cachedResponse.status, 304);
+
+      const removeResponse = await fetch(`${origin}/api/users/me`, {
+        method: "PUT",
+        headers: {
+          cookie: `phg=${user.id}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          settings: { avatar: JSON.parse("null") },
+        }),
+      });
+      assert.equal(removeResponse.status, 200);
+      const userWithoutAvatar = await removeResponse.json();
+      assert.equal(userWithoutAvatar.settings.avatar, undefined);
+      assert.equal(game.seats[0].player.avatarRevision, undefined);
+      assert.deepEqual(broadcasts, [game.id, game.id]);
+
+      const removedAvatarResponse = await fetch(
+        `${origin}/api/players/${user.id}/avatar`,
+        { headers: { cookie: `phg=${user.id}` } },
+      );
+      assert.equal(removedAvatarResponse.status, 404);
     } finally {
       server.close();
       await once(server, "close");

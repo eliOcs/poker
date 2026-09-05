@@ -113,6 +113,13 @@ function parseUserSettings(settings, updates) {
   const nextSettings = { ...settings, ...updates };
   if (!("avatar" in updates)) return nextSettings;
 
+  // JSON requires null to distinguish removal from an omitted setting.
+  // eslint-disable-next-line no-restricted-syntax
+  if (updates.avatar === null) {
+    delete nextSettings.avatar;
+    return nextSettings;
+  }
+
   try {
     nextSettings.avatar = canonicalizeAvatar(updates.avatar);
   } catch (error) {

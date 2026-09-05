@@ -114,6 +114,17 @@ phg-avatar-maker .main {
   gap: var(--space-md);
 }
 
+.avatar-maker__randomize {
+  grid-column: 1;
+}
+
+.avatar-maker__confirmation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-column: 3 / 5;
+  gap: var(--space-md);
+}
+
 .avatar-maker__page-actions .button {
   min-width: 0;
   padding-right: var(--space-md);
