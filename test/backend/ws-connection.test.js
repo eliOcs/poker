@@ -4,11 +4,32 @@ import * as Seat from "../../src/backend/poker/seat.js";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import {
   handlePlayerDisconnected,
+  markPlayerConnected,
   markTournamentPlayerConnected,
 } from "../../src/backend/ws-connection.js";
 import { createTestGame } from "./poker/test-helpers.js";
 
 describe("ws-connection", () => {
+  it("refreshes player identity when a recovered seat reconnects", () => {
+    const game = createTestGame({ seats: 2 });
+    game.id = "table-1";
+    game.seats[0] = Seat.occupied({ id: "player-1", name: "Old name" }, 1000);
+    game.seats[0].disconnected = true;
+    const broadcasts = [];
+
+    markPlayerConnected(
+      game,
+      { id: "player-1", name: "New name", avatarRevision: "revision-1" },
+      game.id,
+      (gameId) => broadcasts.push(gameId),
+    );
+
+    assert.equal(game.seats[0].player.name, "New name");
+    assert.equal(game.seats[0].player.avatarRevision, "revision-1");
+    assert.equal(game.seats[0].disconnected, false);
+    assert.deepEqual(broadcasts, [game.id]);
+  });
+
   it("marks a seat disconnected when the last socket closes", () => {
     const game = createTestGame({ seats: 2 });
     game.id = "table-1";

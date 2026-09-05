@@ -111,6 +111,23 @@
     color: var(--color-fg-white);
   }
 
+  .player-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+  }
+
+  .player-info phg-avatar {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+  }
+
+  .player-info .player-name {
+    min-width: 0;
+  }
+
   :scope.current-player .player-name {
     color: var(--color-primary);
   }

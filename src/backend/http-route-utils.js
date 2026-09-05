@@ -7,6 +7,7 @@ import {
 } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 import { getSessionPlayerLogContext } from "./logger.js";
+import { getUserAvatarRevision } from "./avatar.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -170,11 +171,14 @@ export function respondWithJson(res, data) {
  * @param {(gameId: Id) => void} broadcast
  */
 export function syncUserToGames(user, games, broadcast) {
+  const avatarRevision = getUserAvatarRevision(user);
   for (const [gameId, game] of games) {
     let changed = false;
     for (const seat of game.seats) {
       if (!seat.empty && seat.player.id === user.id) {
         seat.player.name = user.name;
+        if (avatarRevision) seat.player.avatarRevision = avatarRevision;
+        else delete seat.player.avatarRevision;
         changed = true;
       }
     }

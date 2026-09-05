@@ -45,6 +45,7 @@ import {
   callRebuyClock,
   tickRebuyDecisionClocks,
 } from "./mtt-rebuy-clock.js";
+import { getUserAvatarRevision } from "./avatar.js";
 
 /**
  * @typedef {import('./user.js').User} User
@@ -55,6 +56,7 @@ import {
  * @typedef {object} TournamentEntrant
  * @property {string} playerId
  * @property {string} [name]
+ * @property {string} [avatarRevision]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
@@ -119,6 +121,7 @@ import {
  * @typedef {object} ManagedTournamentViewEntrant
  * @property {string} playerId
  * @property {string} [name]
+ * @property {string} [avatarRevision]
  * @property {EntrantStatus} status
  * @property {number} stack
  * @property {string} [tableId]
@@ -217,7 +220,7 @@ export function createMttManager({
   /**
    * @param {TournamentEntrant} entrant
    */
-  function syncEntrantNameToTable(entrant) {
+  function syncEntrantToTable(entrant) {
     if (!entrant.tableId || entrant.seatIndex === undefined) return;
 
     const game = games.get(entrant.tableId);
@@ -227,6 +230,11 @@ export function createMttManager({
     if (!seat || seat.empty) return;
 
     seat.player.name = entrant.name;
+    if (entrant.avatarRevision) {
+      seat.player.avatarRevision = entrant.avatarRevision;
+    } else {
+      delete seat.player.avatarRevision;
+    }
     broadcastTableState(game.id);
   }
 
@@ -683,7 +691,10 @@ export function createMttManager({
         }
         if (entrant) {
           entrant.name = user.name;
-          syncEntrantNameToTable(entrant);
+          const avatarRevision = getUserAvatarRevision(user);
+          if (avatarRevision) entrant.avatarRevision = avatarRevision;
+          else delete entrant.avatarRevision;
+          syncEntrantToTable(entrant);
         }
         broadcastTournamentState(tournament.id);
       }

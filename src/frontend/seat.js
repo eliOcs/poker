@@ -8,6 +8,7 @@ import {
 } from "./seat-utils.js";
 import "./card.js";
 import "./chips.js";
+import "./avatar.js";
 /** @typedef {(seat: any) => boolean} SeatClassCondition */
 
 class Seat extends LitElement {
@@ -236,6 +237,22 @@ class Seat extends LitElement {
       : "";
   }
 
+  _renderPlayerInfo() {
+    const player = this.seat.player;
+    return html`<div class="player-info">
+      ${player?.avatarRevision
+        ? html`<phg-avatar
+            .playerId=${player.id}
+            .revision=${player.avatarRevision}
+            .label=${`${player.name ?? "Player"}'s avatar`}
+          ></phg-avatar>`
+        : ""}
+      <span class="player-name"
+        >${player?.name ?? `Seat ${this.seatNumber + 1}`}</span
+      >
+    </div>`;
+  }
+
   render() {
     if (!this.seat || this.seat.empty) return this._renderEmptySeat();
 
@@ -246,12 +263,7 @@ class Seat extends LitElement {
       ${this._activeChat
         ? html`<div class="chat-bubble">${this._activeChat}</div>`
         : ""}
-      ${this._renderDealerButton()}
-      <div class="player-info">
-        <span class="player-name"
-          >${this.seat.player?.name ?? `Seat ${this.seatNumber + 1}`}</span
-        >
-      </div>
+      ${this._renderDealerButton()} ${this._renderPlayerInfo()}
       ${this._renderStackOrResult()} ${this._renderClock()}
       ${this._renderStatusOrAction()} ${this._renderHandRank()}
       <div

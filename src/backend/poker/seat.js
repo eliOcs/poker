@@ -8,6 +8,7 @@
  * @typedef {object} Player
  * @property {Id} id - Player unique identifier
  * @property {string|undefined} name - Player display name
+ * @property {string} [avatarRevision] - Hash of the public avatar configuration
  */
 
 /**

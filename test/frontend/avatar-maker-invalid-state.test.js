@@ -4,14 +4,12 @@ import { drawAvatarPartPreview } from "../../src/frontend/avatar-drawing.js";
 import { drawEyes } from "../../src/frontend/avatar-eyes.js";
 import { DEFAULT_AVATAR } from "../../src/frontend/avatar-maker-data.js";
 import { getAvatarSpriteTypes } from "../../src/frontend/avatar-sprite-data.js";
-import {
-  avatarSpritesReady,
-  drawSpriteAvatar,
-} from "../../src/frontend/avatar-sprites.js";
+import { loadAllAvatarSprites } from "../../src/frontend/avatar-sprite-loader.js";
+import { drawSpriteAvatar } from "../../src/frontend/avatar-sprites.js";
 import { drawPixelated } from "../../src/frontend/canvas-pixel-renderer.js";
 
 describe("phg-avatar-maker invalid state", () => {
-  before(() => avatarSpritesReady);
+  before(() => loadAllAvatarSprites());
 
   it("reports an unknown active tab", () => {
     const maker = document.createElement("phg-avatar-maker");

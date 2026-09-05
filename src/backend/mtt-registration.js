@@ -1,4 +1,5 @@
 import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
+import { getUserAvatarRevision } from "./avatar.js";
 
 /**
  * @param {import('./mtt.js').ManagedTournament} tournament
@@ -14,9 +15,11 @@ export function addTournamentEntrant(tournament, user, now) {
     throw new Error("registration is closed");
   }
 
+  const avatarRevision = getUserAvatarRevision(user);
   tournament.entrants.set(user.id, {
     playerId: user.id,
     name: user.name,
+    ...(avatarRevision ? { avatarRevision } : {}),
     status: "registered",
     stack: tournament.initialStack,
     handsPlayed: 0,

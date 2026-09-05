@@ -26,6 +26,9 @@ function buildEntrants(tournament) {
     .map((entrant) => ({
       playerId: entrant.playerId,
       name: entrant.name,
+      ...(entrant.avatarRevision
+        ? { avatarRevision: entrant.avatarRevision }
+        : {}),
       status: entrant.status,
       stack: entrant.stack,
       tableId: entrant.tableId,

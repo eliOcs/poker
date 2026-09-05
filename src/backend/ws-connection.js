@@ -29,6 +29,12 @@ export function markPlayerConnected(
   const occupiedSeat = /** @type {import('./poker/seat.js').OccupiedSeat} */ (
     seat
   );
+  occupiedSeat.player.name = player.name;
+  if (player.avatarRevision) {
+    occupiedSeat.player.avatarRevision = player.avatarRevision;
+  } else {
+    delete occupiedSeat.player.avatarRevision;
+  }
   occupiedSeat.disconnected = false;
   broadcastGameStateMessage(gameId);
 }

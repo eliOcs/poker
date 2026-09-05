@@ -6,6 +6,7 @@ import {
   readTournamentSummary,
   toCents,
 } from "./poker/hand-history/io.js";
+import { getUserAvatarRevision } from "./avatar.js";
 
 const contributionActions = new Set([
   "Post SB",
@@ -45,6 +46,7 @@ const contributionActions = new Set([
  * @property {Cents} totalNetWinnings
  * @property {number} totalHands
  * @property {RecentGame[]} recentGames
+ * @property {string} [avatarRevision]
  */
 
 /**
@@ -58,6 +60,7 @@ export async function getPlayerProfile(games, playerId) {
 
   if (!user && totals.totalHands === 0) return;
 
+  const avatarRevision = user ? getUserAvatarRevision(user) : undefined;
   return {
     id: playerId,
     name: resolvePlayerName(user, totals.hands, playerId),
@@ -67,6 +70,7 @@ export async function getPlayerProfile(games, playerId) {
     totalNetWinnings: totals.totalNetWinnings,
     totalHands: totals.totalHands,
     recentGames: totals.recentGames,
+    ...(avatarRevision ? { avatarRevision } : {}),
   };
 }
 

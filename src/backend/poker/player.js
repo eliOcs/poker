@@ -1,3 +1,5 @@
+import { getUserAvatarRevision } from "../avatar.js";
+
 /**
  * @typedef {import('./seat.js').Player} Player
  * @typedef {import('../user.js').User} User
@@ -9,5 +11,10 @@
  * @returns {Player}
  */
 export function fromUser(user) {
-  return { id: user.id, name: user.name };
+  const avatarRevision = getUserAvatarRevision(user);
+  return {
+    id: user.id,
+    name: user.name,
+    ...(avatarRevision ? { avatarRevision } : {}),
+  };
 }

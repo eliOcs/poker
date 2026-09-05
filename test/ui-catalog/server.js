@@ -61,6 +61,7 @@ const routes = {
     "src/frontend/styles/tournament-levels-panel.css",
   "/styles/edit-label.css": "src/frontend/styles/edit-label.css",
   "/styles/avatar-maker.css": "src/frontend/styles/avatar-maker.css",
+  "/styles/avatar.css": "src/frontend/styles/avatar.css",
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/about": "src/frontend/index.html",
   "/avatar": "src/frontend/index.html",

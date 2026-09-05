@@ -10,6 +10,8 @@ import {
 } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
+import { canonicalizeAvatar } from "../shared/avatar.js";
+import { getAvatarRevision } from "./avatar.js";
 import {
   getOrCreateUser,
   parseBody,
@@ -102,6 +104,49 @@ function getRegistrationSeating(tournament) {
   return tournament.currentPlayer.tableId ? "immediate" : "queued";
 }
 
+function parseUserSettings(settings, updates) {
+  if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
+    throw new HttpError(400, "Invalid user settings", {
+      body: { error: "Invalid user settings", status: 400 },
+    });
+  }
+  const nextSettings = { ...settings, ...updates };
+  if (!("avatar" in updates)) return nextSettings;
+
+  try {
+    nextSettings.avatar = canonicalizeAvatar(updates.avatar);
+  } catch (error) {
+    throw new HttpError(400, "Invalid avatar configuration", {
+      body: {
+        error: "Invalid avatar configuration",
+        status: 400,
+        detail: error instanceof Error ? error.message : undefined,
+      },
+    });
+  }
+  return nextSettings;
+}
+
+function respondWithAvatar(req, res, avatar) {
+  const canonicalAvatar = canonicalizeAvatar(avatar);
+  const revision = getAvatarRevision(canonicalAvatar);
+  const etag = `"${revision}"`;
+  const headers = {
+    "cache-control": "public, max-age=0, must-revalidate",
+    etag,
+  };
+  if (req.headers["if-none-match"] === etag) {
+    res.writeHead(304, headers);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    ...headers,
+    "content-type": "application/json",
+  });
+  res.end(JSON.stringify({ revision, avatar: canonicalAvatar }));
+}
+
 /**
  * Creates game-related routes (user, cash, sitngo, mtt, player profiles)
  * @param {Record<string, UserType>} users
@@ -135,19 +180,17 @@ export function createGameRoutes(users, games, broadcast, services) {
         const data = await parseBody(req);
 
         if (data && typeof data === "object") {
+          const settings =
+            "settings" in data
+              ? parseUserSettings(user.settings, data.settings)
+              : user.settings;
           if ("name" in data) {
             user.name = /** @type {string|null|undefined} */ (data.name)
               ?.trim()
               .substring(0, 20);
             if (user.name === "") user.name = undefined;
           }
-          if (
-            "settings" in data &&
-            typeof data.settings === "object" &&
-            data.settings
-          ) {
-            user.settings = { ...user.settings, ...data.settings };
-          }
+          user.settings = settings;
         }
 
         Store.saveUser(user);
@@ -286,6 +329,23 @@ export function createGameRoutes(users, games, broadcast, services) {
         } catch (err) {
           rethrowTournamentError(err);
         }
+      },
+    },
+    {
+      method: "GET",
+      path: /^\/api\/players\/([a-z0-9]+)\/avatar$/,
+      handler: ({ req, res, match, log }) => {
+        getOrCreateUser(req, res, users, log);
+        const playerId = /** @type {string} */ (
+          /** @type {RegExpMatchArray} */ (match)[1]
+        );
+        const avatar = Store.loadUserProfile(playerId)?.settings.avatar;
+        if (!avatar) {
+          throw new HttpError(404, "Avatar not found", {
+            body: { error: "Avatar not found", status: 404 },
+          });
+        }
+        respondWithAvatar(req, res, avatar);
       },
     },
     {

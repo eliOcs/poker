@@ -8,6 +8,39 @@ test.describe("Poker Game Smoke Test", () => {
     player2,
     player3,
   }) => {
+    // === CREATE AVATAR (Player 1) ===
+    await player1.page.goto("/");
+    await player1.page.getByRole("button", { name: "Settings" }).click();
+    await player1.page.getByRole("link", { name: "Change avatar" }).click();
+    await expect(player1.page).toHaveURL(/\/avatar$/);
+
+    const avatarMaker = player1.page.locator("phg-avatar-maker");
+    await expect(avatarMaker).toBeVisible();
+    await avatarMaker.evaluate(
+      (element) => /** @type {any} */ (element).assetsReady,
+    );
+
+    const lightSkin = avatarMaker.getByRole("button", { name: "Color 1" });
+    await lightSkin.click();
+    await expect(lightSkin).toHaveAttribute("aria-pressed", "true");
+
+    await avatarMaker.getByRole("tab", { name: "Eyes" }).click();
+    const beadyEyes = avatarMaker.getByRole("button", {
+      name: "Beady",
+      exact: true,
+    });
+    await beadyEyes.click();
+    await expect(beadyEyes).toHaveAttribute("aria-pressed", "true");
+
+    await avatarMaker.getByRole("tab", { name: "Nose" }).click();
+    await avatarMaker.getByRole("button", { name: "Move down Nose" }).click();
+    await expect(
+      avatarMaker.getByRole("group", { name: "Position: 1" }),
+    ).toBeVisible();
+
+    await avatarMaker.getByRole("button", { name: "Save" }).click();
+    await expect(player1.page).toHaveURL(/\/$/);
+
     // Create game via UI with $0.05/$0.10 stakes (index 2)
     await createGame(player1, { stakesIndex: 2 });
     expect(await player1.getStakes()).toBe("$0.05/$0.10");
@@ -23,6 +56,9 @@ test.describe("Poker Game Smoke Test", () => {
 
     await player1.saveSettings({ name: "Player 1", volumeLabel: "25%" });
     await player2.setName("Player 2");
+    const playerAvatar = player1.mySeat.locator("phg-avatar canvas");
+    await expect(playerAvatar).toBeVisible();
+    await expect(playerAvatar).toHaveAttribute("data-revision", /.+/);
 
     const player1Email = "player1@example.com";
     const player1StackBeforeSignIn = await player1.getStack();

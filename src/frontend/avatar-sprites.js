@@ -7,6 +7,10 @@ import {
   drawOvalFacePartPreview,
   getAlphaBounds,
 } from "./avatar-sprite-preview.js";
+import {
+  areAllAvatarSpritesReady,
+  getAvatarSpriteImage,
+} from "./avatar-sprite-loader.js";
 
 const PIXEL_SIZE = AVATAR_SPRITE_SIZE;
 const DARK = "#151522";
@@ -17,9 +21,7 @@ const SHARED_PREVIEW_SCALE_PARTS = new Set(["face", "nose"]);
 const FULL_SKIN_PREVIEW_PARTS = new Set(["eyes", "eyebrows", "nose", "mouth"]);
 const BEARD_TYPES = new Set(["neckbeard", "beard", "beardCurly"]);
 const OVAL_FACE_PREVIEW_PARTS = new Set(["ears", "hair", "facialHair"]);
-const spriteImages = new Map();
 const spriteCenters = new Map();
-let spritesReady = false;
 const sharedPreviewScales = new Map();
 const tintCanvas = document.createElement("canvas");
 const previewCanvas = document.createElement("canvas");
@@ -27,28 +29,6 @@ const boundsCanvas = document.createElement("canvas");
 tintCanvas.width = tintCanvas.height = PIXEL_SIZE;
 previewCanvas.width = previewCanvas.height = PIXEL_SIZE;
 boundsCanvas.width = boundsCanvas.height = PIXEL_SIZE;
-
-export const avatarSpritesReady = Promise.all(
-  Object.entries(AVATAR_SPRITE_PARTS).flatMap(([partId, part]) =>
-    Object.entries(part.styles).flatMap(([type, sprite]) => {
-      if (!sprite) return [];
-      return Object.keys(sprite.layers).flatMap((role) =>
-        getSpriteDirections(part).map(async (direction) => {
-          const id = getSpriteId(partId, type, role, direction);
-          const directory = toKebabCase(partId);
-          const side = getDirectionSuffix(direction);
-          const url = new URL(
-            `/assets/avatar/${directory}/${type}-${role}${side}.png`,
-            window.location.origin,
-          );
-          spriteImages.set(id, await loadImage(url));
-        }),
-      );
-    }),
-  ),
-).then(() => {
-  spritesReady = true;
-});
 
 /**
  * @param {CanvasRenderingContext2D} context
@@ -108,7 +88,7 @@ export function drawSpritePartPreview(context, avatar, partId, type) {
       : avatar.face,
     [partId]: { ...avatar[partId], type },
   };
-  if (!spritesReady) return true;
+  if (!areAllAvatarSpritesReady()) return true;
   if (OVAL_FACE_PREVIEW_PARTS.has(partId)) {
     drawOvalFacePartPreview({
       context,
@@ -150,7 +130,7 @@ function getPreviewScale(partId, bounds) {
     fitWidth / bounds.width,
     fitHeight / bounds.height,
   );
-  if (!SHARED_PREVIEW_SCALE_PARTS.has(partId) || !spritesReady) {
+  if (!SHARED_PREVIEW_SCALE_PARTS.has(partId) || !areAllAvatarSpritesReady()) {
     return fittedScale;
   }
   const cachedScale = sharedPreviewScales.get(partId);
@@ -275,7 +255,7 @@ function getPartCenter(partId, type, direction, fallbackX, fallbackY) {
   const context = getBoundsContext();
   context.clearRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
   if (!drawSpriteBoundsLayers(context, partId, type, sprite)) {
-    if (spritesReady) {
+    if (areAllAvatarSpritesReady()) {
       throw new Error(`Avatar sprite images unavailable: ${partId}/${type}`);
     }
     return { x: fallbackX, y: fallbackY };
@@ -285,7 +265,7 @@ function getPartCenter(partId, type, direction, fallbackX, fallbackY) {
   const maxX = direction < 0 ? PIXEL_SIZE / 2 : PIXEL_SIZE;
   const bounds = getAlphaBounds(context, minX, maxX);
   if (!bounds) {
-    if (spritesReady) {
+    if (areAllAvatarSpritesReady()) {
       throw new Error(`Avatar sprite has no visible pixels: ${partId}/${type}`);
     }
     return { x: fallbackX, y: fallbackY };
@@ -364,10 +344,8 @@ function getSpriteLayerImages(partId, type, role, direction = 0) {
       : [direction]
     : [0];
   return directions.flatMap((imageDirection) => {
-    const image = spriteImages.get(
-      getSpriteId(partId, type, role, imageDirection),
-    );
-    if (!image && spritesReady) {
+    const image = getAvatarSpriteImage(partId, type, role, imageDirection);
+    if (!image && areAllAvatarSpritesReady()) {
       throw new Error(
         `Avatar sprite image unavailable: ${partId}/${type}/${role}/${imageDirection}`,
       );
@@ -473,50 +451,10 @@ function drawEmptyPreview(context) {
   context.stroke();
 }
 
-function getSpriteId(partId, type, role, direction = 0) {
-  return `${partId}/${type}/${role}/${direction}`;
-}
-
-function getSpriteDirections(part) {
-  return part.splitHorizontally ? [-1, 1] : [0];
-}
-
-function getDirectionSuffix(direction) {
-  if (direction < 0) return "-left";
-  if (direction > 0) return "-right";
-  return "";
-}
-
-/** @param {URL} url */
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.addEventListener(
-      "load",
-      () => {
-        resolve(image);
-      },
-      { once: true },
-    );
-    image.addEventListener(
-      "error",
-      () => {
-        reject(new Error(`Could not load avatar sprite: ${url.pathname}`));
-      },
-      { once: true },
-    );
-    image.src = url.href;
-  });
-}
-
 function shade(color, amount) {
   const value = Number.parseInt(color.slice(1), 16);
   const red = Math.max(0, Math.min(255, (value >> 16) + amount));
   const green = Math.max(0, Math.min(255, ((value >> 8) & 0xff) + amount));
   const blue = Math.max(0, Math.min(255, (value & 0xff) + amount));
   return `rgb(${red}, ${green}, ${blue})`;
-}
-
-function toKebabCase(value) {
-  return value.replace(/([A-Z])/g, "-$1").toLowerCase();
 }

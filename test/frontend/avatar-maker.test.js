@@ -1,6 +1,6 @@
 import { fixture, expect, html, oneEvent } from "@open-wc/testing";
 import "../../src/frontend/avatar-maker.js";
-import { avatarSpritesReady } from "../../src/frontend/avatar-sprites.js";
+import { loadAllAvatarSprites } from "../../src/frontend/avatar-sprite-loader.js";
 import { AVATAR_SPRITE_SIZE } from "../../src/frontend/avatar-sprite-data.js";
 import {
   eyeSpriteRenderingMatchesSource,
@@ -13,7 +13,7 @@ import {
 } from "./avatar-maker-test-helpers.js";
 
 describe("phg-avatar-maker", () => {
-  before(() => avatarSpritesReady);
+  before(() => loadAllAvatarSprites());
 
   it("starts on the face controls with all feature tabs available", async () => {
     const maker = await fixture(html`<phg-avatar-maker></phg-avatar-maker>`);

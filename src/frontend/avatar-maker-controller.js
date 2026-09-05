@@ -1,4 +1,4 @@
-import { avatarSpritesReady } from "./avatar-sprites.js";
+import { loadAllAvatarSprites } from "./avatar-sprite-loader.js";
 import { AVATAR_SPRITE_SIZE } from "./avatar-sprite-data.js";
 
 const MOBILE_AVATAR_QUERY = "(width < 700px)";
@@ -23,7 +23,7 @@ export function configureAvatarMaker(host) {
       viewport.removeEventListener("change", updateCanvasSize);
     },
   });
-  return avatarSpritesReady.then(() => {
+  return loadAllAvatarSprites().then(() => {
     host.requestUpdate();
   });
 }

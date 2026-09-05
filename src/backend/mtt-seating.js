@@ -117,7 +117,13 @@ export function findAvailableSeat(game, tournament) {
  */
 export function seatEntrantAtTable(tournament, game, entrant, seatIndex) {
   const seatedPlayer = Seat.occupied(
-    { id: entrant.playerId, name: entrant.name },
+    {
+      id: entrant.playerId,
+      name: entrant.name,
+      ...(entrant.avatarRevision
+        ? { avatarRevision: entrant.avatarRevision }
+        : {}),
+    },
     entrant.stack,
     false,
   );
@@ -180,7 +186,13 @@ export function movePlayer(
   }
 
   const movedSeat = Seat.occupied(
-    { id: sourceSeat.player.id, name: sourceSeat.player.name },
+    {
+      id: sourceSeat.player.id,
+      name: sourceSeat.player.name,
+      ...(sourceSeat.player.avatarRevision
+        ? { avatarRevision: sourceSeat.player.avatarRevision }
+        : {}),
+    },
     sourceSeat.stack,
     false,
   );

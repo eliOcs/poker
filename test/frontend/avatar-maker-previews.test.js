@@ -1,9 +1,9 @@
 import { expect, fixture, html } from "@open-wc/testing";
 import "../../src/frontend/avatar-maker.js";
-import { avatarSpritesReady } from "../../src/frontend/avatar-sprites.js";
+import { loadAllAvatarSprites } from "../../src/frontend/avatar-sprite-loader.js";
 
 describe("avatar maker style previews", () => {
-  before(() => avatarSpritesReady);
+  before(() => loadAllAvatarSprites());
 
   it("fills the eye preview canvas with the selected skin color", async () => {
     const maker = await fixture(html`<phg-avatar-maker></phg-avatar-maker>`);
