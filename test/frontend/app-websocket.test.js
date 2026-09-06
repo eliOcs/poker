@@ -31,14 +31,30 @@ function createApp(path = "/cash/testgame") {
 
 describe("app-websocket", () => {
   const OriginalWebSocket = globalThis.WebSocket;
+  let visibility;
+  let originalVisibility;
 
   beforeEach(() => {
     MockWebSocket.instances = [];
     globalThis.WebSocket = MockWebSocket;
+    visibility = "visible";
+    originalVisibility = Object.getOwnPropertyDescriptor(
+      document,
+      "visibilityState",
+    );
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => visibility,
+    });
   });
 
   afterEach(() => {
     globalThis.WebSocket = OriginalWebSocket;
+    if (originalVisibility) {
+      Object.defineProperty(document, "visibilityState", originalVisibility);
+    } else {
+      delete document.visibilityState;
+    }
   });
 
   it("reconnects when resume health check times out", () => {
@@ -73,6 +89,32 @@ describe("app-websocket", () => {
       globalThis.setTimeout = originalSetTimeout;
       globalThis.clearTimeout = originalClearTimeout;
     }
+  });
+
+  it("drops queued social messages until the resumed socket answers its health check", () => {
+    const app = createApp();
+    connectToGame(app, app.path);
+    const socket = MockWebSocket.instances.at(-1);
+    const social = {
+      type: "social",
+      action: "chat",
+      seat: 0,
+      message: "Hello",
+    };
+    socket.simulateMessage(social);
+    expect(app.socialAction).to.deep.equal(social);
+
+    visibility = "hidden";
+    socket.simulateMessage({ ...social, message: "While hidden" });
+    expect(app.socialAction).to.deep.equal(social);
+    visibility = "visible";
+    resumeConnectionIfNeeded(app);
+    socket.simulateMessage({ ...social, message: "Queued while away" });
+    expect(app.socialAction).to.deep.equal(social);
+
+    socket.simulateMessage({ type: "pong", pingId: socket.sent[0].pingId });
+    socket.simulateMessage({ ...social, message: "Fresh message" });
+    expect(app.socialAction.message).to.equal("Fresh message");
   });
 
   it("keeps the socket when the resume health check receives a pong", () => {

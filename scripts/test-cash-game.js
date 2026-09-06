@@ -12,6 +12,7 @@ import {
 } from "../test/e2e/utils/random-actions.js";
 import { delay, formatError } from "../test/e2e/utils/stress-helpers.js";
 import { playRandomSocialActions } from "../test/e2e/utils/random-social-actions.js";
+import { takeRandomCardAction } from "../test/e2e/utils/random-card-actions.js";
 
 const BUY_IN_BIG_BLINDS = 100;
 const LOOP_DELAY_MS = 100;
@@ -153,6 +154,8 @@ async function replenishBot(bot) {
 async function takeRandomAction(bot, index) {
   let attemptedAction;
   try {
+    const cardAction = await takeRandomCardAction(bot);
+    if (cardAction) return cardAction;
     if (!(await bot.isMyTurn())) return null;
     const availableActions = await getAvailableActions(bot);
     if (availableActions.length === 0) {

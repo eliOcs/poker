@@ -83,7 +83,7 @@ async function layoutProblems(page) {
       if (markers.length === 2 && intersects(markers[0], markers[1]))
         problems.push("dealer covers its own bet");
       for (const child of seat.querySelectorAll(
-        ".hole-cards, .player-info, .stack, .last-action, .hand-result, .hand-rank, .clock-countdown",
+        ".hole-cards phg-card, .player-info, .stack, .last-action, .hand-result, .hand-rank, .clock-countdown",
       )) {
         const rect = child.getBoundingClientRect();
         if (markers.some((marker) => intersects(marker, rect)))
@@ -223,6 +223,27 @@ test.describe("table clearance", () => {
             await game.updateComplete;
           }, button);
           await expect.poll(() => layoutProblems(page)).toEqual([]);
+          const gap = await page
+            .locator(".dealer-button")
+            .evaluate((dealer) => {
+              const seat = dealer.closest("phg-seat");
+              const panel = seat.getBoundingClientRect();
+              const chip = dealer.getBoundingClientRect();
+              const style = getComputedStyle(
+                seat.querySelector(".seat-content"),
+                "::before",
+              );
+              const scale = panel.height / seat.offsetHeight;
+              const top = panel.top + parseFloat(style.top) * scale;
+              const bottom = panel.bottom - parseFloat(style.bottom) * scale;
+              return (
+                Math.hypot(
+                  Math.max(panel.left - chip.right, chip.left - panel.right, 0),
+                  Math.max(top - chip.bottom, chip.top - bottom, 0),
+                ) / scale
+              );
+            });
+          expect(gap).toBeLessThanOrEqual(16);
           await page.locator("phg-game").evaluate(async (game) => {
             game.game = {
               ...game.game,

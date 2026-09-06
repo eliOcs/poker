@@ -41,8 +41,13 @@ class Seat extends LitElement {
     this.hideBet = false;
     this._activeEmote = undefined;
     this._emoteTimer = undefined;
+    this._emoteFrame = undefined;
     this._activeChat = undefined;
     this._chatTimer = undefined;
+    this._chatFrame = undefined;
+    this._handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") this._clearBubbles();
+    };
     this._handleSeatClick = () => {
       if (!this.seat?.isCurrentPlayer) return;
       this.dispatchEvent(
@@ -63,14 +68,18 @@ class Seat extends LitElement {
     super.connectedCallback();
     this.addEventListener("click", this._handleSeatClick);
     this.addEventListener("keydown", this._handleSeatKeydown);
+    document.addEventListener("visibilitychange", this._handleVisibilityChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this.removeEventListener("click", this._handleSeatClick);
     this.removeEventListener("keydown", this._handleSeatKeydown);
-    clearTimeout(this._emoteTimer);
-    clearTimeout(this._chatTimer);
+    document.removeEventListener(
+      "visibilitychange",
+      this._handleVisibilityChange,
+    );
+    this._clearBubbles();
   }
 
   /** @type {[string, SeatClassCondition][]} */
@@ -112,15 +121,30 @@ class Seat extends LitElement {
     }
   }
 
+  _clearBubbles() {
+    clearTimeout(this._emoteTimer);
+    clearTimeout(this._chatTimer);
+    cancelAnimationFrame(this._emoteFrame);
+    cancelAnimationFrame(this._chatFrame);
+    this._activeEmote = undefined;
+    this._activeChat = undefined;
+    this.requestUpdate();
+  }
+
   _showBubble(value, kind) {
+    if (document.visibilityState === "hidden" || !this.isConnected) return;
     const timerKey = kind === "emote" ? "_emoteTimer" : "_chatTimer";
+    const frameKey = kind === "emote" ? "_emoteFrame" : "_chatFrame";
     const stateKey = kind === "emote" ? "_activeEmote" : "_activeChat";
     const text = String(value ?? "").trim();
     if (!text) return;
     clearTimeout(this[timerKey]);
+    cancelAnimationFrame(this[frameKey]);
     this[stateKey] = undefined;
     this.requestUpdate();
-    requestAnimationFrame(() => {
+    this[frameKey] = requestAnimationFrame(() => {
+      this[frameKey] = undefined;
+      if (document.visibilityState === "hidden" || !this.isConnected) return;
       this[stateKey] = text;
       this.requestUpdate();
       this[timerKey] = setTimeout(() => {

@@ -72,7 +72,10 @@
   }
 
   :scope phg-seat {
-    --seat-font-size: 9px;
+    --seat-font-size: 8px;
+    --seat-avatar-size: 43px;
+    --seat-avatar-left: 3px;
+    --seat-avatar-top: calc(var(--seat-panel-top) + 3px);
     --seat-panel-top: 35px;
     --seat-panel-bottom: 20px;
 
@@ -80,18 +83,19 @@
     grid-column: var(--seat-column) / span 2;
     grid-row: var(--seat-row) / span 2;
     place-self: center;
-    width: 132px;
+    width: 160px;
     height: 104px;
     min-height: 0;
-    padding: 0 6px 22px;
+    padding: 0 6px 22px 50px;
     gap: 2px;
     font-size: var(--seat-font-size);
-    line-height: 14px;
+    line-height: 12px;
   }
 
   :scope .player-info {
     position: static;
     min-height: 0;
+    margin-top: 5px;
     z-index: auto;
   }
 
@@ -102,46 +106,25 @@
 
   :scope .player-info phg-avatar {
     position: absolute;
-    width: 56px;
-    height: 56px;
-    top: -5px;
-    left: 50%;
-    transform: translateX(-50%);
+    width: var(--seat-avatar-size);
+    height: var(--seat-avatar-size);
+    top: var(--seat-avatar-top);
+    left: var(--seat-avatar-left);
     overflow: hidden;
-    z-index: -2;
-  }
-
-  :scope[data-layout="portrait"] phg-seat {
-    --seat-font-size: 8px;
-
-    width: 160px;
-    padding-left: 50px;
-    line-height: 12px;
-  }
-
-  :scope[data-layout="portrait"] .player-info {
-    margin-top: 5px;
-  }
-
-  :scope[data-layout="portrait"] .player-info phg-avatar {
-    width: 43px;
-    height: 43px;
-    top: 38px;
-    left: 3px;
-    transform: none;
     z-index: 0;
   }
 
-  :scope[data-layout="portrait"] .current-player .player-info phg-avatar {
-    top: 49px;
+  :scope .emote-bubble {
+    top: calc(var(--seat-avatar-top) + var(--seat-avatar-size) / 2);
+    left: calc(var(--seat-avatar-left) + var(--seat-avatar-size) / 2);
   }
 
-  :scope[data-layout="portrait"] .hole-cards {
+  :scope .hole-cards {
     width: calc(100% + 44px);
     margin-left: -44px;
   }
 
-  :scope[data-layout="portrait"] .chat-bubble {
+  :scope .chat-bubble {
     bottom: calc(100% - var(--seat-panel-top) + 0.6em);
     transform-origin: bottom center;
   }
@@ -234,6 +217,12 @@
     gap: 4px;
   }
 
+  :scope[data-layout="portrait"] [data-slot="0"] .dealer-button {
+    top: calc(var(--seat-panel-top) - 6px);
+    left: 16px;
+    transform: translateY(-100%);
+  }
+
   :scope[data-layout="landscape"]
     #seats[data-table-size="9"]
     [data-slot="2"]
@@ -262,69 +251,20 @@
     line-height: inherit;
   }
 
-  :scope[data-layout="landscape"] phg-seat,
-  :scope[data-layout="landscape"] phg-seat.current-player {
-    --seat-media-width: 76px;
-    --seat-panel-top: 0px;
-    --seat-panel-bottom: 0px;
-
-    width: 220px;
-    height: 64px;
-    padding: 9px 6px 9px calc(var(--seat-media-width) + 10px);
-  }
-
-  :scope[data-layout="landscape"] phg-seat:not(:has(.hole-cards phg-card)) {
-    --seat-media-width: 58px;
-  }
-
-  :scope[data-layout="landscape"] .clock-countdown {
-    top: 9px;
-  }
-
-  :scope[data-layout="landscape"] .player-info phg-avatar {
-    top: 3px;
-    left: 3px;
-    width: auto;
-    height: calc(100% - 6px);
-    aspect-ratio: 1;
-    transform: none;
-    z-index: 0;
-  }
-
   :scope .player-info phg-avatar canvas {
     object-fit: contain;
   }
 
-  :scope[data-layout="landscape"] .hole-cards {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 76px;
-    height: 56px;
-    min-height: 56px;
-    transform: translateY(-50%);
-    gap: 0;
-    z-index: 1;
-    transition: none;
+  :scope[data-layout="landscape"]
+    #seats[data-table-size="9"]
+    :is([data-slot="2"], [data-slot="3"]) {
+    --seat-column: 6;
   }
 
-  :scope[data-layout="landscape"] .hole-cards phg-card[size] {
-    --card-width: 42px;
-    --card-height: 56px;
-    --card-rank-size: 13px;
-    --card-suit-size: 26px;
-    --card-suit-margin-top: -2px;
-
-    flex-shrink: 0;
-  }
-
-  :scope[data-layout="landscape"] .hole-cards phg-card + phg-card {
-    margin-left: -8px;
-  }
-
-  :scope[data-layout="landscape"] .hole-cards .card {
-    justify-content: center;
-    padding: 0;
+  :scope[data-layout="landscape"]
+    #seats[data-table-size="9"]
+    :is([data-slot="6"], [data-slot="7"]) {
+    --seat-column: 74;
   }
 
   :scope[data-layout="landscape"]
@@ -333,7 +273,9 @@
       #seats[data-table-size="9"] [data-slot="1"],
       #seats[data-table-size="9"] [data-slot="8"]
     ) {
-    margin-bottom: 0;
+    grid-row: -3 / -1;
+    align-self: end;
+    margin-bottom: -20px;
 
     .bet-indicator {
       top: -8px;
@@ -341,35 +283,26 @@
     }
 
     .dealer-button {
-      top: -8px;
-      transform: translate(-50%, -100%);
+      top: calc(var(--seat-panel-top) - 6px);
+      left: 16px;
+      transform: translateY(-100%);
     }
+  }
+
+  :scope[data-layout="landscape"]
+    #seats[data-table-size="9"]
+    [data-slot="1"]
+    .dealer-button {
+    left: calc(100% - 36px);
   }
 
   :scope[data-layout="landscape"]
     :is(
       #seats[data-table-size="9"]
-        :is([data-slot="5"], [data-slot="6"], [data-slot="7"], [data-slot="8"]),
-      #seats[data-table-size="6"] :is([data-slot="4"], [data-slot="5"])
+        :is([data-slot="3"], [data-slot="5"], [data-slot="7"], [data-slot="8"]),
+      #seats[data-table-size="6"] :is([data-slot="2"], [data-slot="5"])
     ) {
-    padding-right: calc(var(--seat-media-width) + 10px);
-    padding-left: 6px;
-
     --dealer-x: -60px;
-
-    .player-info phg-avatar {
-      left: auto;
-      right: 3px;
-    }
-
-    .hole-cards {
-      left: auto;
-      right: 0;
-    }
-
-    .clock-countdown {
-      right: calc(var(--seat-media-width) + 10px);
-    }
   }
 
   :scope[data-layout="landscape"]
@@ -453,15 +386,15 @@
 
   #seats[data-table-size="6"] [data-slot="1"] {
     --bet-x: 110px;
-    --bet-y: -10px;
-    --seat-column: 12;
+    --bet-y: 10px;
+    --seat-column: 6;
     --seat-row: 30;
   }
 
   #seats[data-table-size="6"] [data-slot="2"] {
-    --bet-x: 20px;
+    --bet-x: 70px;
     --bet-y: 48px;
-    --seat-column: 12;
+    --seat-column: 6;
     --seat-row: 11;
   }
 
@@ -473,16 +406,16 @@
   }
 
   #seats[data-table-size="6"] [data-slot="4"] {
-    --bet-x: -20px;
+    --bet-x: -70px;
     --bet-y: 48px;
-    --seat-column: 68;
+    --seat-column: 74;
     --seat-row: 11;
   }
 
   #seats[data-table-size="6"] [data-slot="5"] {
     --bet-x: -110px;
-    --bet-y: -10px;
-    --seat-column: 68;
+    --bet-y: 10px;
+    --seat-column: 74;
     --seat-row: 30;
   }
 

@@ -54,6 +54,12 @@ export class PokerPlayerBase {
     return this.game.locator("phg-action-panel");
   }
 
+  get cardDecisionButtons() {
+    return this.actionPanel.getByRole("button", {
+      name: /^(?:Muck$|Show\b)/,
+    });
+  }
+
   /**
    * Get locator for real action buttons (excludes pre-action toggles)
    */

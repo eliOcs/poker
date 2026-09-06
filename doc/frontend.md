@@ -100,16 +100,13 @@ three along each side, and the current player centered at the bottom.
 Cards and player information stay within each seat's layout bounds. Bet offsets
 follow the visual slot and table size, placing bets inward on the felt. The felt
 is a separate background behind the composition.
-The dealer chip also sits on the felt beside its seat's bet area, with a fixed
-position even when bets are collected. Bets and the dealer chip remain fully
+The dealer chip sits on the felt close to its player panel, beside the hole cards
+for bottom seats, with a fixed position even when bets are collected. Bets and the dealer chip remain fully
 opaque when the player panel is dimmed after folding.
 
-Landscape seats place partially overlapping hole cards beside the player panel,
-mirrored toward the outside for right-hand seats. The overlap leaves the standard
-centered ranks and suits visible. Portrait seats keep the cards above the panel.
-Avatars fill the side of the landscape panel and sit inside the left side of the
-wider portrait panel. They retain square edges; portrait hole cards remain
-centered above the panel and tuck behind its upper edge.
+Both layouts use the same player panel: a square avatar on the left, player text
+on the right, and hole cards centered above the panel. Cards tuck behind its
+upper edge while keeping their ranks and suits visible.
 Player panels reserve a fixed three-line height, with uniform text sizes and
 line spacing within each layout mode. Colors distinguish names, stacks, and
 actions. The countdown sits in the

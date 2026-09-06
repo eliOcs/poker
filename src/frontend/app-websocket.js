@@ -106,6 +106,17 @@ function runSocketHealthCheck(app) {
   }
 }
 
+function handleSocialMessage(app, data) {
+  if (
+    !matchLiveRoute(app.path) ||
+    document.visibilityState === "hidden" ||
+    app._socketHealthCheck
+  ) {
+    return;
+  }
+  app.socialAction = data;
+}
+
 function handleTypedSocketMessage(app, data) {
   if (data.type === "pong") {
     resolveSocketHealthCheck(app, data.pingId);
@@ -118,8 +129,7 @@ function handleTypedSocketMessage(app, data) {
   }
 
   if (data.type === "social") {
-    if (!matchLiveRoute(app.path)) return true;
-    app.socialAction = data;
+    handleSocialMessage(app, data);
     return true;
   }
 

@@ -18,6 +18,7 @@ import {
 } from "./utils/random-actions.js";
 import * as Stress from "./utils/stress-helpers.js";
 import { playRandomSocialActions } from "./utils/random-social-actions.js";
+import { takeRandomCardAction } from "./utils/random-card-actions.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
 
@@ -135,9 +136,11 @@ async function takeAvailableActions(players, activePlayers) {
   const results = await Promise.all(
     [...activePlayers].map(async (seatIdx) => {
       const player = players[seatIdx];
-      if (!(await player.isMyTurn().catch(() => false))) return null;
       let attemptedAction = null;
       try {
+        const cardAction = await takeRandomCardAction(player);
+        if (cardAction) return { seatIdx, action: cardAction };
+        if (!(await player.isMyTurn())) return null;
         const availableActions = await getAvailableActions(player);
         if (availableActions.length > 0) {
           const action = selectRandomAction(availableActions);
@@ -209,7 +212,11 @@ async function waitForAnyTurn(players, activePlayers) {
   while (Date.now() < deadline) {
     const turnStates = await Promise.all(
       [...activePlayers].map((idx) =>
-        players[idx].isMyTurn().catch(() => false),
+        players[idx].turnButtons
+          .or(players[idx].cardDecisionButtons)
+          .first()
+          .isVisible()
+          .catch(() => false),
       ),
     );
     if (turnStates.some(Boolean)) {
@@ -563,11 +570,7 @@ test.describe("Tournament E2E", () => {
         )
         .filter(Boolean),
     );
-    console.log(
-      `Initial tables: ${[...initialTableIds]
-        .map((tableId) => tableId)
-        .join(", ")}`,
-    );
+    console.log(`Initial tables: ${[...initialTableIds].join(", ")}`);
     expect(initialTableIds.size).toBeGreaterThan(1);
 
     const p1Stack = await player1.getStack();

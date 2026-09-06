@@ -2,6 +2,7 @@ import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
 import { waitForLatestEmail } from "./utils/email.js";
 import { takeRandomSocialAction } from "./utils/random-social-actions.js";
+import { takeRandomCardAction } from "./utils/random-card-actions.js";
 
 test.describe("Poker Game Smoke Test", () => {
   test("plays 3 hands with varied actions (check, call, raise, all-in)", async ({
@@ -349,3 +350,54 @@ test.describe("Poker Game Smoke Test", () => {
     ).toHaveText("25%");
   });
 });
+
+for (const { name, roll, revealedIndexes } of [
+  { name: "muck", roll: 0, revealedIndexes: [] },
+  { name: "show first card", roll: 0.3, revealedIndexes: [0] },
+  { name: "show second card", roll: 0.6, revealedIndexes: [1] },
+  { name: "show both cards", roll: 0.99, revealedIndexes: [0, 1] },
+]) {
+  test(`random bots can ${name} outside their betting turn`, async ({
+    player1,
+    player2,
+  }) => {
+    await createGame(player1);
+    await player2.joinGameByUrl(await player1.copyGameLink());
+    await player1.sit(0);
+    await player2.sit(1);
+    await player1.buyIn(100);
+    await player2.buyIn(100);
+    await player1.startGame();
+    await player1.waitForTurn();
+
+    // Ordinary betting buttons must never be selected by this helper.
+    expect(await takeRandomCardAction(player1)).toBeNull();
+    const cards = await player1.mySeat
+      .locator(".hole-cards phg-card")
+      .evaluateAll((elements) => elements.map((element) => element.card));
+    expect(cards).toHaveLength(2);
+
+    await player1.act("fold");
+    await expect(player1.cardDecisionButtons).toHaveCount(4);
+    expect(await player1.isMyTurn()).toBe(false);
+    expect(await takeRandomCardAction(player1, () => roll)).toBe(
+      name === "muck" ? "muck" : "show",
+    );
+    await expect(player1.cardDecisionButtons).toHaveCount(0);
+
+    // Verify what the opponent sees, including which individual card was shown.
+    const observedCards = player2.game.locator(
+      'phg-seat[data-seat="0"] .hole-cards phg-card',
+    );
+    await expect
+      .poll(() =>
+        observedCards.evaluateAll((elements) =>
+          elements
+            .map((element) => element.card)
+            .filter((card) => card !== "??"),
+        ),
+      )
+      .toEqual(revealedIndexes.map((index) => cards[index]));
+    expect(await takeRandomCardAction(player1)).toBeNull();
+  });
+}

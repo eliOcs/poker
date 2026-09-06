@@ -1,5 +1,7 @@
 @scope (phg-seat) {
   :where(:scope) {
+    --seat-avatar-size: 32px;
+
     position: relative;
     display: flex;
     flex-direction: column;
@@ -132,8 +134,8 @@
   }
 
   .player-info phg-avatar {
-    width: 32px;
-    height: 32px;
+    width: var(--seat-avatar-size);
+    height: var(--seat-avatar-size);
     flex: 0 0 auto;
   }
 
@@ -276,7 +278,11 @@
     );
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 3rem;
+    width: var(--seat-avatar-size);
+    height: var(--seat-avatar-size);
+    display: grid;
+    place-items: center;
+    font-size: calc(var(--seat-avatar-size) * 0.8);
     font-family: emoji;
     line-height: 1;
     z-index: 2;
