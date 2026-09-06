@@ -403,6 +403,7 @@ describe("mtt-manager", () => {
     elioSeat.muckDecision = { remainingTicks: 5 };
     cleiSeat.cards = ["Qd", "Jd"];
     cleiSeat.totalInvested = 50;
+    cleiSeat.muckDecision = { remainingTicks: 5 };
     table.handNumber = 18;
 
     HandHistory.clearRecorder(table.id);

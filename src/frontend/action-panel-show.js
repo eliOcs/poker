@@ -1,36 +1,29 @@
 import { html } from "lit";
 
 export function renderShowButtons(panel, actionMap) {
-  const showActions = [
+  const cardActions = [
+    { key: "muck", cards: actionMap.muck ? ["??", "??"] : undefined },
     { key: "showCard1", cards: actionMap.showCard1?.cards },
     { key: "showCard2", cards: actionMap.showCard2?.cards },
     { key: "showBothCards", cards: actionMap.showBothCards?.cards },
   ].filter((entry) => entry.cards?.length);
 
-  if (showActions.length === 0 && !actionMap.muck) return;
+  if (cardActions.length === 0) return;
 
   return html`
     <div class="action-row game-action-row">
-      ${actionMap.muck
-        ? html`<button
-            type="button"
-            class="button button--success button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: "muck", seat: panel.seatIndex })}
-          >
-            Muck
-          </button>`
-        : undefined}
-      ${showActions.map(
+      ${cardActions.map(
         (entry) => html`
           <button
             type="button"
-            class="button button--action button--full-width"
+            class="button ${entry.key === "muck"
+              ? "button--success"
+              : "button--action"} button--full-width"
             @click=${() =>
               panel.sendAction({ action: entry.key, seat: panel.seatIndex })}
           >
             <span class="show-action">
-              <span>Show</span>
+              <span>${entry.key === "muck" ? "Muck" : "Show"}</span>
               <span class="show-cards">
                 ${entry.cards.map(
                   (card) =>

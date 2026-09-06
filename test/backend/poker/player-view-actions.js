@@ -170,6 +170,46 @@ describe("Player View", function () {
   });
 
   describe("show card actions", function () {
+    for (const [choice, shownCards] of [
+      ["showCard1", [true, false]],
+      ["showCard2", [false, true]],
+      ["showBothCards", [true, true]],
+    ]) {
+      for (const folded of [false, true]) {
+        it(`makes ${choice} final after ${folded ? "folding" : "the hand ends"}`, function () {
+          const g = Game.create({ seats: 2 });
+          const player = createPlayer();
+          Actions.sit(g, { seat: 0, player });
+          g.hand.phase = folded ? "flop" : "waiting";
+          g.seats[0].cards = ["As", "Kh"];
+          g.seats[0].totalInvested = 100;
+          if (folded) {
+            g.hand.actingSeat = 0;
+            Actions.fold(g, { seat: 0 });
+          } else {
+            g.seats[0].muckDecision = { remainingTicks: 5 };
+          }
+
+          Actions[choice](g, { seat: 0 });
+
+          const actions = playerView(g, player).seats[0].actions;
+          for (const action of [
+            "showCard1",
+            "showCard2",
+            "showBothCards",
+            "muck",
+          ]) {
+            assert.ok(
+              !actions.some((available) => available.action === action),
+            );
+            assert.throws(() => Actions[action](g, { seat: 0 }));
+          }
+          assert.deepEqual(g.seats[0].shownCards, shownCards);
+          assert.equal(g.seats[0].cardsRevealed, choice === "showBothCards");
+        });
+      }
+    }
+
     it("only shows reveal actions after an invested fold", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
@@ -255,7 +295,7 @@ describe("Player View", function () {
       assert.ok(!p1Actions.some((a) => a.action === "showBothCards"));
     });
 
-    it("shows reveal actions in waiting phase for non-folded players", function () {
+    it("shows reveal and muck actions for an uncontested winner", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();
       const p2 = createPlayer();
@@ -273,6 +313,7 @@ describe("Player View", function () {
       g.seats[0].cards = ["As", "Kh"];
       g.seats[0].folded = false;
       g.seats[0].totalInvested = 100;
+      g.seats[0].muckDecision = { remainingTicks: 5 };
 
       const view = playerView(g, p1);
       const p1Actions = view.seats[0].actions;
@@ -280,6 +321,7 @@ describe("Player View", function () {
       assert.ok(p1Actions.some((a) => a.action === "showCard1"));
       assert.ok(p1Actions.some((a) => a.action === "showCard2"));
       assert.ok(p1Actions.some((a) => a.action === "showBothCards"));
+      assert.ok(p1Actions.some((a) => a.action === "muck"));
     });
   });
 

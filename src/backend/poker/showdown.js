@@ -1,6 +1,7 @@
 import HandRankings from "./hand-rankings.js";
 import * as Pots from "./pots.js";
 import * as Seat from "./seat.js";
+import { MUCK_TIMEOUT_TICKS } from "./game-constants.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -298,6 +299,7 @@ export function awardToLastPlayer(game) {
   // Award to winner
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winner]);
   winnerSeat.stack += totalPot;
+  winnerSeat.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
   game.hand.pot = 0;
 
   // Set hand results and clear lastAction

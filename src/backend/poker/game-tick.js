@@ -20,7 +20,7 @@ import * as TournamentTick from "./tournament-tick.js";
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number} [autoActionSeat] - Seat index to auto-action (check/fold)
  * @property {'clock'} [autoActionReason] - Why auto-action triggered
- * @property {number[]} [autoMuckSeats] - Seats whose post-fold decision expired
+ * @property {number[]} [autoMuckSeats] - Seats whose show-or-muck decision expired
  * @property {boolean} tournamentLevelChanged - Whether tournament blind level changed
  * @property {boolean} tournamentBreakStarted - Whether tournament break started
  * @property {boolean} tournamentBreakEnded - Whether tournament break ended
@@ -171,7 +171,7 @@ function handleRunoutTick(game, result) {
 }
 
 /**
- * Handles post-fold show-or-muck decision windows
+ * Handles show-or-muck decision windows
  * @param {Game} game
  * @param {TickResult} result
  */
@@ -186,7 +186,24 @@ function handleMuckDecisions(game, result) {
     result.shouldBroadcast = true;
     if (seat.muckDecision.remainingTicks <= 0) {
       delete seat.muckDecision;
+      seat.mucked = true;
       (result.autoMuckSeats ??= []).push(seatIndex);
+    }
+  }
+}
+
+/**
+ * Hides voluntarily shown cards after their display window expires.
+ * @param {Game} game
+ * @param {TickResult} result
+ */
+function handleShownCards(game, result) {
+  for (const seat of game.seats) {
+    if (seat.empty || !seat.shownCardsTicks) continue;
+
+    seat.shownCardsTicks -= 1;
+    if (seat.shownCardsTicks === 0) {
+      result.shouldBroadcast = true;
     }
   }
 }
@@ -200,6 +217,7 @@ export function tick(game) {
   const result = createTickResult();
 
   handleMuckDecisions(game, result);
+  handleShownCards(game, result);
   if (handleTournamentTick(game, result)) {
     return result;
   }
@@ -223,8 +241,10 @@ export function shouldTickBeRunning(game) {
   const isTournamentTicking = TournamentTick.shouldTournamentTick(game);
   const isRunningOut = game.runout?.active === true;
   const isCollectingBets = Boolean(game.collectingBets);
-  const hasMuckDecision = game.seats.some(
-    (seat) => !seat.empty && seat.muckDecision !== undefined,
+  const hasCardDecisionTimer = game.seats.some(
+    (seat) =>
+      !seat.empty &&
+      (seat.muckDecision !== undefined || Boolean(seat.shownCardsTicks)),
   );
   return (
     hasCountdown ||
@@ -232,6 +252,6 @@ export function shouldTickBeRunning(game) {
     isTournamentTicking ||
     isRunningOut ||
     isCollectingBets ||
-    hasMuckDecision
+    hasCardDecisionTimer
   );
 }

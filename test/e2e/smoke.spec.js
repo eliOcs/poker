@@ -351,11 +351,17 @@ test.describe("Poker Game Smoke Test", () => {
   });
 });
 
-for (const { name, roll, revealedIndexes } of [
+for (const { name, roll, revealedIndexes, decisionSeat = 0 } of [
   { name: "muck", roll: 0, revealedIndexes: [] },
   { name: "show first card", roll: 0.3, revealedIndexes: [0] },
   { name: "show second card", roll: 0.6, revealedIndexes: [1] },
   { name: "show both cards", roll: 0.99, revealedIndexes: [0, 1] },
+  {
+    name: "muck as the uncontested winner",
+    roll: 0,
+    revealedIndexes: [],
+    decisionSeat: 1,
+  },
 ]) {
   test(`random bots can ${name} outside their betting turn`, async ({
     player1,
@@ -372,22 +378,25 @@ for (const { name, roll, revealedIndexes } of [
 
     // Ordinary betting buttons must never be selected by this helper.
     expect(await takeRandomCardAction(player1)).toBeNull();
-    const cards = await player1.mySeat
+    const players = [player1, player2];
+    const decidingPlayer = players[decisionSeat];
+    const observingPlayer = players[1 - decisionSeat];
+    const cards = await decidingPlayer.mySeat
       .locator(".hole-cards phg-card")
       .evaluateAll((elements) => elements.map((element) => element.card));
     expect(cards).toHaveLength(2);
 
     await player1.act("fold");
-    await expect(player1.cardDecisionButtons).toHaveCount(4);
-    expect(await player1.isMyTurn()).toBe(false);
-    expect(await takeRandomCardAction(player1, () => roll)).toBe(
-      name === "muck" ? "muck" : "show",
+    await expect(decidingPlayer.cardDecisionButtons).toHaveCount(4);
+    expect(await decidingPlayer.isMyTurn()).toBe(false);
+    expect(await takeRandomCardAction(decidingPlayer, () => roll)).toBe(
+      revealedIndexes.length === 0 ? "muck" : "show",
     );
-    await expect(player1.cardDecisionButtons).toHaveCount(0);
+    await expect(decidingPlayer.cardDecisionButtons).toHaveCount(0);
 
     // Verify what the opponent sees, including which individual card was shown.
-    const observedCards = player2.game.locator(
-      'phg-seat[data-seat="0"] .hole-cards phg-card',
+    const observedCards = observingPlayer.game.locator(
+      `phg-seat[data-seat="${decisionSeat}"] .hole-cards phg-card`,
     );
     await expect
       .poll(() =>
@@ -398,6 +407,12 @@ for (const { name, roll, revealedIndexes } of [
         ),
       )
       .toEqual(revealedIndexes.map((index) => cards[index]));
-    expect(await takeRandomCardAction(player1)).toBeNull();
+    await expect(observedCards).toHaveCount(
+      revealedIndexes.length === 0 ? 0 : 2,
+    );
+    await expect(
+      decidingPlayer.mySeat.locator(".hole-cards phg-card"),
+    ).toHaveCount(2);
+    expect(await takeRandomCardAction(decidingPlayer)).toBeNull();
   });
 }

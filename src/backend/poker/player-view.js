@@ -262,8 +262,12 @@ function shouldRevealAllCards(seat, seatIndex, playerSeatIndex, game) {
     return true;
   }
 
+  if (seat.mucked || seat.shownCardsTicks === 0) {
+    return false;
+  }
+
   // Show at showdown or when cards were revealed at showdown
-  if (game.hand.phase === "showdown" || seat.cardsRevealed) {
+  if ((!seat.folded && game.hand.phase === "showdown") || seat.cardsRevealed) {
     return true;
   }
 
@@ -286,6 +290,10 @@ function hiddenCard() {
  * @returns {(Card|HiddenCard)[]}
  */
 function getCardsForView(seat, revealAllCards, isOwnSeat) {
+  if (!isOwnSeat && (seat.mucked || seat.shownCardsTicks === 0)) {
+    return [];
+  }
+
   // Show actual cards if fully visible (own cards, showdown, fully revealed)
   if (revealAllCards || isOwnSeat) {
     return seat.cards;
@@ -298,8 +306,8 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
     );
   }
 
-  // Don't render cards for folded opponents
-  if (seat.folded) {
+  // Keep folded opponents' card backs while their decision is pending.
+  if (seat.folded && !seat.muckDecision) {
     return [];
   }
   // Show face-down cards for active opponents
@@ -317,19 +325,17 @@ function getShowCardsActions(seat, game) {
     return [];
   }
 
-  if (seat.cardsRevealed) {
+  if (seat.cardsRevealed || seat.shownCards.some(Boolean)) {
     return [];
   }
 
-  const shownCards = getShownCards(seat);
-  if (shownCards[0] && shownCards[1]) {
-    return [];
-  }
-
-  const actions = buildShowCardActions(seat.cards, shownCards);
-  if (seat.folded && seat.muckDecision) {
-    actions.unshift({ action: "muck" });
-  }
+  /** @type {PlayerAction[]} */
+  const actions = [
+    { action: "muck" },
+    { action: "showCard1", cards: [/** @type {Card} */ (seat.cards[0])] },
+    { action: "showCard2", cards: [/** @type {Card} */ (seat.cards[1])] },
+    { action: "showBothCards", cards: seat.cards.slice(0, 2) },
+  ];
   return actions;
 }
 
@@ -339,47 +345,14 @@ function getShowCardsActions(seat, game) {
  * @returns {boolean}
  */
 function canShowCards(seat, phase) {
-  if (seat.cards.length < 2 || !Seat.hasInvestedInPot(seat)) {
+  if (
+    !seat.muckDecision ||
+    seat.cards.length < 2 ||
+    !Seat.hasInvestedInPot(seat)
+  ) {
     return false;
   }
-  if (seat.folded) {
-    return seat.muckDecision !== undefined;
-  }
-  return phase === "waiting";
-}
-
-/**
- * @param {import('./seat.js').OccupiedSeat} seat
- * @returns {[boolean, boolean]}
- */
-function getShownCards(seat) {
-  return seat.shownCards;
-}
-
-/**
- * @param {Card[]} cards
- * @param {[boolean, boolean]} shownCards
- * @returns {PlayerAction[]}
- */
-function buildShowCardActions(cards, shownCards) {
-  /** @type {PlayerAction[]} */
-  const actions = [];
-  if (!shownCards[0]) {
-    actions.push({
-      action: "showCard1",
-      cards: [/** @type {Card} */ (cards[0])],
-    });
-  }
-  if (!shownCards[1]) {
-    actions.push({
-      action: "showCard2",
-      cards: [/** @type {Card} */ (cards[1])],
-    });
-  }
-  if (!shownCards[0] && !shownCards[1]) {
-    actions.push({ action: "showBothCards", cards: cards.slice(0, 2) });
-  }
-  return actions;
+  return seat.folded || phase === "waiting";
 }
 
 /**

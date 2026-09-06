@@ -5,7 +5,7 @@ import { invalidateCallPreActions } from "./pre-action.js";
 import * as ActionClock from "./action-clock.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
-import { MUCK_TIMEOUT_TICKS } from "./game-constants.js";
+import { MUCK_TIMEOUT_TICKS, SHOW_CARDS_TICKS } from "./game-constants.js";
 
 // Re-export dealing functions for backward compatibility
 export {
@@ -331,6 +331,7 @@ function revealHoleCards(game, seat, cardIndexes) {
   if (seatObj.shownCards[0] && seatObj.shownCards[1]) {
     seatObj.cardsRevealed = true;
   }
+  seatObj.shownCardsTicks = SHOW_CARDS_TICKS;
 
   return newlyShown;
 }
@@ -340,10 +341,11 @@ function revealHoleCards(game, seat, cardIndexes) {
  * @param {string|undefined} phase
  */
 function assertCanRevealHoleCards(seatObj, phase) {
-  if (
-    (seatObj.folded && !seatObj.muckDecision) ||
-    (!seatObj.folded && phase !== "waiting")
-  ) {
+  if (seatObj.cardsRevealed || seatObj.shownCards.some(Boolean)) {
+    throw new Error("show cards choice already made");
+  }
+
+  if (!seatObj.muckDecision || (!seatObj.folded && phase !== "waiting")) {
     throw new Error("can only show cards after folding or hand ends");
   }
 
@@ -394,7 +396,7 @@ function revealSelectedHoleCards(seatObj, indexes) {
 }
 
 /**
- * Mucks a folded hand without revealing either card
+ * Mucks a folded or uncontested winning hand without revealing either card
  * @param {Game} game
  * @param {{ seat: number }} options
  */
@@ -405,11 +407,15 @@ export function muck(game, { seat }) {
   }
 
   const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
-  if (!seatObj.folded || !seatObj.muckDecision) {
-    throw new Error("can only muck during the post-fold decision window");
+  if (
+    !seatObj.muckDecision ||
+    (!seatObj.folded && game.hand.phase !== "waiting")
+  ) {
+    throw new Error("can only muck during the show-or-muck decision window");
   }
 
   delete seatObj.muckDecision;
+  seatObj.mucked = true;
 }
 
 /**

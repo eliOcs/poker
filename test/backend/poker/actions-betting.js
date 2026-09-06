@@ -256,6 +256,7 @@ describe("betting actions", () => {
 
     it("should allow showing both cards after hand ends", () => {
       game.hand.phase = "waiting";
+      game.seats[2].muckDecision = { remainingTicks: 5 };
       game.seats[2].totalInvested = 100;
       game.seats[2].cards = ["As", "Kh"];
 
@@ -269,6 +270,7 @@ describe("betting actions", () => {
 
     it("should reject showing cards without investing in the pot", () => {
       game.hand.phase = "waiting";
+      game.seats[2].muckDecision = { remainingTicks: 5 };
       game.seats[2].cards = ["As", "Kh"];
 
       assert.throws(

@@ -362,7 +362,7 @@ describe("phg-action-panel", () => {
       expect(findButtonByText(actionPanel, "Max").disabled).to.not.be.true;
     });
 
-    it("renders show-card buttons with card components", async () => {
+    it("renders show and muck buttons with card components", async () => {
       element.game = createMockGameState({
         hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
         seats: [
@@ -398,7 +398,7 @@ describe("phg-action-panel", () => {
       expect(muckButton.classList.contains("button--muted")).to.be.false;
 
       const cards = actionPanel.querySelectorAll(".show-cards phg-card");
-      expect(cards.length).to.equal(4);
+      expect(cards.length).to.equal(6);
       await Promise.all([...cards].map((card) => card.updateComplete));
       expect([...cards].every((card) => card.noAnimation)).to.be.true;
       expect([...cards].every((card) => card.size === "small")).to.be.true;
@@ -407,7 +407,9 @@ describe("phg-action-panel", () => {
       ).to.be.true;
       expect([...cards].every((card) => card.querySelector(".card.static"))).to
         .be.true;
-      expect(muckButton.querySelector("phg-card")).to.be.null;
+      expect(
+        [...muckButton.querySelectorAll("phg-card")].map((card) => card.card),
+      ).to.deep.equal(["??", "??"]);
     });
 
     it("keeps Call the clock in a game-action row separate from social actions", async () => {

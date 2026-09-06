@@ -88,7 +88,7 @@ export function startHandAfterCountdown(game, onBroadcast) {
 }
 
 /**
- * Records a timed-out post-fold decision as a muck.
+ * Records a timed-out show-or-muck decision as a muck.
  * @param {Game} game
  * @param {number} seatIndex
  */

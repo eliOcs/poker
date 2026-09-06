@@ -42,7 +42,9 @@
  * @property {Card[]} [winningCards] - The 5 cards forming the winning hand (only for winners)
  * @property {boolean} cardsRevealed - Whether cards were revealed at showdown
  * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
- * @property {PendingMuckDecision} [muckDecision] - Pending show-or-muck choice after folding
+ * @property {number} [shownCardsTicks] - Ticks left to display voluntarily shown cards; zero hides them
+ * @property {PendingMuckDecision} [muckDecision] - Pending show-or-muck choice after folding or winning uncontested
+ * @property {boolean} [mucked] - Cards were discarded without being shown
  * @property {number} [bustedPosition] - Tournament finishing position (e.g., 6 for 6th place)
  * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action for when turn arrives
  */
@@ -102,7 +104,9 @@ export function resetForNewHand(seat) {
   delete seat.winningCards;
   seat.cardsRevealed = false;
   seat.shownCards = [false, false];
+  delete seat.shownCardsTicks;
   delete seat.muckDecision;
+  delete seat.mucked;
   delete seat.preAction;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {
