@@ -77,7 +77,11 @@ export function createGame(overrides = {}) {
 export function createPlayer(name, overrides = {}) {
   return {
     empty: false,
-    player: { id: `player-${name}`, name },
+    player: {
+      id: `player-${name}`,
+      name,
+      avatarRevision: "catalog-avatars-v1",
+    },
     stack: 1000,
     bet: 0,
     totalBuyIn: 1000,

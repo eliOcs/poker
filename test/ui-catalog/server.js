@@ -11,7 +11,7 @@ import {
   respondWithFile,
   buildNodeModulesMap,
 } from "../../src/backend/static-files.js";
-import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
+import { getCatalogAvatar } from "./avatar-fixtures.js";
 
 const PORT = process.env.UI_CATALOG_PORT || 8445;
 
@@ -75,11 +75,12 @@ function handleRequest(req, res) {
   const pathname = url.pathname;
   console.log(`[REQ] ${pathname}`);
 
-  if (pathname === "/api/players/lz1abc12x9k2/avatar") {
+  const avatarRoute = pathname.match(/^\/api\/players\/([^/]+)\/avatar$/);
+  if (avatarRoute) {
+    const playerId = decodeURIComponent(avatarRoute[1]);
+    const avatar = getCatalogAvatar(playerId);
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(
-      JSON.stringify({ revision: "catalog-avatar", avatar: DEFAULT_AVATAR }),
-    );
+    res.end(JSON.stringify(avatar));
     return;
   }
 

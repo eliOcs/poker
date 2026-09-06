@@ -25,7 +25,7 @@ src/frontend/
 ├── mtt-lobby-render.js         # Lobby rendering helpers
 ├── player-profile.js           # Public profile, avatar, and game history
 ├── index.js                    # Live poker table component
-├── game-layout.js              # Table layout positioning
+├── table-layout.js              # Table layout positioning
 ├── action-panel.js             # Betting action state
 ├── action-panel-render.js      # Betting action rendering
 ├── seat.js                     # Player seat, avatar, stack, and cards
@@ -77,7 +77,7 @@ src/frontend/
 | Component       | File                 | Description                         |
 | --------------- | -------------------- | ----------------------------------- |
 | Game Table      | `index.js`           | Main game view, orchestrates layout |
-| Game Layout     | `game-layout.js`     | Table layout positioning            |
+| Game Layout     | `table-layout.js`    | Table layout positioning            |
 | Action Panel    | `action-panel.js`    | Fold / Call / Raise buttons         |
 | Board           | `board.js`           | Community cards display             |
 | Seat            | `seat.js`            | Player seat with stack and cards    |
@@ -86,6 +86,57 @@ src/frontend/
 | Bet Collection  | `bet-collection.js`  | Animated bet gathering              |
 | Currency Slider | `currency-slider.js` | Slider for selecting bet amounts    |
 | Ranking Panel   | `ranking-panel.js`   | Hand rankings reference             |
+
+`phg-table-layout` is shared by live games and hand history. It observes the
+space allocated by its parent and fits a logical 400 × 700 portrait or 800 × 400
+landscape surface using a single scale, including an outer gutter for seats that
+sit beyond the grid. The full composition is capped at 1000 × 500 landscape or
+500 × 875 portrait, with a maximum scale of 1.25×. The surface remains centered
+when extra space is available.
+`styles/table-layout.css` defines grid
+placements for 2, 6, and 9 seats and reserves separate space for the board.
+Landscape seats follow the ring: nine-player tables have two seats at the top,
+three along each side, and the current player centered at the bottom.
+Cards and player information stay within each seat's layout bounds. Bet offsets
+follow the visual slot and table size, placing bets inward on the felt. The felt
+is a separate background behind the composition.
+The dealer chip also sits on the felt beside its seat's bet area, with a fixed
+position even when bets are collected. Bets and the dealer chip remain fully
+opaque when the player panel is dimmed after folding.
+
+Landscape seats place partially overlapping hole cards beside the player panel,
+mirrored toward the outside for right-hand seats. The overlap leaves the standard
+centered ranks and suits visible. Portrait seats keep the cards above the panel.
+Avatars fill the side of the landscape panel and sit above the portrait panel.
+They retain square edges, with hole cards layered in front.
+Player panels reserve a fixed three-line height. The countdown sits in the
+top-right corner without adding a text row, and the current player's hand rank
+appears beneath the community cards. Winner messages replace that board label
+at the end of a hand; replay panels use their rows for the result and ending stack.
+
+Live games reserve a fixed action-panel row: 180px below 800px viewport width,
+224px otherwise. Short landscape screens use the available side-column height,
+capped at 360px. Controls align to the bottom of this area, so changing available
+actions, waiting, or reconnecting cannot resize or reposition the table.
+
+`data-seat` retains the server seat index. `data-slot` gives its clockwise visual
+position relative to the local player at slot zero (or seat zero for spectators).
+Actions and dealer state continue using server indices. Bet collection converts
+screen coordinates back into the scaled surface's logical coordinates.
+
+Live controls use normal grid layout, with a separate column on short landscape
+screens. Game navigation becomes persistent only at 1000px width and 600px height.
+History uses the same breakpoint for its sidebar and scrolls its timeline on
+smaller screens. The UI catalog includes crowded betting/showdown fixtures for
+all three table sizes, landscape snapshots, and browser assertions for clearance,
+containment, seat identity, and scaled chip animation coordinates.
+
+Catalog game players use nine saved avatar-editor outputs in
+`test/ui-catalog/avatars.json`, generated once with the seed recorded in that file.
+The catalog server selects an avatar by a stable hash of the player ID, so test
+order and page reloads do not change appearances. The shared player factory sets
+the matching avatar revision, and screenshot tests wait for avatar canvases to
+finish drawing. Edit the saved configurations to change the fixture artwork.
 
 ### Shared UI
 

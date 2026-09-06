@@ -455,3 +455,19 @@
     }
   }
 }
+
+/* Short landscape tables need their full width; navigation remains a drawer. */
+@media (width >= 800px) and ((width < 1000px) or (height < 600px)) {
+  phg-game phg-navigation-drawer {
+    position: absolute;
+    z-index: 50;
+  }
+
+  phg-game phg-navigation-drawer .drawer-toggle {
+    display: block;
+  }
+
+  phg-game phg-navigation-drawer[open] .drawer-backdrop {
+    display: block !important;
+  }
+}

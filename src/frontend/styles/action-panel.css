@@ -33,6 +33,21 @@
     width: 100%;
   }
 
+  @media (width < 360px) {
+    .action-row:has(.button--pre-action) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-flow: row;
+
+      .button:has(.button__icon) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .action-row:has(.show-action) .button {
+      padding-inline: var(--space-sm);
+    }
+  }
+
   .stacked {
     display: block;
     max-width: 100%;

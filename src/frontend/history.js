@@ -1,4 +1,5 @@
 import { html, LitElement } from "lit";
+import { visualSeat } from "./table-layout.js";
 import { formatCurrency } from "./currency.js";
 import { renderHistoryTimeline } from "./history-timeline.js";
 import {
@@ -358,33 +359,36 @@ export class History extends LitElement {
     const tableSize = view.seats.length;
 
     return html`
-      <div class="table-state">
-        <phg-board
-          .board=${view.board}
-          .hand=${hand}
-          .winnerMessage=${view.winnerMessage}
-          .winningCards=${view.winningCards}
-          noAnimation
-        ></phg-board>
-        <div id="seats" data-table-size="${tableSize}">
-          ${view.seats.map((seat, index) => {
-            if (seat.empty) return html``;
-            const isButton = index === view.button;
+      <phg-table-layout class="table-state">
+        <div class="table-surface">
+          <phg-board
+            .board=${view.board}
+            .hand=${hand}
+            .winnerMessage=${view.winnerMessage}
+            .winningCards=${view.winningCards}
+            noAnimation
+          ></phg-board>
+          <div id="seats" data-table-size="${tableSize}">
+            ${view.seats.map((seat, index) => {
+              if (seat.empty) return html``;
+              const isButton = index === view.button;
 
-            return html`
-              <phg-seat
-                data-seat="${index}"
-                data-table-size="${tableSize}"
-                .seat=${seat}
-                .seatNumber=${index}
-                .isButton=${isButton}
-                .showSitAction=${false}
-                noAnimation
-              ></phg-seat>
-            `;
-          })}
+              return html`
+                <phg-seat
+                  data-seat="${index}"
+                  data-slot="${visualSeat(index, view.seats)}"
+                  data-table-size="${tableSize}"
+                  .seat=${seat}
+                  .seatNumber=${index}
+                  .isButton=${isButton}
+                  .showSitAction=${false}
+                  noAnimation
+                ></phg-seat>
+              `;
+            })}
+          </div>
         </div>
-      </div>
+      </phg-table-layout>
     `;
   }
 

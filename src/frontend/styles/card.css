@@ -7,7 +7,7 @@
     --card-border-width: 3px;
     --card-font-size: 14px;
     --card-rank-size: 14px;
-    --card-suit-size: 22px;
+    --card-suit-size: 26px;
     --card-suit-margin-top: -2px;
   }
 
@@ -17,7 +17,7 @@
     --card-border-width: 2px;
     --card-font-size: 10px;
     --card-rank-size: 10px;
-    --card-suit-size: 16px;
+    --card-suit-size: 19px;
     --card-suit-margin-top: -1px;
   }
 
@@ -27,7 +27,7 @@
     --card-border-width: 1px;
     --card-font-size: 7px;
     --card-rank-size: 7px;
-    --card-suit-size: 11px;
+    --card-suit-size: 13px;
     --card-suit-margin-top: -1px;
   }
 
@@ -151,7 +151,7 @@
       --card-border-width: 3px;
       --card-font-size: 18px;
       --card-rank-size: 20px;
-      --card-suit-size: 30px;
+      --card-suit-size: 36px;
       --card-suit-margin-top: -2px;
     }
 
@@ -161,7 +161,7 @@
       --card-border-width: 2px;
       --card-font-size: 12px;
       --card-rank-size: 13px;
-      --card-suit-size: 20px;
+      --card-suit-size: 24px;
       --card-suit-margin-top: -1px;
     }
 
@@ -171,7 +171,7 @@
       --card-border-width: 2px;
       --card-font-size: 12px;
       --card-rank-size: 12px;
-      --card-suit-size: 19px;
+      --card-suit-size: 23px;
       --card-suit-margin-top: -1px;
     }
   }

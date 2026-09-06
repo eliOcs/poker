@@ -1,0 +1,645 @@
+{
+  "revision": "catalog-avatars-v1",
+  "seed": 1347373893,
+  "avatars": [
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#8abeb7"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#b54835"
+      },
+      "face": {
+        "type": "diamond",
+        "position": 0,
+        "horizontalPosition": -1,
+        "size": 1,
+        "rotation": 0,
+        "color": "#c98255"
+      },
+      "eyes": {
+        "type": "hypnotic",
+        "position": 0,
+        "spacing": -1,
+        "rotation": 1,
+        "size": 1,
+        "color": "#777781"
+      },
+      "eyebrows": {
+        "type": "straight",
+        "position": 0,
+        "spacing": 1,
+        "size": -1,
+        "color": "#b54835"
+      },
+      "nose": {
+        "type": "c",
+        "position": 0,
+        "horizontalPosition": -1,
+        "size": -1
+      },
+      "mouth": {
+        "type": "happy",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": 0
+      },
+      "ears": {
+        "type": "small",
+        "position": -1,
+        "spacing": 1,
+        "size": -1
+      },
+      "hair": {
+        "type": "nerd",
+        "position": -1,
+        "size": 1,
+        "color": "#8d5a36"
+      },
+      "facialHair": {
+        "type": "none",
+        "position": 0,
+        "horizontalPosition": 0,
+        "size": -1,
+        "color": "#8d5a36"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#8abeb7"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#8d5a36"
+      },
+      "face": {
+        "type": "gaunt",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": -1,
+        "rotation": -1,
+        "color": "#78452f"
+      },
+      "eyes": {
+        "type": "beady",
+        "position": 0,
+        "spacing": -1,
+        "rotation": 0,
+        "size": 1,
+        "color": "#3e7058"
+      },
+      "eyebrows": {
+        "type": "thick",
+        "position": 0,
+        "spacing": 1,
+        "size": 0,
+        "color": "#4a3028"
+      },
+      "nose": {
+        "type": "none",
+        "position": 1,
+        "horizontalPosition": 1,
+        "size": 1
+      },
+      "mouth": {
+        "type": "kiss",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 1
+      },
+      "ears": {
+        "type": "pointy",
+        "position": 1,
+        "spacing": 0,
+        "size": -1
+      },
+      "hair": {
+        "type": "shortHigh",
+        "position": 1,
+        "size": 0,
+        "color": "#b54835"
+      },
+      "facialHair": {
+        "type": "goatee",
+        "position": 0,
+        "horizontalPosition": 1,
+        "size": 0,
+        "color": "#4a3028"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#cc6666"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#314c88"
+      },
+      "face": {
+        "type": "gaunt",
+        "position": -1,
+        "horizontalPosition": -1,
+        "size": -1,
+        "rotation": 0,
+        "color": "#a7613f"
+      },
+      "eyes": {
+        "type": "hypnotic",
+        "position": 1,
+        "spacing": -1,
+        "rotation": 1,
+        "size": 0,
+        "color": "#3e7058"
+      },
+      "eyebrows": {
+        "type": "slanted",
+        "position": 0,
+        "spacing": 1,
+        "size": -1,
+        "color": "#b54835"
+      },
+      "nose": {
+        "type": "u",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 1
+      },
+      "mouth": {
+        "type": "kawai",
+        "position": -1,
+        "horizontalPosition": 0,
+        "size": 0
+      },
+      "ears": {
+        "type": "pointy",
+        "position": 0,
+        "spacing": 0,
+        "size": -1
+      },
+      "hair": {
+        "type": "nerd",
+        "position": -1,
+        "size": -1,
+        "color": "#e3bc65"
+      },
+      "facialHair": {
+        "type": "moustache",
+        "position": 0,
+        "horizontalPosition": 0,
+        "size": 0,
+        "color": "#211e25"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#cc6666"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#8d5a36"
+      },
+      "face": {
+        "type": "pear",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": 0,
+        "rotation": 0,
+        "color": "#f2c9a5"
+      },
+      "eyes": {
+        "type": "sparkle",
+        "position": -1,
+        "spacing": 1,
+        "rotation": 1,
+        "size": 1,
+        "color": "#573b2e"
+      },
+      "eyebrows": {
+        "type": "straight",
+        "position": -1,
+        "spacing": 0,
+        "size": 0,
+        "color": "#e3bc65"
+      },
+      "nose": {
+        "type": "v",
+        "position": 0,
+        "horizontalPosition": 0,
+        "size": 1
+      },
+      "mouth": {
+        "type": "kiss",
+        "position": 0,
+        "horizontalPosition": 0,
+        "size": 0
+      },
+      "ears": {
+        "type": "wide",
+        "position": -1,
+        "spacing": 0,
+        "size": 1
+      },
+      "hair": {
+        "type": "buzz",
+        "position": 1,
+        "size": -1,
+        "color": "#8d5a36"
+      },
+      "facialHair": {
+        "type": "dali",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 0,
+        "color": "#77747b"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#de935f"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#314c88"
+      },
+      "face": {
+        "type": "pear",
+        "position": 0,
+        "horizontalPosition": 1,
+        "size": 1,
+        "rotation": 0,
+        "color": "#dda578"
+      },
+      "eyes": {
+        "type": "lines",
+        "position": -1,
+        "spacing": 1,
+        "rotation": -1,
+        "size": -1,
+        "color": "#39758c"
+      },
+      "eyebrows": {
+        "type": "thick",
+        "position": 0,
+        "spacing": 0,
+        "size": 0,
+        "color": "#e3bc65"
+      },
+      "nose": {
+        "type": "v",
+        "position": -1,
+        "horizontalPosition": -1,
+        "size": 1
+      },
+      "mouth": {
+        "type": "openMouth",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": -1
+      },
+      "ears": {
+        "type": "wide",
+        "position": -1,
+        "spacing": -1,
+        "size": -1
+      },
+      "hair": {
+        "type": "none",
+        "position": 0,
+        "size": 1,
+        "color": "#77747b"
+      },
+      "facialHair": {
+        "type": "moustache",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 1,
+        "color": "#211e25"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#f0c674"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#3e7058"
+      },
+      "face": {
+        "type": "gaunt",
+        "position": 0,
+        "horizontalPosition": 1,
+        "size": -1,
+        "rotation": 0,
+        "color": "#78452f"
+      },
+      "eyes": {
+        "type": "beady",
+        "position": 1,
+        "spacing": 1,
+        "rotation": -1,
+        "size": -1,
+        "color": "#3e7058"
+      },
+      "eyebrows": {
+        "type": "hairy",
+        "position": 1,
+        "spacing": 1,
+        "size": 1,
+        "color": "#8d5a36"
+      },
+      "nose": {
+        "type": "d",
+        "position": 1,
+        "horizontalPosition": 1,
+        "size": 0
+      },
+      "mouth": {
+        "type": "angry",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": -1
+      },
+      "ears": {
+        "type": "small",
+        "position": 1,
+        "spacing": 1,
+        "size": 0
+      },
+      "hair": {
+        "type": "long2",
+        "position": 1,
+        "size": -1,
+        "color": "#b54835"
+      },
+      "facialHair": {
+        "type": "neckbeard",
+        "position": -1,
+        "horizontalPosition": 1,
+        "size": -1,
+        "color": "#8d5a36"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#8abeb7"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#39758c"
+      },
+      "face": {
+        "type": "triangle",
+        "position": -1,
+        "horizontalPosition": 1,
+        "size": -1,
+        "rotation": -1,
+        "color": "#dda578"
+      },
+      "eyes": {
+        "type": "lashes",
+        "position": -1,
+        "spacing": 1,
+        "rotation": -1,
+        "size": 0,
+        "color": "#3e7058"
+      },
+      "eyebrows": {
+        "type": "slanted",
+        "position": 0,
+        "spacing": -1,
+        "size": 0,
+        "color": "#77747b"
+      },
+      "nose": {
+        "type": "v",
+        "position": -1,
+        "horizontalPosition": 1,
+        "size": 0
+      },
+      "mouth": {
+        "type": "smile",
+        "position": 1,
+        "horizontalPosition": 1,
+        "size": -1
+      },
+      "ears": {
+        "type": "small",
+        "position": 0,
+        "spacing": 1,
+        "size": 0
+      },
+      "hair": {
+        "type": "none",
+        "position": -1,
+        "size": 0,
+        "color": "#77747b"
+      },
+      "facialHair": {
+        "type": "dali",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 1,
+        "color": "#e3bc65"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#b294bb"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#39758c"
+      },
+      "face": {
+        "type": "gaunt",
+        "position": 0,
+        "horizontalPosition": 1,
+        "size": 0,
+        "rotation": 0,
+        "color": "#f2c9a5"
+      },
+      "eyes": {
+        "type": "sleepy",
+        "position": 1,
+        "spacing": 1,
+        "rotation": -1,
+        "size": 0,
+        "color": "#a27342"
+      },
+      "eyebrows": {
+        "type": "soft",
+        "position": 1,
+        "spacing": 1,
+        "size": 1,
+        "color": "#211e25"
+      },
+      "nose": {
+        "type": "c",
+        "position": 0,
+        "horizontalPosition": 1,
+        "size": -1
+      },
+      "mouth": {
+        "type": "happy",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": 0
+      },
+      "ears": {
+        "type": "pointy",
+        "position": 0,
+        "spacing": -1,
+        "size": -1
+      },
+      "hair": {
+        "type": "shortClassic",
+        "position": 1,
+        "size": 1,
+        "color": "#e3bc65"
+      },
+      "facialHair": {
+        "type": "goatee",
+        "position": -1,
+        "horizontalPosition": 0,
+        "size": -1,
+        "color": "#8d5a36"
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "background": {
+        "color": "#b294bb"
+      },
+      "torso": {
+        "type": "torso",
+        "position": 0,
+        "size": 0
+      },
+      "clothes": {
+        "type": "shirt",
+        "position": 0,
+        "size": 0,
+        "color": "#39758c"
+      },
+      "face": {
+        "type": "angular",
+        "position": -1,
+        "horizontalPosition": 1,
+        "size": 0,
+        "rotation": 0,
+        "color": "#a7613f"
+      },
+      "eyes": {
+        "type": "lashes",
+        "position": -1,
+        "spacing": 1,
+        "rotation": 1,
+        "size": 0,
+        "color": "#39758c"
+      },
+      "eyebrows": {
+        "type": "soft",
+        "position": 0,
+        "spacing": -1,
+        "size": 1,
+        "color": "#e3bc65"
+      },
+      "nose": {
+        "type": "big",
+        "position": 1,
+        "horizontalPosition": 0,
+        "size": 0
+      },
+      "mouth": {
+        "type": "kiss",
+        "position": 1,
+        "horizontalPosition": -1,
+        "size": 1
+      },
+      "ears": {
+        "type": "small",
+        "position": -1,
+        "spacing": -1,
+        "size": 1
+      },
+      "hair": {
+        "type": "shortClassic",
+        "position": 1,
+        "size": 1,
+        "color": "#8d5a36"
+      },
+      "facialHair": {
+        "type": "moustache",
+        "position": -1,
+        "horizontalPosition": 1,
+        "size": 1,
+        "color": "#4a3028"
+      }
+    }
+  ]
+}

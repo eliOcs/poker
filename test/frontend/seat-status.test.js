@@ -21,6 +21,33 @@ describe("phg-seat status", () => {
     globalThis.WebSocket = MockWebSocket;
   });
 
+  it("keeps bets and the dealer chip fully opaque when a player folds", async () => {
+    const renderedOpacity = (node) => {
+      let opacity = 1;
+      for (let current = node; current; current = current.parentElement) {
+        opacity *= Number(getComputedStyle(current).opacity);
+      }
+      return opacity;
+    };
+    for (const folded of [false, true, false]) {
+      element.game = createMockGameState({
+        button: 0,
+        seats: [{ ...mockOccupiedSeat, folded, bet: 5000 }, mockEmptySeat],
+      });
+      await element.updateComplete;
+      const seat = element.querySelector("phg-seat");
+      await seat.updateComplete;
+      const bet = seat.querySelector(".bet-indicator");
+      expect(bet.textContent).to.include("$50");
+      expect(renderedOpacity(bet)).to.equal(1);
+      expect(renderedOpacity(bet.querySelector("phg-chips"))).to.equal(1);
+      expect(renderedOpacity(seat.querySelector(".dealer-button"))).to.equal(1);
+      expect(renderedOpacity(seat.querySelector(".player-name"))).to.equal(
+        folded ? 0.6 : 1,
+      );
+    }
+  });
+
   it("displays handResult when player won", async () => {
     element.game = createMockGameState({
       seats: [

@@ -177,7 +177,7 @@ class Seat extends LitElement {
         ${formatPosition(this.seat.bustedPosition)}
       </div>`;
     }
-    if ((this.seat.handResult ?? undefined) !== undefined) return "";
+    if ((this.seat.handResult ?? this.seat.netResult) !== undefined) return "";
     const status = this._getStatusLabel();
     if (!status) return "";
     return status.isStatus
@@ -223,7 +223,10 @@ class Seat extends LitElement {
     return this.isButton ? html`<span class="dealer-button">D</span>` : "";
   }
   _renderHandRank() {
-    return this.seat.handRank && !this.seat.lastAction
+    return this.seat.handRank &&
+      !this.seat.isCurrentPlayer &&
+      !this.seat.lastAction &&
+      (this.seat.netResult ?? undefined) === undefined
       ? html`<div class="hand-rank">${this.seat.handRank}</div>`
       : "";
   }
@@ -255,31 +258,33 @@ class Seat extends LitElement {
     if (!this.seat || this.seat.empty) return this._renderEmptySeat();
 
     return html`
-      ${this._activeEmote
-        ? html`<div class="emote-bubble">${this._activeEmote}</div>`
-        : ""}
-      ${this._activeChat
-        ? html`<div class="chat-bubble">${this._activeChat}</div>`
-        : ""}
-      ${this._renderDealerButton()} ${this._renderPlayerInfo()}
-      ${this._renderStackOrResult()} ${this._renderClock()}
-      ${this._renderStatusOrAction()} ${this._renderHandRank()}
-      <div
-        class="hole-cards ${this.seat.cards?.some((card) => card !== "??")
-          ? "revealed"
-          : ""}"
-      >
-        ${this.seat.cards?.map(
-          (card) =>
-            html`<phg-card
-              .card=${card}
-              ?winning=${this.seat.winningCards?.includes(card)}
-              ?noAnimation=${this.noAnimation}
-              size="large"
-            ></phg-card>`,
-        )}
+      <div class="seat-content">
+        ${this._activeEmote
+          ? html`<div class="emote-bubble">${this._activeEmote}</div>`
+          : ""}
+        ${this._activeChat
+          ? html`<div class="chat-bubble">${this._activeChat}</div>`
+          : ""}
+        ${this._renderPlayerInfo()} ${this._renderStackOrResult()}
+        ${this._renderClock()} ${this._renderStatusOrAction()}
+        ${this._renderHandRank()}
+        <div
+          class="hole-cards ${this.seat.cards?.some((card) => card !== "??")
+            ? "revealed"
+            : ""}"
+        >
+          ${this.seat.cards?.map(
+            (card) =>
+              html`<phg-card
+                .card=${card}
+                ?winning=${this.seat.winningCards?.includes(card)}
+                ?noAnimation=${this.noAnimation}
+                size="large"
+              ></phg-card>`,
+          )}
+        </div>
       </div>
-      ${this._renderBetIndicator()}
+      ${this._renderBetIndicator()} ${this._renderDealerButton()}
     `;
   }
 }

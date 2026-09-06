@@ -4,6 +4,7 @@ import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
 import "./seat.js";
+import { visualSeat } from "./table-layout.js";
 import "./action-panel.js";
 import "./modal.js";
 import "./ranking-panel.js";
@@ -86,7 +87,9 @@ export class Game extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._mql = window.matchMedia("(min-width: 800px)");
+    this._mql = window.matchMedia(
+      "(min-width: 1000px) and (min-height: 600px)",
+    );
     this._mql.addEventListener("change", this._onMediaChange);
     this._drawerOpen = this._mql.matches;
   }
@@ -413,40 +416,43 @@ export class Game extends LitElement {
     return html`
       ${renderDrawer(this)}
       <div id="wrapper">
-        <div id="container">
-          <phg-board
-            .board=${this.game.board}
-            .hand=${this.game.hand}
-            .countdown=${this.game.countdown}
-            .winnerMessage=${this.game.winnerMessage}
-            .winningCards=${this.getWinningCards()}
-            .tournament=${this.game.tournament}
-            .seats=${this.game.seats}
-          ></phg-board>
-          <div id="seats" data-table-size="${this.game.seats.length}">
-            ${this.game.seats.map((seat, i) =>
-              seat.empty && isSeated
-                ? ""
-                : html`<phg-seat
-                    data-seat="${i}"
-                    data-table-size="${this.game.seats.length}"
-                    .seat=${seat}
-                    .seatNumber=${i}
-                    .isButton=${this.game.button === i}
-                    .showSitAction=${!isSeated}
-                    .buyIn=${this.game.tournament?.buyIn ?? 0}
-                    .hideBet=${!!this.game.hand?.collectingBets}
-                    .clockRemaining=${seat.isActing
-                      ? this.game.hand?.clockRemaining
-                      : undefined}
-                    @seat-action=${this.handleSeatAction}
-                    @seat-settings=${() => {
-                      gameModalActions.openSettings.call(this);
-                    }}
-                  ></phg-seat>`,
-            )}
+        <phg-table-layout>
+          <div id="container" class="table-surface">
+            <phg-board
+              .board=${this.game.board}
+              .hand=${this.game.hand}
+              .countdown=${this.game.countdown}
+              .winnerMessage=${this.game.winnerMessage}
+              .winningCards=${this.getWinningCards()}
+              .tournament=${this.game.tournament}
+              .seats=${this.game.seats}
+            ></phg-board>
+            <div id="seats" data-table-size="${this.game.seats.length}">
+              ${this.game.seats.map((seat, i) =>
+                seat.empty && isSeated
+                  ? ""
+                  : html`<phg-seat
+                      data-seat="${i}"
+                      data-slot="${visualSeat(i, this.game.seats)}"
+                      data-table-size="${this.game.seats.length}"
+                      .seat=${seat}
+                      .seatNumber=${i}
+                      .isButton=${this.game.button === i}
+                      .showSitAction=${!isSeated}
+                      .buyIn=${this.game.tournament?.buyIn ?? 0}
+                      .hideBet=${!!this.game.hand?.collectingBets}
+                      .clockRemaining=${seat.isActing
+                        ? this.game.hand?.clockRemaining
+                        : undefined}
+                      @seat-action=${this.handleSeatAction}
+                      @seat-settings=${() => {
+                        gameModalActions.openSettings.call(this);
+                      }}
+                    ></phg-seat>`,
+              )}
+            </div>
           </div>
-        </div>
+        </phg-table-layout>
         ${renderActionPanel(
           this,
           actions,

@@ -40,7 +40,7 @@ export const SPECIAL_GAME_TEST_CASES = {
   "game-with-folded-players": () =>
     gameView(
       createGame({
-        button: 0,
+        button: 1,
         hand: { phase: "turn", pot: 800, currentBet: 200, actingSeat: 0 },
         board: { cards: ["Ah", "Kd", "7c", "3s"] },
         seats: [
@@ -56,7 +56,12 @@ export const SPECIAL_GAME_TEST_CASES = {
             ],
             handRank: "Pair of Aces",
           }),
-          createPlayer("Alice", { folded: true, stack: 2800, cards: [] }),
+          createPlayer("Alice", {
+            folded: true,
+            stack: 2800,
+            bet: 100,
+            cards: [],
+          }),
           createPlayer("Bob", {
             stack: 2600,
             bet: 200,

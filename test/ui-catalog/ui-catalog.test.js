@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { waitForAvatars } from "./visual-assets.js";
 
 test.describe.configure({ mode: "parallel" });
 
@@ -74,6 +75,9 @@ const TEST_CASES = [
   "table-heads-up",
   "table-6max",
   "table-full-ring",
+  "table-heads-up-showdown",
+  "table-6max-showdown",
+  "table-full-ring-showdown",
 
   // Error states (using toast)
   "game-error",
@@ -348,6 +352,7 @@ for (const testCase of TEST_CASES) {
     });
 
     await prepareTestCase(testCase, page, component);
+    await waitForAvatars(page);
 
     // Capture content that extends below the viewport as well.
     await expect(page).toHaveScreenshot(`${testCase}.png`, {

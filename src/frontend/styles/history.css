@@ -27,7 +27,7 @@
     border-bottom: 3px solid var(--color-bg-light);
   }
 
-  @media (width <= 799px) {
+  @media (width < 1000px), (height < 600px) {
     .nav-bar {
       display: flex;
     }
@@ -98,7 +98,7 @@
   }
 
   /* Desktop: table + sidebar layout */
-  @media (width >= 800px) {
+  @media (width >= 1000px) and (height >= 600px) {
     .main {
       flex-direction: row;
     }
@@ -113,30 +113,21 @@
     min-width: 0;
   }
 
-  /* Final table state */
   .table-state {
-    flex: 1;
-    position: relative;
-    min-height: 85vh;
-    max-height: none;
+    flex: 1 0 65dvh;
 
     --board-bg: var(--color-table-history);
   }
 
-  @media (width >= 800px) {
+  @media (width >= 1000px) and (height >= 600px) {
     .table-area {
       min-height: 0;
       overflow: hidden;
     }
 
     .table-state {
-      min-height: 0;
+      flex: 1;
     }
-  }
-
-  #seats {
-    position: absolute;
-    inset: 0;
   }
 
   .replay-controls {
@@ -149,33 +140,6 @@
     padding: var(--space-sm) var(--space-lg);
 
     --button-icon-size: 1.5em;
-  }
-
-  phg-board {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    left: 50%;
-  }
-
-  @media (width >= 800px) {
-    .replay-controls {
-      justify-content: flex-end;
-      margin-bottom: var(--space-md);
-    }
-
-    phg-board {
-      top: 50%;
-      width: 78%;
-      height: 70%;
-    }
-  }
-
-  @media (width < 800px) {
-    phg-board {
-      top: 52%;
-      width: 85%;
-      height: 85%;
-    }
   }
 
   /* Action timeline */
@@ -196,7 +160,7 @@
   }
 
   /* Desktop: horizontal layout */
-  @media (width >= 800px) {
+  @media (width >= 1000px) and (height >= 600px) {
     .timeline-panel {
       height: var(--timeline-height, auto);
       max-height: min(
@@ -267,7 +231,7 @@
   }
 
   /* Mobile: vertical layout */
-  @media (width <= 799px) {
+  @media (width < 1000px), (height < 600px) {
     .timeline-content {
       display: flex;
       flex-direction: column;
@@ -413,7 +377,7 @@
     order: -1;
   }
 
-  @media (width >= 800px) {
+  @media (width >= 1000px) and (height >= 600px) {
     .sidebar {
       display: block;
     }
@@ -493,7 +457,7 @@
     display: block;
   }
 
-  @media (width >= 800px) {
+  @media (width >= 1000px) and (height >= 600px) {
     .street-cards,
     .action-cards {
       min-height: 83px;

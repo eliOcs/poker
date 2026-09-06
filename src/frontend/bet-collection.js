@@ -10,9 +10,10 @@ export function snapshotBetPositions(root, bets) {
   if (!container || !potEl) return;
 
   const cRect = container.getBoundingClientRect();
+  const scale = cRect.width / container.clientWidth;
   const tRect = potEl.getBoundingClientRect();
-  const cx = tRect.left - cRect.left + tRect.width / 2;
-  const cy = tRect.top - cRect.top + tRect.height / 2;
+  const cx = (tRect.left - cRect.left + tRect.width / 2) / scale;
+  const cy = (tRect.top - cRect.top + tRect.height / 2) / scale;
 
   const sources = bets
     .map(({ index, bet }) => {
@@ -23,8 +24,8 @@ export function snapshotBetPositions(root, bets) {
       const r = betEl.getBoundingClientRect();
       return {
         amount: bet,
-        left: r.left - cRect.left,
-        top: r.top - cRect.top,
+        left: (r.left - cRect.left) / scale,
+        top: (r.top - cRect.top) / scale,
         targetLeft: cx,
         targetTop: cy,
       };
