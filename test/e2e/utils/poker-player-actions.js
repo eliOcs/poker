@@ -276,27 +276,33 @@ export class PokerPlayerActions extends PokerPlayerBase {
   /**
    * Send an emote via the emote picker modal
    * @param {string} emoji - The emoji to send
+   * @param {{timeout?: number}} [options]
    */
-  async emote(emoji) {
-    await this.actionPanel.getByRole("button", { name: "Emote" }).click();
-    await this.game.locator(".emote-grid").waitFor();
+  async emote(emoji, { timeout = 5000 } = {}) {
+    await this.actionPanel
+      .getByRole("button", { name: "Emote" })
+      .click({ timeout });
+    await this.game.locator(".emote-grid").waitFor({ timeout });
     await this.game
       .locator(".emote-grid button", {
         hasText: emoji,
       })
-      .click();
+      .click({ timeout });
   }
 
   /**
    * Send a chat message via the chat modal
    * @param {string} message - The message to send
+   * @param {{timeout?: number}} [options]
    */
-  async chat(message) {
-    await this.actionPanel.getByRole("button", { name: "Chat" }).click();
+  async chat(message, { timeout = 5000 } = {}) {
+    await this.actionPanel
+      .getByRole("button", { name: "Chat" })
+      .click({ timeout });
     const input = this.game.locator("#chat-input");
-    await input.waitFor();
-    await input.fill(message);
-    await this.game.getByRole("button", { name: "Send" }).click();
+    await input.waitFor({ timeout });
+    await input.fill(message, { timeout });
+    await this.game.getByRole("button", { name: "Send" }).click({ timeout });
   }
 
   /**

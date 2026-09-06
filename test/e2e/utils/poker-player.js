@@ -21,7 +21,7 @@ export class PokerPlayer extends PokerPlayerActions {
 
   /**
    * Save settings from the in-game settings modal
-   * @param {{ name?: string, volumeLabel?: "Off" | "25%" | "75%" | "100%" }} [options]
+   * @param {{ name?: string, volumeLabel?: "Off" | "25%" | "75%" | "100%", randomizeAvatar?: boolean }} [options]
    */
   async saveSettings(options = {}) {
     await this.openSettings();
@@ -37,6 +37,18 @@ export class PokerPlayer extends PokerPlayerActions {
         .locator(".volume-slider")
         .first()
         .locator("label", { hasText: options.volumeLabel })
+        .click();
+    }
+
+    if (options.randomizeAvatar) {
+      await this.page
+        .getByRole("link", { name: "Change", exact: true })
+        .click();
+      await this.page
+        .getByRole("button", { name: "Randomize", exact: true })
+        .click();
+      await this.page
+        .getByRole("button", { name: "Done", exact: true })
         .click();
     }
 

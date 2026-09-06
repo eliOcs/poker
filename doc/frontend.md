@@ -107,9 +107,12 @@ opaque when the player panel is dimmed after folding.
 Landscape seats place partially overlapping hole cards beside the player panel,
 mirrored toward the outside for right-hand seats. The overlap leaves the standard
 centered ranks and suits visible. Portrait seats keep the cards above the panel.
-Avatars fill the side of the landscape panel and sit above the portrait panel.
-They retain square edges, with hole cards layered in front.
-Player panels reserve a fixed three-line height. The countdown sits in the
+Avatars fill the side of the landscape panel and sit inside the left side of the
+wider portrait panel. They retain square edges; portrait hole cards remain
+centered above the panel and tuck behind its upper edge.
+Player panels reserve a fixed three-line height, with uniform text sizes and
+line spacing within each layout mode. Colors distinguish names, stacks, and
+actions. The countdown sits in the
 top-right corner without adding a text row, and the current player's hand rank
 appears beneath the community cards. Winner messages replace that board label
 at the end of a hand; replay panels use their rows for the result and ending stack.

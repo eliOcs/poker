@@ -72,6 +72,10 @@
   }
 
   :scope phg-seat {
+    --seat-font-size: 9px;
+    --seat-panel-top: 35px;
+    --seat-panel-bottom: 20px;
+
     position: relative;
     grid-column: var(--seat-column) / span 2;
     grid-row: var(--seat-row) / span 2;
@@ -81,12 +85,13 @@
     min-height: 0;
     padding: 0 6px 22px;
     gap: 2px;
-    z-index: 1;
+    font-size: var(--seat-font-size);
+    line-height: 14px;
   }
 
   :scope .player-info {
     position: static;
-    min-height: 16px;
+    min-height: 0;
     z-index: auto;
   }
 
@@ -106,42 +111,60 @@
     z-index: -2;
   }
 
+  :scope[data-layout="portrait"] phg-seat {
+    --seat-font-size: 8px;
+
+    width: 160px;
+    padding-left: 50px;
+    line-height: 12px;
+  }
+
+  :scope[data-layout="portrait"] .player-info {
+    margin-top: 5px;
+  }
+
   :scope[data-layout="portrait"] .player-info phg-avatar {
-    box-sizing: border-box;
-    border: 2px solid var(--color-bg-dark);
+    width: 43px;
+    height: 43px;
+    top: 38px;
+    left: 3px;
+    transform: none;
+    z-index: 0;
   }
 
   :scope[data-layout="portrait"] .current-player .player-info phg-avatar {
-    top: 6px;
+    top: 49px;
   }
 
-  :scope phg-seat .seat-content::before {
-    top: 35px;
-    bottom: 20px;
+  :scope[data-layout="portrait"] .hole-cards {
+    width: calc(100% + 44px);
+    margin-left: -44px;
   }
 
-  :scope phg-seat.current-player .seat-content::before {
-    top: 46px;
+  :scope[data-layout="portrait"] .chat-bubble {
+    bottom: calc(100% - var(--seat-panel-top) + 0.6em);
+    transform-origin: bottom center;
   }
 
   :scope phg-seat.current-player {
+    --seat-panel-top: 46px;
+
     height: 115px;
   }
 
   :scope .clock-countdown {
     position: absolute;
-    top: 39px;
+    top: 40px;
     right: 6px;
     gap: 2px;
-    font-size: 8px;
   }
 
   :scope .current-player .clock-countdown {
-    top: 50px;
+    top: 51px;
   }
 
   :scope phg-seat:has(.clock-countdown) .player-info {
-    padding-right: 36px;
+    padding-right: calc(4.2em + 2px);
   }
 
   :scope .current-hand-rank {
@@ -202,7 +225,6 @@
     transform: translate(-50%, -50%);
     width: 20px;
     height: 20px;
-    line-height: 16px;
   }
 
   :scope .bet-indicator {
@@ -229,29 +251,30 @@
     transform: translateY(-50%);
   }
 
-  :scope .last-action {
-    font-size: 9px;
-  }
-
+  :scope .player-name,
+  :scope .stack,
+  :scope .last-action,
+  :scope .status-label,
+  :scope .hand-result,
+  :scope .clock-countdown,
   :scope .hand-rank {
-    font-size: 8px;
+    font-size: inherit;
+    line-height: inherit;
   }
 
   :scope[data-layout="landscape"] phg-seat,
   :scope[data-layout="landscape"] phg-seat.current-player {
     --seat-media-width: 76px;
+    --seat-panel-top: 0px;
+    --seat-panel-bottom: 0px;
 
-    width: 212px;
+    width: 220px;
     height: 64px;
-    padding: 6px 6px 6px calc(var(--seat-media-width) + 10px);
+    padding: 9px 6px 9px calc(var(--seat-media-width) + 10px);
   }
 
   :scope[data-layout="landscape"] phg-seat:not(:has(.hole-cards phg-card)) {
     --seat-media-width: 58px;
-  }
-
-  :scope[data-layout="landscape"] phg-seat .seat-content::before {
-    inset: 0;
   }
 
   :scope[data-layout="landscape"] .clock-countdown {

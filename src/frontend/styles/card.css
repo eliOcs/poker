@@ -140,7 +140,6 @@
 
   .card.winning {
     border-color: var(--color-primary);
-    box-shadow: 0 0 6px var(--color-primary);
   }
 
   /* Larger cards on desktop */

@@ -96,6 +96,7 @@ export function determineWinnersForPot(pot, hands) {
 
   if (eligible.length === 1) {
     const only = /** @type {HandResult} */ (eligible[0]);
+    if (pot.isUncalled) return { winners: [only.seat] };
     return {
       winners: [only.seat],
       winningHand: only.hand,
@@ -191,14 +192,14 @@ function processResults(results, handsBySeat) {
     for (const award of result.awards) {
       winnings.set(award.seat, (winnings.get(award.seat) ?? 0) + award.amount);
     }
+    // Uncalled returns restore chips without identifying a winning hand.
+    if (!result.winningCards) continue;
     for (const winner of result.winners) {
       if (!winningCardsMap.has(winner)) {
-        const winnerCards = handsBySeat.get(winner);
-        if (winnerCards) {
-          winningCardsMap.set(winner, winnerCards);
-        } else if (result.winningCards) {
-          winningCardsMap.set(winner, result.winningCards);
-        }
+        winningCardsMap.set(
+          winner,
+          handsBySeat.get(winner) ?? result.winningCards,
+        );
       }
     }
   }

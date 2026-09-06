@@ -1,6 +1,7 @@
 import { test, expect } from "./utils/fixtures.js";
 import { createGame } from "./utils/game-helpers.js";
 import { waitForLatestEmail } from "./utils/email.js";
+import { takeRandomSocialAction } from "./utils/random-social-actions.js";
 
 test.describe("Poker Game Smoke Test", () => {
   test("plays 3 hands with varied actions (check, call, raise, all-in)", async ({
@@ -99,16 +100,33 @@ test.describe("Poker Game Smoke Test", () => {
 
     // Preflop: SB calls, BB checks
     // While waiting, P2 sends an emote (not their turn yet)
-    await player2.emote("😎");
+    const nextSocialAt = new Map();
+    expect(
+      await takeRandomSocialAction(player2, nextSocialAt, () => 0.2),
+    ).toEqual({
+      action: "emote",
+      value: "😎",
+    });
     const emoteBubble = player2.mySeat.locator(".emote-bubble");
     await expect(emoteBubble).toBeVisible();
     await expect(emoteBubble).toHaveText("😎");
 
-    // P2 also sends a chat message
-    await player2.chat("nice hand");
+    // The shared bot helper should not send again until its cooldown expires.
+    expect(await takeRandomSocialAction(player2, nextSocialAt)).toBeNull();
+    nextSocialAt.set(player2, 0);
+    const chat = await takeRandomSocialAction(
+      player2,
+      nextSocialAt,
+      () => 0.99,
+    );
+    expect(chat).toEqual({
+      action: "chat",
+      value: "I came for the cards, stayed for the company.",
+    });
     const chatBubble = player2.mySeat.locator(".chat-bubble");
     await expect(chatBubble).toBeVisible();
-    await expect(chatBubble).toHaveText("nice hand");
+    await expect(chatBubble).toHaveText(chat.value);
+    await expect(player1.game.locator(".chat-bubble")).toHaveText(chat.value);
 
     await player1.act("call");
     await player2.act("check");

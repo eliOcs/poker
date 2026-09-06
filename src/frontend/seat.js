@@ -259,12 +259,6 @@ class Seat extends LitElement {
 
     return html`
       <div class="seat-content">
-        ${this._activeEmote
-          ? html`<div class="emote-bubble">${this._activeEmote}</div>`
-          : ""}
-        ${this._activeChat
-          ? html`<div class="chat-bubble">${this._activeChat}</div>`
-          : ""}
         ${this._renderPlayerInfo()} ${this._renderStackOrResult()}
         ${this._renderClock()} ${this._renderStatusOrAction()}
         ${this._renderHandRank()}
@@ -284,6 +278,12 @@ class Seat extends LitElement {
           )}
         </div>
       </div>
+      ${this._activeEmote
+        ? html`<div class="emote-bubble">${this._activeEmote}</div>`
+        : ""}
+      ${this._activeChat
+        ? html`<div class="chat-bubble">${this._activeChat}</div>`
+        : ""}
       ${this._renderBetIndicator()} ${this._renderDealerButton()}
     `;
   }

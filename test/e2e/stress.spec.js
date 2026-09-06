@@ -17,6 +17,7 @@ import {
   selectRandomAction,
 } from "./utils/random-actions.js";
 import * as Stress from "./utils/stress-helpers.js";
+import { playRandomSocialActions } from "./utils/random-social-actions.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
 
@@ -365,6 +366,7 @@ async function runTournamentLoop(players, activePlayers, state) {
   const maxActions = 16000;
   /** @type {Map<number, EliminationCandidate>} */
   const eliminationCandidates = new Map();
+  const nextSocialAt = new Map();
 
   for (let actionCount = 0; actionCount < maxActions; actionCount++) {
     await assertNotStalled(players, activePlayers, state);
@@ -394,6 +396,10 @@ async function runTournamentLoop(players, activePlayers, state) {
       Stress.markProgress(state, `hand-${state.handCount}`);
     }
 
+    await playRandomSocialActions(
+      [...activePlayers].map((index) => players[index]),
+      nextSocialAt,
+    );
     const results = await takeAvailableActions(players, activePlayers);
     if (results.length > 0) {
       for (const result of results) {

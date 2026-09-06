@@ -8,6 +8,7 @@
  * @typedef {object} Pot
  * @property {Cents} amount - Chips in this pot
  * @property {number[]} eligibleSeats - Seat indices eligible to win this pot
+ * @property {boolean} [isUncalled] - Only one player contributed to this pot
  */
 
 /**
@@ -69,6 +70,9 @@ export function calculatePots(seats) {
       pots.push({
         amount: potAmount,
         eligibleSeats: eligible,
+        ...(contributions.filter((c) => c.amount >= level).length === 1
+          ? { isUncalled: true }
+          : {}),
       });
     }
 

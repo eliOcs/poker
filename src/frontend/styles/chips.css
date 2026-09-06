@@ -13,7 +13,7 @@
   .chip {
     width: 16px;
     height: 4px;
-    border: 1px solid color-mix(in srgb, var(--c), var(--s) 40%);
+    border: 1px solid color-mix(in srgb, var(--c), #000 65%);
     background: linear-gradient(
       to right,
       var(--s) 0 2px,

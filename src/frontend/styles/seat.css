@@ -17,12 +17,13 @@
     flex-direction: column;
     gap: inherit;
     min-width: 0;
+    z-index: 1;
   }
 
   .seat-content::before {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: var(--seat-panel-top, 0) 0 var(--seat-panel-bottom, 0);
     background: var(--color-bg-light);
     border: 3px solid var(--color-fg-muted);
     box-shadow: 3px 3px 0 var(--color-bg-dark);
@@ -107,10 +108,19 @@
     border-color: var(--color-primary);
   }
 
-  .player-name {
+  .player-name,
+  .stack,
+  .hand-result,
+  .status-label,
+  .last-action,
+  .hand-rank {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .player-name {
     color: var(--color-fg-white);
   }
 
@@ -125,10 +135,6 @@
     width: 32px;
     height: 32px;
     flex: 0 0 auto;
-  }
-
-  .player-info .player-name {
-    min-width: 0;
   }
 
   :scope.current-player .player-name {
@@ -147,8 +153,12 @@
     color: var(--color-bg-dark);
     width: 20px;
     height: 20px;
-    text-align: center;
-    line-height: 20px;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+
+    /* Balance the pixel font's top-heavy glyph and right side bearing. */
+    padding: 0.2em 0 0 0.1em;
     font-size: var(--font-md);
     border: 2px solid var(--color-bg-dark);
     border-radius: 50%;
@@ -159,7 +169,6 @@
     .dealer-button {
       width: 24px;
       height: 24px;
-      line-height: 24px;
     }
   }
 
@@ -262,10 +271,14 @@
 
   .emote-bubble {
     position: absolute;
-    top: -1.5em;
+    top: calc(
+      50% + (var(--seat-panel-top, 0px) - var(--seat-panel-bottom, 0px)) / 2
+    );
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     font-size: 3rem;
+    font-family: emoji;
+    line-height: 1;
     z-index: 2;
     pointer-events: none;
     animation: emote-float 3s ease-out forwards;
@@ -274,22 +287,22 @@
   @keyframes emote-float {
     0% {
       opacity: 0;
-      transform: translateX(-50%) scale(0.5);
+      transform: translate(-50%, -50%) scale(0.5);
     }
 
     10% {
       opacity: 1;
-      transform: translateX(-50%) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
 
     70% {
       opacity: 1;
-      transform: translateX(-50%) translateY(0) scale(1);
+      transform: translate(-50%, -50%) translateY(0) scale(1);
     }
 
     100% {
       opacity: 0;
-      transform: translateX(-50%) translateY(-1.5em) scale(1);
+      transform: translate(-50%, -50%) translateY(-1.5em) scale(1);
     }
   }
 
@@ -305,29 +318,24 @@
     background: #f0f0f0;
     color: #0f0f1a;
     padding: 6px 8px;
-    width: 14ch;
+    width: 85%;
     overflow-wrap: break-word;
     border-radius: 0.4em;
     border: 3px solid var(--color-bg-dark);
-    box-shadow:
-      3px 3px 0 var(--color-bg-dark),
-      inset -2px -2px 0 rgb(0 0 0 / 10%),
-      inset 2px 2px 0 rgb(255 255 255 / 40%);
+    box-shadow: 2px 2px 0 var(--color-bg-dark);
   }
 
   .chat-bubble::after {
     content: "";
     position: absolute;
-    bottom: 0;
+    bottom: calc(-0.45em - 1.5px);
     left: 50%;
-    width: 0;
-    height: 0;
-    border: 0.563em solid transparent;
-    border-top-color: #f0f0f0;
-    border-bottom: 0;
-    margin-left: -0.563em;
-    margin-bottom: -0.563em;
-    filter: drop-shadow(2px 2px 0 var(--color-bg-dark));
+    width: 0.9em;
+    height: 0.9em;
+    background: inherit;
+    border-right: 3px solid var(--color-bg-dark);
+    border-bottom: 3px solid var(--color-bg-dark);
+    transform: translateX(-50%) rotate(45deg);
   }
 
   @keyframes chat-float {

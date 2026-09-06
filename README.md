@@ -67,6 +67,7 @@ npm run test:backend            # Run backend unit tests (node:test)
 npm run test:frontend           # Run frontend component tests (web-test-runner)
 npm run test:e2e                # Run end-to-end tests (Playwright)
 npm run test:e2e:smoke          # Run the main end-to-end smoke flow
+npm run test:game               # Play with 5 randomized bots at a 6-seat table
 npm run test:ui-catalog         # Run visual regression tests
 npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
 npm run test:coverage           # Run backend + frontend coverage
@@ -82,6 +83,23 @@ npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
 npm run avatar:sprites          # Export avatar sprites from the source XCF
 ```
+
+### Playing against bots
+
+Start the server with `npm start`, then run `npm run test:game`. Open the game
+URL printed by the script to join. Bots have randomized avatars and occasionally
+chat and emote.
+
+```bash
+npm run test:game -- --table-size 9 --players 8
+npm run test:game -- --table-size 2 --players 1
+npm run test:game -- --players 3
+npm run test:game -- --help
+```
+
+Table sizes are 2, 6, or 9. The bot count can be 1 through the table size;
+defaults remain 6 seats and 5 bots. With one bot, join an open seat and click
+Start Game. Press Ctrl+C to stop the bots.
 
 ### Git Hooks
 

@@ -2,6 +2,7 @@ import { chromium } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { parseArgs } from "node:util";
 import { getTablePath } from "../src/shared/routes.js";
 import { DEFAULT as DEFAULT_STAKES } from "../src/shared/stakes.js";
 import { PokerPlayer } from "../test/e2e/utils/poker-player.js";
@@ -10,14 +11,43 @@ import {
   selectRandomAction,
 } from "../test/e2e/utils/random-actions.js";
 import { delay, formatError } from "../test/e2e/utils/stress-helpers.js";
+import { playRandomSocialActions } from "../test/e2e/utils/random-social-actions.js";
 
-const BOT_COUNT = 5;
-const TABLE_SIZE = 6;
 const BUY_IN_BIG_BLINDS = 100;
 const LOOP_DELAY_MS = 100;
 const BOT_STATE_DIR = path.join(process.cwd(), "test-data", "cash-game-bots");
 
 let stopping = false;
+
+function readOptions() {
+  const { values } = parseArgs({
+    options: {
+      "table-size": { type: "string", default: "6" },
+      players: { type: "string", default: "5" },
+      help: { type: "boolean", short: "h" },
+    },
+  });
+  if (values.help) {
+    console.log(`Usage: npm run test:game -- [--table-size 6] [--players 5]
+
+  --table-size  Number of seats: 2, 6, or 9 (default: 6)
+  --players     Number of bots: 1 through table size (default: 5)
+  --help, -h    Show this help
+
+With one bot, join an open seat and start the game.`);
+    return;
+  }
+
+  const tableSize = Number(values["table-size"]);
+  const botCount = Number(values.players);
+  if (!/^(2|6|9)$/.test(values["table-size"])) {
+    throw new Error("--table-size must be 2, 6, or 9.");
+  }
+  if (!/^\d+$/.test(values.players) || botCount < 1 || botCount > tableSize) {
+    throw new Error(`--players must be an integer between 1 and ${tableSize}.`);
+  }
+  return { tableSize, botCount };
+}
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.once(signal, () => {
@@ -83,14 +113,15 @@ async function initializeGuestSession(bot, statePath) {
  * persisted bot session back to its previous active game.
  * @param {PokerPlayer} creator
  * @param {string} origin
+ * @param {number} tableSize
  */
-async function createCashGame(creator, origin) {
+async function createCashGame(creator, origin, tableSize) {
   const response = await creator.page.request.post("/cash", {
     data: {
       type: "cash",
       small: DEFAULT_STAKES.small,
       big: DEFAULT_STAKES.big,
-      seats: TABLE_SIZE,
+      seats: tableSize,
     },
   });
   if (!response.ok()) {
@@ -172,14 +203,11 @@ async function replenishBotSafely(bot, index) {
 
 /** @param {PokerPlayer[]} bots */
 async function runBots(bots) {
+  const nextSocialAt = new Map();
   while (!stopping) {
-    const replenished = await Promise.all(
-      bots.map((bot, index) => replenishBotSafely(bot, index)),
-    );
-    replenished.forEach((didReplenish, index) => {
-      if (didReplenish) console.log(`Bot ${index + 1} bought back in`);
-    });
+    await Promise.all(bots.map((bot, index) => replenishBotSafely(bot, index)));
 
+    await playRandomSocialActions(bots, nextSocialAt, { logActions: false });
     const actions = await Promise.all(
       bots.map((bot, index) => takeRandomAction(bot, index)),
     );
@@ -189,6 +217,9 @@ async function runBots(bots) {
 }
 
 async function main() {
+  const options = readOptions();
+  if (!options) return;
+  const { tableSize, botCount } = options;
   const origin = getServerOrigin();
   await assertServerIsRunning(origin);
 
@@ -198,25 +229,31 @@ async function main() {
 
   try {
     await mkdir(BOT_STATE_DIR, { recursive: true });
-    for (let index = 0; index < BOT_COUNT; index++) {
+    for (let index = 0; index < botCount; index++) {
       const statePath = path.join(BOT_STATE_DIR, `bot-${index + 1}.json`);
       const bot = await createBot(browser, origin, index, statePath);
       await initializeGuestSession(bot, statePath);
       bots.push(bot);
     }
 
-    const gameUrl = await createCashGame(bots[0], origin);
+    const gameUrl = await createCashGame(bots[0], origin, tableSize);
     for (const bot of bots) await bot.joinGameByUrl(gameUrl);
 
     for (const [index, bot] of bots.entries()) {
       await bot.sit(index);
       await bot.buyIn(BUY_IN_BIG_BLINDS);
-      await bot.setName(`Bot ${index + 1}`);
+      await bot.saveSettings({
+        name: `Bot ${index + 1}`,
+        randomizeAvatar: true,
+      });
     }
 
-    await bots[0].startGame();
+    if (botCount > 1) await bots[0].startGame();
     console.log(`\nCash game ready: ${gameUrl}`);
-    console.log("Five headless bots are playing. Seat 6 is open for you.");
+    console.log(
+      `${tableSize} seats, ${botCount} randomized ${botCount === 1 ? "bot" : "bots"}, ${tableSize - botCount} open seats.`,
+    );
+    if (botCount === 1) console.log("Join an open seat and start the game.");
     console.log("Press Ctrl+C to stop.\n");
 
     await runBots(bots);
