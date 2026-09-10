@@ -111,7 +111,8 @@ baseline updates and comparisons.
 
 Start the server with `npm start`, then run `npm run test:game`. Open the game
 URL printed by the script to join. Bots have randomized avatars and occasionally
-chat and emote.
+chat and emote. Each bot uses the same notification-driven action queue as the
+stress test, including automatic buy-ins when its stack runs out.
 
 ```bash
 npm run test:game -- --table-size 9 --players 8

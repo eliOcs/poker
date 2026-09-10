@@ -6,16 +6,13 @@ import { parseArgs } from "node:util";
 import { getTablePath } from "../src/shared/routes.js";
 import { DEFAULT as DEFAULT_STAKES } from "../src/shared/stakes.js";
 import { PokerPlayer } from "../test/e2e/utils/poker-player.js";
-import {
-  getAvailableActions,
-  selectRandomAction,
-} from "../test/e2e/utils/random-actions.js";
+import { takeAvailableAction } from "../test/e2e/utils/random-actions.js";
 import { delay, formatError } from "../test/e2e/utils/stress-helpers.js";
 import { playRandomSocialActions } from "../test/e2e/utils/random-social-actions.js";
-import { takeRandomCardAction } from "../test/e2e/utils/random-card-actions.js";
+import { startActionRunner } from "../test/e2e/utils/action-runner.js";
 
 const BUY_IN_BIG_BLINDS = 100;
-const LOOP_DELAY_MS = 100;
+const SOCIAL_CHECK_INTERVAL_MS = 500;
 const BOT_STATE_DIR = path.join(process.cwd(), "test-data", "cash-game-bots");
 
 let stopping = false;
@@ -87,6 +84,7 @@ async function createBot(browser, origin, index, statePath) {
     baseURL: origin,
     storageState: existsSync(statePath) ? statePath : undefined,
   });
+  context.setDefaultTimeout(5000);
   const page = await context.newPage();
   return new PokerPlayer(context, page, `Bot ${index + 1}`);
 }
@@ -136,86 +134,31 @@ async function createCashGame(creator, origin, tableSize) {
   return new URL(getTablePath("cash", data.id), origin).href;
 }
 
-/** @param {PokerPlayer} bot */
-async function replenishBot(bot) {
-  const buyInButton = bot.actionPanel.getByRole("button", {
-    name: /^Buy In/,
-  });
-  if (!(await buyInButton.isVisible())) return false;
-  await bot.buyIn(BUY_IN_BIG_BLINDS);
-  return true;
-}
-
-/**
- * @param {PokerPlayer} bot
- * @param {number} index
- * @returns {Promise<string|null>}
- */
-async function takeRandomAction(bot, index) {
-  let attemptedAction;
-  try {
-    const cardAction = await takeRandomCardAction(bot);
-    if (cardAction) return cardAction;
-    if (!(await bot.isMyTurn())) return null;
-    const availableActions = await getAvailableActions(bot);
-    if (availableActions.length === 0) {
-      throw new Error("turn is active but no player actions are available");
-    }
-    attemptedAction = selectRandomAction(availableActions);
-    await (attemptedAction === "bet" || attemptedAction === "raise"
-      ? bot.actWithRandomPreset(attemptedAction)
-      : bot.act(attemptedAction));
-    return attemptedAction;
-  } catch (error) {
-    const action = attemptedAction ? ` (${attemptedAction})` : "";
-    console.log(
-      `Bot ${index + 1} action failed${action}: ${formatError(error)}`,
-    );
-    return null;
-  }
-}
-
-/** @param {PokerPlayer[]} bots */
-async function callClockIfAvailable(bots) {
-  for (const [index, bot] of bots.entries()) {
-    if (await bot.hasAction("callClock")) {
-      try {
-        await bot.callClock();
-        return;
-      } catch (error) {
-        console.log(
-          `Bot ${index + 1} call clock failed: ${formatError(error)}`,
-        );
-      }
-    }
-  }
-}
-
-/**
- * @param {PokerPlayer} bot
- * @param {number} index
- */
-async function replenishBotSafely(bot, index) {
-  try {
-    return await replenishBot(bot);
-  } catch (error) {
-    console.log(`Bot ${index + 1} buy-in failed: ${formatError(error)}`);
-    return false;
-  }
-}
-
 /** @param {PokerPlayer[]} bots */
 async function runBots(bots) {
   const nextSocialAt = new Map();
-  while (!stopping) {
-    await Promise.all(bots.map((bot, index) => replenishBotSafely(bot, index)));
-
-    await playRandomSocialActions(bots, nextSocialAt, { logActions: false });
-    const actions = await Promise.all(
-      bots.map((bot, index) => takeRandomAction(bot, index)),
-    );
-    if (!actions.some(Boolean)) await callClockIfAvailable(bots);
-    await delay(LOOP_DELAY_MS);
+  const runners = [];
+  try {
+    for (const bot of bots) {
+      const runner = await startActionRunner(bot.page, {
+        act: () =>
+          takeAvailableAction(bot, { buyInBigBlinds: BUY_IN_BIG_BLINDS }),
+        social: () =>
+          playRandomSocialActions([bot], nextSocialAt, { logActions: false }),
+        onError: (error) => {
+          console.log(`${bot.name} action failed: ${formatError(error)}`);
+        },
+      });
+      runners.push(runner);
+    }
+    // Only social scheduling and shutdown use a timer. Game decisions are
+    // driven by each tab's observer, including replenishment after going broke.
+    while (!stopping) {
+      for (const runner of runners) runner.requestSocial();
+      await delay(SOCIAL_CHECK_INTERVAL_MS);
+    }
+  } finally {
+    await Promise.all(runners.map((runner) => runner.stop()));
   }
 }
 
@@ -226,7 +169,12 @@ async function main() {
   const origin = getServerOrigin();
   await assertServerIsRunning(origin);
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    // Let our signal handlers drain the player queues before closing Chromium.
+    handleSIGINT: false,
+    handleSIGTERM: false,
+  });
   /** @type {PokerPlayer[]} */
   const bots = [];
 

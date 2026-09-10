@@ -1,3 +1,5 @@
+import { takeRandomCardAction } from "./random-card-actions.js";
+
 const WEIGHTED_ACTIONS = [
   { threshold: 0.02, action: "allIn" },
   { threshold: 0.25, action: "raise" },
@@ -62,4 +64,32 @@ export function selectRandomAction(availableActions) {
     availableActions.includes(action),
   );
   return fallback || availableActions[0];
+}
+
+/**
+ * Recheck rendered choices after a notification. All clicks, including clock
+ * recovery, run inside this player's queue.
+ * @param {import('./poker-player.js').PokerPlayer} player
+ * @param {{buyInBigBlinds?: number}} [options] - Automatically replenish cash bots when offered a buy-in.
+ */
+export async function takeAvailableAction(player, { buyInBigBlinds } = {}) {
+  if (
+    buyInBigBlinds !== undefined &&
+    (await player.actionPanel
+      .getByRole("button", { name: /^Buy In/ })
+      .isVisible())
+  ) {
+    await player.buyIn(buyInBigBlinds);
+    return "buyIn";
+  }
+  const cardAction = await takeRandomCardAction(player);
+  if (cardAction) return cardAction;
+  const availableActions = await getAvailableActions(player);
+  if (availableActions.length === 0) return null;
+  const action = selectRandomAction(availableActions);
+  if (action === "callClock") await player.callClock();
+  else if (action === "bet" || action === "raise")
+    await player.actWithRandomPreset(action);
+  else await player.act(action);
+  return action;
 }

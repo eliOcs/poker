@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { watchPlayerActions } from "./utils/action-observer.js";
 import { startActionRunner } from "./utils/action-runner.js";
+import { PokerPlayer } from "./utils/poker-player.js";
+import { createGame } from "./utils/game-helpers.js";
+import { takeAvailableAction } from "./utils/random-actions.js";
 
 test("action notifications follow decisions through renders and navigation", async ({
   page,
@@ -152,6 +155,33 @@ test("shutdown drains the current action and discards queued work", async ({
     expect(calls).toEqual(["action"]);
   } finally {
     gate.resolve();
+    await runner.stop();
+  }
+});
+
+test("a cash bot buys in when the UI offers replenishment", async ({
+  page,
+  context,
+}) => {
+  const player = new PokerPlayer(context, page, "Cash bot");
+  await createGame(player);
+  const actions = [];
+  const errors = [];
+  const runner = await startActionRunner(page, {
+    act: async () => {
+      actions.push(await takeAvailableAction(player, { buyInBigBlinds: 100 }));
+    },
+    onError: (error) => errors.push(error),
+  });
+  try {
+    await player.sitAnywhere();
+    await expect.poll(() => actions).toContain("buyIn");
+    await expect(
+      player.actionPanel.getByRole("button", { name: /^Buy In/ }),
+    ).toBeHidden();
+    await expect(player.mySeat.locator(".stack")).toHaveText("$1");
+    expect(errors).toEqual([]);
+  } finally {
     await runner.stop();
   }
 });

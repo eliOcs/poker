@@ -8,8 +8,8 @@ function observeActions() {
       (button) =>
         !button.matches(":disabled, .button--pre-action") &&
         button.checkVisibility({ visibilityProperty: true }) &&
-        /^(Check|Fold|Call\s+\$|Bet\b|Raise to|All-In|Rebuy|Leave|Muck|Show\b|Call the clock)/.test(
-          button.textContent.trim(),
+        /^(Check|Fold|Call\s+\$|Bet\b|Raise to|All-In|Buy In|Rebuy|Leave|Muck|Show\b|Call the clock)/.test(
+          button.textContent.replace(/\s+/g, " ").trim(),
         ),
     );
     const signature = JSON.stringify([

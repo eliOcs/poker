@@ -14,11 +14,10 @@ import {
 } from "./utils/websocket-faults.js";
 import {
   getAvailableActions,
-  selectRandomAction,
+  takeAvailableAction,
 } from "./utils/random-actions.js";
 import * as Stress from "./utils/stress-helpers.js";
 import { playRandomSocialActions } from "./utils/random-social-actions.js";
-import { takeRandomCardAction } from "./utils/random-card-actions.js";
 import { startActionRunner } from "./utils/action-runner.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
@@ -131,24 +130,6 @@ async function collectGameSnapshots(
   }
 
   return { winnerName, removedCount, maxHandNumber, onBreak, reconnecting };
-}
-
-/**
- * Recheck rendered choices after a notification. All clicks, including clock
- * recovery, run inside this player's queue.
- * @param {import('./utils/poker-player.js').PokerPlayer} player
- */
-async function takeAvailableAction(player) {
-  const cardAction = await takeRandomCardAction(player);
-  if (cardAction) return cardAction;
-  const availableActions = await getAvailableActions(player);
-  if (availableActions.length === 0) return null;
-  const action = selectRandomAction(availableActions);
-  if (action === "callClock") await player.callClock();
-  else if (action === "bet" || action === "raise")
-    await player.actWithRandomPreset(action);
-  else await player.act(action);
-  return action;
 }
 
 /**
