@@ -69,7 +69,9 @@ npm run test:e2e                # Run end-to-end tests (Playwright)
 npm run test:e2e:smoke          # Run the main end-to-end smoke flow
 npm run test:game               # Play with 5 randomized bots at a 6-seat table
 npm run test:ui-catalog         # Run visual regression tests
-npm run test:ui-catalog:update  # Regenerate UI catalog screenshots
+npm run test:ui-catalog:update  # Regenerate UI catalog screenshots (Linux)
+npm run test:ui-catalog:docker  # Run visual checks in Docker (local)
+npm run test:ui-catalog:update:docker # Regenerate shared screenshots in Docker
 npm run test:coverage           # Run backend + frontend coverage
 npm run test:e2e:coverage       # Run end-to-end coverage
 npm run duplicates              # Check for code duplication (jscpd)
@@ -83,6 +85,27 @@ npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
 npm run avatar:sprites          # Export avatar sprites from the source XCF
 ```
+
+### Visual checks
+
+For local checks on Linux and macOS, use Docker so installed fonts and local
+Fontconfig preferences do not change the screenshots:
+
+```bash
+npm run test:ui-catalog:docker
+npm run test:ui-catalog:update:docker
+```
+
+Docker must be running. `npm run validate` and the pre-commit hook use Docker
+for visual checks automatically, without an environment override.
+
+CI runs `npm run test:ui-catalog` directly on Ubuntu 24.04 with Node 24 and
+Chromium installed using `npx playwright install --with-deps chromium`. The CI
+visual job does not build or run a Docker image. Keep its Ubuntu release aligned
+with the Playwright image in `Dockerfile.ui-catalog`.
+
+The native commands remain available for local debugging. Use Docker for shared
+baseline updates and comparisons.
 
 ### Playing against bots
 

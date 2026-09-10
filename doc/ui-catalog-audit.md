@@ -10,7 +10,7 @@ Audited September 10, 2026, against commit `c92d42f` and its committed PNG basel
 - Made the pending fixture genuinely pending, with editable owner title and disabled Unregister/Start controls. Added assertions for those controls.
 - Scrolled MTT captures to the distinguishing actions, clock, queue, tables, or standings. Kept one extra mobile header capture, two extra multi-table standings captures (one per device), and one mobile results capture for the overflowed positive/negative Net column. The MTT tooltip and its trigger must both be completely inside the viewport. Its mobile positioning now anchors to the button group, and the capture asserts that the main content has not scrolled horizontally.
 - Retained all distinct states listed in the inventory and all 36 geometry/behavior executions. Moved landscape snapshots to a mobile-only test file, removing the six duplicate desktop landscape captures.
-- Removed both diff-ratio allowances. Added a Linux/amd64 Docker workflow using the matching Playwright image and Node 24, with fixed locale/timezone, host-owned output, documented npm commands, and a CI job. Validation and the pre-commit hook use Docker for the catalog step. Snapshot updates preserve unrelated baselines.
+- Removed both diff-ratio allowances. Added a Linux/amd64 Docker workflow using the matching Playwright image and Node 24, with fixed locale/timezone, host-owned output, documented npm commands, and a CI job. Local validation and the pre-commit hook use Docker for the catalog step. CI runs the catalog natively on Ubuntu 24.04 with Node 24 and Playwright Chromium. Snapshot updates preserve unrelated baselines.
 
 The resulting catalog has **198 test executions and 166 baselines**, down from 216 and 180. The four deliberate extra captures repair coverage gaps, so the final baseline count is higher than the audit's 162-baseline estimate without those repairs. There are 76 fixture IDs plus two static articles.
 
@@ -90,7 +90,7 @@ As evidence of why the ratio mattered, the installed Playwright comparator accep
 
 That historical finding is not a reason to merge those states. Removing the ratio improves sensitivity, but cannot fix controls outside the screenshot or a fixture that never enters its named state.
 
-At audit time there was no dedicated screenshot Docker workflow. This has now been resolved by adding `Dockerfile.ui-catalog` and the documented Docker commands, following the approach used in the reference website repository. Shared baselines are generated and checked in this canonical container.
+At audit time there was no dedicated screenshot Docker workflow. This has now been resolved by adding `Dockerfile.ui-catalog` and the documented Docker commands, following the approach used in the reference website repository. Shared baselines are generated and checked locally in this canonical container; CI compares them natively on Ubuntu 24.04.
 
 ## Landscape and geometry overlap
 

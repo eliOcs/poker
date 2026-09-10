@@ -8,14 +8,26 @@ on:
 
 jobs:
   ui-catalog:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
         with:
           lfs: true
 
-      - name: Run canonical UI catalog tests
-        run: bash scripts/test-ui-catalog-docker.sh
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run UI catalog tests
+        run: npm run test:ui-catalog
 
       - name: Upload visual test artifacts
         uses: actions/upload-artifact@v7
