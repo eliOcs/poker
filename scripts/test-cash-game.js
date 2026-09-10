@@ -243,7 +243,7 @@ async function main() {
     for (const bot of bots) await bot.joinGameByUrl(gameUrl);
 
     for (const [index, bot] of bots.entries()) {
-      await bot.sit(index);
+      await bot.sitAnywhere();
       await bot.buyIn(BUY_IN_BIG_BLINDS);
       await bot.saveSettings({
         name: `Bot ${index + 1}`,

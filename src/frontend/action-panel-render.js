@@ -16,7 +16,9 @@ function buildActionMap(actions) {
 function renderWaitingForPlayers(panel) {
   return html`
     <div class="waiting-panel">
-      <span class="waiting">Waiting for players...</span>
+      ${panel.seatedCount < 2
+        ? html`<span class="waiting">Waiting for players...</span>`
+        : ""}
       ${panel.canSit
         ? html`<button
             type="button"
@@ -491,7 +493,8 @@ export function renderActionPanel(panel) {
   }
 
   if (!panel.actions || panel.actions.length === 0) {
-    if (panel.seatedCount < 2) return renderWaitingForPlayers(panel);
+    if (panel.canSit || panel.seatedCount < 2)
+      return renderWaitingForPlayers(panel);
     if (panel.seatIndex === -1) return html``;
     return html`<span class="waiting">Waiting for your turn...</span>`;
   }

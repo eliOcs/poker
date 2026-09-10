@@ -5,16 +5,6 @@ import { PokerPlayerBase } from "./poker-player-base.js";
  */
 export class PokerPlayerActions extends PokerPlayerBase {
   /**
-   * Sit at a specific seat
-   * @param {number} seatIndex
-   */
-  async sit(seatIndex) {
-    const seat = this.game.locator(`phg-seat:nth-child(${seatIndex + 1})`);
-    await seat.getByRole("button", { name: "Sit" }).click();
-    await this.mySeat.waitFor();
-  }
-
-  /**
    * Sit using the waiting-panel "sit anywhere" button
    */
   async sitAnywhere() {

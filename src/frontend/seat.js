@@ -21,9 +21,7 @@ class Seat extends LitElement {
       seat: { type: Object },
       seatNumber: { type: Number },
       isButton: { type: Boolean },
-      showSitAction: { type: Boolean },
       clockRemaining: { type: Number },
-      buyIn: { type: Number },
       hideBet: { type: Boolean },
       noAnimation: { type: Boolean },
     };
@@ -35,9 +33,7 @@ class Seat extends LitElement {
     this.seatNumber = 0;
     this.isButton = false;
     this.noAnimation = false;
-    this.showSitAction = true;
     this.clockRemaining = undefined;
-    this.buyIn = 0;
     this.hideBet = false;
     this._activeEmote = undefined;
     this._emoteTimer = undefined;
@@ -161,18 +157,6 @@ class Seat extends LitElement {
     this._showBubble(message, "chat");
   }
 
-  handleSit() {
-    const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
-    if (sitAction) {
-      this.dispatchEvent(
-        new CustomEvent("seat-action", {
-          detail: sitAction,
-          bubbles: true,
-        }),
-      );
-    }
-  }
-
   _getStatusLabel() {
     const s = this.seat;
     if (s.disconnected) return { label: "DISCONNECTED", isStatus: true };
@@ -184,15 +168,6 @@ class Seat extends LitElement {
     if (s.allIn) return { label: "ALL-IN", isStatus: true };
     if (s.lastAction) return { label: s.lastAction, isStatus: false };
     return;
-  }
-
-  _renderEmptySeat() {
-    const sitAction = this.seat?.actions?.find((a) => a.action === "sit");
-    if (!sitAction || !this.showSitAction) return "";
-    const label = this.buyIn ? `Sit ${formatCurrency(this.buyIn)}` : "Sit";
-    return html`<button type="button" class="button" @click=${this.handleSit}>
-      ${label}
-    </button>`;
   }
 
   _renderStatusOrAction() {
@@ -279,7 +254,7 @@ class Seat extends LitElement {
   }
 
   render() {
-    if (!this.seat || this.seat.empty) return this._renderEmptySeat();
+    if (!this.seat || this.seat.empty) return "";
 
     return html`
       <div class="seat-content">

@@ -77,10 +77,10 @@ describe("phg-game", () => {
         eventCount++;
       });
 
-      // Trigger a seat action via the phg-seat component
-      const seats = element.querySelectorAll("phg-seat");
-      await seats[0].updateComplete;
-      const sitButton = seats[0].querySelector("button.button");
+      // Join through the action panel.
+      const panel = element.querySelector("phg-action-panel");
+      await panel.updateComplete;
+      const sitButton = panel.querySelector("button.button");
       sitButton.click();
 
       // Should receive exactly one event, not two

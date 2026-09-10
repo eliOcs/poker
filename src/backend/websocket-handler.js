@@ -118,7 +118,9 @@ export function processPokerAction(game, player, action, args) {
   const { seatIndex, seatBefore, betBefore, currentBetBefore } =
     getSeatStateBefore(game, player);
 
-  const actionResult = PokerActions[action](game, { player, ...args });
+  // Client joins always take the first available seat.
+  const actionArgs = action === "sit" ? { player } : { player, ...args };
+  const actionResult = PokerActions[action](game, actionArgs);
 
   if (BETTING_ACTIONS.includes(action) && seatBefore) {
     const seatAfter = /** @type {OccupiedSeat} */ (game.seats[seatIndex]);

@@ -381,7 +381,6 @@ export class History extends LitElement {
                   .seat=${seat}
                   .seatNumber=${index}
                   .isButton=${isButton}
-                  .showSitAction=${false}
                   noAnimation
                 ></phg-seat>
               `;

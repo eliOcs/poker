@@ -23,7 +23,7 @@ describe("phg-seat", () => {
     globalThis.WebSocket = MockWebSocket;
   });
 
-  it('shows "Empty" and Sit button for empty seats', async () => {
+  it("does not offer seat selection on empty seats", async () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
@@ -39,7 +39,7 @@ describe("phg-seat", () => {
       if (sitBtn && sitBtn.textContent.trim() === "Sit") sitButtonCount++;
     }
     expect(emptyCount).to.equal(6);
-    expect(sitButtonCount).to.equal(6);
+    expect(sitButtonCount).to.equal(0);
   });
 
   it("displays 'Seat N' fallback when player has no name", async () => {
@@ -398,34 +398,34 @@ describe("phg-seat", () => {
       sentMessage = e.detail;
     });
 
-    const seats = element.querySelectorAll("phg-seat");
-    await seats[0].updateComplete;
-    const sitButton = seats[0].querySelector("button.button");
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    const sitButton = panel.querySelector("button.button");
     sitButton.click();
 
     expect(sentMessage).to.exist;
     expect(sentMessage.action).to.equal("sit");
-    expect(sentMessage.seat).to.be.a("number");
+    expect(sentMessage).to.deep.equal({ action: "sit" });
   });
 
-  it('shows "Sit" without buy-in for cash game empty seats', async () => {
+  it('shows "Sit" without buy-in in the cash game action panel', async () => {
     element.game = createMockGameState();
     await element.updateComplete;
 
-    const seats = element.querySelectorAll("phg-seat");
-    await seats[0].updateComplete;
-    const sitBtn = seats[0].querySelector("button.button");
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    const sitBtn = panel.querySelector("button.button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit");
   });
 
-  it('shows "Sit $5" with buy-in for tournament empty seats', async () => {
+  it('shows "Sit $5" with buy-in in the tournament action panel', async () => {
     element.game = createMockTournamentGameState();
     await element.updateComplete;
 
-    const seats = element.querySelectorAll("phg-seat");
-    await seats[0].updateComplete;
-    const sitBtn = seats[0].querySelector("button.button");
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    const sitBtn = panel.querySelector("button.button");
     expect(sitBtn).to.exist;
     expect(sitBtn.textContent.trim()).to.equal("Sit $5");
   });

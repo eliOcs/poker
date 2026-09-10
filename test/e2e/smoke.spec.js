@@ -55,7 +55,7 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.joinGameByUrl(gameUrl);
     await player3.joinGameByUrl(gameUrl);
 
-    await player1.sit(0);
+    await player1.sitAnywhere();
     await player2.sitAnywhere();
     await player1.buyIn(20);
     await player2.buyIn(20);
@@ -191,7 +191,7 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(boardCards).toHaveCount(5);
 
     // P3 sits and buys in during the runout, before the hand ends and auto-start fires
-    await player3.sit(2);
+    await player3.sitAnywhere();
     await player3.buyIn(20);
     await player3.setName("Player 3");
 
@@ -369,8 +369,8 @@ for (const { name, roll, revealedIndexes, decisionSeat = 0 } of [
   }) => {
     await createGame(player1);
     await player2.joinGameByUrl(await player1.copyGameLink());
-    await player1.sit(0);
-    await player2.sit(1);
+    await player1.sitAnywhere();
+    await player2.sitAnywhere();
     await player1.buyIn(100);
     await player2.buyIn(100);
     await player1.startGame();

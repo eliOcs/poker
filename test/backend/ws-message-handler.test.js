@@ -48,6 +48,32 @@ function createHandlerContext({
 }
 
 describe("ws-message-handler", () => {
+  for (const requestedSeat of [0, 5, -1, "invalid", null]) {
+    it(`ignores requested seat ${JSON.stringify(requestedSeat)} when joining`, () => {
+      const ctx = createHandlerContext();
+      ctx.game.seats[0] = Seat.occupied({ id: "other-player" }, 1_000);
+
+      ctx.handler(JSON.stringify({ action: "sit", seat: requestedSeat }));
+
+      assert.equal(ctx.game.seats[1].empty, false);
+      assert.equal(ctx.game.seats[1].player.id, ctx.player.id);
+      assert.equal(ctx.game.seats[0].player.id, "other-player");
+      assert.deepEqual(ctx.ws.sent, []);
+    });
+  }
+
+  it("rejects joining a full table even with a requested seat", () => {
+    const ctx = createHandlerContext();
+    ctx.game.seats = ctx.game.seats.map((_, index) =>
+      Seat.occupied({ id: `other-${index}` }, 1_000),
+    );
+
+    ctx.handler(JSON.stringify({ action: "sit", seat: 0 }));
+
+    assert.deepEqual(ctx.ws.sent, [{ error: { message: "no empty seats" } }]);
+    assert.equal(PokerGame.findPlayerSeatIndex(ctx.game, ctx.player), -1);
+  });
+
   it("responds to ping on tournament lobby connections", () => {
     const ws = createWs();
     const handler = createMessageHandler({
@@ -84,7 +110,8 @@ describe("ws-message-handler", () => {
 
     ctx.handler(JSON.stringify({ action: "sit", seat: 2 }));
 
-    assert.equal(ctx.game.seats[2].empty, false);
+    assert.equal(ctx.game.seats[0].empty, false);
+    assert.equal(ctx.game.seats[2].empty, true);
     assert.deepEqual(ctx.broadcasts, [
       { type: "gameState", gameId: ctx.game.id },
     ]);
@@ -98,7 +125,7 @@ describe("ws-message-handler", () => {
       JSON.stringify({ action: "sit", seat: 2, actionId: "action-1" }),
     );
 
-    assert.equal(ctx.game.seats[2].empty, false);
+    assert.equal(ctx.game.seats[0].empty, false);
     assert.deepEqual(ctx.ws.sent, [
       { type: "actionResult", actionId: "action-1", accepted: true },
     ]);

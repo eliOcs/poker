@@ -156,16 +156,9 @@ export class Game extends LitElement {
     );
   }
 
-  handleSeatAction(e) {
-    e.stopPropagation();
-    if (e.detail.action === "sit") {
-      Audio.resume();
-    }
-    this.send(e.detail);
-  }
-
   handleGameAction(e) {
     e.stopPropagation();
+    if (e.detail.action === "sit") Audio.resume();
     this.send(e.detail);
   }
 
@@ -438,13 +431,10 @@ export class Game extends LitElement {
                       .seat=${seat}
                       .seatNumber=${i}
                       .isButton=${this.game.button === i}
-                      .showSitAction=${!isSeated}
-                      .buyIn=${this.game.tournament?.buyIn ?? 0}
                       .hideBet=${!!this.game.hand?.collectingBets}
                       .clockRemaining=${seat.isActing
                         ? this.game.hand?.clockRemaining
                         : undefined}
-                      @seat-action=${this.handleSeatAction}
                       @seat-settings=${() => {
                         gameModalActions.openSettings.call(this);
                       }}

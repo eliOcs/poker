@@ -40,13 +40,6 @@
     }
   }
 
-  :scope.empty {
-    justify-content: center;
-    align-items: center;
-    gap: var(--space-lg);
-    font-size: var(--font-lg);
-  }
-
   :scope.acting .seat-content::before {
     animation: acting-border-pulse 2s step-end infinite;
   }
