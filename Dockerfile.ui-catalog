@@ -5,6 +5,11 @@ FROM mcr.microsoft.com/playwright:v1.58.2-noble
 COPY --from=node /usr/local/ /usr/local/
 WORKDIR /app
 
+# Match the system fonts on GitHub's Ubuntu runner, including control metrics.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 

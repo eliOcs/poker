@@ -102,7 +102,9 @@ for visual checks automatically, without an environment override.
 CI runs `npm run test:ui-catalog` directly on Ubuntu 24.04 with Node 24 and
 Chromium installed using `npx playwright install --with-deps chromium`. The CI
 visual job does not build or run a Docker image. Keep its Ubuntu release aligned
-with the Playwright image in `Dockerfile.ui-catalog`.
+with the Playwright image in `Dockerfile.ui-catalog`. The image also installs
+`fonts-dejavu-core` to match the runner's system fonts; these affect control text
+and fallback font metrics even when the page uses our bundled web font.
 
 The native commands remain available for local debugging. Use Docker for shared
 baseline updates and comparisons.
