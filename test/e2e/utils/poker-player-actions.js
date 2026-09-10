@@ -222,13 +222,13 @@ export class PokerPlayerActions extends PokerPlayerBase {
   }
 
   /**
-   * Select a random enabled bet preset, then click the bet/raise button
+   * Select a random enabled bet preset except Max, leaving all-ins to act("allIn")
    * @param {'bet' | 'raise'} action
    */
   async actWithRandomPreset(action) {
-    const presets = this.actionPanel.locator(
-      ".bet-presets button:not([disabled])",
-    );
+    const presets = this.actionPanel
+      .locator(".bet-presets button:not([disabled])")
+      .filter({ hasNotText: /^\s*Max\s*$/ });
     const presetCount = await presets.count();
     if (presetCount === 0) throw new Error("No betting presets available");
 
