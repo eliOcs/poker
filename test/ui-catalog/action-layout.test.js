@@ -26,8 +26,8 @@ const states = [
   { actions: [{ action: "buyIn", min: 20, max: 100, bigBlind: 50 }] },
   { actions: [{ action: "sitIn" }, { action: "leave" }] },
   { actions: [{ action: "rebuy" }, { action: "leave" }] },
-  { actions: [] },
-  { actions: [], seatedCount: 1, canSit: true },
+  { actions: social, inHand: false },
+  { actions: [], seatIndex: -1, seatedCount: 1, canSit: true },
   { actionPending: true },
   { connectionStatus: "connecting" },
   { bustedPosition: 3 },
@@ -55,6 +55,7 @@ for (const [width, height] of [
         const initial = Object.fromEntries(
           [
             "actions",
+            "seatIndex",
             "isActing",
             "inHand",
             "seatedCount",

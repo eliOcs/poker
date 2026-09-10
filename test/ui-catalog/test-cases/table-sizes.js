@@ -52,7 +52,9 @@ function crowdedTable(size, showdown = false) {
       bet: 0,
       cards: showsCards ? HOLE_CARDS[index] : [],
       lastAction: null,
-      actions: [],
+      actions: seat.isCurrentPlayer
+        ? [{ action: "emote" }, { action: "chat" }]
+        : [],
       handResult: index === 0 ? (size - 1) * 15000 : -15000,
       handRank: showsCards
         ? [

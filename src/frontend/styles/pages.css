@@ -77,9 +77,14 @@ phg-home .game-type-selector {
 }
 
 :is(phg-home, phg-tournaments) .speed-label {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+:is(phg-home, phg-tournaments) .speed-label .tooltip-control {
+  position: static;
 }
 
 :is(phg-home, phg-tournaments) .tooltip-trigger svg {
@@ -88,8 +93,8 @@ phg-home .game-type-selector {
 }
 
 :is(phg-home, phg-tournaments) .speed-label .tooltip {
-  right: 0;
-  left: auto;
+  left: 50%;
+  translate: -50% 0;
   width: min(380px, calc(100vw - 96px));
   max-width: none;
   padding: var(--space-md);
@@ -243,10 +248,6 @@ phg-home .radio-group input[type="radio"]:checked {
 }
 
 @media (width < 800px) {
-  :is(phg-home, phg-tournaments) .tooltip {
-    right: -72px;
-  }
-
   :is(phg-home, phg-tournaments) > .main {
     padding: 56px var(--space-md) var(--space-md);
   }

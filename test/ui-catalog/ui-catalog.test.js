@@ -244,8 +244,24 @@ async function prepareTestCase(testCase, page, component) {
   const tooltipId = await trigger.getAttribute("aria-describedby");
   const tooltip = component.locator(`#${tooltipId}`);
   await expect(tooltip).toBeVisible();
-  await tooltip.scrollIntoViewIfNeeded();
-  await expect(tooltip).toBeInViewport();
+  if (tooltipLabel === "Tournament speed details") {
+    await tooltip.evaluate((element) =>
+      Promise.all(
+        element.getAnimations().map((animation) => animation.finished),
+      ),
+    );
+    await tooltip.evaluate((element) =>
+      element.scrollIntoView({
+        block: "center",
+        inline: "nearest",
+        behavior: "instant",
+      }),
+    );
+    await expect(tooltip).toBeInViewport({ ratio: 1 });
+  } else {
+    await tooltip.scrollIntoViewIfNeeded();
+    await expect(tooltip).toBeInViewport();
+  }
   if (testCase === "mtt-lobby-running-late-register-tooltip") {
     await expect(tooltip).toBeInViewport({ ratio: 1 });
     await expect(component.locator(".main")).toHaveJSProperty("scrollLeft", 0);

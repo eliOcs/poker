@@ -125,7 +125,11 @@ export const ACTION_PANEL_TEST_CASES = {
             cards: ["As", "Ks"],
             lastAction: "Call $100",
             handRank: "A High",
-            actions: [{ action: "emote" }, { action: "callClock" }],
+            actions: [
+              { action: "callClock" },
+              { action: "emote" },
+              { action: "chat" },
+            ],
           }),
           createPlayer("Alice", {
             isActing: true,
@@ -187,7 +191,6 @@ export const ACTION_PANEL_TEST_CASES = {
           createPlayer("You", {
             isCurrentPlayer: true,
             stack: 15000,
-            actions: [],
           }),
           ...emptySeats(8),
         ],
@@ -209,7 +212,7 @@ export const ACTION_PANEL_TEST_CASES = {
             cards: ["As", "Ks"],
             handRank: "A High",
             preAction: { type: "checkFold", amount: null },
-            actions: [{ action: "emote" }],
+            actions: [{ action: "emote" }, { action: "chat" }],
           }),
           createPlayer("Alice", {
             stack: 2700,
@@ -238,7 +241,6 @@ export const ACTION_PANEL_TEST_CASES = {
             isCurrentPlayer: true,
             stack: 0,
             bustedPosition: 3,
-            actions: [],
           }),
           createPlayer("Alice", { stack: 8000, cards: ["??", "??"] }),
           createPlayer("Bob", { stack: 7000, cards: ["??", "??"] }),

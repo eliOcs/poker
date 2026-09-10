@@ -91,7 +91,9 @@ export function createPlayer(name, overrides = {}) {
     sittingOut: false,
     disconnected: false,
     cards: [],
-    actions: [],
+    actions: overrides.isCurrentPlayer
+      ? [{ action: "emote" }, { action: "chat" }]
+      : [],
     isCurrentPlayer: false,
     isActing: false,
     lastAction: null,

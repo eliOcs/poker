@@ -1,6 +1,23 @@
 import { expect } from "@playwright/test";
 
 export async function verifyGameScenario(testCase, component) {
+  const game = component.locator("phg-game");
+  if (await game.count()) {
+    const invalidSeats = await game.evaluate((element) =>
+      element.game.seats.flatMap((seat, index) => {
+        if (seat.empty) return [];
+        if (!seat.isCurrentPlayer)
+          return seat.actions.length ? [`Opponent ${index} has actions`] : [];
+        if (seat.isActing) return [];
+        const actions = seat.actions.map(({ action }) => action);
+        return ["emote", "chat"]
+          .filter((action) => !actions.includes(action))
+          .map((action) => `Idle player ${index} is missing ${action}`);
+      }),
+    );
+    expect(invalidSeats).toEqual([]);
+  }
+
   if (testCase === "game-clock-called") {
     const checkFold = component.getByRole("button", { name: "Check / Fold" });
     await expect(checkFold).toBeVisible();
