@@ -1,5 +1,6 @@
 # To do
 
+- explain how to play poker
 - People don't notice who won the hand
 - Send notification when MTT starts
 - Sidepot bets
