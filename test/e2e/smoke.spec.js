@@ -46,6 +46,11 @@ test.describe("Poker Game Smoke Test", () => {
       player1.page.getByRole("heading", { name: "Settings" }),
     ).toBeVisible();
     await player1.page.getByRole("button", { name: "Save" }).click();
+    // Saving closes Settings through browser history before we navigate again.
+    await expect(
+      player1.page.getByRole("heading", { name: "Settings" }),
+    ).toBeHidden();
+    await expect(player1.page).toHaveURL(/\/$/);
 
     // Create game via UI with $0.05/$0.10 stakes (index 2)
     await createGame(player1, { stakesIndex: 2 });
