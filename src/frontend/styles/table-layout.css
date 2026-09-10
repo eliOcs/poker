@@ -97,6 +97,10 @@
     line-height: 12px;
   }
 
+  :scope phg-seat.empty {
+    padding: 0;
+  }
+
   :scope .player-info {
     position: static;
     min-height: 0;
