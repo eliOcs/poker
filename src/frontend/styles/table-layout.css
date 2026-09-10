@@ -47,6 +47,11 @@
     box-shadow: none;
   }
 
+  :scope phg-board:has(.tournament-winner-overlay) {
+    width: calc(100% - 90px);
+    height: calc(100% - 70px);
+  }
+
   :scope .board-info {
     gap: 8px;
   }
@@ -469,6 +474,12 @@
 
   :scope[data-layout="portrait"] phg-board {
     top: 71.8%;
+  }
+
+  :scope[data-layout="portrait"] phg-board:has(.tournament-winner-overlay) {
+    top: 50%;
+    width: calc(100% - 80px);
+    height: calc(100% - 50px);
   }
 
   :scope[data-layout="portrait"] [data-slot="0"] {
