@@ -169,10 +169,6 @@
     color: var(--color-error);
   }
 
-  td {
-    border-bottom: 0;
-  }
-
   td strong {
     color: var(--color-fg-white);
   }

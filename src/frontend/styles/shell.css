@@ -410,11 +410,6 @@
 
   td {
     color: var(--color-fg-medium);
-    border-bottom: 1px solid var(--color-bg-dark);
-  }
-
-  tbody tr:last-child td {
-    border-bottom: 0;
   }
 
   .empty,

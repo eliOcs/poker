@@ -12,10 +12,9 @@ export default defineConfig({
   workers: UI_CATALOG_WORKERS,
   reporter: "list",
 
-  // Screenshot comparison settings
-  // Use platform-agnostic snapshot names to share between Mac and Linux
+  // Keep all catalog screenshots together with platform-agnostic names.
   snapshotPathTemplate:
-    "{snapshotDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
+    "{testDir}/ui-catalog.test.js-snapshots/{arg}-{projectName}{ext}",
   use: {
     baseURL: `http://localhost:${UI_CATALOG_PORT}`,
     screenshot: "only-on-failure",
