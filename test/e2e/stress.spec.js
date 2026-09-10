@@ -19,6 +19,7 @@ import {
 import * as Stress from "./utils/stress-helpers.js";
 import { playRandomSocialActions } from "./utils/random-social-actions.js";
 import { takeRandomCardAction } from "./utils/random-card-actions.js";
+import { startActionRunner } from "./utils/action-runner.js";
 
 /** @typedef {import('./utils/mtt-registration.js').LateRegistration} LateRegistration */
 
@@ -26,12 +27,14 @@ import { takeRandomCardAction } from "./utils/random-card-actions.js";
 test.setTimeout(20 * 60 * 1000);
 
 const STALL_TIMEOUT_MS = 15000;
-const WAIT_FOR_TURN_TIMEOUT_MS = 2000;
+const BOOKKEEPING_INTERVAL_MS = 500;
 /**
  * @typedef {Object} SnapshotResult
  * @property {string|null} winnerName - Tournament winner name if detected
  * @property {number} removedCount - Number of busted players removed
  * @property {number|null} maxHandNumber - Highest hand number seen across players
+ * @property {boolean} onBreak
+ * @property {boolean} reconnecting
  */
 
 /**
@@ -80,6 +83,8 @@ async function collectGameSnapshots(
   let removedCount = 0;
   let maxHandNumber = null;
   const eliminatedPlayerIndexes = [];
+  let onBreak = false;
+  let reconnecting = false;
 
   const snapshotEntries = await Promise.all(
     [...activePlayers].map(async (idx) => ({
@@ -94,6 +99,8 @@ async function collectGameSnapshots(
       continue;
     }
 
+    onBreak ||= snapshot.onBreak;
+    reconnecting ||= !snapshot.connected;
     if (snapshot.tournamentWinner) {
       winnerName = snapshot.tournamentWinner;
     }
@@ -123,109 +130,65 @@ async function collectGameSnapshots(
     await players[idx].close();
   }
 
-  return { winnerName, removedCount, maxHandNumber };
+  return { winnerName, removedCount, maxHandNumber, onBreak, reconnecting };
 }
 
 /**
- * Take one action for every table that currently has an acting player
+ * Recheck rendered choices after a notification. All clicks, including clock
+ * recovery, run inside this player's queue.
+ * @param {import('./utils/poker-player.js').PokerPlayer} player
+ */
+async function takeAvailableAction(player) {
+  const cardAction = await takeRandomCardAction(player);
+  if (cardAction) return cardAction;
+  const availableActions = await getAvailableActions(player);
+  if (availableActions.length === 0) return null;
+  const action = selectRandomAction(availableActions);
+  if (action === "callClock") await player.callClock();
+  else if (action === "bet" || action === "raise")
+    await player.actWithRandomPreset(action);
+  else await player.act(action);
+  return action;
+}
+
+/**
  * @param {import('./utils/poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
- * @returns {Promise<{seatIdx: number, action: string}[]>}
+ * @param {Map<number, Awaited<ReturnType<typeof startActionRunner>>>} runners
+ * @param {{handCount: number, lastProgressAt: number, lastProgressReason: string}} state
  */
-async function takeAvailableActions(players, activePlayers) {
-  const results = await Promise.all(
-    [...activePlayers].map(async (seatIdx) => {
-      const player = players[seatIdx];
-      let attemptedAction = null;
-      try {
-        const cardAction = await takeRandomCardAction(player);
-        if (cardAction) return { seatIdx, action: cardAction };
-        if (!(await player.isMyTurn())) return null;
-        const availableActions = await getAvailableActions(player);
-        if (availableActions.length > 0) {
-          const action = selectRandomAction(availableActions);
-          attemptedAction = action;
-          await (action === "bet" || action === "raise"
-            ? player.actWithRandomPreset(action)
-            : player.act(action));
-          return { seatIdx, action };
+async function syncPlayerRunners(players, activePlayers, runners, state) {
+  for (const [idx, runner] of runners) {
+    if (!activePlayers.has(idx)) {
+      await runner.stop();
+      runners.delete(idx);
+    }
+  }
+  for (const idx of activePlayers) {
+    if (runners.has(idx)) continue;
+    const player = players[idx];
+    const nextSocialAt = new Map();
+    const runner = await startActionRunner(player.page, {
+      act: async () => {
+        const action = await takeAvailableAction(player);
+        if (action) {
+          Stress.markProgress(
+            state,
+            `seat-${idx + 1}-${action}-hand-${state.handCount}`,
+          );
         }
-        console.log(
-          `Seat ${seatIdx + 1} appears to be acting but has no legal action buttons`,
-        );
-      } catch (err) {
-        console.log(
-          `Seat ${seatIdx + 1} action attempt failed` +
-            `${attemptedAction ? ` (${attemptedAction})` : ""}: ${Stress.formatError(err)}`,
-        );
-      }
-      return null;
-    }),
-  );
-
-  return results.filter((result) => result !== null);
-}
-
-/**
- * Use the same disconnect recovery path as live play: if a player has stopped
- * acting and the UI exposes "Call the clock", trigger it from any active seat.
- * @param {import('./utils/poker-player.js').PokerPlayer[]} players
- * @param {Set<number>} activePlayers
- * @returns {Promise<{seatIdx: number, action: "callClock"}|null>}
- */
-async function tryCallClock(players, activePlayers) {
-  const seatOrder = [...activePlayers];
-  const callableSeats = await Promise.all(
-    seatOrder.map(async (seatIdx) => ({
-      seatIdx,
-      canCallClock: await players[seatIdx]
-        .hasAction("callClock")
-        .catch(() => false),
-    })),
-  );
-
-  for (const { seatIdx, canCallClock } of callableSeats) {
-    try {
-      const player = players[seatIdx];
-      if (canCallClock) {
-        await player.callClock();
-        return { seatIdx, action: "callClock" };
-      }
-    } catch (err) {
-      console.log(
-        `Seat ${seatIdx + 1} call clock attempt failed: ${Stress.formatError(err)}`,
-      );
-    }
+      },
+      social: () => playRandomSocialActions([player], nextSocialAt),
+      onError: (error) => {
+        if (!player.page.isClosed()) {
+          console.log(
+            `Seat ${idx + 1} action attempt failed: ${Stress.formatError(error)}`,
+          );
+        }
+      },
+    });
+    runners.set(idx, runner);
   }
-  return null;
-}
-
-/**
- * Wait for any active player to get their turn
- * @param {import('./utils/poker-player.js').PokerPlayer[]} players
- * @param {Set<number>} activePlayers
- * @returns {Promise<boolean>} Whether any actionable turn appeared
- */
-async function waitForAnyTurn(players, activePlayers) {
-  const deadline = Date.now() + WAIT_FOR_TURN_TIMEOUT_MS;
-
-  while (Date.now() < deadline) {
-    const turnStates = await Promise.all(
-      [...activePlayers].map((idx) =>
-        players[idx].turnButtons
-          .or(players[idx].cardDecisionButtons)
-          .first()
-          .isVisible()
-          .catch(() => false),
-      ),
-    );
-    if (turnStates.some(Boolean)) {
-      return true;
-    }
-    await Stress.delay(100);
-  }
-
-  return false;
 }
 
 /**
@@ -370,87 +333,47 @@ function getTournamentLoopResult(
  * @returns {Promise<string|null>} Winner name or null
  */
 async function runTournamentLoop(players, activePlayers, state) {
-  const maxActions = 16000;
   /** @type {Map<number, EliminationCandidate>} */
   const eliminationCandidates = new Map();
-  const nextSocialAt = new Map();
-
-  for (let actionCount = 0; actionCount < maxActions; actionCount++) {
-    await assertNotStalled(players, activePlayers, state);
-    await processLateRegistrations(
-      players,
-      activePlayers,
-      state.lateRegistrations,
-      state,
-    );
-
-    // Single pass: winner check + bust detection + hand number tracking
-    const snapshots = await collectGameSnapshots(
-      players,
-      activePlayers,
-      eliminationCandidates,
-    );
-    const loopResult = getTournamentLoopResult(
-      snapshots.winnerName,
-      activePlayers.size,
-      state.lateRegistrations,
-    );
-    if (loopResult !== undefined) return loopResult;
-    if (snapshots.removedCount > 0) {
-      Stress.markProgress(state, `removed-${snapshots.removedCount}-busted`);
-    }
-    if (trackHandTransition(snapshots.maxHandNumber, state)) {
-      Stress.markProgress(state, `hand-${state.handCount}`);
-    }
-
-    await playRandomSocialActions(
-      [...activePlayers].map((index) => players[index]),
-      nextSocialAt,
-    );
-    const results = await takeAvailableActions(players, activePlayers);
-    if (results.length > 0) {
-      for (const result of results) {
-        Stress.markProgress(
-          state,
-          `seat-${result.seatIdx + 1}-${result.action}-hand-${state.handCount}`,
-        );
+  /** @type {Map<number, Awaited<ReturnType<typeof startActionRunner>>>} */
+  const runners = new Map();
+  try {
+    for (;;) {
+      await processLateRegistrations(
+        players,
+        activePlayers,
+        state.lateRegistrations,
+        state,
+      );
+      const snapshots = await collectGameSnapshots(
+        players,
+        activePlayers,
+        eliminationCandidates,
+      );
+      const result = getTournamentLoopResult(
+        snapshots.winnerName,
+        activePlayers.size,
+        state.lateRegistrations,
+      );
+      if (result !== undefined) return result;
+      if (snapshots.removedCount > 0) {
+        Stress.markProgress(state, `removed-${snapshots.removedCount}-busted`);
       }
-    } else {
-      const clockResult = await tryCallClock(players, activePlayers);
-      if (clockResult) {
-        Stress.markProgress(
-          state,
-          `seat-${clockResult.seatIdx + 1}-callClock-hand-${state.handCount}`,
-        );
-      } else {
-        const activePlayerIndexes = [...activePlayers];
-        const onBreakStates = await Promise.all(
-          activePlayerIndexes.map((idx) =>
-            players[idx].isOnBreak().catch(() => false),
-          ),
-        );
-        if (onBreakStates.some(Boolean)) {
-          Stress.markProgress(state, `break-hand-${state.handCount}`);
-          await Stress.delay(250);
-          continue;
-        }
-
-        const connectionStates = await Promise.all(
-          activePlayerIndexes.map((idx) =>
-            players[idx].isConnected().catch(() => false),
-          ),
-        );
-        if (connectionStates.some((isConnected) => !isConnected)) {
-          Stress.markProgress(state, `reconnecting-hand-${state.handCount}`);
-          await Stress.delay(250);
-          continue;
-        }
-        await waitForAnyTurn(players, activePlayers);
+      if (trackHandTransition(snapshots.maxHandNumber, state)) {
+        Stress.markProgress(state, `hand-${state.handCount}`);
       }
+      await syncPlayerRunners(players, activePlayers, runners, state);
+      for (const runner of runners.values()) runner.requestSocial();
+      if (snapshots.onBreak)
+        Stress.markProgress(state, `break-hand-${state.handCount}`);
+      if (snapshots.reconnecting)
+        Stress.markProgress(state, `reconnecting-hand-${state.handCount}`);
+      await assertNotStalled(players, activePlayers, state);
+      await Stress.delay(BOOKKEEPING_INTERVAL_MS);
     }
+  } finally {
+    await Promise.all([...runners.values()].map((runner) => runner.stop()));
   }
-
-  return null;
 }
 
 test.describe("Tournament E2E", () => {

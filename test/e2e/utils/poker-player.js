@@ -169,7 +169,7 @@ export class PokerPlayer extends PokerPlayerActions {
   /**
    * Read game snapshot for stress test: winner, hand number, and bust status
    * in a single evaluate call to minimize cross-browser round-trips
-   * @returns {Promise<{tournamentWinner: string|null, handNumber: number|null, bustedPosition: number|null, connected: boolean}|null>}
+   * @returns {Promise<{tournamentWinner: string|null, handNumber: number|null, bustedPosition: number|null, connected: boolean, onBreak: boolean}|null>}
    */
   async getGameSnapshot() {
     return await this.game
@@ -186,20 +186,16 @@ export class PokerPlayer extends PokerPlayerActions {
         const g = el.game;
         if (!g) return null;
         const seats = g.seats || [];
-        const tournament = g.tournament || null;
-        const winnerName = resolveWinnerName(
-          tournament ? tournament.winner : null,
-          seats,
-        );
+        const tournament = g.tournament || {};
+        const winnerName = resolveWinnerName(tournament.winner, seats);
         const mySeat = seats.find((s) => s && s.isCurrentPlayer) || null;
         return {
           tournamentWinner: winnerName,
           handNumber: g.handNumber !== undefined ? g.handNumber : null,
           bustedPosition:
-            (mySeat && mySeat.bustedPosition != null
-              ? mySeat.bustedPosition
-              : el.tournamentFinishPosition) ?? null,
+            mySeat?.bustedPosition ?? el.tournamentFinishPosition ?? null,
           connected: el.connectionStatus === "connected",
+          onBreak: tournament.onBreak === true,
         };
       })
       .catch(() => null);

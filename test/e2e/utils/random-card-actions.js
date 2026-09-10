@@ -8,12 +8,16 @@
 export async function takeRandomCardAction(player, random = Math.random) {
   if (!(await player.isConnected())) return null;
   const buttons = player.cardDecisionButtons;
-  const count = await buttons.count();
-  if (count === 0) return null;
+  // These choices can disappear as the hand advances. Capture their text in
+  // one non-waiting read; count() followed by textContent() can otherwise wait
+  // the full action timeout for an option that no longer exists.
+  const labels = await buttons.allTextContents();
+  if (labels.length === 0) return null;
 
-  const button = buttons.nth(Math.floor(random() * count));
-  const action =
-    (await button.textContent())?.trim() === "Muck" ? "muck" : "show";
+  const index = Math.floor(random() * labels.length);
+  const label = labels[index].replace(/\s+/g, " ").trim();
+  const button = buttons.nth(index);
+  const action = label === "Muck" ? "muck" : "show";
   await button.click({ timeout: 1000 });
   return action;
 }

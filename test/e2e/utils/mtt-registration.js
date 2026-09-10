@@ -157,6 +157,23 @@ async function activateLateRegistrant(
 /**
  * @param {import('./poker-player.js').PokerPlayer[]} players
  * @param {Set<number>} activePlayers
+ */
+async function getActiveTournamentSnapshot(players, activePlayers) {
+  // Every player receives the same tournament view. Stop at the first usable
+  // one, while allowing another player to supply it during a table move.
+  let tournament = null;
+  for (const idx of activePlayers) {
+    tournament = await players[idx]
+      .getTournamentViewSnapshot()
+      .catch(() => null);
+    if (tournament) break;
+  }
+  return tournament;
+}
+
+/**
+ * @param {import('./poker-player.js').PokerPlayer[]} players
+ * @param {Set<number>} activePlayers
  * @param {LateRegistration[]} lateRegistrations
  * @param {{lastProgressAt: number, lastProgressReason: string}} state
  */
@@ -166,6 +183,8 @@ export async function processLateRegistrations(
   lateRegistrations,
   state,
 ) {
+  if (allLateRegistrationsAssigned(lateRegistrations)) return;
+
   for (const registration of lateRegistrations) {
     if (registration.registered && !registration.assigned) {
       await activateLateRegistrant(
@@ -177,12 +196,7 @@ export async function processLateRegistrations(
     }
   }
 
-  const tournamentSnapshots = await Promise.all(
-    [...activePlayers].map((idx) =>
-      players[idx].getTournamentViewSnapshot().catch(() => null),
-    ),
-  );
-  const tournament = tournamentSnapshots.find((snapshot) => snapshot !== null);
+  const tournament = await getActiveTournamentSnapshot(players, activePlayers);
   if (!tournament || tournament.status !== "running") return;
 
   const registration = lateRegistrations.find(

@@ -13,17 +13,36 @@ const PASSIVE_FALLBACKS = ["check", "fold"];
  * @returns {Promise<string[]>}
  */
 export async function getAvailableActions(player) {
-  const actions = [];
-  if (await player.hasAction("rebuy")) actions.push("rebuy");
-  if (await player.hasAction("leave")) actions.push("leave");
-  if (await player.hasAction("check")) actions.push("check");
-  if (await player.hasAction("call")) actions.push("call");
-  if (await player.hasAction("fold")) actions.push("fold");
-  if (await player.hasAction("bet")) actions.push("bet");
-  if (await player.hasAction("raise")) actions.push("raise");
-  if (await player.hasAction("allIn")) actions.push("allIn");
-  if (await player.hasAction("callClock")) actions.push("callClock");
-  return actions;
+  if (!(await player.isConnected())) return [];
+
+  // Read the rendered choices together instead of checking the connection and
+  // querying the browser again for each possible action.
+  const [buttonTexts, hasSlider] = await Promise.all([
+    player.actionPanel
+      .locator("button:visible:not(.button--pre-action)")
+      .allTextContents(),
+    player.actionPanel.locator('input[type="range"]').isVisible(),
+  ]);
+  const labels = buttonTexts.map((text) => text.replace(/\s+/g, " ").trim());
+  /** @type {[string, RegExp][]} */
+  const buttonNames = [
+    ["rebuy", /^Rebuy$/],
+    ["leave", /^Leave\b/],
+    ["check", /^Check$/],
+    ["call", /^Call\s+\$/],
+    ["fold", /^Fold$/],
+    ["bet", /^Bet\b/],
+    ["raise", /^Raise to\b/],
+    ["allIn", /^All-In\b/],
+    ["callClock", /^Call the clock$/],
+  ];
+  return buttonNames
+    .filter(([action, pattern]) =>
+      action === "allIn"
+        ? hasSlider
+        : labels.some((label) => pattern.test(label)),
+    )
+    .map(([action]) => action);
 }
 
 /**
