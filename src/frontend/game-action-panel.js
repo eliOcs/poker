@@ -37,6 +37,7 @@ function getPreActionProps(game, seatIndex) {
   const seat = seatIndex !== -1 ? game.seats[seatIndex] : {};
   const hand = game.hand ?? {};
   return {
+    phase: hand.phase,
     preAction: seat.preAction,
     currentBet: hand.currentBet ?? 0,
     myBet: seat.bet ?? 0,
@@ -69,7 +70,8 @@ function renderTableActionPanel(
     .seatIndex=${seatIndex}
     .smallBlind=${host.game.blinds?.small ?? 1}
     .bigBlind=${host.game.blinds?.big ?? 1}
-    .pot=${host.game.hand?.pot ?? 0}
+    .totalPot=${host.game.hand?.totalPot ?? 0}
+    .phase=${pre.phase}
     .seatedCount=${host.game.seats.filter((s) => !s.empty).length}
     .canSit=${canSit}
     .buyIn=${host.game.tournament?.buyIn ?? 0}

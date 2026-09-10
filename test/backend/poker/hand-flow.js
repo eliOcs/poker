@@ -44,11 +44,11 @@ describe("hand flow", () => {
     });
 
     it("should reset pot", () => {
-      game.hand.pot = 500;
+      game.hand.collectedPot = 500;
 
       Actions.startHand(game);
 
-      assert.equal(game.hand.pot, 0);
+      assert.equal(game.hand.collectedPot, 0);
     });
 
     it("should reset seat states", () => {
@@ -85,11 +85,11 @@ describe("hand flow", () => {
     });
 
     it("should reset pot", () => {
-      game.hand.pot = 500;
+      game.hand.collectedPot = 500;
 
       Actions.endHand(game);
 
-      assert.equal(game.hand.pot, 0);
+      assert.equal(game.hand.collectedPot, 0);
     });
 
     it("should keep the button on the previous dealer", () => {

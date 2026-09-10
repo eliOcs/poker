@@ -18,7 +18,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "preflop", pot: 0, currentBet: 50, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 0,
+          currentBet: 50,
+          actingSeat: 0,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -54,7 +59,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "river", pot: 4000, currentBet: 2000, actingSeat: 0 },
+        hand: {
+          phase: "river",
+          collectedPot: 4000,
+          currentBet: 2000,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
         seats: [
           createPlayer("You", {
@@ -85,7 +95,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "river", pot: 3000, currentBet: 1500, actingSeat: 0 },
+        hand: {
+          phase: "river",
+          collectedPot: 3000,
+          currentBet: 1500,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
         seats: [
           createPlayer("You", {
@@ -115,7 +130,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "flop", pot: 300, currentBet: 100, actingSeat: 1 },
+        hand: {
+          phase: "flop",
+          collectedPot: 300,
+          currentBet: 100,
+          actingSeat: 1,
+        },
         board: { cards: ["Jh", "Td", "5c"] },
         seats: [
           createPlayer("You", {
@@ -147,7 +167,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "river", pot: 1200, currentBet: 0, actingSeat: 1 },
+        hand: {
+          phase: "river",
+          collectedPot: 1200,
+          currentBet: 0,
+          actingSeat: 1,
+        },
         board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
         seats: [
           createPlayer("You", {
@@ -186,7 +211,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         tournament: { level: 5, timeToNextLevel: 0, onBreak: false, winner: 0 },
-        hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "showdown",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -202,7 +232,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "flop", pot: 350, currentBet: 200, actingSeat: 2 },
+        hand: {
+          phase: "flop",
+          collectedPot: 350,
+          currentBet: 200,
+          actingSeat: 2,
+        },
         board: { cards: ["Jh", "Td", "5c"] },
         seats: [
           createPlayer("You", {
@@ -235,7 +270,12 @@ export const ACTION_PANEL_TEST_CASES = {
     gameView(
       createGame({
         tournament: { level: 5, timeToNextLevel: 0, onBreak: false },
-        hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "showdown",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,

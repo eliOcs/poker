@@ -42,7 +42,12 @@ describe("showdown winning-card highlights", () => {
       },
     ];
     game.board.cards = ["Ah", "5s", "Kd", "Jh", "9c"];
-    game.hand = { phase: "river", pot: 1766, currentBet: 0, actingSeat: -1 };
+    game.hand = {
+      phase: "river",
+      collectedPot: 1766,
+      currentBet: 0,
+      actingSeat: -1,
+    };
 
     drainGenerator(Showdown.showdown(game));
 
@@ -83,7 +88,7 @@ describe("showdown winning-card highlights", () => {
       game.board.cards = ["2c", "5s", "8d", "Jh", "9c"];
       game.hand = {
         phase: "river",
-        pot: 1400,
+        collectedPot: 1400,
         currentBet: 0,
         actingSeat: -1,
       };

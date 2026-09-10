@@ -126,7 +126,12 @@ describe("phg-action-panel", () => {
 
     it("calls send() with seat when Show card button is clicked", async () => {
       element.game = createMockGameState({
-        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "waiting",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -166,7 +171,7 @@ describe("phg-action-panel", () => {
 
     it("calls send() with seat when Muck is clicked", async () => {
       element.game = createMockGameState({
-        hand: { phase: "flop", pot: 0, currentBet: 0, actingSeat: 1 },
+        hand: { phase: "flop", collectedPot: 0, currentBet: 0, actingSeat: 1 },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -267,7 +272,7 @@ describe("phg-action-panel", () => {
       element.game = createMockGameState({
         hand: {
           phase: "turn",
-          pot: 300000,
+          collectedPot: 300000,
           currentBet: 300000,
           actingSeat: 0,
         },
@@ -339,32 +344,6 @@ describe("phg-action-panel", () => {
       expect(actionPanel.betAmount).to.equal(5000);
     });
 
-    it("clicking ½ Pot sets betAmount to half the pot", async () => {
-      element.game = createMockGameAtFlop(); // pot: 20000
-      await element.updateComplete;
-
-      const actionPanel = element.querySelector("phg-action-panel");
-      await actionPanel.updateComplete;
-
-      findButtonByText(actionPanel, "½ Pot").click();
-      await actionPanel.updateComplete;
-
-      expect(actionPanel.betAmount).to.equal(10000);
-    });
-
-    it("clicking Pot sets betAmount to the full pot", async () => {
-      element.game = createMockGameAtFlop(); // pot: 20000
-      await element.updateComplete;
-
-      const actionPanel = element.querySelector("phg-action-panel");
-      await actionPanel.updateComplete;
-
-      findButtonByExactText(actionPanel, "Pot").click();
-      await actionPanel.updateComplete;
-
-      expect(actionPanel.betAmount).to.equal(20000);
-    });
-
     it("clicking Max sets betAmount to max", async () => {
       element.game = createMockGameAtFlop(); // bet max: 100000
       await element.updateComplete;
@@ -380,7 +359,12 @@ describe("phg-action-panel", () => {
 
     it("clicking 2.5 BB sets betAmount to 2.5 * bigBlind when pot is 0", async () => {
       element.game = createMockGameState({
-        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 0,
+          currentBet: 5000,
+          actingSeat: 0,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -410,7 +394,12 @@ describe("phg-action-panel", () => {
 
     it("clicking 3 BB sets betAmount to 3 * bigBlind when pot is 0", async () => {
       element.game = createMockGameState({
-        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 0,
+          currentBet: 5000,
+          actingSeat: 0,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -567,7 +556,7 @@ describe("phg-action-panel", () => {
       element.game = createMockGameState({
         hand: {
           phase: "preflop",
-          pot: 15000,
+          collectedPot: 15000,
           currentBet: 10000,
           actingSeat: 0,
         }, // $150/$100 in cents

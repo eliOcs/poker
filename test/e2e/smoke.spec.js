@@ -183,9 +183,12 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(holeCards(player1)).toHaveCount(2);
     await expect(holeCards(player2)).toHaveCount(2);
 
-    // Preflop: SB goes all-in, BB calls
+    // Preflop: SB goes all-in, BB calls. Earlier hand winners determine
+    // whether calling uses BB's whole stack and is labeled All-In.
     await player1.act("allIn");
-    await player2.act("call");
+    await player2.actionPanel
+      .getByRole("button", { name: /^(Call|All-In) \$/ })
+      .click();
 
     // Wait for all-in runout to complete (5 board cards)
     await expect(boardCards).toHaveCount(5);

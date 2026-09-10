@@ -42,7 +42,7 @@ export async function verifyGameScenario(testCase, component) {
     );
   }
   const preset = {
-    "game-preflop-your-turn": "½ Pot",
+    "game-preflop-your-turn": "2.5 BB",
     "action-raise-preflop": "2.5 BB",
   }[testCase];
   if (preset)

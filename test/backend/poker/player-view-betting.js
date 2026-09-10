@@ -28,7 +28,7 @@ describe("Player View - Betting Actions", function () {
       // Simulate flop where opponent went all-in
       g.hand = {
         phase: "flop",
-        pot: 100,
+        collectedPot: 100,
         currentBet: 500, // Opponent bet $5
         actingSeat: 0,
         lastRaiser: 1,
@@ -71,7 +71,7 @@ describe("Player View - Betting Actions", function () {
       // Simulate flop where opponent is all-in but no bet yet this round
       g.hand = {
         phase: "flop",
-        pot: 100,
+        collectedPot: 100,
         currentBet: 0, // No bet yet this round
         actingSeat: 0,
         lastRaiser: 0,
@@ -112,7 +112,7 @@ describe("Player View - Betting Actions", function () {
       // Simulate flop where opponent went all-in for less
       g.hand = {
         phase: "flop",
-        pot: 100,
+        collectedPot: 100,
         currentBet: 500, // Opponent all-in bet
         actingSeat: 0,
         lastRaiser: 1,
@@ -153,7 +153,7 @@ describe("Player View - Betting Actions", function () {
       // Simulate flop where one opponent is all-in but another has chips
       g.hand = {
         phase: "flop",
-        pot: 100,
+        collectedPot: 100,
         currentBet: 500,
         actingSeat: 0,
         lastRaiser: 1,

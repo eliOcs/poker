@@ -20,7 +20,12 @@ describe("showdown split winning cards", () => {
       totalInvested: 50,
     };
     game.board.cards = ["6h", "Qd", "3d", "8d", "3s"];
-    game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+    game.hand = {
+      phase: "river",
+      collectedPot: 0,
+      currentBet: 0,
+      actingSeat: -1,
+    };
 
     drainGenerator(Showdown.showdown(game));
 

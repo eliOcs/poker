@@ -241,7 +241,7 @@ export function startBettingRound(game, phase) {
 export function collectBets(game) {
   for (const seat of game.seats) {
     if (!seat.empty) {
-      game.hand.pot += seat.bet;
+      game.hand.collectedPot += seat.bet;
       seat.totalInvested += seat.bet;
       seat.bet = 0;
     }

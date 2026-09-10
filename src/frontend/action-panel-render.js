@@ -100,8 +100,12 @@ function renderSitInLeave(panel, actionMap) {
 }
 
 function renderBetPresets(panel, min, max) {
+  // Raise amounts are street totals. Call first, then raise by a fraction
+  // of all chips in play, including that call and folded players' bets.
+  const toCall = Math.max(0, panel.currentBet - panel.myBet);
+  const potAfterCall = panel.totalPot + toCall;
   const presets =
-    panel.pot === 0
+    panel.phase === "preflop"
       ? [
           { label: "Min", raw: min },
           { label: "2.5 BB", raw: Math.round(2.5 * panel.bigBlind) },
@@ -110,8 +114,11 @@ function renderBetPresets(panel, min, max) {
         ]
       : [
           { label: "Min", raw: min },
-          { label: "½ Pot", raw: Math.round(panel.pot / 2) },
-          { label: "Pot", raw: panel.pot },
+          {
+            label: "½ Pot",
+            raw: panel.currentBet + Math.round(potAfterCall / 2),
+          },
+          { label: "Pot", raw: panel.currentBet + potAfterCall },
           { label: "Max", raw: max },
         ];
   return html`

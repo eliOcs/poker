@@ -16,11 +16,93 @@ import { createDefaultTournamentSchedule } from "../../../src/shared/tournament.
 // === SPECIAL GAME STATE TEST CASES ===
 
 export const SPECIAL_GAME_TEST_CASES = {
+  // === SHOWDOWN STATES ===
+  "game-showdown-you-win": () => {
+    const winningCards = ["Ah", "Kh", "Qh", "Jh", "Th"];
+    return gameView(
+      createGame({
+        button: 1,
+        hand: {
+          phase: "showdown",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
+        board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
+        winnerMessage: {
+          playerName: "You",
+          handRank: "Royal Flush",
+          amount: 4800,
+        },
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 9800,
+            cards: ["Jh", "Th"],
+            handResult: 4800,
+            handRank: "Royal Flush",
+            winningCards,
+            actions: [{ action: "emote" }, { action: "chat" }],
+          }),
+          createPlayer("Alice", {
+            stack: 200,
+            cards: ["As", "Ad"],
+            handResult: -4800,
+            handRank: "Three of a Kind, Aces",
+          }),
+          ...emptySeats(7),
+        ],
+      }),
+    );
+  },
+
+  "game-showdown-you-lose": () =>
+    gameView(
+      createGame({
+        button: 0,
+        hand: {
+          phase: "showdown",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
+        board: { cards: ["Ah", "Ac", "Kd", "5c", "2d"] },
+        winnerMessage: {
+          playerName: "Alice",
+          handRank: "Four of a Kind, Aces",
+          amount: 4000,
+        },
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 1000,
+            cards: ["Ks", "Kc"],
+            handResult: -2000,
+            handRank: "Full House, Kings over Aces",
+            actions: [{ action: "emote" }, { action: "chat" }],
+          }),
+          createPlayer("Alice", {
+            stack: 7000,
+            cards: ["As", "Ad"],
+            handResult: 4000,
+            handRank: "Four of a Kind, Aces",
+            winningCards: ["Ah", "Ac", "As", "Ad", "Kd"],
+          }),
+          ...emptySeats(7),
+        ],
+      }),
+    ),
+
   "game-all-in-situation": () =>
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "turn", pot: 6000, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "turn",
+          collectedPot: 6000,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         board: { cards: ["Js", "Ts", "9h", "2c"] },
         seats: [
           createPlayer("You", {
@@ -41,7 +123,12 @@ export const SPECIAL_GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "turn", pot: 800, currentBet: 200, actingSeat: 0 },
+        hand: {
+          phase: "turn",
+          collectedPot: 800,
+          currentBet: 200,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "7c", "3s"] },
         seats: [
           createPlayer("You", {
@@ -80,7 +167,7 @@ export const SPECIAL_GAME_TEST_CASES = {
         button: 0,
         hand: {
           phase: "flop",
-          pot: 300,
+          collectedPot: 300,
           currentBet: 100,
           actingSeat: 1,
           actingTicks: 75,
@@ -112,7 +199,12 @@ export const SPECIAL_GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "preflop", pot: 75, currentBet: 50, actingSeat: 2 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 75,
+          currentBet: 50,
+          actingSeat: 2,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -147,7 +239,12 @@ export const SPECIAL_GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "flop", pot: 200, currentBet: 0, actingSeat: 0 },
+        hand: {
+          phase: "flop",
+          collectedPot: 200,
+          currentBet: 0,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "7c"] },
         seats: [
           createPlayer("You", {
@@ -175,7 +272,12 @@ export const SPECIAL_GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "river", pot: 275, currentBet: 50, actingSeat: 3 },
+        hand: {
+          phase: "river",
+          collectedPot: 275,
+          currentBet: 50,
+          actingSeat: 3,
+        },
         board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
         seats: [
           createPlayer("You", {

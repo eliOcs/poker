@@ -4,6 +4,7 @@ import * as Game from "../../../src/backend/poker/game.js";
 import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
+import { collectBets } from "../../../src/backend/poker/betting.js";
 import playerView from "../../../src/backend/poker/player-view.js";
 
 /** Helper to create a test player */
@@ -12,6 +13,35 @@ function createPlayer() {
 }
 
 describe("Player View", function () {
+  it("keeps the total pot stable before, during, and after collecting bets", () => {
+    const game = Game.create({ seats: 4 });
+    const player = createPlayer();
+    Actions.sit(game, { seat: 0, player });
+    Actions.sit(game, { seat: 1, player: createPlayer() });
+    Actions.sit(game, { seat: 2, player: createPlayer() });
+    game.hand.collectedPot = 20000;
+    game.seats[0].bet = 5000;
+    game.seats[1].bet = 10000;
+    game.seats[1].allIn = true;
+    game.seats[2].bet = 3000;
+    game.seats[2].folded = true;
+
+    const before = playerView(game, player).hand;
+    assert.equal(before.collectedPot, 20000);
+    assert.equal(before.totalPot, 38000);
+
+    game.collectingBets = { active: true, delayTicks: 1 };
+    const during = playerView(game, player).hand;
+    assert.equal(during.collectedPot, 20000);
+    assert.equal(during.totalPot, 38000);
+
+    collectBets(game);
+    game.collectingBets = undefined;
+    const after = playerView(game, player).hand;
+    assert.equal(after.collectedPot, 38000);
+    assert.equal(after.totalPot, 38000);
+  });
+
   describe("Seat", function () {
     it("add sit action to empty seats", function () {
       const g = Game.create({ seats: 2 });
@@ -83,7 +113,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       // Simulate post-showdown state
-      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "waiting",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
       // Both players revealed cards at showdown
@@ -107,7 +142,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       // Simulate post-hand state where opponent folded
-      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "waiting",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
       // Opponent folded, cards not revealed
@@ -131,7 +171,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 1, player: p2 });
 
       // Simulate post-hand state where p1 won by fold
-      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "waiting",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
       g.seats[1].folded = true;
@@ -153,7 +198,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
-      g.hand = { phase: "flop", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "flop",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
       g.seats[1].folded = true;
@@ -172,7 +222,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
-      g.hand = { phase: "showdown", pot: 200, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 200,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Kh"];
       g.seats[1].cards = ["Qd", "Jc"];
 
@@ -190,7 +245,12 @@ describe("Player View", function () {
       const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
-      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Ah"];
       g.board = {
         cards: ["Ac", "Kd", "9c", "5h", "2s"],
@@ -208,7 +268,12 @@ describe("Player View", function () {
       const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
-      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["Ah", "2h"];
       g.board = {
         cards: ["Kh", "Qh", "Jh", "5s", "3d"],
@@ -225,7 +290,12 @@ describe("Player View", function () {
       const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
-      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["9s", "8h"];
       g.board = {
         cards: ["7c", "6d", "5h", "2s", "Ad"],
@@ -242,7 +312,12 @@ describe("Player View", function () {
       const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
-      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["Ks", "Kh"];
       g.board = {
         cards: ["Kc", "Qd", "Qh", "5s", "3d"],
@@ -259,7 +334,12 @@ describe("Player View", function () {
       const p1 = createPlayer();
       Actions.sit(g, { seat: 0, player: p1 });
 
-      g.hand = { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Ah"];
       g.seats[0].folded = true;
       g.board = {
@@ -280,7 +360,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
-      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "waiting",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Ah"];
       g.seats[0].handResult = 100;
       g.seats[0].winningCards = ["As", "Ah", "Ac", "Ad", "Kh"];
@@ -298,7 +383,12 @@ describe("Player View", function () {
       Actions.sit(g, { seat: 0, player: p1 });
       Actions.sit(g, { seat: 1, player: p2 });
 
-      g.hand = { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 };
+      g.hand = {
+        phase: "waiting",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
       g.seats[0].cards = ["As", "Ah"];
       g.seats[0].handResult = 100;
       g.seats[0].winningCards = ["As", "Ah", "Ac", "Ad", "Kh"];
@@ -334,7 +424,7 @@ describe("Player View", function () {
       g.seats[2].bet = 50; // BB posted
       g.hand = {
         phase: "preflop",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 50, // Big blind amount
         actingSeat: 0, // UTG (button in 3-handed) to act
         lastRaiser: 0,
@@ -375,7 +465,7 @@ describe("Player View", function () {
       g.seats[1].bet = 50; // BB posted 50
       g.hand = {
         phase: "preflop",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 50,
         actingSeat: 1, // BB to act (their option)
         lastRaiser: 0,

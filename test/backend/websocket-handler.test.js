@@ -77,7 +77,7 @@ describe("websocket-handler", () => {
 
       game.hand = {
         phase: "river",
-        pot: 800,
+        collectedPot: 800,
         currentBet: 0,
         lastRaiser: -1,
         actingSeat: 0,
@@ -193,7 +193,7 @@ describe("websocket-handler", () => {
       game.seats[1] = Seat.occupied(opponent, 1000);
       game.hand = {
         phase: "flop",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         lastRaiser: -1,
         actingSeat: 1,
@@ -258,7 +258,7 @@ describe("websocket-handler", () => {
       game.seats[1] = Seat.occupied(opponent, 1000);
       game.hand = {
         phase: "flop",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         lastRaiser: -1,
         actingSeat: 1,

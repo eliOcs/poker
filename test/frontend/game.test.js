@@ -378,7 +378,7 @@ describe("phg-game", () => {
         const previousGame = createMockGameAtFlop();
         previousGame.hand = {
           phase: "flop",
-          pot: 20000,
+          collectedPot: 20000,
           currentBet: 0,
           actingSeat: 1,
         };
@@ -388,7 +388,7 @@ describe("phg-game", () => {
         const currentGame = createMockGameAtFlop();
         currentGame.hand = {
           phase: "flop",
-          pot: 20000,
+          collectedPot: 20000,
           currentBet: 0,
           actingSeat: 0,
         };
@@ -429,7 +429,7 @@ describe("phg-game", () => {
         const previousGame = createMockGameAtFlop();
         previousGame.hand = {
           phase: "flop",
-          pot: 20000,
+          collectedPot: 20000,
           currentBet: 0,
           actingSeat: 1,
         };
@@ -439,7 +439,7 @@ describe("phg-game", () => {
         const currentGame = createMockGameAtFlop();
         currentGame.hand = {
           phase: "flop",
-          pot: 20000,
+          collectedPot: 20000,
           currentBet: 0,
           actingSeat: 0,
         };

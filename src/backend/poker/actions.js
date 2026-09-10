@@ -508,7 +508,7 @@ export function startHand(game) {
 
   // Reset hand state
   game.hand.phase = "preflop";
-  game.hand.pot = 0;
+  game.hand.collectedPot = 0;
   game.hand.currentBet = 0;
   game.hand.lastRaiser = -1;
   game.hand.actingSeat = -1;
@@ -528,7 +528,7 @@ export function startHand(game) {
  */
 export function endHand(game) {
   game.hand.phase = "waiting";
-  game.hand.pot = 0;
+  game.hand.collectedPot = 0;
   game.hand.currentBet = 0;
   game.hand.lastRaiser = -1;
   game.hand.actingSeat = -1;

@@ -43,7 +43,7 @@ describe("card decision visibility", () => {
 
   for (const decision of ["muck", "timeout"]) {
     it(`lets an uncontested winner ${decision} without showing or losing the pot`, () => {
-      game.hand.pot = 200;
+      game.hand.collectedPot = 200;
       winUncontested();
       assertCardsVisibleToOthers(["??", "??"]);
       assert.ok(

@@ -255,6 +255,15 @@ Messages are JSON objects with an `action` field:
 
 ### Player Views
 
+The game state and hand view use `collectedPot` for chips collected from betting
+rounds and antes. The hand view also exposes `totalPot`: collected chips plus
+every current-round bet, including folded players. Both fields retain these
+meanings during collection; `totalPot` stays constant as bets move into
+`collectedPot`. The board displays `totalPot` during the collection animation
+and `collectedPot` otherwise. Pot-based bet presets use `totalPot`.
+For raises, they add the outstanding call before taking the pot fraction, then
+add the current bet to produce the street's raise-to amount.
+
 Each player receives a filtered view of the game state:
 
 - Their own cards are visible

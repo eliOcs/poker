@@ -45,7 +45,7 @@ describe("game history timing", () => {
 
     game.hand = {
       phase: "flop",
-      pot: 50,
+      collectedPot: 50,
       currentBet: 0,
       actingSeat: -1,
       lastRaiser: -1,

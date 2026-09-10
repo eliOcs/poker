@@ -59,18 +59,22 @@ export function gameViewWithToast(
 
 // Base game state factory
 export function createGame(overrides = {}) {
-  return {
+  const game = {
     running: true,
     button: 0,
     blinds: { ante: 0, small: 25, big: 50 },
     board: { cards: [] },
-    hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+    hand: { phase: "waiting", collectedPot: 0, currentBet: 0, actingSeat: -1 },
     countdown: null,
     winnerMessage: null,
     rankings: [],
     seats: emptyTableSeats(),
     ...overrides,
   };
+  game.hand.totalPot =
+    game.hand.collectedPot +
+    game.seats.reduce((sum, seat) => sum + (seat.empty ? 0 : seat.bet), 0);
+  return game;
 }
 
 // Player seat factory

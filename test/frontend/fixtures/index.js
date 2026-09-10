@@ -83,12 +83,12 @@ export const mockOccupiedSeatWithName = {
 };
 
 export function createMockGameState(overrides = {}) {
-  return {
+  const game = {
     running: true,
     button: 0,
     blinds: { ante: 500, small: 2500, big: 5000 }, // $5/$25/$50 in cents
     board: { cards: [] },
-    hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+    hand: { phase: "waiting", collectedPot: 0, currentBet: 0, actingSeat: -1 },
     seats: [
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 0 }] },
       { ...mockEmptySeat, actions: [{ action: "sit", seat: 1 }] },
@@ -100,11 +100,20 @@ export function createMockGameState(overrides = {}) {
     rankings: [],
     ...overrides,
   };
+  game.hand.totalPot =
+    game.hand.collectedPot +
+    game.seats.reduce((sum, seat) => sum + (seat.empty ? 0 : seat.bet), 0);
+  return game;
 }
 
 export function createMockGameWithPlayers() {
   return createMockGameState({
-    hand: { phase: "preflop", pot: 7500, currentBet: 5000, actingSeat: 0 }, // $75/$50 in cents
+    hand: {
+      phase: "preflop",
+      collectedPot: 7500,
+      currentBet: 5000,
+      actingSeat: 0,
+    }, // $75/$50 in cents
     board: { cards: [] },
     seats: [
       {
@@ -127,7 +136,7 @@ export function createMockGameWithPlayers() {
 
 export function createMockGameAtFlop() {
   return createMockGameState({
-    hand: { phase: "flop", pot: 20000, currentBet: 0, actingSeat: 0 }, // $200 in cents
+    hand: { phase: "flop", collectedPot: 20000, currentBet: 0, actingSeat: 0 }, // $200 in cents
     board: {
       cards: ["Ah", "Kd", "Qc"],
     },
@@ -201,7 +210,7 @@ export function createMockTournamentGameState(overrides = {}) {
 
 export function createMockGameWithWinner(winnerMessage) {
   return createMockGameState({
-    hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+    hand: { phase: "showdown", collectedPot: 0, currentBet: 0, actingSeat: -1 },
     board: {
       cards: ["Ah", "Kd", "Qc", "Js", "Th"],
     },

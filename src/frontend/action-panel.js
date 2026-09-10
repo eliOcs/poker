@@ -21,7 +21,8 @@ class ActionPanel extends LitElement {
       isWinner: { type: Boolean },
       canSit: { type: Boolean },
       buyIn: { type: Number },
-      pot: { type: Number },
+      totalPot: { type: Number },
+      phase: { type: String },
       preAction: { type: Object },
       currentBet: { type: Number },
       myBet: { type: Number },
@@ -45,7 +46,8 @@ class ActionPanel extends LitElement {
     this.isWinner = false;
     this.canSit = false;
     this.buyIn = 0;
-    this.pot = 0;
+    this.totalPot = 0;
+    this.phase = "preflop";
     this.preAction = undefined;
     this.currentBet = 0;
     this.myBet = 0;

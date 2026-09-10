@@ -477,7 +477,8 @@
   }
 
   :scope[data-layout="portrait"] phg-board {
-    top: 71.8%;
+    /* Leave room above the board for a full collected chip stack. */
+    top: 72.8%;
   }
 
   :scope[data-layout="portrait"] phg-board:has(.tournament-winner-overlay) {

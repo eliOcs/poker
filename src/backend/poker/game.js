@@ -51,7 +51,7 @@ export {
 /**
  * @typedef {object} Hand
  * @property {Phase} phase - Current phase of the hand
- * @property {Cents} pot - Total chips in pot
+ * @property {Cents} collectedPot - Chips collected from betting rounds and antes
  * @property {Cents} currentBet - Highest bet in current round
  * @property {number} lastRaiser - Seat index of last raiser (-1 if none)
  * @property {number} actingSeat - Seat index of player to act (-1 if none)
@@ -149,7 +149,7 @@ export {
 export function createHand() {
   return {
     phase: "waiting",
-    pot: 0,
+    collectedPot: 0,
     currentBet: 0,
     lastRaiser: -1,
     actingSeat: -1,

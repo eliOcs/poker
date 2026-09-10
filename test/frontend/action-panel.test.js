@@ -167,7 +167,7 @@ describe("phg-action-panel", () => {
       element.game = createMockGameState({
         hand: {
           phase: "turn",
-          pot: 300000,
+          collectedPot: 300000,
           currentBet: 300000,
           actingSeat: 0,
         },
@@ -222,7 +222,12 @@ describe("phg-action-panel", () => {
 
     it('renders dedicated "Rebuy" and "Leave" decision actions', async () => {
       element.game = createMockGameState({
-        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "waiting",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -290,7 +295,7 @@ describe("phg-action-panel", () => {
     });
 
     it("renders bet preset buttons with pot-based labels when pot > 0", async () => {
-      element.game = createMockGameAtFlop(); // pot: 20000
+      element.game = createMockGameAtFlop(); // collectedPot: 20000
       await element.updateComplete;
 
       const actionPanel = element.querySelector("phg-action-panel");
@@ -304,7 +309,12 @@ describe("phg-action-panel", () => {
 
     it("renders BB-based preset labels when pot is 0", async () => {
       element.game = createMockGameState({
-        hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 0,
+          currentBet: 5000,
+          actingSeat: 0,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -333,7 +343,12 @@ describe("phg-action-panel", () => {
 
     it("disables ½ Pot and Pot presets when they exceed the player stack", async () => {
       element.game = createMockGameState({
-        hand: { phase: "flop", pot: 300000, currentBet: 0, actingSeat: 0 },
+        hand: {
+          phase: "flop",
+          collectedPot: 300000,
+          currentBet: 0,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "Qc"] },
         seats: [
           {
@@ -364,7 +379,12 @@ describe("phg-action-panel", () => {
 
     it("renders show and muck buttons with card components", async () => {
       element.game = createMockGameState({
-        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "waiting",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -414,7 +434,12 @@ describe("phg-action-panel", () => {
 
     it("keeps Call the clock in a game-action row separate from social actions", async () => {
       element.game = createMockGameState({
-        hand: { phase: "flop", pot: 10000, currentBet: 5000, actingSeat: 1 },
+        hand: {
+          phase: "flop",
+          collectedPot: 10000,
+          currentBet: 5000,
+          actingSeat: 1,
+        },
         seats: [
           {
             ...mockOccupiedSeat,
@@ -462,7 +487,12 @@ describe("phg-action-panel", () => {
 
     it("keeps Start Game in a game-action row separate from social actions", async () => {
       element.game = createMockGameState({
-        hand: { phase: "waiting", pot: 0, currentBet: 0, actingSeat: -1 },
+        hand: {
+          phase: "waiting",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: -1,
+        },
         seats: [
           {
             ...mockOccupiedSeat,

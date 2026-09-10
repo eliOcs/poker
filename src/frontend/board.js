@@ -113,8 +113,17 @@ class Board extends LitElement {
     `;
   }
 
+  get displayedPot() {
+    // Live tables display incoming chips during collection. History views
+    // supply only a total and keep displaying that amount.
+    return this.hand?.collectingBets
+      ? this.hand.totalPot
+      : (this.hand?.collectedPot ?? this.hand?.totalPot ?? 0);
+  }
+
   renderDefaultView(cards) {
     const phase = this.hand?.phase ?? "Waiting";
+    const displayedPot = this.displayedPot;
     const currentPlayer = this.seats?.find(
       (seat) => !seat.empty && seat.isCurrentPlayer && !seat.folded,
     );
@@ -125,10 +134,10 @@ class Board extends LitElement {
         ${currentPlayer?.handRank
           ? html`<div class="current-hand-rank">${currentPlayer.handRank}</div>`
           : ""}
-        ${this.hand && this.hand.pot > 0
+        ${displayedPot > 0
           ? html`<div class="pot">
-              <phg-chips .amount=${this.hand.pot}></phg-chips>
-              Pot: ${formatCurrency(this.hand.pot)}
+              <phg-chips .amount=${displayedPot}></phg-chips>
+              ${formatCurrency(displayedPot)}
             </div>`
           : ""}
       </div>

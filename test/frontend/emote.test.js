@@ -22,7 +22,7 @@ function createEmoteGame() {
   return createMockGameState({
     hand: {
       phase: "preflop",
-      pot: 7500,
+      collectedPot: 7500,
       currentBet: 5000,
       actingSeat: 1,
     },

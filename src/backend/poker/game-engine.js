@@ -29,13 +29,13 @@ import {
 
 /**
  * @param {Game} game
- * @returns {{ handNumber: number, phase: string, pot: number, actingSeat: number, currentBet: number }}
+ * @returns {{ handNumber: number, phase: string, collectedPot: number, actingSeat: number, currentBet: number }}
  */
 export function gameStateSnapshot(game) {
   return {
     handNumber: game.handNumber,
     phase: game.hand.phase,
-    pot: game.hand.pot,
+    collectedPot: game.hand.collectedPot,
     actingSeat: game.hand.actingSeat,
     currentBet: game.hand.currentBet,
   };

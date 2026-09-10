@@ -77,7 +77,7 @@ function crowdedTable(size, showdown = false) {
       board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
       hand: {
         phase: showdown ? "showdown" : "river",
-        pot: size * 15000,
+        collectedPot: size * 15000,
         currentBet: showdown ? 0 : 12575,
         actingSeat: showdown ? -1 : hero,
         clockRemaining: showdown ? undefined : 18,

@@ -202,11 +202,11 @@ describe("betting", () => {
       game.seats[0].bet = 50;
       game.seats[2].bet = 100;
       game.seats[4].bet = 100;
-      game.hand.pot = 0;
+      game.hand.collectedPot = 0;
 
       Betting.collectBets(game);
 
-      assert.equal(game.hand.pot, 250);
+      assert.equal(game.hand.collectedPot, 250);
     });
 
     it("should update totalInvested", () => {

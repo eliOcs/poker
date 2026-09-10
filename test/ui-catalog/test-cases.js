@@ -169,7 +169,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "preflop", pot: 75, currentBet: 50, actingSeat: 0 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 75,
+          currentBet: 50,
+          actingSeat: 0,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -204,7 +209,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "preflop", pot: 125, currentBet: 50, actingSeat: 2 },
+        hand: {
+          phase: "preflop",
+          collectedPot: 125,
+          currentBet: 50,
+          actingSeat: 2,
+        },
         seats: [
           createPlayer("You", {
             isCurrentPlayer: true,
@@ -237,7 +247,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "flop", pot: 150, currentBet: 0, actingSeat: 0 },
+        hand: {
+          phase: "flop",
+          collectedPot: 150,
+          currentBet: 0,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kd", "7c"] },
         seats: [
           createPlayer("You", {
@@ -261,7 +276,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "flop", pot: 350, currentBet: 200, actingSeat: 0 },
+        hand: {
+          phase: "flop",
+          collectedPot: 350,
+          currentBet: 200,
+          actingSeat: 0,
+        },
         board: { cards: ["Th", "Jh", "3c"] },
         seats: [
           createPlayer("You", {
@@ -292,7 +312,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 0,
-        hand: { phase: "turn", pot: 600, currentBet: 0, actingSeat: 1 },
+        hand: {
+          phase: "turn",
+          collectedPot: 600,
+          currentBet: 0,
+          actingSeat: 1,
+        },
         board: { cards: ["Ah", "Kd", "7c", "2s"] },
         seats: [
           createPlayer("You", {
@@ -317,7 +342,12 @@ const GAME_TEST_CASES = {
     gameView(
       createGame({
         button: 1,
-        hand: { phase: "river", pot: 2400, currentBet: 1200, actingSeat: 0 },
+        hand: {
+          phase: "river",
+          collectedPot: 2400,
+          currentBet: 1200,
+          actingSeat: 0,
+        },
         board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
         seats: [
           createPlayer("You", {
@@ -337,73 +367,6 @@ const GAME_TEST_CASES = {
             bet: 1200,
             cards: ["??", "??"],
             lastAction: "Bet $1200",
-          }),
-          ...emptySeats(7),
-        ],
-      }),
-    ),
-
-  // === SHOWDOWN STATES ===
-  "game-showdown-you-win": () => {
-    const winningCards = ["Ah", "Kh", "Qh", "Jh", "Th"];
-    return gameView(
-      createGame({
-        button: 1,
-        hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
-        board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
-        winnerMessage: {
-          playerName: "You",
-          handRank: "Royal Flush",
-          amount: 4800,
-        },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 9800,
-            cards: ["Jh", "Th"],
-            handResult: 4800,
-            handRank: "Royal Flush",
-            winningCards,
-            actions: [{ action: "emote" }, { action: "chat" }],
-          }),
-          createPlayer("Alice", {
-            stack: 200,
-            cards: ["As", "Ad"],
-            handResult: -4800,
-            handRank: "Three of a Kind, Aces",
-          }),
-          ...emptySeats(7),
-        ],
-      }),
-    );
-  },
-
-  "game-showdown-you-lose": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
-        board: { cards: ["Ah", "Ac", "Kd", "5c", "2d"] },
-        winnerMessage: {
-          playerName: "Alice",
-          handRank: "Four of a Kind, Aces",
-          amount: 4000,
-        },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 1000,
-            cards: ["Ks", "Kc"],
-            handResult: -2000,
-            handRank: "Full House, Kings over Aces",
-            actions: [{ action: "emote" }, { action: "chat" }],
-          }),
-          createPlayer("Alice", {
-            stack: 7000,
-            cards: ["As", "Ad"],
-            handResult: 4000,
-            handRank: "Four of a Kind, Aces",
-            winningCards: ["Ah", "Ac", "As", "Ad", "Kd"],
           }),
           ...emptySeats(7),
         ],

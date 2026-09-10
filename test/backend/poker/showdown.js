@@ -311,7 +311,7 @@ describe("showdown", () => {
         ...Seat.occupied({ id: "p2" }, 100),
         bet: 50,
       };
-      game.hand.pot = 100;
+      game.hand.collectedPot = 100;
 
       const result = Showdown.awardToLastPlayer(game);
 
@@ -334,7 +334,7 @@ describe("showdown", () => {
         totalInvested: 0, // Will become 50 after bet collection
         lastAction: "bet",
       };
-      game.hand.pot = 0;
+      game.hand.collectedPot = 0;
 
       Showdown.awardToLastPlayer(game);
 
@@ -356,7 +356,7 @@ describe("showdown", () => {
         bet: 50,
         lastAction: "bet",
       };
-      game.hand.pot = 0;
+      game.hand.collectedPot = 0;
 
       Showdown.awardToLastPlayer(game);
 
@@ -381,7 +381,7 @@ describe("showdown", () => {
         totalInvested: 0,
         bet: 0,
       };
-      game.hand.pot = 0;
+      game.hand.collectedPot = 0;
 
       Showdown.awardToLastPlayer(game);
 
@@ -404,7 +404,7 @@ describe("showdown", () => {
         cards: ["Qd", "Jc"],
         bet: 50,
       };
-      game.hand.pot = 0;
+      game.hand.collectedPot = 0;
 
       Showdown.awardToLastPlayer(game);
 
@@ -431,7 +431,7 @@ describe("showdown", () => {
         lastAction: "bet",
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       // Run the showdown generator to completion
       drainGenerator(Showdown.showdown(game));
@@ -458,7 +458,7 @@ describe("showdown", () => {
         lastAction: "bet",
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 
@@ -486,7 +486,7 @@ describe("showdown", () => {
         folded: true,
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 
@@ -511,7 +511,7 @@ describe("showdown", () => {
         totalInvested: 100,
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 
@@ -537,7 +537,7 @@ describe("showdown", () => {
         totalInvested: 100,
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 
@@ -560,7 +560,7 @@ describe("showdown", () => {
         totalInvested: 100,
       };
       game.board.cards = ["Ah", "Kh", "Qh", "Jc", "2d"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 
@@ -589,7 +589,7 @@ describe("showdown", () => {
         totalInvested: 0,
       };
       game.board.cards = ["Ac", "Ad", "Kh", "Qh", "Jh"];
-      game.hand = { phase: "river", pot: 0, currentBet: 0, actingSeat: -1 };
+      game.hand.phase = "river";
 
       drainGenerator(Showdown.showdown(game));
 

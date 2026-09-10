@@ -172,7 +172,7 @@ export function runShowdown(game) {
 function collectRemainingBets(game) {
   for (const seat of game.seats) {
     if (!seat.empty) {
-      game.hand.pot += seat.bet;
+      game.hand.collectedPot += seat.bet;
       seat.totalInvested += seat.bet;
       seat.bet = 0;
     }
@@ -287,7 +287,7 @@ export function awardToLastPlayer(game) {
   }
 
   // Collect all bets into pot
-  let totalPot = game.hand.pot;
+  let totalPot = game.hand.collectedPot;
   for (const seat of game.seats) {
     if (!seat.empty) {
       totalPot += seat.bet;
@@ -300,7 +300,7 @@ export function awardToLastPlayer(game) {
   const winnerSeat = /** @type {OccupiedSeat} */ (game.seats[winner]);
   winnerSeat.stack += totalPot;
   winnerSeat.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
-  game.hand.pot = 0;
+  game.hand.collectedPot = 0;
 
   // Set hand results and clear lastAction
   const winnings = new Map([[winner, totalPot]]);

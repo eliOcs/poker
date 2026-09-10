@@ -354,7 +354,7 @@ export class History extends LitElement {
   renderTableState() {
     const view = getCurrentReplayStep(this).view;
 
-    const hand = { pot: view.pot, phase: view.board.phase };
+    const hand = { totalPot: view.pot, phase: view.board.phase };
 
     const tableSize = view.seats.length;
 

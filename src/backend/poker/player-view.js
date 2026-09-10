@@ -185,7 +185,8 @@ import { HIDDEN, getRank } from "./deck.js";
 /**
  * @typedef {object} ViewHand
  * @property {string} phase
- * @property {Cents} pot
+ * @property {Cents} collectedPot - Chips collected from betting rounds and antes
+ * @property {Cents} totalPot - Collected chips plus all current-round bets
  * @property {Cents} currentBet
  * @property {number} actingSeat
  * @property {number} actingTicks - Ticks the current player has been acting
@@ -847,6 +848,9 @@ export default function playerView(game, player) {
   const actionClock = decisionClock ?? game.actionClock;
 
   const tournament = createTournamentView(game);
+  const totalPot =
+    game.hand.collectedPot +
+    game.seats.reduce((sum, seat) => sum + (seat.empty ? 0 : seat.bet), 0);
 
   return {
     running: game.running,
@@ -856,10 +860,8 @@ export default function playerView(game, player) {
     board: game.board,
     hand: {
       phase: game.hand.phase,
-      pot: game.collectingBets?.active
-        ? game.hand.pot +
-          game.seats.reduce((sum, s) => sum + (s.empty ? 0 : s.bet), 0)
-        : game.hand.pot,
+      collectedPot: game.hand.collectedPot,
+      totalPot,
       currentBet: game.hand.currentBet,
       actingSeat: game.hand.actingSeat,
       actingTicks: actionClock.waitTicks,

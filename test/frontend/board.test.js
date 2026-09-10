@@ -65,12 +65,48 @@ describe("phg-board", () => {
     const board = element.querySelector("phg-board");
     await board.updateComplete;
     const pot = board.querySelector(".pot");
-    expect(pot.textContent).to.include("200");
+    expect(pot.textContent.trim()).to.equal("$200");
+  });
+
+  it("displays incoming chips only during collection without changing the hand amounts", async () => {
+    const game = createMockGameAtFlop();
+    game.hand.totalPot = 30000;
+    game.seats[0].bet = 5000;
+    game.seats[1].bet = 5000;
+    element.game = game;
+    await element.updateComplete;
+    const board = element.querySelector("phg-board");
+    await board.updateComplete;
+    expect(board.querySelector(".pot").textContent.trim()).to.equal("$200");
+
+    element.game = {
+      ...game,
+      hand: { ...game.hand, collectingBets: true },
+    };
+    await element.updateComplete;
+    await board.updateComplete;
+    expect(board.querySelector(".pot").textContent.trim()).to.equal("$300");
+    expect(element.game.hand.collectedPot).to.equal(20000);
+    expect(element.game.hand.totalPot).to.equal(30000);
+
+    element.game = {
+      ...game,
+      hand: { ...game.hand, collectedPot: 30000, collectingBets: false },
+      seats: game.seats.map((seat) => ({ ...seat, bet: 0 })),
+    };
+    await element.updateComplete;
+    await board.updateComplete;
+    expect(board.querySelector(".pot").textContent.trim()).to.equal("$300");
   });
 
   it("hides pot amount when pot is 0", async () => {
     element.game = createMockGameState({
-      hand: { phase: "preflop", pot: 0, currentBet: 5000, actingSeat: 0 },
+      hand: {
+        phase: "preflop",
+        collectedPot: 0,
+        currentBet: 5000,
+        actingSeat: 0,
+      },
     });
     await element.updateComplete;
 

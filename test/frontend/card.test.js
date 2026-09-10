@@ -88,7 +88,12 @@ describe("phg-card", () => {
       board: {
         cards: ["As", "2h", "Td", "Jc", "Ks"],
       },
-      hand: { phase: "river", pot: 100, currentBet: 0, actingSeat: -1 },
+      hand: {
+        phase: "river",
+        collectedPot: 100,
+        currentBet: 0,
+        actingSeat: -1,
+      },
     });
     element.game = gameWithRanks;
     await element.updateComplete;
@@ -111,7 +116,12 @@ describe("phg-card", () => {
   it("applies winning class when winning prop is true", async () => {
     const winningCards = ["As", "Ah", "Ac", "Kd", "Qc"];
     const gameWithWinner = createMockGameState({
-      hand: { phase: "showdown", pot: 0, currentBet: 0, actingSeat: -1 },
+      hand: {
+        phase: "showdown",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      },
       board: {
         cards: ["Ac", "Kd", "Qc", "Js", "Th"],
       },

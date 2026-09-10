@@ -24,7 +24,7 @@ describe("Player View", function () {
       // Simulate a hand in progress where seat 1 is acting
       g.hand = {
         phase: "flop",
-        pot: 10,
+        collectedPot: 10,
         currentBet: 0,
         actingSeat: 1,
         lastRaiser: -1,
@@ -53,7 +53,7 @@ describe("Player View", function () {
       // Simulate a hand in progress where seat 1 is acting
       g.hand = {
         phase: "flop",
-        pot: 10,
+        collectedPot: 10,
         currentBet: 0,
         actingSeat: 1,
         lastRaiser: -1,
@@ -85,7 +85,7 @@ describe("Player View", function () {
       // Simulate a hand where seat 1 started acting recently
       g.hand = {
         phase: "flop",
-        pot: 10,
+        collectedPot: 10,
         currentBet: 0,
         actingSeat: 1,
         lastRaiser: -1,
@@ -117,7 +117,7 @@ describe("Player View", function () {
       // Simulate a hand where clock is already called
       g.hand = {
         phase: "flop",
-        pot: 10,
+        collectedPot: 10,
         currentBet: 0,
         actingSeat: 1,
         lastRaiser: -1,
@@ -149,7 +149,7 @@ describe("Player View", function () {
       // Waiting phase - no one is acting
       g.hand = {
         phase: "waiting",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         actingSeat: -1,
         lastRaiser: -1,
@@ -219,7 +219,7 @@ describe("Player View", function () {
 
       g.hand = {
         phase: "flop",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         actingSeat: 1,
         lastRaiser: -1,
@@ -278,7 +278,7 @@ describe("Player View", function () {
 
       g.hand = {
         phase: "waiting",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         actingSeat: -1,
         lastRaiser: -1,
@@ -304,7 +304,7 @@ describe("Player View", function () {
 
       g.hand = {
         phase: "waiting",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         actingSeat: -1,
         lastRaiser: -1,
@@ -339,7 +339,7 @@ describe("Player View", function () {
 
       g.hand = {
         phase: "waiting",
-        pot: 0,
+        collectedPot: 0,
         currentBet: 0,
         actingSeat: -1,
       };
