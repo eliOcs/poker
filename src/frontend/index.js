@@ -404,7 +404,10 @@ export class Game extends LitElement {
     const { seatIndex, actions, bustedPosition, isWinner } =
       this.getMySeatInfo();
     const isSeated = this.isPlayerSeated();
-    const canSit = !isSeated && this.game.seats.some((s) => s.empty);
+    const canSit =
+      this.gameKind !== "mtt" &&
+      !isSeated &&
+      this.game.seats.some((s) => s.empty);
 
     return html`
       ${renderDrawer(this)}

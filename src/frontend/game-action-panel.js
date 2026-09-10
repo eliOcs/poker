@@ -1,4 +1,19 @@
 import { html } from "lit";
+import { getMttPath } from "../shared/routes.js";
+
+function registerTournament(host) {
+  host.dispatchEvent(
+    new CustomEvent(host.user?.email ? "mtt-action" : "navigate", {
+      detail: host.user?.email
+        ? { action: "register" }
+        : {
+            path: `${getMttPath(host.tournamentId)}?action=register`,
+            allowMttLobby: true,
+          },
+      bubbles: true,
+    }),
+  );
+}
 
 /**
  * @param {object} game - The game state object
@@ -40,7 +55,7 @@ function getPreActionProps(game, seatIndex) {
  * @param {boolean} isWinner
  * @returns {import("lit").TemplateResult}
  */
-export function renderActionPanel(
+function renderTableActionPanel(
   host,
   actions,
   seatIndex,
@@ -72,4 +87,48 @@ export function renderActionPanel(
     @open-emote-picker=${host.openEmotePicker}
     @open-chat=${host.openChat}
   ></phg-action-panel>`;
+}
+
+function renderRegistration(host) {
+  if (!host.mttTournament?.actions?.canRegister) return html``;
+  return html`<div class="waiting-panel">
+    <button
+      type="button"
+      class="button button--primary"
+      ?disabled=${host.actionPending}
+      @click=${() => {
+        registerTournament(host);
+      }}
+    >
+      ${host.mttTournament.status === "running" ? "Late Register" : "Register"}
+    </button>
+  </div>`;
+}
+
+/** @type {typeof renderTableActionPanel} */
+export function renderActionPanel(
+  host,
+  actions,
+  seatIndex,
+  canSit,
+  bustedPosition,
+  isWinner,
+) {
+  if (
+    host.gameKind === "mtt" &&
+    seatIndex === -1 &&
+    !bustedPosition &&
+    !isWinner &&
+    host.connectionStatus === "connected"
+  ) {
+    return renderRegistration(host);
+  }
+  return renderTableActionPanel(
+    host,
+    actions,
+    seatIndex,
+    canSit,
+    bustedPosition,
+    isWinner,
+  );
 }

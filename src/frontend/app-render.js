@@ -40,7 +40,8 @@ export function renderGameView(app, liveRoute) {
       .tournamentFinishPosition=${app._mttView?.currentPlayer?.finishPosition ??
       undefined}
       .connectionStatus=${app.gameConnectionStatus}
-      .actionPending=${app.gameActionPending}
+      .actionPending=${!!app.gameActionPending ||
+      (liveRoute.kind === "mtt_table" && app._mttActionPending)}
       .game=${app.game}
       .socialAction=${app.socialAction}
       .user=${app.user}

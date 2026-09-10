@@ -68,6 +68,52 @@ describe("phg-game", () => {
   });
 
   describe("event handling", () => {
+    it("uses MTT registration eligibility instead of empty seats", async () => {
+      element.game = createMockGameState();
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.user = { email: "player@example.com", settings: {} };
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        actions: { canRegister: true },
+      };
+      await element.updateComplete;
+
+      expect(findButtonByText(element, "Sit")).to.be.null;
+      const registration = oneEvent(element, "mtt-action");
+      findButtonByText(element, "Late Register").click();
+      expect((await registration).detail).to.deep.equal({ action: "register" });
+
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        level: 10,
+        actions: { canRegister: false },
+      };
+      await element.updateComplete;
+      expect(findButtonByText(element, "Sit")).to.be.null;
+      expect(findButtonByText(element, "Register")).to.be.null;
+    });
+
+    it("routes MTT guest registration through the lobby sign-up flow", async () => {
+      element.game = createMockGameState();
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        actions: { canRegister: true },
+      };
+      await element.updateComplete;
+      const navigation = oneEvent(element, "navigate");
+      findButtonByText(element, "Late Register").click();
+      expect((await navigation).detail).to.deep.equal({
+        path: "/mtt/mtt123?action=register",
+        allowMttLobby: true,
+      });
+    });
+
     it("emits only one game-action event per action (no double-send)", async () => {
       element.game = createMockGameState();
       await element.updateComplete;
