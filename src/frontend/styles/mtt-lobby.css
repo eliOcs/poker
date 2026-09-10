@@ -1,7 +1,6 @@
 @scope (phg-mtt-lobby) {
   :scope {
     --data-table-cell-padding: 10px 12px;
-    --data-table-header-border-color: var(--color-bg-dark);
     --data-table-min-width: 620px;
     --shell-content-width: 1120px;
 
@@ -168,6 +167,10 @@
 
   .negative {
     color: var(--color-error);
+  }
+
+  td {
+    border-bottom: 0;
   }
 
   td strong {
