@@ -51,10 +51,10 @@ export function renderSignInEmail({ appOrigin, signInUrl, expiresInMinutes }) {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
             <tr>
               <td align="center">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;max-width:560px;background:${PANEL_BG};border:3px solid ${BORDER};">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;table-layout:fixed;max-width:560px;background:${PANEL_BG};border:3px solid ${BORDER};">
                   <tr>
                     <td style="padding:32px 32px 20px;text-align:center;">
-                      <img src="${logoUrl}" alt="Pluton Poker" width="256" style="display:block;margin:0 auto;height:auto;" />
+                      <img src="${logoUrl}" alt="Pluton Poker" width="256" style="display:block;max-width:100%;margin:0 auto;height:auto;" />
                     </td>
                   </tr>
                   <tr>
