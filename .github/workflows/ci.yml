@@ -7,6 +7,24 @@ on:
     branches: [master]
 
 jobs:
+  ui-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+
+      - name: Run canonical UI catalog tests
+        run: bash scripts/test-ui-catalog-docker.sh
+
+      - name: Upload visual test artifacts
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: ui-catalog-failure-artifacts
+          path: test-results/
+          retention-days: 7
+
   lint-and-test:
     runs-on: ubuntu-latest
 

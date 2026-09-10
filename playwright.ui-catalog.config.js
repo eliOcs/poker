@@ -5,6 +5,7 @@ const UI_CATALOG_WORKERS = Number(process.env.UI_CATALOG_WORKERS || 4);
 
 export default defineConfig({
   testDir: "./test/ui-catalog",
+  outputDir: "./test-results/ui-catalog",
   testMatch: "*.test.js",
   timeout: 5000,
   retries: 0,
@@ -15,21 +16,17 @@ export default defineConfig({
   // Use platform-agnostic snapshot names to share between Mac and Linux
   snapshotPathTemplate:
     "{snapshotDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}",
-  expect: {
-    toHaveScreenshot: {
-      // Higher threshold to tolerate cross-platform font rendering differences
-      maxDiffPixelRatio: 0.03,
-    },
-  },
-
   use: {
     baseURL: `http://localhost:${UI_CATALOG_PORT}`,
     screenshot: "only-on-failure",
+    locale: "en-US",
+    timezoneId: "UTC",
   },
 
   projects: [
     {
       name: "desktop",
+      testIgnore: "**/table-landscape.test.js",
       use: devices["Desktop Chrome"],
     },
     {

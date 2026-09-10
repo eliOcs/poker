@@ -1,0 +1,16 @@
+FROM node:24-bookworm-slim AS node
+FROM mcr.microsoft.com/playwright:v1.58.2-noble
+
+# Keep the browser image aligned with @playwright/test and use the app's runtime.
+COPY --from=node /usr/local/ /usr/local/
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY src ./src
+COPY test/ui-catalog ./test/ui-catalog
+COPY test/frontend/fixtures ./test/frontend/fixtures
+COPY playwright.ui-catalog.config.js ./
+
+CMD ["npm", "run", "test:ui-catalog"]

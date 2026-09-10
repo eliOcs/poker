@@ -6,6 +6,7 @@ export function mttLobbyView({
   tournament = null,
   loading = false,
   error = "",
+  actionPending = false,
 } = {}) {
   return renderShellPageView(
     {
@@ -15,7 +16,7 @@ export function mttLobbyView({
       _mttView: tournament,
       _mttLoading: loading,
       _mttError: error,
-      _mttActionPending: false,
+      _mttActionPending: actionPending,
     },
     "mtt_lobby",
   );

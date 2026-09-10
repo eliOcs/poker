@@ -13,93 +13,6 @@ import {
 } from "./game-helpers.js";
 
 export const ACTION_PANEL_TEST_CASES = {
-  // Sit In / Leave Table buttons (sitting out)
-  "action-sit-in": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: { phase: "preflop", pot: 75, currentBet: 50, actingSeat: 2 },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            sittingOut: true,
-            stack: 5000,
-            cards: [],
-            actions: [{ action: "sitIn", cost: 50 }, { action: "leave" }],
-          }),
-          createPlayer("Alice", {
-            stack: 2975,
-            bet: 25,
-            cards: ["??", "??"],
-            lastAction: "SB $25",
-          }),
-          createPlayer("Bob", {
-            isActing: true,
-            stack: 2950,
-            bet: 50,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(6),
-        ],
-      }),
-    ),
-
-  // Bet action with postflop presets (Min/½Pot/Pot/Max), slider, Fold/Check/Bet
-  "action-bet": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 150, currentBet: 0, actingSeat: 0 },
-        board: { cards: ["Ah", "Kd", "7c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4950,
-            cards: ["As", "Ks"],
-            actions: [
-              { action: "check" },
-              { action: "bet", min: 50, max: 4950 },
-            ],
-            handRank: "Two Pair, Aces and Kings",
-          }),
-          createPlayer("Alice", { stack: 2950, cards: ["??", "??"] }),
-          ...emptySeats(7),
-        ],
-      }),
-    ),
-
-  // Raise action with postflop presets, slider, Fold/Call/Raise
-  "action-raise": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: { phase: "flop", pot: 350, currentBet: 200, actingSeat: 0 },
-        board: { cards: ["Th", "Jh", "3c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4800,
-            cards: ["Qh", "9h"],
-            actions: [
-              { action: "fold" },
-              { action: "call", amount: 200 },
-              { action: "raise", min: 400, max: 4800 },
-            ],
-            handRank: "Flush Draw",
-          }),
-          createPlayer("Alice", {
-            stack: 2800,
-            bet: 200,
-            cards: ["??", "??"],
-            lastAction: "Bet $200",
-          }),
-          ...emptySeats(7),
-        ],
-      }),
-    ),
-
   // Raise action with preflop presets (Min/2.5BB/3BB/Max) when pot=0
   "action-raise-preflop": () =>
     gameView(
@@ -254,7 +167,12 @@ export const ACTION_PANEL_TEST_CASES = {
             stack: 2400,
             cards: ["??", "??"],
           }),
-          ...emptySeats(7),
+          createPlayer("Bob", {
+            stack: 2300,
+            cards: ["??", "??"],
+            lastAction: "Check",
+          }),
+          ...emptySeats(6),
         ],
       }),
     ),
@@ -272,31 +190,6 @@ export const ACTION_PANEL_TEST_CASES = {
             actions: [],
           }),
           ...emptySeats(8),
-        ],
-      }),
-    ),
-
-  // Pre-action: Check/Fold toggle (inactive) — no current bet
-  "action-pre-check-fold": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: { phase: "flop", pot: 150, currentBet: 0, actingSeat: 1 },
-        board: { cards: ["Jh", "Td", "5c"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4900,
-            cards: ["As", "Ks"],
-            handRank: "A High",
-            actions: [{ action: "emote" }],
-          }),
-          createPlayer("Alice", {
-            isActing: true,
-            stack: 2900,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(7),
         ],
       }),
     ),

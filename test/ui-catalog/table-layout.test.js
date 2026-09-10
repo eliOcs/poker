@@ -367,11 +367,3 @@ test.describe("table clearance", () => {
     for (const delta of error) expect(Math.abs(delta)).toBeLessThan(1);
   });
 });
-
-for (const id of TABLE_SIZE_IDS) {
-  test(`${id} landscape`, async ({ page }) => {
-    await page.setViewportSize({ width: 844, height: 390 });
-    await openTable(page, id);
-    await expect(page).toHaveScreenshot(`${id}-landscape.png`);
-  });
-}

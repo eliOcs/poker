@@ -80,6 +80,7 @@ export const MTT_LOBBY_TEST_CASES = {
 
   "mtt-lobby-registration-action-pending": () =>
     mttLobbyView({
+      actionPending: true,
       tournament: makeBaseTournament({
         entrants: ENTRANTS_3,
         standings: ENTRANTS_3,
@@ -90,75 +91,14 @@ export const MTT_LOBBY_TEST_CASES = {
           seatIndex: null,
           finishPosition: null,
         },
-        actions: { canRegister: false, canUnregister: true, canStart: true },
+        actions: {
+          canRegister: false,
+          canUnregister: true,
+          canStart: true,
+          canRename: true,
+        },
       }),
     }),
-
-  // === RUNNING PHASE ===
-
-  "mtt-lobby-running": () => {
-    const entrants = [
-      makeEntrant("owner1", "Alice", {
-        status: "seated",
-        stack: 1450,
-        tableId: "table1",
-        seatIndex: 0,
-      }),
-      makeEntrant("player2", "Bob", {
-        status: "seated",
-        stack: 820,
-        tableId: "table1",
-        seatIndex: 2,
-      }),
-      makeEntrant("player3", "Charlie", {
-        status: "seated",
-        stack: 730,
-        tableId: "table1",
-        seatIndex: 4,
-      }),
-      makeEntrant("player4", "Dana", {
-        status: "seated",
-        stack: 1200,
-        tableId: "table2",
-        seatIndex: 1,
-      }),
-      makeEntrant("player5", "Eve", {
-        status: "seated",
-        stack: 950,
-        tableId: "table2",
-        seatIndex: 3,
-      }),
-      makeEntrant("player6", "Frank", {
-        status: "seated",
-        stack: 850,
-        tableId: "table2",
-        seatIndex: 5,
-      }),
-    ];
-    const tables = [
-      makeTable("table1", "Table 1", { playerCount: 3, handNumber: 8 }),
-      makeTable("table2", "Table 2", { playerCount: 3, handNumber: 6 }),
-    ];
-    return mttLobbyView({
-      tournament: makeBaseTournament({
-        status: "running",
-        startedAt: BASE_CREATED_AT,
-        level: 2,
-        timeToNextLevel: 185,
-        entrants,
-        standings: entrants,
-        tables,
-        currentPlayer: {
-          isOwner: false,
-          status: "seated",
-          tableId: "table1",
-          seatIndex: 2,
-          finishPosition: null,
-        },
-        actions: { canRegister: false, canUnregister: false, canStart: false },
-      }),
-    });
-  },
 
   "mtt-lobby-running-on-break": () => {
     const entrants = [

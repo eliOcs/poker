@@ -1,0 +1,12 @@
+**
+!package.json
+!package-lock.json
+!playwright.ui-catalog.config.js
+!src
+!src/**
+!test
+!test/ui-catalog
+!test/ui-catalog/**
+!test/frontend
+!test/frontend/fixtures
+!test/frontend/fixtures/**

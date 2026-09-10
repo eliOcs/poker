@@ -315,7 +315,7 @@ const GAME_TEST_CASES = {
     ),
 
   // === RIVER STATES ===
-  "game-river-all-in-decision": () =>
+  "game-river-facing-bet": () =>
     gameView(
       createGame({
         button: 1,

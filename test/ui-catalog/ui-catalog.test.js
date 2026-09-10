@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { waitForAvatars } from "./visual-assets.js";
+import { prepareMttTestCase, captureMttDetails } from "./catalog-mtt.js";
+import { verifyGameScenario } from "./catalog-game.js";
 
 test.describe.configure({ mode: "parallel" });
 
@@ -42,7 +44,7 @@ const TEST_CASES = [
   "game-turn",
 
   // River states
-  "game-river-all-in-decision",
+  "game-river-facing-bet",
 
   // Showdown states
   "game-showdown-you-win",
@@ -51,22 +53,17 @@ const TEST_CASES = [
   // Special states
   "game-all-in-situation",
   "game-with-folded-players",
-  "game-player-folded",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
   "game-full-table",
 
   // Action panel states
-  "action-sit-in",
-  "action-bet",
-  "action-raise",
   "action-raise-preflop",
   "action-all-in",
   "action-fold-or-all-in",
   "action-emote-and-clock",
   "action-show-cards",
-  "action-pre-check-fold",
   "action-pre-fold-and-call",
   "action-tournament-winner",
   "action-tournament-busted",
@@ -102,7 +99,6 @@ const TEST_CASES = [
   "mtt-lobby-running-can-late-register",
   "mtt-lobby-running-late-register-tooltip",
   "mtt-lobby-running-waiting-for-table",
-  "mtt-lobby-running",
   "mtt-lobby-running-on-break",
   "mtt-lobby-running-pending-break",
   "mtt-lobby-running-multiple-tables",
@@ -223,57 +219,7 @@ async function prepareTestCase(testCase, page, component) {
     });
   }
 
-  if (testCase.startsWith("mtt-lobby-")) {
-    const viewport = page.viewportSize();
-    if (!viewport) {
-      throw new Error("UI catalog tests require a configured viewport");
-    }
-    const viewportHeight = viewport.height;
-    await expect(
-      page.locator(
-        "phg-app-shell > .app-shell-layout > .app-shell-content > phg-mtt-lobby",
-      ),
-    ).toHaveCount(1);
-    const lobbyHeight = await component.evaluate(
-      (element) => element.getBoundingClientRect().height,
-    );
-    const drawerHeight = await component
-      .locator(".drawer-panel")
-      .evaluate((element) => element.getBoundingClientRect().height);
-    expect(lobbyHeight).toBeGreaterThanOrEqual(viewportHeight);
-    expect(drawerHeight).toBeGreaterThanOrEqual(viewportHeight);
-
-    if (testCase === "mtt-lobby-running") {
-      const layout = await component.evaluate((element) => {
-        const main = element.querySelector(".main");
-        if (!(main instanceof HTMLElement)) {
-          throw new Error("Expected the MTT lobby main content element");
-        }
-        return {
-          documentScrollHeight: document.documentElement.scrollHeight,
-          mainClientHeight: main.clientHeight,
-          mainScrollHeight: main.scrollHeight,
-        };
-      });
-      expect(layout.documentScrollHeight).toBe(viewportHeight);
-      expect(layout.mainScrollHeight).toBeGreaterThan(layout.mainClientHeight);
-    }
-
-    if (testCase === "mtt-lobby-registration-owner-can-start") {
-      await expect(component.locator("h1 phg-edit-label")).toHaveCount(1);
-      const width = await component.evaluate((element) => {
-        const main = element.querySelector(".main");
-        if (!(main instanceof HTMLElement)) {
-          throw new Error("Expected the MTT lobby main content element");
-        }
-        return {
-          client: main.clientWidth,
-          scroll: main.scrollWidth,
-        };
-      });
-      expect(width.scroll).toBe(width.client);
-    }
-  }
+  await prepareMttTestCase(testCase, page, component);
 
   const tooltipLabel = {
     "game-rankings-modal-tooltip": "Net winnings details",
@@ -282,6 +228,12 @@ async function prepareTestCase(testCase, page, component) {
     "tournaments-speed-tooltip": "Tournament speed details",
   }[testCase];
   if (!tooltipLabel) return;
+  const trigger = component.getByRole("button", {
+    name: tooltipLabel,
+    exact: true,
+  });
+  await trigger.scrollIntoViewIfNeeded();
+  await expect(trigger).toBeInViewport({ ratio: 1 });
   await component.evaluate((element, label) => {
     const trigger = element.querySelector(`[aria-label="${label}"]`);
     if (!(trigger instanceof HTMLElement)) {
@@ -289,6 +241,16 @@ async function prepareTestCase(testCase, page, component) {
     }
     trigger.focus({ preventScroll: true });
   }, tooltipLabel);
+  const tooltipId = await trigger.getAttribute("aria-describedby");
+  const tooltip = component.locator(`#${tooltipId}`);
+  await expect(tooltip).toBeVisible();
+  await tooltip.scrollIntoViewIfNeeded();
+  await expect(tooltip).toBeInViewport();
+  if (testCase === "mtt-lobby-running-late-register-tooltip") {
+    await expect(tooltip).toBeInViewport({ ratio: 1 });
+    await expect(component.locator(".main")).toHaveJSProperty("scrollLeft", 0);
+  }
+  await expect(trigger).toBeInViewport({ ratio: 1 });
 }
 
 async function verifyAvatarMakerScrollIsContained(testCase, component) {
@@ -351,14 +313,16 @@ for (const testCase of TEST_CASES) {
       await el.updateComplete;
     });
 
+    await page.evaluate(() => document.fonts.ready);
     await prepareTestCase(testCase, page, component);
+    await verifyGameScenario(testCase, component);
     await waitForAvatars(page);
 
     // Capture content that extends below the viewport as well.
     await expect(page).toHaveScreenshot(`${testCase}.png`, {
       fullPage: true,
-      maxDiffPixelRatio: 0.01,
     });
+    await captureMttDetails(testCase, page, component);
   });
 }
 

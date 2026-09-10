@@ -204,6 +204,14 @@
   }
 
   @media (width < 600px) {
+    .late-registration-control {
+      position: relative;
+    }
+
+    .late-registration-control .tooltip-control {
+      position: static;
+    }
+
     .main {
       padding: 56px var(--space-md) var(--space-md);
     }
