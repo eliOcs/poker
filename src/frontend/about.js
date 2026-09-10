@@ -19,11 +19,11 @@ class About extends LitElement {
 
           <p>
             When I was younger, I enjoyed regular home games with friends.
-            Eventually, our home game became a weekly league. We started with 6
-            to 10 players and grew to more than 20. We even created a points
-            system, played seasons of tournaments, and awarded a prize to the
-            overall winner at the end of the year. The friendly rivalries and
-            the excuse to spend time together were the best parts.
+            Eventually, our home game became a weekly league. We started single
+            table tournaments and ended up playing multiple tables. We even
+            created a points system, played seasons of tournaments, and awarded
+            a prize to the overall winner at the end of the year. I miss the
+            friendly rivalries and a excuse to spend time together.
           </p>
 
           <p>
@@ -49,7 +49,7 @@ class About extends LitElement {
               href="https://github.com/eliOcs/poker"
               target="_blank"
               rel="noreferrer"
-              >open source on GitHub</a
+              >open source</a
             >
             for transparency and trust. Bug reports and ideas are welcome. If
             you want to know more about the person building it, visit

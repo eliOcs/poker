@@ -18,7 +18,7 @@ describe("phg-about", () => {
       links.some(
         (link) =>
           link.href === "https://github.com/eliOcs/poker" &&
-          link.textContent.includes("open source on GitHub"),
+          link.textContent.includes("open source"),
       ),
     ).to.equal(true);
     expect(

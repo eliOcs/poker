@@ -114,7 +114,7 @@ class Home extends LitElement {
     );
     const isCash = this.selectedGameType === "cash";
     return renderCreatePage(
-      "Invite your friends to play a poker game, no sign up required.",
+      "Create a table, share the link, and start playing right away. No sign-up required.",
       html`
         <div class="game-type-selector">
           <span class="stakes-label">Game Type</span>

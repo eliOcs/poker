@@ -93,7 +93,7 @@ class Tournaments extends LitElement {
       (preset) => preset.amount === this.selectedBuyIn.amount,
     );
     return renderCreatePage(
-      "Create a multi-table tournament and invite your friends to play",
+      "Organize a multi-table tournament for a bigger group. Share the link, let players register, then start when you're ready.",
       html`
         ${renderPresetSelect({
           label: "Buy-In",
