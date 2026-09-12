@@ -6,6 +6,7 @@ import { formatDollars } from "./currency.js";
  * - Displays dollars in the number input
  * - Uses cents internally for precise calculations
  * - Emits value-changed events with cents
+ * - Labeled handles display action frequencies in whole percentage points
  */
 class CurrencySlider extends LitElement {
   createRenderRoot() {
@@ -18,6 +19,9 @@ class CurrencySlider extends LitElement {
       min: { type: Number }, // Min value in cents
       max: { type: Number }, // Max value in cents
       step: { type: Number }, // Step for +/- buttons in cents
+      label: { type: String },
+      handleLabel: { type: String },
+      variant: { type: String },
     };
   }
 
@@ -27,6 +31,9 @@ class CurrencySlider extends LitElement {
     this.min = 0;
     this.max = 100;
     this.step = 1;
+    this.label = "Amount";
+    this.handleLabel = "";
+    this.variant = "primary";
   }
 
   _clamp(value) {
@@ -70,7 +77,29 @@ class CurrencySlider extends LitElement {
     this._emitChange(this.value + this.step);
   }
 
+  renderLabeledHandle() {
+    const ratio = (this.value - this.min) / (this.max - this.min);
+    return html`<div class="labeled-slider" style=${`--slider-ratio: ${ratio}`}>
+      <span
+        class="button button--${this.variant} slider-handle"
+        aria-hidden="true"
+        >${this.handleLabel} ${this.value}%</span
+      >
+      <input
+        type="range"
+        aria-label=${this.label}
+        aria-valuetext=${`${this.value}%`}
+        min=${this.min}
+        max=${this.max}
+        step=${this.step}
+        .value=${String(this.value)}
+        @input=${this._handleRangeInput}
+      />
+    </div>`;
+  }
+
   render() {
+    if (this.handleLabel) return this.renderLabeledHandle();
     const displayValue = formatDollars(this.value);
     const minDollars = this.min / 100;
     const maxDollars = this.max / 100;
@@ -79,6 +108,7 @@ class CurrencySlider extends LitElement {
     return html`
       <input
         type="number"
+        aria-label=${this.label}
         min="${minDollars}"
         max="${maxDollars}"
         step="${stepDollars}"
@@ -88,12 +118,14 @@ class CurrencySlider extends LitElement {
       <button
         type="button"
         class="button button--muted button--compact"
+        aria-label=${`Decrease ${this.label}`}
         @click=${this._handleDecrement}
       >
         -
       </button>
       <input
         type="range"
+        aria-label=${this.label}
         min="${this.min}"
         max="${this.max}"
         step="${this.step}"
@@ -103,6 +135,7 @@ class CurrencySlider extends LitElement {
       <button
         type="button"
         class="button button--muted button--compact"
+        aria-label=${`Increase ${this.label}`}
         @click=${this._handleIncrement}
       >
         +

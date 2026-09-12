@@ -1,4 +1,5 @@
-@scope (phg-action-panel) {
+/* Shared container and control layouts for live play and learning. */
+@scope (phg-action-panel, .table-action-panel) {
   :where(:scope) {
     display: flex;
     flex-direction: column;

@@ -170,23 +170,12 @@ export const ICONS = {
   check: svg`<svg
     width="1em"
     height="1em"
-    viewBox="0 0 16 16"
-    fill="none"
+    viewBox="0 0 24 24"
+    fill="currentColor"
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
   >
-    <rect x="1" y="7" width="2" height="2" fill="currentColor" />
-    <rect x="3" y="9" width="2" height="2" fill="currentColor" />
-    <rect x="3" y="7" width="2" height="2" fill="currentColor" />
-    <rect x="5" y="11" width="2" height="2" fill="currentColor" />
-    <rect x="5" y="9" width="2" height="2" fill="currentColor" />
-    <rect x="7" y="9" width="2" height="2" fill="currentColor" />
-    <rect x="7" y="7" width="2" height="2" fill="currentColor" />
-    <rect x="9" y="7" width="2" height="2" fill="currentColor" />
-    <rect x="9" y="5" width="2" height="2" fill="currentColor" />
-    <rect x="11" y="5" width="2" height="2" fill="currentColor" />
-    <rect x="11" y="3" width="2" height="2" fill="currentColor" />
-    <rect x="13" y="3" width="2" height="2" fill="currentColor" />
+    <path d="M10 18H8v-2h2v2Zm-2-2H6v-2h2v2Zm4-2v2h-2v-2h2Zm-6 0H4v-2h2v2Zm8 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm2-2h-2V8h2v2Zm2-2h-2V6h2v2Z" />
   </svg>`,
   signIn: svg`<svg
     width="1em"

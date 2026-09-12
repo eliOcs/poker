@@ -9,6 +9,7 @@
 import { html, render } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
+import "/src/frontend/learn.js";
 import "/src/frontend/tournaments.js";
 import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
@@ -50,6 +51,11 @@ function avatarMakerView() {
 }
 
 const GAME_TEST_CASES = {
+  "learn-preflop": () =>
+    html`<phg-app-shell
+      path="/learn"
+      .content=${html`<phg-learn></phg-learn>`}
+    ></phg-app-shell>`,
   // === AVATAR MAKER ===
   "avatar-maker": avatarMakerView,
   "avatar-maker-sparkle-eyes": avatarMakerView,

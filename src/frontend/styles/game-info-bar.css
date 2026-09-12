@@ -1,0 +1,48 @@
+@scope (phg-game, phg-learn) {
+  #info-bar {
+    position: absolute;
+    right: var(--space-md);
+    top: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-sm);
+    color: var(--color-fg-medium);
+  }
+
+  button#info-bar {
+    padding: 0;
+    font-family: inherit;
+    background: none;
+    border: 0;
+  }
+
+  .info-cell {
+    white-space: nowrap;
+  }
+
+  #info-bar.clickable {
+    cursor: pointer;
+  }
+
+  #info-bar.clickable:hover {
+    color: var(--color-fg-light);
+  }
+
+  #info-bar.clickable:focus-visible {
+    outline: 2px solid var(--color-fg-muted);
+    outline-offset: var(--space-sm);
+  }
+
+  @media (width < 800px) {
+    .info-size {
+      display: none;
+    }
+  }
+
+  .info-cell + .info-cell::before {
+    content: "|";
+    margin-right: var(--space-sm);
+    color: var(--color-bg-disabled);
+  }
+}

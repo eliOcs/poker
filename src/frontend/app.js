@@ -1,6 +1,7 @@
 import { LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import "./home.js";
+import "./learn.js";
 import "./about.js";
 import "./tournaments.js";
 import "./index.js";

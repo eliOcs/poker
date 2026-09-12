@@ -2,6 +2,7 @@ import { getFilePath, respondWithFile } from "./static-files.js";
 import { createLog } from "./logger.js";
 import { createSignInRoutes } from "./sign-in-routes.js";
 import { createGameRoutes } from "./game-routes.js";
+import { createLearnRoutes } from "./learn-routes.js";
 import { createHistoryRoutes } from "./history-routes.js";
 import { getOrCreateUser, parseBody } from "./http-route-utils.js";
 import {
@@ -98,6 +99,8 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute(/^\/players\/([a-z0-9]+)$/),
     spaPageRoute("/mtt"),
     spaPageRoute("/about"),
+    spaPageRoute("/learn"),
+    ...createLearnRoutes(),
     spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),
     spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/),

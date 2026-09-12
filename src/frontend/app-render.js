@@ -155,6 +155,7 @@ export function renderShellPageView(app, page) {
     about: () => renderAboutView(),
     avatar: () => renderAvatarMakerView(app),
     home: () => renderHomeView(),
+    learn: () => html`<phg-learn></phg-learn>`,
     mtt_lobby: () => renderMttLobbyView(app),
     player_profile: () => renderPlayerProfileView(app),
     release_notes: () => renderReleaseNotesView(),

@@ -23,6 +23,7 @@ class Seat extends LitElement {
       isButton: { type: Boolean },
       clockRemaining: { type: Number },
       hideBet: { type: Boolean },
+      settingsEnabled: { type: Boolean },
       noAnimation: { type: Boolean },
     };
   }
@@ -35,6 +36,7 @@ class Seat extends LitElement {
     this.noAnimation = false;
     this.clockRemaining = undefined;
     this.hideBet = false;
+    this.settingsEnabled = true;
     this._activeEmote = undefined;
     this._emoteTimer = undefined;
     this._emoteFrame = undefined;
@@ -45,7 +47,7 @@ class Seat extends LitElement {
       if (document.visibilityState === "hidden") this._clearBubbles();
     };
     this._handleSeatClick = () => {
-      if (!this.seat?.isCurrentPlayer) return;
+      if (!this.settingsEnabled || !this.seat?.isCurrentPlayer) return;
       this.dispatchEvent(
         new CustomEvent("seat-settings", {
           bubbles: true,
@@ -53,7 +55,7 @@ class Seat extends LitElement {
       );
     };
     this._handleSeatKeydown = (event) => {
-      if (!this.seat?.isCurrentPlayer) return;
+      if (!this.settingsEnabled || !this.seat?.isCurrentPlayer) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       event.preventDefault();
       this._handleSeatClick();
@@ -98,7 +100,8 @@ class Seat extends LitElement {
   ];
 
   updated(changedProperties) {
-    if (!changedProperties.has("seat")) return;
+    if (!["seat", "settingsEnabled"].some((key) => changedProperties.has(key)))
+      return;
     const isEmpty = !this.seat || this.seat.empty;
     for (const [cls, condition] of Seat._seatClassStates) {
       this.classList.toggle(
@@ -106,7 +109,7 @@ class Seat extends LitElement {
         cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
     }
-    if (!isEmpty && this.seat?.isCurrentPlayer) {
+    if (this.settingsEnabled && !isEmpty && this.seat?.isCurrentPlayer) {
       this.setAttribute("role", "button");
       this.setAttribute("tabindex", "0");
       this.setAttribute("aria-label", "Open settings");

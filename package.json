@@ -27,7 +27,7 @@
     "test:backend": "node --test --test-force-exit 'test/backend/**/*.js'",
     "test:e2e": "playwright test",
     "test:game": "node --env-file=.env scripts/test-cash-game.js",
-    "test:e2e:smoke": "playwright test test/e2e/smoke.spec.js",
+    "test:e2e:smoke": "playwright test test/e2e/smoke.spec.js test/e2e/learn.spec.js",
     "test:e2e:coverage": "rm -rf coverage/e2e && E2E_COVERAGE=1 playwright test && npm run test:e2e:coverage:report",
     "test:e2e:debug": "DEBUG=pw:api DEBUG_E2E=1 playwright test",
     "test:frontend": "web-test-runner",

@@ -1,4 +1,5 @@
 @import url("./base.css");
+@import url("./styles/learn.css");
 @import url("./styles/controls.css");
 @import url("./styles/table-layout.css");
 @import url("./styles/shell.css");
@@ -8,6 +9,7 @@
 @import url("./styles/player-profile.css");
 @import url("./styles/history.css");
 @import url("./styles/game.css");
+@import url("./styles/game-info-bar.css");
 @import url("./styles/board.css");
 @import url("./styles/seat.css");
 @import url("./styles/card.css");
