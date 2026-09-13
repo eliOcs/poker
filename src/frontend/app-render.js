@@ -6,6 +6,7 @@ import {
   renderProfileSignUpModal,
 } from "./app-sign-in-modal.js";
 import { DEFAULT_AVATAR } from "./avatar-maker-data.js";
+import { openAppModal, closeAppModal } from "./app-navigation.js";
 
 /**
  * @param {any} app
@@ -155,7 +156,16 @@ export function renderShellPageView(app, page) {
     about: () => renderAboutView(),
     avatar: () => renderAvatarMakerView(app),
     home: () => renderHomeView(),
-    learn: () => html`<phg-learn></phg-learn>`,
+    learn: () =>
+      html`<phg-learn
+        .rangeOpen=${app._modal === "learn-details"}
+        @open-details=${() => {
+          openAppModal(app, "learn-details");
+        }}
+        @close-details=${() => {
+          closeAppModal(app);
+        }}
+      ></phg-learn>`,
     mtt_lobby: () => renderMttLobbyView(app),
     player_profile: () => renderPlayerProfileView(app),
     release_notes: () => renderReleaseNotesView(),

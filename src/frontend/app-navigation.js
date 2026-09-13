@@ -3,7 +3,8 @@
  * @typedef {{ path: string, allowMttLobby?: boolean }} AppNavigationDetail
  */
 
-const APP_MODALS = new Set(["settings", "sign-in", "sign-up"]);
+/** @typedef {"settings"|"sign-in"|"sign-up"|"learn-details"} AppModal */
+const APP_MODALS = new Set(["settings", "sign-in", "sign-up", "learn-details"]);
 const handledNavigationRoutes = new Map();
 
 function browserNavigation() {
@@ -28,7 +29,7 @@ function normalizeUrl(path) {
 
 /**
  * @param {URL|string} url
- * @returns {"settings"|"sign-in"|"sign-up"|undefined}
+ * @returns {AppModal|undefined}
  */
 export function getAppModal(url) {
   const parsedUrl = typeof url === "string" ? normalizeUrl(url) : url;
@@ -118,7 +119,7 @@ export function navigateApp(app, path, options = {}) {
 
 /**
  * @param {any} app
- * @param {"settings"|"sign-in"|"sign-up"} modal
+ * @param {AppModal} modal
  * @param {{ replace?: boolean }} [options]
  */
 export function openAppModal(app, modal, options = {}) {

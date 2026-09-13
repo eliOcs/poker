@@ -20,7 +20,7 @@ export class Learn extends LitElement {
     betAmount: { state: true },
     sizing: { state: true },
     result: { state: true },
-    rangeOpen: { state: true },
+    rangeOpen: { type: Boolean },
     busy: { state: true },
     error: { state: true },
   };
@@ -28,6 +28,7 @@ export class Learn extends LitElement {
   constructor() {
     super();
     this.scenario = undefined;
+    this.rangeOpen = false;
     this.reset();
     this.busy = false;
     this.error = "";
@@ -87,15 +88,14 @@ export class Learn extends LitElement {
     this.betAmount = 0;
     this.sizing = false;
     this.result = undefined;
-    this.rangeOpen = false;
   }
 
-  async closeRange() {
-    this.rangeOpen = false;
-    await this.updateComplete;
-    /** @type {HTMLElement | null} */ (
-      this.querySelector(".learn-details-button")
-    )?.focus();
+  updated(changed) {
+    if (changed.get("rangeOpen") === true && !this.rangeOpen) {
+      /** @type {HTMLElement | null} */ (
+        this.querySelector(".learn-details-button")
+      )?.focus();
+    }
   }
 
   async submit() {

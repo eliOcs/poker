@@ -99,7 +99,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute(/^\/players\/([a-z0-9]+)$/),
     spaPageRoute("/mtt"),
     spaPageRoute("/about"),
-    spaPageRoute("/learn"),
+    spaPageRoute(/^\/learn(?:\?.*)?$/),
     ...createLearnRoutes(),
     spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),

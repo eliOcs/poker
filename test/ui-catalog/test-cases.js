@@ -54,7 +54,14 @@ const GAME_TEST_CASES = {
   "learn-preflop": () =>
     html`<phg-app-shell
       path="/learn"
-      .content=${html`<phg-learn></phg-learn>`}
+      .content=${html`<phg-learn
+        @open-details=${(event) => {
+          event.currentTarget.rangeOpen = true;
+        }}
+        @close-details=${(event) => {
+          event.currentTarget.rangeOpen = false;
+        }}
+      ></phg-learn>`}
     ></phg-app-shell>`,
   // === AVATAR MAKER ===
   "avatar-maker": avatarMakerView,

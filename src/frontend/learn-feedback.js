@@ -61,7 +61,9 @@ export function renderLearnFeedback(view) {
         class="button learn-details-button"
         aria-haspopup="dialog"
         @click=${() => {
-          view.rangeOpen = true;
+          view.dispatchEvent(
+            new CustomEvent("open-details", { bubbles: true }),
+          );
         }}
       >
         Details
@@ -73,7 +75,10 @@ export function renderLearnFeedback(view) {
     ${view.rangeOpen
       ? renderModal(
           `Range: Preflop, First In, ${POSITION_NAMES[view.scenario.position]}`,
-          () => view.closeRange(),
+          () =>
+            view.dispatchEvent(
+              new CustomEvent("close-details", { bubbles: true }),
+            ),
           renderRangeDetails(view),
         )
       : ""}`;
