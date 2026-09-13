@@ -1,5 +1,5 @@
 phg-avatar-maker {
-  --shell-content-width: 1180px;
+  --shell-content-width: 1280px;
 
   height: 100%;
   min-height: 0;
@@ -13,7 +13,7 @@ phg-avatar-maker .main {
 
 .avatar-maker__workspace {
   display: grid;
-  grid-template-columns: minmax(300px, 0.86fr) minmax(520px, 1.4fr);
+  grid-template-columns: minmax(300px, 384px) minmax(520px, 1fr);
   align-items: stretch;
   gap: clamp(16px, 3vw, 32px);
   height: 100%;
@@ -67,19 +67,19 @@ phg-avatar-maker .main {
 .avatar-maker__tabs {
   display: flex;
   flex: 0 0 auto;
-  overflow-x: auto;
+  flex-wrap: wrap;
   border-bottom: 3px solid var(--color-bg-light);
-  scrollbar-color: var(--color-fg-muted) transparent;
-  scrollbar-width: thin;
 }
 
 .avatar-maker__tabs button {
   flex: 1 0 auto;
+  max-width: 160px;
   min-height: 45px;
   padding: var(--space-md) var(--space-sm);
   color: var(--color-fg-medium);
   font: inherit;
-  font-size: var(--font-xs);
+  font-size: var(--font-md);
+  line-height: 1.5;
   cursor: pointer;
   background: transparent;
   border: 0;
@@ -134,7 +134,7 @@ phg-avatar-maker .main {
 .avatar-maker__options {
   display: grid;
   flex: none;
-  grid-template-columns: repeat(5, minmax(82px, 1fr));
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
   gap: var(--space-md);
   overflow-x: auto;
 }
@@ -147,7 +147,7 @@ phg-avatar-maker .main {
   padding: var(--space-md);
   color: var(--color-fg-muted);
   font: inherit;
-  font-size: var(--font-xs);
+  font-size: var(--font-sm);
   line-height: 1.4;
   cursor: pointer;
   background: var(--color-bg-medium);
@@ -201,13 +201,13 @@ phg-avatar-maker .main {
 .avatar-maker__adjustment {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   min-width: 0;
 }
 
 .avatar-maker__adjustment > span {
   color: var(--color-fg-medium);
-  font-size: var(--font-xs);
+  font-size: var(--font-md);
   text-align: left;
 }
 
@@ -274,9 +274,11 @@ phg-avatar-maker .main {
 
 .avatar-maker__colors legend {
   padding: 0;
-  margin-bottom: var(--space-lg);
+
+  /* Include the selected swatch's 3px outline and 2px offset in the gap. */
+  margin-bottom: calc(var(--space-md) + 5px);
   color: var(--color-fg-medium);
-  font-size: var(--font-xs);
+  font-size: var(--font-md);
 }
 
 .avatar-maker__colors > div {
@@ -328,16 +330,16 @@ phg-avatar-maker .main {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     margin: 0;
-    overflow-x: visible;
   }
 
   .avatar-maker__tabs button {
     min-width: 0;
-    min-height: 36px;
+    max-width: none;
+    min-height: 44px;
   }
 
   .avatar-maker__options {
-    grid-template-columns: repeat(3, minmax(82px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     overflow-x: visible;
   }
 
@@ -366,8 +368,12 @@ phg-avatar-maker .main {
     justify-content: center;
   }
 
-  .avatar-maker__page-actions .button {
-    font-size: var(--font-xs);
+  .avatar-maker__page-actions {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .avatar-maker__confirmation-actions {
+    grid-column: 2;
   }
 
   .avatar-maker__stepper {
