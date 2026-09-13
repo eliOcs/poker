@@ -36,10 +36,6 @@ phg-app .auth-status-card p {
   line-height: 1.8;
 }
 
-phg-app .settings-content > input {
-  margin-bottom: var(--space-lg);
-}
-
 phg-app .sign-in-content {
   display: grid;
   gap: var(--space-md);

@@ -132,7 +132,6 @@
     }
   }
 
-  .settings-content > input,
   .sign-in-content input {
     margin-bottom: var(--space-lg);
   }
