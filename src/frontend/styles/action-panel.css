@@ -1,9 +1,23 @@
 /* Shared container and control layouts for live play and learning. */
+@scope (phg-game, phg-learn) {
+  :where(:scope) {
+    --action-panel-height: 224px;
+  }
+
+  @media (width < 800px) {
+    :where(:scope) {
+      --action-panel-height: 172px;
+    }
+  }
+}
+
 @scope (phg-action-panel, .table-action-panel) {
   :where(:scope) {
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     align-items: stretch;
+    justify-content: flex-end;
     gap: var(--space-md);
     padding: var(--space-md);
     border: none;
@@ -11,6 +25,9 @@
     box-shadow: none;
     box-sizing: border-box;
     width: min(560px, calc(100vw - 2 * var(--space-md)));
+    max-width: 100%;
+    height: var(--action-panel-height, auto);
+    margin-bottom: var(--space-sm);
   }
 
   /* Betting panel styles */

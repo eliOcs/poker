@@ -1,6 +1,5 @@
 @scope (phg-game) {
   :where(:scope) {
-    --action-panel-height: 224px;
     --modal-input-error-focus-shadow: 0 0 0 2px rgb(204 51 51 / 22%);
     --modal-input-error-shadow: 0 0 0 2px rgb(204 51 51 / 18%);
     --modal-input-focus-shadow: 0 0 0 2px rgb(136 68 170 / 20%);
@@ -51,23 +50,13 @@
   phg-action-panel {
     grid-row: 3;
     justify-self: center;
-    margin-bottom: var(--space-sm);
-    max-width: 100%;
-    height: var(--action-panel-height);
-    justify-content: flex-end;
-  }
-
-  @media (width < 800px) {
-    :scope {
-      --action-panel-height: 180px;
-    }
   }
 
   @media (width >= 1280px) and (height >= 900px) and (orientation: landscape) {
     #wrapper {
       /* Equal outer space centers the table and actions as one group. */
       grid-template-rows:
-        30px minmax(0, 1fr) 500px 24px
+        30px minmax(0, 1fr) 600px 24px
         var(--action-panel-height) minmax(0, 1fr);
     }
 

@@ -44,7 +44,10 @@ function crowdedTable(size, showdown = false) {
   const hero = Math.floor(size / 2);
   const seats = Array.from({ length: size }, (_, index) => {
     const seat = riverPlayer(index, hero, size);
-    if (!showdown) return seat;
+    if (!showdown)
+      return size === 6 || size === 9
+        ? { ...seat, cards: HOLE_CARDS[index] }
+        : seat;
     const showsCards = index === 0 || seat.cards.length > 0;
     return {
       ...seat,

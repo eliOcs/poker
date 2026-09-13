@@ -18,20 +18,36 @@ async function layoutProblems(page) {
     const bounds = stage.getBoundingClientRect();
     const elements = [
       ...stage.querySelectorAll(
-        "phg-seat, phg-avatar, .board-info, .bet-indicator, .dealer-button",
+        "phg-seat, phg-avatar, .hole-cards phg-card, .board-info, .bet-indicator, .dealer-button",
       ),
     ];
-    const boxes = elements.map((element) => ({
-      name: element.matches("phg-seat")
-        ? `seat ${element.getAttribute("data-seat")}`
-        : element.matches(".bet-indicator, .dealer-button")
-          ? `${element.className} ${element.closest("phg-seat").getAttribute("data-seat")}`
-          : element.matches("phg-avatar")
-            ? `avatar ${element.closest("phg-seat").getAttribute("data-seat")}`
-            : "board",
-      seat: element.closest("phg-seat"),
-      rect: element.getBoundingClientRect(),
-    }));
+    const boxes = elements.map((element) => {
+      const rect = element.getBoundingClientRect();
+      if (element.matches("phg-seat:not(.empty)")) {
+        // Check the nameplate and cards separately, leaving their empty corners free.
+        const style = getComputedStyle(element);
+        const scale = rect.height / element.offsetHeight;
+        const top =
+          parseFloat(style.getPropertyValue("--seat-panel-top")) * scale;
+        const bottom =
+          parseFloat(style.getPropertyValue("--seat-panel-bottom")) * scale;
+        rect.y += top;
+        rect.height -= top + bottom;
+      }
+      return {
+        name: element.matches("phg-seat")
+          ? `seat ${element.getAttribute("data-seat")}`
+          : element.matches(".bet-indicator, .dealer-button")
+            ? `${element.className} ${element.closest("phg-seat").getAttribute("data-seat")}`
+            : element.matches("phg-avatar")
+              ? `avatar ${element.closest("phg-seat").getAttribute("data-seat")}`
+              : element.matches("phg-card")
+                ? `card ${element.closest("phg-seat").getAttribute("data-seat")}`
+                : "board",
+        seat: element.closest("phg-seat"),
+        rect,
+      };
+    });
     const surface = stage.querySelector(".table-surface");
     const surfaceRect = surface.getBoundingClientRect();
     const scale = surfaceRect.width / surface.clientWidth;
@@ -75,6 +91,32 @@ async function layoutProblems(page) {
         }
       }
     }
+    const reference = stage.querySelector("phg-card:has(.rank)");
+    const referenceCard = reference
+      ?.querySelector(".card")
+      .getBoundingClientRect();
+    stage.querySelectorAll("phg-card").forEach((card) => {
+      const bounds = card.querySelector(".card").getBoundingClientRect();
+      if (
+        Math.abs(bounds.width - referenceCard.width) > 0.1 ||
+        Math.abs(bounds.height - referenceCard.height) > 0.1
+      )
+        problems.push("card sizes differ between the board and seats");
+      for (const selector of [".rank", ".suit"]) {
+        const symbol = card.querySelector(selector)?.getBoundingClientRect();
+        const expected = reference
+          .querySelector(selector)
+          .getBoundingClientRect();
+        if (
+          symbol &&
+          (Math.abs(symbol.height - expected.height) > 0.1 ||
+            Math.abs(
+              symbol.top - bounds.top - (expected.top - referenceCard.top),
+            ) > 0.1)
+        )
+          problems.push("card typography differs between the board and seats");
+      }
+    });
     stage.querySelectorAll("phg-seat").forEach((seat) => {
       const outer = seat.getBoundingClientRect();
       const markers = [
@@ -121,7 +163,7 @@ test.describe("table clearance", () => {
       page,
     }) => {
       await openTable(page, id);
-      for (const [width, height] of [
+      for (const [width, height, minTableWidth = 0] of [
         [320, 568],
         [390, 844],
         [768, 1024],
@@ -132,8 +174,8 @@ test.describe("table clearance", () => {
         [1024, 768],
         [1280, 720],
         [1280, 900],
-        [2048, 1200],
-        [3840, 2160],
+        [2048, 1200, 1000],
+        [3840, 2160, 1000],
         [1200, 2048],
       ]) {
         await page.setViewportSize({ width, height });
@@ -155,8 +197,14 @@ test.describe("table clearance", () => {
         expect(panel.y).toBeGreaterThanOrEqual(0);
         expect(panel.y + panel.height).toBeLessThanOrEqual(height + 1);
         const surface = await page.locator(".table-surface").boundingBox();
-        expect(surface.width).toBeLessThanOrEqual(1000);
-        expect(surface.height).toBeLessThanOrEqual(875);
+        expect(surface.width).toBeLessThanOrEqual(1200);
+        expect(surface.height).toBeLessThanOrEqual(1050);
+        await expect
+          .poll(
+            async () =>
+              (await page.locator(".table-surface").boundingBox()).width,
+          )
+          .toBeGreaterThan(minTableWidth);
       }
     });
   }
@@ -166,6 +214,8 @@ test.describe("table clearance", () => {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openTable(page, "table-full-ring");
+    await expect(page.locator(".dealer-button")).toHaveCount(9);
+    await expect(page.locator(".hole-cards .rank")).toHaveCount(18);
     for (const [width, height] of [
       [390, 844],
       [844, 390],
@@ -185,6 +235,40 @@ test.describe("table clearance", () => {
         await expect.poll(() => layoutProblems(page)).toEqual([]);
       }
     }
+  });
+
+  test("tall portrait tables use spare height without enlarging cards", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 413, height: 915 });
+    await openTable(page, "table-full-ring");
+    const surface = page.locator(".table-surface");
+    const card = page.locator(".community-cards phg-card").first();
+    const tableBefore = await surface.boundingBox();
+    const cardBefore = await card.boundingBox();
+    await page.setViewportSize({ width: 413, height: 1000 });
+    await expect
+      .poll(async () => (await surface.boundingBox()).height)
+      .toBeCloseTo(tableBefore.height + 85, 1);
+    const cardAfter = await card.boundingBox();
+    expect(cardAfter.width).toBeCloseTo(cardBefore.width, 1);
+    expect(cardAfter.height).toBeCloseTo(cardBefore.height, 1);
+    const gap = await page.locator("phg-game").evaluate((game) => {
+      const hero = game.querySelector('phg-seat[data-slot="0"]');
+      const seat = hero.getBoundingClientRect();
+      const padding = parseFloat(
+        getComputedStyle(hero).getPropertyValue("--seat-panel-bottom"),
+      );
+      const panel = game
+        .querySelector("phg-action-panel")
+        .getBoundingClientRect();
+      return (
+        panel.top - (seat.bottom - padding * (seat.height / hero.offsetHeight))
+      );
+    });
+    expect(gap).toBeGreaterThanOrEqual(3);
+    expect(gap).toBeLessThanOrEqual(5);
+    await expect.poll(() => layoutProblems(page)).toEqual([]);
   });
 
   test("history shares the table's clearance", async ({ page }) => {
@@ -224,7 +308,7 @@ test.describe("table clearance", () => {
           }, button);
           await expect.poll(() => layoutProblems(page)).toEqual([]);
           const gap = await page
-            .locator(".dealer-button")
+            .locator(`phg-seat[data-seat="${button}"] .dealer-button`)
             .evaluate((dealer) => {
               const seat = dealer.closest("phg-seat");
               const panel = seat.getBoundingClientRect();

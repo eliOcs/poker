@@ -19,7 +19,7 @@
     width: var(--table-width, 400px);
     height: var(--table-height, 700px);
     left: 50%;
-    top: 50%;
+    top: calc(50% + var(--table-offset-y, 0px) * var(--table-scale, 0));
     transform: translate(-50%, -50%) scale(var(--table-scale, 0));
   }
 
@@ -65,6 +65,7 @@
     --card-height: 56px;
     --card-rank-size: 14px;
     --card-suit-size: 26px;
+    --card-suit-margin-top: -2px;
     --card-border-width: 2px;
   }
 
@@ -81,7 +82,7 @@
     --seat-avatar-size: 43px;
     --seat-avatar-left: 3px;
     --seat-avatar-top: calc(var(--seat-panel-top) + 3px);
-    --seat-panel-top: 35px;
+    --seat-panel-top: 46px;
     --seat-panel-bottom: 20px;
 
     position: relative;
@@ -89,7 +90,7 @@
     grid-row: var(--seat-row) / span 2;
     place-self: center;
     width: 160px;
-    height: 104px;
+    height: 115px;
     min-height: 0;
     padding: 0 6px 22px 50px;
     gap: 2px;
@@ -138,21 +139,11 @@
     transform-origin: bottom center;
   }
 
-  :scope phg-seat.current-player {
-    --seat-panel-top: 46px;
-
-    height: 115px;
-  }
-
   :scope .clock-countdown {
     position: absolute;
-    top: 40px;
+    top: 51px;
     right: 6px;
     gap: 2px;
-  }
-
-  :scope .current-player .clock-countdown {
-    top: 51px;
   }
 
   :scope phg-seat:has(.clock-countdown) .player-info {
@@ -177,42 +168,16 @@
     inset: auto;
     transform: none;
     order: -1;
-    height: 33px;
-    min-height: 33px;
+    height: 44px;
+    min-height: 44px;
     flex-shrink: 0;
     gap: 3px;
     z-index: -1;
   }
 
-  :scope .current-player .hole-cards {
-    height: 44px;
-  }
-
-  /* Keep ranks and suits above the panel while the larger cards tuck behind it. */
-  :scope .hole-cards .card {
-    justify-content: flex-start;
-    padding-top: 5px;
-  }
-
-  :scope .hole-cards phg-card[size] {
-    --card-width: 36px;
-    --card-height: 48px;
-    --card-rank-size: 13px;
-    --card-suit-size: 20px;
-    --card-suit-margin-top: -4px;
-  }
-
-  :scope .current-player .hole-cards phg-card[size] {
-    --card-width: 42px;
-    --card-height: 56px;
-    --card-rank-size: 16px;
-    --card-suit-size: 26px;
-    --card-suit-margin-top: -2px;
-  }
-
   :scope .dealer-button {
     top: calc(50% + var(--bet-y, 48px));
-    left: calc(50% + var(--bet-x, 0px) + var(--dealer-x, 60px));
+    left: calc(50% + var(--bet-x, 0px) + var(--dealer-x, 62px));
     right: auto;
     transform: translate(-50%, -50%);
     width: 20px;
@@ -226,23 +191,35 @@
     gap: 4px;
   }
 
+  :scope[data-layout="portrait"] .dealer-button {
+    /* Keep the dealer beside the nameplate as bets move into the open felt. */
+    top: calc(
+      100% - var(--seat-panel-bottom) + var(--portrait-dealer-y, -12px)
+    );
+    left: calc(50% + var(--portrait-dealer-x, 96px));
+  }
+
   :scope[data-layout="portrait"] [data-slot="0"] .dealer-button {
     top: calc(var(--seat-panel-top) - 6px);
-    left: 16px;
+    left: 12px;
     transform: translateY(-100%);
   }
 
   :scope[data-layout="landscape"]
-    #seats[data-table-size="9"]
-    [data-slot="2"]
+    :is(
+      #seats[data-table-size="9"] :is([data-slot="2"], [data-slot="3"]),
+      #seats[data-table-size="6"] [data-slot="1"]
+    )
     .bet-indicator {
     left: calc(100% + 8px);
     transform: translateY(-50%);
   }
 
   :scope[data-layout="landscape"]
-    #seats[data-table-size="9"]
-    [data-slot="7"]
+    :is(
+      #seats[data-table-size="9"] :is([data-slot="6"], [data-slot="7"]),
+      #seats[data-table-size="6"] [data-slot="5"]
+    )
     .bet-indicator {
     left: auto;
     right: calc(100% + 8px);
@@ -293,7 +270,7 @@
 
     .dealer-button {
       top: calc(var(--seat-panel-top) - 6px);
-      left: 16px;
+      left: 14px;
       transform: translateY(-100%);
     }
   }
@@ -302,7 +279,7 @@
     #seats[data-table-size="9"]
     [data-slot="1"]
     .dealer-button {
-    left: calc(100% - 36px);
+    left: calc(100% - 32px);
   }
 
   :scope[data-layout="landscape"]
@@ -314,27 +291,10 @@
     --dealer-x: -60px;
   }
 
-  :scope[data-layout="landscape"]
-    #seats[data-table-size="6"]
-    [data-slot="1"]
-    .bet-indicator {
-    left: calc(100% + 8px);
-    transform: translateY(-50%);
-  }
-
-  :scope[data-layout="landscape"]
-    #seats[data-table-size="6"]
-    [data-slot="5"]
-    .bet-indicator {
-    left: auto;
-    right: calc(100% + 8px);
-    transform: translateY(-50%);
-  }
-
   /* Clockwise slots follow the ring, starting at the local player's bottom seat. */
   [data-slot="0"] {
     --dealer-x: -60px;
-    --bet-x: 40px;
+    --bet-x: 0px;
     --bet-y: -72px;
     --seat-column: 40;
   }
@@ -354,30 +314,30 @@
 
   [data-slot="3"] {
     --bet-x: 70px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 10;
-    --seat-row: 12;
+    --seat-row: 11;
   }
 
   [data-slot="4"] {
-    --bet-x: 40px;
-    --bet-y: 48px;
+    --bet-x: 10px;
+    --bet-y: 54px;
     --seat-column: 27;
     --seat-row: 4;
   }
 
   [data-slot="5"] {
-    --bet-x: -40px;
-    --bet-y: 48px;
+    --bet-x: -10px;
+    --bet-y: 54px;
     --seat-column: 53;
     --seat-row: 4;
   }
 
   [data-slot="6"] {
     --bet-x: -70px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 70;
-    --seat-row: 12;
+    --seat-row: 11;
   }
 
   [data-slot="7"] {
@@ -402,21 +362,21 @@
 
   #seats[data-table-size="6"] [data-slot="2"] {
     --bet-x: 70px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 6;
     --seat-row: 11;
   }
 
   #seats[data-table-size="6"] [data-slot="3"] {
     --bet-x: 0px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 40;
     --seat-row: 4;
   }
 
   #seats[data-table-size="6"] [data-slot="4"] {
     --bet-x: -70px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 74;
     --seat-row: 11;
   }
@@ -430,7 +390,7 @@
 
   #seats[data-table-size="2"] [data-slot="1"] {
     --bet-x: 0px;
-    --bet-y: 48px;
+    --bet-y: 52px;
     --seat-column: 40;
     --seat-row: 4;
   }
@@ -446,30 +406,60 @@
         :is([data-slot="5"], [data-slot="6"], [data-slot="7"], [data-slot="8"]),
       #seats[data-table-size="6"] :is([data-slot="4"], [data-slot="5"])
     ) {
-    --dealer-x: -60px;
+    --portrait-dealer-x: -96px;
+  }
+
+  :scope[data-layout="portrait"]
+    :is(
+      #seats[data-table-size="6"] [data-slot="3"],
+      #seats[data-table-size="2"] [data-slot="1"]
+    ) {
+    --portrait-dealer-x: -60px;
+    --portrait-dealer-y: 14px;
+  }
+
+  :scope[data-layout="portrait"]
+    :is(
+      #seats[data-table-size="9"] :is([data-slot="1"], [data-slot="8"]),
+      #seats[data-table-size="6"] :is([data-slot="1"], [data-slot="5"])
+    ) {
+    --portrait-dealer-y: -20px;
   }
 
   :scope[data-layout="landscape"]
     :is(
-      #seats[data-table-size="9"] [data-slot="2"],
+      #seats[data-table-size="9"] :is([data-slot="2"], [data-slot="3"]),
       #seats[data-table-size="6"] [data-slot="1"]
     )
     .dealer-button {
-    top: calc(50% + var(--bet-y) - 26px);
+    top: calc(50% + var(--bet-y) - var(--dealer-gap-y, 26px));
     left: calc(100% + 8px);
     transform: translateY(-50%);
   }
 
   :scope[data-layout="landscape"]
     :is(
-      #seats[data-table-size="9"] [data-slot="7"],
+      #seats[data-table-size="9"] :is([data-slot="6"], [data-slot="7"]),
       #seats[data-table-size="6"] [data-slot="5"]
     )
     .dealer-button {
-    top: calc(50% + var(--bet-y) - 26px);
+    top: calc(50% + var(--bet-y) - var(--dealer-gap-y, 26px));
     left: auto;
     right: calc(100% + 8px);
     transform: translateY(-50%);
+  }
+
+  :scope[data-layout="landscape"]
+    #seats[data-table-size="9"]
+    :is([data-slot="2"], [data-slot="3"], [data-slot="6"], [data-slot="7"]) {
+    --dealer-gap-y: 20px;
+    --bet-y: 22px;
+  }
+
+  :scope[data-layout="landscape"]
+    #seats[data-table-size="9"]
+    :is([data-slot="3"], [data-slot="6"]) {
+    --bet-y: 26px;
   }
 
   :scope[data-layout="portrait"] .table-surface::before {
@@ -495,98 +485,98 @@
 
   :scope[data-layout="portrait"] [data-slot="1"] {
     --bet-x: 34px;
-    --bet-y: 44px;
+    --bet-y: 54px;
     --seat-column: 3;
     --seat-row: 39;
   }
 
   :scope[data-layout="portrait"] [data-slot="2"] {
-    --bet-x: 34px;
-    --bet-y: 44px;
+    --bet-x: 96px;
+    --bet-y: 56px;
     --seat-column: 3;
     --seat-row: 28;
   }
 
   :scope[data-layout="portrait"] [data-slot="3"] {
-    --bet-x: 34px;
-    --bet-y: 44px;
+    --bet-x: 96px;
+    --bet-y: 56px;
     --seat-column: 3;
     --seat-row: 17;
   }
 
   :scope[data-layout="portrait"] [data-slot="4"] {
-    --bet-x: 32px;
-    --bet-y: 42px;
-    --seat-column: 5;
+    --bet-x: 70px;
+    --bet-y: 56px;
+    --seat-column: 4;
     --seat-row: 5;
   }
 
   :scope[data-layout="portrait"] [data-slot="5"] {
-    --bet-x: -32px;
-    --bet-y: 42px;
-    --seat-column: 15;
+    --bet-x: -70px;
+    --bet-y: 56px;
+    --seat-column: 16;
     --seat-row: 5;
   }
 
   :scope[data-layout="portrait"] [data-slot="6"] {
-    --bet-x: -34px;
-    --bet-y: 44px;
+    --bet-x: -96px;
+    --bet-y: 56px;
     --seat-column: 17;
     --seat-row: 17;
   }
 
   :scope[data-layout="portrait"] [data-slot="7"] {
-    --bet-x: -34px;
-    --bet-y: 44px;
+    --bet-x: -96px;
+    --bet-y: 56px;
     --seat-column: 17;
     --seat-row: 28;
   }
 
   :scope[data-layout="portrait"] [data-slot="8"] {
     --bet-x: -34px;
-    --bet-y: 44px;
+    --bet-y: 54px;
     --seat-column: 17;
     --seat-row: 39;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="6"] [data-slot="1"] {
     --bet-x: 34px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 3;
     --seat-row: 37;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="6"] [data-slot="2"] {
     --bet-x: 34px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 3;
     --seat-row: 21;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="6"] [data-slot="3"] {
     --bet-x: 0px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 10;
     --seat-row: 5;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="6"] [data-slot="4"] {
     --bet-x: -34px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 17;
     --seat-row: 21;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="6"] [data-slot="5"] {
     --bet-x: -34px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 17;
     --seat-row: 37;
   }
 
   :scope[data-layout="portrait"] #seats[data-table-size="2"] [data-slot="1"] {
     --bet-x: 0px;
-    --bet-y: 44px;
+    --bet-y: 56px;
     --seat-column: 10;
     --seat-row: 6;
   }

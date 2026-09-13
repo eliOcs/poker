@@ -4,6 +4,8 @@
 
 When raising is included, Continue opens a sizing question using the regular betting presets (Min, 2.5 BB, 3 BB, Max) and dollar amount slider with numeric entry and −/+ controls. Presets set the amount without submitting. “Check strategy” submits the mix and size, converting cents to big blinds for grading. There is no timer or account requirement. Feedback includes a modal with the position range and lesson details.
 
+Lessons and live games share fixed panel sizing in `styles/action-panel.css` through `--action-panel-height`. Lessons reserve 280px below 800px viewport width and 336px on larger screens to fit all three sliders and mixed-strategy feedback. The reserved height stays the same through choices, sizing, loading and feedback, keeping the table stationary.
+
 The server deals the exercise (`GET /api/learn/scenario`) and grades the submitted distribution (`POST /api/learn/evaluate`). Scenarios are stateless position/hand identifiers; no game, wallet or multiplayer connection is created. Positions and the 169 hand classes are sampled uniformly for practice, rather than weighted as a random physical deal. Suits are randomized consistently with the hand class. Answers and the position range are returned after submission. Progress is not persisted.
 
 ## Source and limits

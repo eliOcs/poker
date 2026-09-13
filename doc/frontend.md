@@ -90,9 +90,11 @@ src/frontend/
 `phg-table-layout` is shared by live games and hand history. It observes the
 space allocated by its parent and fits a logical 400 × 700 portrait or 800 × 400
 landscape surface using a single scale, including an outer gutter for seats that
-sit beyond the grid. The full composition is capped at 1000 × 500 landscape or
-500 × 875 portrait, with a maximum scale of 1.25×. The surface remains centered
-when extra space is available.
+sit beyond the grid. The full composition is capped at 1200 × 600 landscape or
+600 × 1050 portrait, with a maximum scale of 1.5×. The surface stays horizontally
+centered. Tall portrait stages extend the logical table height
+to use the available vertical space without enlarging the cards, reserving a 20px
+top gutter and a 4px bottom gutter.
 `styles/table-layout.css` defines grid
 placements for 2, 6, and 9 seats and reserves separate space for the board.
 Landscape seats follow the ring: nine-player tables have two seats at the top,
@@ -103,10 +105,16 @@ is a separate background behind the composition.
 The dealer chip sits on the felt close to its player panel, beside the hole cards
 for bottom seats, with a fixed position even when bets are collected. Bets and the dealer chip remain fully
 opaque when the player panel is dimmed after folding.
+In portrait, bets use the open gaps below and inward from the nameplates, with
+less vertical offset on the lowest full-ring row to clear the board. Dealer
+markers stay anchored beside their nameplates independently of these bet offsets.
 
 Both layouts use the same player panel: a square avatar on the left, player text
 on the right, and hole cards centered above the panel. Cards tuck behind its
 upper edge while keeping their ranks and suits visible.
+The board and every seat share one card style at 42 × 56 logical pixels. Card
+dimensions and rank/suit text scale together with the table on mobile and desktop;
+current-player emphasis comes from the name and panel color.
 Player panels reserve a fixed three-line height, with uniform text sizes and
 line spacing within each layout mode. Colors distinguish names, stacks, and
 actions. The countdown sits in the
@@ -114,7 +122,7 @@ top-right corner without adding a text row, and the current player's hand rank
 appears beneath the community cards. Winner messages replace that board label
 at the end of a hand; replay panels use their rows for the result and ending stack.
 
-Live games reserve a fixed action-panel row: 180px below 800px viewport width,
+Live games reserve a fixed action-panel row: 172px below 800px viewport width,
 224px otherwise. Short landscape screens use the available side-column height,
 capped at 360px. Controls align to the bottom of this area, so changing available
 actions, waiting, or reconnecting cannot resize or reposition the table.
@@ -130,6 +138,9 @@ History uses the same breakpoint for its sidebar and scrolls its timeline on
 smaller screens. The UI catalog includes crowded betting/showdown fixtures for
 all three table sizes, landscape snapshots, and browser assertions for clearance,
 containment, seat identity, and scaled chip animation coordinates.
+The `table-6max` and `table-full-ring` catalog fixtures deliberately show face-up
+cards, a bet, and a dealer marker at every seat so all spacing can be inspected at
+once.
 
 Catalog game players use nine saved avatar-editor outputs in
 `test/ui-catalog/avatars.json`, generated once with the seed recorded in that file.

@@ -477,7 +477,7 @@ const TEST_CASES = {
 export const TEST_CASE_IDS = Object.keys(TEST_CASES);
 
 // Parse query params and render
-function init() {
+async function init() {
   const params = new URLSearchParams(window.location.search);
   const testId = params.get("test");
   const root = document.getElementById("root");
@@ -495,6 +495,15 @@ function init() {
   }
 
   render(testCase(), root);
+
+  if (testId === "table-6max" || testId === "table-full-ring") {
+    const game = root.querySelector("phg-game");
+    await game.updateComplete;
+    // Show every marker together for spacing inspection in these fixtures.
+    const seats = [...game.querySelectorAll("phg-seat")];
+    for (const seat of seats) seat.isButton = true;
+    await Promise.all(seats.map((seat) => seat.updateComplete));
+  }
 }
 
 init();

@@ -1,5 +1,8 @@
 @scope (phg-learn) {
   :scope {
+    /* Reserve room for the largest lesson step, including mixed feedback. */
+    --action-panel-height: 336px;
+
     position: relative;
     box-sizing: border-box;
     padding-top: 32px;
@@ -32,11 +35,13 @@
   }
 
   .learn-panel {
-    flex: 0 0 336px;
-    height: 336px;
-    justify-content: flex-end;
-    max-width: 100%;
-    margin: 0 auto var(--space-sm);
+    margin-inline: auto;
+  }
+
+  @media (width < 800px) {
+    :scope {
+      --action-panel-height: 280px;
+    }
   }
 
   .learn-question {
