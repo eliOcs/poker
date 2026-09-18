@@ -152,8 +152,8 @@
     place-items: center;
     line-height: 1;
 
-    /* Balance the pixel font's top-heavy glyph and right side bearing. */
-    padding: 0.2em 0 0 0.1em;
+    /* Balance the D glyph's right side bearing. */
+    padding: 0 0 0 0.1em;
     font-size: var(--font-md);
     border: 2px solid var(--color-bg-dark);
     border-radius: 50%;

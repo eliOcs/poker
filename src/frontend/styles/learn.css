@@ -1,7 +1,7 @@
 @scope (phg-learn) {
   :scope {
-    /* Reserve room for the largest lesson step, including mixed feedback. */
-    --action-panel-height: 336px;
+    /* Reserve room for all three action sliders to keep the table steady. */
+    --action-panel-height: 256px;
 
     position: relative;
     box-sizing: border-box;
@@ -36,11 +36,16 @@
 
   .learn-panel {
     margin-inline: auto;
+    justify-content: flex-start;
+  }
+
+  .learn-panel > :is(.button, .action-row) {
+    margin-top: auto;
   }
 
   @media (width < 800px) {
     :scope {
-      --action-panel-height: 280px;
+      --action-panel-height: 240px;
     }
   }
 
@@ -49,6 +54,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    min-height: 24px;
   }
 
   .learn-question .tooltip-control {
@@ -123,50 +129,60 @@
     display: flex;
     justify-content: center;
     gap: var(--space-lg);
+    margin-block: var(--space-md);
+    color: var(--color-fg-light);
   }
 
   .learn-strategy {
     display: grid;
     align-content: start;
     justify-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     flex: 1;
     min-width: 0;
   }
 
   .learn-strategy h3 {
-    margin: 0;
+    margin: 0 0 var(--space-md);
     font-size: var(--font-sm);
-    color: var(--color-fg-muted);
-  }
-
-  .learn-strategy-block {
-    display: grid;
-    place-items: center;
-    width: 100px;
-    aspect-ratio: 1;
-    color: var(--color-fg-white);
-    font-size: var(--font-lg);
-    border: 2px solid var(--color-bg-dark);
+    color: var(--color-fg-medium);
   }
 
   .learn-strategy-actions {
     display: grid;
-    gap: var(--space-xs);
+    gap: var(--space-md);
+    font-size: var(--font-sm);
+    width: min(100%, calc(5ch + var(--space-md) + 100px));
     list-style: none;
     padding: 0;
     margin: 0;
   }
 
   .learn-strategy-actions li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 5ch minmax(0, 1fr);
     align-items: center;
-    gap: var(--space-sm);
+    gap: var(--space-md);
   }
 
-  .learn-strategy-actions i {
-    width: 10px;
-    height: 10px;
+  .learn-frequency {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 24px;
+    background: var(--color-bg-dark);
+    text-align: center;
+    color: var(--color-fg-white);
+  }
+
+  .learn-frequency i {
+    position: absolute;
+    inset: 0 auto 0 0;
+  }
+
+  .learn-frequency span {
+    position: relative;
+    text-shadow: 1px 1px var(--color-bg-dark);
   }
 
   .learn-range-legend {

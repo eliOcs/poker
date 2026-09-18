@@ -46,6 +46,14 @@
   box-sizing: border-box;
 }
 
+/* Press Start 2P's visible glyphs sit above the center of its font metrics.
+   Use on the text inside centered controls, never on icons or paragraphs. */
+.pixel-label {
+  display: inline-block;
+  line-height: 1;
+  translate: 0 0.1em;
+}
+
 html,
 body {
   margin: 0;

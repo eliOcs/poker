@@ -23,11 +23,27 @@ test("learn first-in strategy and mix", async ({ page }) => {
   const table = page.locator("phg-table-layout");
   const tableBounds = await table.boundingBox();
   const panelBounds = await page.locator(".learn-panel").boundingBox();
+  const headingBounds = await page.locator(".learn-panel h2").boundingBox();
+  const continueBounds = await page
+    .getByRole("button", { name: "Continue", exact: true })
+    .boundingBox();
   async function expectStableLayout() {
     expect(await table.boundingBox()).toEqual(tableBounds);
     expect(await page.locator(".learn-panel").boundingBox()).toEqual(
       panelBounds,
     );
+  }
+  async function expectStableControls(buttonName) {
+    const heading = await page.locator(".learn-panel h2").boundingBox();
+    expect(heading.y + heading.height / 2).toBeCloseTo(
+      headingBounds.y + headingBounds.height / 2,
+      1,
+    );
+    const button = await page
+      .getByRole("button", { name: buttonName, exact: true })
+      .boundingBox();
+    expect(button.y).toEqual(continueBounds.y);
+    expect(button.height).toEqual(continueBounds.height);
   }
   const mixHelp = page.getByRole("button", { name: "How to mix your actions" });
   await expect(page.getByRole("tooltip")).toHaveCount(0);
@@ -52,6 +68,7 @@ test("learn first-in strategy and mix", async ({ page }) => {
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page).toHaveScreenshot("learn-raise-sizing.png");
   await expectStableLayout();
+  await expectStableControls("Check strategy");
   await page.getByRole("button", { name: "3 BB", exact: true }).click();
   await page
     .getByRole("button", { name: "Check strategy", exact: true })
@@ -66,6 +83,8 @@ test("learn first-in strategy and mix", async ({ page }) => {
   await expect(page.locator(".learn-strategy")).toHaveCount(2);
   await expect(page).toHaveScreenshot("learn-feedback.png");
   await expectStableLayout();
+  await expectStableControls("Next hand");
+  await expectStableControls("Details");
   const details = page.getByRole("button", {
     name: "Details",
   });
@@ -84,6 +103,7 @@ test("learn first-in strategy and mix", async ({ page }) => {
   const range = page.getByRole("slider", { name: "Fold", exact: true });
   await expect(range).toHaveValue("35");
   await expectStableLayout();
+  await expectStableControls("Continue");
   const track = await range.boundingBox();
   expect(track).not.toBeNull();
   await page.mouse.move(
@@ -160,7 +180,7 @@ test("learn suited connected hand explanation", async ({ page }) => {
   await expect(page).toHaveScreenshot("learn-hand-details.png");
 });
 
-test("learn correct strategy shows only the recommended block", async ({
+test("learn correct strategy shows only the recommended actions", async ({
   page,
 }) => {
   await page.route("**/api/learn/scenario", (route) =>

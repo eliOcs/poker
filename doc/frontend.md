@@ -49,6 +49,16 @@ src/frontend/
 
 ## Components
 
+### Centered Text Labels
+
+Wrap short text inside centered controls in `<span class="pixel-label">…</span>`.
+The shared rule in `base.css` uses a consistent line height and a font-relative
+optical correction for Press Start 2P. It moves only the text, leaving the
+control's geometry, icons, and interaction animations intact. Dealer badges,
+bet presets, labeled slider handles, and Learn percentages use this rule.
+Keep it off paragraphs and other running text, and avoid nesting corrected
+labels or adding component-specific vertical offsets.
+
 ### App Shell & Auth
 
 | Component         | File                                 | Description                                  |

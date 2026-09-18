@@ -41,7 +41,7 @@ export function renderBetPresets(
               onChange(Math.max(min, Math.min(max, raw)));
             }}
           >
-            ${label}
+            <span class="pixel-label">${label}</span>
           </button>
         `,
       )}

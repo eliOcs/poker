@@ -83,8 +83,9 @@ class CurrencySlider extends LitElement {
       <span
         class="button button--${this.variant} slider-handle"
         aria-hidden="true"
-        >${this.handleLabel} ${this.value}%</span
       >
+        <span class="pixel-label">${this.handleLabel} ${this.value}%</span>
+      </span>
       <input
         type="range"
         aria-label=${this.label}

@@ -222,7 +222,11 @@ class Seat extends LitElement {
   }
 
   _renderDealerButton() {
-    return this.isButton ? html`<span class="dealer-button">D</span>` : "";
+    return this.isButton
+      ? html`<span class="dealer-button"
+          ><span class="pixel-label">D</span></span
+        >`
+      : "";
   }
   _renderHandRank() {
     return this.seat.handRank &&

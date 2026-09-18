@@ -167,7 +167,7 @@ export class Learn extends LitElement {
     const setAmount = (amount) => {
       this.betAmount = amount;
     };
-    return html`<h2>How much would you raise to?</h2>
+    return html`<h2 class="learn-question">How much would you raise to?</h2>
       <div class="betting-panel">
         ${renderBetPresets(
           {

@@ -40,20 +40,14 @@ export function renderLearnFeedback(view) {
       </h2>
     </div>
     <div class="learn-strategies">
-      ${renderStrategyBlock(
+      ${renderStrategy(
         "Recommended",
-        view.scenario.hand,
         result.expected,
         result.raiseTo,
         comparing,
       )}
       ${comparing
-        ? renderStrategyBlock(
-            "Your strategy",
-            view.scenario.hand,
-            view.frequencies,
-            view.raiseTo,
-          )
+        ? renderStrategy("Your strategy", view.frequencies, view.raiseTo)
         : ""}
     </div>
     <div class="action-row">
@@ -89,31 +83,22 @@ function rangeBackground(values) {
   return `background: linear-gradient(to right, var(--color-error) ${fold}%, var(--color-success) ${fold}% ${fold + call}%, var(--color-accent) ${fold + call}%)`;
 }
 
-function renderStrategyBlock(
-  label,
-  hand,
-  frequencies,
-  raiseTo,
-  showTitle = true,
-) {
+function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
   return html`<section class="learn-strategy" aria-label=${label}>
     ${showTitle ? html`<h3>${label}</h3>` : ""}
-    <div
-      class="learn-strategy-block"
-      style=${rangeBackground(frequencies)}
-      aria-hidden="true"
-    >
-      ${hand}
-    </div>
     <ul class="learn-strategy-actions">
       ${frequencies.map((frequency, index) =>
         frequency > 0
           ? html`<li>
-              <i
-                class=${["legend-fold", "legend-call", "legend-raise"][index]}
-                aria-hidden="true"
-              ></i
-              >${ACTIONS[index]} ${frequency}%
+              <span>${ACTIONS[index]}</span>
+              <span class="learn-frequency">
+                <i
+                  class=${["legend-fold", "legend-call", "legend-raise"][index]}
+                  style=${`width: ${frequency}%`}
+                  aria-hidden="true"
+                ></i>
+                <span class="pixel-label">${frequency}%</span>
+              </span>
             </li>`
           : "",
       )}

@@ -169,6 +169,12 @@ async function preparePlayerProfileTestCase(testCase, component) {
   ).toHaveCount(1);
 }
 
+async function prepareTestCaseClock(testCase, page) {
+  if (testCase !== "player-profile-summary") return;
+  // Keep relative dates stable as the real calendar advances.
+  await page.clock.setFixedTime(new Date("2026-09-01T12:00:00Z"));
+}
+
 async function prepareTestCase(testCase, page, component) {
   const componentState = {
     "game-rankings-modal": { showRanking: true },
@@ -317,6 +323,7 @@ async function verifyAvatarMakerScrollIsContained(testCase, component) {
 for (const testCase of TEST_CASES) {
   // eslint-disable-next-line playwright/valid-title
   test(testCase, async ({ page }) => {
+    await prepareTestCaseClock(testCase, page);
     await page.goto(`/test.html?test=${testCase}`);
 
     const selector = getComponentSelector(testCase);
