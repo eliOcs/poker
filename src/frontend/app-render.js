@@ -158,7 +158,9 @@ export function renderShellPageView(app, page) {
     home: () => renderHomeView(),
     learn: () =>
       html`<phg-learn
+        .user=${app.user}
         .rangeOpen=${app._modal === "learn-details"}
+        @seat-settings=${() => app.openProfileSettings()}
         @open-details=${() => {
           openAppModal(app, "learn-details");
         }}

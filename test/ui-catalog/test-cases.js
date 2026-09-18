@@ -16,6 +16,7 @@ import "/src/frontend/player-profile.js";
 import "/src/frontend/toast.js";
 import "/src/frontend/app-shell.js";
 import { renderShellPageView } from "/src/frontend/app-render.js";
+import { DEFAULT_AVATAR } from "/src/shared/avatar.js";
 import "/src/frontend/avatar-maker.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
 import { EMAIL_TEST_CASES } from "./test-cases-email.js";
@@ -55,6 +56,11 @@ const GAME_TEST_CASES = {
     html`<phg-app-shell
       path="/learn"
       .content=${html`<phg-learn
+        .user=${{
+          id: "learn-player",
+          name: "Alex",
+          settings: { volume: 0.75, vibration: true, avatar: DEFAULT_AVATAR },
+        }}
         @open-details=${(event) => {
           event.currentTarget.rangeOpen = true;
         }}

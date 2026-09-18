@@ -15,6 +15,7 @@ const ACTION_STYLES = ["danger", "success", "action"];
 
 export class Learn extends LitElement {
   static properties = {
+    user: { type: Object },
     scenario: { state: true },
     frequencies: { state: true },
     betAmount: { state: true },
@@ -27,6 +28,7 @@ export class Learn extends LitElement {
 
   constructor() {
     super();
+    this.user = undefined;
     this.scenario = undefined;
     this.rangeOpen = false;
     this.reset();
@@ -209,11 +211,23 @@ export class Learn extends LitElement {
                       data-seat=${i}
                       data-slot=${visualSeat(i, this.scenario.seats)}
                       data-table-size="6"
-                      .seat=${seat}
+                      .seat=${seat.isCurrentPlayer && this.user
+                        ? {
+                            ...seat,
+                            player: {
+                              id: this.user.id,
+                              name: this.user.name ?? seat.player.name,
+                            },
+                          }
+                        : seat}
+                      .avatar=${seat.isCurrentPlayer
+                        ? this.user?.settings.avatar
+                        : undefined}
+                      title=${seat.player.name}
                       .seatNumber=${i}
                       .isButton=${i === 3}
                       .noAnimation=${true}
-                      .settingsEnabled=${false}
+                      .settingsEnabled=${!!this.user}
                     ></phg-seat>`,
                 )}
               </div>

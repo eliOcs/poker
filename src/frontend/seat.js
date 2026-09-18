@@ -19,6 +19,7 @@ class Seat extends LitElement {
   static get properties() {
     return {
       seat: { type: Object },
+      avatar: { type: Object },
       seatNumber: { type: Number },
       isButton: { type: Boolean },
       clockRemaining: { type: Number },
@@ -31,6 +32,8 @@ class Seat extends LitElement {
   constructor() {
     super();
     this.seat = undefined;
+    /** @type {import('../shared/avatar.js').AvatarConfiguration|undefined} */
+    this.avatar = undefined;
     this.seatNumber = 0;
     this.isButton = false;
     this.noAnimation = false;
@@ -250,6 +253,7 @@ class Seat extends LitElement {
     const player = this.seat.player;
     return html`<div class="player-info">
       <phg-avatar
+        .avatar=${this.avatar}
         .playerId=${player?.id}
         .revision=${player?.avatarRevision}
         .label=${`${player?.name ?? "Player"}'s avatar`}
