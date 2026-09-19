@@ -45,28 +45,34 @@ export function followupScenario(raised = false) {
   };
 }
 
-export function buttonFollowupScenario(opponent) {
-  const villain = opponent === "SB" ? 4 : 5;
-  const bets =
-    opponent === "SB" ? [0, 0, 0, 1250, 5000, 500] : [0, 0, 0, 1250, 250, 5000];
+export function openFollowupScenario(position, opponent) {
+  const positions = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
+  const hero = positions.indexOf(position);
+  const villain = positions.indexOf(opponent);
+  const currentBet = opponent === "BTN" ? 4250 : 5000;
+  const bets = [0, 0, 0, 0, 250, 500];
+  bets[hero] = 1250;
+  bets[villain] = currentBet;
   return {
     ...learnScenario,
-    id: `BTN_RAISE_${opponent}-AA`,
-    position: "BTN",
-    title: `BTN Open vs ${opponent} 3-bet`,
-    history: `You raised to 2.5 BB. ${opponent} 3-bet to 10 BB; the other blind folded.`,
-    currentBet: 5000,
-    minRaiseTo: 8750,
+    id: `${position}_RAISE_${opponent}-AA`,
+    position,
+    title: `${position} Open vs ${opponent} 3-bet`,
+    history: `You raised to 2.5 BB. ${opponent} 3-bet to ${currentBet / 500} BB; everyone else folded.`,
+    currentBet,
+    minRaiseTo: currentBet * 2 - 1250,
     seats: learnScenario.seats.map((seat, i) => ({
       ...seat,
-      player: { name: ["UTG", "UTG+1", "CO", "You · BTN", "SB", "BB"][i] },
+      player: {
+        name: `${i === hero ? "You · " : ""}${["UTG", "UTG+1", "CO", "BTN", "SB", "BB"][i]}`,
+      },
       bet: bets[i],
       stack: 50000 - bets[i],
-      folded: i !== 3 && i !== villain,
-      lastAction: i === 3 || i === villain ? "raise" : "fold",
-      isCurrentPlayer: i === 3,
-      isActing: i === 3,
-      cards: i === 3 ? ["As", "Ah"] : i === villain ? ["??", "??"] : [],
+      folded: i !== hero && i !== villain,
+      lastAction: i === hero || i === villain ? "raise" : "fold",
+      isCurrentPlayer: i === hero,
+      isActing: i === hero,
+      cards: i === hero ? ["As", "Ah"] : i === villain ? ["??", "??"] : [],
     })),
   };
 }

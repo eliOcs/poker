@@ -84,6 +84,27 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
         min: 8750,
         action: "raise",
       },
+      CO_RAISE_BTN: {
+        hero: 2,
+        opponent: 3,
+        bets: [0, 0, 1250, 4250, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      CO_RAISE_SB: {
+        hero: 2,
+        opponent: 4,
+        bets: [0, 0, 1250, 0, 5000, 500],
+        min: 8750,
+        action: "raise",
+      },
+      CO_RAISE_BB: {
+        hero: 2,
+        opponent: 5,
+        bets: [0, 0, 1250, 0, 250, 5000],
+        min: 8750,
+        action: "raise",
+      },
     }[key];
     if (followup) {
       assert.equal(hero, followup.hero);
@@ -113,7 +134,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 9);
+  assert.equal(seen.size, 12);
 });
 
 test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
@@ -124,6 +145,9 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
     // The supplied PDF's BB chart is nearly identical to its SB chart,
     // despite different captions. Preserve the chart; see doc/learn.md.
     ["BTN_RAISE_BB", "BTN", 2, [44.5, 47.3, 8.6], 2],
+    ["CO_RAISE_BTN", "CO", 2, [59, 20.4, 20.6], 1],
+    ["CO_RAISE_SB", "CO", 2, [53.1, 35.8, 11.1], 1],
+    ["CO_RAISE_BB", "CO", 2, [52.1, 37.6, 10.3], 1],
   ]) {
     const hands = ranges[key].hands;
     assert.equal(hands["72o"], undefined);
@@ -160,6 +184,9 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
     ["SB_RAISE_BB", 15, 24, 12, 6],
     ["BTN_RAISE_SB", 17.5, 23, 13.5, 7.5],
     ["BTN_RAISE_BB", 17.5, 23, 13, 7.5],
+    ["CO_RAISE_BTN", 14.5, 23, 12.5, 6],
+    ["CO_RAISE_SB", 17.5, 23, 13.5, 7.5],
+    ["CO_RAISE_BB", 17.5, 23, 13, 7.5],
   ]) {
     const correct = evaluateLearnStrategy({
       id: `${key}-AA`,

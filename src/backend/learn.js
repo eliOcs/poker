@@ -169,6 +169,7 @@ export function evaluateLearnStrategy(input) {
     sizingMatch,
     raiseTo: range.raiseTo,
     playability: describePlayability(hand, range.raiseTo, situation),
+    explanationTitle: situation.explanationTitle,
     explanation: explanationFor(situation, expected, frequencies),
     page: range.page,
     chart: range.chart,

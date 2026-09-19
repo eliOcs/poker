@@ -118,7 +118,8 @@ function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
 // Current reference: Modern Poker Theory, Michael Acevedo, chapter 5.
 // Position -> Hand Range / PDF page: LJ 47/200, HJ 42/194, CO 38/189,
 // BTN 35/185, SB 32/182. General heuristics: PDF 177–179; opening sizes: PDF 181.
-// Follow-ups: SB 33/183 and 34/184; BTN 36/187 and 37/188.
+// Follow-ups: SB 33/183 and 34/184; BTN 36/187 and 37/188;
+// CO 39/191, 40/192 and 41/193 (position guidance on PDF 189–190).
 // Player-facing GTO guidance paraphrases the conclusion on PDF page 136.
 // Calibration: 100 BB, 5% rake capped at $3; chart estimates rounded to 5 points.
 // Mix grading tolerates 15 points per action, not an EV-loss estimate. Nearby
@@ -170,7 +171,10 @@ function renderRangeDetails(view) {
     <h2>This situation</h2>
     <ul class="learn-card-factors">
       <li>
-        <strong>${POSITION_CHARACTERISTICS[view.scenario.position]}</strong>
+        <strong
+          >${result.explanationTitle ??
+          POSITION_CHARACTERISTICS[view.scenario.position]}</strong
+        >
         <p>${result.explanation}</p>
       </li>
       ${result.playability.situation.map(

@@ -4,7 +4,7 @@ import "../../src/frontend/learn.js";
 import {
   learnScenario as scenario,
   followupScenario,
-  buttonFollowupScenario,
+  openFollowupScenario,
 } from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
@@ -197,8 +197,11 @@ describe("Learn strategy flow", () => {
   for (const [lesson, min, halfPot, pot, raiseTo] of [
     [followupScenario(), 6, 7, 10.5, 13],
     [followupScenario(true), 15, 18, 27, 24],
-    [buttonFollowupScenario("SB"), 17.5, 20.5, 31, 23],
-    [buttonFollowupScenario("BB"), 17.5, 20.25, 30.5, 23],
+    [openFollowupScenario("BTN", "SB"), 17.5, 20.5, 31, 23],
+    [openFollowupScenario("BTN", "BB"), 17.5, 20.25, 30.5, 23],
+    [openFollowupScenario("CO", "BTN"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("CO", "SB"), 17.5, 20.5, 31, 23],
+    [openFollowupScenario("CO", "BB"), 17.5, 20.25, 30.5, 23],
   ]) {
     it(`supports legal sizing for ${lesson.title}`, async () => {
       const el = await fixture(html`<phg-learn></phg-learn>`);

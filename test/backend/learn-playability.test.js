@@ -71,6 +71,9 @@ test("follow-up explanations calculate pot odds from the additional call and pot
     ["SB_RAISE_BB-AA", "Pot odds: ~33%", "6 ÷ (12 + 6) ~ 33%"],
     ["BTN_RAISE_SB-AA", "Pot odds: ~36%", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
     ["BTN_RAISE_BB-AA", "Pot odds: ~37%", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["CO_RAISE_BTN-AA", "Pot odds: ~32%", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["CO_RAISE_SB-AA", "Pot odds: ~36%", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["CO_RAISE_BB-AA", "Pot odds: ~37%", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
     const note = result.playability.situation.find((n) =>

@@ -48,6 +48,47 @@ const FOLLOWUPS = {
     explanation:
       "You opened on the button and the big blind re-raised after the small blind folded. The small blind’s 0.5 BB remains in the pot. You will act last after the flop, so many hands prefer calling to using a 4-bet that could face an all-in. The reference combines strong hands with selected bluffs in its 4-bet range, while preserving hands that play well after the flop in its calling range.",
   },
+  CO_RAISE_BTN: {
+    position: "CO",
+    opponent: "BTN",
+    title: "CO Open vs BTN 3-bet",
+    history:
+      "You raised to 2.5 BB. BTN 3-bet to 8.5 BB and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs BTN",
+    explanation:
+      "The button is the exception: you are out of position and must act first after the flop. Compared with facing either blind, the reference 4-bets more and calls less, trying to win the pot preflop. If called, the larger pot leaves less money behind relative to it, reducing the button’s positional advantage. Weaker hands also fold more often because playing them out of position is harder.",
+  },
+  CO_RAISE_SB: {
+    position: "CO",
+    opponent: "SB",
+    title: "CO Open vs SB 3-bet",
+    history:
+      "You raised to 2.5 BB. BTN folded, SB 3-bet to 10 BB and BB folded.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs SB",
+    explanation:
+      "You are in position against the small blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller 4-bet range combines strong hands with selected bluffs.",
+  },
+  CO_RAISE_BB: {
+    position: "CO",
+    opponent: "BB",
+    title: "CO Open vs BB 3-bet",
+    history: "You raised to 2.5 BB. BTN and SB folded, then BB 3-bet to 10 BB.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs BB",
+    explanation:
+      "You are in position against the big blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller 4-bet range combines strong hands with selected bluffs.",
+  },
 };
 
 export function learnSituation(key) {

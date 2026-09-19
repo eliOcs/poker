@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   learnScenario,
   followupScenario,
-  buttonFollowupScenario,
+  openFollowupScenario,
 } from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
@@ -188,8 +188,11 @@ test("learn suited connected hand explanation", async ({ page }) => {
 for (const [name, scenario, min, raiseTo, odds] of [
   ["learn-sb-limp", followupScenario(), 6, 13, 36],
   ["learn-sb-open", followupScenario(true), 15, 24, 33],
-  ["learn-btn-vs-sb", buttonFollowupScenario("SB"), 17.5, 23, 36],
-  ["learn-btn-vs-bb", buttonFollowupScenario("BB"), 17.5, 23, 37],
+  ["learn-btn-vs-sb", openFollowupScenario("BTN", "SB"), 17.5, 23, 36],
+  ["learn-btn-vs-bb", openFollowupScenario("BTN", "BB"), 17.5, 23, 37],
+  ["learn-co-vs-btn", openFollowupScenario("CO", "BTN"), 14.5, 23, 32],
+  ["learn-co-vs-sb", openFollowupScenario("CO", "SB"), 17.5, 23, 36],
+  ["learn-co-vs-bb", openFollowupScenario("CO", "BB"), 17.5, 23, 37],
 ]) {
   test(`learn follow-up ${scenario.title}`, async ({ page }) => {
     await page.route("**/api/learn/scenario", (route) =>
