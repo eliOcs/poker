@@ -54,6 +54,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(cards[0][1] === cards[1][1], scenario.hand.endsWith("s"));
     assert.equal(scenario.expected, undefined);
     assert.equal(scenario.hands, undefined);
+    assert.equal(scenario.rangeTotals, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
       SB_LIMP_BB: {
@@ -229,6 +230,30 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
         .sizingMatch,
       undefined,
     );
+  }
+});
+
+test("chart totals weight combinations and the preceding limp or raise, not grid cells", () => {
+  for (const [key, totals] of [
+    ["LJ", [83, 0, 17]],
+    ["BTN", [57, 0, 43]],
+    ["SB", [38, 37, 25]],
+    ["SB_LIMP_BB", [47, 40, 13]],
+    ["SB_RAISE_BB", [46, 37, 17]],
+    ["CO_RAISE_BTN", [59, 20, 21]],
+    ["CO_RAISE_SB", [53, 35, 12]],
+  ]) {
+    for (const hand of ["AA", "22"]) {
+      const result = evaluateLearnStrategy({
+        id: `${key}-${hand}`,
+        frequencies: [100, 0, 0],
+      });
+      assert.deepEqual(result.rangeTotals, totals, `${key}-${hand}`);
+      assert.equal(
+        result.rangeTotals.reduce((sum, value) => sum + value, 0),
+        100,
+      );
+    }
   }
 });
 

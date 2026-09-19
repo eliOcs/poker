@@ -89,10 +89,24 @@
 
   .learn-card-factors {
     display: grid;
-    gap: var(--space-md);
+    gap: var(--space-lg);
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+
+  .learn-card-factors li {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .learn-hole-cards {
+    display: flex;
+    gap: 2px;
+  }
+
+  .learn-hole-cards phg-card {
+    display: block;
   }
 
   .learn-card-factors strong {
@@ -148,6 +162,11 @@
     color: var(--color-fg-medium);
   }
 
+  .learn-range-details .learn-strategy {
+    justify-items: start;
+    margin-bottom: var(--space-md);
+  }
+
   .learn-strategy-actions {
     display: grid;
     gap: var(--space-md);
@@ -169,7 +188,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    min-height: 24px;
+    min-height: 18px;
     background: var(--color-bg-dark);
     text-align: center;
     color: var(--color-fg-white);
@@ -190,6 +209,26 @@
     flex-wrap: wrap;
     gap: var(--space-md) var(--space-lg);
     font-size: var(--font-sm);
+  }
+
+  .learn-range-totals {
+    display: grid;
+    grid-template-columns: repeat(
+      3,
+      minmax(0, calc(5ch + var(--space-sm) + 100px))
+    );
+    justify-content: center;
+    gap: var(--space-md);
+    font-size: var(--font-sm);
+    line-height: 1.5;
+  }
+
+  .learn-range-total {
+    display: grid;
+    grid-template-columns: 5ch minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-sm);
+    white-space: nowrap;
   }
 
   .learn-range-legend span {

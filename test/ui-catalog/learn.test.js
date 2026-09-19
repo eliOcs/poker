@@ -100,6 +100,19 @@ test("learn first-in strategy and mix", async ({ page }) => {
   await expect(cells.nth(13)).toHaveText("AKo");
   await expect(cells.last()).toHaveText("22");
   await expect(page).toHaveScreenshot("learn-range-modal.png");
+  const totals = page.getByRole("group", { name: "Range totals", exact: true });
+  await totals.scrollIntoViewIfNeeded();
+  await expect(totals.locator(".learn-range-total")).toHaveText([
+    "Fold 38%",
+    "Call 37%",
+    "Raise 25%",
+  ]);
+  await expect(page).toHaveScreenshot("learn-range-totals.png");
+  const strategy = page.getByRole("region", { name: "GTO strategy" });
+  await strategy.scrollIntoViewIfNeeded();
+  await expect(strategy.locator("li")).toHaveText(["Call 40%", "Raise 60%"]);
+  await expect(strategy).toContainText("Raise to 3 BB");
+  await expect(page).toHaveScreenshot("learn-details-strategy.png");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(details).toBeFocused();
@@ -172,9 +185,13 @@ test("learn suited connected hand explanation", async ({ page }) => {
   const dialog = page.getByRole("dialog");
   const heading = dialog.getByRole("heading", {
     name: "Your cards",
+    exact: true,
   });
   await heading.scrollIntoViewIfNeeded();
   await expect(heading).toBeVisible();
+  const cards = dialog.getByRole("group", { name: "Your hole cards" });
+  await expect(cards.locator(".rank")).toHaveText(["10", "9"]);
+  await expect(cards.locator(".suit")).toHaveText(["♠", "♠"]);
   await expect(dialog.getByText("Suited", { exact: true })).toBeVisible();
   await expect(dialog.getByText("Connected", { exact: true })).toBeVisible();
   await expect(dialog.getByText(/Both cards fit together/)).toBeVisible();
@@ -225,9 +242,10 @@ for (const [name, scenario, min, raiseTo, odds] of [
       page.getByTitle("72o: Not in range", { exact: true }),
     ).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-range.png`);
-    const potOdds = page.getByText(`Pot odds: ~${odds}%`, { exact: true });
+    const potOdds = page.getByText(/^Calling costs another/);
     await potOdds.scrollIntoViewIfNeeded();
     await expect(potOdds).toBeVisible();
+    await expect(potOdds).toContainText(`~ ${odds}%`);
     await expect(page).toHaveScreenshot(`${name}-pot-odds.png`);
   });
 }

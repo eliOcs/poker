@@ -24,6 +24,41 @@ const explanations = {
   SB: "Only the big blind remains, but you will be out of position and act first after the flop. Split your opening range between limping, raising and folding. Limping (calling to 1 BB) costs just another 0.5 BB, so you can play more hands while raising less often and making BB’s 3-bets less effective. When you raise, the reference uses 3 BB to discourage calls and compensate for playing out of position.",
 };
 
+/** Weight the displayed chart by combinations and the action that reached it. */
+function rangeTotals(range, situation) {
+  const previousHands = situation.opponent
+    ? /** @type {NonNullable<typeof ranges[string]>} */ (
+        ranges[situation.position]
+      ).hands
+    : undefined;
+  const previousAction = situation.lastAction === "call" ? 1 : 2;
+  const totals = [0, 1, 2].map((index) => ({ index, total: 0 }));
+  let weightTotal = 0;
+  for (const [hand, frequencies] of Object.entries(range.hands)) {
+    const combinations = hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12;
+    const weight =
+      combinations *
+      (previousHands
+        ? /** @type {number} */ (
+            /** @type {number[]} */ (previousHands[hand])[previousAction]
+          )
+        : 100);
+    weightTotal += weight;
+    totals.forEach((action) => {
+      action.total += frequencies[action.index] * weight;
+    });
+  }
+  const percentages = totals.map(({ total }) => {
+    const percent = total / weightTotal;
+    return { rounded: Math.floor(percent), fraction: percent % 1 };
+  });
+  // Give leftover percentage points to the largest fractions so the total is 100%.
+  const remaining = 100 - percentages.reduce((sum, n) => sum + n.rounded, 0);
+  const order = percentages.toSorted((a, b) => b.fraction - a.fraction);
+  for (const action of order.slice(0, remaining)) action.rounded++;
+  return percentages.map(({ rounded }) => rounded);
+}
+
 export function createLearnScenario() {
   const keys = Object.keys(ranges);
   const key = /** @type {string} */ (keys[randomInt(keys.length)]);
@@ -174,6 +209,7 @@ export function evaluateLearnStrategy(input) {
     page: range.page,
     chart: range.chart,
     hands: range.hands,
+    rangeTotals: rangeTotals(range, situation),
   };
 }
 

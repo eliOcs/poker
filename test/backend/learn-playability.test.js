@@ -211,22 +211,22 @@ test("the weaker button opens named in the cutoff explanation really fold there"
 
 test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
   for (const [id, title, calculation] of [
-    ["SB_LIMP_BB-AA", "Pot odds: ~36%", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
-    ["SB_RAISE_BB-AA", "Pot odds: ~33%", "6 ÷ (12 + 6) ~ 33%"],
-    ["BTN_RAISE_SB-AA", "Pot odds: ~36%", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["BTN_RAISE_BB-AA", "Pot odds: ~37%", "7.5 ÷ (13 + 7.5) ~ 37%"],
-    ["CO_RAISE_BTN-AA", "Pot odds: ~32%", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["CO_RAISE_SB-AA", "Pot odds: ~36%", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["CO_RAISE_BB-AA", "Pot odds: ~37%", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["SB_LIMP_BB-AA", "4.5 BB in the pot", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
+    ["SB_RAISE_BB-AA", "12 BB in the pot", "6 ÷ (12 + 6) ~ 33%"],
+    ["BTN_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["BTN_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["CO_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["CO_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["CO_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
-    const note = result.playability.situation.find((n) =>
-      n.title.startsWith("Pot odds:"),
-    );
+    const note = result.playability.situation.find((n) => n.title === title);
     assert.equal(note.title, title);
     assert.ok(note.text.includes(calculation));
-    assert.match(note.text, /Assuming no further betting/);
-    assert.match(note.text, /matching it breaks even/);
+    assert.match(note.text, /no further betting/);
+    assert.match(note.text, /break-even win rate/);
+    assert.match(note.text, /winning more often is profitable/);
+    assert.match(note.text, /Future bets and folds/);
   }
 });
 
@@ -237,9 +237,7 @@ test("first-in explanations do not use heads-up follow-up pot odds", () => {
       frequencies: [100, 0, 0],
     });
     assert.ok(
-      result.playability.situation.every(
-        (n) => !n.title.startsWith("Pot odds:"),
-      ),
+      result.playability.situation.every((n) => !n.text.includes("Pot odds:")),
     );
   }
 });

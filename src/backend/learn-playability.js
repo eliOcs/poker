@@ -47,15 +47,11 @@ export function describePlayability(hand, raiseTo, situation = undefined) {
 function situationNotes(raiseTo, situation) {
   return [
     situation?.explanation
-      ? {
-          title: `${situation.pot} BB in the pot`,
-          text: `You have already put in ${situation.heroBet} BB. Calling costs another ${situation.currentBet - situation.heroBet} BB. Both players started with 100 BB; earlier contributions are already part of the pot.`,
-        }
+      ? potOddsNote(situation)
       : {
           title: "1.5 BB to play for",
           text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
         },
-    ...(situation?.currentBet > 1 ? [potOddsNote(situation)] : []),
     {
       title: `${raiseTo} BB ${situation?.explanation ? "re-raise total" : "opening size"}`,
       text: situation?.explanation
@@ -76,8 +72,8 @@ function potOddsNote(situation) {
   const call = situation.currentBet - situation.heroBet;
   const percentage = Math.round((100 * call) / (pot + call));
   return {
-    title: `Pot odds: ~${percentage}%`,
-    text: `Call cost ÷ pot after calling: ${call} ÷ (${pot} + ${call}) ~ ${percentage}%, with amounts in BB. Assuming no further betting, winning more often than the exact threshold makes calling profitable over time; matching it breaks even. Preflop, future bets may cost more or force you to fold before showdown, so pot odds alone do not tell you whether to call.`,
+    title: `${pot} BB in the pot`,
+    text: `Calling costs another ${call} BB. Pot odds: ${call} ÷ (${pot} + ${call}) ~ ${percentage}%. With no further betting, this is the break-even win rate; winning more often is profitable. Future bets and folds still matter.`,
   };
 }
 

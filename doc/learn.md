@@ -18,7 +18,7 @@ The button follow-ups start after BTN opens to 2.5 BB and either SB or BB 3-bets
 
 The cutoff follow-ups start with a 2.5 BB open and cover 3-bets from BTN (8.5 BB), SB (10 BB) and BB (10 BB). Against BTN, both folded blinds contribute 1.5 BB: the pot is 12.5 BB, calling costs 6 BB, pot odds are about 32%, and the minimum 4-bet is 14.5 BB. Half-pot/pot presets are 17.75/27 BB. Against either blind, the contributions, pot odds and legal sizes match the corresponding button follow-up, but the hand ranges come from the cutoff charts. The reference 4-bet size is 23 BB in all three cases. Explanations distinguish playing out of position against BTN (more folding and 4-betting, less calling) from playing in position against the blinds (continuing mostly by calling).
 
-Follow-up feedback also shows pot odds under “This situation”: the additional call divided by the pot after calling, including chips already committed. SB limp versus BB raise is `2.5 / (4.5 + 2.5) ~ 36%`; SB open versus BB 3-bet is `6 / (12 + 6) ~ 33%`. Percentages are rounded to whole numbers for teaching. The explanation describes the break-even threshold with no further betting, and explains why future bets and folds affect preflop calls. Rake is discussed separately rather than repeated in the pot-odds explanation. These metrics do not estimate the hand’s equity or change grading. Source: “Pot Odds and Outs,” PDF pages 37–38.
+Follow-up feedback combines the pot size, call cost and pot odds in one concise note under “This situation”: the additional call divided by the pot after calling, including chips already committed. SB limp versus BB raise is `2.5 / (4.5 + 2.5) ~ 36%`; SB open versus BB 3-bet is `6 / (12 + 6) ~ 33%`. Percentages are rounded to whole numbers for teaching. The explanation describes the break-even threshold with no further betting, and explains why future bets and folds affect preflop calls. Rake is discussed separately rather than repeated in the pot-odds explanation. These metrics do not estimate the hand’s equity or change grading. Source: “Pot Odds and Outs,” PDF pages 37–38.
 
 ## Source and limits
 
@@ -31,6 +31,8 @@ Modern Poker Theory by Michael Acevedo, chapter 5, 100 BB, six-handed cash. Refe
 | CO       | 38         | 189      | 27.8%                     | 27.87%    |
 | BTN      | 35         | 185      | 43.4%                     | 43.46%    |
 | SB       | 32         | 182      | 24.4%                     | 24.63%    |
+
+Each chart displays Fold / Call / Raise totals directly below its grid. These are calculated from the displayed per-hand frequencies, weighted by card combinations (6 per pair, 4 per suited hand, 12 per offsuit hand). Follow-up totals also weight each hand by its preceding limp or opening-raise frequency; unavailable cells contribute nothing. The server returns the totals only with the evaluated answer. Whole percentages use largest-remainder rounding so the three displayed values add to 100%. These totals describe the chart, not the trainer’s uniform practice sampling.
 
 Follow-up charts use conditional frequencies after the earlier SB, BTN or CO action:
 

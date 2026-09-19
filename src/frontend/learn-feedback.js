@@ -2,6 +2,7 @@ import { html } from "lit";
 import { renderModal } from "./modal.js";
 import { ICONS } from "./icons.js";
 import { formatAmount } from "./currency.js";
+import "./card.js";
 
 const ACTIONS = ["Fold", "Call", "Raise"];
 const POSITION_NAMES = {
@@ -91,6 +92,17 @@ function rangeBackground(values) {
   return `background: linear-gradient(to right, var(--color-error) ${fold}%, var(--color-success) ${fold}% ${fold + call}%, var(--color-accent) ${fold + call}%)`;
 }
 
+function renderFrequency(frequency, index) {
+  return html`<span class="learn-frequency">
+    <i
+      class=${["legend-fold", "legend-call", "legend-raise"][index]}
+      style=${`width: ${frequency}%`}
+      aria-hidden="true"
+    ></i>
+    <span class="pixel-label">${frequency}%</span>
+  </span>`;
+}
+
 function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
   return html`<section class="learn-strategy" aria-label=${label}>
     ${showTitle ? html`<h3>${label}</h3>` : ""}
@@ -98,15 +110,8 @@ function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
       ${frequencies.map((frequency, index) =>
         frequency > 0
           ? html`<li>
-              <span>${ACTIONS[index]}</span>
-              <span class="learn-frequency">
-                <i
-                  class=${["legend-fold", "legend-call", "legend-raise"][index]}
-                  style=${`width: ${frequency}%`}
-                  aria-hidden="true"
-                ></i>
-                <span class="pixel-label">${frequency}%</span>
-              </span>
+              <span class="pixel-label">${ACTIONS[index]}</span>
+              ${renderFrequency(frequency, index)}
             </li>`
           : "",
       )}
@@ -128,6 +133,7 @@ function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
 // future strategies may come from another source or our own solver.
 function renderRangeDetails(view) {
   const result = view.result;
+  const hero = view.scenario.seats.find((seat) => seat.isCurrentPlayer);
   return html` <div class="learn-range-details" tabindex="-1" autofocus>
     <div class="learn-range-legend" aria-label="Range legend">
       <span><i class="legend-fold" aria-hidden="true"></i>Fold</span>
@@ -158,7 +164,24 @@ function renderRangeDetails(view) {
         >`;
       })}
     </div>
+    <div class="learn-range-totals" role="group" aria-label="Range totals">
+      ${ACTIONS.map(
+        (action, i) =>
+          html`<span class="learn-range-total"
+            ><span class="pixel-label">${action}</span> ${renderFrequency(
+              result.rangeTotals[i],
+              i,
+            )}</span
+          >`,
+      )}
+    </div>
     <h2>Your cards</h2>
+    <div class="learn-hole-cards" role="group" aria-label="Your hole cards">
+      ${hero.cards.map(
+        (card) =>
+          html`<phg-card .card=${card} noAnimation size="medium"></phg-card>`,
+      )}
+    </div>
     <ul class="learn-card-factors">
       ${result.playability.cards.map(
         (factor) =>
@@ -169,6 +192,15 @@ function renderRangeDetails(view) {
       )}
     </ul>
     <h2>This situation</h2>
+    ${renderStrategy(
+      "GTO strategy",
+      result.expected,
+      formatAmount(
+        result.raiseTo * view.scenario.blinds.big,
+        view.displayBigBlind,
+      ),
+      false,
+    )}
     <ul class="learn-card-factors">
       <li>
         <strong

@@ -35,6 +35,7 @@ describe("Learn strategy flow", () => {
             page: 182,
             chart: 32,
             hands: { AA: [0, 50, 50] },
+            rangeTotals: [20, 60, 20],
           }),
         );
       }
@@ -238,6 +239,11 @@ describe("Learn strategy flow", () => {
         el.scenario.title,
       );
       expect(el.querySelectorAll(".learn-range span")).to.have.length(169);
+      expect(
+        [...el.querySelectorAll(".learn-range-total")].map((span) =>
+          span.textContent.replace(/\s+/g, " ").trim(),
+        ),
+      ).to.deep.equal(["Fold 20%", "Call 60%", "Raise 20%"]);
       expect(el.querySelector('[title="72o: Not in range"]')).to.exist;
     });
   }
