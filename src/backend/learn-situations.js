@@ -10,7 +10,7 @@ const FOLLOWUPS = {
     minRaiseTo: 6,
     lastAction: "call",
     explanation:
-      "You limped from the small blind and the big blind raised. You will act first after the flop. The reference re-raises a range built around high-equity hands, while calling with other hands that can continue for the extra 2.5 BB.",
+      "After you limp and BB raises to 3.5 BB, the reference re-raises a linear range built from high-equity hands. These hands can continue against a further raise and play well when the remaining stacks are small relative to the pot (low SPR). You are still out of position after the flop; other playable hands call the extra 2.5 BB.",
   },
   SB_RAISE_BB: {
     position: "SB",
@@ -22,7 +22,7 @@ const FOLLOWUPS = {
     minRaiseTo: 15,
     lastAction: "raise",
     explanation:
-      "You opened from the small blind and the big blind re-raised. You will act first after the flop. Many medium-strength hands prefer calling the extra 6 BB. The reference 4-bets a polarized range of strong hands and selected bluffs, including hands that block strong opposing holdings.",
+      "After you open to 3 BB and BB 3-bets to 9 BB, medium-strength hands often prefer calling the extra 6 BB: they want to see a flop without 4-betting and then folding to an all-in. This leaves a polarized 4-bet range of strong hands and selected bluffs with useful blockers. Those hands have a plan to call or fold against a 5-bet shove, while retaining coverage of different boards if BB calls. You still act first after the flop.",
   },
   BTN_RAISE_SB: {
     position: "BTN",
@@ -34,7 +34,7 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanation:
-      "You opened on the button and the small blind re-raised. The big blind folded, leaving its 1 BB in the pot. You will act last after the flop, which helps you realize your hand’s equity by seeing what your opponent does first. The reference mostly calls with its continuing hands and uses a polarized 4-bet range of strong hands and selected bluffs with useful blockers.",
+      "You have position on the small blind and act last after the flop. Preserve that advantage by mostly calling with hands that continue. Keep a polarized 4-bet range of strong hands and selected bluffs with useful blockers and coverage of different boards. A 4-bet lets the blind respond with a 5-bet shove, forcing you to fold some hands that could have played well by calling. The book uses similar defenses against both blinds, but recommends slightly more defense against SB: the folded BB leaves 1 BB, giving you better calling odds than against BB.",
   },
   BTN_RAISE_BB: {
     position: "BTN",
@@ -46,7 +46,7 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanation:
-      "You opened on the button and the big blind re-raised after the small blind folded. The small blind’s 0.5 BB remains in the pot. You will act last after the flop, so many hands prefer calling to using a 4-bet that could face an all-in. The reference combines strong hands with selected bluffs in its 4-bet range, while preserving hands that play well after the flop in its calling range.",
+      "You have position on the big blind and act last after the flop. Preserve that advantage by mostly calling with hands that continue. Keep a polarized 4-bet range of strong hands and selected bluffs with useful blockers and coverage of different boards. A 4-bet lets the blind respond with a 5-bet shove, forcing you to fold some hands that could have played well by calling. The book uses similar defenses against both blinds, but recommends slightly less defense against BB: the folded SB leaves only 0.5 BB, giving you a smaller pot than against SB.",
   },
   CO_RAISE_BTN: {
     position: "CO",
@@ -74,7 +74,7 @@ const FOLLOWUPS = {
     lastAction: "raise",
     explanationTitle: "In position vs SB",
     explanation:
-      "You are in position against the small blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller 4-bet range combines strong hands with selected bluffs.",
+      "You are in position against the small blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller, polarized 4-bet range combines strong hands with selected bluffs.",
   },
   CO_RAISE_BB: {
     position: "CO",
@@ -87,7 +87,7 @@ const FOLLOWUPS = {
     lastAction: "raise",
     explanationTitle: "In position vs BB",
     explanation:
-      "You are in position against the big blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller 4-bet range combines strong hands with selected bluffs.",
+      "You are in position against the big blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller, polarized 4-bet range combines strong hands with selected bluffs.",
   },
 };
 

@@ -19,9 +19,9 @@ const ranges = LEARN_RANGES;
 const explanations = {
   LJ: "Five players still have a chance to enter the pot. Start with a strong range: several opponents can have position on you after the flop.",
   HJ: "Four players are still to act. You can open more hands than from the first seat, but the cutoff and button can still play with position on you.",
-  CO: "Only three players remain, so more hands become playable. The button can still call or raise with position on you.",
-  BTN: "Only the blinds remain, and you will act after them on later rounds. That positional advantage lets you open a wider range.",
-  SB: "Only the big blind remains. Calling adds half a big blind to reach 1 BB, letting you play more hands. This is also called limping. Raising larger helps offset having to act first after the flop.",
+  CO: "The button still has position on you and can call or 3-bet, so open a tighter range than on the button: about 28% of hands instead of 43%. Play raise or fold, using the reference opening size of 2.5 BB. Weaker button opens such as K2s, Q2s and 98o fold here because there is another player to get through, and you will act before the button after the flop.",
+  BTN: "With only the blinds left, play raise or fold: the reference opens to 2.5 BB with about 43% of hands. You have position on both blinds and act last after the flop, but unlike SB you get no discount to limp. Limping invites both blinds into the pot or lets them raise and force you to pay more or fold. Raising keeps your range easier to defend against 3-bets. If the blinds fold too often, you can open wider than this baseline.",
+  SB: "Only the big blind remains, but you will be out of position and act first after the flop. Split your opening range between limping, raising and folding. Limping (calling to 1 BB) costs just another 0.5 BB, so you can play more hands while raising less often and making BB’s 3-bets less effective. When you raise, the reference uses 3 BB to discourage calls and compensate for playing out of position.",
 };
 
 export function createLearnScenario() {
