@@ -125,6 +125,7 @@ function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
 // BTN 35/185, SB 32/182. General heuristics: PDF 177–179; opening sizes: PDF 181.
 // Follow-ups: SB 33/183 and 34/184; BTN 36/187 and 37/188;
 // CO 39/191, 40/192 and 41/193 (position guidance on PDF 189–190).
+// HJ 43/196, 44/197, 45/198 and 46/199 (position guidance on PDF 193–195).
 // Player-facing GTO guidance paraphrases the conclusion on PDF page 136.
 // Calibration: 100 BB, 5% rake capped at $3; chart estimates rounded to 5 points.
 // Mix grading tolerates 15 points per action, not an EV-loss estimate. Nearby

@@ -58,10 +58,6 @@ function situationNotes(raiseTo, situation) {
         ? "This is the total bet, including chips you already committed. The reference range assumes this sizing and the preceding bets; different sizes change the decision."
         : "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",
     },
-    {
-      title: "Cash-game rake",
-      text: "The house takes a fee from eligible pots, reducing what you can win. This makes marginal hands less attractive.",
-    },
   ];
 }
 

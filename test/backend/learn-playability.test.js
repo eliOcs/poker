@@ -65,7 +65,7 @@ test("connects the evaluation to this hand and position without changing grading
   assert.equal(early.playability.cards[2].title, "Connected");
 });
 
-// Modern Poker Theory, Small Blind through Cutoff, PDF pages 181–193. Check the teaching
+// Modern Poker Theory, Small Blind through Hijack, PDF pages 181–199. Check the teaching
 // concepts in the public evaluation response rather than exact paragraphs.
 for (const { name, id, raiseTo, concepts } of [
   {
@@ -182,6 +182,54 @@ for (const { name, id, raiseTo, concepts } of [
       /strong hands with selected bluffs/i,
     ],
   })),
+  {
+    name: "HJ first-in explains tighter opening with two opponents in position",
+    id: "HJ-AA",
+    raiseTo: 2.5,
+    concepts: [
+      /Four players/i,
+      /cutoff and button.*position on you/i,
+      /tighter range.*21%.*28%/i,
+      /raise or fold.*2\.5 BB/i,
+      /smaller pairs.*offsuit broadways.*suited connectors.*suited kings and queens/i,
+    ],
+  },
+  {
+    name: "HJ vs CO explains folding and 4-betting more out of position and calling less than against BTN",
+    id: "HJ_RAISE_CO-AA",
+    raiseTo: 23,
+    concepts: [
+      /out of position.*act first/i,
+      /fold more and 4-bet more often.*calling less/i,
+      /less polarized than the button/i,
+      /15% against CO versus 21% against BTN/i,
+    ],
+  },
+  {
+    name: "HJ vs BTN explains extra calls against BTN's more polarized 3-bets",
+    id: "HJ_RAISE_BTN-AA",
+    raiseTo: 23,
+    concepts: [
+      /out of position/i,
+      /fold more and 4-bet more often than against the blinds/i,
+      /call more than against CO/i,
+      /BTN also has a calling range/i,
+      /more polarized.*strong hands and bluffs/i,
+      /better equity and playability/i,
+    ],
+  },
+  ...["SB", "BB"].map((opponent) => ({
+    name: `HJ vs ${opponent} explains folding less and mostly calling in position`,
+    id: `HJ_RAISE_${opponent}-AA`,
+    raiseTo: 23,
+    concepts: [
+      /position.*act last after the flop/i,
+      /Fold less than against CO or BTN/i,
+      /mostly by calling/i,
+      /4-bet less often/i,
+      /10%.*22%/i,
+    ],
+  })),
 ]) {
   test(name, () => {
     const result = evaluateLearnStrategy({
@@ -209,6 +257,29 @@ test("the weaker button opens named in the cutoff explanation really fold there"
   }
 });
 
+test("hijack ranges support tighter opens and the positional defense lessons", () => {
+  const evaluate = (id) =>
+    evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });
+  for (const hand of ["55", "JTo", "98s", "K5s", "Q8s"]) {
+    assert.ok(
+      evaluate(`HJ-${hand}`).expected[2] < evaluate(`CO-${hand}`).expected[2],
+      hand,
+    );
+  }
+  const co = evaluate("HJ_RAISE_CO-QJs");
+  const button = evaluate("HJ_RAISE_BTN-QJs");
+  assert.ok(button.expected[1] > co.expected[1]);
+  assert.ok(button.rangeTotals[1] > co.rangeTotals[1]);
+  for (const opponent of ["SB", "BB"]) {
+    const blind = evaluate(`HJ_RAISE_${opponent}-QJs`);
+    for (const late of [co, button]) {
+      assert.ok(blind.rangeTotals[0] < late.rangeTotals[0]);
+      assert.ok(blind.rangeTotals[1] > late.rangeTotals[1]);
+      assert.ok(blind.rangeTotals[2] < late.rangeTotals[2]);
+    }
+  }
+});
+
 test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
   for (const [id, title, calculation] of [
     ["SB_LIMP_BB-AA", "4.5 BB in the pot", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
@@ -218,6 +289,10 @@ test("follow-up explanations calculate pot odds from the additional call and pot
     ["CO_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
     ["CO_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
     ["CO_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["HJ_RAISE_CO-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["HJ_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["HJ_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["HJ_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
     const note = result.playability.situation.find((n) => n.title === title);

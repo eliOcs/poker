@@ -106,6 +106,34 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
         min: 8750,
         action: "raise",
       },
+      HJ_RAISE_CO: {
+        hero: 1,
+        opponent: 2,
+        bets: [0, 1250, 4250, 0, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      HJ_RAISE_BTN: {
+        hero: 1,
+        opponent: 3,
+        bets: [0, 1250, 0, 4250, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      HJ_RAISE_SB: {
+        hero: 1,
+        opponent: 4,
+        bets: [0, 1250, 0, 0, 5000, 500],
+        min: 8750,
+        action: "raise",
+      },
+      HJ_RAISE_BB: {
+        hero: 1,
+        opponent: 5,
+        bets: [0, 1250, 0, 0, 250, 5000],
+        min: 8750,
+        action: "raise",
+      },
     }[key];
     if (followup) {
       assert.equal(hero, followup.hero);
@@ -135,7 +163,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 12);
+  assert.equal(seen.size, 16);
 });
 
 test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
@@ -149,6 +177,10 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
     ["CO_RAISE_BTN", "CO", 2, [59, 20.4, 20.6], 1],
     ["CO_RAISE_SB", "CO", 2, [53.1, 35.8, 11.1], 1],
     ["CO_RAISE_BB", "CO", 2, [52.1, 37.6, 10.3], 1],
+    ["HJ_RAISE_CO", "HJ", 2, [63.3, 14.5, 22.2], 1],
+    ["HJ_RAISE_BTN", "HJ", 2, [57.6, 20.8, 21.6], 1],
+    ["HJ_RAISE_SB", "HJ", 2, [52.6, 36.3, 11.1], 1],
+    ["HJ_RAISE_BB", "HJ", 2, [51.4, 39.1, 9.6], 1],
   ]) {
     const hands = ranges[key].hands;
     assert.equal(hands["72o"], undefined);
@@ -188,6 +220,10 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
     ["CO_RAISE_BTN", 14.5, 23, 12.5, 6],
     ["CO_RAISE_SB", 17.5, 23, 13.5, 7.5],
     ["CO_RAISE_BB", 17.5, 23, 13, 7.5],
+    ["HJ_RAISE_CO", 14.5, 23, 12.5, 6],
+    ["HJ_RAISE_BTN", 14.5, 23, 12.5, 6],
+    ["HJ_RAISE_SB", 17.5, 23, 13.5, 7.5],
+    ["HJ_RAISE_BB", 17.5, 23, 13, 7.5],
   ]) {
     const correct = evaluateLearnStrategy({
       id: `${key}-AA`,
@@ -242,6 +278,10 @@ test("chart totals weight combinations and the preceding limp or raise, not grid
     ["SB_RAISE_BB", [46, 37, 17]],
     ["CO_RAISE_BTN", [59, 20, 21]],
     ["CO_RAISE_SB", [53, 35, 12]],
+    ["HJ_RAISE_CO", [63, 14, 23]],
+    ["HJ_RAISE_BTN", [58, 20, 22]],
+    ["HJ_RAISE_SB", [52, 36, 12]],
+    ["HJ_RAISE_BB", [51, 39, 10]],
   ]) {
     for (const hand of ["AA", "22"]) {
       const result = evaluateLearnStrategy({

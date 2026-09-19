@@ -89,6 +89,62 @@ const FOLLOWUPS = {
     explanation:
       "You are in position against the big blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller, polarized 4-bet range combines strong hands with selected bluffs.",
   },
+  HJ_RAISE_CO: {
+    position: "HJ",
+    opponent: "CO",
+    title: "HJ Open vs CO 3-bet",
+    history:
+      "You raised to 2.5 BB. CO 3-bet to 8.5 BB; BTN and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs CO",
+    explanation:
+      "You are out of position against the cutoff and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. The cutoff's 3-bet range is less polarized than the button's, so fewer of your opening hands make profitable calls: the reference calls about 15% against CO versus 21% against BTN. A similar share, about 22%, is 4-bet against either late position.",
+  },
+  HJ_RAISE_BTN: {
+    position: "HJ",
+    opponent: "BTN",
+    title: "HJ Open vs BTN 3-bet",
+    history:
+      "You raised to 2.5 BB. CO folded, BTN 3-bet to 8.5 BB and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs BTN",
+    explanation:
+      "You are out of position against the button, so fold more and 4-bet more often than against the blinds. But call more than against CO: BTN also has a calling range, making its 3-bets more polarized, with strong hands and bluffs. Your opening range has better equity and playability against that mix. The reference calls about 21% against BTN versus 15% against CO.",
+  },
+  HJ_RAISE_SB: {
+    position: "HJ",
+    opponent: "SB",
+    title: "HJ Open vs SB 3-bet",
+    history:
+      "You raised to 2.5 BB. CO and BTN folded, SB 3-bet to 10 BB and BB folded.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs SB",
+    explanation:
+      "You have position on the small blind and act last after the flop. Fold less than against CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 10% of your opening range against the blinds versus 22% against CO or BTN.",
+  },
+  HJ_RAISE_BB: {
+    position: "HJ",
+    opponent: "BB",
+    title: "HJ Open vs BB 3-bet",
+    history:
+      "You raised to 2.5 BB. CO, BTN and SB folded, then BB 3-bet to 10 BB.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs BB",
+    explanation:
+      "You have position on the big blind and act last after the flop. Fold less than against CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 10% of your opening range against the blinds versus 22% against CO or BTN.",
+  },
 };
 
 export function learnSituation(key) {

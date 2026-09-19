@@ -49,7 +49,7 @@ export function openFollowupScenario(position, opponent) {
   const positions = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
   const hero = positions.indexOf(position);
   const villain = positions.indexOf(opponent);
-  const currentBet = opponent === "BTN" ? 4250 : 5000;
+  const currentBet = opponent === "CO" || opponent === "BTN" ? 4250 : 5000;
   const bets = [0, 0, 0, 0, 250, 500];
   bets[hero] = 1250;
   bets[villain] = currentBet;

@@ -210,6 +210,10 @@ for (const [name, scenario, min, raiseTo, odds] of [
   ["learn-co-vs-btn", openFollowupScenario("CO", "BTN"), 14.5, 23, 32],
   ["learn-co-vs-sb", openFollowupScenario("CO", "SB"), 17.5, 23, 36],
   ["learn-co-vs-bb", openFollowupScenario("CO", "BB"), 17.5, 23, 37],
+  ["learn-hj-vs-co", openFollowupScenario("HJ", "CO"), 14.5, 23, 32],
+  ["learn-hj-vs-btn", openFollowupScenario("HJ", "BTN"), 14.5, 23, 32],
+  ["learn-hj-vs-sb", openFollowupScenario("HJ", "SB"), 17.5, 23, 36],
+  ["learn-hj-vs-bb", openFollowupScenario("HJ", "BB"), 17.5, 23, 37],
 ]) {
   test(`learn follow-up ${scenario.title}`, async ({ page }) => {
     await page.route("**/api/learn/scenario", (route) =>
