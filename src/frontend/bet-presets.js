@@ -13,7 +13,7 @@ export function renderBetPresets(
   const toCall = Math.max(0, panel.currentBet - panel.myBet);
   const potAfterCall = panel.totalPot + toCall;
   const presets =
-    panel.phase === "preflop"
+    panel.phase === "preflop" && panel.currentBet <= panel.bigBlind
       ? [
           { label: "Min", raw: min },
           { label: "2.5 BB", raw: Math.round(2.5 * panel.bigBlind) },

@@ -64,3 +64,33 @@ test("connects the evaluation to this hand and position without changing grading
   assert.match(early.explanation, /Five players/);
   assert.equal(early.playability.cards[2].title, "Connected");
 });
+
+test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
+  for (const [id, title, calculation] of [
+    ["SB_LIMP_BB-AA", "Pot odds: ≈36%", "2.5 ÷ (4.5 + 2.5) ≈ 36%"],
+    ["SB_RAISE_BB-AA", "Pot odds: ≈33%", "6 ÷ (12 + 6) ≈ 33%"],
+  ]) {
+    const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
+    const note = result.playability.situation.find((n) =>
+      n.title.startsWith("Pot odds:"),
+    );
+    assert.equal(note.title, title);
+    assert.ok(note.text.includes(calculation));
+    assert.match(note.text, /Ignoring rake and assuming no further betting/);
+    assert.match(note.text, /matching it breaks even/);
+  }
+});
+
+test("first-in explanations do not use heads-up follow-up pot odds", () => {
+  for (const position of ["LJ", "HJ", "CO", "BTN", "SB"]) {
+    const result = evaluateLearnStrategy({
+      id: `${position}-AA`,
+      frequencies: [100, 0, 0],
+    });
+    assert.ok(
+      result.playability.situation.every(
+        (n) => !n.title.startsWith("Pot odds:"),
+      ),
+    );
+  }
+});

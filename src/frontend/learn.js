@@ -152,7 +152,7 @@ export class Learn extends LitElement {
         class="button button--primary"
         @click=${() => {
           if (raising) {
-            this.betAmount = 2 * this.scenario.blinds.big;
+            this.betAmount = this.scenario.minRaiseTo;
             this.sizing = true;
           } else this.submit();
         }}
@@ -164,7 +164,7 @@ export class Learn extends LitElement {
   renderSizing() {
     const { small, big } = this.scenario.blinds;
     const hero = this.scenario.seats.find((seat) => seat.isCurrentPlayer);
-    const min = 2 * big;
+    const min = this.scenario.minRaiseTo;
     const max = hero.stack + hero.bet;
     const setAmount = (amount) => {
       this.betAmount = amount;
@@ -175,9 +175,12 @@ export class Learn extends LitElement {
           {
             phase: "preflop",
             bigBlind: big,
-            currentBet: big,
+            currentBet: this.scenario.currentBet,
             myBet: hero.bet,
-            totalPot: small + big,
+            totalPot: this.scenario.seats.reduce(
+              (sum, seat) => sum + seat.bet,
+              0,
+            ),
           },
           min,
           max,
@@ -200,7 +203,7 @@ export class Learn extends LitElement {
   }
 
   render() {
-    return html`${renderInfoBar(this.scenario, "cash")}
+    return html`${renderInfoBar(this.scenario, "learn")}
       ${this.scenario
         ? html` <phg-table-layout>
             <div class="table-surface">

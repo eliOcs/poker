@@ -47,6 +47,10 @@
     :scope {
       --action-panel-height: 240px;
     }
+
+    #info-bar .info-blinds {
+      display: none;
+    }
   }
 
   .learn-question {
@@ -220,6 +224,11 @@
     border: 2px solid var(--color-primary);
   }
 
+  .legend-unavailable {
+    background: var(--color-bg-dark);
+    color: var(--color-fg-muted);
+  }
+
   .learn-range {
     display: grid;
     grid-template-columns: repeat(13, minmax(0, 1fr));
@@ -232,6 +241,10 @@
     aspect-ratio: 1;
     font-size: clamp(7px, 1.5vw, 12px);
     color: white;
+  }
+
+  .learn-range .legend-unavailable {
+    color: var(--color-fg-muted);
   }
 
   .learn-range .selected {

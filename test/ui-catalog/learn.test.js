@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { learnScenario } from "../frontend/fixtures/learn.js";
+import { learnScenario, followupScenario } from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
@@ -135,6 +135,7 @@ test("learn suited connected hand explanation", async ({ page }) => {
     id: "LJ-T9s",
     hand: "T9s",
     position: "LJ",
+    history: "You are first to act.",
     seats: learnScenario.seats.map((seat, i) => ({
       ...seat,
       player: { name: ["You · UTG", "UTG+1", "CO", "BTN", "SB", "BB"][i] },
@@ -179,6 +180,53 @@ test("learn suited connected hand explanation", async ({ page }) => {
   await expect(dialog.getByRole("tooltip")).toHaveCount(0);
   await expect(page).toHaveScreenshot("learn-hand-details.png");
 });
+
+for (const raised of [false, true]) {
+  const name = raised ? "learn-sb-open" : "learn-sb-limp";
+
+  test(`learn follow-up after SB ${raised ? "open" : "limp"}`, async ({
+    page,
+  }) => {
+    const scenario = followupScenario(raised);
+    await page.route("**/api/learn/scenario", (route) =>
+      route.fulfill({ json: scenario }),
+    );
+    await page.route("**/api/learn/evaluate", (route) =>
+      route.fulfill({
+        json: evaluateLearnStrategy(route.request().postDataJSON()),
+      }),
+    );
+    await page.goto("/test.html?test=learn-preflop");
+    await waitForAvatars(page);
+    await expect(page).toHaveScreenshot(`${name}.png`);
+    await page.getByRole("slider", { name: "Raise", exact: true }).focus();
+    await page.keyboard.press("End");
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
+    const amount = page.getByRole("spinbutton", { name: "Raise to ($)" });
+    await expect(amount).toHaveValue(raised ? "75" : "30");
+    await expect(page).toHaveScreenshot(`${name}-sizing.png`);
+    await amount.fill(raised ? "120" : "65");
+    await page
+      .getByRole("button", { name: "Check strategy", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Correct", exact: true }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    await expect(page.getByRole("dialog")).toContainText(scenario.title);
+    await expect(
+      page.getByTitle("72o: Not in this range", { exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveScreenshot(`${name}-range.png`);
+    const potOdds = page.getByText(
+      raised ? "Pot odds: ≈33%" : "Pot odds: ≈36%",
+      { exact: true },
+    );
+    await potOdds.scrollIntoViewIfNeeded();
+    await expect(potOdds).toBeVisible();
+    await expect(page).toHaveScreenshot(`${name}-pot-odds.png`);
+  });
+}
 
 test("learn correct strategy shows only the recommended actions", async ({
   page,

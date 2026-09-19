@@ -68,7 +68,7 @@ export function renderLearnFeedback(view) {
     </div>
     ${view.rangeOpen
       ? renderModal(
-          `Range: Preflop, First In, ${POSITION_NAMES[view.scenario.position]}`,
+          `Range: Preflop, ${view.scenario.title}, ${POSITION_NAMES[view.scenario.position]}`,
           () =>
             view.dispatchEvent(
               new CustomEvent("close-details", { bubbles: true }),
@@ -124,14 +124,26 @@ function renderRangeDetails(view) {
       <span><i class="legend-call" aria-hidden="true"></i>Call</span>
       <span><i class="legend-raise" aria-hidden="true"></i>Raise</span>
       <span><i class="legend-selected" aria-hidden="true"></i>Your hand</span>
+      ${Object.keys(result.hands).length < 169
+        ? html`<span
+            ><i class="legend-unavailable" aria-hidden="true"></i>Not in this
+            range</span
+          >`
+        : ""}
     </div>
     <div class="learn-range">
       ${HAND_ORDER.map((hand) => {
         const values = result.hands[hand];
         return html`<span
-          class=${hand === view.scenario.hand ? "selected" : ""}
-          title=${`${hand}: ${ACTIONS.map((a, i) => `${a} ${values[i]}%`).join(", ")}`}
-          style=${rangeBackground(values)}
+          class=${!values
+            ? "legend-unavailable"
+            : hand === view.scenario.hand
+              ? "selected"
+              : ""}
+          title=${values
+            ? `${hand}: ${ACTIONS.map((a, i) => `${a} ${values[i]}%`).join(", ")}`
+            : `${hand}: Not in this range`}
+          style=${values ? rangeBackground(values) : ""}
           >${hand}</span
         >`;
       })}

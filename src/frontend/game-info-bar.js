@@ -19,6 +19,7 @@ function formatTime(seconds) {
  * @returns {string}
  */
 function getTypeLabel(gameKind, game) {
+  if (gameKind === "learn") return "Preflop";
   if (gameKind === "mtt") return "Tournament";
   if (gameKind === "sitngo" || game?.tournament) {
     return "Sit & Go";
@@ -43,7 +44,7 @@ function getTournamentTimerCell(tournament) {
 
 /**
  * @param {object} game - The game state object
- * @param {string} gameKind - The game kind (cash, sitngo, mtt)
+ * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
  * @returns {import("lit").TemplateResult|string}
  */
@@ -55,6 +56,9 @@ export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
     html`<span class="info-cell info-type"
       >${getTypeLabel(gameKind, game)}</span
     >`,
+    gameKind === "learn"
+      ? html`<span class="info-cell info-scenario">${game.title}</span>`
+      : undefined,
     html`<span class="info-cell info-size">${sizeLabel}</span>`,
   ].filter(Boolean);
 

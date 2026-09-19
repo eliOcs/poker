@@ -8,8 +8,13 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
   }),
 );
 
-/** Hand is a validated canonical class, for example T9s, AKo or 55. */
-export function describePlayability(hand, raiseTo) {
+/**
+ * Hand is a validated canonical class, for example T9s, AKo or 55.
+ * @param {string} hand
+ * @param {number} raiseTo
+ * @param {ReturnType<import('./learn-situations.js').learnSituation>} [situation]
+ */
+export function describePlayability(hand, raiseTo, situation = undefined) {
   const high = RANKS.indexOf(hand.charAt(0)) + 2;
   const low = RANKS.indexOf(hand.charAt(1)) + 2;
   const pair = high === low;
@@ -35,20 +40,44 @@ export function describePlayability(hand, raiseTo) {
           },
           connectionNote(high, low, straightPatterns),
         ],
-    situation: [
-      {
-        title: "1.5 BB to play for",
-        text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
-      },
-      {
-        title: `${raiseTo} BB opening size`,
-        text: "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",
-      },
-      {
-        title: "Cash-game rake",
-        text: "The house takes a fee from eligible pots, reducing what you can win. This makes marginal hands less attractive.",
-      },
-    ],
+    situation: situationNotes(raiseTo, situation),
+  };
+}
+
+function situationNotes(raiseTo, situation) {
+  return [
+    situation?.explanation
+      ? {
+          title: `${situation.heroBet + situation.currentBet} BB in the pot`,
+          text: `You have already put in ${situation.heroBet} BB. Calling costs another ${situation.currentBet - situation.heroBet} BB. Both players started with 100 BB; earlier contributions are already part of the pot.`,
+        }
+      : {
+          title: "1.5 BB to play for",
+          text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
+        },
+    ...(situation?.currentBet > 1 ? [potOddsNote(situation)] : []),
+    {
+      title: `${raiseTo} BB ${situation?.explanation ? "re-raise total" : "opening size"}`,
+      text: situation?.explanation
+        ? "This is the total bet, including chips you already committed. The reference range assumes this sizing and the preceding bets; different sizes change the decision."
+        : "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",
+    },
+    {
+      title: "Cash-game rake",
+      text: "The house takes a fee from eligible pots, reducing what you can win. This makes marginal hands less attractive.",
+    },
+  ];
+}
+
+// Modern Poker Theory, Pot Odds and Outs, PDF pages 37–38.
+// These follow-ups are heads-up: both players' street bets form the entire pot.
+function potOddsNote(situation) {
+  const pot = situation.heroBet + situation.currentBet;
+  const call = situation.currentBet - situation.heroBet;
+  const percentage = Math.round((100 * call) / (pot + call));
+  return {
+    title: `Pot odds: ≈${percentage}%`,
+    text: `Call cost ÷ pot after calling: ${call} ÷ (${pot} + ${call}) ≈ ${percentage}%, with amounts in BB. Ignoring rake and assuming no further betting, winning more often than the exact threshold makes calling profitable over time; matching it breaks even. Preflop, future bets may cost more or force you to fold before showdown, so pot odds alone do not tell you whether to call.`,
   };
 }
 

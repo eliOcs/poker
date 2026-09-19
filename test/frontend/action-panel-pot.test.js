@@ -102,4 +102,30 @@ describe("pot bet presets", () => {
     expect(findButtonByExactText(panel, "2.5 BB")).to.exist;
     expect(findButtonByExactText(panel, "Pot")).not.to.exist;
   });
+
+  it("uses pot presets when facing a preflop raise", async () => {
+    const game = createMockGameAtFlop();
+    game.hand.phase = "preflop";
+    game.hand.currentBet = 10000;
+    game.hand.collectedPot = 0;
+    game.hand.totalPot = 15000;
+    game.seats[0].bet = 5000;
+    game.seats[0].actions = [
+      { action: "fold" },
+      { action: "call", amount: 5000 },
+      { action: "raise", min: 15000, max: 100000 },
+    ];
+    game.seats[1].bet = 10000;
+    element.game = game;
+    await element.updateComplete;
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    expect(findButtonByExactText(panel, "2.5 BB")).not.to.exist;
+    findButtonByExactText(panel, "½ Pot").click();
+    await panel.updateComplete;
+    expect(panel.betAmount).to.equal(20000);
+    findButtonByExactText(panel, "Pot").click();
+    await panel.updateComplete;
+    expect(panel.betAmount).to.equal(30000);
+  });
 });

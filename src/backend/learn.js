@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
 import { describePlayability } from "./learn-playability.js";
 import { HttpError } from "./http-error.js";
+import { learnSituation } from "./learn-situations.js";
 
 const POSITIONS = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
 // Keep the reference chart keys internally; use familiar table labels for learners.
@@ -24,10 +25,11 @@ const explanations = {
 };
 
 export function createLearnScenario() {
-  const position = /** @type {string} */ (POSITIONS[randomInt(5)]);
-  const range = /** @type {NonNullable<typeof ranges[string]>} */ (
-    ranges[position]
-  );
+  const keys = Object.keys(ranges);
+  const key = /** @type {string} */ (keys[randomInt(keys.length)]);
+  const situation = learnSituation(key);
+  const { position } = situation;
+  const range = /** @type {NonNullable<typeof ranges[string]>} */ (ranges[key]);
   const hands = Object.keys(range.hands);
   const hand = /** @type {string} */ (hands[randomInt(hands.length)]);
   const suits = ["s", "h", "d", "c"];
@@ -35,9 +37,13 @@ export function createLearnScenario() {
   const second = hand.endsWith("s") ? first : (first + 1 + randomInt(3)) % 4;
   const hero = POSITIONS.indexOf(position);
   return {
-    id: `${position}-${hand}`,
+    id: `${key}-${hand}`,
     position,
     hand,
+    title: situation.title,
+    history: position === "LJ" ? "You are first to act." : situation.history,
+    currentBet: situation.currentBet * 500,
+    minRaiseTo: situation.minRaiseTo * 500,
     blinds: { small: 250, big: 500 },
     seats: POSITIONS.map((name, i) => ({
       empty: false,
@@ -48,9 +54,16 @@ export function createLearnScenario() {
       isCurrentPlayer: i === hero,
       isActing: i === hero,
       folded: i < hero,
-      lastAction: i < hero ? "fold" : undefined,
-      stack: 50000 - (i === 4 ? 250 : i === 5 ? 500 : 0),
-      bet: i === 4 ? 250 : i === 5 ? 500 : 0,
+      lastAction:
+        i < hero
+          ? "fold"
+          : i === hero
+            ? situation.lastAction
+            : situation.lastAction && i === 5
+              ? "raise"
+              : undefined,
+      stack: 50000 - seatBet(i, hero, situation),
+      bet: seatBet(i, hero, situation),
       cards:
         i === hero
           ? [
@@ -64,6 +77,11 @@ export function createLearnScenario() {
   };
 }
 
+function seatBet(index, hero, situation) {
+  if (index === hero) return situation.heroBet * 500;
+  return index === 4 ? 250 : index === 5 ? situation.currentBet * 500 : 0;
+}
+
 /** @returns {never} */
 function invalidStrategy() {
   throw new HttpError(400, "Invalid learning strategy");
@@ -73,11 +91,11 @@ function parseScenario(id) {
   if (typeof id !== "string") {
     invalidStrategy();
   }
-  const [position = "", hand = "", extra] = id.split("-");
-  if (extra !== undefined || !Object.hasOwn(ranges, position)) {
+  const [key = "", hand = "", extra] = id.split("-");
+  if (extra !== undefined || !Object.hasOwn(ranges, key)) {
     invalidStrategy();
   }
-  const range = ranges[position];
+  const range = ranges[key];
   if (!range || !Object.hasOwn(range.hands, hand)) {
     invalidStrategy();
   }
@@ -85,7 +103,7 @@ function parseScenario(id) {
   if (!expected) {
     invalidStrategy();
   }
-  return { position, hand, range, expected };
+  return { situation: learnSituation(key), hand, range, expected };
 }
 
 function validFrequency(n) {
@@ -111,11 +129,13 @@ export function evaluateLearnStrategy(input) {
     invalidStrategy();
   }
   const { id, frequencies, raiseTo } = input;
-  const { position, hand, range, expected } = parseScenario(id);
+  const { situation, hand, range, expected } = parseScenario(id);
   validateFrequencies(frequencies);
   if (
     frequencies[2] > 0 &&
-    (!Number.isFinite(raiseTo) || raiseTo < 2 || raiseTo > 100)
+    (!Number.isFinite(raiseTo) ||
+      raiseTo < situation.minRaiseTo ||
+      raiseTo > 100)
   ) {
     invalidStrategy();
   }
@@ -142,8 +162,8 @@ export function evaluateLearnStrategy(input) {
     frequencyMatch,
     sizingMatch,
     raiseTo: range.raiseTo,
-    playability: describePlayability(hand, range.raiseTo),
-    explanation: explanationFor(position, expected, frequencies),
+    playability: describePlayability(hand, range.raiseTo, situation),
+    explanation: explanationFor(situation, expected, frequencies),
     page: range.page,
     chart: range.chart,
     hands: range.hands,
@@ -167,23 +187,25 @@ function strategyGrade(
   return distributionMatch && sizingMatch !== false ? "correct" : "close";
 }
 
-function explanationFor(position, expected, frequencies) {
-  if (position !== "SB" && frequencies[1] > 0) {
+function explanationFor(situation, expected, frequencies) {
+  const { position } = situation;
+  const explanation = situation.explanation ?? explanations[position];
+  if (!situation.explanation && position !== "SB" && frequencies[1] > 0) {
     return (
-      explanations[position] +
+      explanation +
       " The reference strategy never calls first in from this position. Calling pays the full big blind and encourages more players into the pot. Raising can win the blinds immediately and makes it harder for opponents to enter cheaply; hands outside the opening range fold instead."
     );
   }
   if (expected.filter((n) => n > 0).length > 1) {
     return (
-      explanations[position] +
+      explanation +
       " This hand mixes actions in the reference strategy. The mix matters over repeated decisions; choosing one of those actions is not a mistake on its own."
     );
   }
   return (
-    explanations[position] +
+    explanation +
     (expected[0] === 100
-      ? " This hand is outside the reference opening range. Folding saves chips for stronger opportunities."
+      ? " This hand folds in the reference strategy. Folding saves the remaining stack for stronger opportunities."
       : " This hand consistently takes the same action in the reference strategy.")
   );
 }

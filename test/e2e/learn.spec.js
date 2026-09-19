@@ -45,7 +45,10 @@ for (const navigationApi of [true, false]) {
     await expect(hero.locator("phg-avatar .avatar-empty")).toBeVisible();
     await expect(raise).toHaveValue("100");
     await page.getByRole("button", { name: "Continue", exact: true }).click();
-    await page.getByRole("spinbutton", { name: "Raise to ($)" }).fill("20");
+    const raiseTo = Math.max(4, scenario.minRaiseTo / scenario.blinds.big);
+    await page
+      .getByRole("spinbutton", { name: "Raise to ($)" })
+      .fill(String(raiseTo * 5));
     const evaluated = page.waitForResponse("**/api/learn/evaluate");
     await page
       .getByRole("button", { name: "Check strategy", exact: true })
@@ -55,7 +58,7 @@ for (const navigationApi of [true, false]) {
     expect(response.request().postDataJSON()).toEqual({
       id: scenario.id,
       frequencies: [0, 0, 100],
-      raiseTo: 4,
+      raiseTo,
     });
     const result = await response.json();
     await expect(page.locator(".learn-grade")).toHaveText(

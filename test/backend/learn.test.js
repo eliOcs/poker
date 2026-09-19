@@ -15,6 +15,7 @@ const ranges = JSON.parse(
 test("opening ranges cover every hand and reproduce source totals", () => {
   const sourceTotals = { LJ: 17.1, HJ: 21.4, CO: 27.8, BTN: 43.4, SB: 24.4 };
   for (const [position, range] of Object.entries(ranges)) {
+    if (!(position in sourceTotals)) continue;
     assert.equal(Object.keys(range.hands).length, 169);
     let raiseTotal = 0;
     for (const [hand, frequencies] of Object.entries(range.hands)) {
@@ -33,9 +34,13 @@ test("opening ranges cover every hand and reproduce source totals", () => {
   }
 });
 
-test("deals six seats with the hero acting first in and no answer exposed", () => {
-  for (let i = 0; i < 100; i++) {
+test("deals first-in and follow-up decisions with consistent bets and no answer exposed", () => {
+  const seen = new Set();
+  for (let i = 0; i < 500; i++) {
     const scenario = createLearnScenario();
+    const key = scenario.id.split("-")[0];
+    seen.add(key);
+    assert.ok(Object.hasOwn(ranges[key].hands, scenario.hand));
     assert.equal(scenario.seats.length, 6);
     const hero = scenario.seats.findIndex((s) => s.isCurrentPlayer);
     assert.ok(hero >= 0 && hero < 5);
@@ -49,9 +54,111 @@ test("deals six seats with the hero acting first in and no answer exposed", () =
     assert.notEqual(cards[0], cards[1]);
     assert.equal(cards[0][1] === cards[1][1], scenario.hand.endsWith("s"));
     assert.equal(scenario.expected, undefined);
+    assert.equal(scenario.hands, undefined);
+    assert.equal(scenario.raiseTo, undefined);
+    const followup = {
+      SB_LIMP_BB: [500, 1750, 3000, "call"],
+      SB_RAISE_BB: [1500, 4500, 7500, "raise"],
+    }[key];
+    if (followup) {
+      assert.equal(hero, 4);
+      assert.equal(scenario.seats[hero].bet, followup[0]);
+      assert.equal(scenario.seats[5].bet, followup[1]);
+      assert.equal(scenario.currentBet, followup[1]);
+      assert.equal(scenario.minRaiseTo, followup[2]);
+      assert.equal(scenario.seats[hero].lastAction, followup[3]);
+      assert.equal(scenario.seats[5].lastAction, "raise");
+    } else {
+      assert.equal(scenario.currentBet, 500);
+      assert.equal(scenario.minRaiseTo, 1000);
+    }
     assert.equal(
       scenario.seats.reduce((total, s) => total + s.stack + s.bet, 0),
       300000,
+    );
+  }
+  assert.equal(seen.size, 7);
+});
+
+test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
+  for (const [key, previousAction, totals] of [
+    ["SB_LIMP_BB", 1, [46.8, 39.8, 13.4]],
+    ["SB_RAISE_BB", 2, [45.4, 37.4, 17.2]],
+  ]) {
+    const hands = ranges[key].hands;
+    assert.equal(hands["72o"], undefined);
+    assert.deepEqual(hands.AA, [0, 0, 100]);
+    const measured = [0, 0, 0];
+    let weightTotal = 0;
+    for (const [hand, frequencies] of Object.entries(hands)) {
+      assert.equal(
+        frequencies.reduce((a, b) => a + b),
+        100,
+      );
+      assert.ok(frequencies.every((n) => n >= 0 && n <= 100 && n % 5 === 0));
+      const weight =
+        (hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12) *
+        ranges.SB.hands[hand][previousAction];
+      weightTotal += weight;
+      frequencies.forEach((n, i) => (measured[i] += n * weight));
+      const answer = evaluateLearnStrategy({
+        id: `${key}-${hand}`,
+        frequencies,
+        raiseTo: ranges[key].raiseTo,
+      });
+      assert.equal(answer.grade, "correct");
+    }
+    measured.forEach((n, i) =>
+      assert.ok(Math.abs(n / weightTotal - totals[i]) < 0.4),
+    );
+  }
+});
+
+test("follow-ups grade their own ranges and sizes and explain the actual pot", () => {
+  for (const [key, min, size, pot, call] of [
+    ["SB_LIMP_BB", 6, 13, 4.5, 2.5],
+    ["SB_RAISE_BB", 15, 24, 12, 6],
+  ]) {
+    const correct = evaluateLearnStrategy({
+      id: `${key}-AA`,
+      frequencies: [0, 0, 100],
+      raiseTo: size,
+    });
+    assert.equal(correct.grade, "correct");
+    assert.equal(
+      correct.playability.situation[0].title,
+      `${pot} BB in the pot`,
+    );
+    assert.ok(
+      correct.playability.situation[0].text.includes(`another ${call} BB`),
+    );
+    assert.ok(!correct.explanation.includes("never calls first in"));
+    assert.throws(
+      () =>
+        evaluateLearnStrategy({
+          id: `${key}-AA`,
+          frequencies: [0, 0, 100],
+          raiseTo: min - 0.01,
+        }),
+      /Invalid learning strategy/,
+    );
+    assert.throws(
+      () =>
+        evaluateLearnStrategy({ id: `${key}-72o`, frequencies: [100, 0, 0] }),
+      /Invalid learning strategy/,
+    );
+    assert.equal(
+      evaluateLearnStrategy({
+        id: `${key}-AA`,
+        frequencies: [0, 0, 100],
+        raiseTo: min,
+      }).grade,
+      "incorrect",
+    );
+    assert.equal(
+      evaluateLearnStrategy({ id: `${key}-AA`, frequencies: [100, 0, 0] })
+        .sizingMatch,
+      undefined,
     );
   }
 });

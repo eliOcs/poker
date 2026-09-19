@@ -1,7 +1,10 @@
 import { fixture, html, expect, waitUntil } from "@open-wc/testing";
 import "../../src/frontend/learn.js";
 
-import { learnScenario as scenario } from "./fixtures/learn.js";
+import {
+  learnScenario as scenario,
+  followupScenario,
+} from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
   let originalFetch;
@@ -158,4 +161,36 @@ describe("Learn strategy flow", () => {
     expect(submissions[0].raiseTo).to.equal(3);
     expect(submissions[0].frequencies).to.deep.equal([35, 35, 30]);
   });
+
+  for (const raised of [false, true]) {
+    it(`supports legal sizing after ${raised ? "opening" : "limping"}`, async () => {
+      const el = await fixture(html`<phg-learn></phg-learn>`);
+      await waitUntil(() => !el.busy);
+      el.scenario = followupScenario(raised);
+      await el.updateComplete;
+      await button(el, "Continue");
+      const amount = () => el.querySelector('input[type="number"]');
+      expect(Number(amount().min)).to.equal(raised ? 75 : 30);
+      expect(Number(amount().value)).to.equal(raised ? 75 : 30);
+      expect(el.textContent).not.to.include("2.5 BB");
+      await button(el, "½ Pot");
+      expect(Number(amount().value)).to.equal(raised ? 90 : 35);
+      await button(el, "Pot");
+      expect(Number(amount().value)).to.equal(raised ? 135 : 52.5);
+      amount().value = raised ? "120" : "65";
+      amount().dispatchEvent(new Event("input", { bubbles: true }));
+      await el.updateComplete;
+      await button(el, "Check strategy");
+      await waitUntil(() => !el.busy);
+      expect(submissions[0].id).to.equal(el.scenario.id);
+      expect(submissions[0].raiseTo).to.equal(raised ? 24 : 13);
+      el.rangeOpen = true;
+      await el.updateComplete;
+      expect(el.querySelector("phg-modal").textContent).to.include(
+        el.scenario.title,
+      );
+      expect(el.querySelectorAll(".learn-range span")).to.have.length(169);
+      expect(el.querySelector('[title="72o: Not in this range"]')).to.exist;
+    });
+  }
 });
