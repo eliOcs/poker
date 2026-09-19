@@ -17,7 +17,7 @@ const POSITION_LABELS = {
 /** @type {Record<string, {page: number, chart: number, raiseTo: number, hands: Record<string, number[]>}>} */
 const ranges = LEARN_RANGES;
 const explanations = {
-  LJ: "Five players still have a chance to enter the pot. Start with a strong range: several opponents can have position on you after the flop.",
+  LJ: "Five players still have a chance to enter the pot, and HJ, CO and BTN have position on you after the flop. Open a strong range of about 17% of hands, playing raise or fold with a 2.5 BB opening size. Favor high-equity hands with useful blockers, while retaining small amounts of suited connectors and small pairs to cover different boards. A tight opening range is easier to defend against 3-bets.",
   HJ: "Four players remain, and both the cutoff and button have position on you after the flop. Open a tighter range than the cutoff: about 21% of hands instead of 28%, playing raise or fold to 2.5 BB. Trim smaller pairs, weaker offsuit broadways, suited connectors and weak suited kings and queens; these marginal hands are harder to play profitably with two opponents who can act after you.",
   CO: "The button still has position on you and can call or 3-bet, so open a tighter range than on the button: about 28% of hands instead of 43%. Play raise or fold, using the reference opening size of 2.5 BB. Weaker button opens such as K2s, Q2s and 98o fold here because there is another player to get through, and you will act before the button after the flop.",
   BTN: "With only the blinds left, play raise or fold: the reference opens to 2.5 BB with about 43% of hands. You have position on both blinds and act last after the flop, but unlike SB you get no discount to limp. Limping invites both blinds into the pot or lets them raise and force you to pay more or fold. Raising keeps your range easier to defend against 3-bets. If the blinds fold too often, you can open wider than this baseline.",
@@ -76,7 +76,10 @@ export function createLearnScenario() {
     position,
     hand,
     title: situation.title,
-    history: position === "LJ" ? "You are first to act." : situation.history,
+    history:
+      position === "LJ" && !situation.opponent
+        ? "You are first to act."
+        : situation.history,
     currentBet: situation.currentBet * 500,
     minRaiseTo: situation.minRaiseTo * 500,
     blinds: { small: 250, big: 500 },

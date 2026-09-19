@@ -65,7 +65,7 @@ test("connects the evaluation to this hand and position without changing grading
   assert.equal(early.playability.cards[2].title, "Connected");
 });
 
-// Modern Poker Theory, Small Blind through Hijack, PDF pages 181–199. Check the teaching
+// Modern Poker Theory, Small Blind through Lojack, PDF pages 181–207. Check the teaching
 // concepts in the public evaluation response rather than exact paragraphs.
 for (const { name, id, raiseTo, concepts } of [
   {
@@ -230,6 +230,56 @@ for (const { name, id, raiseTo, concepts } of [
       /10%.*22%/i,
     ],
   })),
+  {
+    name: "LJ first-in explains a strong range with blockers and some board coverage",
+    id: "LJ-AA",
+    raiseTo: 2.5,
+    concepts: [
+      /Five players/i,
+      /HJ, CO and BTN have position on you/i,
+      /about 17%/i,
+      /raise or fold.*2\.5 BB/i,
+      /high-equity hands.*blockers/i,
+      /small amounts of suited connectors and small pairs.*different boards/i,
+      /tight opening range.*defend against 3-bets/i,
+    ],
+  },
+  ...["HJ", "CO"].map((opponent) => ({
+    name: `LJ vs ${opponent} explains more folding and 4-betting out of position, fewer calls than against BTN`,
+    id: `LJ_RAISE_${opponent}-AA`,
+    raiseTo: 23,
+    concepts: [
+      /out of position.*act first/i,
+      /fold more and 4-bet more often.*calling less/i,
+      /more polarized/i,
+      /calls about 1[45]%.*23%/i,
+    ],
+  })),
+  {
+    name: "LJ vs BTN explains more calls against a polarized range with less domination",
+    id: "LJ_RAISE_BTN-AA",
+    raiseTo: 23,
+    concepts: [
+      /out of position/i,
+      /fold more and 4-bet more often than against the blinds/i,
+      /call more than against HJ or CO/i,
+      /polarized.*strong hands and bluffs/i,
+      /dominated less often/i,
+      /play better after the flop/i,
+    ],
+  },
+  ...["SB", "BB"].map((opponent) => ({
+    name: `LJ vs ${opponent} explains folding less and mostly calling in position`,
+    id: `LJ_RAISE_${opponent}-AA`,
+    raiseTo: 23,
+    concepts: [
+      /position.*act last after the flop/i,
+      /Fold less than against HJ, CO or BTN/i,
+      /mostly by calling/i,
+      /4-bet less often/i,
+      /11%.*23%/i,
+    ],
+  })),
 ]) {
   test(name, () => {
     const result = evaluateLearnStrategy({
@@ -280,6 +330,34 @@ test("hijack ranges support tighter opens and the positional defense lessons", (
   }
 });
 
+test("lojack ranges support board coverage and the positional defense lessons", () => {
+  const evaluate = (id) =>
+    evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });
+  for (const hand of ["55", "65s"]) {
+    const lojack = evaluate(`LJ-${hand}`);
+    assert.ok(lojack.expected[2] > 0);
+    assert.ok(lojack.expected[2] < 100);
+  }
+  assert.ok(
+    evaluate("LJ-AA").rangeTotals[2] < evaluate("HJ-AA").rangeTotals[2],
+  );
+  const hj = evaluate("LJ_RAISE_HJ-QJs");
+  const co = evaluate("LJ_RAISE_CO-QJs");
+  const button = evaluate("LJ_RAISE_BTN-QJs");
+  for (const earlier of [hj, co]) {
+    assert.ok(button.expected[1] > earlier.expected[1]);
+    assert.ok(button.rangeTotals[1] > earlier.rangeTotals[1]);
+  }
+  for (const opponent of ["SB", "BB"]) {
+    const blind = evaluate(`LJ_RAISE_${opponent}-QJs`);
+    for (const inPosition of [hj, co, button]) {
+      assert.ok(blind.rangeTotals[0] < inPosition.rangeTotals[0]);
+      assert.ok(blind.rangeTotals[1] > inPosition.rangeTotals[1]);
+      assert.ok(blind.rangeTotals[2] < inPosition.rangeTotals[2]);
+    }
+  }
+});
+
 test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
   for (const [id, title, calculation] of [
     ["SB_LIMP_BB-AA", "4.5 BB in the pot", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
@@ -293,6 +371,11 @@ test("follow-up explanations calculate pot odds from the additional call and pot
     ["HJ_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
     ["HJ_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
     ["HJ_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["LJ_RAISE_HJ-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_CO-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["LJ_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
     const note = result.playability.situation.find((n) => n.title === title);

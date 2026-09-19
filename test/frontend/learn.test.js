@@ -207,6 +207,11 @@ describe("Learn strategy flow", () => {
     [openFollowupScenario("HJ", "BTN"), 14.5, 17.75, 27, 23],
     [openFollowupScenario("HJ", "SB"), 17.5, 20.5, 31, 23],
     [openFollowupScenario("HJ", "BB"), 17.5, 20.25, 30.5, 23],
+    [openFollowupScenario("LJ", "HJ"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("LJ", "CO"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("LJ", "BTN"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("LJ", "SB"), 17.5, 20.5, 31, 23],
+    [openFollowupScenario("LJ", "BB"), 17.5, 20.25, 30.5, 23],
   ]) {
     it(`supports legal sizing for ${lesson.title}`, async () => {
       const el = await fixture(html`<phg-learn></phg-learn>`);

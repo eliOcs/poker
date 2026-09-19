@@ -202,7 +202,7 @@ test("learn suited connected hand explanation", async ({ page }) => {
   await expect(page).toHaveScreenshot("learn-hand-details.png");
 });
 
-for (const [name, scenario, min, raiseTo, odds] of [
+for (const [name, scenario, min, raiseTo, odds, call = 0] of [
   ["learn-sb-limp", followupScenario(), 6, 13, 36],
   ["learn-sb-open", followupScenario(true), 15, 24, 33],
   ["learn-btn-vs-sb", openFollowupScenario("BTN", "SB"), 17.5, 23, 36],
@@ -214,6 +214,11 @@ for (const [name, scenario, min, raiseTo, odds] of [
   ["learn-hj-vs-btn", openFollowupScenario("HJ", "BTN"), 14.5, 23, 32],
   ["learn-hj-vs-sb", openFollowupScenario("HJ", "SB"), 17.5, 23, 36],
   ["learn-hj-vs-bb", openFollowupScenario("HJ", "BB"), 17.5, 23, 37],
+  ["learn-lj-vs-hj", openFollowupScenario("LJ", "HJ"), 14.5, 23, 32],
+  ["learn-lj-vs-co", openFollowupScenario("LJ", "CO"), 14.5, 23, 32],
+  ["learn-lj-vs-btn", openFollowupScenario("LJ", "BTN"), 14.5, 23, 32],
+  ["learn-lj-vs-sb", openFollowupScenario("LJ", "SB"), 17.5, 23, 36],
+  ["learn-lj-vs-bb", openFollowupScenario("LJ", "BB"), 17.5, 23, 37, 10],
 ]) {
   test(`learn follow-up ${scenario.title}`, async ({ page }) => {
     await page.route("**/api/learn/scenario", (route) =>
@@ -229,6 +234,8 @@ for (const [name, scenario, min, raiseTo, odds] of [
     await expect(page).toHaveScreenshot(`${name}.png`);
     await page.getByRole("slider", { name: "Raise", exact: true }).focus();
     await page.keyboard.press("End");
+    await page.getByRole("slider", { name: "Call", exact: true }).focus();
+    for (let i = 0; i < call; i += 5) await page.keyboard.press("ArrowRight");
     await page.getByRole("button", { name: "Continue", exact: true }).click();
     const amount = page.getByRole("spinbutton", { name: "Raise to (BB)" });
     await expect(amount).toHaveJSProperty("valueAsNumber", min);

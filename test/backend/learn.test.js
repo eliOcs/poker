@@ -134,9 +134,45 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
         min: 8750,
         action: "raise",
       },
+      LJ_RAISE_HJ: {
+        hero: 0,
+        opponent: 1,
+        bets: [1250, 4250, 0, 0, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      LJ_RAISE_CO: {
+        hero: 0,
+        opponent: 2,
+        bets: [1250, 0, 4250, 0, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      LJ_RAISE_BTN: {
+        hero: 0,
+        opponent: 3,
+        bets: [1250, 0, 0, 4250, 250, 500],
+        min: 7250,
+        action: "raise",
+      },
+      LJ_RAISE_SB: {
+        hero: 0,
+        opponent: 4,
+        bets: [1250, 0, 0, 0, 5000, 500],
+        min: 8750,
+        action: "raise",
+      },
+      LJ_RAISE_BB: {
+        hero: 0,
+        opponent: 5,
+        bets: [1250, 0, 0, 0, 250, 5000],
+        min: 8750,
+        action: "raise",
+      },
     }[key];
     if (followup) {
       assert.equal(hero, followup.hero);
+      assert.match(scenario.history, /3-bet|raised/i);
       assert.deepEqual(
         scenario.seats.map((s) => s.bet),
         followup.bets,
@@ -154,6 +190,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
         } else if (index !== hero) assert.deepEqual(seat.cards, ["??", "??"]);
       });
     } else {
+      if (key === "LJ") assert.equal(scenario.history, "You are first to act.");
       assert.equal(scenario.currentBet, 500);
       assert.equal(scenario.minRaiseTo, 1000);
       assert.ok(scenario.seats.slice(hero + 1).every((s) => !s.folded));
@@ -163,7 +200,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 16);
+  assert.equal(seen.size, 21);
 });
 
 test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
@@ -181,10 +218,18 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
     ["HJ_RAISE_BTN", "HJ", 2, [57.6, 20.8, 21.6], 1],
     ["HJ_RAISE_SB", "HJ", 2, [52.6, 36.3, 11.1], 1],
     ["HJ_RAISE_BB", "HJ", 2, [51.4, 39.1, 9.6], 1],
+    ["LJ_RAISE_HJ", "LJ", 2, [63.1, 15.1, 21.8], 1],
+    ["LJ_RAISE_CO", "LJ", 2, [62.4, 13.8, 23.8], 1],
+    ["LJ_RAISE_BTN", "LJ", 2, [54.9, 23.3, 21.9], 1],
+    ["LJ_RAISE_SB", "LJ", 2, [51.9, 36.6, 11.5], 1],
+    ["LJ_RAISE_BB", "LJ", 2, [51.7, 38.8, 9.5], 1],
   ]) {
     const hands = ranges[key].hands;
     assert.equal(hands["72o"], undefined);
-    assert.deepEqual(hands.AA, [0, 0, 100]);
+    assert.deepEqual(
+      hands.AA,
+      key === "LJ_RAISE_BB" ? [0, 10, 90] : [0, 0, 100],
+    );
     const measured = [0, 0, 0];
     let weightTotal = 0;
     for (const [hand, frequencies] of Object.entries(hands)) {
@@ -224,10 +269,15 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
     ["HJ_RAISE_BTN", 14.5, 23, 12.5, 6],
     ["HJ_RAISE_SB", 17.5, 23, 13.5, 7.5],
     ["HJ_RAISE_BB", 17.5, 23, 13, 7.5],
+    ["LJ_RAISE_HJ", 14.5, 23, 12.5, 6],
+    ["LJ_RAISE_CO", 14.5, 23, 12.5, 6],
+    ["LJ_RAISE_BTN", 14.5, 23, 12.5, 6],
+    ["LJ_RAISE_SB", 17.5, 23, 13.5, 7.5],
+    ["LJ_RAISE_BB", 17.5, 23, 13, 7.5],
   ]) {
     const correct = evaluateLearnStrategy({
       id: `${key}-AA`,
-      frequencies: [0, 0, 100],
+      frequencies: ranges[key].hands.AA,
       raiseTo: size,
     });
     assert.equal(correct.grade, "correct");
@@ -282,6 +332,11 @@ test("chart totals weight combinations and the preceding limp or raise, not grid
     ["HJ_RAISE_BTN", [58, 20, 22]],
     ["HJ_RAISE_SB", [52, 36, 12]],
     ["HJ_RAISE_BB", [51, 39, 10]],
+    ["LJ_RAISE_HJ", [63, 15, 22]],
+    ["LJ_RAISE_CO", [63, 13, 24]],
+    ["LJ_RAISE_BTN", [55, 22, 23]],
+    ["LJ_RAISE_SB", [52, 36, 12]],
+    ["LJ_RAISE_BB", [51, 39, 10]],
   ]) {
     for (const hand of ["AA", "22"]) {
       const result = evaluateLearnStrategy({

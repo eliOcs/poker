@@ -17,14 +17,20 @@ SOURCES = [('LJ', 200, 47, 17.1), ('HJ', 194, 42, 21.4),
            ('CO_RAISE_BTN', 191, 39, 20.6), ('CO_RAISE_SB', 192, 40, 11.1),
            ('CO_RAISE_BB', 193, 41, 10.3),
            ('HJ_RAISE_CO', 196, 43, 22.2), ('HJ_RAISE_BTN', 197, 44, 21.6),
-           ('HJ_RAISE_SB', 198, 45, 11.1), ('HJ_RAISE_BB', 199, 46, 9.6)]
+           ('HJ_RAISE_SB', 198, 45, 11.1), ('HJ_RAISE_BB', 199, 46, 9.6),
+           ('LJ_RAISE_HJ', 202, 48, 21.8), ('LJ_RAISE_CO', 203, 49, 23.8),
+           ('LJ_RAISE_BTN', 204, 50, 21.9), ('LJ_RAISE_SB', 205, 51, 11.5),
+           ('LJ_RAISE_BB', 206, 52, 9.5)]
 # Previous chart, previous action, and recommended re-raise total.
 FOLLOWUPS = {'SB_LIMP_BB': ('SB', 1, 13), 'SB_RAISE_BB': ('SB', 2, 24),
              'BTN_RAISE_SB': ('BTN', 2, 23), 'BTN_RAISE_BB': ('BTN', 2, 23),
              'CO_RAISE_BTN': ('CO', 2, 23), 'CO_RAISE_SB': ('CO', 2, 23),
              'CO_RAISE_BB': ('CO', 2, 23),
              'HJ_RAISE_CO': ('HJ', 2, 23), 'HJ_RAISE_BTN': ('HJ', 2, 23),
-             'HJ_RAISE_SB': ('HJ', 2, 23), 'HJ_RAISE_BB': ('HJ', 2, 23)}
+             'HJ_RAISE_SB': ('HJ', 2, 23), 'HJ_RAISE_BB': ('HJ', 2, 23),
+             'LJ_RAISE_HJ': ('LJ', 2, 23), 'LJ_RAISE_CO': ('LJ', 2, 23),
+             'LJ_RAISE_BTN': ('LJ', 2, 23), 'LJ_RAISE_SB': ('LJ', 2, 23),
+             'LJ_RAISE_BB': ('LJ', 2, 23)}
 RANKS = 'AKQJT98765432'
 
 

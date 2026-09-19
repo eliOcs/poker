@@ -145,6 +145,76 @@ const FOLLOWUPS = {
     explanation:
       "You have position on the big blind and act last after the flop. Fold less than against CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 10% of your opening range against the blinds versus 22% against CO or BTN.",
   },
+  LJ_RAISE_HJ: {
+    position: "LJ",
+    opponent: "HJ",
+    title: "LJ Open vs HJ 3-bet",
+    history:
+      "You raised to 2.5 BB. HJ 3-bet to 8.5 BB; CO, BTN and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs HJ",
+    explanation:
+      "You are out of position against the hijack and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. Your tight opening range helps you defend against a strong 3-bet range. Call less than against BTN: the reference calls about 15% against HJ versus 23% against the button's more polarized range.",
+  },
+  LJ_RAISE_CO: {
+    position: "LJ",
+    opponent: "CO",
+    title: "LJ Open vs CO 3-bet",
+    history:
+      "You raised to 2.5 BB. HJ folded, CO 3-bet to 8.5 BB; BTN and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs CO",
+    explanation:
+      "You are out of position against the cutoff and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. Like against HJ, fewer hands make profitable calls than against BTN's more polarized 3-bets. The reference calls about 14% against CO versus 23% against BTN, and 4-bets about 24% against CO.",
+  },
+  LJ_RAISE_BTN: {
+    position: "LJ",
+    opponent: "BTN",
+    title: "LJ Open vs BTN 3-bet",
+    history:
+      "You raised to 2.5 BB. HJ and CO folded, BTN 3-bet to 8.5 BB and both blinds folded.",
+    heroBet: 2.5,
+    currentBet: 8.5,
+    minRaiseTo: 14.5,
+    lastAction: "raise",
+    explanationTitle: "Out of position vs BTN",
+    explanation:
+      "You are out of position against the button, so fold more and 4-bet more often than against the blinds. But call more than against HJ or CO: BTN's more polarized 3-bet range contains strong hands and bluffs, so your hands are dominated less often and play better after the flop. The reference calls about 23% against BTN versus 14–15% against HJ or CO.",
+  },
+  LJ_RAISE_SB: {
+    position: "LJ",
+    opponent: "SB",
+    title: "LJ Open vs SB 3-bet",
+    history:
+      "You raised to 2.5 BB. HJ, CO and BTN folded, SB 3-bet to 10 BB and BB folded.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs SB",
+    explanation:
+      "You have position on the small blind and act last after the flop. Fold less than against HJ, CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 11% of your opening range against the blinds versus 23% against the other positions.",
+  },
+  LJ_RAISE_BB: {
+    position: "LJ",
+    opponent: "BB",
+    title: "LJ Open vs BB 3-bet",
+    history:
+      "You raised to 2.5 BB. HJ, CO, BTN and SB folded, then BB 3-bet to 10 BB.",
+    heroBet: 2.5,
+    currentBet: 10,
+    minRaiseTo: 17.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs BB",
+    explanation:
+      "You have position on the big blind and act last after the flop. Fold less than against HJ, CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 11% of your opening range against the blinds versus 23% against the other positions.",
+  },
 };
 
 export function learnSituation(key) {
