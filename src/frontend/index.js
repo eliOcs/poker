@@ -1,3 +1,4 @@
+import { getDisplayBigBlind } from "./currency.js";
 import { html, LitElement } from "lit";
 import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
@@ -387,6 +388,10 @@ export class Game extends LitElement {
       ?.winningCards;
   }
 
+  get displayBigBlind() {
+    return getDisplayBigBlind(this.user?.settings, this.game?.blinds?.big);
+  }
+
   renderLoading() {
     return html`
       ${renderDrawer(this)}
@@ -415,6 +420,7 @@ export class Game extends LitElement {
         <phg-table-layout>
           <div id="container" class="table-surface">
             <phg-board
+              .displayBigBlind=${this.displayBigBlind}
               .board=${this.game.board}
               .hand=${this.game.hand}
               .countdown=${this.game.countdown}
@@ -432,6 +438,7 @@ export class Game extends LitElement {
                       data-slot="${visualSeat(i, this.game.seats)}"
                       data-table-size="${this.game.seats.length}"
                       .seat=${seat}
+                      .displayBigBlind=${this.displayBigBlind}
                       .seatNumber=${i}
                       .isButton=${this.game.button === i}
                       .hideBet=${!!this.game.hand?.collectingBets}
@@ -454,9 +461,14 @@ export class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${renderInfoBar(this.game, this.gameKind, () => {
-          this.openTournamentLevels();
-        })}
+        ${renderInfoBar(
+          this.game,
+          this.gameKind,
+          () => {
+            this.openTournamentLevels();
+          },
+          this.displayBigBlind,
+        )}
         ${renderRankingModal(this)} ${renderTournamentLevelsModal(this)}
         ${renderEmoteModal(this)} ${renderChatModal(this)}
       </div>

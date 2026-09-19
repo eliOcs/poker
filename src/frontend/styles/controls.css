@@ -374,11 +374,15 @@
 .volume-slider label {
   position: relative;
   box-sizing: border-box;
+  display: flex;
   flex: 1;
+  align-items: center;
+  justify-content: center;
   padding: var(--space-md);
   color: var(--color-fg-medium);
   font: inherit;
   font-size: var(--font-md);
+  line-height: 1.5;
   text-align: center;
   cursor: pointer;
   background: var(--color-bg-medium);

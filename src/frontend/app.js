@@ -68,6 +68,7 @@ class App extends LitElement {
       _modal: { state: true },
       _settingsVolume: { state: true },
       _settingsVibration: { state: true },
+      _settingsAmountDisplay: { state: true },
       _settingsName: { state: true },
       _settingsAvatar: { state: true },
     };
@@ -106,6 +107,7 @@ class App extends LitElement {
     this._modalHistoryEntry = history.state?.modalEntry === true;
     this._settingsVolume = 0.75;
     this._settingsVibration = true;
+    this._settingsAmountDisplay = "default";
     this._settingsName = "";
     this._settingsAvatar = undefined;
     this._settingsDraftActive = false;
@@ -254,6 +256,8 @@ class App extends LitElement {
         this.user = await readUserResponse(res);
         this._settingsVolume = this.user.settings.volume;
         this._settingsVibration = this.user.settings.vibration;
+        this._settingsAmountDisplay =
+          this.user.settings.amountDisplay ?? "default";
         return true;
       }
     } catch (error) {

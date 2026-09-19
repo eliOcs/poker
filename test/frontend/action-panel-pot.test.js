@@ -3,7 +3,7 @@ import { createMockGameAtFlop, mockOpponentSeat } from "./setup.js";
 
 function findButtonByExactText(root, text) {
   return [...root.querySelectorAll("button.button")].find(
-    (button) => button.textContent.trim() === text,
+    (button) => button.textContent.trim().replace(/\s+/g, " ") === text,
   );
 }
 
@@ -11,6 +11,48 @@ describe("pot bet presets", () => {
   let element;
   beforeEach(async () => {
     element = await fixture(html`<phg-game game-id="test123"></phg-game>`);
+  });
+  it("displays live amounts in BB while sending bets in cents", async () => {
+    const game = createMockGameAtFlop();
+    game.blinds = { small: 250, big: 500 };
+    game.seats[0].stack = 50000;
+    game.seats[1].bet = 1250;
+    element.game = game;
+    element.user = {
+      settings: { volume: 0, vibration: false, amountDisplay: "bb" },
+    };
+    await element.updateComplete;
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    expect(
+      element.querySelector(".current-player .stack").textContent,
+    ).to.include("100 BB");
+    expect(element.querySelector(".bet-indicator").textContent).to.include(
+      "2.5 BB",
+    );
+    expect(element.querySelector(".pot").textContent).to.include("40 BB");
+    expect(element.querySelector(".info-blinds").textContent).to.equal(
+      "0.5/1 BB",
+    );
+    const amount = panel.querySelector('input[type="number"]');
+    expect(Number(amount.value)).to.equal(10);
+    amount.value = "12.5";
+    amount.dispatchEvent(new Event("input", { bubbles: true }));
+    await panel.updateComplete;
+    let sent;
+    element.addEventListener("game-action", (event) => {
+      sent = event.detail;
+    });
+    findButtonByExactText(panel, "Bet 12.5 BB").click();
+    expect(sent).to.deep.equal({ action: "bet", seat: 0, amount: 6250 });
+    element.user = {
+      ...element.user,
+      settings: { ...element.user.settings, amountDisplay: "default" },
+    };
+    await element.updateComplete;
+    await panel.updateComplete;
+    expect(Number(amount.value)).to.equal(62.5);
+    expect(panel.betAmount).to.equal(6250);
   });
   it("clicking ½ Pot sets betAmount to half the pot", async () => {
     element.game = createMockGameAtFlop(); // collectedPot: 20000
@@ -105,6 +147,7 @@ describe("pot bet presets", () => {
 
   it("uses pot presets when facing a preflop raise", async () => {
     const game = createMockGameAtFlop();
+    game.blinds = { small: 250, big: 500 };
     game.hand.phase = "preflop";
     game.hand.currentBet = 10000;
     game.hand.collectedPot = 0;
@@ -125,6 +168,12 @@ describe("pot bet presets", () => {
     await panel.updateComplete;
     expect(panel.betAmount).to.equal(20000);
     findButtonByExactText(panel, "Pot").click();
+    await panel.updateComplete;
+    expect(panel.betAmount).to.equal(30000);
+    findButtonByExactText(panel, "+").click();
+    await panel.updateComplete;
+    expect(panel.betAmount).to.equal(30250);
+    findButtonByExactText(panel, "-").click();
     await panel.updateComplete;
     expect(panel.betAmount).to.equal(30000);
   });

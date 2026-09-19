@@ -93,6 +93,10 @@
 
   .modal-content {
     min-height: 0;
+
+    /* Keep shadows and focus outlines inside the scrollable area. */
+    padding: var(--space-sm);
+    margin: calc(-1 * var(--space-sm));
     overflow: auto;
   }
 

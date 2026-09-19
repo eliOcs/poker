@@ -1,3 +1,4 @@
+import { getDisplayBigBlind } from "./currency.js";
 import { html, LitElement } from "lit";
 import { visualSeat } from "./table-layout.js";
 import "./seat.js";
@@ -8,7 +9,6 @@ import { renderLearnFeedback } from "./learn-feedback.js";
 import { renderTooltip } from "./tooltip.js";
 import { renderInfoBar } from "./game-info-bar.js";
 import { renderBetPresets } from "./bet-presets.js";
-import { getChipDenomination } from "../shared/stakes.js";
 
 const ACTIONS = ["Fold", "Call", "Raise"];
 const ACTION_STYLES = ["danger", "success", "action"];
@@ -34,6 +34,14 @@ export class Learn extends LitElement {
     this.reset();
     this.busy = false;
     this.error = "";
+  }
+
+  get displayBigBlind() {
+    return getDisplayBigBlind(
+      this.user?.settings,
+      this.scenario?.blinds.big,
+      true,
+    );
   }
 
   get raiseTo() {
@@ -187,11 +195,12 @@ export class Learn extends LitElement {
           setAmount,
         )}
         <phg-currency-slider
-          .label=${"Raise to ($)"}
+          .label=${this.displayBigBlind ? "Raise to (BB)" : "Raise to ($)"}
+          .displayBigBlind=${this.displayBigBlind}
           .value=${this.betAmount}
           .min=${min}
           .max=${max}
-          .step=${getChipDenomination(small, big)}
+          .step=${small}
           @value-changed=${(event) => {
             setAmount(event.detail.value);
           }}
@@ -227,6 +236,7 @@ export class Learn extends LitElement {
                         ? this.user?.settings.avatar
                         : undefined}
                       title=${seat.player.name}
+                      .displayBigBlind=${this.displayBigBlind}
                       .seatNumber=${i}
                       .isButton=${i === 3}
                       .noAnimation=${true}

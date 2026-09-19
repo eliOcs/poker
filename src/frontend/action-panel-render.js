@@ -1,6 +1,6 @@
 import { html } from "lit";
 import { renderBetPresets } from "./bet-presets.js";
-import { formatCurrency } from "./currency.js";
+import { formatCurrency, formatAmount } from "./currency.js";
 import { renderRebuyDecision } from "./action-panel-rebuy.js";
 import { ICONS } from "./icons.js";
 import { formatPosition } from "./action-panel-format.js";
@@ -49,6 +49,7 @@ function renderBuyIn(panel, action) {
   return html`
     <div class="betting-panel">
       <phg-currency-slider
+        .displayBigBlind=${panel.displayBigBlind}
         .value=${stack}
         .min=${minStack}
         .max=${maxStack}
@@ -66,7 +67,9 @@ function renderBuyIn(panel, action) {
               amount: bbCount,
             })}
         >
-          <span class="stacked">Buy In ${formatCurrency(stack)}</span>
+          <span class="stacked"
+            >Buy In ${formatAmount(stack, panel.displayBigBlind)}</span
+          >
         </button>
       </div>
     </div>
@@ -134,7 +137,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
         >
           <span class="stacked"
             >${actionMap.call.allIn ? "All-In" : "Call"}
-            ${formatCurrency(actionMap.call.amount)}</span
+            ${formatAmount(actionMap.call.amount, panel.displayBigBlind)}</span
           >
         </button>`
       : undefined}
@@ -154,7 +157,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
     >
       <span class="stacked"
         >${isAllIn ? "All-In" : isBet ? "Bet" : "Raise to"}
-        ${formatCurrency(currentValue)}</span
+        ${formatAmount(currentValue, panel.displayBigBlind)}</span
       >
     </button>
   `;
@@ -172,10 +175,11 @@ function renderBettingSlider(panel, actionMap, betAction) {
     <div class="betting-panel">
       ${renderBetPresets(panel, min, max)}
       <phg-currency-slider
+        .displayBigBlind=${panel.displayBigBlind}
         .value=${currentValue}
         .min=${min}
         .max=${max}
-        .step=${panel.chipDenomination}
+        .step=${panel.smallBlind}
         @value-changed=${(e) => (panel.betAmount = e.detail.value)}
       ></phg-currency-slider>
       <div class="action-row">
@@ -224,7 +228,7 @@ function renderSimpleActions(panel, actionMap) {
       >
         <span class="stacked"
           >${actionMap.call.allIn ? "All-In" : "Call"}
-          ${formatCurrency(actionMap.call.amount)}</span
+          ${formatAmount(actionMap.call.amount, panel.displayBigBlind)}</span
         >
       </button>`,
     );
@@ -238,7 +242,8 @@ function renderSimpleActions(panel, actionMap) {
           panel.sendAction({ action: "allIn", seat: panel.seatIndex })}
       >
         <span class="stacked"
-          >All-In ${formatCurrency(actionMap.allIn.amount)}</span
+          >All-In
+          ${formatAmount(actionMap.allIn.amount, panel.displayBigBlind)}</span
         >
       </button>`,
     );
@@ -368,7 +373,9 @@ function renderPreActionWithBet(panel, callClock) {
       >
         <span class="pre-action-label"
           >${preActionCheckbox(isCallActive)}
-          <span class="stacked">Call ${formatCurrency(callAmount)}</span></span
+          <span class="stacked"
+            >Call ${formatAmount(callAmount, panel.displayBigBlind)}</span
+          ></span
         >
       </button>
       ${callClock}

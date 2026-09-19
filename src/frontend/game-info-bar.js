@@ -1,7 +1,13 @@
 import { html } from "lit";
-import { formatCurrency } from "./currency.js";
+import { formatCurrency, formatAmount } from "./currency.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
+
+function formatBlinds(blinds, displayBigBlind) {
+  return displayBigBlind
+    ? `${blinds.small / displayBigBlind}/${formatAmount(blinds.big, displayBigBlind)}`
+    : `${formatCurrency(blinds.small)}/${formatCurrency(blinds.big)}`;
+}
 
 /**
  * @param {number} seconds
@@ -46,9 +52,15 @@ function getTournamentTimerCell(tournament) {
  * @param {object} game - The game state object
  * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
+ * @param {number} [displayBigBlind]
  * @returns {import("lit").TemplateResult|string}
  */
-export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
+export function renderInfoBar(
+  game,
+  gameKind,
+  onOpenTournamentLevels,
+  displayBigBlind = 0,
+) {
   if (!game) return "";
   const sizeLabel = TABLE_SIZE_LABELS[game.seats.length] ?? "";
 
@@ -62,12 +74,10 @@ export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
     html`<span class="info-cell info-size">${sizeLabel}</span>`,
   ].filter(Boolean);
 
-  if (game.blinds) {
+  if (game.blinds && gameKind !== "learn") {
     cells.push(
       html`<span class="info-cell info-blinds"
-        >${formatCurrency(game.blinds.small)}/${formatCurrency(
-          game.blinds.big,
-        )}</span
+        >${formatBlinds(game.blinds, displayBigBlind)}</span
       >`,
     );
   }

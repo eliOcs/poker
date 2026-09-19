@@ -11,6 +11,7 @@ export function syncProfileDraft(app) {
   app._settingsName = app.user.name ?? "";
   app._settingsVolume = app.user.settings.volume;
   app._settingsVibration = app.user.settings.vibration;
+  app._settingsAmountDisplay = app.user.settings.amountDisplay ?? "default";
   app._settingsAvatar = app.user.settings.avatar;
   app._settingsDraftActive = true;
 }
@@ -32,6 +33,7 @@ export const appProfileActions = {
     const saved = await this._updateUser({
       name,
       settings: {
+        amountDisplay: this._settingsAmountDisplay,
         volume:
           typeof volumeValue === "string"
             ? Number(volumeValue)

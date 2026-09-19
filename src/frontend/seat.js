@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { formatCurrency } from "./currency.js";
+import { formatAmount } from "./currency.js";
 import { ICONS } from "./icons.js";
 import {
   formatPosition,
@@ -26,6 +26,7 @@ class Seat extends LitElement {
       hideBet: { type: Boolean },
       settingsEnabled: { type: Boolean },
       noAnimation: { type: Boolean },
+      displayBigBlind: { type: Number },
     };
   }
 
@@ -37,6 +38,7 @@ class Seat extends LitElement {
     this.seatNumber = 0;
     this.isButton = false;
     this.noAnimation = false;
+    this.displayBigBlind = 0;
     this.clockRemaining = undefined;
     this.hideBet = false;
     this.settingsEnabled = true;
@@ -197,18 +199,20 @@ class Seat extends LitElement {
     if ((this.seat.netResult ?? undefined) !== undefined) {
       return html`
         <div class="hand-result ${getResultClass(this.seat.netResult)}">
-          ${formatHandResult(this.seat.netResult)}
+          ${formatHandResult(this.seat.netResult, this.displayBigBlind)}
         </div>
         <div class="stack ending-stack">
-          ${formatCurrency(this.seat.endingStack)}
+          ${formatAmount(this.seat.endingStack, this.displayBigBlind)}
         </div>
       `;
     }
     return (this.seat.handResult ?? undefined) !== undefined
       ? html`<div class="hand-result ${getResultClass(this.seat.handResult)}">
-          ${formatHandResult(this.seat.handResult)}
+          ${formatHandResult(this.seat.handResult, this.displayBigBlind)}
         </div>`
-      : html`<div class="stack">${formatCurrency(this.seat.stack)}</div>`;
+      : html`<div class="stack">
+          ${formatAmount(this.seat.stack, this.displayBigBlind)}
+        </div>`;
   }
 
   _renderClock() {
@@ -244,7 +248,7 @@ class Seat extends LitElement {
     return this.seat.bet > 0 && !this.hideBet
       ? html`<div class="bet-indicator">
           <phg-chips .amount=${this.seat.bet}></phg-chips>
-          ${formatCurrency(this.seat.bet)}
+          ${formatAmount(this.seat.bet, this.displayBigBlind)}
         </div>`
       : "";
   }

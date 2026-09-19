@@ -39,7 +39,12 @@ for (const navigationApi of [true, false]) {
       .getByRole("textbox", { name: "Name", exact: true })
       .fill("Alex Updated");
     await settings.getByRole("button", { name: "Remove", exact: true }).click();
+    await settings.getByText("Currency", { exact: true }).click();
     await settings.getByRole("button", { name: "Save", exact: true }).click();
+    expect(
+      (await (await page.request.get("/api/users/me")).json()).settings
+        .amountDisplay,
+    ).toBe("currency");
     await expect(page).toHaveURL(/\/learn\?source=practice$/);
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
     await expect(hero.locator("phg-avatar .avatar-empty")).toBeVisible();
@@ -95,6 +100,16 @@ for (const navigationApi of [true, false]) {
       page.getByRole("slider", { name: "Fold", exact: true }),
     ).toHaveValue("35");
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
+    await page.reload();
+    await expect(hero.locator(".stack")).toContainText("$");
+    const invalidPreference = await page.request.put("/api/users/me", {
+      data: { settings: { amountDisplay: "invalid" } },
+    });
+    expect(invalidPreference.status()).toBe(400);
+    expect(
+      (await (await page.request.get("/api/users/me")).json()).settings
+        .amountDisplay,
+    ).toBe("currency");
     const invalid = await page.request.post("/api/learn/evaluate", {
       data: { id: "not-a-scenario", frequencies: [100, 0, 0] },
     });

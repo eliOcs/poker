@@ -1,4 +1,4 @@
-import { formatCurrency } from "./currency.js";
+import { formatAmount } from "./currency.js";
 
 export function formatPosition(position) {
   const suffixes = ["th", "st", "nd", "rd"];
@@ -7,10 +7,10 @@ export function formatPosition(position) {
   return `${position}${suffix}`;
 }
 
-export function formatHandResult(result) {
-  if (result > 0) return `+${formatCurrency(result)}`;
-  if (result < 0) return `-${formatCurrency(Math.abs(result))}`;
-  return formatCurrency(0);
+export function formatHandResult(result, displayBigBlind = 0) {
+  if (result > 0) return `+${formatAmount(result, displayBigBlind)}`;
+  if (result < 0) return `-${formatAmount(Math.abs(result), displayBigBlind)}`;
+  return formatAmount(0, displayBigBlind);
 }
 
 export function getResultClass(result) {

@@ -47,10 +47,6 @@
     :scope {
       --action-panel-height: 240px;
     }
-
-    #info-bar .info-blinds {
-      display: none;
-    }
   }
 
   .learn-question {

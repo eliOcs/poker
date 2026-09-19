@@ -12,8 +12,11 @@ from PIL import Image
 
 SOURCES = [('LJ', 200, 47, 17.1), ('HJ', 194, 42, 21.4),
            ('CO', 189, 38, 27.8), ('BTN', 185, 35, 43.4), ('SB', 182, 32, 24.4),
-           ('SB_LIMP_BB', 183, 33, 13.4), ('SB_RAISE_BB', 184, 34, 17.2)]
-FOLLOWUPS = {'SB_LIMP_BB': (1, 13), 'SB_RAISE_BB': (2, 24)}
+           ('SB_LIMP_BB', 183, 33, 13.4), ('SB_RAISE_BB', 184, 34, 17.2),
+           ('BTN_RAISE_SB', 187, 36, 8.1), ('BTN_RAISE_BB', 188, 37, 8.6)]
+# Previous chart, previous action, and recommended re-raise total.
+FOLLOWUPS = {'SB_LIMP_BB': ('SB', 1, 13), 'SB_RAISE_BB': ('SB', 2, 24),
+             'BTN_RAISE_SB': ('BTN', 2, 23), 'BTN_RAISE_BB': ('BTN', 2, 23)}
 RANKS = 'AKQJT98765432'
 
 
@@ -61,10 +64,10 @@ for position, page, chart, _ in SOURCES:
             values = [round(n/sum(counts)*20)*5 for n in counts]
             values[max(range(3), key=counts.__getitem__)] += 100-sum(values)
             hands[hand] = values
-    raise_to = FOLLOWUPS[position][1] if followup else 3 if position == 'SB' else 2.5
+    raise_to = FOLLOWUPS[position][2] if followup else 3 if position == 'SB' else 2.5
     result[position] = {'page':page, 'chart':chart, 'raiseTo':raise_to, 'hands':hands}
     weights = {h: (6 if len(h)==2 else 4 if h.endswith('s') else 12) *
-               (result['SB']['hands'][h][FOLLOWUPS[position][0]] / 100 if followup else 1)
+               (result[FOLLOWUPS[position][0]]['hands'][h][FOLLOWUPS[position][1]] / 100 if followup else 1)
                for h in hands}
     totals = [sum(v[a]*weights[h] for h,v in hands.items())/sum(weights.values()) for a in range(3)]
     print(position, 'fold/call/raise:', [round(v,2) for v in totals])

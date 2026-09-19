@@ -48,7 +48,7 @@ function situationNotes(raiseTo, situation) {
   return [
     situation?.explanation
       ? {
-          title: `${situation.heroBet + situation.currentBet} BB in the pot`,
+          title: `${situation.pot} BB in the pot`,
           text: `You have already put in ${situation.heroBet} BB. Calling costs another ${situation.currentBet - situation.heroBet} BB. Both players started with 100 BB; earlier contributions are already part of the pot.`,
         }
       : {
@@ -70,14 +70,14 @@ function situationNotes(raiseTo, situation) {
 }
 
 // Modern Poker Theory, Pot Odds and Outs, PDF pages 37–38.
-// These follow-ups are heads-up: both players' street bets form the entire pot.
+// Include folded players' contributions when pricing the outstanding call.
 function potOddsNote(situation) {
-  const pot = situation.heroBet + situation.currentBet;
+  const pot = situation.pot;
   const call = situation.currentBet - situation.heroBet;
   const percentage = Math.round((100 * call) / (pot + call));
   return {
-    title: `Pot odds: ≈${percentage}%`,
-    text: `Call cost ÷ pot after calling: ${call} ÷ (${pot} + ${call}) ≈ ${percentage}%, with amounts in BB. Ignoring rake and assuming no further betting, winning more often than the exact threshold makes calling profitable over time; matching it breaks even. Preflop, future bets may cost more or force you to fold before showdown, so pot odds alone do not tell you whether to call.`,
+    title: `Pot odds: ~${percentage}%`,
+    text: `Call cost ÷ pot after calling: ${call} ÷ (${pot} + ${call}) ~ ${percentage}%, with amounts in BB. Assuming no further betting, winning more often than the exact threshold makes calling profitable over time; matching it breaks even. Preflop, future bets may cost more or force you to fold before showdown, so pot odds alone do not tell you whether to call.`,
   };
 }
 

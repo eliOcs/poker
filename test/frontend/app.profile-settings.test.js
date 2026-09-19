@@ -250,6 +250,7 @@ describe("phg-app profile settings", () => {
       settings: {
         volume: 0.75,
         vibration: false,
+        amountDisplay: "default",
         avatar: JSON.parse("null"),
       },
     });

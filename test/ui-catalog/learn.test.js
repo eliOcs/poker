@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { learnScenario, followupScenario } from "../frontend/fixtures/learn.js";
+import {
+  learnScenario,
+  followupScenario,
+  buttonFollowupScenario,
+} from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
@@ -181,13 +185,13 @@ test("learn suited connected hand explanation", async ({ page }) => {
   await expect(page).toHaveScreenshot("learn-hand-details.png");
 });
 
-for (const raised of [false, true]) {
-  const name = raised ? "learn-sb-open" : "learn-sb-limp";
-
-  test(`learn follow-up after SB ${raised ? "open" : "limp"}`, async ({
-    page,
-  }) => {
-    const scenario = followupScenario(raised);
+for (const [name, scenario, min, raiseTo, odds] of [
+  ["learn-sb-limp", followupScenario(), 6, 13, 36],
+  ["learn-sb-open", followupScenario(true), 15, 24, 33],
+  ["learn-btn-vs-sb", buttonFollowupScenario("SB"), 17.5, 23, 36],
+  ["learn-btn-vs-bb", buttonFollowupScenario("BB"), 17.5, 23, 37],
+]) {
+  test(`learn follow-up ${scenario.title}`, async ({ page }) => {
     await page.route("**/api/learn/scenario", (route) =>
       route.fulfill({ json: scenario }),
     );
@@ -202,10 +206,10 @@ for (const raised of [false, true]) {
     await page.getByRole("slider", { name: "Raise", exact: true }).focus();
     await page.keyboard.press("End");
     await page.getByRole("button", { name: "Continue", exact: true }).click();
-    const amount = page.getByRole("spinbutton", { name: "Raise to ($)" });
-    await expect(amount).toHaveValue(raised ? "75" : "30");
+    const amount = page.getByRole("spinbutton", { name: "Raise to (BB)" });
+    await expect(amount).toHaveJSProperty("valueAsNumber", min);
     await expect(page).toHaveScreenshot(`${name}-sizing.png`);
-    await amount.fill(raised ? "120" : "65");
+    await amount.fill(String(raiseTo));
     await page
       .getByRole("button", { name: "Check strategy", exact: true })
       .click();
@@ -215,13 +219,10 @@ for (const raised of [false, true]) {
     await page.getByRole("button", { name: "Details", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText(scenario.title);
     await expect(
-      page.getByTitle("72o: Not in this range", { exact: true }),
+      page.getByTitle("72o: Not in range", { exact: true }),
     ).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-range.png`);
-    const potOdds = page.getByText(
-      raised ? "Pot odds: ≈33%" : "Pot odds: ≈36%",
-      { exact: true },
-    );
+    const potOdds = page.getByText(`Pot odds: ~${odds}%`, { exact: true });
     await potOdds.scrollIntoViewIfNeeded();
     await expect(potOdds).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-pot-odds.png`);
@@ -258,4 +259,20 @@ test("learn correct strategy shows only the recommended actions", async ({
   );
   await waitForAvatars(page);
   await expect(page).toHaveScreenshot("learn-correct.png");
+});
+
+test("live table amounts in BB", async ({ page }) => {
+  await page.goto("/test.html?test=game-flop-facing-bet");
+  await page.locator("phg-game").evaluate((game) => {
+    // The server sends the action verb; this older catalog fixture includes currency.
+    game.game.seats[1].lastAction = "bet";
+    game.user = {
+      settings: { volume: 0, vibration: false, amountDisplay: "bb" },
+    };
+  });
+  await waitForAvatars(page);
+  await expect(
+    page.getByRole("spinbutton", { name: "Amount (BB)" }),
+  ).toBeVisible();
+  await expect(page).toHaveScreenshot("game-amounts-bb.png");
 });

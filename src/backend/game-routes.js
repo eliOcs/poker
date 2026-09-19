@@ -111,6 +111,14 @@ function parseUserSettings(settings, updates) {
     });
   }
   const nextSettings = { ...settings, ...updates };
+  if (
+    "amountDisplay" in updates &&
+    !["default", "currency", "bb"].includes(updates.amountDisplay)
+  ) {
+    throw new HttpError(400, "Invalid amount display preference", {
+      body: { error: "Invalid amount display preference", status: 400 },
+    });
+  }
   if (!("avatar" in updates)) return nextSettings;
 
   // JSON requires null to distinguish removal from an omitted setting.

@@ -16,6 +16,7 @@ class ActionPanel extends LitElement {
       betAmount: { type: Number },
       smallBlind: { type: Number },
       bigBlind: { type: Number },
+      displayBigBlind: { type: Number },
       seatedCount: { type: Number },
       bustedPosition: { type: Number },
       isWinner: { type: Boolean },
@@ -41,6 +42,7 @@ class ActionPanel extends LitElement {
     this.betAmount = 0;
     this.smallBlind = 1;
     this.bigBlind = 1;
+    this.displayBigBlind = 0;
     this.seatedCount = 0;
     this.bustedPosition = undefined;
     this.isWinner = false;

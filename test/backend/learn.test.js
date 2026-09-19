@@ -49,7 +49,6 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       ["UTG", "UTG+1", "CO", "BTN", "SB", "BB"],
     );
     assert.ok(scenario.seats.slice(0, hero).every((s) => s.folded));
-    assert.ok(scenario.seats.slice(hero + 1).every((s) => !s.folded));
     const cards = scenario.seats[hero].cards;
     assert.notEqual(cards[0], cards[1]);
     assert.equal(cards[0][1] === cards[1][1], scenario.hand.endsWith("s"));
@@ -57,33 +56,74 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.hands, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
-      SB_LIMP_BB: [500, 1750, 3000, "call"],
-      SB_RAISE_BB: [1500, 4500, 7500, "raise"],
+      SB_LIMP_BB: {
+        hero: 4,
+        opponent: 5,
+        bets: [0, 0, 0, 0, 500, 1750],
+        min: 3000,
+        action: "call",
+      },
+      SB_RAISE_BB: {
+        hero: 4,
+        opponent: 5,
+        bets: [0, 0, 0, 0, 1500, 4500],
+        min: 7500,
+        action: "raise",
+      },
+      BTN_RAISE_SB: {
+        hero: 3,
+        opponent: 4,
+        bets: [0, 0, 0, 1250, 5000, 500],
+        min: 8750,
+        action: "raise",
+      },
+      BTN_RAISE_BB: {
+        hero: 3,
+        opponent: 5,
+        bets: [0, 0, 0, 1250, 250, 5000],
+        min: 8750,
+        action: "raise",
+      },
     }[key];
     if (followup) {
-      assert.equal(hero, 4);
-      assert.equal(scenario.seats[hero].bet, followup[0]);
-      assert.equal(scenario.seats[5].bet, followup[1]);
-      assert.equal(scenario.currentBet, followup[1]);
-      assert.equal(scenario.minRaiseTo, followup[2]);
-      assert.equal(scenario.seats[hero].lastAction, followup[3]);
-      assert.equal(scenario.seats[5].lastAction, "raise");
+      assert.equal(hero, followup.hero);
+      assert.deepEqual(
+        scenario.seats.map((s) => s.bet),
+        followup.bets,
+      );
+      assert.equal(scenario.currentBet, followup.bets[followup.opponent]);
+      assert.equal(scenario.minRaiseTo, followup.min);
+      assert.equal(scenario.seats[hero].lastAction, followup.action);
+      assert.equal(scenario.seats[followup.opponent].lastAction, "raise");
+      scenario.seats.forEach((seat, index) => {
+        const folded = index !== hero && index !== followup.opponent;
+        assert.equal(seat.folded, folded);
+        if (folded) {
+          assert.deepEqual(seat.cards, []);
+          assert.equal(seat.lastAction, "fold");
+        } else if (index !== hero) assert.deepEqual(seat.cards, ["??", "??"]);
+      });
     } else {
       assert.equal(scenario.currentBet, 500);
       assert.equal(scenario.minRaiseTo, 1000);
+      assert.ok(scenario.seats.slice(hero + 1).every((s) => !s.folded));
     }
     assert.equal(
       scenario.seats.reduce((total, s) => total + s.stack + s.bet, 0),
       300000,
     );
   }
-  assert.equal(seen.size, 7);
+  assert.equal(seen.size, 9);
 });
 
 test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
-  for (const [key, previousAction, totals] of [
-    ["SB_LIMP_BB", 1, [46.8, 39.8, 13.4]],
-    ["SB_RAISE_BB", 2, [45.4, 37.4, 17.2]],
+  for (const [key, position, previousAction, totals, tolerance] of [
+    ["SB_LIMP_BB", "SB", 1, [46.8, 39.8, 13.4], 0.4],
+    ["SB_RAISE_BB", "SB", 2, [45.4, 37.4, 17.2], 0.4],
+    ["BTN_RAISE_SB", "BTN", 2, [43.1, 48.9, 8.1], 0.4],
+    // The supplied PDF's BB chart is nearly identical to its SB chart,
+    // despite different captions. Preserve the chart; see doc/learn.md.
+    ["BTN_RAISE_BB", "BTN", 2, [44.5, 47.3, 8.6], 2],
   ]) {
     const hands = ranges[key].hands;
     assert.equal(hands["72o"], undefined);
@@ -98,7 +138,7 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
       assert.ok(frequencies.every((n) => n >= 0 && n <= 100 && n % 5 === 0));
       const weight =
         (hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12) *
-        ranges.SB.hands[hand][previousAction];
+        ranges[position].hands[hand][previousAction];
       weightTotal += weight;
       frequencies.forEach((n, i) => (measured[i] += n * weight));
       const answer = evaluateLearnStrategy({
@@ -109,7 +149,7 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
       assert.equal(answer.grade, "correct");
     }
     measured.forEach((n, i) =>
-      assert.ok(Math.abs(n / weightTotal - totals[i]) < 0.4),
+      assert.ok(Math.abs(n / weightTotal - totals[i]) < tolerance),
     );
   }
 });
@@ -118,6 +158,8 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
   for (const [key, min, size, pot, call] of [
     ["SB_LIMP_BB", 6, 13, 4.5, 2.5],
     ["SB_RAISE_BB", 15, 24, 12, 6],
+    ["BTN_RAISE_SB", 17.5, 23, 13.5, 7.5],
+    ["BTN_RAISE_BB", 17.5, 23, 13, 7.5],
   ]) {
     const correct = evaluateLearnStrategy({
       id: `${key}-AA`,

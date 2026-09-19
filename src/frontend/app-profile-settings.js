@@ -104,6 +104,35 @@ export function renderProfileSettingsModal(app) {
           )}
         </div>
       </fieldset>
+      <fieldset>
+        <legend>Table amounts</legend>
+        <div class="volume-slider">
+          ${[
+            ["default", "Default"],
+            ["currency", "Currency"],
+            ["bb", "Big Blinds"],
+          ].map(
+            ([value, label]) =>
+              html`<label
+                class=${(app._settingsAmountDisplay ?? "default") === value
+                  ? "active"
+                  : ""}
+              >
+                <input
+                  type="radio"
+                  name="amountDisplay"
+                  value=${value}
+                  .checked=${(app._settingsAmountDisplay ?? "default") ===
+                  value}
+                  @change=${() => {
+                    app._settingsAmountDisplay = value;
+                  }}
+                />
+                ${label}
+              </label>`,
+          )}
+        </div>
+      </fieldset>
       <div class="buttons">
         <button
           type="button"

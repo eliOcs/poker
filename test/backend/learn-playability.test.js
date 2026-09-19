@@ -67,8 +67,10 @@ test("connects the evaluation to this hand and position without changing grading
 
 test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
   for (const [id, title, calculation] of [
-    ["SB_LIMP_BB-AA", "Pot odds: ≈36%", "2.5 ÷ (4.5 + 2.5) ≈ 36%"],
-    ["SB_RAISE_BB-AA", "Pot odds: ≈33%", "6 ÷ (12 + 6) ≈ 33%"],
+    ["SB_LIMP_BB-AA", "Pot odds: ~36%", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
+    ["SB_RAISE_BB-AA", "Pot odds: ~33%", "6 ÷ (12 + 6) ~ 33%"],
+    ["BTN_RAISE_SB-AA", "Pot odds: ~36%", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["BTN_RAISE_BB-AA", "Pot odds: ~37%", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
     const note = result.playability.situation.find((n) =>
@@ -76,7 +78,7 @@ test("follow-up explanations calculate pot odds from the additional call and pot
     );
     assert.equal(note.title, title);
     assert.ok(note.text.includes(calculation));
-    assert.match(note.text, /Ignoring rake and assuming no further betting/);
+    assert.match(note.text, /Assuming no further betting/);
     assert.match(note.text, /matching it breaks even/);
   }
 });

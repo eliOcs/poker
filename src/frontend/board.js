@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { formatCurrency } from "./currency.js";
+import { formatAmount } from "./currency.js";
 import "./card.js";
 import "./chips.js";
 
@@ -16,6 +16,7 @@ class Board extends LitElement {
       winnerMessage: { type: Object },
       winningCards: { type: Array },
       noAnimation: { type: Boolean },
+      displayBigBlind: { type: Number },
       tournament: { type: Object },
       seats: { type: Array },
     };
@@ -29,6 +30,7 @@ class Board extends LitElement {
     this.winnerMessage = undefined;
     this.winningCards = undefined;
     this.noAnimation = false;
+    this.displayBigBlind = 0;
     this.tournament = undefined;
     this.seats = undefined;
   }
@@ -83,7 +85,9 @@ class Board extends LitElement {
           ${isSplit ? "Split pot!" : `${playerName} wins!`}
         </div>
         ${handRank ? html`<div class="winner-hand">${handRank}</div>` : ""}
-        <div class="winner-amount">+${formatCurrency(amount)}</div>
+        <div class="winner-amount">
+          +${formatAmount(amount, this.displayBigBlind)}
+        </div>
       </div>
     `;
   }
@@ -137,7 +141,7 @@ class Board extends LitElement {
         ${displayedPot > 0
           ? html`<div class="pot">
               <phg-chips .amount=${displayedPot}></phg-chips>
-              ${formatCurrency(displayedPot)}
+              ${formatAmount(displayedPot, this.displayBigBlind)}
             </div>`
           : ""}
       </div>

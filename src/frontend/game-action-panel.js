@@ -70,6 +70,7 @@ function renderTableActionPanel(
     .seatIndex=${seatIndex}
     .smallBlind=${host.game.blinds?.small ?? 1}
     .bigBlind=${host.game.blinds?.big ?? 1}
+    .displayBigBlind=${host.displayBigBlind}
     .totalPot=${host.game.hand?.totalPot ?? 0}
     .phase=${pre.phase}
     .seatedCount=${host.game.seats.filter((s) => !s.empty).length}

@@ -61,17 +61,17 @@ labels or adding component-specific vertical offsets.
 
 ### App Shell & Auth
 
-| Component         | File                                 | Description                                  |
-| ----------------- | ------------------------------------ | -------------------------------------------- |
-| App Router        | `app.js` / `app-route-state.js`      | Top-level page and live-resource routing     |
-| App Navigation    | `app-navigation.js`                  | Browser history and URL-backed modal state   |
-| App Shell         | `app-shell.js`                       | Header and navigation chrome                 |
-| Auth State        | `app-auth.js`                        | Guest → registered session merge             |
-| Auth Status       | `app-auth-status.js`                 | Signed-in / guest indicator                  |
-| Sign-In Modal     | `app-sign-in-modal.js`               | Shared passwordless sign-in and sign-up form |
-| Profile Settings  | `app-profile-settings.js`            | Name, avatar, sound, and vibration settings  |
-| Navigation Drawer | `app-navigation-drawer.js`           | Site navigation and profile actions          |
-| Drawer            | `navigation-drawer.js` / `drawer.js` | Sliding drawer container                     |
+| Component         | File                                 | Description                                       |
+| ----------------- | ------------------------------------ | ------------------------------------------------- |
+| App Router        | `app.js` / `app-route-state.js`      | Top-level page and live-resource routing          |
+| App Navigation    | `app-navigation.js`                  | Browser history and URL-backed modal state        |
+| App Shell         | `app-shell.js`                       | Header and navigation chrome                      |
+| Auth State        | `app-auth.js`                        | Guest → registered session merge                  |
+| Auth Status       | `app-auth-status.js`                 | Signed-in / guest indicator                       |
+| Sign-In Modal     | `app-sign-in-modal.js`               | Shared passwordless sign-in and sign-up form      |
+| Profile Settings  | `app-profile-settings.js`            | Name, avatar, sound, vibration, and table amounts |
+| Navigation Drawer | `app-navigation-drawer.js`           | Site navigation and profile actions               |
+| Drawer            | `navigation-drawer.js` / `drawer.js` | Sliding drawer container                          |
 
 ### Tournaments & Profiles
 

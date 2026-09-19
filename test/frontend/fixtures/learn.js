@@ -44,3 +44,29 @@ export function followupScenario(raised = false) {
     }),
   };
 }
+
+export function buttonFollowupScenario(opponent) {
+  const villain = opponent === "SB" ? 4 : 5;
+  const bets =
+    opponent === "SB" ? [0, 0, 0, 1250, 5000, 500] : [0, 0, 0, 1250, 250, 5000];
+  return {
+    ...learnScenario,
+    id: `BTN_RAISE_${opponent}-AA`,
+    position: "BTN",
+    title: `BTN Open vs ${opponent} 3-bet`,
+    history: `You raised to 2.5 BB. ${opponent} 3-bet to 10 BB; the other blind folded.`,
+    currentBet: 5000,
+    minRaiseTo: 8750,
+    seats: learnScenario.seats.map((seat, i) => ({
+      ...seat,
+      player: { name: ["UTG", "UTG+1", "CO", "You · BTN", "SB", "BB"][i] },
+      bet: bets[i],
+      stack: 50000 - bets[i],
+      folded: i !== 3 && i !== villain,
+      lastAction: i === 3 || i === villain ? "raise" : "fold",
+      isCurrentPlayer: i === 3,
+      isActing: i === 3,
+      cards: i === 3 ? ["As", "Ah"] : i === villain ? ["??", "??"] : [],
+    })),
+  };
+}

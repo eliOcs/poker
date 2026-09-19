@@ -4,6 +4,7 @@ import "../../src/frontend/learn.js";
 import {
   learnScenario as scenario,
   followupScenario,
+  buttonFollowupScenario,
 } from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
@@ -85,25 +86,56 @@ describe("Learn strategy flow", () => {
     expect(el.raiseTo).to.equal(0);
   });
 
-  it("uses dollar amounts and standard presets for sizing, then submits in big blinds", async () => {
+  it("defaults to big blinds for stacks, bets and sizing", async () => {
     const el = await fixture(html`<phg-learn></phg-learn>`);
     await waitUntil(() => !el.busy);
     await button(el, "Continue");
     const amount = () => el.querySelector('input[type="number"]');
-    expect(Number(amount().value)).to.equal(10);
+    expect(el.querySelector(".current-player .stack").textContent).to.include(
+      "99.5 BB",
+    );
+    expect(
+      el.querySelector(".current-player .bet-indicator").textContent,
+    ).to.include("0.5 BB");
+    expect(el.querySelector(".info-blinds")).not.to.exist;
+    expect(Number(amount().value)).to.equal(2);
     await button(el, "Max");
-    expect(Number(amount().value)).to.equal(500);
+    expect(Number(amount().value)).to.equal(100);
     await button(el, "Min");
-    expect(Number(amount().value)).to.equal(10);
+    expect(Number(amount().value)).to.equal(2);
     await button(el, "2.5 BB");
-    expect(Number(amount().value)).to.equal(12.5);
-    amount().value = "20";
+    expect(Number(amount().value)).to.equal(2.5);
+    amount().value = "4";
     amount().dispatchEvent(new Event("input", { bubbles: true }));
     await el.updateComplete;
     expect(submissions).to.have.length(0);
     await button(el, "Check strategy");
     await waitUntil(() => !el.busy);
     expect(submissions[0].raiseTo).to.equal(4);
+  });
+
+  it("switches units without changing the chosen bet and submits currency input in BB", async () => {
+    const el = await fixture(html`<phg-learn></phg-learn>`);
+    await waitUntil(() => !el.busy);
+    await button(el, "Continue");
+    await button(el, "3 BB");
+    el.user = { id: "hero", settings: { amountDisplay: "currency" } };
+    await el.updateComplete;
+    const amount = el.querySelector('input[type="number"]');
+    expect(Number(amount.value)).to.equal(15);
+    expect(el.querySelector(".current-player .stack").textContent).to.include(
+      "$497.50",
+    );
+    expect(el.betAmount).to.equal(1500);
+    amount.value = "20";
+    amount.dispatchEvent(new Event("input", { bubbles: true }));
+    await el.updateComplete;
+    await button(el, "Check strategy");
+    await waitUntil(() => !el.busy);
+    expect(submissions[0].raiseTo).to.equal(4);
+    expect(el.querySelector(".learn-strategy").textContent).to.include(
+      "Raise to $15",
+    );
   });
 
   it("supports pure actions and redistributes from zero while preserving 100%", async () => {
@@ -153,7 +185,7 @@ describe("Learn strategy flow", () => {
     expect(el.querySelector('[role="alert"]').textContent).to.include(
       "try again",
     );
-    expect(el.querySelector('input[type="number"]').value).to.equal("15");
+    expect(el.querySelector('input[type="number"]').value).to.equal("3");
     window.fetch = workingFetch;
     await button(el, "Check strategy");
     await waitUntil(() => !el.busy);
@@ -162,35 +194,48 @@ describe("Learn strategy flow", () => {
     expect(submissions[0].frequencies).to.deep.equal([35, 35, 30]);
   });
 
-  for (const raised of [false, true]) {
-    it(`supports legal sizing after ${raised ? "opening" : "limping"}`, async () => {
+  for (const [lesson, min, halfPot, pot, raiseTo] of [
+    [followupScenario(), 6, 7, 10.5, 13],
+    [followupScenario(true), 15, 18, 27, 24],
+    [buttonFollowupScenario("SB"), 17.5, 20.5, 31, 23],
+    [buttonFollowupScenario("BB"), 17.5, 20.25, 30.5, 23],
+  ]) {
+    it(`supports legal sizing for ${lesson.title}`, async () => {
       const el = await fixture(html`<phg-learn></phg-learn>`);
       await waitUntil(() => !el.busy);
-      el.scenario = followupScenario(raised);
+      el.scenario = lesson;
       await el.updateComplete;
       await button(el, "Continue");
       const amount = () => el.querySelector('input[type="number"]');
-      expect(Number(amount().min)).to.equal(raised ? 75 : 30);
-      expect(Number(amount().value)).to.equal(raised ? 75 : 30);
-      expect(el.textContent).not.to.include("2.5 BB");
+      expect(Number(amount().min)).to.equal(min);
+      expect(Number(amount().value)).to.equal(min);
+      await button(el, "+");
+      expect(Number(amount().value)).to.equal(min + 0.5);
+      await button(el, "-");
+      expect(Number(amount().value)).to.equal(min);
+      expect(
+        [...el.querySelectorAll("button")].some(
+          (button) => button.textContent.trim() === "2.5 BB",
+        ),
+      ).to.equal(false);
       await button(el, "½ Pot");
-      expect(Number(amount().value)).to.equal(raised ? 90 : 35);
+      expect(Number(amount().value)).to.equal(halfPot);
       await button(el, "Pot");
-      expect(Number(amount().value)).to.equal(raised ? 135 : 52.5);
-      amount().value = raised ? "120" : "65";
+      expect(Number(amount().value)).to.equal(pot);
+      amount().value = String(raiseTo);
       amount().dispatchEvent(new Event("input", { bubbles: true }));
       await el.updateComplete;
       await button(el, "Check strategy");
       await waitUntil(() => !el.busy);
       expect(submissions[0].id).to.equal(el.scenario.id);
-      expect(submissions[0].raiseTo).to.equal(raised ? 24 : 13);
+      expect(submissions[0].raiseTo).to.equal(raiseTo);
       el.rangeOpen = true;
       await el.updateComplete;
       expect(el.querySelector("phg-modal").textContent).to.include(
         el.scenario.title,
       );
       expect(el.querySelectorAll(".learn-range span")).to.have.length(169);
-      expect(el.querySelector('[title="72o: Not in this range"]')).to.exist;
+      expect(el.querySelector('[title="72o: Not in range"]')).to.exist;
     });
   }
 });

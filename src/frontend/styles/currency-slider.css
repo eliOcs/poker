@@ -24,6 +24,10 @@
       inset -2px -2px 0 rgb(255 255 255 / 10%);
   }
 
+  .amount-unit {
+    font-size: var(--font-sm);
+  }
+
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     appearance: none;

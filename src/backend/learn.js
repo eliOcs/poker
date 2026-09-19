@@ -45,41 +45,47 @@ export function createLearnScenario() {
     currentBet: situation.currentBet * 500,
     minRaiseTo: situation.minRaiseTo * 500,
     blinds: { small: 250, big: 500 },
-    seats: POSITIONS.map((name, i) => ({
-      empty: false,
-      allIn: false,
-      sittingOut: false,
-      disconnected: false,
-      player: { name: `${i === hero ? "You · " : ""}${POSITION_LABELS[name]}` },
-      isCurrentPlayer: i === hero,
-      isActing: i === hero,
-      folded: i < hero,
-      lastAction:
-        i < hero
+    seats: POSITIONS.map((name, i) => {
+      const folded = hasFolded(name, i, hero, situation);
+      const bet = (situation.bets[name] ?? 0) * 500;
+      return {
+        empty: false,
+        allIn: false,
+        sittingOut: false,
+        disconnected: false,
+        player: {
+          name: `${i === hero ? "You · " : ""}${POSITION_LABELS[name]}`,
+        },
+        isCurrentPlayer: i === hero,
+        isActing: i === hero,
+        folded,
+        lastAction: folded
           ? "fold"
           : i === hero
             ? situation.lastAction
-            : situation.lastAction && i === 5
+            : name === situation.opponent
               ? "raise"
               : undefined,
-      stack: 50000 - seatBet(i, hero, situation),
-      bet: seatBet(i, hero, situation),
-      cards:
-        i === hero
-          ? [
-              hand.charAt(0) + suits.at(first),
-              hand.charAt(1) + suits.at(second),
-            ]
-          : i < hero
-            ? []
-            : ["??", "??"],
-    })),
+        stack: 50000 - bet,
+        bet,
+        cards:
+          i === hero
+            ? [
+                hand.charAt(0) + suits.at(first),
+                hand.charAt(1) + suits.at(second),
+              ]
+            : folded
+              ? []
+              : ["??", "??"],
+      };
+    }),
   };
 }
 
-function seatBet(index, hero, situation) {
-  if (index === hero) return situation.heroBet * 500;
-  return index === 4 ? 250 : index === 5 ? situation.currentBet * 500 : 0;
+function hasFolded(position, index, hero, situation) {
+  return situation.opponent
+    ? position !== situation.position && position !== situation.opponent
+    : index < hero;
 }
 
 /** @returns {never} */

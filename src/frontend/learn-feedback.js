@@ -1,6 +1,7 @@
 import { html } from "lit";
 import { renderModal } from "./modal.js";
 import { ICONS } from "./icons.js";
+import { formatAmount } from "./currency.js";
 
 const ACTIONS = ["Fold", "Call", "Raise"];
 const POSITION_NAMES = {
@@ -43,11 +44,18 @@ export function renderLearnFeedback(view) {
       ${renderStrategy(
         "Recommended",
         result.expected,
-        result.raiseTo,
+        formatAmount(
+          result.raiseTo * view.scenario.blinds.big,
+          view.displayBigBlind,
+        ),
         comparing,
       )}
       ${comparing
-        ? renderStrategy("Your strategy", view.frequencies, view.raiseTo)
+        ? renderStrategy(
+            "Your strategy",
+            view.frequencies,
+            formatAmount(view.betAmount, view.displayBigBlind),
+          )
         : ""}
     </div>
     <div class="action-row">
@@ -103,13 +111,14 @@ function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
           : "",
       )}
     </ul>
-    ${frequencies[2] > 0 ? html`<p>Raise to ${raiseTo} BB</p>` : ""}
+    ${frequencies[2] > 0 ? html`<p>Raise to ${raiseTo}</p>` : ""}
   </section>`;
 }
 
 // Current reference: Modern Poker Theory, Michael Acevedo, chapter 5.
 // Position -> Hand Range / PDF page: LJ 47/200, HJ 42/194, CO 38/189,
 // BTN 35/185, SB 32/182. General heuristics: PDF 177–179; opening sizes: PDF 181.
+// Follow-ups: SB 33/183 and 34/184; BTN 36/187 and 37/188.
 // Player-facing GTO guidance paraphrases the conclusion on PDF page 136.
 // Calibration: 100 BB, 5% rake capped at $3; chart estimates rounded to 5 points.
 // Mix grading tolerates 15 points per action, not an EV-loss estimate. Nearby
@@ -126,7 +135,7 @@ function renderRangeDetails(view) {
       <span><i class="legend-selected" aria-hidden="true"></i>Your hand</span>
       ${Object.keys(result.hands).length < 169
         ? html`<span
-            ><i class="legend-unavailable" aria-hidden="true"></i>Not in this
+            ><i class="legend-unavailable" aria-hidden="true"></i>Not in
             range</span
           >`
         : ""}
@@ -142,7 +151,7 @@ function renderRangeDetails(view) {
               : ""}
           title=${values
             ? `${hand}: ${ACTIONS.map((a, i) => `${a} ${values[i]}%`).join(", ")}`
-            : `${hand}: Not in this range`}
+            : `${hand}: Not in range`}
           style=${values ? rangeBackground(values) : ""}
           >${hand}</span
         >`;

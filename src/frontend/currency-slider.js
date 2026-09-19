@@ -1,9 +1,9 @@
 import { html, LitElement } from "lit";
-import { formatDollars } from "./currency.js";
+import { formatDollars, formatAmount } from "./currency.js";
 
 /**
  * Reusable currency slider component
- * - Displays dollars in the number input
+ * - Displays dollars or big blinds in the number input
  * - Uses cents internally for precise calculations
  * - Emits value-changed events with cents
  * - Labeled handles display action frequencies in whole percentage points
@@ -22,6 +22,7 @@ class CurrencySlider extends LitElement {
       label: { type: String },
       handleLabel: { type: String },
       variant: { type: String },
+      displayBigBlind: { type: Number },
     };
   }
 
@@ -34,6 +35,7 @@ class CurrencySlider extends LitElement {
     this.label = "Amount";
     this.handleLabel = "";
     this.variant = "primary";
+    this.displayBigBlind = 0;
   }
 
   _clamp(value) {
@@ -53,9 +55,8 @@ class CurrencySlider extends LitElement {
   }
 
   _handleNumberInput(e) {
-    // Input is in dollars, convert to cents
-    const dollars = parseFloat(e.target.value) || 0;
-    const cents = Math.round(dollars * 100);
+    const amount = parseFloat(e.target.value) || 0;
+    const cents = Math.round(amount * (this.displayBigBlind || 100));
     this._emitChange(cents);
   }
 
@@ -101,21 +102,26 @@ class CurrencySlider extends LitElement {
 
   render() {
     if (this.handleLabel) return this.renderLabeledHandle();
-    const displayValue = formatDollars(this.value);
-    const minDollars = this.min / 100;
-    const maxDollars = this.max / 100;
-    const stepDollars = this.step / 100;
+    const divisor = this.displayBigBlind || 100;
+    const displayValue = this.displayBigBlind
+      ? String(this.value / divisor)
+      : formatDollars(this.value);
 
     return html`
       <input
         type="number"
-        aria-label=${this.label}
-        min="${minDollars}"
-        max="${maxDollars}"
-        step="${stepDollars}"
+        aria-label=${this.displayBigBlind && !this.label.includes("BB")
+          ? `${this.label} (BB)`
+          : this.label}
+        min="${this.min / divisor}"
+        max="${this.max / divisor}"
+        step="${this.step / divisor}"
         .value="${displayValue}"
         @input=${this._handleNumberInput}
       />
+      ${this.displayBigBlind
+        ? html`<span class="amount-unit" aria-hidden="true">BB</span>`
+        : ""}
       <button
         type="button"
         class="button button--muted button--compact"
@@ -127,6 +133,7 @@ class CurrencySlider extends LitElement {
       <input
         type="range"
         aria-label=${this.label}
+        aria-valuetext=${formatAmount(this.value, this.displayBigBlind)}
         min="${this.min}"
         max="${this.max}"
         step="${this.step}"
