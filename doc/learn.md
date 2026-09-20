@@ -65,14 +65,49 @@ For the cutoff, hijack and lojack charts, the aggregate sanity checks allow one 
 
 The supplied PDF’s BTN charts on pages 187–188 are almost identical, while their captions differ; the page 188 caption also totals 100.4%. We preserve the measured per-hand chart mixes rather than adjusting them to force agreement with that caption. The aggregate sanity check therefore allows a two-percentage-point difference for this chart. Page 186 also quotes pots of 27/26 BB, which are inconsistent with the 2.5 BB open and 10 BB 3-bet prescribed on page 181. The trainer uses those explicit bet sizes and calculates the pots from actual seat contributions (13.5/13 BB).
 
-The data in `src/backend/learn-ranges.json` contains approximate `[fold, call, raise]` percentages. They are measured from chart image colors and rounded to five percentage points. The LJ chart uses black for raises; the SB chart uses black for calls. Overall frequencies are checked using six combinations per pair, four per suited hand and twelve per offsuit hand. Aggregate agreement is a sanity check, not proof of exact per-hand solver frequencies.
+The shared catalog in `src/backend/learn-ranges.json` contains complete strategies with an explicit `actions` array defining the order of each hand's approximate percentages. Most charts use `["fold", "call", "raise"]`; BB facing an SB limp uses `["check", "raise"]`. Frequencies are measured from chart image colors and rounded to five percentage points. The LJ chart uses black for raises; the SB chart uses black for calls. Overall frequencies are checked using six combinations per pair, four per suited hand and twelve per offsuit hand. Aggregate agreement is a sanity check, not proof of exact per-hand solver frequencies.
+
+### Opponent ranges in detailed explanations
+
+After “This situation,” every follow-up lesson includes an “Opponent range” section showing the opponent's preceding raise or 3-bet against the learner's position and action. First-in lessons omit it. The server returns this data only with evaluation feedback; it does not affect dealing or grading.
+
+Opponent ranges are derived at evaluation time from the shared catalog by conditioning on the action already taken and the learner's hole cards. For example, `BTN_RAISE_SB` uses the `raise` column of `SB_VS_BTN_OPEN`; `SB_LIMP_BB` uses the `raise` column of `BB_VS_SB_LIMP`. The complete facing-open and facing-limp charts are stored once, from the acting player's perspective, so they can also support future lessons at those decisions. There is no separately stored opponent range. `LEARN_SITUATION_KEYS` in `learn-situations.js` defines the 21 available practice situations independently of the catalog; other chart keys are neither dealt nor accepted as lesson submissions.
+
+The derived view keeps all 169 hand classes. Each entry contains `frequency` (the reference action frequency), `combinations` (available combinations after removing the learner's cards), `blockedCombinations` (combinations removed by those cards), and `probability` (percentage of the conditional range). `totalWeight` is the sum of available combinations multiplied by action frequency / 100. Each hand's probability is its weight divided by that total, multiplied by 100. Unrounded probabilities sum to 100%; zero-frequency hands have zero probability. For example, six combinations of AA raising 100% have three times the weight of four combinations of A5s raising 50%. The learner's blockers can change that ratio.
+
+`learn-opponent-range.js` counts remaining pairs, suited hands and offsuit hands on the server. With no board and suit-symmetric reference charts, every concrete deal in a given hand class has identical remaining counts by hand class. Canonical representative suits therefore give the exact counts without adding suits to the stateless lesson identifier or trusting a new client input. All remaining hand classes together account for 1,225 possible opponent combinations from the 50 unknown cards. The model assumes the reference strategy and does not infer other players' folded cards or model their card-removal effects.
+
+The opponent chart uses a red-to-green gradient for positive probabilities relative to the most likely hand in that chart: red means less likely and green means more likely. Zero-probability cells keep their neutral dark background so they remain distinct from rare hands. It is not a literal percentage-width action bar. Hovering, focusing or tapping a cell opens details with the hand probability (rounded to two decimal places), available combinations and action frequency. The combination count says “after removing your cards” only when the learner’s cards remove combinations of that hand. Popovers stay within the viewport, including inside the scrolling modal; Escape dismisses the hand details before closing the modal. Zero-probability cells retain the shared “Not in range” legend and the regular native “[hand]: Not in range” tooltip, without the probability breakdown. The learner's strategy chart continues to show action frequencies. Opponent bet totals follow the user's BB/currency preference.
+
+The source section starts on PDF page 216. The full strategies below are extracted, retaining calls, checks and folds. The intervening facing-4-bet charts are not included:
+
+| Opponent action against learner | Hand Range | PDF page | Published raise frequency |
+| ------------------------------- | ---------- | -------- | ------------------------- |
+| HJ vs LJ open                   | 56         | 217      | 8.1%                      |
+| CO vs LJ open                   | 58         | 219      | 8.6%                      |
+| CO vs HJ open                   | 60         | 221      | 9.9%                      |
+| BTN vs LJ open                  | 62         | 224      | 7.3%                      |
+| BTN vs HJ open                  | 64         | 226      | 8.8%                      |
+| BTN vs CO open                  | 66         | 228      | 11.7%                     |
+| SB vs LJ open                   | 68         | 230      | 7.3%                      |
+| SB vs HJ open                   | 70         | 232      | 8.7%                      |
+| SB vs CO open                   | 72         | 234      | 10.9%                     |
+| SB vs BTN open                  | 74         | 236      | 15.0%                     |
+| BB vs LJ open                   | 76         | 239      | 5.8%                      |
+| BB vs HJ open                   | 78         | 241      | 7.6%                      |
+| BB vs CO open                   | 80         | 243      | 9.7%                      |
+| BB vs BTN open                  | 82         | 245      | 13.4%                     |
+| BB vs SB open                   | 84         | 247      | 16.3%                     |
+| BB vs SB limp                   | 86         | 249      | 40.6%                     |
+
+Combination-weighted raise totals are checked within one percentage point of the source captions. The entire catalog is regenerated together; existing learner frequencies remain unchanged. Opponent probabilities are computed from the catalog rather than stored separately.
 
 Regeneration requires a local PDF and Python with `pymupdf` and `Pillow` installed:
 
 ```sh
 python scripts/learn/extract-ranges.py /path/to/modern-poker-theory.pdf
 npx prettier --write src/backend/learn-ranges.json
-node --test test/backend/learn.test.js
+node --test test/backend/learn.test.js test/backend/learn-opponent-ranges.test.js
 ```
 
 No source PDF or chart bitmap is included in the application. The displayed grid is rendered from the derived numbers. Explanations are original paraphrases of the position guidance and general heuristics (PDF pages 177–179); sizing is on PDF pages 180–181.

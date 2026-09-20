@@ -32,6 +32,18 @@ FOLLOWUPS = {'SB_LIMP_BB': ('SB', 1, 13), 'SB_RAISE_BB': ('SB', 2, 24),
              'LJ_RAISE_BTN': ('LJ', 2, 23), 'LJ_RAISE_SB': ('LJ', 2, 23),
              'LJ_RAISE_BB': ('LJ', 2, 23)}
 RANKS = 'AKQJT98765432'
+# Acting position versus the earlier action, independent of who is the learner.
+# Key, PDF page, chart, published raise percentage, and raise total in BB.
+FACING_SOURCES = [
+    ('HJ_VS_LJ_OPEN', 217, 56, 8.1, 8.5), ('CO_VS_LJ_OPEN', 219, 58, 8.6, 8.5),
+    ('CO_VS_HJ_OPEN', 221, 60, 9.9, 8.5), ('BTN_VS_LJ_OPEN', 224, 62, 7.3, 8.5),
+    ('BTN_VS_HJ_OPEN', 226, 64, 8.8, 8.5), ('BTN_VS_CO_OPEN', 228, 66, 11.7, 8.5),
+    ('SB_VS_LJ_OPEN', 230, 68, 7.3, 10), ('SB_VS_HJ_OPEN', 232, 70, 8.7, 10),
+    ('SB_VS_CO_OPEN', 234, 72, 10.9, 10), ('SB_VS_BTN_OPEN', 236, 74, 15, 10),
+    ('BB_VS_LJ_OPEN', 239, 76, 5.8, 10), ('BB_VS_HJ_OPEN', 241, 78, 7.6, 10),
+    ('BB_VS_CO_OPEN', 243, 80, 9.7, 10), ('BB_VS_BTN_OPEN', 245, 82, 13.4, 10),
+    ('BB_VS_SB_OPEN', 247, 84, 16.3, 9), ('BB_VS_SB_LIMP', 249, 86, 40.6, 3.5),
+]
 
 
 def color(pixel, followup=False):
@@ -46,9 +58,9 @@ def color(pixel, followup=False):
 
 
 pdf = pymupdf.open(sys.argv[1])
-result = {}
-for position, page, chart, _ in SOURCES:
-    followup = position in FOLLOWUPS
+
+
+def extract_hands(page, followup=False, opening_position=None):
     entry = max(pdf[page - 1].get_images(), key=lambda item: item[2] * item[3])
     im = Image.open(io.BytesIO(pdf.extract_image(entry[0])['image'])).convert('RGB')
     # The source images have a narrow white margin on their right/bottom edges.
@@ -64,9 +76,9 @@ for position, page, chart, _ in SOURCES:
                 # Sample below lettering, above horizontal cell borders.
                 samples = [color(im.getpixel((x, y)), followup) for y in range(round(y0+(y1-y0)*.70), round(y0+(y1-y0)*.88))]
                 c = max(range(len(counts)), key=samples.count)
-                if position == 'LJ' and c == 1:
+                if opening_position == 'LJ' and c == 1:
                     c = 2
-                elif position != 'SB' and not followup and c == 1:
+                elif opening_position not in (None, 'SB') and c == 1:
                     c = 0
                 counts[c] += 1
             hand = RANKS[row]+RANKS[col] if row == col else (RANKS[row]+RANKS[col]+'s' if row < col else RANKS[col]+RANKS[row]+'o')
@@ -78,11 +90,34 @@ for position, page, chart, _ in SOURCES:
             values = [round(n/sum(counts)*20)*5 for n in counts]
             values[max(range(3), key=counts.__getitem__)] += 100-sum(values)
             hands[hand] = values
+    return hands
+
+
+result = {}
+for position, page, chart, _ in SOURCES:
+    followup = position in FOLLOWUPS
+    hands = extract_hands(page, followup, None if followup else position)
     raise_to = FOLLOWUPS[position][2] if followup else 3 if position == 'SB' else 2.5
-    result[position] = {'page':page, 'chart':chart, 'raiseTo':raise_to, 'hands':hands}
+    result[position] = {'page':page, 'chart':chart, 'raiseTo':raise_to,
+                        'actions': ['fold', 'call', 'raise'], 'hands':hands}
     weights = {h: (6 if len(h)==2 else 4 if h.endswith('s') else 12) *
                (result[FOLLOWUPS[position][0]]['hands'][h][FOLLOWUPS[position][1]] / 100 if followup else 1)
                for h in hands}
     totals = [sum(v[a]*weights[h] for h,v in hands.items())/sum(weights.values()) for a in range(3)]
     print(position, 'fold/call/raise:', [round(v,2) for v in totals])
+
+# Keep the complete strategies. Opponent views select an action at runtime.
+for situation, page, chart, published, raise_to in FACING_SOURCES:
+    hands = extract_hands(page)
+    total = sum(values[2] * (6 if len(hand) == 2 else 4 if hand.endswith('s') else 12)
+                for hand, values in hands.items()) / 1326
+    assert abs(total - published) < 1, (situation, total, published)
+    actions = ['fold', 'call', 'raise']
+    if situation.endswith('_LIMP'):
+        actions = ['check', 'raise']
+        # All non-raising weight is checking when BB faces an SB limp.
+        hands = {hand: [values[0] + values[1], values[2]] for hand, values in hands.items()}
+    result[situation] = {'page': page, 'chart': chart, 'raiseTo': raise_to,
+                         'actions': actions, 'hands': hands}
+    print(situation, 'raise:', round(total, 2))
 Path('src/backend/learn-ranges.json').write_text(json.dumps(result, indent=2)+'\n')

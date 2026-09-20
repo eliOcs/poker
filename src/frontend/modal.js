@@ -44,7 +44,8 @@ class Modal extends LitElement {
   }
 
   handleKeydown(event) {
-    if (event.key === "Escape") this.close();
+    if (event.key === "Escape" && !this.querySelector("[popover]:popover-open"))
+      this.close();
   }
 
   close() {

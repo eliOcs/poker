@@ -76,7 +76,16 @@ for (const navigationApi of [true, false]) {
       /\/learn\?source=practice&modal=learn-details$/,
     );
     await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.locator(".learn-range span")).toHaveCount(169);
+    await expect(
+      page.locator(".learn-range-details > .learn-range span"),
+    ).toHaveCount(169);
+    const opponentRange = page.getByRole("region", {
+      name: /^Oponent range:/,
+    });
+    await expect(opponentRange).toHaveCount(result.opponentRange ? 1 : 0);
+    await expect(opponentRange.locator(".learn-range > *")).toHaveCount(
+      result.opponentRange ? 169 : 0,
+    );
     expect((await page.request.get(page.url())).status()).toBe(200);
     await page.goBack();
     await expect(page).toHaveURL(/\/learn\?source=practice$/);

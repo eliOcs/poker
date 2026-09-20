@@ -250,7 +250,9 @@ for (const [name, scenario, min, raiseTo, odds, call = 0] of [
     await page.getByRole("button", { name: "Details", exact: true }).click();
     await expect(page.getByRole("dialog")).toContainText(scenario.title);
     await expect(
-      page.getByTitle("72o: Not in range", { exact: true }),
+      page
+        .locator(".learn-range-details > .learn-range")
+        .getByTitle("72o: Not in range", { exact: true }),
     ).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-range.png`);
     const explanation = page.locator(".learn-card-factors").last();
@@ -261,8 +263,70 @@ for (const [name, scenario, min, raiseTo, odds, call = 0] of [
     );
     await expect(explanation).toContainText(`${raiseTo} BB re-raise total`);
     await expect(page).toHaveScreenshot(`${name}-details.png`);
+    const opponentRange = page.getByRole("region", {
+      name: /^Oponent range:/,
+    });
+    await expect(opponentRange.locator(".learn-range > *")).toHaveCount(169);
+    await expect(opponentRange.locator(".selected")).toHaveCount(0);
+    await opponentRange.scrollIntoViewIfNeeded();
+    await expect(page).toHaveScreenshot(`${name}-opponent-range.png`);
   });
 }
+
+test("learn opponent hand probabilities", async ({ page, isMobile }) => {
+  const scenario = openFollowupScenario("HJ", "CO");
+  scenario.id = "HJ_RAISE_CO-AJo";
+  scenario.hand = "AJo";
+  scenario.seats.find((seat) => seat.isCurrentPlayer).cards = ["Ad", "Js"];
+  const result = evaluateLearnStrategy({
+    id: scenario.id,
+    frequencies: [100, 0, 0],
+  });
+  await page.route("**/api/learn/scenario", (route) =>
+    route.fulfill({ json: scenario }),
+  );
+  await page.route("**/api/learn/evaluate", (route) =>
+    route.fulfill({ json: result }),
+  );
+  await page.goto("/test.html?test=learn-preflop");
+  await waitForAvatars(page);
+  await page.getByRole("slider", { name: "Fold", exact: true }).focus();
+  await page.keyboard.press("End");
+  await page
+    .getByRole("button", { name: "Check strategy", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Details", exact: true }).click();
+  const range = page.getByRole("region", { name: /^Oponent range:/ });
+  const cell = range.getByRole("button", { name: /^AA:/ });
+  await cell.scrollIntoViewIfNeeded();
+  await cell[isMobile ? "tap" : "hover"]();
+  const tooltip = page.getByRole("tooltip");
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toContainText(
+    `${result.opponentRange.hands.AA.probability.toFixed(2)}% probability`,
+  );
+  await expect(tooltip).toContainText("3 available combinations");
+  await expect(tooltip).toContainText("3-bet frequency: 100%");
+  await expect(page).toHaveScreenshot("learn-opponent-hand-probability.png");
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await cell.blur();
+  await cell.focus();
+  await expect(tooltip).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(tooltip).toHaveCount(0);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  const suited = range.getByRole("button", { name: /^AJs:/ });
+  await suited.focus();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "2 available combinations",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
 
 for (const [name, scenario, hand, cards] of [
   [

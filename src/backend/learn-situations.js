@@ -185,6 +185,16 @@ const FOLLOWUPS = {
   },
 };
 
+// The range catalog also contains strategies that are not yet practice lessons.
+export const LEARN_SITUATION_KEYS = [
+  "LJ",
+  "HJ",
+  "CO",
+  "BTN",
+  "SB",
+  ...Object.keys(FOLLOWUPS),
+];
+
 export function learnSituation(key) {
   const followup = FOLLOWUPS[key];
   const situation = {

@@ -55,6 +55,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.expected, undefined);
     assert.equal(scenario.hands, undefined);
     assert.equal(scenario.rangeTotals, undefined);
+    assert.equal(scenario.opponentRange, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
       SB_LIMP_BB: {

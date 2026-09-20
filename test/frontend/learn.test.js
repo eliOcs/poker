@@ -195,6 +195,109 @@ describe("Learn strategy flow", () => {
     expect(submissions[0].frequencies).to.deep.equal([35, 35, 30]);
   });
 
+  it("shows opponent probabilities with hover and tap details and respects display units", async () => {
+    const fetch = window.fetch;
+    window.fetch = async (url, options) => {
+      const response = await fetch(url, options);
+      if (!String(url).endsWith("evaluate")) return response;
+      const result = await response.json();
+      result.opponentRange = {
+        position: "SB",
+        action: "3-bet",
+        raiseTo: 10,
+        totalWeight: 4,
+        hands: Object.fromEntries(
+          [..."AKQJT98765432"].flatMap((rank, row, ranks) =>
+            ranks.map((other, col) => {
+              const hand =
+                row === col
+                  ? rank + other
+                  : row < col
+                    ? rank + other + "s"
+                    : other + rank + "o";
+              return [
+                hand,
+                {
+                  frequency: hand === "AA" ? 100 : hand === "KQs" ? 75 : 0,
+                  combinations: hand === "AA" ? 1 : 4,
+                  blockedCombinations: hand === "AA" ? 5 : 0,
+                  probability: hand === "AA" ? 25 : hand === "KQs" ? 75 : 0,
+                },
+              ];
+            }),
+          ),
+        ),
+      };
+      return new Response(JSON.stringify(result));
+    };
+    const el = await fixture(html`<phg-learn></phg-learn>`);
+    await waitUntil(() => !el.busy);
+    el.scenario = openFollowupScenario("BTN", "SB");
+    await slide(el, "Fold", 100);
+    await button(el, "Check strategy");
+    await waitUntil(() => !el.busy);
+    expect(el.querySelector(".learn-opponent-range")).not.to.exist;
+    el.rangeOpen = true;
+    await el.updateComplete;
+    const section = el.querySelector(".learn-opponent-range");
+    expect(section.textContent.replace(/\s+/g, " ")).to.include(
+      "Oponent range:",
+    );
+    expect(section.textContent.replace(/\s+/g, " ")).to.include(
+      "Oponent range: Small Blind, 3-bet to 10 BB",
+    );
+    expect(section.querySelectorAll(".learn-range > *")).to.have.length(169);
+    const aces = section.querySelector('[aria-label="AA: 25.00% probability"]');
+    const mixed = section.querySelector(
+      '[aria-label="KQs: 75.00% probability"]',
+    );
+    expect(mixed.style.background).to.include("100%");
+    expect(section.querySelector('[title="72o: Not in range"]')).to.have.class(
+      "legend-unavailable",
+    );
+    mixed.dispatchEvent(new PointerEvent("pointerenter"));
+    const info = mixed.nextElementSibling;
+    expect(info.matches(":popover-open")).to.equal(true);
+    expect(info.textContent).to.include("75.00% probability");
+    expect(info.textContent).to.include("4 available");
+    expect(info.textContent).to.include("3-bet frequency: 75%");
+    expect(info.textContent).not.to.include("after removing your cards");
+    mixed.dispatchEvent(new PointerEvent("pointerleave"));
+    expect(info.matches(":popover-open")).to.equal(false);
+    aces.click();
+    expect(aces.nextElementSibling.matches(":popover-open")).to.equal(true);
+    expect(aces.nextElementSibling.textContent.replace(/\s+/g, " ")).to.include(
+      "1 available combination after removing your cards.",
+    );
+    aces.focus();
+    aces.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    );
+    expect(aces.nextElementSibling.matches(":popover-open")).to.equal(false);
+    expect(el.querySelector("phg-modal")).to.exist;
+    expect(section.querySelector(".selected")).not.to.exist;
+    el.user = { settings: { amountDisplay: "currency" } };
+    await el.updateComplete;
+    expect(section.textContent.replace(/\s+/g, " ")).to.include(
+      "Oponent range: Small Blind, 3-bet to $50",
+    );
+    await button(el, "Next hand");
+    await waitUntil(() => !el.busy);
+    expect(el.querySelector(".learn-opponent-range")).not.to.exist;
+  });
+
+  it("omits opponent ranges for first-in feedback", async () => {
+    const el = await fixture(html`<phg-learn></phg-learn>`);
+    await waitUntil(() => !el.busy);
+    await slide(el, "Fold", 100);
+    await button(el, "Check strategy");
+    await waitUntil(() => !el.busy);
+    el.rangeOpen = true;
+    await el.updateComplete;
+    expect(el.querySelector("phg-modal")).to.exist;
+    expect(el.querySelector(".learn-opponent-range")).not.to.exist;
+  });
+
   for (const [lesson, min, halfPot, pot, raiseTo] of [
     [followupScenario(), 6, 7, 10.5, 13],
     [followupScenario(true), 15, 18, 27, 24],

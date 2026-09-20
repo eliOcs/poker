@@ -2,8 +2,9 @@ import { randomInt } from "node:crypto";
 import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
 import { explainLearnHand } from "./learn-explanations.js";
 import { describePlayability } from "./learn-playability.js";
+import { conditionLearnRange } from "./learn-opponent-range.js";
 import { HttpError } from "./http-error.js";
-import { learnSituation } from "./learn-situations.js";
+import { learnSituation, LEARN_SITUATION_KEYS } from "./learn-situations.js";
 
 const POSITIONS = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
 // Keep the reference chart keys internally; use familiar table labels for learners.
@@ -15,7 +16,7 @@ const POSITION_LABELS = {
   SB: "SB",
   BB: "BB",
 };
-/** @type {Record<string, {page: number, chart: number, raiseTo: number, hands: Record<string, number[]>}>} */
+/** @type {Record<string, {page: number, chart: number, raiseTo: number, actions: string[], hands: Record<string, number[]>}>} */
 const ranges = LEARN_RANGES;
 
 /** Weight the displayed chart by combinations and the action that reached it. */
@@ -54,7 +55,7 @@ function rangeTotals(range, situation) {
 }
 
 export function createLearnScenario() {
-  const keys = Object.keys(ranges);
+  const keys = LEARN_SITUATION_KEYS;
   const key = /** @type {string} */ (keys[randomInt(keys.length)]);
   const situation = learnSituation(key);
   const { position } = situation;
@@ -130,7 +131,7 @@ function parseScenario(id) {
     invalidStrategy();
   }
   const [key = "", hand = "", extra] = id.split("-");
-  if (extra !== undefined || !Object.hasOwn(ranges, key)) {
+  if (extra !== undefined || !LEARN_SITUATION_KEYS.includes(key)) {
     invalidStrategy();
   }
   const range = ranges[key];
@@ -207,6 +208,22 @@ export function evaluateLearnStrategy(input) {
     chart: range.chart,
     hands: range.hands,
     rangeTotals: rangeTotals(range, situation),
+    opponentRange: opponentRange(situation, hand),
+  };
+}
+
+function opponentRange(situation, heroHand) {
+  if (!situation.opponent) return undefined;
+  const facing = situation.lastAction === "call" ? "LIMP" : "OPEN";
+  const key = `${situation.opponent}_VS_${situation.position}_${facing}`;
+  const range = /** @type {NonNullable<typeof ranges[string]>} */ (ranges[key]);
+  return {
+    page: range.page,
+    chart: range.chart,
+    ...conditionLearnRange(range, "raise", heroHand),
+    position: situation.opponent,
+    action: facing === "LIMP" ? "Raise" : "3-bet",
+    raiseTo: range.raiseTo,
   };
 }
 

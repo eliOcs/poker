@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { describePlayability } from "../../src/backend/learn-playability.js";
+import { LEARN_SITUATION_KEYS } from "../../src/backend/learn-situations.js";
 import { readFileSync } from "node:fs";
 const ranges = JSON.parse(
   readFileSync(
@@ -75,7 +76,8 @@ test("connects the evaluation to this hand and position without changing grading
 test("situation guidance follows every hand's recommended actions, regardless of the answer", () => {
   const actionNames = ["Fold", "Call", "Raise"];
   const coveredMixes = new Set();
-  for (const [key, range] of Object.entries(ranges)) {
+  for (const key of LEARN_SITUATION_KEYS) {
+    const range = ranges[key];
     for (const [hand, expected] of Object.entries(range.hands)) {
       const id = `${key}-${hand}`;
       const result = evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });
