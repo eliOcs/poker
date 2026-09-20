@@ -26,7 +26,7 @@ const ranges = LEARN_RANGES;
 /** Weight the displayed chart by combinations and the action that reached it. */
 function rangeTotals(range, situation) {
   const previousHands =
-    situation.opponent && situation.heroBet > 0
+    situation.opponent && situation.lastAction
       ? /** @type {NonNullable<typeof ranges[string]>} */ (
           ranges[situation.previousRangeKey ?? situation.position]
         ).hands

@@ -8,6 +8,7 @@ import {
   hijackScenario,
   cutoffScenario,
   buttonScenario,
+  smallBlindScenario,
 } from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
@@ -304,6 +305,14 @@ describe("Learn strategy flow", () => {
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [
+    [smallBlindScenario("LJ"), 4, 5.5, 8.5, 10],
+    [smallBlindScenario("LJ", true), 36, 46.5, 70, 100],
+    [smallBlindScenario("HJ"), 4, 5.5, 8.5, 10],
+    [smallBlindScenario("HJ", true), 36, 46.5, 70, 100],
+    [smallBlindScenario("CO"), 4, 5.5, 8.5, 10],
+    [smallBlindScenario("CO", true), 36, 46.5, 70, 100],
+    [smallBlindScenario("BTN"), 4, 5.5, 8.5, 10],
+    [smallBlindScenario("BTN", true), 36, 46.5, 70, 100],
     [cutoffScenario("LJ"), 4, 5.75, 9, 8.5],
     [buttonScenario("LJ"), 4, 5.75, 9, 8.5],
     [buttonScenario("HJ"), 4, 5.75, 9, 8.5],

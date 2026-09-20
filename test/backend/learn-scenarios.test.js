@@ -11,7 +11,7 @@ const ranges = JSON.parse(
 
 test("deals first-in and follow-up decisions with consistent bets and no answer exposed", () => {
   const seen = new Set();
-  for (let i = 0; i < 500; i++) {
+  for (let i = 0; i < 800; i++) {
     const scenario = createLearnScenario();
     const key = scenario.id.split("-")[0];
     seen.add(key);
@@ -38,6 +38,70 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.lessonNotes, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
+      SB_VS_LJ_OPEN: {
+        hero: 4,
+        opponent: 0,
+        bets: [1250, 0, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      SB_VS_LJ_4BET: {
+        hero: 4,
+        opponent: 0,
+        bets: [11500, 0, 0, 0, 5000, 500],
+        min: 18000,
+        action: "raise",
+        pending: false,
+      },
+      SB_VS_HJ_OPEN: {
+        hero: 4,
+        opponent: 1,
+        bets: [0, 1250, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      SB_VS_HJ_4BET: {
+        hero: 4,
+        opponent: 1,
+        bets: [0, 11500, 0, 0, 5000, 500],
+        min: 18000,
+        action: "raise",
+        pending: false,
+      },
+      SB_VS_CO_OPEN: {
+        hero: 4,
+        opponent: 2,
+        bets: [0, 0, 1250, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      SB_VS_CO_4BET: {
+        hero: 4,
+        opponent: 2,
+        bets: [0, 0, 11500, 0, 5000, 500],
+        min: 18000,
+        action: "raise",
+        pending: false,
+      },
+      SB_VS_BTN_OPEN: {
+        hero: 4,
+        opponent: 3,
+        bets: [0, 0, 0, 1250, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      SB_VS_BTN_4BET: {
+        hero: 4,
+        opponent: 3,
+        bets: [0, 0, 0, 11500, 5000, 500],
+        min: 18000,
+        action: "raise",
+        pending: false,
+      },
       BTN_VS_LJ_OPEN: {
         hero: 3,
         opponent: 0,
@@ -279,5 +343,5 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 33);
+  assert.equal(seen.size, 41);
 });

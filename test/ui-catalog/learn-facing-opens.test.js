@@ -3,11 +3,68 @@ import {
   hijackScenario,
   cutoffScenario,
   buttonScenario,
+  smallBlindScenario,
 } from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
 for (const [name, scenario, size, call, unavailable] of [
+  [
+    "learn-sb-vs-lj-open",
+    smallBlindScenario("LJ"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-sb-vs-lj-4bet",
+    smallBlindScenario("LJ", true),
+    100,
+    35,
+    "72o: Not in range",
+  ],
+  [
+    "learn-sb-vs-hj-open",
+    smallBlindScenario("HJ"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-sb-vs-hj-4bet",
+    smallBlindScenario("HJ", true),
+    100,
+    35,
+    "72o: Not in range",
+  ],
+  [
+    "learn-sb-vs-co-open",
+    smallBlindScenario("CO"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-sb-vs-co-4bet",
+    smallBlindScenario("CO", true),
+    100,
+    60,
+    "72o: Not in range",
+  ],
+  [
+    "learn-sb-vs-btn-open",
+    smallBlindScenario("BTN"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-sb-vs-btn-4bet",
+    smallBlindScenario("BTN", true),
+    100,
+    100,
+    "72o: Not in range",
+  ],
   [
     "learn-btn-vs-lj-open",
     buttonScenario("LJ"),
@@ -89,7 +146,7 @@ for (const [name, scenario, size, call, unavailable] of [
 ]) {
   const sizeStep = call < 100 ? enterRaiseSize : async () => {};
 
-  test(`learn ${{ CO: "Cutoff", HJ: "Hijack", BTN: "Button" }[scenario.position]} practice ${scenario.title}`, async ({
+  test(`learn ${{ CO: "Cutoff", HJ: "Hijack", BTN: "Button", SB: "Small Blind" }[scenario.position]} practice ${scenario.title}`, async ({
     page,
   }) => {
     await page.route("**/api/learn/scenario", (route) =>
@@ -140,6 +197,14 @@ for (const [name, scenario, size, call, unavailable] of [
 }
 
 for (const [position, opponent, fourBet, takeaway, count] of [
+  ["SB", "LJ", false, "The blind discount does not justify a call", 2],
+  ["SB", "HJ", false, "Widen against the wider opener", 2],
+  ["SB", "CO", false, "Add another layer of 3-bets", 2],
+  ["SB", "BTN", false, "Defend most widely against BTN", 2],
+  ["SB", "LJ", true, "Preserve the opponent’s possible bluffs", 2],
+  ["SB", "HJ", true, "A wider 3-bet range needs more defense", 2],
+  ["SB", "CO", true, "Some 5-bet bluffs now appear", 3],
+  ["SB", "BTN", true, "Always slowplay AA in this reference", 2],
   ["CO", "LJ", false, "One fewer player, only a little wider", 2],
   ["CO", "HJ", false, "A wider opener allows more 3-bets", 2],
   ["CO", "LJ", true, "Strong hands do not all shove", 2],
@@ -152,17 +217,22 @@ for (const [position, opponent, fourBet, takeaway, count] of [
   ["BTN", "CO", true, "AA always calls against CO", 2],
 ]) {
   const stage = fourBet ? "4BET" : "OPEN";
-  const makeScenario = position === "BTN" ? buttonScenario : cutoffScenario;
-  const hero = position === "BTN" ? 3 : 2;
+  const makeScenario = {
+    SB: smallBlindScenario,
+    BTN: buttonScenario,
+    CO: cutoffScenario,
+  }[position];
+  const hero = { SB: 4, BTN: 3, CO: 2 }[position];
+  const hand = position === "SB" ? "KTs" : "A9s";
 
-  test(`learn ${position === "BTN" ? "Button" : "Cutoff"} takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
+  test(`learn ${{ SB: "Small Blind", BTN: "Button", CO: "Cutoff" }[position]} takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
     page,
   }) => {
     const scenario = makeScenario(opponent, fourBet);
     // Range-wide lessons also belong in feedback for a pure fold.
-    scenario.id = `${position}_VS_${opponent}_${stage}-A9s`;
-    scenario.hand = "A9s";
-    scenario.seats[hero].cards = ["As", "9s"];
+    scenario.id = `${position}_VS_${opponent}_${stage}-${hand}`;
+    scenario.hand = hand;
+    scenario.seats[hero].cards = [hand[0] + "s", hand[1] + "s"];
     await page.route("**/api/learn/scenario", (route) =>
       route.fulfill({ json: scenario }),
     );

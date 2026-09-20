@@ -78,24 +78,26 @@ export function openFollowupScenario(position, opponent) {
 }
 
 export function hijackScenario(facingFourBet = false) {
-  return earlyPositionScenario("HJ", "LJ", facingFourBet);
+  return facingOpenScenario("HJ", "LJ", facingFourBet);
 }
 
 export function cutoffScenario(opponent, facingFourBet = false) {
-  return earlyPositionScenario("CO", opponent, facingFourBet);
+  return facingOpenScenario("CO", opponent, facingFourBet);
 }
 
 export function buttonScenario(opponent, facingFourBet = false) {
-  return earlyPositionScenario("BTN", opponent, facingFourBet);
+  return facingOpenScenario("BTN", opponent, facingFourBet);
 }
 
-function earlyPositionScenario(position, opponent, facingFourBet) {
+export function smallBlindScenario(opponent, facingFourBet = false) {
+  return facingOpenScenario("SB", opponent, facingFourBet);
+}
+
+function facingOpenScenario(position, opponent, facingFourBet) {
   const positions = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
   const hero = positions.indexOf(position);
   const villain = positions.indexOf(opponent);
-  const amounts = facingFourBet
-    ? { heroBet: 4250, currentBet: 11500, minRaiseTo: 18750 }
-    : { heroBet: 0, currentBet: 1250, minRaiseTo: 2000 };
+  const amounts = facingOpenAmounts(position, facingFourBet);
   const bets = [0, 0, 0, 0, 250, 500];
   bets[hero] = amounts.heroBet;
   bets[villain] = amounts.currentBet;
@@ -103,6 +105,7 @@ function earlyPositionScenario(position, opponent, facingFourBet) {
     HJ: "CO, BTN and both blinds",
     CO: "BTN and both blinds",
     BTN: "Both blinds",
+    SB: "BB",
   }[position];
   const opening = {
     HJ_LJ: "LJ raised to 2.5 BB.",
@@ -111,6 +114,10 @@ function earlyPositionScenario(position, opponent, facingFourBet) {
     BTN_LJ: "LJ raised to 2.5 BB; HJ and CO folded.",
     BTN_HJ: "LJ folded, HJ raised to 2.5 BB and CO folded.",
     BTN_CO: "LJ and HJ folded, then CO raised to 2.5 BB.",
+    SB_LJ: "LJ raised to 2.5 BB; HJ, CO and BTN folded.",
+    SB_HJ: "LJ folded, HJ raised to 2.5 BB; CO and BTN folded.",
+    SB_CO: "LJ and HJ folded, CO raised to 2.5 BB and BTN folded.",
+    SB_BTN: "LJ, HJ and CO folded, then BTN raised to 2.5 BB.",
   }[`${position}_${opponent}`];
   return {
     ...learnScenario,
@@ -120,8 +127,8 @@ function earlyPositionScenario(position, opponent, facingFourBet) {
       ? `${position} 3-bet vs ${opponent} 4-bet`
       : `${position} vs ${opponent} Open`,
     history: facingFourBet
-      ? `${opening} You 3-bet to 8.5 BB; ${behind} folded. ${opponent} 4-bet to 23 BB.`
-      : `${opening} ${behind} are still to act.`,
+      ? `${opening} You 3-bet to ${amounts.threeBet} BB; ${behind} folded. ${opponent} 4-bet to 23 BB.`
+      : `${opening} ${behind} ${position === "SB" ? "is" : "are"} still to act.`,
     currentBet: amounts.currentBet,
     minRaiseTo: amounts.minRaiseTo,
     seats: learnScenario.seats.map((seat, i) => {
@@ -150,4 +157,15 @@ function earlyPositionScenario(position, opponent, facingFourBet) {
 function lessonCards(hero, folded) {
   if (hero) return ["As", "Ah"];
   return folded ? [] : ["??", "??"];
+}
+
+function facingOpenAmounts(position, facingFourBet) {
+  const threeBet = position === "SB" ? 10 : 8.5;
+  const blind = position === "SB" ? 0.5 : 0;
+  return {
+    threeBet,
+    heroBet: (facingFourBet ? threeBet : blind) * 500,
+    currentBet: (facingFourBet ? 23 : 2.5) * 500,
+    minRaiseTo: (facingFourBet ? 46 - threeBet : 4) * 500,
+  };
 }

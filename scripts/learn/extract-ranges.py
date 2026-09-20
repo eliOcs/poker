@@ -133,6 +133,10 @@ for key, page, chart, previous, published in [
     ('BTN_VS_LJ_4BET', 225, 63, 'BTN_VS_LJ_OPEN', [40.6, 40, 19.4]),
     ('BTN_VS_HJ_4BET', 227, 65, 'BTN_VS_HJ_OPEN', [40, 41.6, 18.4]),
     ('BTN_VS_CO_4BET', 229, 67, 'BTN_VS_CO_OPEN', [37.3, 45.2, 17.1]),
+    ('SB_VS_LJ_4BET', 231, 69, 'SB_VS_LJ_OPEN', [33.8, 45.7, 20.6]),
+    ('SB_VS_HJ_4BET', 233, 71, 'SB_VS_HJ_OPEN', [32.8, 46.8, 20]),
+    ('SB_VS_CO_4BET', 235, 73, 'SB_VS_CO_OPEN', [29.2, 52.2, 18.6]),
+    ('SB_VS_BTN_4BET', 237, 75, 'SB_VS_BTN_OPEN', [26.5, 56, 17.3]),
 ]:
     hands = extract_hands(page, followup=True)
     result[key] = {'page': page, 'chart': chart, 'raiseTo': 100,
