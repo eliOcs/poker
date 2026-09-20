@@ -99,11 +99,11 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute(/^\/players\/([a-z0-9]+)$/),
     spaPageRoute("/mtt"),
     spaPageRoute("/about"),
-    spaPageRoute(/^\/learn(?:\?.*)?$/),
+    spaPageRoute("/learn"),
     ...createLearnRoutes(),
     spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),
-    spaPageRoute(/^\/auth\/email-sign-in\/callback(?:\?.*)?$/),
+    spaPageRoute("/auth/email-sign-in/callback"),
     ...createHistoryRoutes(users),
   ];
 }
@@ -114,7 +114,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
  * @param {Route[]} routes
  */
 export async function handleRequest(req, res, routes) {
-  const url = req.url ?? "";
+  const pathname = new URL(req.url ?? "", "http://localhost").pathname;
   const method = req.method ?? "GET";
 
   for (const route of routes) {
@@ -123,9 +123,9 @@ export async function handleRequest(req, res, routes) {
     /** @type {RegExpMatchArray|undefined} */
     let match;
     if (typeof route.path === "string") {
-      if (route.path !== url) continue;
+      if (route.path !== pathname) continue;
     } else {
-      const routeMatch = url.match(route.path);
+      const routeMatch = pathname.match(route.path);
       if (!routeMatch) continue;
       match = routeMatch;
     }
@@ -143,7 +143,7 @@ export async function handleRequest(req, res, routes) {
   }
 
   // Static file fallback
-  const filePath = getFilePath(url);
+  const filePath = getFilePath(pathname);
   if (method === "GET" && filePath) {
     respondWithFile(req, res, filePath);
     return;

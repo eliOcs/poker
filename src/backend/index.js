@@ -240,13 +240,13 @@ function matchRoutePath(routePath, url) {
 async function handleRequest(req, res, log) {
   throwIfRateLimitedHttpRequest(req, log);
 
-  const url = req.url ?? "";
+  const pathname = new URL(req.url ?? "", "http://localhost").pathname;
   const method = req.method ?? "GET";
 
   for (const route of routes) {
     if (route.method !== method) continue;
 
-    const routeMatch = matchRoutePath(route.path, url);
+    const routeMatch = matchRoutePath(route.path, pathname);
     if (!routeMatch.matched) continue;
 
     await route.handler({
@@ -261,7 +261,7 @@ async function handleRequest(req, res, log) {
     return;
   }
 
-  const filePath = getFilePath(url);
+  const filePath = getFilePath(pathname);
   if (method === "GET" && filePath) {
     respondWithFile(req, res, filePath);
     return;

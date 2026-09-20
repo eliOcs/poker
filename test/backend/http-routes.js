@@ -108,7 +108,26 @@ describe("http-routes", () => {
     assert.deepStrictEqual(users, {});
   });
 
-  for (const path of ["/about", "/avatar"]) {
+  for (const path of [
+    "/about",
+    "/avatar",
+    "/?modal=settings",
+    "/?modal=sign-in",
+    "/?modal=sign-up",
+    "/players/mtx1ernzca42?modal=settings",
+    "/cash/abc123?modal=settings",
+    "/sitngo/abc123?modal=settings",
+    "/mtt/abc123?modal=settings",
+    "/mtt/abc123/tables/def456?modal=settings",
+    "/history/abc123?modal=settings",
+    "/history/abc123/1?modal=settings",
+    "/mtt?modal=settings",
+    "/about?modal=settings",
+    "/avatar?modal=settings",
+    "/release-notes?modal=settings",
+    "/learn?source=practice&modal=learn-details",
+    "/auth/email-sign-in/callback?token=abc123",
+  ]) {
     it(`serves ${path} through the SPA`, async () => {
       const routes = createRoutes({}, new Map(), () => {});
       const response = new Writable({

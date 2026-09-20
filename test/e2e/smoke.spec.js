@@ -52,6 +52,14 @@ test.describe("Poker Game Smoke Test", () => {
     ).toBeHidden();
     await expect(player1.page).toHaveURL(/\/$/);
 
+    await player1.page.getByRole("button", { name: "Settings" }).click();
+    await player1.page.reload();
+    await expect(
+      player1.page.getByRole("heading", { name: "Settings" }),
+    ).toBeVisible();
+    await player1.page.getByRole("button", { name: "Save" }).click();
+    await expect(player1.page).toHaveURL(/\/$/);
+
     // Create game via UI with $0.05/$0.10 stakes (index 2)
     await createGame(player1, { stakesIndex: 2 });
     expect(await player1.getStakes()).toBe("$0.05/$0.10");
@@ -350,6 +358,11 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(profilePage.locator("phg-player-profile")).toBeVisible();
 
     await profilePage.getByRole("button", { name: "Settings" }).click();
+    await expect(profilePage).toHaveURL(
+      /\/players\/[a-z0-9]+\?modal=settings$/,
+    );
+    await profilePage.reload();
+    await expect(profilePage.locator("phg-player-profile")).toBeVisible();
     await expect(
       profilePage.locator("#profile-settings-name-input"),
     ).toHaveValue("Player 1");
