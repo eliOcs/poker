@@ -100,14 +100,11 @@ test("BB calls with playable hands and widens against later openers", () => {
   ])
     assert.deepEqual(answer(opponent, "OPEN", hand).expected, mix);
   const call = answer("LJ", "OPEN", "AQo");
-  assert.match(
-    call.explanation,
-    /Calling the extra 1.5 BB closes the preflop action/,
-  );
+  assert.match(call.explanation, /Calling the extra 1.5 BB guarantees a flop/);
   assert.match(call.playability.situation[0].text, /1.5 ÷ \(4 \+ 1.5\) ~ 27%/);
   assert.match(
     answer("SB", "OPEN", "ATo").explanation,
-    /Position helps you realize equity against SB/,
+    /respond to SB’s decisions help you realize equity/,
   );
 });
 
@@ -144,7 +141,7 @@ test("free checks have two actions, no pot-odds claim and no fold or call submis
   const result = answer("SB", "LIMP", "72o");
   assert.deepEqual(result.actions, ["check", "raise"]);
   assert.deepEqual(result.expected, [100, 0]);
-  assert.match(result.explanation, /^Check 100%/);
+  assert.doesNotMatch(result.explanation, /Check \d+%/);
   assert.match(result.explanation, /Checking costs nothing/);
   assert.deepEqual(result.playability.situation, []);
   assert.equal(result.sizingMatch, undefined);
@@ -162,7 +159,9 @@ test("free checks have two actions, no pot-odds claim and no fold or call submis
     );
   const mixed = answer("SB", "LIMP", "32s");
   assert.deepEqual(mixed.expected, [50, 50]);
-  assert.match(mixed.explanation, /Check 50%, Raise 50%/);
+  assert.doesNotMatch(mixed.explanation, /(?:Check|Raise) \d+%/);
+  assert.match(mixed.explanation, /Checking costs nothing/);
+  assert.match(mixed.explanation, /Raising to 3.5 BB/);
   assert.ok(
     mixed.playability.situation.every(({ text }) => !text.includes("Pot odds")),
   );

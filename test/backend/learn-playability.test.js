@@ -74,7 +74,6 @@ test("connects the evaluation to this hand and position without changing grading
 });
 
 test("situation guidance follows every hand's recommended actions, regardless of the answer", () => {
-  const actionNames = ["Fold", "Call", "Raise"];
   const coveredMixes = new Set();
   for (const key of LEARN_SITUATION_KEYS) {
     const range = ranges[key];
@@ -90,13 +89,7 @@ test("situation guidance follows every hand's recommended actions, regardless of
       assert.equal(result.explanation, otherAnswer.explanation, id);
       assert.ok(!result.explanation.startsWith(`${hand}:`), id);
       assert.deepEqual(result.playability, otherAnswer.playability, id);
-      for (const [index, action] of actionNames.entries()) {
-        assert.equal(
-          result.explanation.includes(`${action} ${expected[index]}%`),
-          expected[index] > 0,
-          id,
-        );
-      }
+      assert.doesNotMatch(result.explanation, /(?:Fold|Call|Raise) \d+%/, id);
       const notes = result.playability.situation;
       assert.equal(
         notes.some((note) => /opening size|re-raise total/.test(note.title)),
@@ -125,8 +118,6 @@ test("situation guidance follows every hand's recommended actions, regardless of
           /Calling|Limping|mostly.*call/i,
           id,
         );
-      const mixed = expected.filter((n) => n > 0).length > 1;
-      assert.equal(result.explanation.includes("Mix these actions"), mixed, id);
       coveredMixes.add(expected.map((n) => Number(n > 0)).join(""));
     }
   }
@@ -138,7 +129,6 @@ for (const { name, id, concepts, absent = [] } of [
     name: "first-in fold explains the pressure from players still to act",
     id: "HJ-K4s",
     concepts: [
-      /^Fold 100%/,
       /Four players/,
       /cutoff and button.*position/,
       /stronger opposing hands/,
@@ -160,14 +150,14 @@ for (const { name, id, concepts, absent = [] } of [
     id: "CO_RAISE_BTN-A7s",
     concepts: [
       /out of position against BTN/,
-      /acting first/,
+      /act first/,
       /committing more chips/,
     ],
   },
   {
     name: "SB call-only explains the limp discount without opening sizing",
     id: "SB-J2s",
-    concepts: [/Call 100%/, /0\.5 BB/, /pot small out of position/],
+    concepts: [/Limping costs/, /0\.5 BB/, /pot small when BB checks/],
   },
   {
     name: "SB mixed calling and raising explains both actions",
@@ -177,7 +167,6 @@ for (const { name, id, concepts, absent = [] } of [
       /0\.5 BB/,
       /Raising puts pressure/,
       /larger opening size/,
-      /Mix these actions/,
     ],
     absent: [/Folding/],
   },
@@ -194,16 +183,16 @@ for (const { name, id, concepts, absent = [] } of [
   {
     name: "in-position call explains the actual price and positional advantage",
     id: "BTN_RAISE_SB-22",
-    concepts: [/Calling the extra 7\.5 BB/, /Acting last/, /realize your hand/],
+    concepts: [
+      /Calling the extra 7\.5 BB/,
+      /act last/,
+      /opponent’s decisions to guide your play/,
+    ],
   },
   {
     name: "out-of-position call explains pot control",
     id: "CO_RAISE_BTN-22",
-    concepts: [
-      /Calling the extra 6 BB/,
-      /Keeping the pot smaller/,
-      /acting first/,
-    ],
+    concepts: [/Calling the extra 6 BB/, /keeps the pot smaller/, /act first/],
   },
   {
     name: "out-of-position 4-bet explains reducing the positional disadvantage",
@@ -216,23 +205,13 @@ for (const { name, id, concepts, absent = [] } of [
   {
     name: "a small raise frequency still receives sizing and raise guidance",
     id: "CO_RAISE_SB-KJo",
-    concepts: [
-      /Raise 5%/,
-      /Folding some of the time/,
-      /4-betting/,
-      /Mix these actions/,
-    ],
+    concepts: [/Folding some of the time/, /4-betting/],
     absent: [/Calling/],
   },
   {
     name: "mixed calls and 4-bets retain both explanations even for aces",
     id: "LJ_RAISE_BB-AA",
-    concepts: [
-      /Call 10%, Raise 90%/,
-      /Calling the extra/,
-      /4-betting/,
-      /Mix these actions/,
-    ],
+    concepts: [/Calling the extra/, /4-betting/],
     absent: [/Folding/],
   },
 ]) {

@@ -286,7 +286,7 @@ test("grades first-in calls outside SB as learning mistakes, including mixed cal
       assert.equal(result.actionsMatch, false);
       assert.equal(result.frequencyMatch, false);
       assert.equal(result.expected[1], 0);
-      assert.match(result.explanation, /^Raise 100%/);
+      assert.match(result.explanation, /Raising can win the blinds/);
       assert.doesNotMatch(result.explanation, /Calling|Limping/);
     }
   }

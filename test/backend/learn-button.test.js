@@ -94,7 +94,7 @@ test("BTN keeps strong flat calls and adds blocker 3-bets against wider openers"
   }
   for (const opponent of ["LJ", "HJ", "CO"]) {
     const fold = evaluate(opponent, "OPEN", "72o");
-    assert.match(fold.explanation, /Both blinds can still enter the pot/);
+    assert.match(fold.explanation, /Both blinds are still to act/);
     assert.doesNotMatch(fold.explanation, /Calling the extra|3-betting to/);
   }
 });

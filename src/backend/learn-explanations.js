@@ -308,30 +308,15 @@ export function explainLearnHand(
     call: () => callReason(hand, situation, inPosition),
     raise: () => raiseReason(hand, situation, inPosition),
     check: () =>
-      "Checking costs nothing and closes the preflop action. You keep this hand’s equity and see a flop in position against SB without building a larger pot.",
+      "Checking costs nothing and guarantees a flop without risking a limp-reraise.",
   };
-  const recommended = actions.flatMap((action, i) =>
-    expected[i] > 0
-      ? [`${action.charAt(0).toUpperCase() + action.slice(1)} ${expected[i]}%`]
-      : [],
-  );
-  return [
-    `${recommended.join(", ")}.`,
-    context,
-    ...actions.flatMap((action, i) =>
-      expected[i] > 0 ? [reasons[action]()] : [],
-    ),
-    ...(recommended.length > 1
-      ? [
-          "Mix these actions over repeated decisions with this hand; the frequencies describe how often to use each one.",
-        ]
-      : []),
-  ].join(" ");
+  const recommended = actions.filter((_, i) => expected[i] > 0);
+  return [context, ...recommended.map((action) => reasons[action]())].join(" ");
 }
 
 function facingOpenContext(situation) {
   if (situation.position === "BB")
-    return `You close the preflop action against ${situation.opponent}. ${situation.opponent === "SB" ? "You have position on SB and act last after the flop." : "You are out of position and act first after the flop."}`;
+    return `You are the last player to respond to ${situation.opponent}’s open. ${situation.opponent === "SB" ? "You have position on SB and act last after the flop." : "You are out of position and act first after the flop."}`;
   if (situation.position === "SB")
     return `You are out of position against ${situation.opponent}. BB is still to act, and you will act first after the flop against either opponent.`;
   if (situation.position === "BTN")
@@ -351,71 +336,71 @@ function foldReason(hand, situation, pure, inPosition) {
     return `${decision} ${
       inPosition
         ? "Position helps, but does not make every hand worth the extra chips against this stronger range."
-        : "Facing this stronger range while acting first makes it harder to reach showdown without committing more chips."
+        : "This stronger range can pressure you into committing more chips before showdown."
     } The chips already in the pot do not oblige you to risk more.`;
   }
   const pressure =
     situation.position === "SB"
-      ? "Even with the blind discount, playing the rest of the hand out of position can cost more chips."
+      ? "The blind discount does not offset the risk of costly decisions on later streets."
       : situation.position === "BTN"
-        ? "Having position and only two opponents left does not make every hand worth entering the pot."
-        : "With several opponents still to act, you need a hand that can handle stronger opposing hands and pressure after the flop.";
+        ? "This hand’s equity and playability are too limited to profitably contest the blinds more often."
+        : "You need a hand that can handle stronger opposing hands and pressure after the flop.";
   return `${decision} ${pressure} Folding preserves your stack without investing more.`;
 }
 
 function callReason(hand, situation, inPosition) {
   if (!situation.opponent) {
-    return "Limping costs just another 0.5 BB. The discount lets this hand see a flop cheaply when BB checks, while keeping the pot small out of position.";
+    return "Limping costs just another 0.5 BB, keeping the pot small when BB checks.";
   }
   const cost = situation.currentBet - situation.heroBet;
   if (situation.position === "BB" && situation.opponentAction === "Open")
-    return `Calling the extra ${cost} BB closes the preflop action: no player remains behind to squeeze. ${inPosition ? "Position helps you realize equity against SB while keeping medium-strength hands in a smaller pot." : "The blind discount makes more hands worth defending, but acting first postflop still makes equity harder to realize."}`;
+    return `Calling the extra ${cost} BB guarantees a flop. ${inPosition ? "The blind discount and ability to respond to SB’s decisions help you realize equity without building a larger pot." : "The blind discount makes more hands worth defending, though future pressure can prevent you from realizing all of their equity."}`;
   if (situation.opponentAction === "Open") {
-    return `Calling the extra ${cost} BB uses BTN’s guaranteed postflop position without building a 3-bet pot. The calling range balances playable hands with strong hands that protect it. Both blinds can still squeeze, so calling does not guarantee a cheap flop.`;
+    return `Calling the extra ${cost} BB keeps the pot smaller. Strong hands in the calling range protect the more speculative ones. Both blinds can still squeeze, so a call does not guarantee a flop at this price.`;
   }
   if (situation.opponentAction === "4-bet")
     return fourBetCallReason(hand, situation, inPosition, cost);
-  return `Calling the extra ${cost} BB keeps this hand in the pot without increasing the price further. ${
+  return `Calling the extra ${cost} BB keeps the pot smaller ${
     inPosition
-      ? "Acting last lets you see your opponent’s decision before making yours, helping you realize your hand’s equity."
-      : "Keeping the pot smaller leaves room to use the hand’s postflop potential, though acting first makes future decisions harder."
+      ? "while letting you use your opponent’s decisions to guide your play."
+      : "and leaves room to use this hand’s postflop potential."
   }`;
 }
 
 function raiseReason(hand, situation, inPosition) {
   if (situation.opponentAction === "Limp")
-    return "Raising to 3.5 BB puts pressure on SB’s limp while keeping position after the flop. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
+    return "Raising to 3.5 BB puts pressure on SB’s limp. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
   if (situation.opponentAction === "Limp-reraise")
-    return "4-betting to 28 BB pressures SB’s strong limp-reraising range while retaining position. Only a narrow portion of the prior raising range takes this line, mixing strong hands with selected ace and king blockers. This raise leaves chips for later decisions; it is not an all-in.";
+    return "4-betting to 28 BB pressures SB’s strong limp-reraising range. Only a narrow portion of the prior raising range takes this line, mixing strong hands with selected ace and king blockers. This raise leaves chips for later decisions.";
   if (situation.opponentAction === "Open")
     return openRaiseReason(hand, situation);
   if (situation.opponentAction === "4-bet") {
-    return `5-betting all-in to 100 BB commits your remaining ${100 - situation.heroBet} BB. This hand belongs in the reference’s narrow shoving range at the recommended frequency, putting ${situation.opponent} to a decision for the full stack. There are no chips left for postflop betting if ${situation.opponent} calls.`;
+    return `5-betting all-in to 100 BB commits your remaining ${100 - situation.heroBet} BB. This hand belongs in the reference’s narrow shoving range at the recommended frequency.`;
   }
   if (!situation.opponent) {
     return situation.position === "SB"
-      ? "Raising puts pressure on the only remaining opponent and builds the pot when BB continues. The larger opening size discourages calls and compensates for playing out of position."
-      : "Raising can win the blinds immediately and builds the pot when an opponent continues. This hand is part of the opening range from this position.";
+      ? "Raising puts pressure on BB and builds the pot when it continues. The larger opening size discourages calls and compensates for the positional disadvantage."
+      : "Raising can win the blinds immediately and builds the pot when an opponent continues.";
   }
   if (situation.lastAction === "call") {
     return "Re-raising puts this hand in the linear range built from high-equity hands. These hands can continue against a further raise and play well when the remaining stacks are small relative to the pot.";
   }
-  return `4-betting puts pressure on the opponent and builds a larger pot if they continue. ${
+  return `4-betting puts pressure on the opponent and builds a larger pot if they continue.${
     inPosition
-      ? "You retain the advantage of acting last after the flop."
-      : "Leaving less money behind relative to the pot reduces the opponent’s positional advantage."
+      ? ""
+      : " Leaving less money behind relative to the pot reduces the opponent’s positional advantage."
   } The 4-bet range contains both strong hands and selected bluffs, so raising alone does not mean a hand should continue against a shove.`;
 }
 
 function openRaiseReason(hand, situation) {
   if (situation.position === "BB")
     return situation.opponent === "SB"
-      ? "3-betting to 9 BB uses position to apply pressure to SB. The polarized range combines strong hands with selected blocker and board-coverage bluffs, while many medium-strength hands take a flop instead."
-      : `3-betting to 10 BB pressures ${situation.opponent} while building a pot out of position. ${situation.opponent === "BTN" ? "Against BTN’s wider opening range, the reference uses a more linear range built around strong hands." : "Suitedness, connectivity and useful blockers help selected hands handle the stronger opening range."}`;
+      ? "3-betting to 9 BB applies pressure to SB. The polarized range combines strong hands with selected blocker and board-coverage bluffs, while many medium-strength hands take a flop instead."
+      : `3-betting to 10 BB pressures ${situation.opponent}. ${situation.opponent === "BTN" ? "Against BTN’s wider opening range, the reference uses a more linear range built around strong hands." : "Suitedness, connectivity and useful blockers help selected hands handle the stronger opening range."}`;
   if (situation.position === "SB")
     return `3-betting to 10 BB puts pressure on ${situation.opponent} and BB. This reference uses 3-bet or fold from SB: the larger size compensates for playing out of position and discourages BB from entering. The range widens against later openers, following each hand’s recommended frequency.`;
   if (situation.position === "BTN") {
-    return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the blinds while retaining position after the flop. BTN’s polarized 3-bet range mixes strong hands with selected bluffs at their recommended frequencies.`;
+    return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the blinds. BTN’s polarized 3-bet range mixes strong hands with selected bluffs.`;
   }
   if (situation.position === "CO") {
     const adjustment =
@@ -437,26 +422,26 @@ function openFoldReason(decision, situation) {
   if (situation.position === "SB")
     return `${decision} The 0.5 BB already posted is only a discount on entry. Acting first postflop and facing an active BB make it harder to realize this hand’s equity. Folding preserves your stack without investing more.`;
   if (situation.position === "BTN")
-    return `${decision} Having position does not remove the need for enough strength against ${situation.opponent}’s opening range. Both blinds can still enter the pot. Folding preserves your stack without investing more.`;
+    return `${decision} You still need enough strength against ${situation.opponent}’s opening range. Folding preserves your stack without investing more.`;
   const pressure =
-    situation.position === "CO"
-      ? `${situation.opponent === "HJ" ? "HJ starts wider than LJ, but still has a stronger range than a random hand" : "LJ starts with a tight range"}, and three players behind you can still enter.`
-      : "LJ starts with a tight range, and four players behind you can still enter.";
+    situation.opponent === "HJ"
+      ? "HJ starts wider than LJ, but still has a stronger range than a random hand."
+      : "LJ starts with a tight range.";
   return `${decision} ${pressure} Folding limits exposure to that pressure and preserves your stack without investing more.`;
 }
 
 function fourBetCallReason(hand, situation, inPosition, cost) {
-  if (!inPosition)
-    return `Calling the extra ${cost} BB keeps this hand in the pot while leaving chips for postflop play. You act first against ${situation.opponent}, so realizing equity is harder. ${hand === "AA" ? "Keeping AA in the calling range protects it: a call can still contain the strongest starting hand." : "The reference retains this hand’s equity and postflop potential among the calls at the recommended frequency."}`;
   const strength =
     hand === "AA"
       ? "Keeping AA in the calling range protects it: a call can still contain the strongest starting hand."
-      : "This hand keeps its postflop potential without committing the whole stack now.";
+      : inPosition
+        ? "You can use the opponent’s decisions to guide your play against a strong range."
+        : "This hand has enough postflop potential to continue, though future pressure can prevent it from realizing all of its equity.";
   const widerDefense =
     situation.position === "CO" &&
     situation.opponent === "HJ" &&
     ["KJs", "ATs", "KTs"].includes(hand)
       ? " Against HJ’s wider starting range, suited broadways like this one join CO’s defense at the recommended frequency."
       : "";
-  return `Calling the extra ${cost} BB lets you see the flop in position. Acting last helps you realize equity against ${situation.opponent}’s strong range. ${strength}${widerDefense}`;
+  return `Calling the extra ${cost} BB leaves chips for postflop play. ${strength}${widerDefense}`;
 }
