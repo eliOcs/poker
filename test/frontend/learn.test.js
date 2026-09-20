@@ -6,6 +6,7 @@ import {
   followupScenario,
   openFollowupScenario,
   hijackScenario,
+  cutoffScenario,
 } from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
@@ -302,6 +303,10 @@ describe("Learn strategy flow", () => {
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [
+    [cutoffScenario("LJ"), 4, 5.75, 9, 8.5],
+    [cutoffScenario("HJ"), 4, 5.75, 9, 8.5],
+    [cutoffScenario("LJ", true), 37.5, 46.75, 70.5, 100],
+    [cutoffScenario("HJ", true), 37.5, 46.75, 70.5, 100],
     [hijackScenario(), 4, 5.75, 9, 8.5],
     [hijackScenario(true), 37.5, 46.75, 70.5, 100],
     [followupScenario(), 6, 7, 10.5, 13],

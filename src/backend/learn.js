@@ -3,6 +3,7 @@ import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
 import {
   explainLearnHand,
   OPPONENT_RANGE_NOTES,
+  LEARN_RANGE_NOTES,
 } from "./learn-explanations.js";
 import { describePlayability } from "./learn-playability.js";
 import { conditionLearnRange } from "./learn-opponent-range.js";
@@ -149,7 +150,7 @@ function parseScenario(id) {
   if (!expected) {
     invalidStrategy();
   }
-  return { situation: learnSituation(key), hand, range, expected };
+  return { key, situation: learnSituation(key), hand, range, expected };
 }
 
 function validFrequency(n) {
@@ -175,7 +176,7 @@ export function evaluateLearnStrategy(input) {
     invalidStrategy();
   }
   const { id, frequencies, raiseTo } = input;
-  const { situation, hand, range, expected } = parseScenario(id);
+  const { key, situation, hand, range, expected } = parseScenario(id);
   validateFrequencies(frequencies);
   if (
     frequencies[2] > 0 &&
@@ -211,6 +212,7 @@ export function evaluateLearnStrategy(input) {
     playability: describePlayability(hand, range.raiseTo, situation, expected),
     explanationTitle: situation.explanationTitle,
     explanation: explainLearnHand(hand, situation, expected),
+    lessonNotes: LEARN_RANGE_NOTES[key],
     page: range.page,
     chart: range.chart,
     hands: range.hands,

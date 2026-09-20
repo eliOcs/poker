@@ -64,7 +64,7 @@ function situationNotes(raiseTo, situation, expected) {
       title: `${raiseTo} BB ${followup ? "re-raise total" : "opening size"}`,
       text:
         situation?.opponentAction === "4-bet"
-          ? "This 5-bet is all-in: 100 BB total, including the 8.5 BB already committed. You put in your remaining 91.5 BB. The reference assumes LJ’s 23 BB 4-bet and 100 BB starting stacks."
+          ? `This 5-bet is all-in: 100 BB total, including the 8.5 BB already committed. You put in your remaining 91.5 BB. The reference assumes ${situation.opponent}’s 23 BB 4-bet and 100 BB starting stacks.`
           : followup
             ? "This is the total bet, including chips you already committed. The reference range assumes this sizing and the preceding bets; different sizes change the decision."
             : "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",

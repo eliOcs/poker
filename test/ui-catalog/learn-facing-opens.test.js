@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { hijackScenario } from "../frontend/fixtures/learn.js";
+import { hijackScenario, cutoffScenario } from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
@@ -12,8 +12,38 @@ for (const [name, scenario, size, call, unavailable] of [
     "72o: Fold 100%, Call 0%, Raise 0%",
   ],
   ["learn-hj-vs-lj-4bet", hijackScenario(true), 100, 50, "72o: Not in range"],
+  [
+    "learn-co-vs-lj-open",
+    cutoffScenario("LJ"),
+    8.5,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-co-vs-hj-open",
+    cutoffScenario("HJ"),
+    8.5,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-co-vs-lj-4bet",
+    cutoffScenario("LJ", true),
+    100,
+    50,
+    "72o: Not in range",
+  ],
+  [
+    "learn-co-vs-hj-4bet",
+    cutoffScenario("HJ", true),
+    100,
+    60,
+    "72o: Not in range",
+  ],
 ]) {
-  test(`learn Hijack practice ${scenario.title}`, async ({ page }) => {
+  test(`learn ${scenario.position === "CO" ? "Cutoff" : "Hijack"} practice ${scenario.title}`, async ({
+    page,
+  }) => {
     await page.route("**/api/learn/scenario", (route) =>
       route.fulfill({ json: scenario }),
     );
@@ -67,5 +97,49 @@ for (const [name, scenario, size, call, unavailable] of [
       "1 available combination after removing your cards",
     );
     await expect(page).toHaveScreenshot(`${name}-opponent-hand.png`);
+  });
+}
+
+for (const [opponent, fourBet, takeaway] of [
+  ["LJ", false, "One fewer player, only a little wider"],
+  ["HJ", false, "A wider opener allows more 3-bets"],
+  ["LJ", true, "Strong hands do not all shove"],
+  ["HJ", true, "Wider 3-bets need a wider defense"],
+]) {
+  const stage = fourBet ? "4BET" : "OPEN";
+
+  test(`learn Cutoff takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
+    page,
+  }) => {
+    const scenario = cutoffScenario(opponent, fourBet);
+    // Range-wide lessons also belong in feedback for a pure fold.
+    scenario.id = `CO_VS_${opponent}_${stage}-A9s`;
+    scenario.hand = "A9s";
+    scenario.seats[2].cards = ["As", "9s"];
+    await page.route("**/api/learn/scenario", (route) =>
+      route.fulfill({ json: scenario }),
+    );
+    await page.route("**/api/learn/evaluate", (route) =>
+      route.fulfill({
+        json: evaluateLearnStrategy(route.request().postDataJSON()),
+      }),
+    );
+    await page.goto("/test.html?test=learn-preflop");
+    await waitForAvatars(page);
+    await page.getByRole("slider", { name: "Fold", exact: true }).focus();
+    await page.keyboard.press("End");
+    await page
+      .getByRole("button", { name: "Check strategy", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    const notes = page.getByRole("region", { name: "Strategy takeaways" });
+    await notes.scrollIntoViewIfNeeded();
+    await expect(notes).toContainText(takeaway);
+    await expect(notes.locator("li")).toHaveCount(2);
+    await expect(page).toHaveScreenshot(
+      `learn-co-vs-${opponent.toLowerCase()}-${stage.toLowerCase()}-takeaways.png`,
+    );
+    await notes.locator("li").last().scrollIntoViewIfNeeded();
+    await expect(notes.locator("li").last()).toBeInViewport({ ratio: 1 });
   });
 }

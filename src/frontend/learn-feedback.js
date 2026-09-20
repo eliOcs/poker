@@ -347,6 +347,23 @@ function renderRangeDetails(view) {
           </li>`,
       )}
     </ul>
+    ${result.lessonNotes?.length
+      ? html`<section
+          class="learn-strategy-notes"
+          aria-labelledby="learn-takeaways-heading"
+        >
+          <h2 id="learn-takeaways-heading">Strategy takeaways</h2>
+          <ul class="learn-card-factors">
+            ${result.lessonNotes.map(
+              (note) =>
+                html`<li>
+                  <strong>${note.title}</strong>
+                  <p>${note.text}</p>
+                </li>`,
+            )}
+          </ul>
+        </section>`
+      : ""}
     ${renderOpponentRange(view)}
     <p class="learn-disclaimer">
       This range is a balanced starting point against opponents who play

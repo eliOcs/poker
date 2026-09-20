@@ -78,37 +78,66 @@ export function openFollowupScenario(position, opponent) {
 }
 
 export function hijackScenario(facingFourBet = false) {
-  const bets = facingFourBet
-    ? [11500, 4250, 0, 0, 250, 500]
-    : [1250, 0, 0, 0, 250, 500];
+  return earlyPositionScenario("HJ", "LJ", facingFourBet);
+}
+
+export function cutoffScenario(opponent, facingFourBet = false) {
+  return earlyPositionScenario("CO", opponent, facingFourBet);
+}
+
+function earlyPositionScenario(position, opponent, facingFourBet) {
+  const positions = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
+  const hero = positions.indexOf(position);
+  const villain = positions.indexOf(opponent);
+  const amounts = facingFourBet
+    ? { heroBet: 4250, currentBet: 11500, minRaiseTo: 18750 }
+    : { heroBet: 0, currentBet: 1250, minRaiseTo: 2000 };
+  const bets = [0, 0, 0, 0, 250, 500];
+  bets[hero] = amounts.heroBet;
+  bets[villain] = amounts.currentBet;
+  const behind =
+    position === "HJ" ? "CO, BTN and both blinds" : "BTN and both blinds";
+  const opening = {
+    HJ_LJ: "LJ raised to 2.5 BB.",
+    CO_LJ: "LJ raised to 2.5 BB and HJ folded.",
+    CO_HJ: "LJ folded and HJ raised to 2.5 BB.",
+  }[`${position}_${opponent}`];
   return {
     ...learnScenario,
-    id: `${facingFourBet ? "HJ_VS_LJ_4BET" : "HJ_VS_LJ_OPEN"}-AA`,
-    position: "HJ",
-    title: facingFourBet ? "HJ 3-bet vs LJ 4-bet" : "HJ vs LJ Open",
+    id: `${position}_VS_${opponent}_${facingFourBet ? "4BET" : "OPEN"}-AA`,
+    position,
+    title: facingFourBet
+      ? `${position} 3-bet vs ${opponent} 4-bet`
+      : `${position} vs ${opponent} Open`,
     history: facingFourBet
-      ? "LJ opened to 2.5 BB. You 3-bet to 8.5 BB; CO, BTN and both blinds folded. LJ 4-bet to 23 BB."
-      : "LJ raised to 2.5 BB. CO, BTN and both blinds are still to act.",
-    currentBet: facingFourBet ? 11500 : 1250,
-    minRaiseTo: facingFourBet ? 18750 : 2000,
-    seats: learnScenario.seats.map((seat, i) => ({
-      ...seat,
-      player: { name: ["UTG", "You · UTG+1", "CO", "BTN", "SB", "BB"][i] },
-      bet: bets[i],
-      stack: 50000 - bets[i],
-      folded: facingFourBet && i > 1,
-      lastAction:
-        i === 0
-          ? "raise"
-          : facingFourBet
-            ? i === 1
-              ? "raise"
-              : "fold"
+      ? `${opening} You 3-bet to 8.5 BB; ${behind} folded. ${opponent} 4-bet to 23 BB.`
+      : `${opening} ${behind} are still to act.`,
+    currentBet: amounts.currentBet,
+    minRaiseTo: amounts.minRaiseTo,
+    seats: learnScenario.seats.map((seat, i) => {
+      const folded = i !== hero && i !== villain && (facingFourBet || i < hero);
+      return {
+        ...seat,
+        player: {
+          name: `${i === hero ? "You · " : ""}${["UTG", "UTG+1", "CO", "BTN", "SB", "BB"][i]}`,
+        },
+        bet: bets[i],
+        stack: 50000 - bets[i],
+        folded,
+        lastAction: folded
+          ? "fold"
+          : i === villain || (i === hero && facingFourBet)
+            ? "raise"
             : undefined,
-      isCurrentPlayer: i === 1,
-      isActing: i === 1,
-      cards:
-        i === 1 ? ["As", "Ah"] : facingFourBet && i > 1 ? [] : ["??", "??"],
-    })),
+        isCurrentPlayer: i === hero,
+        isActing: i === hero,
+        cards: lessonCards(i === hero, folded),
+      };
+    }),
   };
+}
+
+function lessonCards(hero, folded) {
+  if (hero) return ["As", "Ah"];
+  return folded ? [] : ["??", "??"];
 }

@@ -35,7 +35,7 @@ test("follow-up feedback includes the opponent's preceding raising range", () =>
     SB_LIMP_BB: [249, 86, 40.6],
   };
   for (const key of LEARN_SITUATION_KEYS) {
-    if (key.startsWith("HJ_VS_LJ_")) continue;
+    if (key.includes("_VS_")) continue;
     const { opponentRange } = evaluateLearnStrategy({
       id: `${key}-AA`,
       frequencies: [100, 0, 0],

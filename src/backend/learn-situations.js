@@ -1,5 +1,61 @@
 // Bet amounts here are street totals in BB. Convert to cents at the view boundary.
 const FOLLOWUPS = {
+  CO_VS_LJ_OPEN: {
+    position: "CO",
+    opponent: "LJ",
+    opponentAction: "Open",
+    opponentRangeKey: "LJ",
+    title: "CO vs LJ Open",
+    history:
+      "LJ raised to 2.5 BB and HJ folded. BTN and both blinds are still to act.",
+    heroBet: 0,
+    currentBet: 2.5,
+    minRaiseTo: 4,
+    explanationTitle: "Facing a tight LJ range",
+  },
+  CO_VS_HJ_OPEN: {
+    position: "CO",
+    opponent: "HJ",
+    opponentAction: "Open",
+    opponentRangeKey: "HJ",
+    title: "CO vs HJ Open",
+    history:
+      "LJ folded and HJ raised to 2.5 BB. BTN and both blinds are still to act.",
+    heroBet: 0,
+    currentBet: 2.5,
+    minRaiseTo: 4,
+    explanationTitle: "Facing a wider HJ range",
+  },
+  CO_VS_LJ_4BET: {
+    position: "CO",
+    opponent: "LJ",
+    opponentAction: "4-bet",
+    opponentRangeKey: "LJ_RAISE_CO",
+    previousRangeKey: "CO_VS_LJ_OPEN",
+    title: "CO 3-bet vs LJ 4-bet",
+    history:
+      "LJ opened to 2.5 BB and HJ folded. You 3-bet to 8.5 BB; BTN and both blinds folded. LJ 4-bet to 23 BB.",
+    heroBet: 8.5,
+    currentBet: 23,
+    minRaiseTo: 37.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs LJ",
+  },
+  CO_VS_HJ_4BET: {
+    position: "CO",
+    opponent: "HJ",
+    opponentAction: "4-bet",
+    opponentRangeKey: "HJ_RAISE_CO",
+    previousRangeKey: "CO_VS_HJ_OPEN",
+    title: "CO 3-bet vs HJ 4-bet",
+    history:
+      "LJ folded and HJ opened to 2.5 BB. You 3-bet to 8.5 BB; BTN and both blinds folded. HJ 4-bet to 23 BB.",
+    heroBet: 8.5,
+    currentBet: 23,
+    minRaiseTo: 37.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs HJ",
+  },
   HJ_VS_LJ_OPEN: {
     position: "HJ",
     opponent: "LJ",

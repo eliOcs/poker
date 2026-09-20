@@ -62,6 +62,7 @@
   }
 
   .learn-range-details,
+  .learn-strategy-notes,
   .learn-opponent-range {
     display: grid;
     gap: var(--space-md);
