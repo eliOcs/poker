@@ -253,11 +253,87 @@ for (const [name, scenario, min, raiseTo, odds, call = 0] of [
       page.getByTitle("72o: Not in range", { exact: true }),
     ).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-range.png`);
+    const explanation = page.locator(".learn-card-factors").last();
+    await explanation.scrollIntoViewIfNeeded();
     const potOdds = page.getByText(/^Calling costs another/);
-    await potOdds.scrollIntoViewIfNeeded();
-    await expect(potOdds).toBeVisible();
-    await expect(potOdds).toContainText(`~ ${odds}%`);
-    await expect(page).toHaveScreenshot(`${name}-pot-odds.png`);
+    await expect(potOdds).toHaveText(
+      call > 0 ? [new RegExp(`~ ${odds}%`)] : [],
+    );
+    await expect(explanation).toContainText(`${raiseTo} BB re-raise total`);
+    await expect(page).toHaveScreenshot(`${name}-details.png`);
+  });
+}
+
+for (const [name, scenario, hand, cards] of [
+  [
+    "first-in-fold",
+    { ...learnScenario, position: "HJ", id: "HJ-AA" },
+    "K4s",
+    ["Ks", "4s"],
+  ],
+  ["fold", openFollowupScenario("LJ", "SB"), "A9s", ["As", "9s"]],
+  ["call", openFollowupScenario("BTN", "SB"), "22", ["2s", "2h"]],
+  ["fold-call", openFollowupScenario("BTN", "SB"), "K4s", ["Ks", "4s"]],
+  ["fold-raise", openFollowupScenario("CO", "SB"), "KJo", ["Ks", "Jh"]],
+  ["call-raise", openFollowupScenario("BTN", "SB"), "66", ["6s", "6h"]],
+  ["all-actions", openFollowupScenario("BTN", "SB"), "KJo", ["Ks", "Jh"]],
+]) {
+  test(`learn hand-specific details ${name}`, async ({ page }) => {
+    const lesson = {
+      ...scenario,
+      id: scenario.id.replace(/-AA$/, `-${hand}`),
+      hand,
+      seats: scenario.seats.map((seat, index) => {
+        const hero =
+          name === "first-in-fold" ? index === 1 : seat.isCurrentPlayer;
+        return {
+          ...seat,
+          ...(name === "first-in-fold"
+            ? {
+                player: {
+                  name: ["UTG", "You · UTG+1", "CO", "BTN", "SB", "BB"][index],
+                },
+                folded: index === 0,
+              }
+            : {}),
+          isCurrentPlayer: hero,
+          isActing: hero,
+          cards: hero ? cards : ["??", "??"],
+        };
+      }),
+    };
+    const result = evaluateLearnStrategy({
+      id: lesson.id,
+      frequencies: [100, 0, 0],
+    });
+    await page.route("**/api/learn/scenario", (route) =>
+      route.fulfill({ json: lesson }),
+    );
+    await page.route("**/api/learn/evaluate", (route) =>
+      route.fulfill({ json: result }),
+    );
+    await page.goto("/test.html?test=learn-preflop");
+    await waitForAvatars(page);
+    await page.getByRole("slider", { name: "Fold", exact: true }).focus();
+    await page.keyboard.press("End");
+    await page
+      .getByRole("button", { name: "Check strategy", exact: true })
+      .click();
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    const explanation = page.locator(".learn-card-factors").last();
+    await explanation.scrollIntoViewIfNeeded();
+    await expect(explanation).not.toContainText(`${hand}:`);
+    await expect(explanation.getByText(/BB re-raise total/)).toHaveCount(
+      result.expected[2] > 0 ? 1 : 0,
+    );
+    await expect(explanation.getByText(/^Calling costs another/)).toHaveCount(
+      result.expected[1] > 0 ? 1 : 0,
+    );
+    await expect(explanation.locator("li")).toHaveCount(
+      1 + result.playability.situation.length,
+    );
+    await expect(explanation).toContainText(result.explanation);
+    await expect(page).toHaveScreenshot(`learn-details-${name}.png`);
   });
 }
 

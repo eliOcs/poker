@@ -281,13 +281,11 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
       raiseTo: size,
     });
     assert.equal(correct.grade, "correct");
-    assert.equal(
-      correct.playability.situation[0].title,
-      `${pot} BB in the pot`,
-    );
-    assert.ok(
-      correct.playability.situation[0].text.includes(`another ${call} BB`),
-    );
+    const notes = correct.playability.situation;
+    const potNote = notes.find((note) => note.title === `${pot} BB in the pot`);
+    assert.equal(Boolean(potNote), correct.expected[1] > 0);
+    if (potNote) assert.ok(potNote.text.includes(`another ${call} BB`));
+    assert.ok(notes.some((note) => note.title === `${size} BB re-raise total`));
     assert.ok(!correct.explanation.includes("never calls first in"));
     assert.throws(
       () =>
@@ -452,7 +450,8 @@ test("grades first-in calls outside SB as learning mistakes, including mixed cal
       assert.equal(result.actionsMatch, false);
       assert.equal(result.frequencyMatch, false);
       assert.equal(result.expected[1], 0);
-      assert.match(result.explanation, /never calls first in/);
+      assert.match(result.explanation, /^Raise 100%/);
+      assert.doesNotMatch(result.explanation, /Calling|Limping/);
     }
   }
 });

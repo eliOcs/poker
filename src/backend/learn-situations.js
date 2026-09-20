@@ -9,8 +9,6 @@ const FOLLOWUPS = {
     currentBet: 3.5,
     minRaiseTo: 6,
     lastAction: "call",
-    explanation:
-      "After you limp and BB raises to 3.5 BB, the reference re-raises a linear range built from high-equity hands. These hands can continue against a further raise and play well when the remaining stacks are small relative to the pot (low SPR). You are still out of position after the flop; other playable hands call the extra 2.5 BB.",
   },
   SB_RAISE_BB: {
     position: "SB",
@@ -21,8 +19,6 @@ const FOLLOWUPS = {
     currentBet: 9,
     minRaiseTo: 15,
     lastAction: "raise",
-    explanation:
-      "After you open to 3 BB and BB 3-bets to 9 BB, medium-strength hands often prefer calling the extra 6 BB: they want to see a flop without 4-betting and then folding to an all-in. This leaves a polarized 4-bet range of strong hands and selected bluffs with useful blockers. Those hands have a plan to call or fold against a 5-bet shove, while retaining coverage of different boards if BB calls. You still act first after the flop.",
   },
   BTN_RAISE_SB: {
     position: "BTN",
@@ -33,8 +29,6 @@ const FOLLOWUPS = {
     currentBet: 10,
     minRaiseTo: 17.5,
     lastAction: "raise",
-    explanation:
-      "You have position on the small blind and act last after the flop. Preserve that advantage by mostly calling with hands that continue. Keep a polarized 4-bet range of strong hands and selected bluffs with useful blockers and coverage of different boards. A 4-bet lets the blind respond with a 5-bet shove, forcing you to fold some hands that could have played well by calling. The book uses similar defenses against both blinds, but recommends slightly more defense against SB: the folded BB leaves 1 BB, giving you better calling odds than against BB.",
   },
   BTN_RAISE_BB: {
     position: "BTN",
@@ -45,8 +39,6 @@ const FOLLOWUPS = {
     currentBet: 10,
     minRaiseTo: 17.5,
     lastAction: "raise",
-    explanation:
-      "You have position on the big blind and act last after the flop. Preserve that advantage by mostly calling with hands that continue. Keep a polarized 4-bet range of strong hands and selected bluffs with useful blockers and coverage of different boards. A 4-bet lets the blind respond with a 5-bet shove, forcing you to fold some hands that could have played well by calling. The book uses similar defenses against both blinds, but recommends slightly less defense against BB: the folded SB leaves only 0.5 BB, giving you a smaller pot than against SB.",
   },
   CO_RAISE_BTN: {
     position: "CO",
@@ -59,8 +51,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs BTN",
-    explanation:
-      "The button is the exception: you are out of position and must act first after the flop. Compared with facing either blind, the reference 4-bets more and calls less, trying to win the pot preflop. If called, the larger pot leaves less money behind relative to it, reducing the button’s positional advantage. Weaker hands also fold more often because playing them out of position is harder.",
   },
   CO_RAISE_SB: {
     position: "CO",
@@ -73,8 +63,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs SB",
-    explanation:
-      "You are in position against the small blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller, polarized 4-bet range combines strong hands with selected bluffs.",
   },
   CO_RAISE_BB: {
     position: "CO",
@@ -86,8 +74,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs BB",
-    explanation:
-      "You are in position against the big blind: you act last after the flop and can see what your opponent does before deciding. That advantage makes calling more attractive. Compared with facing the button, the reference calls more and 4-bets less, continuing mostly by calling. Its smaller, polarized 4-bet range combines strong hands with selected bluffs.",
   },
   HJ_RAISE_CO: {
     position: "HJ",
@@ -100,8 +86,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs CO",
-    explanation:
-      "You are out of position against the cutoff and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. The cutoff's 3-bet range is less polarized than the button's, so fewer of your opening hands make profitable calls: the reference calls about 15% against CO versus 21% against BTN. A similar share, about 22%, is 4-bet against either late position.",
   },
   HJ_RAISE_BTN: {
     position: "HJ",
@@ -114,8 +98,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs BTN",
-    explanation:
-      "You are out of position against the button, so fold more and 4-bet more often than against the blinds. But call more than against CO: BTN also has a calling range, making its 3-bets more polarized, with strong hands and bluffs. Your opening range has better equity and playability against that mix. The reference calls about 21% against BTN versus 15% against CO.",
   },
   HJ_RAISE_SB: {
     position: "HJ",
@@ -128,8 +110,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs SB",
-    explanation:
-      "You have position on the small blind and act last after the flop. Fold less than against CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 10% of your opening range against the blinds versus 22% against CO or BTN.",
   },
   HJ_RAISE_BB: {
     position: "HJ",
@@ -142,8 +122,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs BB",
-    explanation:
-      "You have position on the big blind and act last after the flop. Fold less than against CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 10% of your opening range against the blinds versus 22% against CO or BTN.",
   },
   LJ_RAISE_HJ: {
     position: "LJ",
@@ -156,8 +134,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs HJ",
-    explanation:
-      "You are out of position against the hijack and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. Your tight opening range helps you defend against a strong 3-bet range. Call less than against BTN: the reference calls about 15% against HJ versus 23% against the button's more polarized range.",
   },
   LJ_RAISE_CO: {
     position: "LJ",
@@ -170,8 +146,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs CO",
-    explanation:
-      "You are out of position against the cutoff and act first after the flop. Compared with facing the blinds, fold more and 4-bet more often, calling less. Like against HJ, fewer hands make profitable calls than against BTN's more polarized 3-bets. The reference calls about 14% against CO versus 23% against BTN, and 4-bets about 24% against CO.",
   },
   LJ_RAISE_BTN: {
     position: "LJ",
@@ -184,8 +158,6 @@ const FOLLOWUPS = {
     minRaiseTo: 14.5,
     lastAction: "raise",
     explanationTitle: "Out of position vs BTN",
-    explanation:
-      "You are out of position against the button, so fold more and 4-bet more often than against the blinds. But call more than against HJ or CO: BTN's more polarized 3-bet range contains strong hands and bluffs, so your hands are dominated less often and play better after the flop. The reference calls about 23% against BTN versus 14–15% against HJ or CO.",
   },
   LJ_RAISE_SB: {
     position: "LJ",
@@ -198,8 +170,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs SB",
-    explanation:
-      "You have position on the small blind and act last after the flop. Fold less than against HJ, CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 11% of your opening range against the blinds versus 23% against the other positions.",
   },
   LJ_RAISE_BB: {
     position: "LJ",
@@ -212,8 +182,6 @@ const FOLLOWUPS = {
     minRaiseTo: 17.5,
     lastAction: "raise",
     explanationTitle: "In position vs BB",
-    explanation:
-      "You have position on the big blind and act last after the flop. Fold less than against HJ, CO or BTN, and continue mostly by calling. Position helps you realize your hand's equity, so 4-bet less often: roughly 11% of your opening range against the blinds versus 23% against the other positions.",
   },
 };
 

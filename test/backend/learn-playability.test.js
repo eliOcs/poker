@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { describePlayability } from "../../src/backend/learn-playability.js";
+import { readFileSync } from "node:fs";
+const ranges = JSON.parse(
+  readFileSync(
+    new URL("../../src/backend/learn-ranges.json", import.meta.url),
+    "utf8",
+  ),
+);
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 
 test("distinguishes high cards, suitedness, connectedness and pocket pairs", () => {
@@ -65,229 +72,172 @@ test("connects the evaluation to this hand and position without changing grading
   assert.equal(early.playability.cards[2].title, "Connected");
 });
 
-// Modern Poker Theory, Small Blind through Lojack, PDF pages 181–207. Check the teaching
-// concepts in the public evaluation response rather than exact paragraphs.
-for (const { name, id, raiseTo, concepts } of [
+test("situation guidance follows every hand's recommended actions, regardless of the answer", () => {
+  const actionNames = ["Fold", "Call", "Raise"];
+  const coveredMixes = new Set();
+  for (const [key, range] of Object.entries(ranges)) {
+    for (const [hand, expected] of Object.entries(range.hands)) {
+      const id = `${key}-${hand}`;
+      const result = evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });
+      const otherAnswer = evaluateLearnStrategy({
+        id,
+        frequencies: [0, 0, 100],
+        raiseTo: range.raiseTo,
+      });
+      assert.equal(result.explanation, otherAnswer.explanation, id);
+      assert.ok(!result.explanation.startsWith(`${hand}:`), id);
+      assert.deepEqual(result.playability, otherAnswer.playability, id);
+      for (const [index, action] of actionNames.entries()) {
+        assert.equal(
+          result.explanation.includes(`${action} ${expected[index]}%`),
+          expected[index] > 0,
+          id,
+        );
+      }
+      const notes = result.playability.situation;
+      assert.equal(
+        notes.some((note) => /opening size|re-raise total/.test(note.title)),
+        expected[2] > 0,
+        id,
+      );
+      assert.equal(
+        notes.some((note) => note.text.includes("Pot odds:")),
+        key.includes("_") && expected[1] > 0,
+        id,
+      );
+      if (expected[0] === 100) {
+        assert.deepEqual(notes, [], id);
+        assert.doesNotMatch(result.explanation, /call|rais|limp|4-bet/i, id);
+        assert.match(
+          result.explanation,
+          /risk more|without investing more/,
+          id,
+        );
+      }
+      if (expected[1] === 100)
+        assert.doesNotMatch(result.explanation, /rais|4-bet/i, id);
+      if (expected[2] === 100)
+        assert.doesNotMatch(
+          result.explanation,
+          /Calling|Limping|mostly.*call/i,
+          id,
+        );
+      const mixed = expected.filter((n) => n > 0).length > 1;
+      assert.equal(result.explanation.includes("Mix these actions"), mixed, id);
+      coveredMixes.add(expected.map((n) => Number(n > 0)).join(""));
+    }
+  }
+  assert.equal(coveredMixes.size, 7);
+});
+
+for (const { name, id, concepts, absent = [] } of [
   {
-    name: "SB first-in explains the limp/raise split, discount and larger opening size",
+    name: "first-in fold explains the pressure from players still to act",
+    id: "HJ-K4s",
+    concepts: [
+      /^Fold 100%/,
+      /Four players/,
+      /cutoff and button.*position/,
+      /stronger opposing hands/,
+      /preserves your stack/,
+    ],
+  },
+  {
+    name: "folding in position acknowledges that position does not justify every hand",
+    id: "LJ_RAISE_SB-A9s",
+    concepts: [
+      /in position against SB/,
+      /act last/,
+      /stronger range/,
+      /already in the pot do not oblige/,
+    ],
+  },
+  {
+    name: "folding out of position explains future pressure",
+    id: "CO_RAISE_BTN-A7s",
+    concepts: [
+      /out of position against BTN/,
+      /acting first/,
+      /committing more chips/,
+    ],
+  },
+  {
+    name: "SB call-only explains the limp discount without opening sizing",
+    id: "SB-J2s",
+    concepts: [/Call 100%/, /0\.5 BB/, /pot small out of position/],
+  },
+  {
+    name: "SB mixed calling and raising explains both actions",
     id: "SB-AA",
-    raiseTo: 3,
     concepts: [
-      /out of position/i,
-      /limping/i,
-      /raising/i,
-      /folding/i,
-      /0\.5 BB/i,
-      /3-bets less effective/i,
-      /3 BB.*discourage calls/i,
+      /Limping/,
+      /0\.5 BB/,
+      /Raising puts pressure/,
+      /larger opening size/,
+      /Mix these actions/,
     ],
+    absent: [/Folding/],
   },
   {
-    name: "SB limp versus raise explains linear re-raises and low-SPR playability",
+    name: "limp re-raise explains linear strength and low SPR",
     id: "SB_LIMP_BB-AA",
-    raiseTo: 13,
     concepts: [
-      /out of position/i,
-      /linear/i,
-      /high-equity hands/i,
-      /continue against a further raise/i,
-      /remaining stacks are small relative to the pot/i,
+      /linear range/,
+      /high-equity/,
+      /continue against a further raise/,
+      /remaining stacks are small relative to the pot/,
     ],
   },
   {
-    name: "SB open versus 3-bet explains calling medium hands and polarized 4-bets",
-    id: "SB_RAISE_BB-AA",
-    raiseTo: 24,
+    name: "in-position call explains the actual price and positional advantage",
+    id: "BTN_RAISE_SB-22",
+    concepts: [/Calling the extra 7\.5 BB/, /Acting last/, /realize your hand/],
+  },
+  {
+    name: "out-of-position call explains pot control",
+    id: "CO_RAISE_BTN-22",
     concepts: [
-      /act first after the flop/i,
-      /medium-strength hands.*calling/i,
-      /4-betting and then folding to an all-in/i,
-      /polarized/i,
-      /strong hands and selected bluffs/i,
-      /blockers/i,
-      /different boards if BB calls/i,
+      /Calling the extra 6 BB/,
+      /Keeping the pot smaller/,
+      /acting first/,
     ],
   },
   {
-    name: "BTN first-in explains raise-or-fold, positional advantage and adapting to overfolds",
-    id: "BTN-AA",
-    raiseTo: 2.5,
-    concepts: [
-      /raise or fold/i,
-      /2\.5 BB/i,
-      /about 43%/i,
-      /position on both blinds/i,
-      /no discount to limp/i,
-      /limping invites.*raise/i,
-      /defend against 3-bets/i,
-      /blinds fold too often.*open wider/i,
-    ],
-  },
-  ...["SB", "BB"].map((opponent) => ({
-    name: `BTN vs ${opponent} explains calling in position, polarized 4-bets and the price difference`,
-    id: `BTN_RAISE_${opponent}-AA`,
-    raiseTo: 23,
-    concepts: [
-      /act last after the flop/i,
-      /mostly calling/i,
-      /polarized 4-bet range/i,
-      /strong hands and selected bluffs/i,
-      /blockers/i,
-      /different boards/i,
-      /5-bet shove.*fold/i,
-      /similar defenses against both blinds/i,
-      ...(opponent === "SB"
-        ? [/folded BB.*1 BB/i, /better calling odds/i]
-        : [/folded SB.*0\.5 BB/i, /slightly less defense/i]),
-    ],
-  })),
-  {
-    name: "CO first-in explains tightening the button range because BTN has position",
-    id: "CO-AA",
-    raiseTo: 2.5,
-    concepts: [
-      /button.*position on you/i,
-      /call or 3-bet/i,
-      /tighter range/i,
-      /about 28%.*43%/i,
-      /raise or fold/i,
-      /2\.5 BB/i,
-      /K2s.*Q2s.*98o.*fold/i,
-    ],
-  },
-  {
-    name: "CO vs BTN explains more 4-betting and folding, less calling, and reducing the positional disadvantage",
+    name: "out-of-position 4-bet explains reducing the positional disadvantage",
     id: "CO_RAISE_BTN-AA",
-    raiseTo: 23,
     concepts: [
-      /out of position/i,
-      /act first after the flop/i,
-      /4-bets more and calls less/i,
-      /win the pot preflop/i,
-      /less money behind relative to/i,
-      /reducing.*positional advantage/i,
-      /weaker hands.*fold more/i,
-    ],
-  },
-  ...["SB", "BB"].map((opponent) => ({
-    name: `CO vs ${opponent} explains calling in position with polarized 4-bets`,
-    id: `CO_RAISE_${opponent}-AA`,
-    raiseTo: 23,
-    concepts: [
-      /in position/i,
-      /act last after the flop/i,
-      /calls more and 4-bets less/i,
-      /mostly by calling/i,
-      /polarized 4-bet range/i,
-      /strong hands with selected bluffs/i,
-    ],
-  })),
-  {
-    name: "HJ first-in explains tighter opening with two opponents in position",
-    id: "HJ-AA",
-    raiseTo: 2.5,
-    concepts: [
-      /Four players/i,
-      /cutoff and button.*position on you/i,
-      /tighter range.*21%.*28%/i,
-      /raise or fold.*2\.5 BB/i,
-      /smaller pairs.*offsuit broadways.*suited connectors.*suited kings and queens/i,
+      /4-betting puts pressure/,
+      /reduces the opponent’s positional advantage/,
     ],
   },
   {
-    name: "HJ vs CO explains folding and 4-betting more out of position and calling less than against BTN",
-    id: "HJ_RAISE_CO-AA",
-    raiseTo: 23,
+    name: "a small raise frequency still receives sizing and raise guidance",
+    id: "CO_RAISE_SB-KJo",
     concepts: [
-      /out of position.*act first/i,
-      /fold more and 4-bet more often.*calling less/i,
-      /less polarized than the button/i,
-      /15% against CO versus 21% against BTN/i,
+      /Raise 5%/,
+      /Folding some of the time/,
+      /4-betting/,
+      /Mix these actions/,
     ],
+    absent: [/Calling/],
   },
   {
-    name: "HJ vs BTN explains extra calls against BTN's more polarized 3-bets",
-    id: "HJ_RAISE_BTN-AA",
-    raiseTo: 23,
+    name: "mixed calls and 4-bets retain both explanations even for aces",
+    id: "LJ_RAISE_BB-AA",
     concepts: [
-      /out of position/i,
-      /fold more and 4-bet more often than against the blinds/i,
-      /call more than against CO/i,
-      /BTN also has a calling range/i,
-      /more polarized.*strong hands and bluffs/i,
-      /better equity and playability/i,
+      /Call 10%, Raise 90%/,
+      /Calling the extra/,
+      /4-betting/,
+      /Mix these actions/,
     ],
+    absent: [/Folding/],
   },
-  ...["SB", "BB"].map((opponent) => ({
-    name: `HJ vs ${opponent} explains folding less and mostly calling in position`,
-    id: `HJ_RAISE_${opponent}-AA`,
-    raiseTo: 23,
-    concepts: [
-      /position.*act last after the flop/i,
-      /Fold less than against CO or BTN/i,
-      /mostly by calling/i,
-      /4-bet less often/i,
-      /10%.*22%/i,
-    ],
-  })),
-  {
-    name: "LJ first-in explains a strong range with blockers and some board coverage",
-    id: "LJ-AA",
-    raiseTo: 2.5,
-    concepts: [
-      /Five players/i,
-      /HJ, CO and BTN have position on you/i,
-      /about 17%/i,
-      /raise or fold.*2\.5 BB/i,
-      /high-equity hands.*blockers/i,
-      /small amounts of suited connectors and small pairs.*different boards/i,
-      /tight opening range.*defend against 3-bets/i,
-    ],
-  },
-  ...["HJ", "CO"].map((opponent) => ({
-    name: `LJ vs ${opponent} explains more folding and 4-betting out of position, fewer calls than against BTN`,
-    id: `LJ_RAISE_${opponent}-AA`,
-    raiseTo: 23,
-    concepts: [
-      /out of position.*act first/i,
-      /fold more and 4-bet more often.*calling less/i,
-      /more polarized/i,
-      /calls about 1[45]%.*23%/i,
-    ],
-  })),
-  {
-    name: "LJ vs BTN explains more calls against a polarized range with less domination",
-    id: "LJ_RAISE_BTN-AA",
-    raiseTo: 23,
-    concepts: [
-      /out of position/i,
-      /fold more and 4-bet more often than against the blinds/i,
-      /call more than against HJ or CO/i,
-      /polarized.*strong hands and bluffs/i,
-      /dominated less often/i,
-      /play better after the flop/i,
-    ],
-  },
-  ...["SB", "BB"].map((opponent) => ({
-    name: `LJ vs ${opponent} explains folding less and mostly calling in position`,
-    id: `LJ_RAISE_${opponent}-AA`,
-    raiseTo: 23,
-    concepts: [
-      /position.*act last after the flop/i,
-      /Fold less than against HJ, CO or BTN/i,
-      /mostly by calling/i,
-      /4-bet less often/i,
-      /11%.*23%/i,
-    ],
-  })),
 ]) {
   test(name, () => {
-    const result = evaluateLearnStrategy({
-      id,
-      frequencies: [0, 0, 100],
-      raiseTo,
-    });
+    const result = evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });
     for (const concept of concepts) assert.match(result.explanation, concept);
+    for (const concept of absent)
+      assert.doesNotMatch(result.explanation, concept);
   });
 }
 
@@ -360,22 +310,22 @@ test("lojack ranges support board coverage and the positional defense lessons", 
 
 test("follow-up explanations calculate pot odds from the additional call and pot after calling", () => {
   for (const [id, title, calculation] of [
-    ["SB_LIMP_BB-AA", "4.5 BB in the pot", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
-    ["SB_RAISE_BB-AA", "12 BB in the pot", "6 ÷ (12 + 6) ~ 33%"],
-    ["BTN_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["BTN_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
-    ["CO_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["CO_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["CO_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
-    ["HJ_RAISE_CO-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["HJ_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["HJ_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["HJ_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
-    ["LJ_RAISE_HJ-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["LJ_RAISE_CO-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["LJ_RAISE_BTN-AA", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
-    ["LJ_RAISE_SB-AA", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
-    ["LJ_RAISE_BB-AA", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["SB_LIMP_BB-22", "4.5 BB in the pot", "2.5 ÷ (4.5 + 2.5) ~ 36%"],
+    ["SB_RAISE_BB-22", "12 BB in the pot", "6 ÷ (12 + 6) ~ 33%"],
+    ["BTN_RAISE_SB-22", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["BTN_RAISE_BB-22", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["CO_RAISE_BTN-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["CO_RAISE_SB-22", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["CO_RAISE_BB-22", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["HJ_RAISE_CO-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["HJ_RAISE_BTN-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["HJ_RAISE_SB-22", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["HJ_RAISE_BB-22", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
+    ["LJ_RAISE_HJ-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_CO-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_BTN-22", "12.5 BB in the pot", "6 ÷ (12.5 + 6) ~ 32%"],
+    ["LJ_RAISE_SB-22", "13.5 BB in the pot", "7.5 ÷ (13.5 + 7.5) ~ 36%"],
+    ["LJ_RAISE_BB-22", "13 BB in the pot", "7.5 ÷ (13 + 7.5) ~ 37%"],
   ]) {
     const result = evaluateLearnStrategy({ id, frequencies: [0, 100, 0] });
     const note = result.playability.situation.find((n) => n.title === title);

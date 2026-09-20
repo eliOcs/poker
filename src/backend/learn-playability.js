@@ -13,8 +13,14 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
  * @param {string} hand
  * @param {number} raiseTo
  * @param {ReturnType<import('./learn-situations.js').learnSituation>} [situation]
+ * @param {number[]} [expected]
  */
-export function describePlayability(hand, raiseTo, situation = undefined) {
+export function describePlayability(
+  hand,
+  raiseTo,
+  situation = undefined,
+  expected = [0, 0, 0],
+) {
   const high = RANKS.indexOf(hand.charAt(0)) + 2;
   const low = RANKS.indexOf(hand.charAt(1)) + 2;
   const pair = high === low;
@@ -40,25 +46,28 @@ export function describePlayability(hand, raiseTo, situation = undefined) {
           },
           connectionNote(high, low, straightPatterns),
         ],
-    situation: situationNotes(raiseTo, situation),
+    situation: situationNotes(raiseTo, situation, expected),
   };
 }
 
-function situationNotes(raiseTo, situation) {
-  return [
-    situation?.explanation
-      ? potOddsNote(situation)
-      : {
-          title: "1.5 BB to play for",
-          text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
-        },
-    {
-      title: `${raiseTo} BB ${situation?.explanation ? "re-raise total" : "opening size"}`,
-      text: situation?.explanation
+function situationNotes(raiseTo, situation, expected) {
+  const notes = [];
+  const followup = Boolean(situation?.opponent);
+  if (expected[1] > 0 && followup) notes.push(potOddsNote(situation));
+  if (expected[2] > 0) {
+    if (!followup)
+      notes.push({
+        title: "1.5 BB to play for",
+        text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
+      });
+    notes.push({
+      title: `${raiseTo} BB ${followup ? "re-raise total" : "opening size"}`,
+      text: followup
         ? "This is the total bet, including chips you already committed. The reference range assumes this sizing and the preceding bets; different sizes change the decision."
         : "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",
-    },
-  ];
+    });
+  }
+  return notes;
 }
 
 // Modern Poker Theory, Pot Odds and Outs, PDF pages 37–38.

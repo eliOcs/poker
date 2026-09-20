@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto";
 import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
+import { explainLearnHand } from "./learn-explanations.js";
 import { describePlayability } from "./learn-playability.js";
 import { HttpError } from "./http-error.js";
 import { learnSituation } from "./learn-situations.js";
@@ -16,13 +17,6 @@ const POSITION_LABELS = {
 };
 /** @type {Record<string, {page: number, chart: number, raiseTo: number, hands: Record<string, number[]>}>} */
 const ranges = LEARN_RANGES;
-const explanations = {
-  LJ: "Five players still have a chance to enter the pot, and HJ, CO and BTN have position on you after the flop. Open a strong range of about 17% of hands, playing raise or fold with a 2.5 BB opening size. Favor high-equity hands with useful blockers, while retaining small amounts of suited connectors and small pairs to cover different boards. A tight opening range is easier to defend against 3-bets.",
-  HJ: "Four players remain, and both the cutoff and button have position on you after the flop. Open a tighter range than the cutoff: about 21% of hands instead of 28%, playing raise or fold to 2.5 BB. Trim smaller pairs, weaker offsuit broadways, suited connectors and weak suited kings and queens; these marginal hands are harder to play profitably with two opponents who can act after you.",
-  CO: "The button still has position on you and can call or 3-bet, so open a tighter range than on the button: about 28% of hands instead of 43%. Play raise or fold, using the reference opening size of 2.5 BB. Weaker button opens such as K2s, Q2s and 98o fold here because there is another player to get through, and you will act before the button after the flop.",
-  BTN: "With only the blinds left, play raise or fold: the reference opens to 2.5 BB with about 43% of hands. You have position on both blinds and act last after the flop, but unlike SB you get no discount to limp. Limping invites both blinds into the pot or lets them raise and force you to pay more or fold. Raising keeps your range easier to defend against 3-bets. If the blinds fold too often, you can open wider than this baseline.",
-  SB: "Only the big blind remains, but you will be out of position and act first after the flop. Split your opening range between limping, raising and folding. Limping (calling to 1 BB) costs just another 0.5 BB, so you can play more hands while raising less often and making BB’s 3-bets less effective. When you raise, the reference uses 3 BB to discourage calls and compensate for playing out of position.",
-};
 
 /** Weight the displayed chart by combinations and the action that reached it. */
 function rangeTotals(range, situation) {
@@ -206,9 +200,9 @@ export function evaluateLearnStrategy(input) {
     frequencyMatch,
     sizingMatch,
     raiseTo: range.raiseTo,
-    playability: describePlayability(hand, range.raiseTo, situation),
+    playability: describePlayability(hand, range.raiseTo, situation, expected),
     explanationTitle: situation.explanationTitle,
-    explanation: explanationFor(situation, expected, frequencies),
+    explanation: explainLearnHand(hand, situation, expected),
     page: range.page,
     chart: range.chart,
     hands: range.hands,
@@ -231,27 +225,4 @@ function strategyGrade(
   )
     return "incorrect";
   return distributionMatch && sizingMatch !== false ? "correct" : "close";
-}
-
-function explanationFor(situation, expected, frequencies) {
-  const { position } = situation;
-  const explanation = situation.explanation ?? explanations[position];
-  if (!situation.explanation && position !== "SB" && frequencies[1] > 0) {
-    return (
-      explanation +
-      " The reference strategy never calls first in from this position. Calling pays the full big blind and encourages more players into the pot. Raising can win the blinds immediately and makes it harder for opponents to enter cheaply; hands outside the opening range fold instead."
-    );
-  }
-  if (expected.filter((n) => n > 0).length > 1) {
-    return (
-      explanation +
-      " This hand mixes actions in the reference strategy. The mix matters over repeated decisions; choosing one of those actions is not a mistake on its own."
-    );
-  }
-  return (
-    explanation +
-    (expected[0] === 100
-      ? " This hand folds in the reference strategy. Folding saves the remaining stack for stronger opportunities."
-      : " This hand consistently takes the same action in the reference strategy.")
-  );
 }
