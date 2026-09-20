@@ -5,6 +5,16 @@ import { formatAmount } from "./currency.js";
 import "./card.js";
 
 import { DEFAULT_LEARN_ACTIONS, LEARN_ACTIONS } from "./learn-actions.js";
+/**
+ * @typedef {import('./learn.js').Learn} Learn
+ * @typedef {import('../backend/learn-types.js').LearnScenario} LearnScenario
+ * @typedef {import('../backend/learn-types.js').LearnEvaluation} LearnEvaluation
+ * @typedef {import('../backend/learn-types.js').HandClass} HandClass
+ * @typedef {import('../backend/learn-types.js').LearnAction} LearnAction
+ * @typedef {import('../backend/learn-types.js').Frequencies} Frequencies
+ * @typedef {import('../backend/learn-types.js').OpponentRange} OpponentRange
+ */
+/** @satisfies {Record<import('../backend/learn-types.js').Position, string>} */
 const POSITION_NAMES = {
   LJ: "Under the Gun (UTG)",
   HJ: "Under the Gun +1 (UTG+1)",
@@ -13,6 +23,7 @@ const POSITION_NAMES = {
   SB: "Small Blind",
   BB: "Big Blind",
 };
+/** @type {Partial<Record<import("../backend/learn-types.js").Position, string>>} */
 const POSITION_CHARACTERISTICS = {
   LJ: "Early position",
   HJ: "Middle position",
@@ -20,17 +31,24 @@ const POSITION_CHARACTERISTICS = {
   BTN: "Late position",
   SB: "Small blind",
 };
-const RANKS = [..."AKQJT98765432"];
+const RANKS = /** @type {import("../backend/poker/deck.js").Rank[]} */ ([
+  ..."AKQJT98765432",
+]);
+/** @type {HandClass[]} */
 const HAND_ORDER = RANKS.flatMap((rank, row) =>
-  RANKS.map((other, column) => {
-    if (row === column) return rank + other;
-    return row < column ? rank + other + "s" : other + rank + "o";
-  }),
+  RANKS.map(
+    /** @returns {HandClass} */ (other, column) => {
+      if (row === column) return /** @type {HandClass} */ (`${rank}${other}`);
+      return /** @type {HandClass} */ (
+        row < column ? `${rank}${other}s` : `${other}${rank}o`
+      );
+    },
+  ),
 );
 
-export function renderLearnFeedback(view) {
-  const result = view.result;
-  const actions = result.actions ?? DEFAULT_LEARN_ACTIONS;
+/** @param {Learn} view @param {LearnScenario} scenario @param {LearnEvaluation} result */
+export function renderLearnFeedback(view, scenario, result) {
+  const actions = result.actions;
   const comparing = !result.distributionMatch || result.sizingMatch === false;
   const labels = { correct: "Correct", close: "Close", incorrect: "Incorrect" };
   const icons = {
@@ -48,7 +66,7 @@ export function renderLearnFeedback(view) {
         "Recommended",
         result.expected,
         formatAmount(
-          result.raiseTo * view.scenario.blinds.big,
+          result.raiseTo * scenario.blinds.big,
           view.displayBigBlind,
         ),
         comparing,
@@ -82,16 +100,17 @@ export function renderLearnFeedback(view) {
     </div>
     ${view.rangeOpen
       ? renderModal(
-          `Range: Preflop, ${view.scenario.title}, ${POSITION_NAMES[view.scenario.position]}`,
+          `Range: Preflop, ${scenario.title}, ${POSITION_NAMES[scenario.position]}`,
           () =>
             view.dispatchEvent(
               new CustomEvent("close-details", { bubbles: true }),
             ),
-          renderRangeDetails(view),
+          renderRangeDetails(view, scenario, result),
         )
       : ""}`;
 }
 
+/** @param {Frequencies} values @param {LearnAction[]} actions */
 function rangeBackground(values, actions) {
   const fold = values[actions.indexOf("fold")] ?? 0;
   const call =
@@ -99,6 +118,7 @@ function rangeBackground(values, actions) {
   return `background: linear-gradient(to right, var(--color-error) ${fold}%, var(--color-success) ${fold}% ${fold + call}%, var(--color-accent) ${fold + call}%)`;
 }
 
+/** @param {import("../backend/learn-types.js").Percentage} frequency @param {LearnAction} action */
 function renderFrequency(frequency, action) {
   return html`<span class="learn-frequency">
     <i
@@ -110,6 +130,13 @@ function renderFrequency(frequency, action) {
   </span>`;
 }
 
+/**
+ * @param {string} label
+ * @param {Frequencies} frequencies
+ * @param {string} raiseTo Formatted display amount, including units.
+ * @param {boolean} [showTitle]
+ * @param {LearnAction[]} [actions]
+ */
 function renderStrategy(
   label,
   frequencies,
@@ -124,24 +151,29 @@ function renderStrategy(
         frequency > 0
           ? html`<li>
               <span class="pixel-label"
-                >${LEARN_ACTIONS[actions[index]].label}</span
+                >${LEARN_ACTIONS[/** @type {LearnAction} */ (actions[index])]
+                  .label}</span
               >
-              ${renderFrequency(frequency, actions[index])}
+              ${renderFrequency(
+                frequency,
+                /** @type {LearnAction} */ (actions[index]),
+              )}
             </li>`
           : "",
       )}
     </ul>
-    ${frequencies[actions.indexOf("raise")] > 0
+    ${(frequencies[actions.indexOf("raise")] ?? 0) > 0
       ? html`<p>Raise to ${raiseTo}</p>`
       : ""}
   </section>`;
 }
 
-function renderOpponentRange(view) {
-  const range = view.result.opponentRange;
+/** @param {Learn} view @param {LearnScenario} scenario @param {LearnEvaluation} result */
+function renderOpponentRange(view, scenario, result) {
+  const range = result.opponentRange;
   if (!range) return "";
   const raiseTo = formatAmount(
-    range.raiseTo * view.scenario.blinds.big,
+    range.raiseTo * scenario.blinds.big,
     view.displayBigBlind,
   );
   const maxProbability = Math.max(
@@ -181,21 +213,26 @@ function renderOpponentRange(view) {
   </section>`;
 }
 
+/** @param {HandClass} hand @param {OpponentRange} range @param {number} maxProbability */
 function renderOpponentHand(hand, range, maxProbability) {
-  const {
-    probability,
-    frequency,
-    combinations,
-    blockedCombinations,
-    openingFrequency,
-  } = range.hands[hand];
-  if (probability === 0) {
+  const entry =
+    /** @type {import("../backend/learn-types.js").OpponentHand} */ (
+      range.hands[hand]
+    );
+  if (entry.probability === 0) {
     return html`<span
       class="legend-unavailable"
       title=${`${hand}: Not in range`}
       >${hand}</span
     >`;
   }
+  const {
+    probability,
+    frequency,
+    combinations,
+    blockedCombinations,
+    openingFrequency,
+  } = entry;
   const percent = probability.toFixed(2);
   const likelihood =
     maxProbability > 0 ? (100 * probability) / maxProbability : 0;
@@ -209,15 +246,15 @@ function renderOpponentHand(hand, range, maxProbability) {
       @pointerenter=${showOpponentHand}
       @focus=${showOpponentHand}
       @click=${showOpponentHand}
-      @pointerleave=${(event) => {
-        if (!event.currentTarget.matches(":focus")) hideOpponentHand(event);
+      @pointerleave=${(/** @type {PointerEvent} */ event) => {
+        const button = /** @type {HTMLElement} */ (event.currentTarget);
+        if (!button.matches(":focus")) hideOpponentHand(event);
       }}
       @blur=${hideOpponentHand}
-      @keydown=${(event) => {
-        if (
-          event.key === "Escape" &&
-          event.currentTarget.nextElementSibling.matches(":popover-open")
-        ) {
+      @keydown=${(/** @type {KeyboardEvent} */ event) => {
+        const button = /** @type {HTMLElement} */ (event.currentTarget);
+        const tooltip = /** @type {HTMLElement} */ (button.nextElementSibling);
+        if (event.key === "Escape" && tooltip.matches(":popover-open")) {
           event.stopPropagation();
           event.preventDefault();
           hideOpponentHand(event);
@@ -254,9 +291,10 @@ function renderOpponentHand(hand, range, maxProbability) {
   </div>`;
 }
 
+/** @param {Event} event */
 function showOpponentHand(event) {
-  const button = event.currentTarget;
-  const tooltip = button.nextElementSibling;
+  const button = /** @type {HTMLElement} */ (event.currentTarget);
+  const tooltip = /** @type {HTMLElement} */ (button.nextElementSibling);
   tooltip.showPopover();
   const rect = button.getBoundingClientRect();
   const width = tooltip.offsetWidth;
@@ -266,8 +304,10 @@ function showOpponentHand(event) {
   tooltip.style.top = `${Math.max(8, Math.min(top, window.innerHeight - height - 8))}px`;
 }
 
+/** @param {Event} event */
 function hideOpponentHand(event) {
-  event.currentTarget.nextElementSibling.hidePopover();
+  const button = /** @type {HTMLElement} */ (event.currentTarget);
+  /** @type {HTMLElement} */ (button.nextElementSibling).hidePopover();
 }
 
 // Current reference: Modern Poker Theory, Michael Acevedo, chapter 5.
@@ -283,10 +323,12 @@ function hideOpponentHand(event) {
 // bet sizes may also be reasonable. See doc/learn.md for these source assumptions.
 // Keep provenance here and in doc/learn.md for verification, not in the UI:
 // future strategies may come from another source or our own solver.
-function renderRangeDetails(view) {
-  const result = view.result;
-  const actions = result.actions ?? DEFAULT_LEARN_ACTIONS;
-  const hero = view.scenario.seats.find((seat) => seat.isCurrentPlayer);
+/** @param {Learn} view @param {LearnScenario} scenario @param {LearnEvaluation} result */
+function renderRangeDetails(view, scenario, result) {
+  const actions = result.actions;
+  const hero = /** @type {import("../backend/learn-types.js").LearnSeat} */ (
+    scenario.seats.find((seat) => seat.isCurrentPlayer)
+  );
   return html` <div class="learn-range-details" tabindex="-1" autofocus>
     <div class="learn-range-legend" aria-label="Range legend">
       ${actions.map(
@@ -313,11 +355,16 @@ function renderRangeDetails(view) {
         return html`<span
           class=${!values
             ? "legend-unavailable"
-            : hand === view.scenario.hand
+            : hand === scenario.hand
               ? "selected"
               : ""}
           title=${values
-            ? `${hand}: ${actions.map((a, i) => `${LEARN_ACTIONS[a].label} ${values[i]}%`).join(", ")}`
+            ? `${hand}: ${actions
+                .map((action, i) => {
+                  const frequency = /** @type {number} */ (values[i]);
+                  return `${LEARN_ACTIONS[action].label} ${frequency}%`;
+                })
+                .join(", ")}`
             : `${hand}: Not in range`}
           style=${values ? rangeBackground(values, actions) : ""}
           >${hand}</span
@@ -329,7 +376,10 @@ function renderRangeDetails(view) {
         (action, i) =>
           html`<span class="learn-range-total"
             ><span class="pixel-label">${LEARN_ACTIONS[action].label}</span>
-            ${renderFrequency(result.rangeTotals[i], action)}</span
+            ${renderFrequency(
+              /** @type {number} */ (result.rangeTotals[i]),
+              action,
+            )}</span
           >`,
       )}
     </div>
@@ -353,10 +403,7 @@ function renderRangeDetails(view) {
     ${renderStrategy(
       "GTO strategy",
       result.expected,
-      formatAmount(
-        result.raiseTo * view.scenario.blinds.big,
-        view.displayBigBlind,
-      ),
+      formatAmount(result.raiseTo * scenario.blinds.big, view.displayBigBlind),
       false,
       actions,
     )}
@@ -364,7 +411,7 @@ function renderRangeDetails(view) {
       <li>
         <strong
           >${result.explanationTitle ??
-          POSITION_CHARACTERISTICS[view.scenario.position]}</strong
+          POSITION_CHARACTERISTICS[scenario.position]}</strong
         >
         <p>${result.explanation}</p>
       </li>
@@ -393,7 +440,7 @@ function renderRangeDetails(view) {
           </ul>
         </section>`
       : ""}
-    ${renderOpponentRange(view)}
+    ${renderOpponentRange(view, scenario, result)}
     <p class="learn-disclaimer">
       This range is a balanced starting point against opponents who play
       optimally. It aims to make your play hard to exploit, but adapting to an

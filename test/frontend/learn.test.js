@@ -23,6 +23,7 @@ describe("Learn strategy flow", () => {
         submissions.push(JSON.parse(options.body));
         return new Response(
           JSON.stringify({
+            actions: ["fold", "call", "raise"],
             expected: [0, 50, 50],
             grade: "correct",
             distributionMatch: true,

@@ -10,6 +10,16 @@ import { conditionLearnRange } from "./learn-opponent-range.js";
 import { HttpError } from "./http-error.js";
 import { learnSituation, LEARN_SITUATION_KEYS } from "./learn-situations.js";
 
+/**
+ * @typedef {import('./learn-types.js').HandClass} HandClass
+ * @typedef {import('./learn-types.js').LearnRange} LearnRange
+ * @typedef {import('./learn-types.js').RangeKey} RangeKey
+ * @typedef {import('./learn-types.js').SituationKey} SituationKey
+ * @typedef {import('./learn-types.js').LearnSituation} LearnSituation
+ * @typedef {import('./poker/deck.js').Card} Card
+ */
+
+/** @type {import('./learn-types.js').Position[]} */
 const POSITIONS = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
 // Keep the reference chart keys internally; use familiar table labels for learners.
 const POSITION_LABELS = {
@@ -20,23 +30,55 @@ const POSITION_LABELS = {
   SB: "SB",
   BB: "BB",
 };
-/** @type {Record<string, {page: number, chart: number, raiseTo: number, actions: string[], hands: Record<string, number[]>}>} */
-const ranges = LEARN_RANGES;
+// JSON imports widen action literals to string; narrow them at the data boundary.
+const ranges = /** @type {Record<RangeKey, LearnRange>} */ (
+  Object.fromEntries(
+    Object.entries(LEARN_RANGES).map(([key, range]) => {
+      const actions = range.actions.map((action) => {
+        if (
+          action === "fold" ||
+          action === "call" ||
+          action === "check" ||
+          action === "raise"
+        )
+          return action;
+        throw new Error(`Invalid learning action in ${key}: ${action}`);
+      });
+      const typedRange = /** @satisfies {LearnRange} */ ({ ...range, actions });
+      return [key, typedRange];
+    }),
+  )
+);
 
-/** Weight the displayed chart by combinations and the action that reached it. */
+/**
+ * Weight the displayed chart by combinations and the action that reached it.
+ * @param {LearnRange} range
+ * @param {LearnSituation} situation
+ * @returns {import('./learn-types.js').Frequencies}
+ */
 function rangeTotals(range, situation) {
   const previousRange =
     situation.opponent && situation.lastAction
-      ? /** @type {NonNullable<typeof ranges[string]>} */ (
-          ranges[situation.previousRangeKey ?? situation.position]
-        )
+      ? ranges[
+          situation.previousRangeKey ??
+            /** @type {RangeKey} */ (situation.position)
+        ]
       : undefined;
   const previousAction = previousRange
-    ? previousRange.actions.indexOf(situation.lastAction)
+    ? previousRange.actions.indexOf(
+        /** @type {import("./learn-types.js").LearnAction} */ (
+          situation.lastAction
+        ),
+      )
     : 0;
   const totals = range.actions.map((_, index) => ({ index, total: 0 }));
   let weightTotal = 0;
-  for (const [hand, frequencies] of Object.entries(range.hands)) {
+  for (const [
+    hand,
+    frequencies,
+  ] of /** @type {[HandClass, import("./learn-types.js").Frequencies][]} */ (
+    Object.entries(range.hands)
+  )) {
     const combinations = hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12;
     const weight =
       combinations *
@@ -47,7 +89,8 @@ function rangeTotals(range, situation) {
         : 100);
     weightTotal += weight;
     totals.forEach((action) => {
-      action.total += frequencies[action.index] * weight;
+      action.total +=
+        /** @type {number} */ (frequencies[action.index]) * weight;
     });
   }
   const percentages = totals.map(({ total }) => {
@@ -61,17 +104,25 @@ function rangeTotals(range, situation) {
   return percentages.map(({ rounded }) => rounded);
 }
 
+/** @returns {import("./learn-types.js").LearnScenario} */
 export function createLearnScenario() {
   const keys = LEARN_SITUATION_KEYS;
-  const key = /** @type {string} */ (keys[randomInt(keys.length)]);
+  const key = /** @type {SituationKey} */ (keys[randomInt(keys.length)]);
   const situation = learnSituation(key);
   const { position } = situation;
-  const range = /** @type {NonNullable<typeof ranges[string]>} */ (ranges[key]);
+  const range = ranges[key];
   const hands = Object.keys(range.hands);
-  const hand = /** @type {string} */ (hands[randomInt(hands.length)]);
+  const hand = /** @type {HandClass} */ (hands[randomInt(hands.length)]);
+  /** @type {import("./poker/deck.js").Suit[]} */
   const suits = ["s", "h", "d", "c"];
   const first = randomInt(4);
   const second = hand.endsWith("s") ? first : (first + 1 + randomInt(3)) % 4;
+  const firstSuit = /** @type {import("./poker/deck.js").Suit} */ (
+    suits[first]
+  );
+  const secondSuit = /** @type {import("./poker/deck.js").Suit} */ (
+    suits[second]
+  );
   const hero = POSITIONS.indexOf(position);
   return {
     id: `${key}-${hand}`,
@@ -114,8 +165,8 @@ export function createLearnScenario() {
         cards:
           i === hero
             ? [
-                hand.charAt(0) + suits.at(first),
-                hand.charAt(1) + suits.at(second),
+                /** @type {Card} */ (`${hand.charAt(0)}${firstSuit}`),
+                /** @type {Card} */ (`${hand.charAt(1)}${secondSuit}`),
               ]
             : folded
               ? []
@@ -125,6 +176,12 @@ export function createLearnScenario() {
   };
 }
 
+/**
+ * @param {import('./learn-types.js').Position} position
+ * @param {number} index
+ * @param {number} hero
+ * @param {LearnSituation} situation
+ */
 function hasFolded(position, index, hero, situation) {
   if (situation.opponentAction === "Open") {
     return index < hero && position !== situation.opponent;
@@ -139,18 +196,24 @@ function invalidStrategy() {
   throw new HttpError(400, "Invalid learning strategy");
 }
 
+/** @param {unknown} id */
 function parseScenario(id) {
   if (typeof id !== "string") {
     invalidStrategy();
   }
-  const [key = "", hand = "", extra] = id.split("-");
-  if (extra !== undefined || !LEARN_SITUATION_KEYS.includes(key)) {
+  const [rawKey = "", rawHand = "", extra] = id.split("-");
+  if (
+    extra !== undefined ||
+    !LEARN_SITUATION_KEYS.some((key) => key === rawKey)
+  ) {
     invalidStrategy();
   }
+  const key = /** @type {SituationKey} */ (rawKey);
   const range = ranges[key];
-  if (!range || !Object.hasOwn(range.hands, hand)) {
+  if (!Object.hasOwn(range.hands, rawHand)) {
     invalidStrategy();
   }
+  const hand = /** @type {HandClass} */ (rawHand);
   const expected = range.hands[hand];
   if (!expected) {
     invalidStrategy();
@@ -158,10 +221,16 @@ function parseScenario(id) {
   return { key, situation: learnSituation(key), hand, range, expected };
 }
 
+/** @param {unknown} n @returns {n is number} */
 function validFrequency(n) {
-  return Number.isInteger(n) && n >= 0 && n <= 100;
+  return typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 100;
 }
 
+/**
+ * @param {unknown} frequencies
+ * @param {number} count
+ * @returns {asserts frequencies is import('./learn-types.js').Frequencies}
+ */
 function validateFrequencies(frequencies, count) {
   if (
     !Array.isArray(frequencies) ||
@@ -175,32 +244,48 @@ function validateFrequencies(frequencies, count) {
   }
 }
 
-/** Validate the submitted strategy at the HTTP boundary, then grade its distribution. */
+/**
+ * @param {unknown} raiseTo
+ * @param {import('./learn-types.js').BigBlinds} minimum
+ * @returns {asserts raiseTo is import('./learn-types.js').BigBlinds}
+ */
+function validateRaiseTo(raiseTo, minimum) {
+  if (
+    typeof raiseTo !== "number" ||
+    !Number.isFinite(raiseTo) ||
+    raiseTo < minimum ||
+    raiseTo > 100
+  )
+    invalidStrategy();
+}
+
+/**
+ * Validate the submitted strategy at the HTTP boundary, then grade its distribution.
+ * @param {unknown} input
+ * @returns {import('./learn-types.js').LearnEvaluation}
+ */
 export function evaluateLearnStrategy(input) {
   if (!input || typeof input !== "object") {
     invalidStrategy();
   }
-  const { id, frequencies, raiseTo } = input;
+  const { id, frequencies, raiseTo } = /** @type {Record<string, unknown>} */ (
+    input
+  );
   const { key, situation, hand, range, expected } = parseScenario(id);
   validateFrequencies(frequencies, range.actions.length);
-  const raising = frequencies[range.actions.indexOf("raise")] > 0;
-  if (
-    raising &&
-    (!Number.isFinite(raiseTo) ||
-      raiseTo < situation.minRaiseTo ||
-      raiseTo > 100)
-  ) {
-    invalidStrategy();
-  }
+  const raising = (frequencies[range.actions.indexOf("raise")] ?? 0) > 0;
+  if (raising) validateRaiseTo(raiseTo, situation.minRaiseTo);
   const actionsMatch = expected.every(
-    (n, i) => (n < 10 || frequencies[i] > 0) && (n > 0 || frequencies[i] === 0),
+    (n, i) =>
+      (n < 10 || (frequencies[i] ?? 0) > 0) && (n > 0 || frequencies[i] === 0),
   );
   const frequencyMatch = expected.every(
-    (n, i) => Math.abs(n - frequencies[i]) <= 15,
+    (n, i) => Math.abs(n - /** @type {number} */ (frequencies[i])) <= 15,
   );
-  const sizingMatch = raising
-    ? Math.abs(raiseTo - range.raiseTo) < 0.01
-    : undefined;
+  const sizingDifference = raising
+    ? /** @type {number} */ (raiseTo) - range.raiseTo
+    : 0;
+  const sizingMatch = raising ? Math.abs(sizingDifference) < 0.01 : undefined;
   const distributionMatch = expected.every((n, i) => n === frequencies[i]);
   return {
     actions: range.actions,
@@ -211,7 +296,7 @@ export function evaluateLearnStrategy(input) {
       frequencyMatch,
       distributionMatch,
       sizingMatch,
-      raiseTo - range.raiseTo,
+      sizingDifference,
     ),
     actionsMatch,
     frequencyMatch,
@@ -226,7 +311,10 @@ export function evaluateLearnStrategy(input) {
     ),
     explanationTitle: situation.explanationTitle,
     explanation: explainLearnHand(hand, situation, expected, range.actions),
-    lessonNotes: LEARN_RANGE_NOTES[key],
+    lessonNotes:
+      /** @type {Partial<Record<RangeKey, import("./learn-types.js").LearnNote[]>>} */ (
+        LEARN_RANGE_NOTES
+      )[key],
     page: range.page,
     chart: range.chart,
     hands: range.hands,
@@ -235,13 +323,20 @@ export function evaluateLearnStrategy(input) {
   };
 }
 
+/**
+ * @param {LearnSituation} situation
+ * @param {HandClass} heroHand
+ * @returns {import('./learn-types.js').OpponentRange | undefined}
+ */
 function opponentRange(situation, heroHand) {
   if (!situation.opponent) return undefined;
   const facing = situation.lastAction === "call" ? "LIMP" : "OPEN";
   const key =
     situation.opponentRangeKey ??
-    `${situation.opponent}_VS_${situation.position}_${facing}`;
-  const range = /** @type {NonNullable<typeof ranges[string]>} */ (ranges[key]);
+    /** @type {RangeKey} */ (
+      `${situation.opponent}_VS_${situation.position}_${facing}`
+    );
+  const range = ranges[key];
   return {
     page: range.page,
     chart: range.chart,
@@ -262,12 +357,21 @@ function opponentRange(situation, heroHand) {
   };
 }
 
+/** @param {LearnSituation} situation @returns {LearnRange | undefined} */
 function opponentOpeningRange(situation) {
   if (situation.opponentAction === "4-bet" || situation.opponentPriorAction)
-    return ranges[situation.opponent];
+    return ranges[/** @type {RangeKey} */ (situation.opponent)];
   return undefined;
 }
 
+/**
+ * @param {boolean} actionsMatch
+ * @param {boolean} frequencyMatch
+ * @param {boolean} distributionMatch
+ * @param {boolean | undefined} sizingMatch
+ * @param {import('./learn-types.js').BigBlinds} sizingDifference
+ * @returns {import('./learn-types.js').StrategyGrade}
+ */
 function strategyGrade(
   actionsMatch,
   frequencyMatch,

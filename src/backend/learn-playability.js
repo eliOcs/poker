@@ -10,11 +10,12 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
 
 /**
  * Hand is a validated canonical class, for example T9s, AKo or 55.
- * @param {string} hand
- * @param {number} raiseTo
- * @param {ReturnType<import('./learn-situations.js').learnSituation>} [situation]
- * @param {number[]} [expected]
- * @param {string[]} [actions]
+ * @param {import("./learn-types.js").HandClass} hand
+ * @param {import("./learn-types.js").BigBlinds} raiseTo
+ * @param {import("./learn-types.js").LearnSituation} [situation]
+ * @param {import("./learn-types.js").Frequencies} [expected]
+ * @param {import("./learn-types.js").LearnAction[]} [actions]
+ * @returns {import("./learn-types.js").Playability}
  */
 export function describePlayability(
   hand,
@@ -51,14 +52,20 @@ export function describePlayability(
     situation: situationNotes(raiseTo, situation, [
       0,
       expected[actions.indexOf("call")] ?? 0,
-      expected[actions.indexOf("raise")],
+      /** @type {number} */ (expected[actions.indexOf("raise")]),
     ]),
   };
 }
 
+/**
+ * @param {import('./learn-types.js').BigBlinds} raiseTo
+ * @param {import('./learn-types.js').LearnSituation | undefined} situation
+ * @param {[number, number, number]} expected
+ * @returns {import('./learn-types.js').LearnNote[]}
+ */
 function situationNotes(raiseTo, situation, expected) {
   const notes = [];
-  const followup = Boolean(situation?.opponent);
+  const followup = situation?.opponent !== undefined;
   if (expected[1] > 0 && followup) notes.push(potOddsNote(situation));
   if (expected[2] > 0) {
     if (!followup)
@@ -81,6 +88,7 @@ function situationNotes(raiseTo, situation, expected) {
 
 // Modern Poker Theory, Pot Odds and Outs, PDF pages 37–38.
 // Include folded players' contributions when pricing the outstanding call.
+/** @param {import("./learn-types.js").LearnSituation} situation */
 function potOddsNote(situation) {
   const pot = situation.pot;
   const call = situation.currentBet - situation.heroBet;
@@ -91,6 +99,7 @@ function potOddsNote(situation) {
   };
 }
 
+/** @param {number} rank */
 function pairNotes(rank) {
   return [
     {
@@ -103,6 +112,7 @@ function pairNotes(rank) {
   ];
 }
 
+/** @param {number} count */
 function highCardNote(count) {
   if (count === 2)
     return {
@@ -120,6 +130,7 @@ function highCardNote(count) {
   };
 }
 
+/** @param {number} high @param {number} low @param {number} count */
 function connectionNote(high, low, count) {
   if (!count)
     return {

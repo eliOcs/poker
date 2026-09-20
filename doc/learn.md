@@ -248,6 +248,21 @@ No source PDF or chart bitmap is included in the application. The displayed grid
 
 Action feedback requires inclusion of reference actions used at least 10% of the time and excludes actions absent from the reference. Frequency feedback allows a 15-percentage-point difference per action. Tiny chart actions can therefore be omitted without failing action selection. Exact mixes with the recommended sizing are graded correct. Mixes within tolerance and raise sizes within 1 BB of the recommendation are graded close; other strategies are graded incorrect. The sizing allowance is a teaching tolerance, not an EV estimate. Card feedback computes high-card count (ten or higher), pocket pairs, suitedness, and the number of five-rank straight patterns containing both hole-card ranks. Aces count high or low, never wrapping. These are descriptive features, not equity estimates or solver rationales, and do not affect grading. The range modal describes the players left to act and the actions recommended for the specific hand. `learn-explanations.js` composes position context and fold/call/check/raise reasons using every positive recommended frequency, including small mixes. It does not use the learner’s submitted actions to select guidance. Pure folds get only folding guidance; pure calls omit raise guidance. `learn-playability.js` includes pot odds only for recommended follow-up calls and sizing only for recommended raises. Mixed hands include the relevant reasons and a reminder to mix over repeated decisions. The range data and grading are unchanged. Source: “Main Variables that Affect Pre-flop Hand Ranges,” PDF pages 163–167.
 
+## Domain types
+
+`src/backend/learn-types.js` defines the JSDoc contracts shared by the lesson
+backend and frontend. `HandClass` describes starting hands such as `AA`, `AKs`
+and `AKo` using the existing deck `Rank` type; dealt cards use `Card` and `Suit`.
+Actions, positions, situation/range keys and grades use literal unions. Situation
+objects distinguish first-in decisions from decisions with an opponent, and
+range maps are partial because later decisions omit unreachable hands.
+
+Lesson calculations and submitted raise sizes use `BigBlinds`; scenario bets,
+stacks and UI slider amounts use the existing `Cents` type. These number aliases
+document units; they are not nominal types. HTTP submissions enter as `unknown`
+and are narrowed by boundary validation. The frontend uses the same scenario,
+submission and evaluation contracts through its request methods and rendering.
+
 ## Validation
 
 Backend tests cover range totals, dealing, boundary validation and grading thresholds. Explanation tests check every hand in every range for action-specific guidance, conditional pot odds and sizing, all seven pure/mixed action combinations, and independence from the submitted answer. Focused examples check first-in folds, folding in and out of position, the SB limp discount, linear limp re-raises, calls at the actual price, and 4-bets that reduce a positional disadvantage. Range comparisons verify the positional patterns. Range-wide takeaway and opponent-note content is also checked on the backend. Component tests cover mixed and pure strategies, BB and currency sizing, and retrying failed evaluations. A real-server smoke test exercises /learn, submission, Details, the next hand and invalid requests. The [UI catalog](../test/ui-catalog/README.md) renders independent examples of distinct visual states on desktop and mobile: action controls, sizing, loading/errors, feedback grades, full/conditional/check ranges, explanation lists and opponent tooltips. Positions, hands, calculations and explanation wording do not get separate screenshot cases.

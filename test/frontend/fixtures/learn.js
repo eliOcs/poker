@@ -1,6 +1,7 @@
 export const learnScenario = {
   id: "SB-AA",
   position: "SB",
+  actions: ["fold", "call", "raise"],
   hand: "AA",
   title: "First In",
   history: "Everyone before you folded.",

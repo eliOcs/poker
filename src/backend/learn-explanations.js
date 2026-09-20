@@ -1,6 +1,7 @@
 import { BIG_BLIND_NOTES } from "./learn-big-blind.js";
 
 // Teaching heuristics for the recommended actions, not per-action EV estimates.
+/** @type {Partial<Record<import("./learn-types.js").Position, string>>} */
 const OPENING_CONTEXT = {
   LJ: "Five players still have a chance to enter the pot, and UTG+1, CO and BTN have position on you after the flop.",
   HJ: "Four players remain, and both the cutoff and button have position on you after the flop.",
@@ -11,6 +12,7 @@ const OPENING_CONTEXT = {
 
 // Modern Poker Theory, Cutoff through Small Blind, PDF pages 218–237.
 // Range-wide takeaways are separate from reasons for the current hand's actions.
+/** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").LearnNote[]>>} */
 export const LEARN_RANGE_NOTES = {
   ...BIG_BLIND_NOTES,
   SB_VS_LJ_OPEN: [
@@ -205,6 +207,7 @@ export const LEARN_RANGE_NOTES = {
 
 // Modern Poker Theory, Hijack through Small Blind, PDF pages 216–237.
 // These describe the opponent's strategy, not the learner's current action.
+/** @type {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").LearnNote[]>>} */
 export const OPPONENT_RANGE_NOTES = {
   BB_VS_LJ_OPEN: [
     ...BIG_BLIND_NOTES.BB_VS_LJ_OPEN,
@@ -287,6 +290,13 @@ export const OPPONENT_RANGE_NOTES = {
   ],
 };
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation} situation
+ * @param {import('./learn-types.js').Frequencies} expected
+ * @param {import('./learn-types.js').LearnAction[]} [actions]
+ * @returns {string}
+ */
 export function explainLearnHand(
   hand,
   situation,
@@ -296,7 +306,7 @@ export function explainLearnHand(
   const postflopOrder = ["SB", "BB", "LJ", "HJ", "CO", "BTN"];
   const inPosition =
     postflopOrder.indexOf(situation.position) >
-    postflopOrder.indexOf(situation.opponent);
+    postflopOrder.indexOf(situation.opponent ?? "");
   const context =
     situation.opponentAction === "Open"
       ? facingOpenContext(situation)
@@ -310,10 +320,13 @@ export function explainLearnHand(
     check: () =>
       "Checking costs nothing and guarantees a flop without risking a limp-reraise.",
   };
-  const recommended = actions.filter((_, i) => expected[i] > 0);
+  const recommended = actions.filter((_, i) => (expected[i] ?? 0) > 0);
   return [context, ...recommended.map((action) => reasons[action]())].join(" ");
 }
 
+/**
+ * @param {import('./learn-types.js').LearnSituation & {opponent: import('./learn-types.js').Position}} situation
+ */
 function facingOpenContext(situation) {
   if (situation.position === "BB")
     return `You are the last player to respond to ${situation.opponent}’s open. ${situation.opponent === "SB" ? "You have position on SB and act last after the flop." : "You are out of position and act first after the flop."}`;
@@ -326,6 +339,12 @@ function facingOpenContext(situation) {
     : "You have position on LJ, but CO, BTN and both blinds are still to act. CO or BTN would have position on you if they enter.";
 }
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation} situation
+ * @param {boolean} pure
+ * @param {boolean} inPosition
+ */
 function foldReason(hand, situation, pure, inPosition) {
   const decision = pure
     ? `${hand} stays outside the continuing range here.`
@@ -348,6 +367,11 @@ function foldReason(hand, situation, pure, inPosition) {
   return `${decision} ${pressure} Folding preserves your stack without investing more.`;
 }
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation} situation
+ * @param {boolean} inPosition
+ */
 function callReason(hand, situation, inPosition) {
   if (!situation.opponent) {
     return "Limping costs just another 0.5 BB, keeping the pot small when BB checks.";
@@ -367,6 +391,11 @@ function callReason(hand, situation, inPosition) {
   }`;
 }
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation} situation
+ * @param {boolean} inPosition
+ */
 function raiseReason(hand, situation, inPosition) {
   if (situation.opponentAction === "Limp")
     return "Raising to 3.5 BB puts pressure on SB’s limp. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
@@ -392,6 +421,10 @@ function raiseReason(hand, situation, inPosition) {
   } The 4-bet range contains both strong hands and selected bluffs, so raising alone does not mean a hand should continue against a shove.`;
 }
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation & {opponent: import('./learn-types.js').Position}} situation
+ */
 function openRaiseReason(hand, situation) {
   if (situation.position === "BB")
     return situation.opponent === "SB"
@@ -410,12 +443,16 @@ function openRaiseReason(hand, situation) {
     return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the players behind you. ${adjustment} This reference uses a 3-bet-or-fold strategy.`;
   }
   const coverage =
-    hand.length === 2 && "2345678".includes(hand[0])
+    hand.length === 2 && "2345678".includes(hand.charAt(0))
       ? " Occasional 3-bets with small pairs spread set potential across more flop textures and make opponents’ blockers less effective at narrowing your range."
       : "";
   return `3-betting to 8.5 BB puts pressure on LJ and the players behind you. HJ continues with only about 8% of starting hands in this reference, using a tight 3-bet-or-fold strategy.${coverage}`;
 }
 
+/**
+ * @param {string} decision
+ * @param {import('./learn-types.js').LearnSituation & {opponent: import('./learn-types.js').Position}} situation
+ */
 function openFoldReason(decision, situation) {
   if (situation.position === "BB")
     return `${decision} The 1 BB already posted is a discount, not a reason to defend every hand. This hand’s equity and postflop playability do not justify continuing at a higher frequency against ${situation.opponent}. Folding preserves your stack without investing more.`;
@@ -430,6 +467,12 @@ function openFoldReason(decision, situation) {
   return `${decision} ${pressure} Folding limits exposure to that pressure and preserves your stack without investing more.`;
 }
 
+/**
+ * @param {import('./learn-types.js').HandClass} hand
+ * @param {import('./learn-types.js').LearnSituation} situation
+ * @param {boolean} inPosition
+ * @param {import('./learn-types.js').BigBlinds} cost
+ */
 function fourBetCallReason(hand, situation, inPosition, cost) {
   const strength =
     hand === "AA"

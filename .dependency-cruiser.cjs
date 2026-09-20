@@ -37,7 +37,7 @@ module.exports = {
         pathNot: [
           "^src/backend/index\\.js$", // server entry point (nothing imports it)
           "^src/frontend/app\\.js$", // browser entry point (nothing imports it)
-          "^src/backend/poker/types\\.js$", // JSDoc-only type definitions
+          "^src/backend/(poker/types|learn-types)\\.js$", // JSDoc-only type definitions
           "^test/", // test runner is the implicit importer
         ],
       },

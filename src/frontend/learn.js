@@ -12,6 +12,13 @@ import { renderBetPresets } from "./bet-presets.js";
 
 import { DEFAULT_LEARN_ACTIONS, LEARN_ACTIONS } from "./learn-actions.js";
 
+/**
+ * @typedef {import('../backend/learn-types.js').LearnScenario} LearnScenario
+ * @typedef {import('../backend/learn-types.js').LearnEvaluation} LearnEvaluation
+ * @typedef {import('../backend/learn-types.js').LearnSubmission} LearnSubmission
+ * @typedef {import('../backend/poker/types.js').Cents} Cents
+ */
+
 export class Learn extends LitElement {
   static properties = {
     user: { type: Object },
@@ -27,14 +34,19 @@ export class Learn extends LitElement {
 
   constructor() {
     super();
+    /** @type {import("../backend/user.js").User | undefined} */
     this.user = undefined;
+    /** @type {LearnScenario | undefined} */
     this.scenario = undefined;
     this.rangeOpen = false;
+    /** @type {Cents} */
+    this.betAmount = 0;
     this.reset();
     this.busy = false;
     this.error = "";
   }
 
+  /** @returns {Cents | undefined} */
   get displayBigBlind() {
     return getDisplayBigBlind(
       this.user?.settings,
@@ -47,8 +59,11 @@ export class Learn extends LitElement {
     return this.scenario?.actions ?? DEFAULT_LEARN_ACTIONS;
   }
 
+  /** @returns {import("../backend/learn-types.js").BigBlinds} */
   get raiseTo() {
-    return this.betAmount / this.scenario.blinds.big;
+    return (
+      this.betAmount / /** @type {LearnScenario} */ (this.scenario).blinds.big
+    );
   }
 
   createRenderRoot() {
@@ -63,7 +78,22 @@ export class Learn extends LitElement {
     this._request?.abort();
   }
 
-  /** @param {string} path @param {object} [body] */
+  /**
+   * @overload
+   * @param {'scenario'} path
+   * @returns {Promise<LearnScenario>}
+   */
+  /**
+   * @overload
+   * @param {'evaluate'} path
+   * @param {LearnSubmission} body
+   * @returns {Promise<LearnEvaluation>}
+   */
+  /**
+   * @param {'scenario' | 'evaluate'} path
+   * @param {LearnSubmission} [body]
+   * @returns {Promise<LearnScenario | LearnEvaluation>}
+   */
   async request(path, body = undefined) {
     this._request?.abort();
     this._request = new AbortController();
@@ -100,9 +130,11 @@ export class Learn extends LitElement {
     this.frequencies = initialFrequencies(this.actions.length);
     this.betAmount = 0;
     this.sizing = false;
+    /** @type {LearnEvaluation | undefined} */
     this.result = undefined;
   }
 
+  /** @param {import("lit").PropertyValues<Learn>} changed */
   updated(changed) {
     if (changed.get("rangeOpen") === true && !this.rangeOpen) {
       /** @type {HTMLElement | null} */ (
@@ -117,7 +149,7 @@ export class Learn extends LitElement {
     this.error = "";
     try {
       this.result = await this.request("evaluate", {
-        id: this.scenario.id,
+        id: /** @type {LearnScenario} */ (this.scenario).id,
         frequencies: this.frequencies,
         raiseTo: this.raiseTo,
       });
@@ -128,7 +160,8 @@ export class Learn extends LitElement {
     }
   }
 
-  renderChoices() {
+  /** @param {LearnScenario} scenario */
+  renderChoices(scenario) {
     const raising = (this.frequencies[this.actions.indexOf("raise")] ?? 0) > 0;
     return html`<div class="learn-question">
         <h2>How would you play this hand?</h2>
@@ -149,7 +182,9 @@ export class Learn extends LitElement {
               .min=${0}
               .max=${100}
               .step=${5}
-              @value-changed=${(event) => {
+              @value-changed=${(
+                /** @type {CustomEvent<{value: number}>} */ event,
+              ) => {
                 this.frequencies = balanceFrequencies(
                   this.frequencies,
                   i,
@@ -163,7 +198,7 @@ export class Learn extends LitElement {
         class="button button--primary"
         @click=${() => {
           if (raising) {
-            this.betAmount = this.scenario.minRaiseTo;
+            this.betAmount = scenario.minRaiseTo;
             this.sizing = true;
           } else this.submit();
         }}
@@ -172,11 +207,15 @@ export class Learn extends LitElement {
       </button>`;
   }
 
-  renderSizing() {
-    const { small, big } = this.scenario.blinds;
-    const hero = this.scenario.seats.find((seat) => seat.isCurrentPlayer);
-    const min = this.scenario.minRaiseTo;
+  /** @param {LearnScenario} scenario */
+  renderSizing(scenario) {
+    const { small, big } = scenario.blinds;
+    const hero = /** @type {import("../backend/learn-types.js").LearnSeat} */ (
+      scenario.seats.find((seat) => seat.isCurrentPlayer)
+    );
+    const min = scenario.minRaiseTo;
     const max = hero.stack + hero.bet;
+    /** @param {Cents} amount */
     const setAmount = (amount) => {
       this.betAmount = amount;
     };
@@ -186,12 +225,9 @@ export class Learn extends LitElement {
           {
             phase: "preflop",
             bigBlind: big,
-            currentBet: this.scenario.currentBet,
+            currentBet: scenario.currentBet,
             myBet: hero.bet,
-            totalPot: this.scenario.seats.reduce(
-              (sum, seat) => sum + seat.bet,
-              0,
-            ),
+            totalPot: scenario.seats.reduce((sum, seat) => sum + seat.bet, 0),
           },
           min,
           max,
@@ -204,7 +240,9 @@ export class Learn extends LitElement {
           .min=${min}
           .max=${max}
           .step=${small}
-          @value-changed=${(event) => {
+          @value-changed=${(
+            /** @type {CustomEvent<{value: number}>} */ event,
+          ) => {
             setAmount(event.detail.value);
           }}
         ></phg-currency-slider>
@@ -215,16 +253,17 @@ export class Learn extends LitElement {
   }
 
   render() {
-    return html`${renderInfoBar(this.scenario, "learn")}
-      ${this.scenario
+    const scenario = this.scenario;
+    return html`${renderInfoBar(scenario, "learn")}
+      ${scenario
         ? html` <phg-table-layout>
             <div class="table-surface">
               <div id="seats" data-table-size="6">
-                ${this.scenario.seats.map(
+                ${scenario.seats.map(
                   (seat, i) =>
                     html` <phg-seat
                       data-seat=${i}
-                      data-slot=${visualSeat(i, this.scenario.seats)}
+                      data-slot=${visualSeat(i, scenario.seats)}
                       data-table-size="6"
                       .seat=${seat.isCurrentPlayer && this.user
                         ? {
@@ -258,14 +297,18 @@ export class Learn extends LitElement {
         ${this.error ? html`<p role="alert">${this.error}</p>` : ""}
         ${this.busy
           ? html`<p role="status">
-              ${this.scenario ? "One moment…" : "Dealing your first hand…"}
+              ${scenario ? "One moment…" : "Dealing your first hand…"}
             </p>`
           : this.result
-            ? renderLearnFeedback(this)
-            : this.scenario
+            ? renderLearnFeedback(
+                this,
+                /** @type {LearnScenario} */ (scenario),
+                this.result,
+              )
+            : scenario
               ? this.sizing
-                ? this.renderSizing()
-                : this.renderChoices()
+                ? this.renderSizing(scenario)
+                : this.renderChoices(scenario)
               : html`<button class="button" @click=${() => this.nextHand()}>
                   Try again
                 </button>`}

@@ -1,4 +1,5 @@
 // Modern Poker Theory, Big Blind, PDF pages 237–250. Bet amounts are totals in BB.
+/** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").SituationDefinition>>} */
 export const BIG_BLIND_SITUATIONS = {
   BB_VS_LJ_OPEN: {
     position: "BB",
@@ -173,6 +174,7 @@ export const BIG_BLIND_SITUATIONS = {
 };
 
 // Original paraphrases of the position guidance; chart approximations grade practice.
+/** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").LearnNote[]>>} */
 export const BIG_BLIND_NOTES = {
   BB_VS_LJ_OPEN: [
     {

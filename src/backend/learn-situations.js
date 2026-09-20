@@ -1,6 +1,7 @@
 import { BIG_BLIND_SITUATIONS } from "./learn-big-blind.js";
 
 // Bet amounts here are street totals in BB. Convert to cents at the view boundary.
+/** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").SituationDefinition>>} */
 const FOLLOWUPS = {
   ...BIG_BLIND_SITUATIONS,
   SB_VS_LJ_OPEN: {
@@ -466,28 +467,37 @@ const FOLLOWUPS = {
   },
 };
 
+/** @typedef {import("./learn-types.js").OpeningPosition | keyof typeof FOLLOWUPS} SituationKey */
+
 // Keep the playable situations explicit, independently of the range catalog.
+/** @type {SituationKey[]} */
 export const LEARN_SITUATION_KEYS = [
   "LJ",
   "HJ",
   "CO",
   "BTN",
   "SB",
-  ...Object.keys(FOLLOWUPS),
+  .../** @type {(keyof typeof FOLLOWUPS)[]} */ (Object.keys(FOLLOWUPS)),
 ];
 
+/**
+ * @param {SituationKey} key
+ * @returns {import('./learn-types.js').LearnSituation}
+ */
 export function learnSituation(key) {
-  const followup = FOLLOWUPS[key];
-  const situation = {
-    position: key,
+  const followup =
+    /** @type {Partial<Record<SituationKey, import('./learn-types.js').SituationDefinition>>} */ (
+      FOLLOWUPS
+    )[key];
+  const situation = followup ?? {
+    position: /** @type {import("./learn-types.js").OpeningPosition} */ (key),
     title: "First In",
     history: "Everyone before you folded.",
     heroBet: key === "SB" ? 0.5 : 0,
     currentBet: 1,
     minRaiseTo: 2,
-    ...followup,
   };
-  /** @type {Record<string, number>} */
+  /** @type {Partial<Record<import("./learn-types.js").Position, import("./learn-types.js").BigBlinds>>} */
   const bets = { SB: 0.5, BB: 1, [situation.position]: situation.heroBet };
   if (situation.opponent) bets[situation.opponent] = situation.currentBet;
   return {

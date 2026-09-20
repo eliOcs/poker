@@ -49,7 +49,7 @@ function getTournamentTimerCell(tournament) {
 }
 
 /**
- * @param {object} game - The game state object
+ * @param {object|undefined} game - The game state object
  * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
  * @param {number} [displayBigBlind]
