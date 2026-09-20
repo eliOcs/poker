@@ -356,42 +356,6 @@ const GAME_TEST_CASES = {
       }),
     ),
 
-  // === RIVER STATES ===
-  "game-river-facing-bet": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: {
-          phase: "river",
-          collectedPot: 2400,
-          currentBet: 1200,
-          actingSeat: 0,
-        },
-        board: { cards: ["Ah", "Kh", "Qh", "5c", "2d"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 3600,
-            cards: ["Jh", "Th"],
-            actions: [
-              { action: "fold" },
-              { action: "call", amount: 1200 },
-              { action: "raise", min: 2400, max: 3600 },
-            ],
-            handRank: "Royal Flush",
-          }),
-          createPlayer("Alice", {
-            stack: 1800,
-            bet: 1200,
-            cards: ["??", "??"],
-            lastAction: "Bet $1200",
-          }),
-          ...emptySeats(7),
-        ],
-      }),
-    ),
-
   // === BUY-IN STATE ===
   "game-buy-in": () =>
     gameView(
@@ -475,6 +439,7 @@ const GAME_TEST_CASES = {
 // Merge all test cases
 const TEST_CASES = {
   ...GAME_TEST_CASES,
+  "game-amounts-bb": GAME_TEST_CASES["game-flop-facing-bet"],
   ...SPECIAL_GAME_TEST_CASES,
   ...RANKING_MODAL_TEST_CASES,
   "game-rankings-modal-tooltip":

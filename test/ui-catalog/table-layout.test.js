@@ -396,27 +396,6 @@ test.describe("table clearance", () => {
     }
   });
 
-  test("visual rotation preserves seat actions and dealer identity", async ({
-    page,
-  }) => {
-    await openTable(page, "table-full-ring");
-    const hero = page.locator('phg-seat[data-slot="0"]');
-    await expect(hero).toHaveAttribute("data-seat", "4");
-    await expect(
-      page.locator('phg-seat[data-seat="8"] .dealer-button'),
-    ).toHaveText("D");
-    await page.locator("phg-game").evaluate((game) => {
-      game.addEventListener("game-action", (event) => {
-        game.dataset.sent = JSON.stringify(event.detail);
-      });
-    });
-    await page.getByRole("button", { name: "Fold", exact: true }).click();
-    await expect(page.locator("phg-game")).toHaveAttribute(
-      "data-sent",
-      /"action":"fold"/,
-    );
-  });
-
   test("chip collection coordinates remain aligned when the table is scaled", async ({
     page,
   }) => {

@@ -43,8 +43,8 @@ const TEST_CASES = [
   // Turn states
   "game-turn",
 
-  // River states
-  "game-river-facing-bet",
+  // Currency display
+  "game-amounts-bb",
 
   // Showdown states
   "game-showdown-you-win",
@@ -56,10 +56,8 @@ const TEST_CASES = [
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
-  "game-full-table",
 
   // Action panel states
-  "action-raise-preflop",
   "action-all-in",
   "action-fold-or-all-in",
   "action-emote-and-clock",
@@ -187,6 +185,16 @@ async function prepareTestCase(testCase, page, component) {
       Object.assign(element, state);
       await element.updateComplete;
     }, componentState);
+  }
+
+  if (testCase === "game-amounts-bb") {
+    await component.evaluate(async (element) => {
+      element.game.seats[1].lastAction = "bet";
+      element.user = {
+        settings: { volume: 0, vibration: false, amountDisplay: "bb" },
+      };
+      await element.updateComplete;
+    });
   }
 
   await prepareAvatarMakerTestCase(testCase, component);

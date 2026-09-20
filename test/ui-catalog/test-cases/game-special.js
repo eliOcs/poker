@@ -267,68 +267,6 @@ export const SPECIAL_GAME_TEST_CASES = {
         ],
       }),
     ),
-
-  "game-full-table": () =>
-    gameView(
-      createGame({
-        button: 0,
-        hand: {
-          phase: "river",
-          collectedPot: 275,
-          currentBet: 50,
-          actingSeat: 3,
-        },
-        board: { cards: ["Ah", "Kd", "7c", "3s", "Jh"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            stack: 4950,
-            bet: 50,
-            cards: ["9h", "9d"],
-            lastAction: "Call $50",
-            handRank: "Pair of Nines",
-            actions: [{ action: "emote" }, { action: "chat" }],
-          }),
-          createPlayer("Alice", {
-            stack: 2975,
-            bet: 25,
-            cards: ["??", "??"],
-            lastAction: "SB $25",
-          }),
-          createPlayer("Bob", {
-            stack: 2950,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "BB $50",
-          }),
-          createPlayer("Charlie", {
-            isActing: true,
-            stack: 3000,
-            cards: ["??", "??"],
-          }),
-          createPlayer("Diana", {
-            stack: 1500,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "Call $50",
-          }),
-          createPlayer("Eve", { sittingOut: true, stack: 2000, cards: [] }),
-          createPlayer("Frank", {
-            stack: 2200,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "Call $50",
-          }),
-          createPlayer("Grace", {
-            stack: 1800,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "Call $50",
-          }),
-          createPlayer("Henry", { folded: true, stack: 2500, cards: [] }),
-        ],
-      }),
-    ),
 };
 
 // === RANKING MODAL TEST CASES ===
@@ -521,5 +459,4 @@ export const SPECIAL_GAME_IDS = [
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
-  "game-full-table",
 ];

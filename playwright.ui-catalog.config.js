@@ -30,6 +30,7 @@ export default defineConfig({
     },
     {
       name: "mobile",
+      testIgnore: ["**/table-layout.test.js", "**/action-layout.test.js"],
       use: devices["Pixel 5"],
     },
   ],

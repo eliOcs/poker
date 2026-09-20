@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { TABLE_SIZE_IDS } from "./test-cases/table-size-ids.js";
 import { waitForAvatars } from "./visual-assets.js";
 
-// The mobile project owns landscape snapshots; both projects retain geometry tests.
+// The mobile project owns landscape snapshots; desktop owns explicit viewport geometry tests.
 for (const id of TABLE_SIZE_IDS) {
   test(`${id} landscape`, async ({ page }) => {
     await page.setViewportSize({ width: 844, height: 390 });

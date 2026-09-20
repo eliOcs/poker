@@ -13,47 +13,6 @@ import {
 } from "./game-helpers.js";
 
 export const ACTION_PANEL_TEST_CASES = {
-  // Raise action with preflop presets (Min/2.5BB/3BB/Max) when pot=0
-  "action-raise-preflop": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: {
-          phase: "preflop",
-          collectedPot: 0,
-          currentBet: 50,
-          actingSeat: 0,
-        },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            isActing: true,
-            stack: 4950,
-            cards: ["As", "Ks"],
-            actions: [
-              { action: "fold" },
-              { action: "call", amount: 50 },
-              { action: "raise", min: 100, max: 5000 },
-            ],
-            handRank: "A High",
-          }),
-          createPlayer("Alice", {
-            stack: 2975,
-            bet: 25,
-            cards: ["??", "??"],
-            lastAction: "SB $25",
-          }),
-          createPlayer("Bob", {
-            stack: 2950,
-            bet: 50,
-            cards: ["??", "??"],
-            lastAction: "BB $50",
-          }),
-          ...emptySeats(6),
-        ],
-      }),
-    ),
-
   // Raise where max equals current value — shows "All-In" button
   "action-all-in": () =>
     gameView(

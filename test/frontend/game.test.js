@@ -152,6 +152,30 @@ describe("phg-game", () => {
     });
   });
 
+  it("preserves the acting seat when the table rotates the hero to the bottom", async () => {
+    const game = createMockGameAtFlop();
+    const hero = game.seats.find((seat) => !seat.empty && seat.isCurrentPlayer);
+    hero.actions = [{ action: "fold" }];
+    game.seats = [...game.seats.slice(1), game.seats[0]];
+    game.button = 0;
+    game.hand.actingSeat = 5;
+    element.game = game;
+    await element.updateComplete;
+    const panel = element.querySelector("phg-action-panel");
+    await panel.updateComplete;
+    expect(
+      element
+        .querySelector('phg-seat[data-slot="0"]')
+        .getAttribute("data-seat"),
+    ).to.equal("5");
+    expect(element.querySelector('phg-seat[data-seat="0"]').isButton).to.equal(
+      true,
+    );
+    const action = oneEvent(element, "game-action");
+    findButtonByText(panel, "Fold").click();
+    expect((await action).detail).to.include({ action: "fold", seat: 5 });
+  });
+
   describe("settings", () => {
     it("shows homepage logo link as the first drawer item", async () => {
       element.game = createMockGameState();

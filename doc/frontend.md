@@ -204,9 +204,4 @@ npm run test:frontend   # Run frontend component tests
 
 ### UI Catalog
 
-Visual regression testing with Playwright screenshots. Test cases live in `test/ui-catalog/test-cases/` and snapshots are stored in Git LFS.
-
-```bash
-npm run test:ui-catalog          # Run visual regression tests
-npm run test:ui-catalog:update   # Regenerate snapshots after UI changes
-```
+The UI catalog verifies the appearance and layout of distinct UI elements and visual states. See [the UI catalog README](../test/ui-catalog/README.md) for coverage rules, fixture locations, Docker commands and baseline maintenance.

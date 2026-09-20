@@ -2,6 +2,8 @@
 
 A web-based Texas Hold'em poker game with real-time multiplayer support.
 
+Before adding or changing UI catalog tests or snapshot baselines, read [test/ui-catalog/README.md](test/ui-catalog/README.md) for coverage rules and the required workflow.
+
 ## Architecture
 
 ### Philosophy
@@ -377,15 +379,8 @@ Hand histories and tournament summaries are stored using open standard formats:
 
 **UI Catalog** (`test/ui-catalog/`):
 
-- Visual regression testing with Playwright screenshots
-- Snapshots are stored in Git LFS
-- For local checks on Linux and macOS, run `npm run test:ui-catalog:docker` so screenshots use the baseline environment regardless of host fonts and Fontconfig preferences. `npm run validate` and the pre-commit hook also use Docker for the UI catalog step; Docker must be running.
-- Generate shared baselines with `npm run test:ui-catalog:update:docker` after UI changes, then verify with `npm run test:ui-catalog:docker`. Docker must be running. The image uses Node 24 and Playwright 1.58.2 on Linux/amd64; keep `Dockerfile.ui-catalog` aligned with the installed Playwright version. The fixed architecture also applies on Apple Silicon.
-- Pass Playwright filters through npm, for example `npm run test:ui-catalog:update:docker -- --grep game-clock-called`. The update command preserves unrelated baselines; remove obsolete files explicitly when removing or renaming cases.
-- All UI catalog snapshots, including landscape screenshots, live in `test/ui-catalog/ui-catalog.test.js-snapshots/`. Docker mounts this directory and `test-results/` back to the host and runs as the host user, so generated PNGs and failure artifacts remain available without root-owned files. It does not mount host `node_modules`.
-- CI runs `npm run test:ui-catalog` directly on Ubuntu 24.04 with Node 24 and Chromium installed via `npx playwright install --with-deps chromium`; it does not build or run a Docker image. Keep this Ubuntu release aligned with the Playwright image in `Dockerfile.ui-catalog`. The image installs `fonts-dejavu-core` to match the runner's system fonts, which affect control text and fallback font metrics even with the bundled web font.
-- Native commands remain available for local debugging, but use Docker for shared baseline updates and comparisons. Locale is `en-US`, timezone is UTC, and screenshot comparisons have no allowed differing-pixel ratio.
-- Landscape screenshots run only in the mobile project; both projects retain the layout and action-transition checks. MTT snapshots deliberately scroll internal content to show scenario-specific controls and standings; retain the representative mobile header capture.
+- Use representative screenshots for distinct visual states. Keep interaction behavior in component/E2E tests and poker calculations or explanation content in backend tests.
+- Follow the coverage and baseline workflow in the UI catalog README linked above.
 
 ## Deployment
 
