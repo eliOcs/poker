@@ -7,7 +7,6 @@
 - https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
 - hand strength modal
 - delayed showed cards to end of the hand
-- always show player on same seat
 - setting to show amount of big blinds instead of cash
 - Poker club: invite members, members notified of events.
 - Seasons: allow grouping games into a seasson to get aggregate results
@@ -46,9 +45,6 @@
 
 # Not right now
 
-- Posicion en la mesa fija
-- once we start chargin set license to: https://osaasy.dev/
-- sb/bb indicators (more position information)
 - Store hand history as gzip
 - gzip dynamic backend responses
 - Send diffs instead of the full game state to reduce websocket traffic
