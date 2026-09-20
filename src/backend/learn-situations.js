@@ -1,5 +1,32 @@
 // Bet amounts here are street totals in BB. Convert to cents at the view boundary.
 const FOLLOWUPS = {
+  HJ_VS_LJ_OPEN: {
+    position: "HJ",
+    opponent: "LJ",
+    opponentAction: "Open",
+    opponentRangeKey: "LJ",
+    title: "HJ vs LJ Open",
+    history: "LJ raised to 2.5 BB. CO, BTN and both blinds are still to act.",
+    heroBet: 0,
+    currentBet: 2.5,
+    minRaiseTo: 4,
+    explanationTitle: "Facing an early-position open",
+  },
+  HJ_VS_LJ_4BET: {
+    position: "HJ",
+    opponent: "LJ",
+    opponentAction: "4-bet",
+    opponentRangeKey: "LJ_RAISE_HJ",
+    previousRangeKey: "HJ_VS_LJ_OPEN",
+    title: "HJ 3-bet vs LJ 4-bet",
+    history:
+      "LJ opened to 2.5 BB. You 3-bet to 8.5 BB; CO, BTN and both blinds folded. LJ 4-bet to 23 BB.",
+    heroBet: 8.5,
+    currentBet: 23,
+    minRaiseTo: 37.5,
+    lastAction: "raise",
+    explanationTitle: "In position vs LJ",
+  },
   SB_LIMP_BB: {
     position: "SB",
     opponent: "BB",

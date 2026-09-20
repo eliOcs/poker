@@ -48,7 +48,11 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       scenario.seats.map((seat) => seat.player.name.replace("You · ", "")),
       ["UTG", "UTG+1", "CO", "BTN", "SB", "BB"],
     );
-    assert.ok(scenario.seats.slice(0, hero).every((s) => s.folded));
+    assert.ok(
+      scenario.seats
+        .slice(0, hero)
+        .every((s) => s.folded || s.lastAction === "raise"),
+    );
     const cards = scenario.seats[hero].cards;
     assert.notEqual(cards[0], cards[1]);
     assert.equal(cards[0][1] === cards[1][1], scenario.hand.endsWith("s"));
@@ -58,6 +62,21 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.opponentRange, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
+      HJ_VS_LJ_OPEN: {
+        hero: 1,
+        opponent: 0,
+        bets: [1250, 0, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      HJ_VS_LJ_4BET: {
+        hero: 1,
+        opponent: 0,
+        bets: [11500, 4250, 0, 0, 250, 500],
+        min: 18750,
+        action: "raise",
+      },
       SB_LIMP_BB: {
         hero: 4,
         opponent: 5,
@@ -183,7 +202,8 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       assert.equal(scenario.seats[hero].lastAction, followup.action);
       assert.equal(scenario.seats[followup.opponent].lastAction, "raise");
       scenario.seats.forEach((seat, index) => {
-        const folded = index !== hero && index !== followup.opponent;
+        const folded =
+          !followup.pending && index !== hero && index !== followup.opponent;
         assert.equal(seat.folded, folded);
         if (folded) {
           assert.deepEqual(seat.cards, []);
@@ -201,11 +221,12 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 21);
+  assert.equal(seen.size, 23);
 });
 
 test("follow-up ranges reproduce conditional source totals and omit unreachable hands", () => {
   for (const [key, position, previousAction, totals, tolerance] of [
+    ["HJ_VS_LJ_4BET", "HJ_VS_LJ_OPEN", 2, [38.3, 43.3, 18.4], 1],
     ["SB_LIMP_BB", "SB", 1, [46.8, 39.8, 13.4], 0.4],
     ["SB_RAISE_BB", "SB", 2, [45.4, 37.4, 17.2], 0.4],
     ["BTN_RAISE_SB", "BTN", 2, [43.1, 48.9, 8.1], 0.4],
@@ -229,7 +250,11 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
     assert.equal(hands["72o"], undefined);
     assert.deepEqual(
       hands.AA,
-      key === "LJ_RAISE_BB" ? [0, 10, 90] : [0, 0, 100],
+      key === "HJ_VS_LJ_4BET"
+        ? [0, 50, 50]
+        : key === "LJ_RAISE_BB"
+          ? [0, 10, 90]
+          : [0, 0, 100],
     );
     const measured = [0, 0, 0];
     let weightTotal = 0;
@@ -259,6 +284,7 @@ test("follow-up ranges reproduce conditional source totals and omit unreachable 
 
 test("follow-ups grade their own ranges and sizes and explain the actual pot", () => {
   for (const [key, min, size, pot, call] of [
+    ["HJ_VS_LJ_4BET", 37.5, 100, 33, 14.5],
     ["SB_LIMP_BB", 6, 13, 4.5, 2.5],
     ["SB_RAISE_BB", 15, 24, 12, 6],
     ["BTN_RAISE_SB", 17.5, 23, 13.5, 7.5],
@@ -320,6 +346,8 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
 
 test("chart totals weight combinations and the preceding limp or raise, not grid cells", () => {
   for (const [key, totals] of [
+    ["HJ_VS_LJ_OPEN", [92, 0, 8]],
+    ["HJ_VS_LJ_4BET", [38, 43, 19]],
     ["LJ", [83, 0, 17]],
     ["BTN", [57, 0, 43]],
     ["SB", [38, 37, 25]],

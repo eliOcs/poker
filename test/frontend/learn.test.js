@@ -5,6 +5,7 @@ import {
   learnScenario as scenario,
   followupScenario,
   openFollowupScenario,
+  hijackScenario,
 } from "./fixtures/learn.js";
 
 describe("Learn strategy flow", () => {
@@ -260,7 +261,9 @@ describe("Learn strategy flow", () => {
     expect(info.matches(":popover-open")).to.equal(true);
     expect(info.textContent).to.include("75.00% probability");
     expect(info.textContent).to.include("4 available");
-    expect(info.textContent).to.include("3-bet frequency: 75%");
+    expect(info.textContent.replace(/\s+/g, " ")).to.include(
+      "3-bet frequency: 75%",
+    );
     expect(info.textContent).not.to.include("after removing your cards");
     mixed.dispatchEvent(new PointerEvent("pointerleave"));
     expect(info.matches(":popover-open")).to.equal(false);
@@ -299,6 +302,8 @@ describe("Learn strategy flow", () => {
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [
+    [hijackScenario(), 4, 5.75, 9, 8.5],
+    [hijackScenario(true), 37.5, 46.75, 70.5, 100],
     [followupScenario(), 6, 7, 10.5, 13],
     [followupScenario(true), 15, 18, 27, 24],
     [openFollowupScenario("BTN", "SB"), 17.5, 20.5, 31, 23],

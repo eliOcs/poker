@@ -35,6 +35,7 @@ test("follow-up feedback includes the opponent's preceding raising range", () =>
     SB_LIMP_BB: [249, 86, 40.6],
   };
   for (const key of LEARN_SITUATION_KEYS) {
+    if (key.startsWith("HJ_VS_LJ_")) continue;
     const { opponentRange } = evaluateLearnStrategy({
       id: `${key}-AA`,
       frequencies: [100, 0, 0],
@@ -113,8 +114,8 @@ test("shared strategies preserve all actions, including checks against a limp", 
 });
 
 test("opponent feedback selects only the action taken from the shared strategy", () => {
-  const facingRanges = Object.entries(ranges).filter(([key]) =>
-    key.includes("_VS_"),
+  const facingRanges = Object.entries(ranges).filter(
+    ([key]) => key.includes("_VS_") && !key.endsWith("_4BET"),
   );
   assert.equal(facingRanges.length, 16);
   for (const [key, range] of facingRanges) {
@@ -128,10 +129,11 @@ test("opponent feedback selects only the action taken from the shared strategy",
         frequencies[range.actions.indexOf("raise")],
       );
     }
-    assert.throws(
-      () =>
-        evaluateLearnStrategy({ id: `${key}-AA`, frequencies: [100, 0, 0] }),
-      /Invalid learning strategy/,
-    );
+    if (!LEARN_SITUATION_KEYS.includes(key))
+      assert.throws(
+        () =>
+          evaluateLearnStrategy({ id: `${key}-AA`, frequencies: [100, 0, 0] }),
+        /Invalid learning strategy/,
+      );
   }
 });

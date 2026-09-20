@@ -120,4 +120,15 @@ for situation, page, chart, published, raise_to in FACING_SOURCES:
     result[situation] = {'page': page, 'chart': chart, 'raiseTo': raise_to,
                          'actions': actions, 'hands': hands}
     print(situation, 'raise:', round(total, 2))
+# HJ's response after 3-betting LJ and facing a 4-bet.
+# White cells did not reach this decision. Weight totals by the earlier 3-bet.
+hands = extract_hands(218, followup=True)
+result['HJ_VS_LJ_4BET'] = {'page': 218, 'chart': 57, 'raiseTo': 100,
+                           'actions': ['fold', 'call', 'raise'], 'hands': hands}
+weights = {hand: (6 if len(hand) == 2 else 4 if hand.endswith('s') else 12) *
+           result['HJ_VS_LJ_OPEN']['hands'][hand][2] / 100 for hand in hands}
+totals = [sum(values[action] * weights[hand] for hand, values in hands.items()) /
+          sum(weights.values()) for action in range(3)]
+assert all(abs(actual - published) < 1 for actual, published in zip(totals, [38.3, 43.3, 18.4])), totals
+print('HJ_VS_LJ_4BET', 'fold/call/raise:', [round(value, 2) for value in totals])
 Path('src/backend/learn-ranges.json').write_text(json.dumps(result, indent=2)+'\n')

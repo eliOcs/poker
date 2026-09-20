@@ -255,7 +255,9 @@ for (const [name, scenario, min, raiseTo, odds, call = 0] of [
         .getByTitle("72o: Not in range", { exact: true }),
     ).toBeVisible();
     await expect(page).toHaveScreenshot(`${name}-range.png`);
-    const explanation = page.locator(".learn-card-factors").last();
+    const explanation = page
+      .locator(".learn-range-details > .learn-card-factors")
+      .last();
     await explanation.scrollIntoViewIfNeeded();
     const potOdds = page.getByText(/^Calling costs another/);
     await expect(potOdds).toHaveText(
@@ -272,6 +274,33 @@ for (const [name, scenario, min, raiseTo, odds, call = 0] of [
     await expect(page).toHaveScreenshot(`${name}-opponent-range.png`);
   });
 }
+
+test("learn Hijack opponent strategy notes", async ({ page }) => {
+  const scenario = openFollowupScenario("LJ", "HJ");
+  await page.route("**/api/learn/scenario", (route) =>
+    route.fulfill({ json: scenario }),
+  );
+  await page.route("**/api/learn/evaluate", (route) =>
+    route.fulfill({
+      json: evaluateLearnStrategy(route.request().postDataJSON()),
+    }),
+  );
+  await page.goto("/test.html?test=learn-preflop");
+  await waitForAvatars(page);
+  await page.getByRole("slider", { name: "Fold", exact: true }).focus();
+  await page.keyboard.press("End");
+  await page.getByRole("button", { name: "Check strategy" }).click();
+  await page.getByRole("button", { name: "Details", exact: true }).click();
+  const notes = page.locator(".learn-opponent-range .learn-card-factors");
+  await notes.scrollIntoViewIfNeeded();
+  await expect(notes).toContainText("There is no calling range.");
+  await expect(notes).toContainText("88 down to 22");
+  await expect(notes).toContainText("38.3% fold, 43.3% call and 18.4% shove");
+  await expect(notes).toContainText("HJ calls AA about half the time");
+  await expect(page).toHaveScreenshot("learn-lj-vs-hj-opponent-notes.png");
+  await notes.locator("li").last().scrollIntoViewIfNeeded();
+  await expect(notes.locator("li").last()).toBeInViewport({ ratio: 1 });
+});
 
 test("learn opponent hand probabilities", async ({ page, isMobile }) => {
   const scenario = openFollowupScenario("HJ", "CO");
@@ -384,7 +413,9 @@ for (const [name, scenario, hand, cards] of [
       .getByRole("button", { name: "Check strategy", exact: true })
       .click();
     await page.getByRole("button", { name: "Details", exact: true }).click();
-    const explanation = page.locator(".learn-card-factors").last();
+    const explanation = page
+      .locator(".learn-range-details > .learn-card-factors")
+      .last();
     await explanation.scrollIntoViewIfNeeded();
     await expect(explanation).not.toContainText(`${hand}:`);
     await expect(explanation.getByText(/BB re-raise total/)).toHaveCount(

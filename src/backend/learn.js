@@ -1,6 +1,9 @@
 import { randomInt } from "node:crypto";
 import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
-import { explainLearnHand } from "./learn-explanations.js";
+import {
+  explainLearnHand,
+  OPPONENT_RANGE_NOTES,
+} from "./learn-explanations.js";
 import { describePlayability } from "./learn-playability.js";
 import { conditionLearnRange } from "./learn-opponent-range.js";
 import { HttpError } from "./http-error.js";
@@ -21,11 +24,12 @@ const ranges = LEARN_RANGES;
 
 /** Weight the displayed chart by combinations and the action that reached it. */
 function rangeTotals(range, situation) {
-  const previousHands = situation.opponent
-    ? /** @type {NonNullable<typeof ranges[string]>} */ (
-        ranges[situation.position]
-      ).hands
-    : undefined;
+  const previousHands =
+    situation.opponent && situation.heroBet > 0
+      ? /** @type {NonNullable<typeof ranges[string]>} */ (
+          ranges[situation.previousRangeKey ?? situation.position]
+        ).hands
+      : undefined;
   const previousAction = situation.lastAction === "call" ? 1 : 2;
   const totals = [0, 1, 2].map((index) => ({ index, total: 0 }));
   let weightTotal = 0;
@@ -116,6 +120,9 @@ export function createLearnScenario() {
 }
 
 function hasFolded(position, index, hero, situation) {
+  if (situation.opponentAction === "Open") {
+    return index < hero && position !== situation.opponent;
+  }
   return situation.opponent
     ? position !== situation.position && position !== situation.opponent
     : index < hero;
@@ -215,15 +222,25 @@ export function evaluateLearnStrategy(input) {
 function opponentRange(situation, heroHand) {
   if (!situation.opponent) return undefined;
   const facing = situation.lastAction === "call" ? "LIMP" : "OPEN";
-  const key = `${situation.opponent}_VS_${situation.position}_${facing}`;
+  const key =
+    situation.opponentRangeKey ??
+    `${situation.opponent}_VS_${situation.position}_${facing}`;
   const range = /** @type {NonNullable<typeof ranges[string]>} */ (ranges[key]);
   return {
     page: range.page,
     chart: range.chart,
-    ...conditionLearnRange(range, "raise", heroHand),
+    ...conditionLearnRange(
+      range,
+      "raise",
+      heroHand,
+      situation.opponentAction === "4-bet"
+        ? ranges[situation.opponent]
+        : undefined,
+    ),
     position: situation.opponent,
-    action: facing === "LIMP" ? "Raise" : "3-bet",
+    action: situation.opponentAction ?? (facing === "LIMP" ? "Raise" : "3-bet"),
     raiseTo: range.raiseTo,
+    notes: OPPONENT_RANGE_NOTES[key],
   };
 }
 

@@ -85,3 +85,30 @@ test("an impossible action cannot produce opponent probabilities", () => {
     /Opponent action has no valid range weight/,
   );
 });
+
+test("a later raise is weighted by how often each hand opened", () => {
+  const opening = {
+    actions: ["fold", "raise"],
+    hands: { AA: [0, 100], A5s: [50, 50], "72o": [100, 0] },
+  };
+  const fourBet = {
+    actions: ["call", "raise"],
+    hands: { AA: [0, 100], A5s: [50, 50] },
+  };
+  const { hands, totalWeight } = conditionLearnRange(
+    fourBet,
+    "raise",
+    "KK",
+    opening,
+  );
+  assert.equal(totalWeight, 7);
+  assert.equal(hands.AA.probability, 600 / 7);
+  assert.equal(hands.A5s.probability, 100 / 7);
+  assert.equal(hands.A5s.frequency, 50);
+  assert.equal(hands.A5s.openingFrequency, 50);
+  assert.equal(hands["72o"].probability, 0);
+  const blocked = conditionLearnRange(fourBet, "raise", "AA", opening);
+  assert.equal(blocked.totalWeight, 1.5);
+  assert.equal(blocked.hands.AA.probability, 100 / 1.5);
+  assert.equal(blocked.hands.A5s.probability, 50 / 1.5);
+});

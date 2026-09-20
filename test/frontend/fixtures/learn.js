@@ -76,3 +76,39 @@ export function openFollowupScenario(position, opponent) {
     })),
   };
 }
+
+export function hijackScenario(facingFourBet = false) {
+  const bets = facingFourBet
+    ? [11500, 4250, 0, 0, 250, 500]
+    : [1250, 0, 0, 0, 250, 500];
+  return {
+    ...learnScenario,
+    id: `${facingFourBet ? "HJ_VS_LJ_4BET" : "HJ_VS_LJ_OPEN"}-AA`,
+    position: "HJ",
+    title: facingFourBet ? "HJ 3-bet vs LJ 4-bet" : "HJ vs LJ Open",
+    history: facingFourBet
+      ? "LJ opened to 2.5 BB. You 3-bet to 8.5 BB; CO, BTN and both blinds folded. LJ 4-bet to 23 BB."
+      : "LJ raised to 2.5 BB. CO, BTN and both blinds are still to act.",
+    currentBet: facingFourBet ? 11500 : 1250,
+    minRaiseTo: facingFourBet ? 18750 : 2000,
+    seats: learnScenario.seats.map((seat, i) => ({
+      ...seat,
+      player: { name: ["UTG", "You · UTG+1", "CO", "BTN", "SB", "BB"][i] },
+      bet: bets[i],
+      stack: 50000 - bets[i],
+      folded: facingFourBet && i > 1,
+      lastAction:
+        i === 0
+          ? "raise"
+          : facingFourBet
+            ? i === 1
+              ? "raise"
+              : "fold"
+            : undefined,
+      isCurrentPlayer: i === 1,
+      isActing: i === 1,
+      cards:
+        i === 1 ? ["As", "Ah"] : facingFourBet && i > 1 ? [] : ["??", "??"],
+    })),
+  };
+}

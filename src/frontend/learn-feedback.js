@@ -151,12 +151,28 @@ function renderOpponentRange(view) {
         renderOpponentHand(hand, range, maxProbability),
       )}
     </div>
+    ${range.notes?.length
+      ? html`<ul class="learn-card-factors">
+          ${range.notes.map(
+            (note) =>
+              html`<li>
+                <strong>${note.title}</strong>
+                <p>${note.text}</p>
+              </li>`,
+          )}
+        </ul>`
+      : ""}
   </section>`;
 }
 
 function renderOpponentHand(hand, range, maxProbability) {
-  const { probability, frequency, combinations, blockedCombinations } =
-    range.hands[hand];
+  const {
+    probability,
+    frequency,
+    combinations,
+    blockedCombinations,
+    openingFrequency,
+  } = range.hands[hand];
   if (probability === 0) {
     return html`<span
       class="legend-unavailable"
@@ -204,7 +220,14 @@ function renderOpponentHand(hand, range, maxProbability) {
           ? " after removing your cards"
           : ""}.
       </p>
-      <p>${range.action} frequency: ${frequency}%.</p>
+      ${openingFrequency !== undefined
+        ? html`<p>Open frequency: ${openingFrequency}%.</p>`
+        : ""}
+      <p>
+        ${range.action}
+        frequency${openingFrequency !== undefined ? " after opening" : ""}:
+        ${frequency}%.
+      </p>
     </div>
   </div>`;
 }
