@@ -109,6 +109,10 @@ for position, page, chart, _ in SOURCES:
 # Keep the complete strategies. Opponent views select an action at runtime.
 for situation, page, chart, published, raise_to in FACING_SOURCES:
     hands = extract_hands(page)
+    if situation == 'BTN_VS_HJ_OPEN':
+        # Page 227 explicitly gives 54s a 4% 3-bet. Its thin red strip
+        # disappears in pixel sampling; retain it at five-point precision.
+        hands['54s'] = [65, 30, 5]
     total = sum(values[2] * (6 if len(hand) == 2 else 4 if hand.endswith('s') else 12)
                 for hand, values in hands.items()) / 1326
     assert abs(total - published) < 1, (situation, total, published)
@@ -126,6 +130,9 @@ for key, page, chart, previous, published in [
     ('HJ_VS_LJ_4BET', 218, 57, 'HJ_VS_LJ_OPEN', [38.3, 43.3, 18.4]),
     ('CO_VS_LJ_4BET', 220, 59, 'CO_VS_LJ_OPEN', [37.4, 45.1, 17.5]),
     ('CO_VS_HJ_4BET', 222, 61, 'CO_VS_HJ_OPEN', [35.8, 48.2, 16.1]),
+    ('BTN_VS_LJ_4BET', 225, 63, 'BTN_VS_LJ_OPEN', [40.6, 40, 19.4]),
+    ('BTN_VS_HJ_4BET', 227, 65, 'BTN_VS_HJ_OPEN', [40, 41.6, 18.4]),
+    ('BTN_VS_CO_4BET', 229, 67, 'BTN_VS_CO_OPEN', [37.3, 45.2, 17.1]),
 ]:
     hands = extract_hands(page, followup=True)
     result[key] = {'page': page, 'chart': chart, 'raiseTo': 100,

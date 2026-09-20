@@ -38,6 +38,54 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.lessonNotes, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
+      BTN_VS_LJ_OPEN: {
+        hero: 3,
+        opponent: 0,
+        bets: [1250, 0, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      BTN_VS_LJ_4BET: {
+        hero: 3,
+        opponent: 0,
+        bets: [11500, 0, 0, 4250, 250, 500],
+        min: 18750,
+        action: "raise",
+        pending: false,
+      },
+      BTN_VS_HJ_OPEN: {
+        hero: 3,
+        opponent: 1,
+        bets: [0, 1250, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      BTN_VS_HJ_4BET: {
+        hero: 3,
+        opponent: 1,
+        bets: [0, 11500, 0, 4250, 250, 500],
+        min: 18750,
+        action: "raise",
+        pending: false,
+      },
+      BTN_VS_CO_OPEN: {
+        hero: 3,
+        opponent: 2,
+        bets: [0, 0, 1250, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+        pending: true,
+      },
+      BTN_VS_CO_4BET: {
+        hero: 3,
+        opponent: 2,
+        bets: [0, 0, 11500, 4250, 250, 500],
+        min: 18750,
+        action: "raise",
+        pending: false,
+      },
       CO_VS_LJ_OPEN: {
         hero: 2,
         opponent: 0,
@@ -231,5 +279,5 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 27);
+  assert.equal(seen.size, 33);
 });

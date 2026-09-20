@@ -1,9 +1,55 @@
 import { test, expect } from "@playwright/test";
-import { hijackScenario, cutoffScenario } from "../frontend/fixtures/learn.js";
+import {
+  hijackScenario,
+  cutoffScenario,
+  buttonScenario,
+} from "../frontend/fixtures/learn.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
 for (const [name, scenario, size, call, unavailable] of [
+  [
+    "learn-btn-vs-lj-open",
+    buttonScenario("LJ"),
+    8.5,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-btn-vs-hj-open",
+    buttonScenario("HJ"),
+    8.5,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-btn-vs-co-open",
+    buttonScenario("CO"),
+    8.5,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-btn-vs-lj-4bet",
+    buttonScenario("LJ", true),
+    100,
+    55,
+    "72o: Not in range",
+  ],
+  [
+    "learn-btn-vs-hj-4bet",
+    buttonScenario("HJ", true),
+    100,
+    65,
+    "72o: Not in range",
+  ],
+  [
+    "learn-btn-vs-co-4bet",
+    buttonScenario("CO", true),
+    100,
+    100,
+    "72o: Not in range",
+  ],
   [
     "learn-hj-vs-lj-open",
     hijackScenario(),
@@ -41,7 +87,9 @@ for (const [name, scenario, size, call, unavailable] of [
     "72o: Not in range",
   ],
 ]) {
-  test(`learn ${scenario.position === "CO" ? "Cutoff" : "Hijack"} practice ${scenario.title}`, async ({
+  const sizeStep = call < 100 ? enterRaiseSize : async () => {};
+
+  test(`learn ${{ CO: "Cutoff", HJ: "Hijack", BTN: "Button" }[scenario.position]} practice ${scenario.title}`, async ({
     page,
   }) => {
     await page.route("**/api/learn/scenario", (route) =>
@@ -59,16 +107,7 @@ for (const [name, scenario, size, call, unavailable] of [
     await page.keyboard.press("End");
     await page.getByRole("slider", { name: "Call", exact: true }).focus();
     for (let i = 0; i < call; i += 5) await page.keyboard.press("ArrowRight");
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-    const amount = page.getByRole("spinbutton", { name: "Raise to (BB)" });
-    await expect(amount).toHaveJSProperty(
-      "valueAsNumber",
-      scenario.minRaiseTo / 500,
-    );
-    await page.getByRole("button", { name: "Max", exact: true }).click();
-    await expect(amount).toHaveJSProperty("valueAsNumber", 100);
-    await amount.fill(String(size));
-    await expect(page).toHaveScreenshot(`${name}-sizing.png`);
+    await sizeStep(page, scenario, size, name);
     await page
       .getByRole("button", { name: "Check strategy", exact: true })
       .click();
@@ -100,22 +139,30 @@ for (const [name, scenario, size, call, unavailable] of [
   });
 }
 
-for (const [opponent, fourBet, takeaway] of [
-  ["LJ", false, "One fewer player, only a little wider"],
-  ["HJ", false, "A wider opener allows more 3-bets"],
-  ["LJ", true, "Strong hands do not all shove"],
-  ["HJ", true, "Wider 3-bets need a wider defense"],
+for (const [position, opponent, fourBet, takeaway, count] of [
+  ["CO", "LJ", false, "One fewer player, only a little wider", 2],
+  ["CO", "HJ", false, "A wider opener allows more 3-bets", 2],
+  ["CO", "LJ", true, "Strong hands do not all shove", 2],
+  ["CO", "HJ", true, "Wider 3-bets need a wider defense", 2],
+  ["BTN", "LJ", false, "Position makes room for calls", 3],
+  ["BTN", "HJ", false, "More 3-bets, slightly fewer calls", 2],
+  ["BTN", "CO", false, "Attack wider while trimming calls", 2],
+  ["BTN", "LJ", true, "Keep the shove range narrow", 2],
+  ["BTN", "HJ", true, "A pure call can still be a rare hand", 2],
+  ["BTN", "CO", true, "AA always calls against CO", 2],
 ]) {
   const stage = fourBet ? "4BET" : "OPEN";
+  const makeScenario = position === "BTN" ? buttonScenario : cutoffScenario;
+  const hero = position === "BTN" ? 3 : 2;
 
-  test(`learn Cutoff takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
+  test(`learn ${position === "BTN" ? "Button" : "Cutoff"} takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
     page,
   }) => {
-    const scenario = cutoffScenario(opponent, fourBet);
+    const scenario = makeScenario(opponent, fourBet);
     // Range-wide lessons also belong in feedback for a pure fold.
-    scenario.id = `CO_VS_${opponent}_${stage}-A9s`;
+    scenario.id = `${position}_VS_${opponent}_${stage}-A9s`;
     scenario.hand = "A9s";
-    scenario.seats[2].cards = ["As", "9s"];
+    scenario.seats[hero].cards = ["As", "9s"];
     await page.route("**/api/learn/scenario", (route) =>
       route.fulfill({ json: scenario }),
     );
@@ -135,11 +182,24 @@ for (const [opponent, fourBet, takeaway] of [
     const notes = page.getByRole("region", { name: "Strategy takeaways" });
     await notes.scrollIntoViewIfNeeded();
     await expect(notes).toContainText(takeaway);
-    await expect(notes.locator("li")).toHaveCount(2);
+    await expect(notes.locator("li")).toHaveCount(count);
     await expect(page).toHaveScreenshot(
-      `learn-co-vs-${opponent.toLowerCase()}-${stage.toLowerCase()}-takeaways.png`,
+      `learn-${position.toLowerCase()}-vs-${opponent.toLowerCase()}-${stage.toLowerCase()}-takeaways.png`,
     );
     await notes.locator("li").last().scrollIntoViewIfNeeded();
     await expect(notes.locator("li").last()).toBeInViewport({ ratio: 1 });
   });
+}
+
+async function enterRaiseSize(page, scenario, size, name) {
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  const amount = page.getByRole("spinbutton", { name: "Raise to (BB)" });
+  await expect(amount).toHaveJSProperty(
+    "valueAsNumber",
+    scenario.minRaiseTo / 500,
+  );
+  await page.getByRole("button", { name: "Max", exact: true }).click();
+  await expect(amount).toHaveJSProperty("valueAsNumber", 100);
+  await amount.fill(String(size));
+  await expect(page).toHaveScreenshot(`${name}-sizing.png`);
 }

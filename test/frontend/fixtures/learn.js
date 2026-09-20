@@ -85,6 +85,10 @@ export function cutoffScenario(opponent, facingFourBet = false) {
   return earlyPositionScenario("CO", opponent, facingFourBet);
 }
 
+export function buttonScenario(opponent, facingFourBet = false) {
+  return earlyPositionScenario("BTN", opponent, facingFourBet);
+}
+
 function earlyPositionScenario(position, opponent, facingFourBet) {
   const positions = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
   const hero = positions.indexOf(position);
@@ -95,12 +99,18 @@ function earlyPositionScenario(position, opponent, facingFourBet) {
   const bets = [0, 0, 0, 0, 250, 500];
   bets[hero] = amounts.heroBet;
   bets[villain] = amounts.currentBet;
-  const behind =
-    position === "HJ" ? "CO, BTN and both blinds" : "BTN and both blinds";
+  const behind = {
+    HJ: "CO, BTN and both blinds",
+    CO: "BTN and both blinds",
+    BTN: "Both blinds",
+  }[position];
   const opening = {
     HJ_LJ: "LJ raised to 2.5 BB.",
     CO_LJ: "LJ raised to 2.5 BB and HJ folded.",
     CO_HJ: "LJ folded and HJ raised to 2.5 BB.",
+    BTN_LJ: "LJ raised to 2.5 BB; HJ and CO folded.",
+    BTN_HJ: "LJ folded, HJ raised to 2.5 BB and CO folded.",
+    BTN_CO: "LJ and HJ folded, then CO raised to 2.5 BB.",
   }[`${position}_${opponent}`];
   return {
     ...learnScenario,
