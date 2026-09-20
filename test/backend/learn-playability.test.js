@@ -78,6 +78,7 @@ test("situation guidance follows every hand's recommended actions, regardless of
   const coveredMixes = new Set();
   for (const key of LEARN_SITUATION_KEYS) {
     const range = ranges[key];
+    if (range.actions.includes("check")) continue;
     for (const [hand, expected] of Object.entries(range.hands)) {
       const id = `${key}-${hand}`;
       const result = evaluateLearnStrategy({ id, frequencies: [100, 0, 0] });

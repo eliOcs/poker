@@ -11,14 +11,14 @@ const ranges = JSON.parse(
 
 test("deals first-in and follow-up decisions with consistent bets and no answer exposed", () => {
   const seen = new Set();
-  for (let i = 0; i < 800; i++) {
+  for (let i = 0; i < 1000; i++) {
     const scenario = createLearnScenario();
     const key = scenario.id.split("-")[0];
     seen.add(key);
     assert.ok(Object.hasOwn(ranges[key].hands, scenario.hand));
     assert.equal(scenario.seats.length, 6);
     const hero = scenario.seats.findIndex((s) => s.isCurrentPlayer);
-    assert.ok(hero >= 0 && hero < 5);
+    assert.ok(hero >= 0 && hero < 6);
     assert.deepEqual(
       scenario.seats.map((seat) => seat.player.name.replace("You · ", "")),
       ["UTG", "UTG+1", "CO", "BTN", "SB", "BB"],
@@ -26,7 +26,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.ok(
       scenario.seats
         .slice(0, hero)
-        .every((s) => s.folded || s.lastAction === "raise"),
+        .every((s) => s.folded || ["raise", "call"].includes(s.lastAction)),
     );
     const cards = scenario.seats[hero].cards;
     assert.notEqual(cards[0], cards[1]);
@@ -38,6 +38,90 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.equal(scenario.lessonNotes, undefined);
     assert.equal(scenario.raiseTo, undefined);
     const followup = {
+      BB_VS_LJ_OPEN: {
+        hero: 5,
+        opponent: 0,
+        bets: [1250.0, 0, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+      },
+      BB_VS_LJ_4BET: {
+        hero: 5,
+        opponent: 0,
+        bets: [11500, 0, 0, 0, 250, 5000],
+        min: 18000,
+        action: "raise",
+      },
+      BB_VS_HJ_OPEN: {
+        hero: 5,
+        opponent: 1,
+        bets: [0, 1250.0, 0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+      },
+      BB_VS_HJ_4BET: {
+        hero: 5,
+        opponent: 1,
+        bets: [0, 11500, 0, 0, 250, 5000],
+        min: 18000,
+        action: "raise",
+      },
+      BB_VS_CO_OPEN: {
+        hero: 5,
+        opponent: 2,
+        bets: [0, 0, 1250.0, 0, 250, 500],
+        min: 2000,
+        action: undefined,
+      },
+      BB_VS_CO_4BET: {
+        hero: 5,
+        opponent: 2,
+        bets: [0, 0, 11500, 0, 250, 5000],
+        min: 18000,
+        action: "raise",
+      },
+      BB_VS_BTN_OPEN: {
+        hero: 5,
+        opponent: 3,
+        bets: [0, 0, 0, 1250.0, 250, 500],
+        min: 2000,
+        action: undefined,
+      },
+      BB_VS_BTN_4BET: {
+        hero: 5,
+        opponent: 3,
+        bets: [0, 0, 0, 11500, 250, 5000],
+        min: 18000,
+        action: "raise",
+      },
+      BB_VS_SB_OPEN: {
+        hero: 5,
+        opponent: 4,
+        bets: [0, 0, 0, 0, 1500, 500],
+        min: 2500,
+        action: undefined,
+      },
+      BB_VS_SB_4BET: {
+        hero: 5,
+        opponent: 4,
+        bets: [0, 0, 0, 0, 12000, 4500],
+        min: 19500,
+        action: "raise",
+      },
+      BB_VS_SB_LIMP: {
+        hero: 5,
+        opponent: 4,
+        bets: [0, 0, 0, 0, 500, 500],
+        min: 1000,
+        action: undefined,
+      },
+      BB_VS_SB_LIMP_RAISE: {
+        hero: 5,
+        opponent: 4,
+        bets: [0, 0, 0, 0, 6500, 1750],
+        min: 11250,
+        action: "raise",
+      },
       SB_VS_LJ_OPEN: {
         hero: 4,
         opponent: 0,
@@ -312,7 +396,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     }[key];
     if (followup) {
       assert.equal(hero, followup.hero);
-      assert.match(scenario.history, /3-bet|raised/i);
+      assert.match(scenario.history, /3-bet|raised|opened|called/i);
       assert.deepEqual(
         scenario.seats.map((s) => s.bet),
         followup.bets,
@@ -320,7 +404,10 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       assert.equal(scenario.currentBet, followup.bets[followup.opponent]);
       assert.equal(scenario.minRaiseTo, followup.min);
       assert.equal(scenario.seats[hero].lastAction, followup.action);
-      assert.equal(scenario.seats[followup.opponent].lastAction, "raise");
+      assert.equal(
+        scenario.seats[followup.opponent].lastAction,
+        key === "BB_VS_SB_LIMP" ? "call" : "raise",
+      );
       scenario.seats.forEach((seat, index) => {
         const folded =
           index !== hero &&
@@ -343,5 +430,5 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
       300000,
     );
   }
-  assert.equal(seen.size, 41);
+  assert.equal(seen.size, 53);
 });

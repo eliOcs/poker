@@ -1,3 +1,5 @@
+import { BIG_BLIND_NOTES } from "./learn-big-blind.js";
+
 // Teaching heuristics for the recommended actions, not per-action EV estimates.
 const OPENING_CONTEXT = {
   LJ: "Five players still have a chance to enter the pot, and UTG+1, CO and BTN have position on you after the flop.",
@@ -10,6 +12,7 @@ const OPENING_CONTEXT = {
 // Modern Poker Theory, Cutoff through Small Blind, PDF pages 218–237.
 // Range-wide takeaways are separate from reasons for the current hand's actions.
 export const LEARN_RANGE_NOTES = {
+  ...BIG_BLIND_NOTES,
   SB_VS_LJ_OPEN: [
     {
       title: "The blind discount does not justify a call",
@@ -203,6 +206,31 @@ export const LEARN_RANGE_NOTES = {
 // Modern Poker Theory, Hijack through Small Blind, PDF pages 216–237.
 // These describe the opponent's strategy, not the learner's current action.
 export const OPPONENT_RANGE_NOTES = {
+  BB_VS_LJ_OPEN: [
+    ...BIG_BLIND_NOTES.BB_VS_LJ_OPEN,
+    ...BIG_BLIND_NOTES.BB_VS_LJ_4BET,
+  ],
+  BB_VS_HJ_OPEN: [
+    ...BIG_BLIND_NOTES.BB_VS_HJ_OPEN,
+    ...BIG_BLIND_NOTES.BB_VS_HJ_4BET,
+  ],
+  BB_VS_CO_OPEN: [
+    ...BIG_BLIND_NOTES.BB_VS_CO_OPEN,
+    ...BIG_BLIND_NOTES.BB_VS_CO_4BET,
+  ],
+  BB_VS_BTN_OPEN: [
+    ...BIG_BLIND_NOTES.BB_VS_BTN_OPEN,
+    ...BIG_BLIND_NOTES.BB_VS_BTN_4BET,
+  ],
+  BB_VS_SB_OPEN: [
+    ...BIG_BLIND_NOTES.BB_VS_SB_OPEN,
+    ...BIG_BLIND_NOTES.BB_VS_SB_4BET,
+  ],
+  BB_VS_SB_LIMP: [
+    ...BIG_BLIND_NOTES.BB_VS_SB_LIMP,
+    ...BIG_BLIND_NOTES.BB_VS_SB_LIMP_RAISE,
+  ],
+
   SB_VS_LJ_OPEN: [
     ...LEARN_RANGE_NOTES.SB_VS_LJ_OPEN,
     ...LEARN_RANGE_NOTES.SB_VS_LJ_4BET,
@@ -259,7 +287,12 @@ export const OPPONENT_RANGE_NOTES = {
   ],
 };
 
-export function explainLearnHand(hand, situation, expected) {
+export function explainLearnHand(
+  hand,
+  situation,
+  expected,
+  actions = ["fold", "call", "raise"],
+) {
   const postflopOrder = ["SB", "BB", "LJ", "HJ", "CO", "BTN"];
   const inPosition =
     postflopOrder.indexOf(situation.position) >
@@ -270,19 +303,24 @@ export function explainLearnHand(hand, situation, expected) {
       : situation.opponent
         ? `You are ${inPosition ? "in" : "out of"} position against ${situation.opponent} and act ${inPosition ? "last" : "first"} after the flop.`
         : OPENING_CONTEXT[situation.position];
-  const reasons = [
-    () => foldReason(hand, situation, expected[0] === 100, inPosition),
-    () => callReason(hand, situation, inPosition),
-    () => raiseReason(hand, situation, inPosition),
-  ];
-  const actions = ["Fold", "Call", "Raise"];
+  const reasons = {
+    fold: () => foldReason(hand, situation, expected[0] === 100, inPosition),
+    call: () => callReason(hand, situation, inPosition),
+    raise: () => raiseReason(hand, situation, inPosition),
+    check: () =>
+      "Checking costs nothing and closes the preflop action. You keep this hand’s equity and see a flop in position against SB without building a larger pot.",
+  };
   const recommended = actions.flatMap((action, i) =>
-    expected[i] > 0 ? [`${action} ${expected[i]}%`] : [],
+    expected[i] > 0
+      ? [`${action.charAt(0).toUpperCase() + action.slice(1)} ${expected[i]}%`]
+      : [],
   );
   return [
     `${recommended.join(", ")}.`,
     context,
-    ...reasons.flatMap((reason, i) => (expected[i] > 0 ? [reason()] : [])),
+    ...actions.flatMap((action, i) =>
+      expected[i] > 0 ? [reasons[action]()] : [],
+    ),
     ...(recommended.length > 1
       ? [
           "Mix these actions over repeated decisions with this hand; the frequencies describe how often to use each one.",
@@ -292,6 +330,8 @@ export function explainLearnHand(hand, situation, expected) {
 }
 
 function facingOpenContext(situation) {
+  if (situation.position === "BB")
+    return `You close the preflop action against ${situation.opponent}. ${situation.opponent === "SB" ? "You have position on SB and act last after the flop." : "You are out of position and act first after the flop."}`;
   if (situation.position === "SB")
     return `You are out of position against ${situation.opponent}. BB is still to act, and you will act first after the flop against either opponent.`;
   if (situation.position === "BTN")
@@ -328,6 +368,8 @@ function callReason(hand, situation, inPosition) {
     return "Limping costs just another 0.5 BB. The discount lets this hand see a flop cheaply when BB checks, while keeping the pot small out of position.";
   }
   const cost = situation.currentBet - situation.heroBet;
+  if (situation.position === "BB" && situation.opponentAction === "Open")
+    return `Calling the extra ${cost} BB closes the preflop action: no player remains behind to squeeze. ${inPosition ? "Position helps you realize equity against SB while keeping medium-strength hands in a smaller pot." : "The blind discount makes more hands worth defending, but acting first postflop still makes equity harder to realize."}`;
   if (situation.opponentAction === "Open") {
     return `Calling the extra ${cost} BB uses BTN’s guaranteed postflop position without building a 3-bet pot. The calling range balances playable hands with strong hands that protect it. Both blinds can still squeeze, so calling does not guarantee a cheap flop.`;
   }
@@ -341,6 +383,10 @@ function callReason(hand, situation, inPosition) {
 }
 
 function raiseReason(hand, situation, inPosition) {
+  if (situation.opponentAction === "Limp")
+    return "Raising to 3.5 BB puts pressure on SB’s limp while keeping position after the flop. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
+  if (situation.opponentAction === "Limp-reraise")
+    return "4-betting to 28 BB pressures SB’s strong limp-reraising range while retaining position. Only a narrow portion of the prior raising range takes this line, mixing strong hands with selected ace and king blockers. This raise leaves chips for later decisions; it is not an all-in.";
   if (situation.opponentAction === "Open")
     return openRaiseReason(hand, situation);
   if (situation.opponentAction === "4-bet") {
@@ -362,6 +408,10 @@ function raiseReason(hand, situation, inPosition) {
 }
 
 function openRaiseReason(hand, situation) {
+  if (situation.position === "BB")
+    return situation.opponent === "SB"
+      ? "3-betting to 9 BB uses position to apply pressure to SB. The polarized range combines strong hands with selected blocker and board-coverage bluffs, while many medium-strength hands take a flop instead."
+      : `3-betting to 10 BB pressures ${situation.opponent} while building a pot out of position. ${situation.opponent === "BTN" ? "Against BTN’s wider opening range, the reference uses a more linear range built around strong hands." : "Suitedness, connectivity and useful blockers help selected hands handle the stronger opening range."}`;
   if (situation.position === "SB")
     return `3-betting to 10 BB puts pressure on ${situation.opponent} and BB. This reference uses 3-bet or fold from SB: the larger size compensates for playing out of position and discourages BB from entering. The range widens against later openers, following each hand’s recommended frequency.`;
   if (situation.position === "BTN") {
@@ -382,6 +432,8 @@ function openRaiseReason(hand, situation) {
 }
 
 function openFoldReason(decision, situation) {
+  if (situation.position === "BB")
+    return `${decision} The 1 BB already posted is a discount, not a reason to defend every hand. This hand’s equity and postflop playability do not justify continuing at a higher frequency against ${situation.opponent}. Folding preserves your stack without investing more.`;
   if (situation.position === "SB")
     return `${decision} The 0.5 BB already posted is only a discount on entry. Acting first postflop and facing an active BB make it harder to realize this hand’s equity. Folding preserves your stack without investing more.`;
   if (situation.position === "BTN")

@@ -115,7 +115,10 @@ test("shared strategies preserve all actions, including checks against a limp", 
 
 test("opponent feedback selects only the action taken from the shared strategy", () => {
   const facingRanges = Object.entries(ranges).filter(
-    ([key]) => key.includes("_VS_") && !key.endsWith("_4BET"),
+    ([key]) =>
+      key.includes("_VS_") &&
+      !key.endsWith("_4BET") &&
+      !key.endsWith("_LIMP_RAISE"),
   );
   assert.equal(facingRanges.length, 16);
   for (const [key, range] of facingRanges) {

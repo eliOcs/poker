@@ -1,3 +1,4 @@
+import { bigBlindScenario } from "../frontend/fixtures/learn-big-blind.js";
 import { test, expect } from "@playwright/test";
 import {
   hijackScenario,
@@ -9,6 +10,83 @@ import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { waitForAvatars } from "./visual-assets.js";
 
 for (const [name, scenario, size, call, unavailable] of [
+  [
+    "learn-bb-vs-lj-open",
+    bigBlindScenario("LJ"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-bb-vs-lj-4bet",
+    bigBlindScenario("LJ", "4BET"),
+    100,
+    35,
+    "72o: Not in range",
+  ],
+  [
+    "learn-bb-vs-hj-open",
+    bigBlindScenario("HJ"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-bb-vs-hj-4bet",
+    bigBlindScenario("HJ", "4BET"),
+    100,
+    25,
+    "72o: Not in range",
+  ],
+  [
+    "learn-bb-vs-co-open",
+    bigBlindScenario("CO"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-bb-vs-co-4bet",
+    bigBlindScenario("CO", "4BET"),
+    100,
+    50,
+    "72o: Not in range",
+  ],
+  [
+    "learn-bb-vs-btn-open",
+    bigBlindScenario("BTN"),
+    10,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-bb-vs-btn-4bet",
+    bigBlindScenario("BTN", "4BET"),
+    100,
+    90,
+    "72o: Not in range",
+  ],
+  [
+    "learn-bb-vs-sb-open",
+    bigBlindScenario("SB"),
+    9,
+    0,
+    "72o: Fold 100%, Call 0%, Raise 0%",
+  ],
+  [
+    "learn-bb-vs-sb-4bet",
+    bigBlindScenario("SB", "4BET"),
+    100,
+    100,
+    "72o: Not in range",
+  ],
+  [
+    "learn-bb-vs-sb-limp-raise",
+    bigBlindScenario("SB", "LIMP_RAISE"),
+    28,
+    50,
+    "72o: Not in range",
+  ],
   [
     "learn-sb-vs-lj-open",
     smallBlindScenario("LJ"),
@@ -146,7 +224,7 @@ for (const [name, scenario, size, call, unavailable] of [
 ]) {
   const sizeStep = call < 100 ? enterRaiseSize : async () => {};
 
-  test(`learn ${{ CO: "Cutoff", HJ: "Hijack", BTN: "Button", SB: "Small Blind" }[scenario.position]} practice ${scenario.title}`, async ({
+  test(`learn ${{ CO: "Cutoff", HJ: "Hijack", BTN: "Button", SB: "Small Blind", BB: "Big Blind" }[scenario.position]} practice ${scenario.title}`, async ({
     page,
   }) => {
     await page.route("**/api/learn/scenario", (route) =>
@@ -197,6 +275,16 @@ for (const [name, scenario, size, call, unavailable] of [
 }
 
 for (const [position, opponent, fourBet, takeaway, count] of [
+  ["BB", "LJ", false, "Playability can beat a higher card", 2],
+  ["BB", "LJ", true, "Keep premiums in both calls and shoves", 2],
+  ["BB", "HJ", false, "Widen a little from LJ to HJ", 2],
+  ["BB", "HJ", true, "Do not overgeneralize small solver quirks", 2],
+  ["BB", "CO", false, "Weak offsuit hands still struggle", 2],
+  ["BB", "CO", true, "More polarized 4-bets invite more calls", 2],
+  ["BB", "BTN", false, "Build a more linear 3-bet range", 2],
+  ["BB", "BTN", true, "Defend mainly by calling", 2],
+  ["BB", "SB", false, "Position changes the range structure", 2],
+  ["BB", "SB", true, "Slowplay strong hands in position", 2],
   ["SB", "LJ", false, "The blind discount does not justify a call", 2],
   ["SB", "HJ", false, "Widen against the wider opener", 2],
   ["SB", "CO", false, "Add another layer of 3-bets", 2],
@@ -218,14 +306,16 @@ for (const [position, opponent, fourBet, takeaway, count] of [
 ]) {
   const stage = fourBet ? "4BET" : "OPEN";
   const makeScenario = {
+    BB: (opponent, fourBet) =>
+      bigBlindScenario(opponent, fourBet ? "4BET" : "OPEN"),
     SB: smallBlindScenario,
     BTN: buttonScenario,
     CO: cutoffScenario,
   }[position];
-  const hero = { SB: 4, BTN: 3, CO: 2 }[position];
-  const hand = position === "SB" ? "KTs" : "A9s";
+  const hero = { BB: 5, SB: 4, BTN: 3, CO: 2 }[position];
+  const hand = ["SB", "BB"].includes(position) ? "KTs" : "A9s";
 
-  test(`learn ${{ SB: "Small Blind", BTN: "Button", CO: "Cutoff" }[position]} takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
+  test(`learn ${{ BB: "Big Blind", SB: "Small Blind", BTN: "Button", CO: "Cutoff" }[position]} takeaways vs ${opponent} ${fourBet ? "4-bet" : "open"}`, async ({
     page,
   }) => {
     const scenario = makeScenario(opponent, fourBet);

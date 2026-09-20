@@ -4,7 +4,7 @@ import { ICONS } from "./icons.js";
 import { formatAmount } from "./currency.js";
 import "./card.js";
 
-const ACTIONS = ["Fold", "Call", "Raise"];
+import { DEFAULT_LEARN_ACTIONS, LEARN_ACTIONS } from "./learn-actions.js";
 const POSITION_NAMES = {
   LJ: "Under the Gun (UTG)",
   HJ: "Under the Gun +1 (UTG+1)",
@@ -30,6 +30,7 @@ const HAND_ORDER = RANKS.flatMap((rank, row) =>
 
 export function renderLearnFeedback(view) {
   const result = view.result;
+  const actions = result.actions ?? DEFAULT_LEARN_ACTIONS;
   const comparing = !result.distributionMatch || result.sizingMatch === false;
   const labels = { correct: "Correct", close: "Close", incorrect: "Incorrect" };
   const icons = {
@@ -51,12 +52,15 @@ export function renderLearnFeedback(view) {
           view.displayBigBlind,
         ),
         comparing,
+        actions,
       )}
       ${comparing
         ? renderStrategy(
             "Your strategy",
             view.frequencies,
             formatAmount(view.betAmount, view.displayBigBlind),
+            true,
+            actions,
           )
         : ""}
     </div>
@@ -88,15 +92,17 @@ export function renderLearnFeedback(view) {
       : ""}`;
 }
 
-function rangeBackground(values) {
-  const [fold = 0, call = 0] = values;
+function rangeBackground(values, actions) {
+  const fold = values[actions.indexOf("fold")] ?? 0;
+  const call =
+    values[actions.indexOf("call")] ?? values[actions.indexOf("check")] ?? 0;
   return `background: linear-gradient(to right, var(--color-error) ${fold}%, var(--color-success) ${fold}% ${fold + call}%, var(--color-accent) ${fold + call}%)`;
 }
 
-function renderFrequency(frequency, index) {
+function renderFrequency(frequency, action) {
   return html`<span class="learn-frequency">
     <i
-      class=${["legend-fold", "legend-call", "legend-raise"][index]}
+      class=${`legend-${LEARN_ACTIONS[action].legend}`}
       style=${`width: ${frequency}%`}
       aria-hidden="true"
     ></i>
@@ -104,20 +110,30 @@ function renderFrequency(frequency, index) {
   </span>`;
 }
 
-function renderStrategy(label, frequencies, raiseTo, showTitle = true) {
+function renderStrategy(
+  label,
+  frequencies,
+  raiseTo,
+  showTitle = true,
+  actions = DEFAULT_LEARN_ACTIONS,
+) {
   return html`<section class="learn-strategy" aria-label=${label}>
     ${showTitle ? html`<h3>${label}</h3>` : ""}
     <ul class="learn-strategy-actions">
       ${frequencies.map((frequency, index) =>
         frequency > 0
           ? html`<li>
-              <span class="pixel-label">${ACTIONS[index]}</span>
-              ${renderFrequency(frequency, index)}
+              <span class="pixel-label"
+                >${LEARN_ACTIONS[actions[index]].label}</span
+              >
+              ${renderFrequency(frequency, actions[index])}
             </li>`
           : "",
       )}
     </ul>
-    ${frequencies[2] > 0 ? html`<p>Raise to ${raiseTo}</p>` : ""}
+    ${frequencies[actions.indexOf("raise")] > 0
+      ? html`<p>Raise to ${raiseTo}</p>`
+      : ""}
   </section>`;
 }
 
@@ -221,11 +237,17 @@ function renderOpponentHand(hand, range, maxProbability) {
           : ""}.
       </p>
       ${openingFrequency !== undefined
-        ? html`<p>Open frequency: ${openingFrequency}%.</p>`
+        ? html`<p>
+            ${range.openingAction ?? "Open"} frequency: ${openingFrequency}%.
+          </p>`
         : ""}
       <p>
         ${range.action}
-        frequency${openingFrequency !== undefined ? " after opening" : ""}:
+        frequency${openingFrequency !== undefined
+          ? range.openingAction === "Limp"
+            ? " after limping"
+            : " after opening"
+          : ""}:
         ${frequency}%.
       </p>
     </div>
@@ -263,12 +285,20 @@ function hideOpponentHand(event) {
 // future strategies may come from another source or our own solver.
 function renderRangeDetails(view) {
   const result = view.result;
+  const actions = result.actions ?? DEFAULT_LEARN_ACTIONS;
   const hero = view.scenario.seats.find((seat) => seat.isCurrentPlayer);
   return html` <div class="learn-range-details" tabindex="-1" autofocus>
     <div class="learn-range-legend" aria-label="Range legend">
-      <span><i class="legend-fold" aria-hidden="true"></i>Fold</span>
-      <span><i class="legend-call" aria-hidden="true"></i>Call</span>
-      <span><i class="legend-raise" aria-hidden="true"></i>Raise</span>
+      ${actions.map(
+        (action) =>
+          html`<span
+            ><i
+              class=${`legend-${LEARN_ACTIONS[action].legend}`}
+              aria-hidden="true"
+            ></i
+            >${LEARN_ACTIONS[action].label}</span
+          >`,
+      )}
       <span><i class="legend-selected" aria-hidden="true"></i>Your hand</span>
       ${Object.keys(result.hands).length < 169
         ? html`<span
@@ -287,21 +317,19 @@ function renderRangeDetails(view) {
               ? "selected"
               : ""}
           title=${values
-            ? `${hand}: ${ACTIONS.map((a, i) => `${a} ${values[i]}%`).join(", ")}`
+            ? `${hand}: ${actions.map((a, i) => `${LEARN_ACTIONS[a].label} ${values[i]}%`).join(", ")}`
             : `${hand}: Not in range`}
-          style=${values ? rangeBackground(values) : ""}
+          style=${values ? rangeBackground(values, actions) : ""}
           >${hand}</span
         >`;
       })}
     </div>
     <div class="learn-range-totals" role="group" aria-label="Range totals">
-      ${ACTIONS.map(
+      ${actions.map(
         (action, i) =>
           html`<span class="learn-range-total"
-            ><span class="pixel-label">${action}</span> ${renderFrequency(
-              result.rangeTotals[i],
-              i,
-            )}</span
+            ><span class="pixel-label">${LEARN_ACTIONS[action].label}</span>
+            ${renderFrequency(result.rangeTotals[i], action)}</span
           >`,
       )}
     </div>
@@ -330,6 +358,7 @@ function renderRangeDetails(view) {
         view.displayBigBlind,
       ),
       false,
+      actions,
     )}
     <ul class="learn-card-factors">
       <li>

@@ -25,22 +25,24 @@ const ranges = LEARN_RANGES;
 
 /** Weight the displayed chart by combinations and the action that reached it. */
 function rangeTotals(range, situation) {
-  const previousHands =
+  const previousRange =
     situation.opponent && situation.lastAction
       ? /** @type {NonNullable<typeof ranges[string]>} */ (
           ranges[situation.previousRangeKey ?? situation.position]
-        ).hands
+        )
       : undefined;
-  const previousAction = situation.lastAction === "call" ? 1 : 2;
-  const totals = [0, 1, 2].map((index) => ({ index, total: 0 }));
+  const previousAction = previousRange
+    ? previousRange.actions.indexOf(situation.lastAction)
+    : 0;
+  const totals = range.actions.map((_, index) => ({ index, total: 0 }));
   let weightTotal = 0;
   for (const [hand, frequencies] of Object.entries(range.hands)) {
     const combinations = hand.length === 2 ? 6 : hand.endsWith("s") ? 4 : 12;
     const weight =
       combinations *
-      (previousHands
+      (previousRange
         ? /** @type {number} */ (
-            /** @type {number[]} */ (previousHands[hand])[previousAction]
+            /** @type {number[]} */ (previousRange.hands[hand])[previousAction]
           )
         : 100);
     weightTotal += weight;
@@ -74,6 +76,7 @@ export function createLearnScenario() {
   return {
     id: `${key}-${hand}`,
     position,
+    actions: range.actions,
     hand,
     title: situation.title,
     history:
@@ -102,7 +105,9 @@ export function createLearnScenario() {
           : i === hero
             ? situation.lastAction
             : name === situation.opponent
-              ? "raise"
+              ? situation.opponentAction === "Limp"
+                ? "call"
+                : "raise"
               : undefined,
         stack: 50000 - bet,
         bet,
@@ -157,10 +162,10 @@ function validFrequency(n) {
   return Number.isInteger(n) && n >= 0 && n <= 100;
 }
 
-function validateFrequencies(frequencies) {
+function validateFrequencies(frequencies, count) {
   if (
     !Array.isArray(frequencies) ||
-    frequencies.length !== 3 ||
+    frequencies.length !== count ||
     !frequencies.every(validFrequency)
   ) {
     invalidStrategy();
@@ -177,9 +182,10 @@ export function evaluateLearnStrategy(input) {
   }
   const { id, frequencies, raiseTo } = input;
   const { key, situation, hand, range, expected } = parseScenario(id);
-  validateFrequencies(frequencies);
+  validateFrequencies(frequencies, range.actions.length);
+  const raising = frequencies[range.actions.indexOf("raise")] > 0;
   if (
-    frequencies[2] > 0 &&
+    raising &&
     (!Number.isFinite(raiseTo) ||
       raiseTo < situation.minRaiseTo ||
       raiseTo > 100)
@@ -192,10 +198,12 @@ export function evaluateLearnStrategy(input) {
   const frequencyMatch = expected.every(
     (n, i) => Math.abs(n - frequencies[i]) <= 15,
   );
-  const sizingMatch =
-    frequencies[2] > 0 ? Math.abs(raiseTo - range.raiseTo) < 0.01 : undefined;
+  const sizingMatch = raising
+    ? Math.abs(raiseTo - range.raiseTo) < 0.01
+    : undefined;
   const distributionMatch = expected.every((n, i) => n === frequencies[i]);
   return {
+    actions: range.actions,
     expected,
     distributionMatch,
     grade: strategyGrade(
@@ -209,9 +217,15 @@ export function evaluateLearnStrategy(input) {
     frequencyMatch,
     sizingMatch,
     raiseTo: range.raiseTo,
-    playability: describePlayability(hand, range.raiseTo, situation, expected),
+    playability: describePlayability(
+      hand,
+      range.raiseTo,
+      situation,
+      expected,
+      range.actions,
+    ),
     explanationTitle: situation.explanationTitle,
-    explanation: explainLearnHand(hand, situation, expected),
+    explanation: explainLearnHand(hand, situation, expected, range.actions),
     lessonNotes: LEARN_RANGE_NOTES[key],
     page: range.page,
     chart: range.chart,
@@ -233,17 +247,25 @@ function opponentRange(situation, heroHand) {
     chart: range.chart,
     ...conditionLearnRange(
       range,
-      "raise",
+      situation.opponentRangeAction ?? "raise",
       heroHand,
-      situation.opponentAction === "4-bet"
-        ? ranges[situation.opponent]
-        : undefined,
+      opponentOpeningRange(situation),
+      situation.opponentPriorAction ?? "raise",
     ),
     position: situation.opponent,
     action: situation.opponentAction ?? (facing === "LIMP" ? "Raise" : "3-bet"),
-    raiseTo: range.raiseTo,
+    raiseTo: situation.currentBet,
+    ...(situation.opponentPriorAction === "call"
+      ? { openingAction: "Limp" }
+      : {}),
     notes: OPPONENT_RANGE_NOTES[key],
   };
+}
+
+function opponentOpeningRange(situation) {
+  if (situation.opponentAction === "4-bet" || situation.opponentPriorAction)
+    return ranges[situation.opponent];
+  return undefined;
 }
 
 function strategyGrade(

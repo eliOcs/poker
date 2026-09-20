@@ -14,12 +14,14 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
  * @param {number} raiseTo
  * @param {ReturnType<import('./learn-situations.js').learnSituation>} [situation]
  * @param {number[]} [expected]
+ * @param {string[]} [actions]
  */
 export function describePlayability(
   hand,
   raiseTo,
   situation = undefined,
   expected = [0, 0, 0],
+  actions = ["fold", "call", "raise"],
 ) {
   const high = RANKS.indexOf(hand.charAt(0)) + 2;
   const low = RANKS.indexOf(hand.charAt(1)) + 2;
@@ -46,7 +48,11 @@ export function describePlayability(
           },
           connectionNote(high, low, straightPatterns),
         ],
-    situation: situationNotes(raiseTo, situation, expected),
+    situation: situationNotes(raiseTo, situation, [
+      0,
+      expected[actions.indexOf("call")] ?? 0,
+      expected[actions.indexOf("raise")],
+    ]),
   };
 }
 
@@ -64,7 +70,7 @@ function situationNotes(raiseTo, situation, expected) {
       title: `${raiseTo} BB ${followup ? "re-raise total" : "opening size"}`,
       text:
         situation?.opponentAction === "4-bet"
-          ? `This 5-bet is all-in: 100 BB total, including the ${situation.heroBet} BB already committed. You put in your remaining ${100 - situation.heroBet} BB. The reference assumes ${situation.opponent}’s 23 BB 4-bet and 100 BB starting stacks.`
+          ? `This 5-bet is all-in: 100 BB total, including the ${situation.heroBet} BB already committed. You put in your remaining ${100 - situation.heroBet} BB. The reference assumes ${situation.opponent}’s ${situation.currentBet} BB 4-bet and 100 BB starting stacks.`
           : followup
             ? "This is the total bet, including chips you already committed. The reference range assumes this sizing and the preceding bets; different sizes change the decision."
             : "A larger raise risks more chips to win the same pot. The weakest opening hands are especially sensitive to that price.",

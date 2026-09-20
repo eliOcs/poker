@@ -10,8 +10,7 @@ import { renderTooltip } from "./tooltip.js";
 import { renderInfoBar } from "./game-info-bar.js";
 import { renderBetPresets } from "./bet-presets.js";
 
-const ACTIONS = ["Fold", "Call", "Raise"];
-const ACTION_STYLES = ["danger", "success", "action"];
+import { DEFAULT_LEARN_ACTIONS, LEARN_ACTIONS } from "./learn-actions.js";
 
 export class Learn extends LitElement {
   static properties = {
@@ -42,6 +41,10 @@ export class Learn extends LitElement {
       this.scenario?.blinds.big,
       true,
     );
+  }
+
+  get actions() {
+    return this.scenario?.actions ?? DEFAULT_LEARN_ACTIONS;
   }
 
   get raiseTo() {
@@ -94,7 +97,7 @@ export class Learn extends LitElement {
   }
 
   reset() {
-    this.frequencies = initialFrequencies();
+    this.frequencies = initialFrequencies(this.actions.length);
     this.betAmount = 0;
     this.sizing = false;
     this.result = undefined;
@@ -126,7 +129,7 @@ export class Learn extends LitElement {
   }
 
   renderChoices() {
-    const raising = (this.frequencies[2] ?? 0) > 0;
+    const raising = (this.frequencies[this.actions.indexOf("raise")] ?? 0) > 0;
     return html`<div class="learn-question">
         <h2>How would you play this hand?</h2>
         ${renderTooltip({
@@ -136,12 +139,12 @@ export class Learn extends LitElement {
         })}
       </div>
       <div class="betting-panel">
-        ${ACTIONS.map(
+        ${this.actions.map(
           (action, i) =>
             html` <phg-currency-slider
-              .handleLabel=${action}
-              .label=${action}
-              .variant=${ACTION_STYLES[i]}
+              .handleLabel=${LEARN_ACTIONS[action].label}
+              .label=${LEARN_ACTIONS[action].label}
+              .variant=${LEARN_ACTIONS[action].variant}
               .value=${this.frequencies[i]}
               .min=${0}
               .max=${100}

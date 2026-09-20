@@ -6,14 +6,23 @@
  * @param {string} action
  * @param {string} heroHand
  * @param {{actions: string[], hands: Record<string, number[]>}} [openingRange]
+ * @param {string} [openingAction]
  */
-export function conditionLearnRange(range, action, heroHand, openingRange) {
+export function conditionLearnRange(
+  range,
+  action,
+  heroHand,
+  openingRange,
+  openingAction = "raise",
+) {
   const blocked = [
     heroHand[0] + "s",
     heroHand[1] + (heroHand.endsWith("s") ? "s" : "h"),
   ];
   const actionIndex = range.actions.indexOf(action);
-  const openingIndex = openingRange?.actions.indexOf("raise") ?? 0;
+  const openingIndex = openingRange
+    ? openingRange.actions.indexOf(openingAction)
+    : 0;
   const hands = Object.fromEntries(
     Object.keys(openingRange?.hands ?? range.hands).map((hand) => {
       const combinations = availableCombinations(hand, blocked);

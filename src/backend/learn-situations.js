@@ -1,5 +1,8 @@
+import { BIG_BLIND_SITUATIONS } from "./learn-big-blind.js";
+
 // Bet amounts here are street totals in BB. Convert to cents at the view boundary.
 const FOLLOWUPS = {
+  ...BIG_BLIND_SITUATIONS,
   SB_VS_LJ_OPEN: {
     position: "SB",
     opponent: "LJ",
@@ -463,7 +466,7 @@ const FOLLOWUPS = {
   },
 };
 
-// The range catalog also contains strategies that are not yet practice lessons.
+// Keep the playable situations explicit, independently of the range catalog.
 export const LEARN_SITUATION_KEYS = [
   "LJ",
   "HJ",

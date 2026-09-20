@@ -1,3 +1,4 @@
+import { bigBlindScenario } from "./fixtures/learn-big-blind.js";
 import { fixture, html, expect, waitUntil } from "@open-wc/testing";
 import "../../src/frontend/learn.js";
 
@@ -178,6 +179,56 @@ describe("Learn strategy flow", () => {
     expect(submissions[0].frequencies).to.deep.equal([0, 100, 0]);
   });
 
+  it("checks a limp for free and resets the action mix for the next open", async () => {
+    const fetch = window.fetch;
+    let dealt = false;
+    window.fetch = async (url, options) => {
+      if (!String(url).endsWith("evaluate") && !dealt) {
+        dealt = true;
+        return new Response(JSON.stringify(bigBlindScenario("SB", "LIMP")));
+      }
+      const response = await fetch(url, options);
+      if (!String(url).endsWith("evaluate")) return response;
+      const result = await response.json();
+      return new Response(
+        JSON.stringify({
+          ...result,
+          actions: ["check", "raise"],
+          expected: [100, 0],
+          hands: { AA: [100, 0] },
+          rangeTotals: [59, 41],
+        }),
+      );
+    };
+    const el = await fixture(html`<phg-learn></phg-learn>`);
+    await waitUntil(() => !el.busy);
+    expect(el.frequencies).to.deep.equal([50, 50]);
+    expect(el.querySelectorAll('input[type="range"]')).to.have.length(2);
+    for (const [action, value, expected] of [
+      ["Check", 100, [100, 0]],
+      ["Check", 0, [0, 100]],
+      ["Raise", 0, [100, 0]],
+      ["Raise", 35, [65, 35]],
+      ["Check", 100, [100, 0]],
+    ]) {
+      await slide(el, action, value);
+      expect(el.frequencies).to.deep.equal(expected);
+    }
+    expect(el.querySelector('input[type="number"]')).not.to.exist;
+    await button(el, "Check strategy");
+    await waitUntil(() => !el.busy);
+    expect(submissions[0].frequencies).to.deep.equal([100, 0]);
+    expect(el.querySelector(".learn-strategy").textContent).to.include("Check");
+    expect(el.querySelector(".learn-strategy").textContent).not.to.include(
+      "Call",
+    );
+    await button(el, "Next hand");
+    await waitUntil(() => !el.busy);
+    expect(el.frequencies).to.deep.equal([35, 35, 30]);
+    expect(el.querySelectorAll('input[type="range"]')).to.have.length(3);
+    expect(el.querySelector('input[aria-label="Check"]')).not.to.exist;
+  });
+
   it("keeps the strategy and sizing available after a failed evaluation", async () => {
     const el = await fixture(html`<phg-learn></phg-learn>`);
     await waitUntil(() => !el.busy);
@@ -305,6 +356,17 @@ describe("Learn strategy flow", () => {
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [
+    [bigBlindScenario("LJ"), 4, 5.25, 8, 10],
+    [bigBlindScenario("LJ", "4BET"), 36, 46.25, 69.5, 100],
+    [bigBlindScenario("HJ"), 4, 5.25, 8, 10],
+    [bigBlindScenario("HJ", "4BET"), 36, 46.25, 69.5, 100],
+    [bigBlindScenario("CO"), 4, 5.25, 8, 10],
+    [bigBlindScenario("CO", "4BET"), 36, 46.25, 69.5, 100],
+    [bigBlindScenario("BTN"), 4, 5.25, 8, 10],
+    [bigBlindScenario("BTN", "4BET"), 36, 46.25, 69.5, 100],
+    [bigBlindScenario("SB"), 5, 6, 9, 9],
+    [bigBlindScenario("SB", "4BET"), 39, 48, 72, 100],
+    [bigBlindScenario("SB", "LIMP_RAISE"), 22.5, 26, 39, 28],
     [smallBlindScenario("LJ"), 4, 5.5, 8.5, 10],
     [smallBlindScenario("LJ", true), 36, 46.5, 70, 100],
     [smallBlindScenario("HJ"), 4, 5.5, 8.5, 10],

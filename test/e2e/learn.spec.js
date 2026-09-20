@@ -62,7 +62,9 @@ for (const navigationApi of [true, false]) {
     expect(response.status()).toBe(200);
     expect(response.request().postDataJSON()).toEqual({
       id: scenario.id,
-      frequencies: [0, 0, 100],
+      frequencies: scenario.actions.map((action) =>
+        action === "raise" ? 100 : 0,
+      ),
       raiseTo,
     });
     const result = await response.json();
@@ -104,10 +106,15 @@ for (const navigationApi of [true, false]) {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page).toHaveURL(/\/learn\?source=practice$/);
     await expect(details).toBeFocused();
+    const nextDeal = page.waitForResponse("**/api/learn/scenario");
     await page.getByRole("button", { name: "Next hand", exact: true }).click();
+    const nextScenario = await (await nextDeal).json();
     await expect(
-      page.getByRole("slider", { name: "Fold", exact: true }),
-    ).toHaveValue("35");
+      page.getByRole("slider", {
+        name: nextScenario.actions.includes("check") ? "Check" : "Fold",
+        exact: true,
+      }),
+    ).toHaveValue(nextScenario.actions.includes("check") ? "50" : "35");
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
     await page.reload();
     await expect(hero.locator(".stack")).toContainText("$");
