@@ -143,8 +143,10 @@ async function activateLateRegistrant(
     return false;
   }
 
-  await expect(player.page.locator("phg-toast")).toContainText("Moved to ");
+  // Immediate registration can redirect from the HTTP response before the
+  // lobby socket receives a playerMoved event. Verify seating, not its toast.
   await player.waitForTournamentTable();
+  await expect(player.mySeat).toBeVisible();
   activePlayers.add(registration.playerIndex);
   registration.assigned = true;
   markProgress(state, `late-player-${registration.playerIndex + 1}-assigned`);
