@@ -30,6 +30,7 @@ for (const navigationApi of [true, false]) {
     );
     await expect(hero).toHaveAttribute("role", "button");
     const raise = page.getByRole("slider", { name: "Raise", exact: true });
+    await expect(raise).toBeVisible({ timeout: 10000 });
     await raise.focus();
     await page.keyboard.press("End");
     await hero.press("Enter");
@@ -114,7 +115,9 @@ for (const navigationApi of [true, false]) {
         name: nextScenario.actions.includes("check") ? "Check" : "Fold",
         exact: true,
       }),
-    ).toHaveValue(nextScenario.actions.includes("check") ? "50" : "35");
+    ).toHaveValue(nextScenario.actions.includes("check") ? "50" : "35", {
+      timeout: 10000,
+    });
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
     await page.reload();
     await expect(hero.locator(".stack")).toContainText("$");

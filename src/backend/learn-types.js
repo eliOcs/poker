@@ -26,7 +26,7 @@
  * @property {RangeKey} [previousRangeKey]
  * @property {LearnAction} [opponentRangeAction]
  * @property {LearnAction} [opponentPriorAction]
- * @property {LearnAction} [lastAction]
+ * @property {'call' | 'raise'} [lastAction]
  * @property {string} title
  * @property {string} history
  * @property {string} [explanationTitle]
@@ -51,6 +51,9 @@
  * @property {Cents} bet
  * @property {(Card | typeof import('./poker/deck.js').HIDDEN)[]} cards
  *
+ * @typedef {{seat: number} & ({action: 'fold'} | {action: 'call' | 'raise', amount: Cents})} LearnReplayAction
+ * @typedef {{seats: LearnSeat[], action?: LearnReplayAction}} LearnReplayStep
+ *
  * @typedef {object} LearnScenario
  * @property {ScenarioId} id
  * @property {Position} position
@@ -62,6 +65,7 @@
  * @property {Cents} minRaiseTo
  * @property {{small: Cents, big: Cents}} blinds
  * @property {LearnSeat[]} seats
+ * @property {LearnReplayStep[]} replay Earlier action snapshots, including the initial deal and final action. Empty when already first to act.
  *
  * @typedef {object} LearnSubmission
  * @property {ScenarioId} id

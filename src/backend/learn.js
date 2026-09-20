@@ -8,7 +8,12 @@ import {
 import { describePlayability } from "./learn-playability.js";
 import { conditionLearnRange } from "./learn-opponent-range.js";
 import { HttpError } from "./http-error.js";
-import { learnSituation, LEARN_SITUATION_KEYS } from "./learn-situations.js";
+import {
+  learnSituation,
+  LEARN_SITUATION_KEYS,
+  LEARN_POSITIONS as POSITIONS,
+} from "./learn-situations.js";
+import { createLearnReplay } from "./learn-replay.js";
 
 /**
  * @typedef {import('./learn-types.js').HandClass} HandClass
@@ -19,8 +24,6 @@ import { learnSituation, LEARN_SITUATION_KEYS } from "./learn-situations.js";
  * @typedef {import('./poker/deck.js').Card} Card
  */
 
-/** @type {import('./learn-types.js').Position[]} */
-const POSITIONS = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
 // Keep the reference chart keys internally; use familiar table labels for learners.
 const POSITION_LABELS = {
   LJ: "UTG",
@@ -124,7 +127,8 @@ export function createLearnScenario() {
     suits[second]
   );
   const hero = POSITIONS.indexOf(position);
-  return {
+  /** @type {import('./learn-types.js').LearnScenario} */
+  const scenario = {
     id: `${key}-${hand}`,
     position,
     actions: range.actions,
@@ -137,6 +141,7 @@ export function createLearnScenario() {
     currentBet: situation.currentBet * 500,
     minRaiseTo: situation.minRaiseTo * 500,
     blinds: { small: 250, big: 500 },
+    replay: [],
     seats: POSITIONS.map((name, i) => {
       const folded = hasFolded(name, i, hero, situation);
       const bet = (situation.bets[name] ?? 0) * 500;
@@ -174,6 +179,12 @@ export function createLearnScenario() {
       };
     }),
   };
+  scenario.replay = createLearnReplay(
+    situation,
+    scenario.seats,
+    scenario.blinds,
+  );
+  return scenario;
 }
 
 /**

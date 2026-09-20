@@ -5,6 +5,8 @@ import {
 } from "../frontend/fixtures/learn.js";
 import { bigBlindScenario } from "../frontend/fixtures/learn-big-blind.js";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
+import { createLearnReplay } from "../../src/backend/learn-replay.js";
+import { learnSituation } from "../../src/backend/learn-situations.js";
 import { waitForAvatars } from "./visual-assets.js";
 
 test.describe.configure({ mode: "parallel" });
@@ -33,6 +35,20 @@ const error = "Could not reach the lesson. Please try again.";
 
 // One independent capture per visual state, not one walkthrough per lesson.
 const states = [
+  {
+    name: "lead-in",
+    state: {
+      scenario: {
+        ...followup.scenario,
+        replay: createLearnReplay(
+          learnSituation("BTN_RAISE_SB"),
+          followup.scenario.seats,
+          followup.scenario.blinds,
+        ),
+      },
+      replayIndex: 4,
+    },
+  },
   { name: "strategy", state: {} },
   { name: "mix-help", state: {}, tooltip: "How to mix your actions" },
   { name: "pure-action", state: { frequencies: [100, 0, 0] } },

@@ -8,6 +8,7 @@ export const learnScenario = {
   currentBet: 500,
   minRaiseTo: 1000,
   blinds: { small: 250, big: 500 },
+  replay: [],
   seats: Array.from({ length: 6 }, (_, i) => ({
     empty: false,
     allIn: false,

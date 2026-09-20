@@ -18,6 +18,7 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
     assert.ok(Object.hasOwn(ranges[key].hands, scenario.hand));
     assert.equal(scenario.seats.length, 6);
     const hero = scenario.seats.findIndex((s) => s.isCurrentPlayer);
+    assertLearnReplay(scenario);
     assert.ok(hero >= 0 && hero < 6);
     assert.deepEqual(
       scenario.seats.map((seat) => seat.player.name.replace("You · ", "")),
@@ -432,3 +433,45 @@ test("deals first-in and follow-up decisions with consistent bets and no answer 
   }
   assert.equal(seen.size, 53);
 });
+
+function assertLearnReplay(scenario) {
+  const { replay, seats: decision } = scenario;
+  if (scenario.id.startsWith("LJ-")) {
+    assert.deepEqual(replay, []);
+    return;
+  }
+  assert.deepEqual(replay.at(-1).seats, decision);
+  assert.deepEqual(
+    replay[0].seats.map((seat) => seat.bet),
+    [0, 0, 0, 0, 250, 500],
+  );
+  assert.ok(replay[0].seats.every((seat) => !seat.folded));
+  for (const [index, step] of replay.entries()) {
+    assert.equal(step.seats.filter((seat) => seat.isActing).length, 1);
+    step.seats.forEach((seat, seatIndex) => {
+      assert.equal(seat.stack + seat.bet, 50000);
+      assert.ok(Number.isInteger(seat.stack));
+      assert.ok(Number.isInteger(seat.bet));
+      assert.deepEqual(
+        seat.cards,
+        seat.isCurrentPlayer
+          ? decision[seatIndex].cards
+          : seat.folded
+            ? []
+            : ["??", "??"],
+      );
+    });
+    if (!step.action) continue;
+    const before = replay[index - 1].seats;
+    const { seat, action } = step.action;
+    assert.equal(before[seat].isActing, true);
+    assert.equal(before[seat].folded, false);
+    assert.equal(step.seats[seat].lastAction, action);
+    // Acting passes clockwise, skipping everyone who has already folded.
+    let next = (seat + 1) % 6;
+    while (step.seats[next].folded) next = (next + 1) % 6;
+    assert.equal(step.seats[next].isActing, true);
+    if (action === "fold") assert.equal(step.seats[seat].folded, true);
+    else assert.equal(step.seats[seat].bet, step.action.amount);
+  }
+}

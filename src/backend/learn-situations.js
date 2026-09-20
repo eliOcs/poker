@@ -1,5 +1,8 @@
 import { BIG_BLIND_SITUATIONS } from "./learn-big-blind.js";
 
+/** @type {import('./learn-types.js').Position[]} */
+export const LEARN_POSITIONS = ["LJ", "HJ", "CO", "BTN", "SB", "BB"];
+
 // Bet amounts here are street totals in BB. Convert to cents at the view boundary.
 /** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").SituationDefinition>>} */
 const FOLLOWUPS = {

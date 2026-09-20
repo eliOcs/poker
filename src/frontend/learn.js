@@ -9,6 +9,11 @@ import { renderLearnFeedback } from "./learn-feedback.js";
 import { renderTooltip } from "./tooltip.js";
 import { renderInfoBar } from "./game-info-bar.js";
 import { renderBetPresets } from "./bet-presets.js";
+import {
+  startLearnReplay,
+  stopLearnReplay,
+  renderLearnReplay,
+} from "./learn-replay.js";
 
 import { DEFAULT_LEARN_ACTIONS, LEARN_ACTIONS } from "./learn-actions.js";
 
@@ -30,6 +35,7 @@ export class Learn extends LitElement {
     rangeOpen: { type: Boolean },
     busy: { state: true },
     error: { state: true },
+    replayIndex: { state: true },
   };
 
   constructor() {
@@ -38,6 +44,10 @@ export class Learn extends LitElement {
     this.user = undefined;
     /** @type {LearnScenario | undefined} */
     this.scenario = undefined;
+    /** @type {number | undefined} */
+    this.replayIndex = undefined;
+    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    this.replayTimer = undefined;
     this.rangeOpen = false;
     /** @type {Cents} */
     this.betAmount = 0;
@@ -59,6 +69,16 @@ export class Learn extends LitElement {
     return this.scenario?.actions ?? DEFAULT_LEARN_ACTIONS;
   }
 
+  get replayStep() {
+    return this.replayIndex === undefined
+      ? undefined
+      : this.scenario?.replay[this.replayIndex];
+  }
+
+  get tableSeats() {
+    return this.replayStep?.seats ?? this.scenario?.seats ?? [];
+  }
+
   /** @returns {import("../backend/learn-types.js").BigBlinds} */
   get raiseTo() {
     return (
@@ -76,6 +96,7 @@ export class Learn extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this._request?.abort();
+    stopLearnReplay(this);
   }
 
   /**
@@ -113,12 +134,15 @@ export class Learn extends LitElement {
   }
 
   async nextHand() {
+    stopLearnReplay(this);
     this.busy = true;
     this.error = "";
     try {
       const scenario = await this.request("scenario");
+      if (!this.isConnected) return;
       this.scenario = scenario;
       this.reset();
+      startLearnReplay(this);
     } catch (error) {
       if (error.name !== "AbortError") this.error = error.message;
     } finally {
@@ -144,7 +168,7 @@ export class Learn extends LitElement {
   }
 
   async submit() {
-    if (this.busy) return;
+    if (this.busy || this.replayStep) return;
     this.busy = true;
     this.error = "";
     try {
@@ -259,7 +283,7 @@ export class Learn extends LitElement {
         ? html` <phg-table-layout>
             <div class="table-surface">
               <div id="seats" data-table-size="6">
-                ${scenario.seats.map(
+                ${this.tableSeats.map(
                   (seat, i) =>
                     html` <phg-seat
                       data-seat=${i}
@@ -281,7 +305,7 @@ export class Learn extends LitElement {
                       .displayBigBlind=${this.displayBigBlind}
                       .seatNumber=${i}
                       .isButton=${i === 3}
-                      .noAnimation=${true}
+                      .noAnimation=${!this.replayStep}
                       .settingsEnabled=${!!this.user}
                     ></phg-seat>`,
                 )}
@@ -299,19 +323,21 @@ export class Learn extends LitElement {
           ? html`<p role="status">
               ${scenario ? "One moment…" : "Dealing your first hand…"}
             </p>`
-          : this.result
-            ? renderLearnFeedback(
-                this,
-                /** @type {LearnScenario} */ (scenario),
-                this.result,
-              )
-            : scenario
-              ? this.sizing
-                ? this.renderSizing(scenario)
-                : this.renderChoices(scenario)
-              : html`<button class="button" @click=${() => this.nextHand()}>
-                  Try again
-                </button>`}
+          : this.replayStep
+            ? renderLearnReplay(this, this.replayStep)
+            : this.result
+              ? renderLearnFeedback(
+                  this,
+                  /** @type {LearnScenario} */ (scenario),
+                  this.result,
+                )
+              : scenario
+                ? this.sizing
+                  ? this.renderSizing(scenario)
+                  : this.renderChoices(scenario)
+                : html`<button class="button" @click=${() => this.nextHand()}>
+                    Try again
+                  </button>`}
       </section>`;
   }
 }
