@@ -11,7 +11,6 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
 /**
  * Hand is a validated canonical class, for example T9s, AKo or 55.
  * @param {import("./learn-types.js").HandClass} hand
- * @param {import("./learn-types.js").BigBlinds} raiseTo
  * @param {import("./learn-types.js").LearnSituation} [situation]
  * @param {import("./learn-types.js").Frequencies} [expected]
  * @param {import("./learn-types.js").LearnAction[]} [actions]
@@ -19,7 +18,6 @@ const STRAIGHTS = Array.from({ length: 10 }, (_, start) =>
  */
 export function describePlayability(
   hand,
-  raiseTo,
   situation = undefined,
   expected = [0, 0, 0],
   actions = ["fold", "call", "raise"],
@@ -49,7 +47,7 @@ export function describePlayability(
           },
           connectionNote(high, low, straightPatterns),
         ],
-    situation: situationNotes(raiseTo, situation, [
+    situation: situationNotes(situation, [
       0,
       expected[actions.indexOf("call")] ?? 0,
       /** @type {number} */ (expected[actions.indexOf("raise")]),
@@ -58,12 +56,11 @@ export function describePlayability(
 }
 
 /**
- * @param {import('./learn-types.js').BigBlinds} raiseTo
  * @param {import('./learn-types.js').LearnSituation | undefined} situation
  * @param {[number, number, number]} expected
  * @returns {import('./learn-types.js').LearnNote[]}
  */
-function situationNotes(raiseTo, situation, expected) {
+function situationNotes(situation, expected) {
   const notes = [];
   const followup = situation?.opponent !== undefined;
   if (expected[1] > 0 && followup) notes.push(potOddsNote(situation));
@@ -74,7 +71,9 @@ function situationNotes(raiseTo, situation, expected) {
         text: "The pot contains just the blinds, with no antes. Extra money in the pot would make stealing it more rewarding.",
       });
     notes.push({
-      title: `${raiseTo} BB ${followup ? "re-raise total" : "opening size"}`,
+      title: followup
+        ? "Understanding the raise total"
+        : "Why opening size matters",
       text:
         situation?.opponentAction === "4-bet"
           ? `This is the total bet, including the ${situation.heroBet} BB already committed. The reference assumes ${situation.opponent}’s ${situation.currentBet} BB 4-bet and 100 BB starting stacks.`

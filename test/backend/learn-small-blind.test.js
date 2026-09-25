@@ -91,7 +91,7 @@ test("SB widens its 3-bets by opener without adding calls", () => {
     );
     assert.match(
       evaluate(opponent, "OPEN", "AA").explanation,
-      /3-betting to 10 BB/,
+      /3-betting puts pressure/,
     );
     assert.throws(
       () => evaluate(opponent, "4BET", "72o"),
@@ -99,7 +99,7 @@ test("SB widens its 3-bets by opener without adding calls", () => {
     );
   }
   const fold = evaluate("LJ", "OPEN", "72o");
-  assert.match(fold.explanation, /0.5 BB already posted/);
+  assert.match(fold.explanation, /blind discount/);
   assert.match(fold.lessonNotes[0].text, /raked cash-game assumptions/);
 });
 
@@ -129,7 +129,10 @@ test("SB retains selective calls and changes its 5-bet range against later opene
     assert.deepEqual(evaluate(opponent, "4BET", hand).expected, expected);
   const aces = evaluate("BTN", "4BET", "AA", [0, 100, 0]);
   assert.equal(aces.grade, "correct");
-  assert.match(aces.explanation, /Keeping AA in the calling range protects it/);
+  assert.match(
+    aces.lessonNotes[0].text,
+    /AA calls 100%, protecting a broad calling range/,
+  );
   assert.doesNotMatch(aces.explanation, /5-betting/);
   assert.equal(evaluate("BTN", "4BET", "AA", [0, 0, 100]).grade, "incorrect");
   assert.match(
@@ -145,7 +148,10 @@ test("SB retains selective calls and changes its 5-bet range against later opene
 test("SB uses its posted blind and 10 BB investment for pricing, legal raises and stack commitment", () => {
   for (const opponent of ["LJ", "HJ", "CO", "BTN"]) {
     const call = evaluate(opponent, "4BET", "AA");
-    assert.match(call.explanation, /Calling the extra 13 BB/);
+    assert.match(
+      call.playability.situation[0].text,
+      /Calling costs another 13 BB/,
+    );
     assert.match(call.playability.situation[0].text, /13 ÷ \(34 \+ 13\) ~ 28%/);
     const shove = evaluate(opponent, "4BET", "AKs", [0, 0, 100]);
     assert.equal(shove.grade, "correct");
@@ -205,13 +211,11 @@ test("SB receives the actual opener and its opening-weighted 4-bet range", () =>
         for (const [hand, entry] of entries)
           assert.equal(entry.openingFrequency, ranges[opponent].hands[hand][2]);
     }
-    const { lessonNotes } = evaluateLearnStrategy({
+    const { lessonNotes, explanation } = evaluateLearnStrategy({
       id: `${opponent}_RAISE_SB-AA`,
       frequencies: [100, 0, 0],
     });
     assert.ok(lessonNotes.length >= 2);
-    assert.ok(
-      lessonNotes.some(({ text }) => /out of position|acts first/.test(text)),
-    );
+    assert.match(explanation, /in position against SB and act last/);
   }
 });

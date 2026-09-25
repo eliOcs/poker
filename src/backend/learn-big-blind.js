@@ -189,31 +189,31 @@ export const BIG_BLIND_NOTES = {
   BB_VS_LJ_4BET: [
     {
       title: "Keep premiums in both calls and shoves",
-      text: "AKs shoves, while AA, KK, AKo and QQ mix calls with shoves. A5s also has a bluff-shove frequency. These responses apply after BB has already 3-bet; a strong starting hand does not automatically mean an all-in.",
+      text: "AKs shoves, while AA, KK, AKo and QQ mix calls with shoves. A5s also has a bluff-shove frequency. Keeping premiums among the calls protects the weaker hands in that defense.",
     },
     {
       title: "Use postflop potential in the calling defense",
-      text: "Pairs, suited aces and connected suited hands make up much of the calling range, including mixes with JTs and 54s. BB is out of position and calls another 13 BB into 33.5 BB. Immediate pot odds are about 28%, but later betting and equity realization still matter.",
+      text: "Pairs, suited aces and connected suited hands make up much of the calling range, including mixes with JTs and 54s.",
     },
   ],
   BB_VS_HJ_OPEN: [
     {
       title: "Widen a little from LJ to HJ",
-      text: "Against HJ, the source 3-bets about 7.6% and calls 23.9% of all starting hands, compared with 5.8% and 22.8% against LJ. Much of the expansion comes from giving hands near the boundary more frequency. Continue to distinguish a hand that mixes from one that always defends.",
+      text: "Against HJ, the source 3-bets about 7.6% and calls 23.9% of all starting hands, compared with 5.8% and 22.8% against LJ. Much of the expansion comes from giving hands near the boundary more frequency.",
     },
     {
       title: "Closing the action supports calls",
-      text: "Only HJ remains in the pot, so calling cannot invite a squeeze behind you. The 1 BB already posted reduces the extra price to 1.5 BB. That supports a substantial calling range, although BB still acts first after the flop.",
+      text: "Only HJ remains in the pot, so calling cannot invite a squeeze behind you. Together with the blind discount, that supports a substantial calling range.",
     },
   ],
   BB_VS_HJ_4BET: [
     {
       title: "A wider 3-bet range needs additional calls",
-      text: "The response resembles BB’s defense against LJ, but adds some KJs and KTs calls to support the wider preceding 3-bet range. Calls and shoves are conditional responses to the 4-bet, not percentages of all starting hands.",
+      text: "The response resembles BB’s defense against LJ, but adds some KJs and KTs calls to support the wider preceding 3-bet range. Strong slowplays such as AA protect the weaker calls.",
     },
     {
       title: "Do not overgeneralize small solver quirks",
-      text: "The chart mixes shoves with JJ while QQ calls. The source treats such small irregularities as possible blocker effects rather than universal rules to memorize. Learn the overall defense and use the displayed hand mix for this specific situation.",
+      text: "The chart mixes shoves with JJ while QQ calls. The source treats such small irregularities as possible blocker effects rather than universal rules to memorize.",
     },
   ],
   BB_VS_CO_OPEN: [
@@ -233,7 +233,7 @@ export const BIG_BLIND_NOTES = {
     },
     {
       title: "Broaden the calling defense selectively",
-      text: "The defense incorporates more calls with hands such as KQs, AQo, A5s, A9s and A4s. Those hands do not all use the same frequency. Follow the displayed mixes and preserve strong slowplays rather than treating every call as a capped, weak range.",
+      text: "The defense incorporates more calls with hands such as KQs, AQo, A5s, A9s and A4s. Those hands do not all use the same frequency.",
     },
   ],
   BB_VS_BTN_OPEN: [
@@ -243,23 +243,23 @@ export const BIG_BLIND_NOTES = {
     },
     {
       title: "Build a more linear 3-bet range",
-      text: "Against BTN, BB 3-bets more aggressively with a range built around high-equity hands. This differs from the more polarized approach used in position against SB. The raise is 10 BB against BTN’s 2.5 BB open, and BB still acts first postflop.",
+      text: "Against BTN, BB 3-bets more aggressively with a range built around high-equity hands. This differs from the more polarized approach used in position against SB.",
     },
   ],
   BB_VS_BTN_4BET: [
     {
       title: "Defend mainly by calling",
-      text: "BTN’s polarized 4-bet range gives BB reason to continue mainly through calls. Strong slowplays sit alongside hands with useful equity and postflop playability, including suited aces, suited kings, AQo, connected suited hands and pairs. The displayed chart governs each hand’s mix.",
+      text: "BTN’s polarized 4-bet range gives BB reason to continue mainly through calls. Strong slowplays sit alongside hands with useful equity and postflop playability, including suited aces, suited kings, AQo, connected suited hands and pairs.",
     },
     {
       title: "Mix value shoves and selected wheel-ace bluffs",
-      text: "The shoving range includes strong pairs and ace-king, with some mixed actions and wheel-ace bluffs such as A5s and A4s. AA also remains among the calls. A hand’s shove percentage describes what to do when holding it here, not how much of the entire 3-bet range it represents.",
+      text: "The shoving range includes strong pairs and ace-king, with some mixed actions and wheel-ace bluffs such as A5s and A4s. A hand’s shove percentage describes what to do when holding it here, not how much of the entire 3-bet range it represents.",
     },
   ],
   BB_VS_SB_OPEN: [
     {
       title: "Position changes the range structure",
-      text: "Against SB’s 3 BB open, BB has position and uses a polarized 3-bet range: strong hands that can continue against a 4-bet, plus selected blocker and board-coverage bluffs that can fold. Medium-strength hands often prefer calling and realizing equity in position. The reference 3-bet is 9 BB.",
+      text: "Against SB’s open, BB uses a polarized 3-bet range: strong hands that can continue against a 4-bet, plus selected blocker and board-coverage bluffs that can fold. Medium-strength hands often prefer calling and realizing equity in position.",
     },
     {
       title: "Even position does not rescue the worst hands",
@@ -273,27 +273,27 @@ export const BIG_BLIND_NOTES = {
     },
     {
       title: "Release the bottom of the polarized range",
-      text: "Some hands entered as 3-bet bluffs and now fold. The source response is about 41.2% fold, 46.2% call and 12.6% shove over the preceding 3-bet range. SB has raised to 24 BB after BB’s 9 BB 3-bet; calling costs 15 BB into 33 BB, about 31% immediate pot odds.",
+      text: "Some hands entered as 3-bet bluffs and now fold. The source response is about 41.2% fold, 46.2% call and 12.6% shove over the preceding 3-bet range.",
     },
   ],
   BB_VS_SB_LIMP: [
     {
       title: "A free flop is a real option",
-      text: "SB has matched the 1 BB blind, so BB can check without paying more and see a flop in position. There is no need to fold. The source checks about 59.4% and raises 40.6% of starting hands, using a raise to 3.5 BB.",
+      text: "The source checks about 59.4% and raises 40.6% of starting hands. Keeping medium-strength hands among the checks preserves their equity without inflating the pot.",
     },
     {
       title: "Raise hands with different responses to a reraise",
-      text: "The raising range combines hands that can call an SB limp-reraise in position with selected hands that can raise and then fold. Keeping medium-strength hands among the checks preserves their equity without inflating the pot. Raising does not commit every hand to further aggression.",
+      text: "The raising range combines hands that can call an SB limp-reraise in position with selected hands that can raise and then fold.",
     },
   ],
   BB_VS_SB_LIMP_RAISE: [
     {
       title: "A narrow 4-bet range after the limp-reraise",
-      text: "After SB limps, BB raises to 3.5 BB and SB reraises to 13 BB, the source 4-bets only about 7.3% of BB’s prior raising range. Those raises mix strong hands such as TT+ and AK with selected ace and king blockers. The reference 4-bet is 28 BB, leaving chips behind.",
+      text: "Against SB’s limp-reraise, the source 4-bets only about 7.3% of BB’s prior raising range. Those raises mix strong hands such as TT+ and AK with selected ace and king blockers.",
     },
     {
       title: "Continue selectively in position",
-      text: "The source calls about 41.3% and folds 51.4% of the hands that already raised the limp. BB calls another 9.5 BB into 16.5 BB, about 37% immediate pot odds, and acts last postflop. SB’s range must reflect both its initial limp and its later reraise; it is not the same as an opening-raise range.",
+      text: "The source calls about 41.3% and folds 51.4% of the hands that already raised the limp. SB’s range must reflect both its initial limp and its later reraise; it is not the same as an opening-raise range.",
     },
   ],
 };

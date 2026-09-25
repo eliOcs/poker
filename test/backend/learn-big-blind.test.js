@@ -100,11 +100,11 @@ test("BB calls with playable hands and widens against later openers", () => {
   ])
     assert.deepEqual(answer(opponent, "OPEN", hand).expected, mix);
   const call = answer("LJ", "OPEN", "AQo");
-  assert.match(call.explanation, /Calling the extra 1.5 BB guarantees a flop/);
+  assert.match(call.explanation, /Calling guarantees a flop/);
   assert.match(call.playability.situation[0].text, /1.5 ÷ \(4 \+ 1.5\) ~ 27%/);
   assert.match(
     answer("SB", "OPEN", "ATo").explanation,
-    /respond to SB’s decisions help you realize equity/,
+    /Responding to SB’s decisions helps you realize equity/,
   );
 });
 
@@ -161,7 +161,7 @@ test("free checks have two actions, no pot-odds claim and no fold or call submis
   assert.deepEqual(mixed.expected, [50, 50]);
   assert.doesNotMatch(mixed.explanation, /(?:Check|Raise) \d+%/);
   assert.match(mixed.explanation, /Checking costs nothing/);
-  assert.match(mixed.explanation, /Raising to 3.5 BB/);
+  assert.match(mixed.explanation, /Raising can win the pot immediately/);
   assert.ok(
     mixed.playability.situation.every(({ text }) => !text.includes("Pot odds")),
   );
@@ -214,7 +214,7 @@ test("BB follows actual blind-versus-blind sizes and legal minimums", () => {
       "LIMP_RAISE",
       "AA",
       /9.5 ÷ \(16.5 \+ 9.5\) ~ 37%/,
-      /4-betting to 28 BB/,
+      /4-betting pressures/,
       22.5,
       28,
     ],

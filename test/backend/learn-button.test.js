@@ -80,7 +80,7 @@ test("BTN keeps strong flat calls and adds blocker 3-bets against wider openers"
   ]) {
     const answer = evaluate("LJ", "OPEN", hand, mix);
     assert.deepEqual(answer.expected, mix);
-    assert.match(answer.explanation, /Both blinds can still squeeze/);
+    assert.match(answer.lessonNotes[1].text, /blinds can still re-raise/);
     assert.match(
       answer.playability.situation[0].text,
       /2.5 ÷ \(4 \+ 2.5\) ~ 38%/,
@@ -95,7 +95,7 @@ test("BTN keeps strong flat calls and adds blocker 3-bets against wider openers"
   for (const opponent of ["LJ", "HJ", "CO"]) {
     const fold = evaluate(opponent, "OPEN", "72o");
     assert.match(fold.explanation, /Both blinds are still to act/);
-    assert.doesNotMatch(fold.explanation, /Calling the extra|3-betting to/);
+    assert.doesNotMatch(fold.explanation, /Calling|3-betting/);
   }
 });
 
@@ -118,7 +118,10 @@ test("BTN adjusts premium 5-bets and calls by opener, including pure AA calls ve
     assert.deepEqual(evaluate(opponent, "4BET", hand).expected, mix);
   const aces = evaluate("CO", "4BET", "AA", [0, 100, 0]);
   assert.equal(aces.grade, "correct");
-  assert.match(aces.explanation, /Keeping AA in the calling range protects it/);
+  assert.match(
+    aces.lessonNotes[0].text,
+    /Keeping AA among these calls protects/,
+  );
   assert.doesNotMatch(aces.explanation, /5-betting all-in/);
   assert.match(
     aces.playability.situation[0].text,

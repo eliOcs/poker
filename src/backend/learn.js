@@ -309,13 +309,7 @@ export function evaluateLearnStrategy(input) {
     frequencyMatch,
     sizingMatch,
     raiseTo: range.raiseTo,
-    playability: describePlayability(
-      hand,
-      range.raiseTo,
-      situation,
-      expected,
-      range.actions,
-    ),
+    playability: describePlayability(hand, situation, expected, range.actions),
     explanationTitle: situation.explanationTitle,
     explanation: explainLearnHand(hand, situation, expected, range.actions),
     lessonNotes:

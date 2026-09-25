@@ -12,7 +12,7 @@ const ranges = JSON.parse(
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 
 test("distinguishes high cards, suitedness, connectedness and pocket pairs", () => {
-  const suited = describePlayability("T9s", 2.5);
+  const suited = describePlayability("T9s");
   assert.deepEqual(suited.features, {
     pair: false,
     suited: true,
@@ -23,9 +23,9 @@ test("distinguishes high cards, suitedness, connectedness and pocket pairs", () 
     suited.cards.map((c) => c.title),
     ["One high card", "Suited", "Connected"],
   );
-  assert.equal(describePlayability("T9o", 2.5).features.suited, false);
-  assert.equal(describePlayability("AKo", 2.5).features.highCards, 2);
-  const pair = describePlayability("55", 2.5);
+  assert.equal(describePlayability("T9o").features.suited, false);
+  assert.equal(describePlayability("AKo").features.highCards, 2);
+  const pair = describePlayability("55");
   assert.equal(pair.features.pair, true);
   assert.equal(pair.features.straightPatterns, 0);
   assert.deepEqual(
@@ -50,7 +50,7 @@ test("counts actual straight patterns including ace high/low without wrapping", 
     "72o": 0,
   }))
     assert.equal(
-      describePlayability(hand, 2.5).features.straightPatterns,
+      describePlayability(hand).features.straightPatterns,
       count,
       hand,
     );
@@ -64,7 +64,10 @@ test("connects the evaluation to this hand and position without changing grading
   });
   assert.equal(response.playability.features.suited, true);
   assert.match(response.playability.cards[1].text, /ace-high flush/);
-  assert.equal(response.playability.situation[1].title, "3 BB opening size");
+  assert.equal(
+    response.playability.situation[1].title,
+    "Why opening size matters",
+  );
   const early = evaluateLearnStrategy({
     id: "LJ-T9s",
     frequencies: [100, 0, 0],
@@ -92,7 +95,7 @@ test("situation guidance follows every hand's recommended actions, regardless of
       assert.doesNotMatch(result.explanation, /(?:Fold|Call|Raise) \d+%/, id);
       const notes = result.playability.situation;
       assert.equal(
-        notes.some((note) => /opening size|re-raise total/.test(note.title)),
+        notes.some((note) => /opening size|raise total/.test(note.title)),
         expected[2] > 0,
         id,
       );
@@ -106,7 +109,7 @@ test("situation guidance follows every hand's recommended actions, regardless of
         assert.doesNotMatch(result.explanation, /call|rais|limp|4-bet/i, id);
         assert.match(
           result.explanation,
-          /risk more|without investing more/,
+          /stays outside the continuing range/,
           id,
         );
       }
@@ -132,7 +135,6 @@ for (const { name, id, concepts, absent = [] } of [
       /Four players/,
       /cutoff and button.*position/,
       /stronger opposing hands/,
-      /preserves your stack/,
     ],
   },
   {
@@ -181,10 +183,10 @@ for (const { name, id, concepts, absent = [] } of [
     ],
   },
   {
-    name: "in-position call explains the actual price and positional advantage",
+    name: "in-position call explains positional advantage without repeating the price",
     id: "BTN_RAISE_SB-22",
     concepts: [
-      /Calling the extra 7\.5 BB/,
+      /Calling keeps the pot smaller/,
       /act last/,
       /opponent’s decisions to guide your play/,
     ],
@@ -192,7 +194,7 @@ for (const { name, id, concepts, absent = [] } of [
   {
     name: "out-of-position call explains pot control",
     id: "CO_RAISE_BTN-22",
-    concepts: [/Calling the extra 6 BB/, /keeps the pot smaller/, /act first/],
+    concepts: [/keeps the pot smaller/, /act first/],
   },
   {
     name: "out-of-position 4-bet explains reducing the positional disadvantage",
@@ -211,7 +213,7 @@ for (const { name, id, concepts, absent = [] } of [
   {
     name: "mixed calls and 4-bets retain both explanations even for aces",
     id: "LJ_RAISE_BB-AA",
-    concepts: [/Calling the extra/, /4-betting/],
+    concepts: [/Calling/, /4-betting/],
     absent: [/Folding/],
   },
 ]) {
@@ -330,4 +332,24 @@ test("first-in explanations do not use heads-up follow-up pot odds", () => {
       result.playability.situation.every((n) => !n.text.includes("Pot odds:")),
     );
   }
+});
+
+test("details keep call prices and range-wide slowplays in their own sections", () => {
+  const result = evaluateLearnStrategy({
+    id: "BTN_VS_CO_4BET-AA",
+    frequencies: [0, 100, 0],
+  });
+  assert.match(result.explanation, /Calling leaves chips for postflop play/);
+  assert.doesNotMatch(result.explanation, /14\.5 BB|protect|slowplay/);
+  assert.equal(
+    result.playability.situation.filter((note) =>
+      note.text.includes("Calling costs another 14.5 BB"),
+    ).length,
+    1,
+  );
+  assert.equal(
+    result.lessonNotes.filter((note) => /AA/.test(note.text)).length,
+    1,
+  );
+  assert.match(result.lessonNotes[0].text, /protects the range/);
 });

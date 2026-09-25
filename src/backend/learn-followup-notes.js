@@ -10,7 +10,7 @@ export const FOLLOWUP_NOTES = {
     },
     {
       title: "Plan for resistance to your limp-reraise",
-      text: "If you reraise to 13 BB, BB can use position to call with playable hands. The source folds about 51.4%, calls 41.3% and 4-bets 7.3% of BB’s prior raising range. That narrow 4-bet range includes strong hands and selected ace or king blockers; your reraise does not always end the hand.",
+      text: "If you reraise, BB can use position to call with playable hands. The source folds about 51.4%, calls 41.3% and 4-bets 7.3% of BB’s prior raising range. That narrow 4-bet range includes strong hands and selected ace or king blockers; your reraise does not always end the hand.",
     },
   ],
   SB_RAISE_BB: [
@@ -20,23 +20,23 @@ export const FOLLOWUP_NOTES = {
     },
     {
       title: "A call to your 4-bet can conceal aces",
-      text: "If you 4-bet to 24 BB, BB calls AA every time in this reference and often calls KK and AKs too. BB folds the bottom of its polarized 3-bet range and continues mainly through calls in position. A call would not mean you can rule out premiums.",
+      text: "If you 4-bet, BB calls AA every time in this reference and often calls KK and AKs too. BB folds the bottom of its polarized 3-bet range and continues mainly through calls in position. A call would not mean you can rule out premiums.",
     },
   ],
   BTN_RAISE_SB: [
     {
       title: "SB attacks your wide opening range",
-      text: "Against your BTN open, SB 3-bets about 15% of starting hands and has no flat-calling range in this reference. This is its widest defense against an open, including selected offsuit broadways, suited aces and connectors. SB still acts first postflop, so you retain position when calling.",
+      text: "Against your BTN open, SB 3-bets about 15% of starting hands and has no flat-calling range in this reference. This is its widest defense against an open, including selected offsuit broadways, suited aces and connectors.",
     },
     {
       title: "If you 4-bet, SB can slowplay AA",
-      text: "If you 4-bet, SB calls AA 100% in this reference to protect a broad calling range. KK, QQ and AK shove, while other hands mix calls and shoves. Your 4-bet therefore does not simply separate strong shoves from weak calls; follow your hand’s recommended mix.",
+      text: "If you 4-bet, SB calls AA 100% in this reference to protect a broad calling range. KK, QQ and AK shove, while other hands mix calls and shoves. Your 4-bet therefore does not simply separate strong shoves from weak calls.",
     },
   ],
   BTN_RAISE_BB: [
     {
       title: "BB’s 3-bets emphasize high-equity hands",
-      text: "Against your wide BTN open, BB uses a more linear 3-bet range built around high-equity hands, alongside a broad calling range. You have position, but should not treat its extra aggression as only weak bluffs.",
+      text: "Against your wide BTN open, BB uses a more linear 3-bet range built around high-equity hands, alongside a broad calling range. Its extra aggression does not consist only of weak bluffs.",
     },
     {
       title: "If you 4-bet, expect calls as well as shoves",
@@ -46,7 +46,7 @@ export const FOLLOWUP_NOTES = {
   CO_RAISE_BTN: [
     {
       title: "BTN can call, making its 3-bets more polarized",
-      text: "BTN has position on you and can flat-call with playable hands, including some strong hands that protect those calls against squeezes. Its 3-bets mix strength with selected bluffs. From CO you are out of position, which gives more reason to 4-bet and reduce the chips left for postflop play.",
+      text: "BTN has position on you and can flat-call with playable hands, including some strong hands that protect those calls against squeezes. Its 3-bets mix strength with selected bluffs.",
     },
     {
       title: "If you 4-bet, BTN keeps AA among its calls",
@@ -56,7 +56,7 @@ export const FOLLOWUP_NOTES = {
   CO_RAISE_SB: [
     {
       title: "SB’s range widens against CO",
-      text: "SB uses 3-bet or fold, entering about 10.9% of starting hands against your CO open. Compared with an HJ open, AJo, A8s and T9s gain frequency. SB acts first postflop, while you can use position to call with suitable hands.",
+      text: "SB uses 3-bet or fold, entering about 10.9% of starting hands against your CO open. Compared with an HJ open, AJo, A8s and T9s gain frequency.",
     },
     {
       title: "If you 4-bet, SB has calls and some bluff shoves",
@@ -66,7 +66,7 @@ export const FOLLOWUP_NOTES = {
   CO_RAISE_BB: [
     {
       title: "BB widens selectively against your open",
-      text: "Against CO, BB expands both calls and 3-bets compared with earlier openers, but weak disconnected offsuit hands still struggle out of position. Its 3-bet range is a selected part of that defense, not every hand it can profitably play. You retain position when calling.",
+      text: "Against CO, BB expands both calls and 3-bets compared with earlier openers, but weak disconnected offsuit hands still struggle out of position. Its 3-bet range is a selected part of that defense, not every hand it can profitably play.",
     },
     {
       title: "If you 4-bet, BB protects its calls",
@@ -80,7 +80,7 @@ export const FOLLOWUP_NOTES = {
     },
     {
       title: "If you 4-bet, CO can continue in position",
-      text: "If you 4-bet, CO supports its wider 3-bet range with additional calls, including KJs and some ATs and KTs. Most continuing hands call, and premiums can remain among them. Your 4-bet can reduce the positional disadvantage, but does not force every strong hand to shove.",
+      text: "If you 4-bet, CO supports its wider 3-bet range with additional calls, including KJs and some ATs and KTs. Most continuing hands call, and premiums can remain among them.",
     },
   ],
   HJ_RAISE_BTN: [
@@ -96,7 +96,7 @@ export const FOLLOWUP_NOTES = {
   HJ_RAISE_SB: [
     {
       title: "SB adds selected hands against HJ",
-      text: "SB uses 3-bet or fold against your open, widening from about 7.3% against LJ to 8.7% against HJ. A9s, KQo, K9s and J9s enter or gain frequency. SB remains out of position, which lets suitable hands in your range continue by calling.",
+      text: "SB uses 3-bet or fold against your open, widening from about 7.3% against LJ to 8.7% against HJ. A9s, KQo, K9s and J9s enter or gain frequency.",
     },
     {
       title: "If you 4-bet, SB must defend its wider range",
@@ -106,11 +106,11 @@ export const FOLLOWUP_NOTES = {
   HJ_RAISE_BB: [
     {
       title: "BB’s defense expands only a little from LJ",
-      text: "Against HJ, BB 3-bets about 7.6% of starting hands and calls 23.9%, often by increasing frequencies near the edge of its LJ defense. The blind discount and closing the action support calls, but its 3-bet is still a selective action. You have position after the flop.",
+      text: "Against HJ, BB 3-bets about 7.6% of starting hands and calls 23.9%, often by increasing frequencies near the edge of its LJ defense. The blind discount and closing the action support calls, but its 3-bet is still a selective action.",
     },
     {
       title: "If you 4-bet, look at the overall defense",
-      text: "If you 4-bet, BB supports its wider 3-bet range with additional calls such as KJs and KTs. The chart also mixes JJ shoves while QQ calls; the source treats such small irregularities as possible blocker effects rather than rules to memorize. Use your displayed strategy instead of assuming every higher pair raises more often.",
+      text: "If you 4-bet, BB supports its wider 3-bet range with additional calls such as KJs and KTs. The chart also mixes JJ shoves while QQ calls; the source treats such small irregularities as possible blocker effects rather than rules to memorize.",
     },
   ],
   LJ_RAISE_HJ: [
@@ -146,7 +146,7 @@ export const FOLLOWUP_NOTES = {
   LJ_RAISE_SB: [
     {
       title: "The blind discount does not give SB a calling range",
-      text: "SB uses 3-bet or fold against your LJ open, entering about 7.3% of starting hands. Flat-calling would leave BB active and SB out of position under the book’s raked cash-game assumptions. Its 10 BB 3-bet therefore represents a tight range, while you retain position.",
+      text: "SB uses 3-bet or fold against your LJ open, entering about 7.3% of starting hands. Flat-calling would leave BB active and SB out of position under the book’s raked cash-game assumptions.",
     },
     {
       title: "If you 4-bet, lower cards can still call",
@@ -156,7 +156,7 @@ export const FOLLOWUP_NOTES = {
   LJ_RAISE_BB: [
     {
       title: "BB must respect your tight opening range",
-      text: "The blind discount and closing the action let BB call some hands, but your strong LJ range limits speculative calls and 3-bet bluffs. Offsuit AQ–AT favor calls; suited broadways, aces and connected hands make better aggressive candidates. You have position against the resulting 3-bet range.",
+      text: "The blind discount and closing the action let BB call some hands, but your strong LJ range limits speculative calls and 3-bet bluffs. Offsuit AQ–AT favor calls; suited broadways, aces and connected hands make better aggressive candidates.",
     },
     {
       title: "If you 4-bet, premiums can call or shove",

@@ -119,7 +119,9 @@ test("follow-ups grade their own ranges and sizes and explain the actual pot", (
     const potNote = notes.find((note) => note.title === `${pot} BB in the pot`);
     assert.equal(Boolean(potNote), correct.expected[1] > 0);
     if (potNote) assert.ok(potNote.text.includes(`another ${call} BB`));
-    assert.ok(notes.some((note) => note.title === `${size} BB re-raise total`));
+    assert.ok(
+      notes.some((note) => note.title === "Understanding the raise total"),
+    );
     assert.ok(!correct.explanation.includes("never calls first in"));
     assert.throws(
       () =>

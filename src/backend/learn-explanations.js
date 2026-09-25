@@ -60,7 +60,7 @@ export const LEARN_RANGE_NOTES = {
   HJ_VS_LJ_4BET: [
     {
       title: "Strong calls protect the rest of your defense",
-      text: "Most of your continuing range calls in position rather than shoving. Keeping AA among those calls protects hands such as smaller pairs, suited broadways and selected suited connectors or wheel aces. Premiums do not all take the same action: AA mixes calls and shoves, while QQ mostly calls but sometimes shoves. Use each hand’s displayed mix.",
+      text: "Most of your continuing range calls in position rather than shoving. Keeping AA among those calls protects hands such as smaller pairs, suited broadways and selected suited connectors or wheel aces. Premiums do not all take the same action: AA mixes calls and shoves, while QQ mostly calls but sometimes shoves.",
     },
   ],
   SB_VS_LJ_OPEN: [
@@ -70,17 +70,17 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Raise larger from out of position",
-      text: "The reference 3-bet is 10 BB against the 2.5 BB open, compared with 8.5 BB in position. It puts pressure on LJ and the active BB. LJ’s tight opening range still demands a selective response; being in a blind does not make a wide defense automatic.",
+      text: "The reference 3-bet is 10 BB against the 2.5 BB open, compared with 8.5 BB in position. The larger size compensates for having to act first after the flop.",
     },
   ],
   SB_VS_HJ_OPEN: [
     {
       title: "Widen against the wider opener",
-      text: "SB increases its 3-bet range from about 7.3% against LJ to 8.7% against HJ. A9s, KQo, K9s and J9s enter or gain frequency, alongside hands already near the edge of the range. These are selective additions, with each hand following its displayed mix.",
+      text: "SB increases its 3-bet range from about 7.3% against LJ to 8.7% against HJ. A9s, KQo, K9s and J9s enter or gain frequency, alongside hands already near the edge of the range.",
     },
     {
       title: "Keep the 3-bet-or-fold structure",
-      text: "The wider response still has no flat calls in this reference. BB remains active and SB will act first after the flop. Use the 10 BB 3-bet sizing; the blind discount alone does not remove the pressure of playing out of position.",
+      text: "The wider response still has no flat calls in this reference. The risk of a BB squeeze, poor equity realization out of position and rake still make flat-calling unattractive.",
     },
   ],
   SB_VS_CO_OPEN: [
@@ -90,7 +90,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "More hands, the same positional problem",
-      text: "SB still uses 3-bet or fold, with a 10 BB raise against the 2.5 BB open. BB can enter behind, and SB acts first postflop. The response widens through selected hands and frequencies rather than adding a flat-calling range.",
+      text: "SB still uses 3-bet or fold. The risk of a BB squeeze, poor equity realization out of position and rake prevent the wider defense from adding flat calls.",
     },
   ],
   SB_VS_BTN_OPEN: [
@@ -100,7 +100,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "A wider defense still uses 3-bet or fold",
-      text: "BTN’s wide open invites more resistance, but SB still has no flat calls in this reference. BB is yet to act and SB acts first postflop. Raise to 10 BB at the recommended frequency; the 15% figure describes all starting hands, not how often to raise every individual hand.",
+      text: "BTN’s wide open invites more resistance, but SB still has no flat calls in this reference. The risk of a BB squeeze and poor equity realization out of position still discourage calling under the book’s raked assumptions.",
     },
   ],
   SB_VS_LJ_4BET: [
@@ -110,7 +110,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Preserve the opponent’s possible bluffs",
-      text: "Small suited connectors and medium pairs can make better calls than AQo or suited king- and queen-high hands. They leave more of LJ’s bluff combinations available while retaining useful postflop potential. Raw high-card strength alone does not determine a good defense; follow each hand’s actual mix.",
+      text: "Small suited connectors and medium pairs can make better calls than AQo or suited king- and queen-high hands. They leave more of LJ’s bluff combinations available while retaining useful postflop potential. Raw high-card strength alone does not determine a good defense.",
     },
   ],
   SB_VS_HJ_4BET: [
@@ -119,8 +119,8 @@ export const LEARN_RANGE_NOTES = {
       text: "After expanding against HJ’s open, SB also calls more hands against the 4-bet. AQo begins calling occasionally, while KQs, KJs and KTs gain partial calls. Folding all of those additions would make the wider 3-bet range too easy to attack.",
     },
     {
-      title: "Defend at the new price, still out of position",
-      text: "SB has invested 10 BB and faces 23 BB, so calling costs another 13 BB into a 34 BB pot. The reference calls with roughly 47% of the range that already 3-bet. Position still matters: SB acts first postflop, and a previous 3-bet does not commit it to an all-in.",
+      title: "Protect a substantial calling range",
+      text: "The reference calls with roughly 47% of the range that already 3-bet. Keeping AA among those calls protects the weaker hands in that defense.",
     },
   ],
   SB_VS_CO_4BET: [
@@ -144,7 +144,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Shove selectively and keep enough calls",
-      text: "KK, QQ and AK shove, while JJ and TT mix calls with shoves. A5s mostly shoves, with some calls. AQo, suited broadways and selected suited connectors or wheel aces also continue by calling, alongside partial calls with AJo, A9s, K9s and QTs. The hand’s displayed mix distinguishes each response.",
+      text: "KK, QQ and AK shove, while JJ and TT mix calls with shoves. A5s mostly shoves, with some calls. AQo, suited broadways and selected suited connectors or wheel aces also continue by calling, alongside partial calls with AJo, A9s, K9s and QTs.",
     },
   ],
   BTN_VS_LJ_OPEN: [
@@ -154,7 +154,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Protect calls against squeezes",
-      text: "The blinds can still re-raise after a call. Keeping some QQ, JJ, TT, 99 and AKo among the calls stops that range from being only weak hands. Suited broadways such as AQs, AJs and KQs also help it withstand squeezes and play postflop. Use each hand’s displayed mix rather than always raising the strongest hands.",
+      text: "The blinds can still re-raise after a call. Keeping some QQ, JJ, TT, 99 and AKo among the calls stops that range from being only weak hands. Suited broadways such as AQs, AJs and KQs also help it withstand squeezes and play postflop.",
     },
     {
       title: "Do not build rules around tiny outliers",
@@ -164,7 +164,7 @@ export const LEARN_RANGE_NOTES = {
   BTN_VS_HJ_OPEN: [
     {
       title: "More 3-bets, slightly fewer calls",
-      text: "Against HJ, BTN 3-bets about 8.8% of all starting hands and calls 6.5%, compared with 7.3% and 6.9% against LJ. HJ’s wider opening range lets BTN attack more, while the blinds can squeeze more often and give BTN’s calls less protection. Guaranteed postflop position still makes a calling range possible.",
+      text: "Against HJ, BTN 3-bets about 8.8% of all starting hands and calls 6.5%, compared with 7.3% and 6.9% against LJ. HJ’s wider opening range lets BTN attack more, while the blinds can squeeze more often and give BTN’s calls less protection.",
     },
     {
       title: "Add selected high-card blockers",
@@ -178,7 +178,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "High-card value matters more",
-      text: "The wider 3-bet range adds suited aces and offsuit broadways, emphasizing high-card value and blockers. Calls still retain hands with good postflop playability. Follow the individual mixes: a wider defense does not make every suited hand or broadway a pure raise.",
+      text: "The wider 3-bet range adds suited aces and offsuit broadways, emphasizing high-card value and blockers. Calls still retain hands with good postflop playability.",
     },
   ],
   BTN_VS_LJ_4BET: [
@@ -188,13 +188,13 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Most continuing hands call in position",
-      text: "After BTN 3-bets and faces LJ’s 4-bet, the source folds 40.6%, calls 40% and shoves 19.4% of that prior 3-bet range. Calling lets hands with enough equity play a flop with position, while strong slowplays protect the calls. These percentages are conditional on already having 3-bet.",
+      text: "After BTN 3-bets and faces LJ’s 4-bet, the source folds 40.6%, calls 40% and shoves 19.4% of that prior 3-bet range. Calling lets hands with enough equity play a flop with position, while strong slowplays protect the calls.",
     },
   ],
   BTN_VS_HJ_4BET: [
     {
       title: "Expand both calls and value shoves",
-      text: "Against HJ, QQ shoves about 38% in the source, compared with only 5% against LJ. AQo calls more often, and the defense adds calls with KTs, QJs, JTs and suited wheel aces. The source response is about 40% fold, 41.6% call and 18.4% shove over the hands that already 3-bet.",
+      text: "Against HJ, QQ shoves about 38% in the source, compared with only 5% against LJ. AQo calls more often, and the defense adds calls with KTs, QJs, JTs and suited wheel aces. The source response is about 40% fold, 41.6% call and 18.4% shove over the hands that already 3-bet. Strong slowplays such as AA protect the calls.",
     },
     {
       title: "A pure call can still be a rare hand",
@@ -208,7 +208,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "The value shove range changes too",
-      text: "JJ starts shoving about 40%, while QQ shoves about 66% and AKo about 96% in the source. These are 5-bets all-in after CO’s 4-bet. They show why the highest pair need not be the hand raised most often: AA calls while other strong hands mix or favor shoving.",
+      text: "JJ starts shoving about 40%, while QQ shoves about 66% and AKo about 96% in the source.",
     },
   ],
   CO_VS_LJ_OPEN: [
@@ -228,7 +228,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Add hands at the edge, not every suited hand",
-      text: "A9s, QTs and JTs gain 3-bet frequency against HJ, along with hands already near the edge of the range. The source uses these hands only some of the time; the hand’s displayed mix gives the rounded practice frequencies.",
+      text: "A9s, QTs and JTs gain 3-bet frequency against HJ, along with hands already near the edge of the range. These remain occasional raises rather than automatic additions to every 3-bet.",
     },
   ],
   CO_VS_LJ_4BET: [
@@ -248,7 +248,7 @@ export const LEARN_RANGE_NOTES = {
     },
     {
       title: "Most continuing hands take a flop in position",
-      text: "Of the range that already 3-bet and now faces HJ’s 4-bet, the source folds about 35.8%, calls 48.2% and shoves 16.1%. CO acts after HJ postflop, and calls can still contain premium hands. These are frequencies over the prior 3-bet range, not all starting hands.",
+      text: "Of the range that already 3-bet and now faces HJ’s 4-bet, the source folds about 35.8%, calls 48.2% and shoves 16.1%. Premium slowplays such as AA protect the weaker hands among those calls.",
     },
   ],
 };
@@ -278,7 +278,7 @@ export function explainLearnHand(
         : OPENING_CONTEXT[situation.position];
   const reasons = {
     fold: () => foldReason(hand, situation, expected[0] === 100, inPosition),
-    call: () => callReason(hand, situation, inPosition),
+    call: () => callReason(situation, inPosition),
     raise: () => raiseReason(situation, inPosition),
     check: () =>
       "Checking costs nothing and guarantees a flop without risking a limp-reraise.",
@@ -327,27 +327,29 @@ function foldReason(hand, situation, pure, inPosition) {
       : situation.position === "BTN"
         ? "This hand’s equity and playability are too limited to profitably contest the blinds more often."
         : "You need a hand that can handle stronger opposing hands and pressure after the flop.";
-  return `${decision} ${pressure} Folding preserves your stack without investing more.`;
+  return `${decision} ${pressure}`;
 }
 
 /**
- * @param {import('./learn-types.js').HandClass} hand
  * @param {import('./learn-types.js').LearnSituation} situation
  * @param {boolean} inPosition
  */
-function callReason(hand, situation, inPosition) {
+function callReason(situation, inPosition) {
   if (!situation.opponent) {
     return "Limping costs just another 0.5 BB, keeping the pot small when BB checks.";
   }
-  const cost = situation.currentBet - situation.heroBet;
   if (situation.position === "BB" && situation.opponentAction === "Open")
-    return `Calling the extra ${cost} BB guarantees a flop. ${inPosition ? "The blind discount and ability to respond to SB’s decisions help you realize equity without building a larger pot." : "The blind discount makes more hands worth defending, though future pressure can prevent you from realizing all of their equity."}`;
+    return `Calling guarantees a flop. ${inPosition ? "Responding to SB’s decisions helps you realize equity without building a larger pot." : "Keeping the pot smaller gives this hand room to realize its equity, though future pressure can still force a fold."}`;
   if (situation.opponentAction === "Open") {
-    return `Calling the extra ${cost} BB keeps the pot smaller. Strong hands in the calling range protect the more speculative ones. Both blinds can still squeeze, so a call does not guarantee a flop at this price.`;
+    return "Calling keeps the pot smaller and leaves room to use this hand’s postflop potential.";
   }
   if (situation.opponentAction === "4-bet")
-    return fourBetCallReason(hand, situation, inPosition, cost);
-  return `Calling the extra ${cost} BB keeps the pot smaller ${
+    return `Calling leaves chips for postflop play. ${
+      inPosition
+        ? "You can use the opponent’s decisions to guide your play against a strong range."
+        : "This hand has enough postflop potential to continue, though future pressure can prevent it from realizing all of its equity."
+    }`;
+  return `Calling keeps the pot smaller ${
     inPosition
       ? "while letting you use your opponent’s decisions to guide your play."
       : "and leaves room to use this hand’s postflop potential."
@@ -360,12 +362,12 @@ function callReason(hand, situation, inPosition) {
  */
 function raiseReason(situation, inPosition) {
   if (situation.opponentAction === "Limp")
-    return "Raising to 3.5 BB puts pressure on SB’s limp. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
+    return "Raising can win the pot immediately or build it when SB calls.";
   if (situation.opponentAction === "Limp-reraise")
-    return "4-betting to 28 BB pressures SB’s strong limp-reraising range. Only a narrow portion of the prior raising range takes this line, mixing strong hands with selected ace and king blockers. This raise leaves chips for later decisions.";
+    return "4-betting pressures SB’s strong limp-reraising range and builds a larger pot when called. This raise leaves chips for later decisions.";
   if (situation.opponentAction === "Open") return openRaiseReason(situation);
   if (situation.opponentAction === "4-bet") {
-    return `5-betting all-in to 100 BB commits your remaining ${100 - situation.heroBet} BB. This hand belongs in the reference’s narrow shoving range at the recommended frequency.`;
+    return `5-betting all-in commits your remaining ${100 - situation.heroBet} BB. There are no chips left for postflop decisions if called.`;
   }
   if (!situation.opponent) {
     return situation.position === "SB"
@@ -386,23 +388,7 @@ function raiseReason(situation, inPosition) {
  * @param {import('./learn-types.js').LearnSituation & {opponent: import('./learn-types.js').Position}} situation
  */
 function openRaiseReason(situation) {
-  if (situation.position === "BB")
-    return situation.opponent === "SB"
-      ? "3-betting to 9 BB applies pressure to SB. The polarized range combines strong hands with selected blocker and board-coverage bluffs, while many medium-strength hands take a flop instead."
-      : `3-betting to 10 BB pressures ${situation.opponent}. ${situation.opponent === "BTN" ? "Against BTN’s wider opening range, the reference uses a more linear range built around strong hands." : "Suitedness, connectivity and useful blockers help selected hands handle the stronger opening range."}`;
-  if (situation.position === "SB")
-    return `3-betting to 10 BB puts pressure on ${situation.opponent} and BB. This reference uses 3-bet or fold from SB: the larger size compensates for playing out of position and discourages BB from entering. The range widens against later openers, following each hand’s recommended frequency.`;
-  if (situation.position === "BTN") {
-    return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the blinds. BTN’s polarized 3-bet range mixes strong hands with selected bluffs.`;
-  }
-  if (situation.position === "CO") {
-    const adjustment =
-      situation.opponent === "LJ"
-        ? "With one fewer player behind than HJ, CO can widen slightly to about 8.6% of starting hands, but LJ’s tight range keeps that increase small."
-        : "HJ opens wider than LJ, so CO can 3-bet about 9.9% of starting hands, adding frequency with hands such as A9s, QTs and JTs.";
-    return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the players behind you. ${adjustment} This reference uses a 3-bet-or-fold strategy.`;
-  }
-  return "3-betting to 8.5 BB puts pressure on LJ and the players behind you.";
+  return `3-betting puts pressure on ${situation.opponent}${situation.position === "BB" ? "" : " and the players behind you"}, building a larger pot when called.`;
 }
 
 /**
@@ -411,36 +397,14 @@ function openRaiseReason(situation) {
  */
 function openFoldReason(decision, situation) {
   if (situation.position === "BB")
-    return `${decision} The 1 BB already posted is a discount, not a reason to defend every hand. This hand’s equity and postflop playability do not justify continuing at a higher frequency against ${situation.opponent}. Folding preserves your stack without investing more.`;
+    return `${decision} This hand’s equity and postflop playability do not justify continuing at a higher frequency against ${situation.opponent}, even with the blind discount.`;
   if (situation.position === "SB")
-    return `${decision} The 0.5 BB already posted is only a discount on entry. Acting first postflop and facing an active BB make it harder to realize this hand’s equity. Folding preserves your stack without investing more.`;
+    return `${decision} The blind discount does not compensate for this hand’s difficulty realizing equity under pressure.`;
   if (situation.position === "BTN")
-    return `${decision} You still need enough strength against ${situation.opponent}’s opening range. Folding preserves your stack without investing more.`;
+    return `${decision} You still need enough strength against ${situation.opponent}’s opening range.`;
   const pressure =
     situation.opponent === "HJ"
       ? "HJ starts wider than LJ, but still has a stronger range than a random hand."
       : "LJ starts with a tight range.";
-  return `${decision} ${pressure} Folding limits exposure to that pressure and preserves your stack without investing more.`;
-}
-
-/**
- * @param {import('./learn-types.js').HandClass} hand
- * @param {import('./learn-types.js').LearnSituation} situation
- * @param {boolean} inPosition
- * @param {import('./learn-types.js').BigBlinds} cost
- */
-function fourBetCallReason(hand, situation, inPosition, cost) {
-  const strength =
-    hand === "AA" && situation.position !== "HJ"
-      ? "Keeping AA in the calling range protects it: a call can still contain the strongest starting hand."
-      : inPosition
-        ? "You can use the opponent’s decisions to guide your play against a strong range."
-        : "This hand has enough postflop potential to continue, though future pressure can prevent it from realizing all of its equity.";
-  const widerDefense =
-    situation.position === "CO" &&
-    situation.opponent === "HJ" &&
-    ["KJs", "ATs", "KTs"].includes(hand)
-      ? " Against HJ’s wider starting range, suited broadways like this one join CO’s defense at the recommended frequency."
-      : "";
-  return `Calling the extra ${cost} BB leaves chips for postflop play. ${strength}${widerDefense}`;
+  return `${decision} ${pressure}`;
 }

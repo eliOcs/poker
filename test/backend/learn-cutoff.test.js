@@ -86,7 +86,6 @@ test("CO widens against HJ with selected suited hands while retaining 3-bet or f
     assert.deepEqual(lj.expected, [100, 0, 0]);
     assert.deepEqual(hj.expected, mix);
     assert.match(hj.explanation, /BTN and both blinds are still to act/);
-    assert.match(hj.explanation, /HJ opens wider than LJ/);
     assert.doesNotMatch(hj.explanation, /four players|CO or BTN/);
     assert.match(lj.lessonNotes[0].text, /8.6%.*8.1%/);
     assert.match(hj.lessonNotes[0].text, /21%.*17%/);
@@ -145,7 +144,7 @@ test("CO retains premium slowplays against LJ and additional suited calls agains
     id: "CO_VS_HJ_4BET-KJs",
     frequencies: [0, 100, 0],
   });
-  assert.match(hj.explanation, /HJ’s wider starting range/);
+  assert.match(hj.lessonNotes[0].text, /KJs always calls/);
   assert.match(hj.playability.situation[0].text, /14.5 ÷ \(33 \+ 14.5\) ~ 31%/);
   for (const opponent of ["LJ", "HJ"]) {
     assert.throws(

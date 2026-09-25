@@ -64,7 +64,7 @@ test("HJ facing a 4-bet retains slowplays and grades a 100 BB shove", () => {
     /Keeping AA among those calls protects/,
   );
   assert.doesNotMatch(result.explanation, /protects/);
-  assert.match(result.explanation, /5-betting all-in to 100 BB/);
+  assert.match(result.explanation, /5-betting all-in commits/);
   assert.match(result.explanation, /remaining 91.5 BB/);
   const notes = result.playability.situation.map((note) => note.text).join(" ");
   assert.match(notes, /14.5 ÷ \(33 \+ 14.5\) ~ 31%/);
