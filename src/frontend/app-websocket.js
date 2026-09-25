@@ -337,7 +337,7 @@ export function disconnectFromGame(app) {
 /**
  * Sends a message to the game via WebSocket
  * @param {any} app
- * @param {object} message
+ * @param {{action: string}} message
  */
 export function sendToGame(app, message) {
   if (app._socket?.readyState !== WebSocket.OPEN) return;
@@ -375,7 +375,7 @@ export function sendToGame(app, message) {
 /**
  * Reports a frontend error to the backend
  * @param {any} app
- * @param {object} error
+ * @param {Record<string, unknown>} error
  */
 export function reportFrontendError(app, error) {
   const payload = createFrontendErrorReport(

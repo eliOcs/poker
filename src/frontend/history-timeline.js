@@ -55,7 +55,7 @@ function renderResult(history, status) {
 
 /**
  * @param {import('./history.js').History} history
- * @param {object} action
+ * @param {import('../backend/poker/hand-history/view.js').HandAction} action
  */
 function renderAction(history, action) {
   const actionStepIndex = getReplayStepIndexForAction(
@@ -127,7 +127,7 @@ function renderRoundActions(history, round, showResult) {
 
 /**
  * @param {import('./history.js').History} history
- * @param {object} round
+ * @param {import('../backend/poker/hand-history/view.js').HandRound} round
  * @param {number} roundIndex
  * @param {number} roundCount
  */

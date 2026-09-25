@@ -24,10 +24,10 @@ import { existsSync, readFileSync } from "node:fs";
  * @property {number} big_blind_amount
  * @property {number} ante_amount
  * @property {Array<{ id: string, seat: number, name: string|null, starting_stack: number }>} players
- * @property {Array<{ id: number, street: string, cards?: string[], actions: Array<object> }>} rounds
+ * @property {OHHHand['rounds']} rounds
  * @property {Array<{ number: number, amount: number, winning_hand: string|null, winning_cards: string[]|null, player_wins: Array<{ player_id: string, win_amount: number, contributed_rake: number }> }>} pots
  * @property {boolean} [tournament]
- * @property {object} [tournament_info]
+ * @property {OHHHand['tournament_info']} [tournament_info]
  */
 
 /**

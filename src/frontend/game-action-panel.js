@@ -16,7 +16,7 @@ function registerTournament(host) {
 }
 
 /**
- * @param {object} game - The game state object
+ * @param {import('../backend/poker/player-view.js').PlayerView} game - The game state object
  * @param {number} seatIndex
  * @returns {boolean}
  */
@@ -25,30 +25,30 @@ function isInHand(game, seatIndex) {
   const seat = game.seats[seatIndex];
   if (!seat || seat.empty) return false;
   if (seat.folded || seat.allIn || seat.sittingOut) return false;
-  return ["preflop", "flop", "turn", "river"].includes(game.hand?.phase);
+  return ["preflop", "flop", "turn", "river"].includes(game.hand.phase);
 }
 
 /**
- * @param {object} game - The game state object
+ * @param {import('../backend/poker/player-view.js').PlayerView} game - The game state object
  * @param {number} seatIndex
- * @returns {object}
  */
 function getPreActionProps(game, seatIndex) {
-  const seat = seatIndex !== -1 ? game.seats[seatIndex] : {};
-  const hand = game.hand ?? {};
+  const viewSeat = game.seats[seatIndex];
+  const seat = viewSeat && !viewSeat.empty ? viewSeat : undefined;
+  const hand = game.hand;
   return {
     phase: hand.phase,
-    preAction: seat.preAction,
-    currentBet: hand.currentBet ?? 0,
-    myBet: seat.bet ?? 0,
-    myStack: seat.stack ?? 0,
+    preAction: seat?.preAction,
+    currentBet: hand.currentBet,
+    myBet: seat?.bet ?? 0,
+    myStack: seat?.stack ?? 0,
     isActing: hand.actingSeat === seatIndex,
     inHand: isInHand(game, seatIndex),
   };
 }
 
 /**
- * @param {object} host - The Game component instance
+ * @param {import('./index.js').Game} host - The Game component instance
  * @param {Array} actions
  * @param {number} seatIndex
  * @param {boolean} canSit

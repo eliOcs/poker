@@ -97,6 +97,10 @@ describe("phg-app sign in", () => {
     });
     element.openProfileSignUp();
     await element.updateComplete;
+    await waitUntil(
+      () =>
+        new URLSearchParams(window.location.search).get("modal") === "sign-up",
+    );
 
     const modal = element.querySelector("phg-app-sign-in-modal");
     await modal.updateComplete;

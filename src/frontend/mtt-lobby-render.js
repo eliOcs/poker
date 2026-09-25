@@ -116,12 +116,12 @@ function renderPlayerProfileLink(entrant) {
 
 /**
  * @param {object} params
- * @param {object} params.tournament
+ * @param {import('../backend/mtt.js').ManagedTournamentView} params.tournament
  * @param {string} params.tournamentId
  * @param {(path: string) => void} params.onNavigate
  */
 function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
-  const tableId = tournament.currentPlayer?.tableId;
+  const tableId = tournament.currentPlayer.tableId;
   if (!tableId) return "";
 
   const isClosed =
@@ -152,7 +152,7 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
 
 /**
  * @param {object} params
- * @param {object} params.tournament
+ * @param {import('../backend/mtt.js').ManagedTournamentView} params.tournament
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
  */
@@ -209,7 +209,7 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
 
 /**
  * @param {object} params
- * @param {object} params.actions
+ * @param {import('../backend/mtt.js').ManagedTournamentView['actions']} params.actions
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
  */
@@ -230,7 +230,7 @@ function renderTournamentActions({ actions, actionPending, onMttAction }) {
 
 /**
  * @param {object} params
- * @param {object} params.tournament
+ * @param {import('../backend/mtt.js').ManagedTournamentView|undefined} params.tournament
  * @param {string} params.tournamentId
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
@@ -283,7 +283,7 @@ export function renderActions({
 
 /**
  * @param {object} params
- * @param {object} params.tournament
+ * @param {import('../backend/mtt.js').ManagedTournamentView|undefined} params.tournament
  * @param {string} params.tournamentId
  * @param {(path: string) => void} params.onNavigate
  */
@@ -314,7 +314,7 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
             <strong class="table-name">${table.tableName}</strong>
             <div class="table-meta">
               <span>Players: ${table.playerCount}</span>
-              <span>Hand: #${table.handNumber ?? 0}</span>
+              <span>Hand: #${table.handNumber}</span>
               ${table.closed ? html`<span>Closed</span>` : ""}
             </div>
             <div class="table-actions">

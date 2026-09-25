@@ -119,6 +119,7 @@ class Card extends LitElement {
     const isFlipped = !isHidden;
     const wrapperClasses = `card-wrapper${isFlipped ? " flipped" : ""}${this._flipping ? " flipping" : ""}${this._dealing ? " dealing" : ""}`;
 
+    /** @type {import("lit").TemplateResult | undefined} */
     let frontContent = undefined;
     let frontClasses = "card front";
     if (!isHidden) {

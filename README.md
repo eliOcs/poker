@@ -58,6 +58,11 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 
 ## Development
 
+`npm run typecheck` uses the TypeScript 7 native compiler (`tsc`), installed as
+`@typescript/native`. The `typescript` dependency aliases `@typescript/typescript6`
+to provide the compiler API required by ESLint. This follows Microsoft's
+[side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0).
+
 ### Commands
 
 ```bash

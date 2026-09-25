@@ -51,7 +51,10 @@ export class Learn extends LitElement {
     this.rangeOpen = false;
     /** @type {Cents} */
     this.betAmount = 0;
-    this.reset();
+    this.frequencies = initialFrequencies(this.actions.length);
+    this.sizing = false;
+    /** @type {LearnEvaluation | undefined} */
+    this.result = undefined;
     this.busy = false;
     this.error = "";
   }
@@ -154,7 +157,6 @@ export class Learn extends LitElement {
     this.frequencies = initialFrequencies(this.actions.length);
     this.betAmount = 0;
     this.sizing = false;
-    /** @type {LearnEvaluation | undefined} */
     this.result = undefined;
   }
 

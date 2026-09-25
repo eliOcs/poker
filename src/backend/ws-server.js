@@ -29,7 +29,7 @@ import { startWebSocketHeartbeat } from "./ws-heartbeat.js";
  * @property {Record<string, UserType>} users
  * @property {Map<string, Game>} games
  * @property {Map<import('ws').WebSocket, { user: UserType, gameId?: string, tournamentId?: string }>} clientConnections
- * @property {ReturnType<import('./rate-limit.js').createRateLimiter>} actionRateLimiter
+ * @property {import('./rate-limit.js').RateLimiter} actionRateLimiter
  * @property {(req: import('http').IncomingMessage) => string} getRequestRateLimitKey
  * @property {(user: UserType|undefined, gameId: string|undefined) => Promise<Game|void>} resolveGameForUpgrade
  * @property {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
@@ -39,7 +39,7 @@ import { startWebSocketHeartbeat } from "./ws-heartbeat.js";
  */
 
 /**
- * @param {ReturnType<import('./rate-limit.js').createRateLimiter>} actionRateLimiter
+ * @param {import('./rate-limit.js').RateLimiter} actionRateLimiter
  * @param {(req: import('http').IncomingMessage) => string} getRequestRateLimitKey
  * @param {import('http').IncomingMessage} request
  * @param {import('stream').Duplex} socket

@@ -143,7 +143,7 @@ function broadcastHandEnded(broadcastGameMessage, gameId, handData) {
  * @param {Record<string, unknown>} args
  * @param {string} gameId
  * @param {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
- * @returns {{ broadcast: { recipients: number, maxPayloadBytes: number }, gameSnapshot: ReturnType<import('./poker/game-engine.js').gameStateSnapshot> }}
+ * @returns {{ broadcast: { recipients: number, maxPayloadBytes: number }, gameSnapshot: ReturnType<typeof import('./poker/game-engine.js').gameStateSnapshot> }}
  */
 function handleGameAction(
   game,

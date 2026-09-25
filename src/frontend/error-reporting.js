@@ -1,6 +1,6 @@
 /**
  * Builds a normalized frontend error report payload
- * @param {object} error
+ * @param {Record<string, unknown>} error
  * @param {string} route
  * @param {string|undefined} gameId
  * @param {string} connectionStatus

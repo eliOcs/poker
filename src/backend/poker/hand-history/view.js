@@ -112,8 +112,8 @@ import HandRankings from "../hand-rankings.js";
 
 /**
  * Converts an action's amount from dollars to cents if present
- * @param {object} action
- * @returns {object}
+ * @param {import('./index.js').OHHAction} action
+ * @returns {HandAction}
  */
 function convertActionAmount(action) {
   if (action.amount !== undefined) {

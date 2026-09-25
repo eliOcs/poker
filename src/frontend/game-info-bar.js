@@ -1,6 +1,16 @@
 import { html } from "lit";
 import { formatCurrency, formatAmount } from "./currency.js";
 
+/**
+ * @typedef {import('../backend/poker/player-view.js').TournamentView} TournamentView
+ * @typedef {object} InfoBarGame
+ * @property {readonly unknown[]} seats
+ * @property {Pick<import('../backend/poker/game.js').Blinds, 'small' | 'big'>} blinds
+ * @property {string} [title]
+ * @property {number} [handNumber]
+ * @property {TournamentView} [tournament]
+ */
+
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
 function formatBlinds(blinds, displayBigBlind) {
@@ -21,7 +31,7 @@ function formatTime(seconds) {
 
 /**
  * @param {string} gameKind
- * @param {object|undefined} game
+ * @param {InfoBarGame|undefined} game
  * @returns {string}
  */
 function getTypeLabel(gameKind, game) {
@@ -34,11 +44,11 @@ function getTypeLabel(gameKind, game) {
 }
 
 /**
- * @param {object|undefined} tournament
+ * @param {TournamentView|undefined} tournament
  * @returns {import("lit").TemplateResult<1>|undefined}
  */
 function getTournamentTimerCell(tournament) {
-  if (!tournament || (tournament.timeToNextLevel ?? undefined) === undefined) {
+  if (!tournament) {
     return;
   }
 
@@ -49,7 +59,7 @@ function getTournamentTimerCell(tournament) {
 }
 
 /**
- * @param {object|undefined} game - The game state object
+ * @param {InfoBarGame|undefined} game - The game state object
  * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
  * @param {number} [displayBigBlind]
@@ -74,7 +84,7 @@ export function renderInfoBar(
     html`<span class="info-cell info-size">${sizeLabel}</span>`,
   ].filter(Boolean);
 
-  if (game.blinds && gameKind !== "learn") {
+  if (gameKind !== "learn") {
     cells.push(
       html`<span class="info-cell info-blinds"
         >${formatBlinds(game.blinds, displayBigBlind)}</span
@@ -82,7 +92,7 @@ export function renderInfoBar(
     );
   }
 
-  if (game.handNumber > 0) {
+  if ((game.handNumber ?? 0) > 0) {
     cells.push(
       html`<span class="info-cell info-hand">#${game.handNumber}</span>`,
     );

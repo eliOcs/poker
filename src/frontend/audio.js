@@ -1,3 +1,4 @@
+/** @type {AudioContext | undefined} */
 let audioContext = undefined;
 let volume = 0.75;
 let vibrationEnabled = true;

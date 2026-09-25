@@ -8,7 +8,7 @@ import * as logger from "../logger.js";
 /**
  * Mulberry32 - Simple, fast seeded PRNG
  * @param {number} seed
- * @returns {function(): number} Returns number in [0, 1)
+ * @returns {() => number} Returns number in [0, 1)
  */
 function mulberry32(seed) {
   return function () {
@@ -19,7 +19,7 @@ function mulberry32(seed) {
   };
 }
 
-/** @type {function(): number} */
+/** @type {() => number} */
 let random = Math.random;
 
 // If RNG_SEED is set, use seeded PRNG
