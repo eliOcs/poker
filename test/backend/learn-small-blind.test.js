@@ -205,15 +205,13 @@ test("SB receives the actual opener and its opening-weighted 4-bet range", () =>
         for (const [hand, entry] of entries)
           assert.equal(entry.openingFrequency, ranges[opponent].hands[hand][2]);
     }
-    const { opponentRange } = evaluateLearnStrategy({
+    const { lessonNotes } = evaluateLearnStrategy({
       id: `${opponent}_RAISE_SB-AA`,
       frequencies: [100, 0, 0],
     });
-    assert.ok(opponentRange.notes.length >= 4);
+    assert.ok(lessonNotes.length >= 2);
     assert.ok(
-      opponentRange.notes.some(({ text }) =>
-        /out of position|acts first/.test(text),
-      ),
+      lessonNotes.some(({ text }) => /out of position|acts first/.test(text)),
     );
   }
 });

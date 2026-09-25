@@ -1,10 +1,6 @@
 import { randomInt } from "node:crypto";
 import LEARN_RANGES from "./learn-ranges.json" with { type: "json" };
-import {
-  explainLearnHand,
-  OPPONENT_RANGE_NOTES,
-  LEARN_RANGE_NOTES,
-} from "./learn-explanations.js";
+import { explainLearnHand, LEARN_RANGE_NOTES } from "./learn-explanations.js";
 import { describePlayability } from "./learn-playability.js";
 import { conditionLearnRange } from "./learn-opponent-range.js";
 import { HttpError } from "./http-error.js";
@@ -364,7 +360,6 @@ function opponentRange(situation, heroHand) {
     ...(situation.opponentPriorAction === "call"
       ? { openingAction: "Limp" }
       : {}),
-    notes: OPPONENT_RANGE_NOTES[key],
   };
 }
 

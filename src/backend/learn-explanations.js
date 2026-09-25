@@ -1,3 +1,4 @@
+import { FOLLOWUP_NOTES } from "./learn-followup-notes.js";
 import { BIG_BLIND_NOTES } from "./learn-big-blind.js";
 
 // Teaching heuristics for the recommended actions, not per-action EV estimates.
@@ -10,11 +11,14 @@ const OPENING_CONTEXT = {
   SB: "Only the big blind remains, but you are out of position and act first after the flop.",
 };
 
-// Modern Poker Theory, Cutoff through Small Blind, PDF pages 218–237.
-// Range-wide takeaways are separate from reasons for the current hand's actions.
+// Modern Poker Theory, PDF pages 181–207 and 216–250.
+// Range-wide takeaways complement the current hand's action reasons. Follow-up
+// notes describe the opponent from the learner's perspective and distinguish
+// actions already taken from possible responses to a later raise.
 /** @satisfies {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").LearnNote[]>>} */
 export const LEARN_RANGE_NOTES = {
   ...BIG_BLIND_NOTES,
+  ...FOLLOWUP_NOTES,
   SB_VS_LJ_OPEN: [
     {
       title: "The blind discount does not justify a call",
@@ -201,91 +205,6 @@ export const LEARN_RANGE_NOTES = {
     {
       title: "Most continuing hands take a flop in position",
       text: "Of the range that already 3-bet and now faces HJ’s 4-bet, the source folds about 35.8%, calls 48.2% and shoves 16.1%. CO acts after HJ postflop, and calls can still contain premium hands. These are frequencies over the prior 3-bet range, not all starting hands.",
-    },
-  ],
-};
-
-// Modern Poker Theory, Hijack through Small Blind, PDF pages 216–237.
-// These describe the opponent's strategy, not the learner's current action.
-/** @type {Partial<Record<import("./learn-types.js").RangeKey, import("./learn-types.js").LearnNote[]>>} */
-export const OPPONENT_RANGE_NOTES = {
-  BB_VS_LJ_OPEN: [
-    ...BIG_BLIND_NOTES.BB_VS_LJ_OPEN,
-    ...BIG_BLIND_NOTES.BB_VS_LJ_4BET,
-  ],
-  BB_VS_HJ_OPEN: [
-    ...BIG_BLIND_NOTES.BB_VS_HJ_OPEN,
-    ...BIG_BLIND_NOTES.BB_VS_HJ_4BET,
-  ],
-  BB_VS_CO_OPEN: [
-    ...BIG_BLIND_NOTES.BB_VS_CO_OPEN,
-    ...BIG_BLIND_NOTES.BB_VS_CO_4BET,
-  ],
-  BB_VS_BTN_OPEN: [
-    ...BIG_BLIND_NOTES.BB_VS_BTN_OPEN,
-    ...BIG_BLIND_NOTES.BB_VS_BTN_4BET,
-  ],
-  BB_VS_SB_OPEN: [
-    ...BIG_BLIND_NOTES.BB_VS_SB_OPEN,
-    ...BIG_BLIND_NOTES.BB_VS_SB_4BET,
-  ],
-  BB_VS_SB_LIMP: [
-    ...BIG_BLIND_NOTES.BB_VS_SB_LIMP,
-    ...BIG_BLIND_NOTES.BB_VS_SB_LIMP_RAISE,
-  ],
-
-  SB_VS_LJ_OPEN: [
-    ...LEARN_RANGE_NOTES.SB_VS_LJ_OPEN,
-    ...LEARN_RANGE_NOTES.SB_VS_LJ_4BET,
-  ],
-  SB_VS_HJ_OPEN: [
-    ...LEARN_RANGE_NOTES.SB_VS_HJ_OPEN,
-    ...LEARN_RANGE_NOTES.SB_VS_HJ_4BET,
-  ],
-  SB_VS_CO_OPEN: [
-    ...LEARN_RANGE_NOTES.SB_VS_CO_OPEN,
-    ...LEARN_RANGE_NOTES.SB_VS_CO_4BET,
-  ],
-  SB_VS_BTN_OPEN: [
-    ...LEARN_RANGE_NOTES.SB_VS_BTN_OPEN,
-    ...LEARN_RANGE_NOTES.SB_VS_BTN_4BET,
-  ],
-  BTN_VS_LJ_OPEN: [
-    ...LEARN_RANGE_NOTES.BTN_VS_LJ_OPEN,
-    ...LEARN_RANGE_NOTES.BTN_VS_LJ_4BET,
-  ],
-  BTN_VS_HJ_OPEN: [
-    ...LEARN_RANGE_NOTES.BTN_VS_HJ_OPEN,
-    ...LEARN_RANGE_NOTES.BTN_VS_HJ_4BET,
-  ],
-  BTN_VS_CO_OPEN: [
-    ...LEARN_RANGE_NOTES.BTN_VS_CO_OPEN,
-    ...LEARN_RANGE_NOTES.BTN_VS_CO_4BET,
-  ],
-  CO_VS_LJ_OPEN: [
-    ...LEARN_RANGE_NOTES.CO_VS_LJ_OPEN,
-    ...LEARN_RANGE_NOTES.CO_VS_LJ_4BET,
-  ],
-  CO_VS_HJ_OPEN: [
-    ...LEARN_RANGE_NOTES.CO_VS_HJ_OPEN,
-    ...LEARN_RANGE_NOTES.CO_VS_HJ_4BET,
-  ],
-  HJ_VS_LJ_OPEN: [
-    {
-      title: "A tight 3-bet-or-fold range",
-      text: "Against an LJ open, HJ 3-bets about 8% of all starting hands and folds the rest in this reference strategy. There is no calling range. The 3-bet range is built mainly around strong hands.",
-    },
-    {
-      title: "Small pairs give board coverage",
-      text: "Pairs from 88 down to 22 appear at low frequencies, letting HJ make sets on more flop textures. Spreading these occasional 3-bets across different pairs also makes opponents’ blockers less effective at narrowing down HJ’s hands.",
-    },
-    {
-      title: "A 4-bet does not always end the hand",
-      text: "If LJ 4-bets, HJ has position and calls with most of the continuing range. The reference response is 38.3% fold, 43.3% call and 18.4% shove. These percentages describe hands that already 3-bet and now face a 4-bet.",
-    },
-    {
-      title: "Calls can still contain very strong hands",
-      text: "Against the 4-bet, HJ calls AA about half the time. AKo, AQs, AJs and KQs also appear among the calls, alongside some small suited connectors and suited wheel aces. A call can conceal strength; a 3-bet does not commit HJ to shoving.",
     },
   ],
 };

@@ -209,10 +209,10 @@ test("CO receives the correct opener's range at both decisions", () => {
     }
   }
   for (const key of ["LJ_RAISE_CO", "HJ_RAISE_CO"]) {
-    const { opponentRange } = evaluateLearnStrategy({
+    const { lessonNotes } = evaluateLearnStrategy({
       id: `${key}-AA`,
       frequencies: [100, 0, 0],
     });
-    assert.equal(opponentRange.notes.length, 4);
+    assert.equal(lessonNotes.length, 2);
   }
 });

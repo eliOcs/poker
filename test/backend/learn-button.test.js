@@ -168,14 +168,12 @@ test("BTN feedback uses the actual opener and conditions 4-bets on the earlier o
       }
       assert.ok(Math.abs(total - 100) < 1e-10);
     }
-    const { opponentRange } = evaluateLearnStrategy({
+    const { lessonNotes } = evaluateLearnStrategy({
       id: `${opponent}_RAISE_BTN-AA`,
       frequencies: [100, 0, 0],
     });
-    assert.ok(opponentRange.notes.length >= 4);
-    assert.ok(
-      opponentRange.notes.some(({ text }) => /calls|calling/.test(text)),
-    );
+    assert.ok(lessonNotes.length >= 2);
+    assert.ok(lessonNotes.some(({ text }) => /calls|calling/.test(text)));
     for (const [stage, invalidSize] of [
       ["OPEN", 3.5],
       ["4BET", 37],

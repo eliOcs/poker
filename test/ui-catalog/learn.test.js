@@ -93,7 +93,7 @@ const states = [
   },
   {
     name: "takeaways",
-    state: { ...checking, rangeOpen: true },
+    state: { ...followup, rangeOpen: true },
     reveal: ".learn-strategy-notes",
   },
   {
@@ -114,7 +114,16 @@ const states = [
 ];
 
 async function revealState(component, { reveal, tooltip, opponentHand }) {
-  if (reveal) await component.locator(reveal).scrollIntoViewIfNeeded();
+  if (reveal) {
+    const target = component.locator(reveal);
+    if (reveal === ".learn-opponent-range") {
+      await target.evaluate((element) =>
+        element.scrollIntoView({ block: "start" }),
+      );
+    } else {
+      await target.scrollIntoViewIfNeeded();
+    }
+  }
   if (tooltip) {
     await component.getByRole("button", { name: tooltip }).focus();
     await expect(component.getByRole("tooltip")).toBeVisible();

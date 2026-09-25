@@ -257,6 +257,16 @@ describe("Learn strategy flow", () => {
       const response = await fetch(url, options);
       if (!String(url).endsWith("evaluate")) return response;
       const result = await response.json();
+      result.lessonNotes = [
+        {
+          title: "Understand their range",
+          text: "SB can 3-bet selected bluffs.",
+        },
+        {
+          title: "Plan your next action",
+          text: "If you 4-bet, SB can call with AA.",
+        },
+      ];
       result.opponentRange = {
         position: "SB",
         action: "3-bet",
@@ -296,6 +306,15 @@ describe("Learn strategy flow", () => {
     el.rangeOpen = true;
     await el.updateComplete;
     const section = el.querySelector(".learn-opponent-range");
+    const takeaways = el.querySelector(".learn-strategy-notes");
+    expect(takeaways.querySelector("h2").textContent).to.equal("Key takeaways");
+    expect(takeaways.querySelectorAll("li")).to.have.length(2);
+    expect(takeaways.textContent).to.include(
+      "If you 4-bet, SB can call with AA.",
+    );
+    expect(takeaways.nextElementSibling).to.equal(section);
+    expect(el.querySelectorAll("#learn-takeaways-heading")).to.have.length(1);
+    expect(section.querySelector(".learn-card-factors")).not.to.exist;
     expect(section.textContent.replace(/\s+/g, " ")).to.include(
       "Oponent range:",
     );
@@ -354,6 +373,7 @@ describe("Learn strategy flow", () => {
     await el.updateComplete;
     expect(el.querySelector("phg-modal")).to.exist;
     expect(el.querySelector(".learn-opponent-range")).not.to.exist;
+    expect(el.querySelector("#learn-takeaways-heading")).not.to.exist;
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [

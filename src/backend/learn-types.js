@@ -80,7 +80,7 @@
  * @property {Percentage} probability
  *
  * @typedef {{hands: Partial<Record<HandClass, OpponentHand>>, totalWeight: number}} ConditionedRange
- * @typedef {ConditionedRange & {page: number, chart: number, position: Position, action: OpponentAction, raiseTo: BigBlinds, openingAction?: 'Limp', notes?: LearnNote[]}} OpponentRange
+ * @typedef {ConditionedRange & {page: number, chart: number, position: Position, action: OpponentAction, raiseTo: BigBlinds, openingAction?: 'Limp'}} OpponentRange
  * @typedef {{features: {pair: boolean, suited: boolean, highCards: number, straightPatterns: number}, cards: LearnNote[], situation: LearnNote[]}} Playability
  *
  * @typedef {object} LearnEvaluation
@@ -95,7 +95,7 @@
  * @property {Playability} playability
  * @property {string | undefined} explanationTitle
  * @property {string} explanation
- * @property {LearnNote[] | undefined} lessonNotes
+ * @property {LearnNote[] | undefined} lessonNotes Key takeaways for this decision, including relevant opponent strategy and conditional next actions.
  * @property {number} page
  * @property {number} chart
  * @property {StrategyRange['hands']} hands

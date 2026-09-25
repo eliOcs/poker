@@ -207,19 +207,6 @@ function renderOpponentRange(view, scenario, result) {
         renderOpponentHand(hand, range, maxProbability),
       )}
     </div>
-    ${
-      range.notes?.length
-        ? html`<ul class="learn-card-factors">
-            ${range.notes.map(
-              (note) =>
-                html`<li>
-                  <strong>${note.title}</strong>
-                  <p>${note.text}</p>
-                </li>`,
-            )}
-          </ul>`
-        : ""
-    }
   </section>`;
 }
 
@@ -449,7 +436,7 @@ function renderRangeDetails(view, scenario, result) {
             class="learn-strategy-notes"
             aria-labelledby="learn-takeaways-heading"
           >
-            <h2 id="learn-takeaways-heading">Strategy takeaways</h2>
+            <h2 id="learn-takeaways-heading">Key takeaways</h2>
             <ul class="learn-card-factors">
               ${result.lessonNotes.map(
                 (note) =>

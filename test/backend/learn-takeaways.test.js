@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
+import { LEARN_SITUATION_KEYS } from "../../src/backend/learn-situations.js";
 
 // Content checks belong here; the catalog renders one representative notes list.
 for (const [position, opponent, fourBet, takeaway, count] of [
@@ -50,7 +51,7 @@ test("Hijack opponent notes explain folds, calls and premium slowplays", () => {
     id: "LJ_RAISE_HJ-AA",
     frequencies: [100, 0, 0],
   });
-  const notes = result.opponentRange.notes
+  const notes = result.lessonNotes
     .map(({ title, text }) => `${title} ${text}`)
     .join(" ");
   for (const concept of [
@@ -74,3 +75,27 @@ test("Big Blind takeaway explains the free flop against a limp", () => {
     ),
   );
 });
+
+for (const key of LEARN_SITUATION_KEYS.filter(
+  (key) => key.includes("_RAISE_") || key === "SB_LIMP_BB",
+)) {
+  test(`${key} combines opponent context and a conditional next step in its takeaways`, () => {
+    const result = evaluateLearnStrategy({
+      id: `${key}-AA`,
+      frequencies: [100, 0, 0],
+    });
+    const opponent = key.split("_").at(-1);
+    assert.equal(result.lessonNotes.length, 2);
+    assert.match(result.lessonNotes[0].text, new RegExp(opponent));
+    assert.match(result.lessonNotes[1].text, /^If you (4-bet|reraise)/);
+    assert.equal(result.opponentRange.notes, undefined);
+    assert.deepEqual(
+      result.lessonNotes,
+      evaluateLearnStrategy({
+        id: `${key}-AA`,
+        frequencies: [0, 0, 100],
+        raiseTo: 100,
+      }).lessonNotes,
+    );
+  });
+}
