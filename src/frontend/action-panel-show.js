@@ -16,9 +16,9 @@ export function renderShowButtons(panel, actionMap) {
         (entry) => html`
           <button
             type="button"
-            class="button ${entry.key === "muck"
-              ? "button--success"
-              : "button--action"} button--full-width"
+            class="button ${
+              entry.key === "muck" ? "button--success" : "button--action"
+            } button--full-width"
             @click=${() =>
               panel.sendAction({ action: entry.key, seat: panel.seatIndex })}
           >

@@ -146,14 +146,16 @@ function renderCashDrawer(game) {
       ${iconRankings} Rankings
     </button>
     ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
-    ${game.game?.tournament
-      ? html`<button
-          type="button"
-          @click=${handleDrawerAction(game, () => game.openTournamentLevels())}
-        >
-          ${ICONS.levels} Levels
-        </button>`
-      : ""}
+    ${
+      game.game?.tournament
+        ? html`<button
+            type="button"
+            @click=${handleDrawerAction(game, () => game.openTournamentLevels())}
+          >
+            ${ICONS.levels} Levels
+          </button>`
+        : ""
+    }
     ${renderSitOutButton(game)}
     <button
       type="button"
@@ -161,38 +163,42 @@ function renderCashDrawer(game) {
     >
       ${iconCopyLink} ${game._copied ? "Copied!" : "Copy Link"}
     </button>
-    ${canShare
-      ? html`<button
-          type="button"
-          @click=${handleDrawerAction(game, () => game.shareGameLink())}
-        >
-          ${iconShare} Share
-        </button>`
-      : ""}
+    ${
+      canShare
+        ? html`<button
+            type="button"
+            @click=${handleDrawerAction(game, () => game.shareGameLink())}
+          >
+            ${iconShare} Share
+          </button>`
+        : ""
+    }
   `;
   const footerItems = html`
-    ${isSignedIn
-      ? html`<a
-          class="drawer-account"
-          href=${`/players/${game.user.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ${ICONS.signIn} Profile
-        </a>`
-      : html`<button
-            type="button"
-            class="drawer-primary"
-            @click=${handleDrawerAction(game, () => game.openSignUp())}
+    ${
+      isSignedIn
+        ? html`<a
+            class="drawer-account"
+            href=${`/players/${game.user.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            ${ICONS.signUp} Sign up</button
-          ><button
-            type="button"
-            class="drawer-entry"
-            @click=${handleDrawerAction(game, () => game.openSignIn())}
-          >
-            ${ICONS.signIn} Sign in
-          </button>`}
+            ${ICONS.signIn} Profile
+          </a>`
+        : html`<button
+              type="button"
+              class="drawer-primary"
+              @click=${handleDrawerAction(game, () => game.openSignUp())}
+            >
+              ${ICONS.signUp} Sign up</button
+            ><button
+              type="button"
+              class="drawer-entry"
+              @click=${handleDrawerAction(game, () => game.openSignIn())}
+            >
+              ${ICONS.signIn} Sign in
+            </button>`
+    }
     <button
       type="button"
       @click=${handleDrawerAction(game, () => game.openSettings())}

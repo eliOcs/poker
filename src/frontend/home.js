@@ -141,26 +141,30 @@ class Home extends LitElement {
             </label>
           </div>
         </div>
-        ${isCash
-          ? renderPresetSelect({
-              label: "Stakes",
-              options: STAKES_PRESETS,
-              selectedIndex,
-              onChange: this.handleStakesChange,
-            })
-          : renderPresetSelect({
-              label: "Buy-In",
-              options: BUYIN_PRESETS,
-              selectedIndex: buyInIndex,
-              onChange: this.handleBuyInChange,
-            })}
-        ${isCash
-          ? ""
-          : renderTournamentSpeedSelect({
-              selectedSpeed: this.selectedSpeed,
-              onChange: this.handleSpeedChange,
-              tooltipId: "sitngo-speed-tooltip",
-            })}
+        ${
+          isCash
+            ? renderPresetSelect({
+                label: "Stakes",
+                options: STAKES_PRESETS,
+                selectedIndex,
+                onChange: this.handleStakesChange,
+              })
+            : renderPresetSelect({
+                label: "Buy-In",
+                options: BUYIN_PRESETS,
+                selectedIndex: buyInIndex,
+                onChange: this.handleBuyInChange,
+              })
+        }
+        ${
+          isCash
+            ? ""
+            : renderTournamentSpeedSelect({
+                selectedSpeed: this.selectedSpeed,
+                onChange: this.handleSpeedChange,
+                tooltipId: "sitngo-speed-tooltip",
+              })
+        }
         ${renderTableSizeSelect({
           selectedTableSize: this.selectedTableSize,
           onChange: this.handleTableSizeChange,

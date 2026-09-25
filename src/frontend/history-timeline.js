@@ -38,18 +38,20 @@ function renderResult(history, status) {
       `;
     })}
     ${winningHand ? html`<div class="showdown-hand">${winningHand}</div>` : ""}
-    ${winningCards?.length
-      ? html`<div class="showdown-cards">
-          ${winningCards.map(
-            (card) =>
-              html`<phg-card
-                .card=${card}
-                noAnimation
-                size="medium"
-              ></phg-card>`,
-          )}
-        </div>`
-      : ""}
+    ${
+      winningCards?.length
+        ? html`<div class="showdown-cards">
+            ${winningCards.map(
+              (card) =>
+                html`<phg-card
+                  .card=${card}
+                  noAnimation
+                  size="medium"
+                ></phg-card>`,
+            )}
+          </div>`
+        : ""
+    }
   </div>`;
 }
 
@@ -70,23 +72,27 @@ function renderAction(history, action) {
     <div class="action-item ${status}">
       <span class="action-player ${isYou ? "you" : ""}">${playerName}</span>
       ${action.action}
-      ${action.cards?.length
-        ? html`<span class="action-cards"
-            >${action.cards.map(
-              (card) =>
-                html`<phg-card
-                  .card=${card}
-                  noAnimation
-                  size="medium"
-                ></phg-card>`,
-            )}</span
-          >`
-        : ""}
-      ${action.amount
-        ? html`<span class="action-amount"
-            >${formatCurrency(action.amount)}</span
-          >`
-        : ""}
+      ${
+        action.cards?.length
+          ? html`<span class="action-cards"
+              >${action.cards.map(
+                (card) =>
+                  html`<phg-card
+                    .card=${card}
+                    noAnimation
+                    size="medium"
+                  ></phg-card>`,
+              )}</span
+            >`
+          : ""
+      }
+      ${
+        action.amount
+          ? html`<span class="action-amount"
+              >${formatCurrency(action.amount)}</span
+            >`
+          : ""
+      }
     </div>
   `;
 }
@@ -153,9 +159,11 @@ export function renderHistoryTimeline(history, aria) {
   return html`
     <div
       class="timeline-panel"
-      style=${history.timelineHeight === undefined
-        ? ""
-        : `--timeline-height: ${history.timelineHeight}px`}
+      style=${
+        history.timelineHeight === undefined
+          ? ""
+          : `--timeline-height: ${history.timelineHeight}px`
+      }
     >
       <div
         class="timeline-resize-handle"

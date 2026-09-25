@@ -84,9 +84,11 @@ class PlayerProfile extends LitElement {
                 </div>
               </div>
               <div class=${`status ${this.profile.online ? "" : "offline"}`}>
-                ${this.profile.online
-                  ? "Playing"
-                  : `Last played ${formatRelativeDate(this.profile.lastSeenAt)}`}
+                ${
+                  this.profile.online
+                    ? "Playing"
+                    : `Last played ${formatRelativeDate(this.profile.lastSeenAt)}`
+                }
               </div>
             </div>
             <div class="summary">

@@ -277,9 +277,9 @@ class Seat extends LitElement {
         ${this._renderClock()} ${this._renderStatusOrAction()}
         ${this._renderHandRank()}
         <div
-          class="hole-cards ${this.seat.cards?.some((card) => card !== "??")
-            ? "revealed"
-            : ""}"
+          class="hole-cards ${
+            this.seat.cards?.some((card) => card !== "??") ? "revealed" : ""
+          }"
         >
           ${this.seat.cards?.map(
             (card) =>
@@ -292,12 +292,16 @@ class Seat extends LitElement {
           )}
         </div>
       </div>
-      ${this._activeEmote
-        ? html`<div class="emote-bubble">${this._activeEmote}</div>`
-        : ""}
-      ${this._activeChat
-        ? html`<div class="chat-bubble">${this._activeChat}</div>`
-        : ""}
+      ${
+        this._activeEmote
+          ? html`<div class="emote-bubble">${this._activeEmote}</div>`
+          : ""
+      }
+      ${
+        this._activeChat
+          ? html`<div class="chat-bubble">${this._activeChat}</div>`
+          : ""
+      }
       ${this._renderBetIndicator()} ${this._renderDealerButton()}
     `;
   }

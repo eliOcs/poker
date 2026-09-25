@@ -72,15 +72,17 @@ export function renderLearnFeedback(view, scenario, result) {
         comparing,
         actions,
       )}
-      ${comparing
-        ? renderStrategy(
-            "Your strategy",
-            view.frequencies,
-            formatAmount(view.betAmount, view.displayBigBlind),
-            true,
-            actions,
-          )
-        : ""}
+      ${
+        comparing
+          ? renderStrategy(
+              "Your strategy",
+              view.frequencies,
+              formatAmount(view.betAmount, view.displayBigBlind),
+              true,
+              actions,
+            )
+          : ""
+      }
     </div>
     <div class="action-row">
       <button
@@ -98,16 +100,18 @@ export function renderLearnFeedback(view, scenario, result) {
         Next hand
       </button>
     </div>
-    ${view.rangeOpen
-      ? renderModal(
-          `Range: Preflop, ${scenario.title}, ${POSITION_NAMES[scenario.position]}`,
-          () =>
-            view.dispatchEvent(
-              new CustomEvent("close-details", { bubbles: true }),
-            ),
-          renderRangeDetails(view, scenario, result),
-        )
-      : ""}`;
+    ${
+      view.rangeOpen
+        ? renderModal(
+            `Range: Preflop, ${scenario.title}, ${POSITION_NAMES[scenario.position]}`,
+            () =>
+              view.dispatchEvent(
+                new CustomEvent("close-details", { bubbles: true }),
+              ),
+            renderRangeDetails(view, scenario, result),
+          )
+        : ""
+    }`;
 }
 
 /** @param {Frequencies} values @param {LearnAction[]} actions */
@@ -151,8 +155,10 @@ function renderStrategy(
         frequency > 0
           ? html`<li>
               <span class="pixel-label"
-                >${LEARN_ACTIONS[/** @type {LearnAction} */ (actions[index])]
-                  .label}</span
+                >${
+                  LEARN_ACTIONS[/** @type {LearnAction} */ (actions[index])]
+                    .label
+                }</span
               >
               ${renderFrequency(
                 frequency,
@@ -162,9 +168,11 @@ function renderStrategy(
           : "",
       )}
     </ul>
-    ${(frequencies[actions.indexOf("raise")] ?? 0) > 0
-      ? html`<p>Raise to ${raiseTo}</p>`
-      : ""}
+    ${
+      (frequencies[actions.indexOf("raise")] ?? 0) > 0
+        ? html`<p>Raise to ${raiseTo}</p>`
+        : ""
+    }
   </section>`;
 }
 
@@ -199,17 +207,19 @@ function renderOpponentRange(view, scenario, result) {
         renderOpponentHand(hand, range, maxProbability),
       )}
     </div>
-    ${range.notes?.length
-      ? html`<ul class="learn-card-factors">
-          ${range.notes.map(
-            (note) =>
-              html`<li>
-                <strong>${note.title}</strong>
-                <p>${note.text}</p>
-              </li>`,
-          )}
-        </ul>`
-      : ""}
+    ${
+      range.notes?.length
+        ? html`<ul class="learn-card-factors">
+            ${range.notes.map(
+              (note) =>
+                html`<li>
+                  <strong>${note.title}</strong>
+                  <p>${note.text}</p>
+                </li>`,
+            )}
+          </ul>`
+        : ""
+    }
   </section>`;
 }
 
@@ -267,24 +277,26 @@ function renderOpponentHand(hand, range, maxProbability) {
       <strong>${hand}: ${percent}% probability</strong>
       <p>
         ${combinations} available
-        ${combinations === 1
-          ? "combination"
-          : "combinations"}${blockedCombinations > 0
-          ? " after removing your cards"
-          : ""}.
+        ${combinations === 1 ? "combination" : "combinations"}${
+          blockedCombinations > 0 ? " after removing your cards" : ""
+        }.
       </p>
-      ${openingFrequency !== undefined
-        ? html`<p>
-            ${range.openingAction ?? "Open"} frequency: ${openingFrequency}%.
-          </p>`
-        : ""}
+      ${
+        openingFrequency !== undefined
+          ? html`<p>
+              ${range.openingAction ?? "Open"} frequency: ${openingFrequency}%.
+            </p>`
+          : ""
+      }
       <p>
         ${range.action}
-        frequency${openingFrequency !== undefined
-          ? range.openingAction === "Limp"
-            ? " after limping"
-            : " after opening"
-          : ""}:
+        frequency${
+          openingFrequency !== undefined
+            ? range.openingAction === "Limp"
+              ? " after limping"
+              : " after opening"
+            : ""
+        }:
         ${frequency}%.
       </p>
     </div>
@@ -342,30 +354,36 @@ function renderRangeDetails(view, scenario, result) {
           >`,
       )}
       <span><i class="legend-selected" aria-hidden="true"></i>Your hand</span>
-      ${Object.keys(result.hands).length < 169
-        ? html`<span
-            ><i class="legend-unavailable" aria-hidden="true"></i>Not in
-            range</span
-          >`
-        : ""}
+      ${
+        Object.keys(result.hands).length < 169
+          ? html`<span
+              ><i class="legend-unavailable" aria-hidden="true"></i>Not in
+              range</span
+            >`
+          : ""
+      }
     </div>
     <div class="learn-range">
       ${HAND_ORDER.map((hand) => {
         const values = result.hands[hand];
         return html`<span
-          class=${!values
-            ? "legend-unavailable"
-            : hand === scenario.hand
-              ? "selected"
-              : ""}
-          title=${values
-            ? `${hand}: ${actions
-                .map((action, i) => {
-                  const frequency = /** @type {number} */ (values[i]);
-                  return `${LEARN_ACTIONS[action].label} ${frequency}%`;
-                })
-                .join(", ")}`
-            : `${hand}: Not in range`}
+          class=${
+            !values
+              ? "legend-unavailable"
+              : hand === scenario.hand
+                ? "selected"
+                : ""
+          }
+          title=${
+            values
+              ? `${hand}: ${actions
+                  .map((action, i) => {
+                    const frequency = /** @type {number} */ (values[i]);
+                    return `${LEARN_ACTIONS[action].label} ${frequency}%`;
+                  })
+                  .join(", ")}`
+              : `${hand}: Not in range`
+          }
           style=${values ? rangeBackground(values, actions) : ""}
           >${hand}</span
         >`;
@@ -410,8 +428,10 @@ function renderRangeDetails(view, scenario, result) {
     <ul class="learn-card-factors">
       <li>
         <strong
-          >${result.explanationTitle ??
-          POSITION_CHARACTERISTICS[scenario.position]}</strong
+          >${
+            result.explanationTitle ??
+            POSITION_CHARACTERISTICS[scenario.position]
+          }</strong
         >
         <p>${result.explanation}</p>
       </li>
@@ -423,31 +443,35 @@ function renderRangeDetails(view, scenario, result) {
           </li>`,
       )}
     </ul>
-    ${result.lessonNotes?.length
-      ? html`<section
-          class="learn-strategy-notes"
-          aria-labelledby="learn-takeaways-heading"
-        >
-          <h2 id="learn-takeaways-heading">Strategy takeaways</h2>
-          <ul class="learn-card-factors">
-            ${result.lessonNotes.map(
-              (note) =>
-                html`<li>
-                  <strong>${note.title}</strong>
-                  <p>${note.text}</p>
-                </li>`,
-            )}
-          </ul>
-        </section>`
-      : ""}
+    ${
+      result.lessonNotes?.length
+        ? html`<section
+            class="learn-strategy-notes"
+            aria-labelledby="learn-takeaways-heading"
+          >
+            <h2 id="learn-takeaways-heading">Strategy takeaways</h2>
+            <ul class="learn-card-factors">
+              ${result.lessonNotes.map(
+                (note) =>
+                  html`<li>
+                    <strong>${note.title}</strong>
+                    <p>${note.text}</p>
+                  </li>`,
+              )}
+            </ul>
+          </section>`
+        : ""
+    }
     ${renderOpponentRange(view, scenario, result)}
     <p class="learn-disclaimer">
       This range is a balanced starting point against opponents who play
       optimally. It aims to make your play hard to exploit, but adapting to an
       opponent’s mistakes can be more profitable.
-      ${result.opponentRange
-        ? "Opponent probabilities use these assumptions, cover all remaining combinations of each hand, and are rounded."
-        : ""}
+      ${
+        result.opponentRange
+          ? "Opponent probabilities use these assumptions, cover all remaining combinations of each hand, and are rounded."
+          : ""
+      }
     </p>
   </div>`;
 }

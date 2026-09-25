@@ -53,31 +53,33 @@ class RankingPanel extends LitElement {
           <tr>
             <th class="rank-col">#</th>
             <th>Player</th>
-            ${isTournament
-              ? html`<th>Stack</th>
-                  <th>Net</th>`
-              : html`
-                  <th>
-                    <div class="ranking-heading">
-                      Net
-                      ${renderTooltip({
-                        id: "net-winnings-tooltip",
-                        triggerLabel: "Net winnings details",
-                        content: html`Total profit or loss at this table.`,
-                      })}
-                    </div>
-                  </th>
-                  <th>
-                    <div class="ranking-heading">
-                      BB/100
-                      ${renderTooltip({
-                        id: "win-rate-tooltip",
-                        triggerLabel: "BB per 100 details",
-                        content: html`Big blinds won or lost per 100 hands.`,
-                      })}
-                    </div>
-                  </th>
-                `}
+            ${
+              isTournament
+                ? html`<th>Stack</th>
+                    <th>Net</th>`
+                : html`
+                    <th>
+                      <div class="ranking-heading">
+                        Net
+                        ${renderTooltip({
+                          id: "net-winnings-tooltip",
+                          triggerLabel: "Net winnings details",
+                          content: html`Total profit or loss at this table.`,
+                        })}
+                      </div>
+                    </th>
+                    <th>
+                      <div class="ranking-heading">
+                        BB/100
+                        ${renderTooltip({
+                          id: "win-rate-tooltip",
+                          triggerLabel: "BB per 100 details",
+                          content: html`Big blinds won or lost per 100 hands.`,
+                        })}
+                      </div>
+                    </th>
+                  `
+            }
           </tr>
         </thead>
         <tbody>
@@ -88,19 +90,21 @@ class RankingPanel extends LitElement {
                 <td class="player-name">
                   ${r.playerName ?? `Seat ${r.seatIndex + 1}`}
                 </td>
-                ${isTournament
-                  ? html`<td>${formatCurrency(r.stack)}</td>
-                      <td class="${this.getValueClass(r.netWinnings)}">
-                        ${this.formatNet(r.netWinnings)}
-                      </td>`
-                  : html`
-                      <td class="${this.getValueClass(r.netWinnings)}">
-                        ${this.formatNet(r.netWinnings)}
-                      </td>
-                      <td class="${this.getValueClass(r.winRate)}">
-                        ${this.formatWinRate(r.winRate)}
-                      </td>
-                    `}
+                ${
+                  isTournament
+                    ? html`<td>${formatCurrency(r.stack)}</td>
+                        <td class="${this.getValueClass(r.netWinnings)}">
+                          ${this.formatNet(r.netWinnings)}
+                        </td>`
+                    : html`
+                        <td class="${this.getValueClass(r.netWinnings)}">
+                          ${this.formatNet(r.netWinnings)}
+                        </td>
+                        <td class="${this.getValueClass(r.winRate)}">
+                          ${this.formatWinRate(r.winRate)}
+                        </td>
+                      `
+                }
               </tr>
             `,
           )}

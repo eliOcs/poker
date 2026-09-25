@@ -118,9 +118,11 @@ class AppSignInModal extends LitElement {
         }}
       >
         <p class="sign-in-intro">
-          ${isSignUp
-            ? html`You will receive an email to complete the sign up.`
-            : html`You will receive an email to complete the sign in.`}
+          ${
+            isSignUp
+              ? html`You will receive an email to complete the sign up.`
+              : html`You will receive an email to complete the sign in.`
+          }
         </p>
         ${this.renderNameInput()}
         <label for="profile-sign-in-email">Email</label>

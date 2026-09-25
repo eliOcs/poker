@@ -44,18 +44,20 @@ export function renderAvatarMakerActions(maker) {
 export function renderAvatarMakerLoading(maker) {
   return html`<main class="main">
     <div class="content">
-      ${maker.assetsError
-        ? html`<p role="alert">Unable to load avatar styles.</p>
-            <button
-              class="button button--action"
-              type="button"
-              @click=${() => {
-                maker.assetsReady = maker.loadAssets();
-              }}
-            >
-              Retry
-            </button>`
-        : html`<p role="status">Loading avatar styles…</p>`}
+      ${
+        maker.assetsError
+          ? html`<p role="alert">Unable to load avatar styles.</p>
+              <button
+                class="button button--action"
+                type="button"
+                @click=${() => {
+                  maker.assetsReady = maker.loadAssets();
+                }}
+              >
+                Retry
+              </button>`
+          : html`<p role="status">Loading avatar styles…</p>`
+      }
       <button
         class="button button--muted"
         type="button"

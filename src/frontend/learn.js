@@ -281,65 +281,73 @@ export class Learn extends LitElement {
   render() {
     const scenario = this.scenario;
     return html`${renderInfoBar(scenario, "learn")}
-      ${scenario
-        ? html` <phg-table-layout>
-            <div class="table-surface">
-              <div id="seats" data-table-size="6">
-                ${this.tableSeats.map(
-                  (seat, i) =>
-                    html` <phg-seat
-                      data-seat=${i}
-                      data-slot=${visualSeat(i, scenario.seats)}
-                      data-table-size="6"
-                      .seat=${seat.isCurrentPlayer && this.user
-                        ? {
-                            ...seat,
-                            player: {
-                              id: this.user.id,
-                              name: this.user.name ?? seat.player.name,
-                            },
-                          }
-                        : seat}
-                      .avatar=${seat.isCurrentPlayer
-                        ? this.user?.settings.avatar
-                        : undefined}
-                      title=${seat.player.name}
-                      .displayBigBlind=${this.displayBigBlind}
-                      .seatNumber=${i}
-                      .isButton=${i === 3}
-                      .noAnimation=${!this.replayStep}
-                      .settingsEnabled=${!!this.user}
-                    ></phg-seat>`,
-                )}
+      ${
+        scenario
+          ? html` <phg-table-layout>
+              <div class="table-surface">
+                <div id="seats" data-table-size="6">
+                  ${this.tableSeats.map(
+                    (seat, i) =>
+                      html` <phg-seat
+                        data-seat=${i}
+                        data-slot=${visualSeat(i, scenario.seats)}
+                        data-table-size="6"
+                        .seat=${
+                          seat.isCurrentPlayer && this.user
+                            ? {
+                                ...seat,
+                                player: {
+                                  id: this.user.id,
+                                  name: this.user.name ?? seat.player.name,
+                                },
+                              }
+                            : seat
+                        }
+                        .avatar=${
+                          seat.isCurrentPlayer
+                            ? this.user?.settings.avatar
+                            : undefined
+                        }
+                        title=${seat.player.name}
+                        .displayBigBlind=${this.displayBigBlind}
+                        .seatNumber=${i}
+                        .isButton=${i === 3}
+                        .noAnimation=${!this.replayStep}
+                        .settingsEnabled=${!!this.user}
+                      ></phg-seat>`,
+                  )}
+                </div>
               </div>
-            </div>
-          </phg-table-layout>`
-        : ""}
+            </phg-table-layout>`
+          : ""
+      }
       <section
         class="table-action-panel learn-panel"
         aria-label="Your strategy"
         aria-busy=${this.busy}
       >
         ${this.error ? html`<p role="alert">${this.error}</p>` : ""}
-        ${this.busy
-          ? html`<p role="status">
-              ${scenario ? "One moment…" : "Dealing your first hand…"}
-            </p>`
-          : this.replayStep
-            ? renderLearnReplay(this, this.replayStep)
-            : this.result
-              ? renderLearnFeedback(
-                  this,
-                  /** @type {LearnScenario} */ (scenario),
-                  this.result,
-                )
-              : scenario
-                ? this.sizing
-                  ? this.renderSizing(scenario)
-                  : this.renderChoices(scenario)
-                : html`<button class="button" @click=${() => this.nextHand()}>
-                    Try again
-                  </button>`}
+        ${
+          this.busy
+            ? html`<p role="status">
+                ${scenario ? "One moment…" : "Dealing your first hand…"}
+              </p>`
+            : this.replayStep
+              ? renderLearnReplay(this, this.replayStep)
+              : this.result
+                ? renderLearnFeedback(
+                    this,
+                    /** @type {LearnScenario} */ (scenario),
+                    this.result,
+                  )
+                : scenario
+                  ? this.sizing
+                    ? this.renderSizing(scenario)
+                    : this.renderChoices(scenario)
+                  : html`<button class="button" @click=${() => this.nextHand()}>
+                      Try again
+                    </button>`
+        }
       </section>`;
   }
 }

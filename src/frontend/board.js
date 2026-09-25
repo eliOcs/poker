@@ -135,15 +135,21 @@ class Board extends LitElement {
       <div class="board-info">
         <div class="phase">${phase}</div>
         ${this.renderCommunityCards(cards)}
-        ${currentPlayer?.handRank
-          ? html`<div class="current-hand-rank">${currentPlayer.handRank}</div>`
-          : ""}
-        ${displayedPot > 0
-          ? html`<div class="pot">
-              <phg-chips .amount=${displayedPot}></phg-chips>
-              ${formatAmount(displayedPot, this.displayBigBlind)}
-            </div>`
-          : ""}
+        ${
+          currentPlayer?.handRank
+            ? html`<div class="current-hand-rank">
+                ${currentPlayer.handRank}
+              </div>`
+            : ""
+        }
+        ${
+          displayedPot > 0
+            ? html`<div class="pot">
+                <phg-chips .amount=${displayedPot}></phg-chips>
+                ${formatAmount(displayedPot, this.displayBigBlind)}
+              </div>`
+            : ""
+        }
       </div>
     `;
   }

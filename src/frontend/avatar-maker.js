@@ -224,29 +224,37 @@ class AvatarMaker extends LitElement {
                 role="tabpanel"
                 aria-labelledby=${`avatar-tab-${tab.id}`}
               >
-                ${tab.showStyles === false
-                  ? ""
-                  : html`
-                      <div class="avatar-maker__options">
-                        ${tab.types.map((type) =>
-                          this.renderTypeOption(tab, type, part.type === type),
-                        )}
-                      </div>
-                    `}
-                <div class="avatar-maker__fine-tuning">
-                  ${ADJUSTMENTS[tab.id].length === 0
+                ${
+                  tab.showStyles === false
                     ? ""
                     : html`
-                        <div class="avatar-maker__adjustments">
-                          ${ADJUSTMENTS[tab.id].map((adjustment) =>
-                            this.renderAdjustment(
-                              tab.id,
-                              adjustment,
-                              part[adjustment.key],
+                        <div class="avatar-maker__options">
+                          ${tab.types.map((type) =>
+                            this.renderTypeOption(
+                              tab,
+                              type,
+                              part.type === type,
                             ),
                           )}
                         </div>
-                      `}
+                      `
+                }
+                <div class="avatar-maker__fine-tuning">
+                  ${
+                    ADJUSTMENTS[tab.id].length === 0
+                      ? ""
+                      : html`
+                          <div class="avatar-maker__adjustments">
+                            ${ADJUSTMENTS[tab.id].map((adjustment) =>
+                              this.renderAdjustment(
+                                tab.id,
+                                adjustment,
+                                part[adjustment.key],
+                              ),
+                            )}
+                          </div>
+                        `
+                  }
                   ${this.renderColors(tab.id, part.color, part.type)}
                   ${tab.id === "clothes" ? this.renderBackgroundColors() : ""}
                 </div>
@@ -376,13 +384,9 @@ class AvatarMaker extends LitElement {
       return "";
     }
     const label =
-      partId === "face"
-        ? "Skin color"
-        : partId === "eyes"
-          ? "Eye color"
-          : partId === "clothes"
-            ? "Clothes color"
-            : "Hair color";
+      { face: "Skin color", eyes: "Eye color", clothes: "Clothes color" }[
+        partId
+      ] ?? "Hair color";
     return this.renderColorPalette(label, colors, selectedColor, (color) => {
       this.updatePart(partId, "color", color);
     });
@@ -410,14 +414,13 @@ class AvatarMaker extends LitElement {
                 type="button"
                 class=${`button ${color === selectedColor ? "is-selected" : ""}`}
                 style=${`--swatch-color: ${color}`}
-                aria-label=${label === "Background color" ||
-                label === "Clothes color"
-                  ? `${label} ${index + 1}`
-                  : `Color ${index + 1}`}
+                aria-label=${
+                  label === "Background color" || label === "Clothes color"
+                    ? `${label} ${index + 1}`
+                    : `Color ${index + 1}`
+                }
                 aria-pressed=${color === selectedColor ? "true" : "false"}
-                @click=${() => {
-                  selectColor(color);
-                }}
+                @click=${() => selectColor(color)}
               ></button>
             `,
           )}

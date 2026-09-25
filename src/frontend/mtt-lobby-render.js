@@ -161,10 +161,28 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
   const isLateRegistration = tournament.status === "running";
 
   return html`
-    ${actions.canRegister
-      ? isLateRegistration
-        ? html`<div class="late-registration-control">
-            <button
+    ${
+      actions.canRegister
+        ? isLateRegistration
+          ? html`<div class="late-registration-control">
+              <button
+                type="button"
+                class="button button--primary"
+                ?disabled=${actionPending}
+                @click=${() => {
+                  onMttAction("register");
+                }}
+              >
+                Late Register
+              </button>
+              ${renderTooltip({
+                id: "late-registration-tooltip",
+                triggerLabel: "Late registration details",
+                content: html`Late registration is allowed through level
+                ${tournament.entryPeriodLevels}.`,
+              })}
+            </div>`
+          : html`<button
               type="button"
               class="button button--primary"
               ?disabled=${actionPending}
@@ -172,38 +190,24 @@ function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
                 onMttAction("register");
               }}
             >
-              Late Register
-            </button>
-            ${renderTooltip({
-              id: "late-registration-tooltip",
-              triggerLabel: "Late registration details",
-              content: html`Late registration is allowed through level
-              ${tournament.entryPeriodLevels}.`,
-            })}
-          </div>`
-        : html`<button
+              Register
+            </button>`
+        : ""
+    }
+    ${
+      actions.canUnregister
+        ? html`<button
             type="button"
-            class="button button--primary"
+            class="button button--muted"
             ?disabled=${actionPending}
             @click=${() => {
-              onMttAction("register");
+              onMttAction("unregister");
             }}
           >
-            Register
+            Unregister
           </button>`
-      : ""}
-    ${actions.canUnregister
-      ? html`<button
-          type="button"
-          class="button button--muted"
-          ?disabled=${actionPending}
-          @click=${() => {
-            onMttAction("unregister");
-          }}
-        >
-          Unregister
-        </button>`
-      : ""}
+        : ""
+    }
   `;
 }
 
@@ -268,15 +272,17 @@ export function renderActions({
       >
         ${copied ? "Copied!" : "Copy Link"}
       </button>
-      ${onShare
-        ? html`<button
-            type="button"
-            class="button button--secondary"
-            @click=${onShare}
-          >
-            Share
-          </button>`
-        : ""}
+      ${
+        onShare
+          ? html`<button
+              type="button"
+              class="button button--secondary"
+              @click=${onShare}
+            >
+              Share
+            </button>`
+          : ""
+      }
     </div>
   `;
 }
@@ -318,27 +324,29 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
               ${table.closed ? html`<span>Closed</span>` : ""}
             </div>
             <div class="table-actions">
-              ${table.closed
-                ? html`<button
-                    type="button"
-                    class="button button--secondary"
-                    @click=${() => {
-                      onNavigate(getHistoryPath(table.tableId));
-                    }}
-                  >
-                    Show History
-                  </button>`
-                : html`<button
-                    type="button"
-                    class=${`button button--${isCurrent ? "success" : "secondary"}`}
-                    @click=${() => {
-                      onNavigate(
-                        getTablePath("mtt", table.tableId, tournamentId),
-                      );
-                    }}
-                  >
-                    ${isCurrent ? "Open My Table" : "Open Table"}
-                  </button>`}
+              ${
+                table.closed
+                  ? html`<button
+                      type="button"
+                      class="button button--secondary"
+                      @click=${() => {
+                        onNavigate(getHistoryPath(table.tableId));
+                      }}
+                    >
+                      Show History
+                    </button>`
+                  : html`<button
+                      type="button"
+                      class=${`button button--${isCurrent ? "success" : "secondary"}`}
+                      @click=${() => {
+                        onNavigate(
+                          getTablePath("mtt", table.tableId, tournamentId),
+                        );
+                      }}
+                    >
+                      ${isCurrent ? "Open My Table" : "Open Table"}
+                    </button>`
+              }
             </div>
           </article>
         `;
@@ -375,9 +383,11 @@ export function renderEntrantsTable(tournament) {
                 </td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
-                  ${entrant.tableId
-                    ? getTableName(tournament, entrant.tableId)
-                    : "\u2014"}
+                  ${
+                    entrant.tableId
+                      ? getTableName(tournament, entrant.tableId)
+                      : "\u2014"
+                  }
                 </td>
                 <td>${entrant.finishPosition ?? "\u2014"}</td>
               </tr>
@@ -420,21 +430,27 @@ export function renderStandingsTable(tournament) {
                 </td>
                 <td>${formatCurrency(entrant.stack)}</td>
                 <td>
-                  ${entrant.tableId
-                    ? getTableName(tournament, entrant.tableId)
-                    : "\u2014"}
+                  ${
+                    entrant.tableId
+                      ? getTableName(tournament, entrant.tableId)
+                      : "\u2014"
+                  }
                 </td>
                 <td>${entrant.finishPosition ?? "\u2014"}</td>
                 <td
-                  class=${entrant.netWinnings > 0
-                    ? "positive"
-                    : entrant.netWinnings < 0
-                      ? "negative"
-                      : ""}
+                  class=${
+                    entrant.netWinnings > 0
+                      ? "positive"
+                      : entrant.netWinnings < 0
+                        ? "negative"
+                        : ""
+                  }
                 >
-                  ${(entrant.netWinnings ?? undefined) !== undefined
-                    ? formatNetWinnings(entrant.netWinnings)
-                    : "\u2014"}
+                  ${
+                    (entrant.netWinnings ?? undefined) !== undefined
+                      ? formatNetWinnings(entrant.netWinnings)
+                      : "\u2014"
+                  }
                 </td>
               </tr>
             `,

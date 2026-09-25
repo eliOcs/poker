@@ -17,18 +17,22 @@ function buildActionMap(actions) {
 function renderWaitingForPlayers(panel) {
   return html`
     <div class="waiting-panel">
-      ${panel.seatedCount < 2
-        ? html`<span class="waiting">Waiting for players...</span>`
-        : ""}
-      ${panel.canSit
-        ? html`<button
-            type="button"
-            class="button button--primary"
-            @click=${() => panel.sendAction({ action: "sit" })}
-          >
-            ${panel.buyIn ? `Sit ${formatCurrency(panel.buyIn)}` : "Sit"}
-          </button>`
-        : ""}
+      ${
+        panel.seatedCount < 2
+          ? html`<span class="waiting">Waiting for players...</span>`
+          : ""
+      }
+      ${
+        panel.canSit
+          ? html`<button
+              type="button"
+              class="button button--primary"
+              @click=${() => panel.sendAction({ action: "sit" })}
+            >
+              ${panel.buyIn ? `Sit ${formatCurrency(panel.buyIn)}` : "Sit"}
+            </button>`
+          : ""
+      }
     </div>
   `;
 }
@@ -79,68 +83,78 @@ function renderBuyIn(panel, action) {
 function renderSitInLeave(panel, actionMap) {
   return html`
     <div class="action-row">
-      ${actionMap.leave
-        ? html`<button
-            type="button"
-            class="button button--muted button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: "leave", seat: panel.seatIndex })}
-          >
-            Leave Table
-          </button>`
-        : ""}
-      ${actionMap.sitIn
-        ? html`<button
-            type="button"
-            class="button button--success button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: "sitIn", seat: panel.seatIndex })}
-          >
-            Sit In
-          </button>`
-        : ""}
+      ${
+        actionMap.leave
+          ? html`<button
+              type="button"
+              class="button button--muted button--full-width"
+              @click=${() =>
+                panel.sendAction({ action: "leave", seat: panel.seatIndex })}
+            >
+              Leave Table
+            </button>`
+          : ""
+      }
+      ${
+        actionMap.sitIn
+          ? html`<button
+              type="button"
+              class="button button--success button--full-width"
+              @click=${() =>
+                panel.sendAction({ action: "sitIn", seat: panel.seatIndex })}
+            >
+              Sit In
+            </button>`
+          : ""
+      }
     </div>
   `;
 }
 
 function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
   return html`
-    ${actionMap.fold
-      ? html`<button
-          type="button"
-          class="button button--danger button--full-width"
-          @click=${() =>
-            panel.sendAction({ action: "fold", seat: panel.seatIndex })}
-        >
-          Fold
-        </button>`
-      : undefined}
-    ${actionMap.check
-      ? html`<button
-          type="button"
-          class="button button--success button--full-width"
-          @click=${() =>
-            panel.sendAction({ action: "check", seat: panel.seatIndex })}
-        >
-          Check
-        </button>`
-      : undefined}
-    ${actionMap.call
-      ? html`<button
-          type="button"
-          class=${`button button--${actionMap.call.allIn ? "primary" : "success"} button--full-width`}
-          @click=${() =>
-            panel.sendAction({
-              action: actionMap.call.allIn ? "allIn" : "call",
-              seat: panel.seatIndex,
-            })}
-        >
-          <span class="stacked"
-            >${actionMap.call.allIn ? "All-In" : "Call"}
-            ${formatAmount(actionMap.call.amount, panel.displayBigBlind)}</span
+    ${
+      actionMap.fold
+        ? html`<button
+            type="button"
+            class="button button--danger button--full-width"
+            @click=${() =>
+              panel.sendAction({ action: "fold", seat: panel.seatIndex })}
           >
-        </button>`
-      : undefined}
+            Fold
+          </button>`
+        : undefined
+    }
+    ${
+      actionMap.check
+        ? html`<button
+            type="button"
+            class="button button--success button--full-width"
+            @click=${() =>
+              panel.sendAction({ action: "check", seat: panel.seatIndex })}
+          >
+            Check
+          </button>`
+        : undefined
+    }
+    ${
+      actionMap.call
+        ? html`<button
+            type="button"
+            class=${`button button--${actionMap.call.allIn ? "primary" : "success"} button--full-width`}
+            @click=${() =>
+              panel.sendAction({
+                action: actionMap.call.allIn ? "allIn" : "call",
+                seat: panel.seatIndex,
+              })}
+          >
+            <span class="stacked"
+              >${actionMap.call.allIn ? "All-In" : "Call"}
+              ${formatAmount(actionMap.call.amount, panel.displayBigBlind)}</span
+            >
+          </button>`
+        : undefined
+    }
     <button
       type="button"
       class=${`button button--${isAllIn ? "primary" : "action"} button--full-width`}
@@ -456,9 +470,11 @@ export function renderActionPanel(panel) {
 
   if (panel.connectionStatus !== "connected") {
     return html`<span class="waiting"
-      >${panel.connectionStatus === "connecting"
-        ? "Reconnecting..."
-        : "Disconnected"}</span
+      >${
+        panel.connectionStatus === "connecting"
+          ? "Reconnecting..."
+          : "Disconnected"
+      }</span
     >`;
   }
 

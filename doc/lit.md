@@ -1075,15 +1075,17 @@ export class TodoItem extends LitElement {
 
     return html`
       <div class=${classMap(classes)}>
-        ${this._editing
-          ? html`
-              <input
-                .value=${this.item.text}
-                @keydown=${this._handleKeydown}
-                @blur=${this._saveEdit}
-              />
-            `
-          : html`<span @dblclick=${this._startEdit}>${this.item.text}</span>`}
+        ${
+          this._editing
+            ? html`
+                <input
+                  .value=${this.item.text}
+                  @keydown=${this._handleKeydown}
+                  @blur=${this._saveEdit}
+                />
+              `
+            : html`<span @dblclick=${this._startEdit}>${this.item.text}</span>`
+        }
         <div class="actions">
           <button @click=${this._toggleComplete}>
             ${this.item.completed ? "Undo" : "Done"}

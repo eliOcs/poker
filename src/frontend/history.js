@@ -457,9 +457,9 @@ export class History extends LitElement {
             return html`
               <li>
                 <a
-                  class="hand-item ${isActive ? "active" : ""} ${isWinner
-                    ? "winner"
-                    : ""}"
+                  class="hand-item ${isActive ? "active" : ""} ${
+                    isWinner ? "winner" : ""
+                  }"
                   href=${getHistoryPath(this.gameId, item.hand_number)}
                   data-app-history="replace"
                 >

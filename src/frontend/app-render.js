@@ -32,17 +32,20 @@ export function renderGameView(app, liveRoute) {
   return html`${renderToast(app)}<phg-game
       .gameId=${liveRoute.tableId}
       .gameKind=${gameKind}
-      .tournamentId=${"tournamentId" in liveRoute
-        ? liveRoute.tournamentId
-        : undefined}
-      .mttTournament=${liveRoute.kind === "mtt_table"
-        ? app._mttView
-        : undefined}
-      .tournamentFinishPosition=${app._mttView?.currentPlayer?.finishPosition ??
-      undefined}
+      .tournamentId=${
+        "tournamentId" in liveRoute ? liveRoute.tournamentId : undefined
+      }
+      .mttTournament=${
+        liveRoute.kind === "mtt_table" ? app._mttView : undefined
+      }
+      .tournamentFinishPosition=${
+        app._mttView?.currentPlayer?.finishPosition ?? undefined
+      }
       .connectionStatus=${app.gameConnectionStatus}
-      .actionPending=${!!app.gameActionPending ||
-      (liveRoute.kind === "mtt_table" && app._mttActionPending)}
+      .actionPending=${
+        !!app.gameActionPending ||
+        (liveRoute.kind === "mtt_table" && app._mttActionPending)
+      }
       .game=${app.game}
       .socialAction=${app.socialAction}
       .user=${app.user}

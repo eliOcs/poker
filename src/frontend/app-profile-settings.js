@@ -43,9 +43,9 @@ export function renderProfileSettingsModal(app) {
         <div class="avatar-setting__content">
           <phg-avatar
             .avatar=${app._settingsAvatar}
-            .label=${app._settingsAvatar
-              ? "Current avatar"
-              : "No avatar selected"}
+            .label=${
+              app._settingsAvatar ? "Current avatar" : "No avatar selected"
+            }
           ></phg-avatar>
           <div class="avatar-setting__actions">
             <button
@@ -114,16 +114,19 @@ export function renderProfileSettingsModal(app) {
           ].map(
             ([value, label]) =>
               html`<label
-                class=${(app._settingsAmountDisplay ?? "default") === value
-                  ? "active"
-                  : ""}
+                class=${
+                  (app._settingsAmountDisplay ?? "default") === value
+                    ? "active"
+                    : ""
+                }
               >
                 <input
                   type="radio"
                   name="amountDisplay"
                   value=${value}
-                  .checked=${(app._settingsAmountDisplay ?? "default") ===
-                  value}
+                  .checked=${
+                    (app._settingsAmountDisplay ?? "default") === value
+                  }
                   @change=${() => {
                     app._settingsAmountDisplay = value;
                   }}

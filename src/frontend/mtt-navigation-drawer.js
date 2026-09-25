@@ -129,12 +129,14 @@ function renderTableItem(table) {
   >
     ${iconTable}
     <span>${table.label}</span>
-    ${table.isCurrentPlayerTable
-      ? html`<span
-          aria-hidden="true"
-          style="width: 8px; height: 8px; border-radius: 999px; background: var(--color-secondary); flex: none;"
-        ></span>`
-      : ""}
+    ${
+      table.isCurrentPlayerTable
+        ? html`<span
+            aria-hidden="true"
+            style="width: 8px; height: 8px; border-radius: 999px; background: var(--color-secondary); flex: none;"
+          ></span>`
+        : ""
+    }
   </button>`;
 }
 
@@ -212,12 +214,14 @@ function renderDrawerTemplate(params) {
     </button>
     ${tableItems.map(renderTableItem)}
     ${showHistory ? renderHistoryItem(historyPath) : ""}
-    ${onOpenLevels
-      ? html`<button type="button" @click=${handleAction(onOpenLevels)}>
-          ${ICONS.levels}
-          <span>Levels</span>
-        </button>`
-      : ""}
+    ${
+      onOpenLevels
+        ? html`<button type="button" @click=${handleAction(onOpenLevels)}>
+            ${ICONS.levels}
+            <span>Levels</span>
+          </button>`
+        : ""
+    }
     ${extraMainItems}
     <button
       type="button"

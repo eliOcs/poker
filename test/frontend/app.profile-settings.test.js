@@ -202,7 +202,11 @@ describe("phg-app profile settings", () => {
       .be.true;
 
     element.querySelector("button.button--action").click();
-    await waitUntil(() => requestBody, { timeout: 2000 });
+    await waitUntil(
+      () => requestBody && !element.querySelector("phg-modal"),
+      "Saving settings should close the modal",
+      { timeout: 2000 },
+    );
     expect(JSON.stringify(requestBody.settings)).to.include('"avatar":null');
   });
 
@@ -215,9 +219,13 @@ describe("phg-app profile settings", () => {
 
     const saveBtn = element.querySelector("button.button--action");
     saveBtn.click();
-    await waitUntil(() => element.toast?.message === "Settings saved", {
-      timeout: 2000,
-    });
+    await waitUntil(
+      () =>
+        element.toast?.message === "Settings saved" &&
+        !element.querySelector("phg-modal"),
+      "Saving settings should close the modal and show a success toast",
+      { timeout: 2000 },
+    );
 
     expect(element.querySelector("phg-modal")).to.not.exist;
     expect(element.toast).to.deep.include({
@@ -241,9 +249,13 @@ describe("phg-app profile settings", () => {
 
     const saveBtn = element.querySelector("button.button--action");
     saveBtn.click();
-    await waitUntil(() => element.toast?.message === "Settings saved", {
-      timeout: 2000,
-    });
+    await waitUntil(
+      () =>
+        element.toast?.message === "Settings saved" &&
+        !element.querySelector("phg-modal"),
+      "Saving settings should close the modal and show a success toast",
+      { timeout: 2000 },
+    );
 
     expect(requestBody).to.deep.equal({
       name: "Test",
@@ -269,9 +281,13 @@ describe("phg-app profile settings", () => {
 
     expect(element.querySelector('input[name="volume"]:checked')).to.not.exist;
     element.querySelector("button.button--action").click();
-    await waitUntil(() => element.toast?.message === "Settings saved", {
-      timeout: 2000,
-    });
+    await waitUntil(
+      () =>
+        element.toast?.message === "Settings saved" &&
+        !element.querySelector("phg-modal"),
+      "Saving settings should close the modal and show a success toast",
+      { timeout: 2000 },
+    );
 
     expect(requestBody.settings.volume).to.equal(0.5);
   });

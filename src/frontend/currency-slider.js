@@ -110,18 +110,22 @@ class CurrencySlider extends LitElement {
     return html`
       <input
         type="number"
-        aria-label=${this.displayBigBlind && !this.label.includes("BB")
-          ? `${this.label} (BB)`
-          : this.label}
+        aria-label=${
+          this.displayBigBlind && !this.label.includes("BB")
+            ? `${this.label} (BB)`
+            : this.label
+        }
         min="${this.min / divisor}"
         max="${this.max / divisor}"
         step="${this.step / divisor}"
         .value="${displayValue}"
         @input=${this._handleNumberInput}
       />
-      ${this.displayBigBlind
-        ? html`<span class="amount-unit" aria-hidden="true">BB</span>`
-        : ""}
+      ${
+        this.displayBigBlind
+          ? html`<span class="amount-unit" aria-hidden="true">BB</span>`
+          : ""
+      }
       <button
         type="button"
         class="button button--muted button--compact"

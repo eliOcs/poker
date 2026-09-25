@@ -442,9 +442,11 @@ export class Game extends LitElement {
                       .seatNumber=${i}
                       .isButton=${this.game.button === i}
                       .hideBet=${!!this.game.hand?.collectingBets}
-                      .clockRemaining=${seat.isActing
-                        ? this.game.hand?.clockRemaining
-                        : undefined}
+                      .clockRemaining=${
+                        seat.isActing
+                          ? this.game.hand?.clockRemaining
+                          : undefined
+                      }
                       @seat-settings=${() => {
                         gameModalActions.openSettings.call(this);
                       }}
