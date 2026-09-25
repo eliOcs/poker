@@ -8,6 +8,8 @@ const NESTED_ASSET =
 
 export default {
   files: "test/frontend/**/*.test.js",
+  // Bound browser load so timing-sensitive app tests remain reliable.
+  concurrency: 2,
   testRunnerHtml: (testFrameworkImport) => `
     <!doctype html>
     <html>

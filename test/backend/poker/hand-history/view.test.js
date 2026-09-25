@@ -1,11 +1,7 @@
-import { describe, it, beforeEach, afterEach } from "node:test";
+import { describe, it, beforeEach } from "node:test";
 import assert from "assert";
-import { rm } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import * as HandHistory from "../../../../src/backend/poker/hand-history/index.js";
 import * as Game from "../../../../src/backend/poker/game.js";
-
-let testDataDir;
 
 /** Creates a base OHH hand structure for testing */
 function createTestHand(overrides = {}) {
@@ -40,13 +36,6 @@ describe("hand-history-view", function () {
     // Clear cache and recorders before each test
     HandHistory.clearCache();
     HandHistory.clearRecorder(testGame.id);
-  });
-
-  afterEach(async function () {
-    // Clean up test data directory
-    if (existsSync(testDataDir)) {
-      await rm(testDataDir, { recursive: true });
-    }
   });
 
   describe("filterHandForPlayer", function () {

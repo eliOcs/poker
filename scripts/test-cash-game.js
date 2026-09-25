@@ -69,6 +69,7 @@ async function assertServerIsRunning(origin) {
   } catch (error) {
     throw new Error(
       `Poker server is not reachable at ${origin}. Run npm start first. (${formatError(error)})`,
+      { cause: error },
     );
   }
 }

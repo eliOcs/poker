@@ -329,7 +329,6 @@ async function verifyAvatarMakerScrollIsContained(testCase, component) {
 }
 
 for (const testCase of TEST_CASES) {
-  // eslint-disable-next-line playwright/valid-title
   test(testCase, async ({ page }) => {
     await prepareTestCaseClock(testCase, page);
     await page.goto(`/test.html?test=${testCase}`);
@@ -362,7 +361,6 @@ for (const [path, selector] of [
   ["about", "phg-about"],
   ["release-notes", "phg-release-notes"],
 ]) {
-  // eslint-disable-next-line playwright/valid-title
   test(path, async ({ page }) => {
     await page.goto(`/${path}`);
 

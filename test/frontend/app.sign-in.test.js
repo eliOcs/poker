@@ -95,6 +95,7 @@ describe("phg-app sign in", () => {
     await waitUntil(() => element.user?.name === "Guest Name", {
       timeout: 2000,
     });
+    const returnPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     element.openProfileSignUp();
     await element.updateComplete;
     await waitUntil(
@@ -120,8 +121,11 @@ describe("phg-app sign in", () => {
     });
     expect(signInRequestBody).to.deep.equal({
       email: "player@example.com",
-      returnPath: `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      returnPath,
     });
+    await waitUntil(
+      () => !new URLSearchParams(window.location.search).has("modal"),
+    );
   });
 
   it("shows an error toast when sign-in link delivery fails", async () => {

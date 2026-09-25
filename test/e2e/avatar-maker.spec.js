@@ -21,10 +21,6 @@ test.beforeAll(async ({ browser }, testInfo) => {
   expect(response.ok()).toBeTruthy();
 });
 
-test.afterAll(async () => {
-  await guestContext.close();
-});
-
 test.beforeEach(async ({ page }) => {
   const response = await page.request.put("/api/users/me", {
     data: {
@@ -33,6 +29,10 @@ test.beforeEach(async ({ page }) => {
     },
   });
   expect(response.ok()).toBeTruthy();
+});
+
+test.afterAll(async () => {
+  await guestContext.close();
 });
 
 test("opens the avatar maker from settings and loads its sprites", async ({
