@@ -2,6 +2,7 @@ import { expect } from "@open-wc/testing";
 import { MockWebSocket } from "./fixtures/index.js";
 import {
   connectToGame,
+  reconnectIfNeeded,
   resumeConnectionIfNeeded,
   sendToGame,
 } from "../../src/frontend/app-websocket.js";
@@ -31,10 +32,16 @@ function createApp(path = "/cash/testgame") {
 
 describe("app-websocket", () => {
   const OriginalWebSocket = globalThis.WebSocket;
+  const originalLocation = window.location.href;
   let visibility;
   let originalVisibility;
 
+  function interceptTestNavigation(event) {
+    if (event.canIntercept) event.intercept({ handler() {} });
+  }
+
   beforeEach(() => {
+    window.navigation?.addEventListener("navigate", interceptTestNavigation);
     MockWebSocket.instances = [];
     globalThis.WebSocket = MockWebSocket;
     visibility = "visible";
@@ -49,6 +56,8 @@ describe("app-websocket", () => {
   });
 
   afterEach(() => {
+    window.navigation?.removeEventListener("navigate", interceptTestNavigation);
+    history.replaceState({}, "", originalLocation);
     globalThis.WebSocket = OriginalWebSocket;
     if (originalVisibility) {
       Object.defineProperty(document, "visibilityState", originalVisibility);
@@ -290,5 +299,104 @@ describe("app-websocket", () => {
       message: "Moved to Table 2",
       variant: "info",
     });
+  });
+
+  for (const path of ["/sitngo/sng123", "/mtt/mtt123/tables/table1"]) {
+    it(`announces each new blind level once at ${path}`, () => {
+      const app = createApp(path);
+      connectToGame(app, path);
+      const socket = MockWebSocket.instances.at(-1);
+      const game = {
+        tournament: { level: 1, onBreak: false },
+        blinds: { small: 1000, big: 2000, ante: 0 },
+      };
+      socket.simulateMessage(game);
+      expect(app.toast).to.equal(null);
+
+      const nextLevel = {
+        tournament: { level: 2, onBreak: false },
+        blinds: { small: 1500, big: 3000, ante: 0 },
+      };
+      socket.simulateMessage(nextLevel);
+      expect(app.toast).to.deep.equal({
+        message: "Level 2 · Blinds $15/$30",
+        variant: "info",
+      });
+      expect(app.game).to.deep.equal(nextLevel);
+
+      app.toast = null;
+      socket.simulateMessage(nextLevel);
+      socket.simulateMessage({
+        ...nextLevel,
+        tournament: { level: 2, onBreak: true },
+      });
+      expect(app.toast).to.equal(null);
+
+      socket.simulateMessage({
+        tournament: { level: 3, onBreak: false },
+        blinds: { small: 2000, big: 4000, ante: 500 },
+      });
+      expect(app.toast).to.deep.equal({
+        message: "Level 3 · Blinds $20/$40 · Ante $5",
+        variant: "info",
+      });
+    });
+  }
+
+  it("does not announce levels on reconnect or when moving to another table", () => {
+    const app = createApp("/mtt/mtt123/tables/table1");
+    connectToGame(app, app.path);
+    const game = {
+      tournament: { level: 2 },
+      blinds: { small: 1500, big: 3000, ante: 0 },
+    };
+    MockWebSocket.instances.at(-1).simulateMessage(game);
+    MockWebSocket.instances.at(-1).close();
+    reconnectIfNeeded(app);
+    MockWebSocket.instances.at(-1).simulateMessage({
+      ...game,
+      tournament: { level: 3 },
+    });
+    expect(app.toast).to.equal(null);
+
+    MockWebSocket.instances.at(-1).simulateMessage({
+      type: "playerMoved",
+      tournamentId: "mtt123",
+      tableId: "table2",
+      tableName: "Table 2",
+    });
+    connectToGame(app, app.path);
+    MockWebSocket.instances.at(-1).simulateMessage({
+      ...game,
+      tournament: { level: 4 },
+    });
+    expect(app.toast).to.deep.equal({
+      message: "Moved to Table 2",
+      variant: "info",
+    });
+  });
+
+  it("does not announce cash blind changes or levels while viewing history", () => {
+    const app = createApp();
+    connectToGame(app, app.path);
+    const socket = MockWebSocket.instances.at(-1);
+    socket.simulateMessage({ blinds: { small: 100, big: 200, ante: 0 } });
+    socket.simulateMessage({ blinds: { small: 200, big: 400, ante: 0 } });
+    expect(app.toast).to.equal(null);
+
+    app.path = "/sitngo/sng123";
+    connectToGame(app, app.path);
+    const tournamentSocket = MockWebSocket.instances.at(-1);
+    const game = {
+      tournament: { level: 1 },
+      blinds: { small: 1000, big: 2000, ante: 0 },
+    };
+    tournamentSocket.simulateMessage(game);
+    app.path = "/history/sng123";
+    tournamentSocket.simulateMessage({
+      ...game,
+      tournament: { level: 2 },
+    });
+    expect(app.toast).to.equal(null);
   });
 });

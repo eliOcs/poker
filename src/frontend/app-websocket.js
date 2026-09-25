@@ -2,6 +2,7 @@ import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
+import { formatCurrency } from "./currency.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
 const ACTION_RESULT_TIMEOUT_MS = 3000;
@@ -117,6 +118,31 @@ function handleSocialMessage(app, data) {
   app.socialAction = data;
 }
 
+/**
+ * Announces level increases after the initial table snapshot.
+ * @param {any} app
+ * @param {import('../backend/poker/player-view.js').PlayerView} game
+ */
+function notifyTournamentLevelChange(app, game) {
+  const previousLevel = app.game?.tournament?.level;
+  const tournament = game.tournament;
+  if (
+    previousLevel === undefined ||
+    !tournament ||
+    tournament.level <= previousLevel ||
+    !matchLiveRoute(app.path)
+  ) {
+    return;
+  }
+
+  const { small, big, ante } = game.blinds;
+  const anteMessage = ante > 0 ? ` · Ante ${formatCurrency(ante)}` : "";
+  app.toast = {
+    message: `Level ${tournament.level} · Blinds ${formatCurrency(small)}/${formatCurrency(big)}${anteMessage}`,
+    variant: "info",
+  };
+}
+
 function handleTypedSocketMessage(app, data) {
   if (data.type === "pong") {
     resolveSocketHealthCheck(app, data.pingId);
@@ -217,6 +243,7 @@ export function connectToGame(app, path) {
       return;
     }
 
+    notifyTournamentLevelChange(app, data);
     app.game = data;
   };
 
