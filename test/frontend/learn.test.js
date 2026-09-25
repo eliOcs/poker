@@ -38,6 +38,12 @@ describe("Learn strategy flow", () => {
             sizingMatch: true,
             raiseTo: 3,
             explanation: "Calling costs half a blind.",
+            lessonNotes: [
+              {
+                title: "Limps and raises work together",
+                text: "Limping keeps your raising range selective.",
+              },
+            ],
             page: 182,
             chart: 32,
             hands: { AA: [0, 50, 50] },
@@ -363,7 +369,7 @@ describe("Learn strategy flow", () => {
     expect(el.querySelector(".learn-opponent-range")).not.to.exist;
   });
 
-  it("omits opponent ranges for first-in feedback", async () => {
+  it("shows first-in takeaways without an opponent range", async () => {
     const el = await fixture(html`<phg-learn></phg-learn>`);
     await waitUntil(() => !el.busy);
     await slide(el, "Fold", 100);
@@ -373,7 +379,12 @@ describe("Learn strategy flow", () => {
     await el.updateComplete;
     expect(el.querySelector("phg-modal")).to.exist;
     expect(el.querySelector(".learn-opponent-range")).not.to.exist;
-    expect(el.querySelector("#learn-takeaways-heading")).not.to.exist;
+    expect(el.querySelector("#learn-takeaways-heading").textContent).to.equal(
+      "Key takeaways",
+    );
+    expect(el.querySelector(".learn-strategy-notes").textContent).to.include(
+      "Limps and raises work together",
+    );
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [

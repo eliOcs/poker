@@ -19,6 +19,50 @@ const OPENING_CONTEXT = {
 export const LEARN_RANGE_NOTES = {
   ...BIG_BLIND_NOTES,
   ...FOLLOWUP_NOTES,
+  // First-in guidance: PDF pages 181–182, 184–186, 188, 193 and 199.
+  LJ: [
+    {
+      title: "A tight range still needs variety",
+      text: "Your opening range favors high-equity hands with useful blockers, but retains some small pairs and suited connectors. Those occasional opens let your range make strong hands on different flop textures instead of relying only on high cards. They remain selective mixes, not permission to open every speculative hand.",
+    },
+  ],
+  HJ: [
+    {
+      title: "Trim frequency as you move earlier",
+      text: "Compared with CO, your opening range gives less room to small pairs, weaker offsuit broadways, suited connectors and weak suited kings or queens. Some remain occasional opens rather than disappearing altogether. Follow their individual mixes instead of treating every pair or suited connector as an automatic raise.",
+    },
+  ],
+  CO: [
+    {
+      title: "Do not borrow the button’s whole range",
+      text: "Moving one seat earlier removes many of BTN’s weak suited kings and queens, offsuit aces and speculative connectors from profitable opens. Being suited or connected is not enough on its own. Use the CO chart rather than carrying over every hand you would open on the button.",
+    },
+  ],
+  BTN: [
+    {
+      title: "Why the reference raises or folds",
+      text: "Unlike SB, you get no discount on an open-limp. Limping invites the blinds to enter or raise, while rake further reduces the value of seeing a cheap flop. Raising or folding keeps you from building a separate limping range that is vulnerable to that pressure.",
+    },
+  ],
+  SB: [
+    {
+      title: "Limps and raises work together",
+      text: "Splitting your playable hands between limps and raises lets you enter more pots without putting every one of those hands into your raising range. That keeps your raises more selective and makes BB’s 3-bets less effective. The two ranges work together; limping is part of the strategy, not simply a weaker substitute for raising.",
+    },
+  ],
+  // Hijack guidance and Hand Ranges 56–57: PDF pages 216–218.
+  HJ_VS_LJ_OPEN: [
+    {
+      title: "Small pairs belong in a tight 3-bet range",
+      text: "Your response uses 3-bet or fold, but the raising range is not exclusively big cards. Occasional 3-bets with pairs from 88 down to 22 spread set potential across more flop textures and make opponents’ blockers less effective at narrowing your range. Replacing all those small pairs with more frequent raises of just the highest pair would lose that variety.",
+    },
+  ],
+  HJ_VS_LJ_4BET: [
+    {
+      title: "Strong calls protect the rest of your defense",
+      text: "Most of your continuing range calls in position rather than shoving. Keeping AA among those calls protects hands such as smaller pairs, suited broadways and selected suited connectors or wheel aces. Premiums do not all take the same action: AA mixes calls and shoves, while QQ mostly calls but sometimes shoves. Use each hand’s displayed mix.",
+    },
+  ],
   SB_VS_LJ_OPEN: [
     {
       title: "The blind discount does not justify a call",
@@ -235,7 +279,7 @@ export function explainLearnHand(
   const reasons = {
     fold: () => foldReason(hand, situation, expected[0] === 100, inPosition),
     call: () => callReason(hand, situation, inPosition),
-    raise: () => raiseReason(hand, situation, inPosition),
+    raise: () => raiseReason(situation, inPosition),
     check: () =>
       "Checking costs nothing and guarantees a flop without risking a limp-reraise.",
   };
@@ -311,17 +355,15 @@ function callReason(hand, situation, inPosition) {
 }
 
 /**
- * @param {import('./learn-types.js').HandClass} hand
  * @param {import('./learn-types.js').LearnSituation} situation
  * @param {boolean} inPosition
  */
-function raiseReason(hand, situation, inPosition) {
+function raiseReason(situation, inPosition) {
   if (situation.opponentAction === "Limp")
     return "Raising to 3.5 BB puts pressure on SB’s limp. The raising range includes hands that can continue against a limp-reraise and selected hands that can release to further pressure.";
   if (situation.opponentAction === "Limp-reraise")
     return "4-betting to 28 BB pressures SB’s strong limp-reraising range. Only a narrow portion of the prior raising range takes this line, mixing strong hands with selected ace and king blockers. This raise leaves chips for later decisions.";
-  if (situation.opponentAction === "Open")
-    return openRaiseReason(hand, situation);
+  if (situation.opponentAction === "Open") return openRaiseReason(situation);
   if (situation.opponentAction === "4-bet") {
     return `5-betting all-in to 100 BB commits your remaining ${100 - situation.heroBet} BB. This hand belongs in the reference’s narrow shoving range at the recommended frequency.`;
   }
@@ -341,10 +383,9 @@ function raiseReason(hand, situation, inPosition) {
 }
 
 /**
- * @param {import('./learn-types.js').HandClass} hand
  * @param {import('./learn-types.js').LearnSituation & {opponent: import('./learn-types.js').Position}} situation
  */
-function openRaiseReason(hand, situation) {
+function openRaiseReason(situation) {
   if (situation.position === "BB")
     return situation.opponent === "SB"
       ? "3-betting to 9 BB applies pressure to SB. The polarized range combines strong hands with selected blocker and board-coverage bluffs, while many medium-strength hands take a flop instead."
@@ -361,11 +402,7 @@ function openRaiseReason(hand, situation) {
         : "HJ opens wider than LJ, so CO can 3-bet about 9.9% of starting hands, adding frequency with hands such as A9s, QTs and JTs.";
     return `3-betting to 8.5 BB puts pressure on ${situation.opponent} and the players behind you. ${adjustment} This reference uses a 3-bet-or-fold strategy.`;
   }
-  const coverage =
-    hand.length === 2 && "2345678".includes(hand.charAt(0))
-      ? " Occasional 3-bets with small pairs spread set potential across more flop textures and make opponents’ blockers less effective at narrowing your range."
-      : "";
-  return `3-betting to 8.5 BB puts pressure on LJ and the players behind you. HJ continues with only about 8% of starting hands in this reference, using a tight 3-bet-or-fold strategy.${coverage}`;
+  return "3-betting to 8.5 BB puts pressure on LJ and the players behind you.";
 }
 
 /**
@@ -394,7 +431,7 @@ function openFoldReason(decision, situation) {
  */
 function fourBetCallReason(hand, situation, inPosition, cost) {
   const strength =
-    hand === "AA"
+    hand === "AA" && situation.position !== "HJ"
       ? "Keeping AA in the calling range protects it: a call can still contain the strongest starting hand."
       : inPosition
         ? "You can use the opponent’s decisions to guide your play against a strong range."

@@ -14,7 +14,11 @@ test("HJ facing an LJ open uses the full 3-bet-or-fold chart and LJ's opening ra
   assert.equal(Object.keys(result.hands).length, 169);
   assert.ok(Object.values(result.hands).every((mix) => mix[1] === 0));
   assert.match(result.explanation, /CO, BTN and both blinds are still to act/);
-  assert.match(result.explanation, /set potential across more flop textures/);
+  assert.match(
+    result.lessonNotes[0].text,
+    /set potential across more flop textures/,
+  );
+  assert.doesNotMatch(result.explanation, /flop textures|blockers/);
   assert.doesNotMatch(result.explanation, /4-betting|act last/);
   assert.equal(result.opponentRange.position, "LJ");
   assert.equal(result.opponentRange.action, "Open");
@@ -56,9 +60,10 @@ test("HJ facing a 4-bet retains slowplays and grades a 100 BB shove", () => {
   assert.deepEqual(result.hands["76s"], [0, 100, 0]);
   assert.match(result.explanation, /in position against LJ/);
   assert.match(
-    result.explanation,
-    /Keeping AA in the calling range protects it/,
+    result.lessonNotes[0].text,
+    /Keeping AA among those calls protects/,
   );
+  assert.doesNotMatch(result.explanation, /protects/);
   assert.match(result.explanation, /5-betting all-in to 100 BB/);
   assert.match(result.explanation, /remaining 91.5 BB/);
   const notes = result.playability.situation.map((note) => note.text).join(" ");

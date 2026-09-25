@@ -3,6 +3,59 @@ import assert from "node:assert/strict";
 import { evaluateLearnStrategy } from "../../src/backend/learn.js";
 import { LEARN_SITUATION_KEYS } from "../../src/backend/learn-situations.js";
 
+for (const [key, foldingHand, concepts] of [
+  [
+    "LJ",
+    "72o",
+    [/small pairs and suited connectors/, /different flop textures/],
+  ],
+  ["HJ", "72o", [/Compared with CO/, /occasional opens/, /individual mixes/]],
+  [
+    "CO",
+    "72o",
+    [
+      /BTN’s weak suited/,
+      /offsuit aces/,
+      /Being suited or connected is not enough/,
+    ],
+  ],
+  ["BTN", "72o", [/no discount/, /blinds to enter or raise/, /rake/]],
+  ["SB", "72o", [/limps and raises/, /raising range/, /3-bets less effective/]],
+  ["HJ_VS_LJ_OPEN", "A9s", [/3-bet or fold/, /88 down to 22/, /blockers/]],
+  [
+    "HJ_VS_LJ_4BET",
+    "A9s",
+    [
+      /continuing range calls/,
+      /Keeping AA/,
+      /QQ mostly calls but sometimes shoves/,
+    ],
+  ],
+]) {
+  test(`${key} teaches its range-wide insight even when this hand folds`, () => {
+    const folded = evaluateLearnStrategy({
+      id: `${key}-${foldingHand}`,
+      frequencies: [100, 0, 0],
+    });
+    assert.deepEqual(folded.expected, [100, 0, 0]);
+    const text = folded.lessonNotes.map((note) => note.text).join(" ");
+    for (const concept of concepts) assert.match(text, concept);
+    const aces = evaluateLearnStrategy({
+      id: `${key}-AA`,
+      frequencies: [100, 0, 0],
+    });
+    assert.deepEqual(folded.lessonNotes, aces.lessonNotes);
+    assert.deepEqual(
+      aces.lessonNotes,
+      evaluateLearnStrategy({
+        id: `${key}-AA`,
+        frequencies: aces.expected,
+        raiseTo: aces.raiseTo,
+      }).lessonNotes,
+    );
+  });
+}
+
 // Content checks belong here; the catalog renders one representative notes list.
 for (const [position, opponent, fourBet, takeaway, count] of [
   ["BB", "LJ", false, "Playability can beat a higher card", 2],
