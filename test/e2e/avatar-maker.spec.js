@@ -1,5 +1,10 @@
 import { test as base, expect } from "@playwright/test";
 import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
+import {
+  checkpointCoverage,
+  startCoverage,
+  stopCoverage,
+} from "./utils/coverage.js";
 
 /** @type {import('@playwright/test').BrowserContext} */
 let guestContext;
@@ -8,7 +13,9 @@ let guestContext;
 const test = base.extend({
   page: async ({}, use) => {
     const page = await guestContext.newPage();
+    await startCoverage(page);
     await use(page);
+    await stopCoverage(page);
     await page.close();
   },
 });
@@ -38,6 +45,7 @@ test.afterAll(async () => {
 test("opens the avatar maker from settings and loads its sprites", async ({
   page,
 }) => {
+  await checkpointCoverage(page);
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
 
@@ -69,6 +77,7 @@ async function openSettingsWithAvatar(page) {
     data: { name: "Alice", settings: { avatar: DEFAULT_AVATAR } },
   });
   expect(response.ok()).toBeTruthy();
+  await checkpointCoverage(page);
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
 }
@@ -79,6 +88,7 @@ for (const action of ["Done", "Cancel"]) {
   }) => {
     await openSettingsWithAvatar(page);
     await page.getByRole("link", { name: "Change", exact: true }).click();
+    await checkpointCoverage(page);
     await page.reload();
     await page
       .getByRole("button", { name: "Bigger Face", exact: true })
@@ -108,6 +118,7 @@ test("preserves the applied draft when returning to the editor with Forward", as
   await page.getByRole("button", { name: "Bigger Face", exact: true }).click();
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await expect(page).toHaveURL(/modal=settings/);
+  await checkpointCoverage(page);
   await page.goForward();
   await expect(
     page.getByRole("button", { name: "Set Face size to 1", exact: true }),
@@ -132,7 +143,13 @@ for (const [action, leaveSettings] of [
     "Cancel",
     (page) => page.getByRole("button", { name: "Cancel", exact: true }).click(),
   ],
-  ["Back", (page) => page.goBack()],
+  [
+    "Back",
+    async (page) => {
+      await checkpointCoverage(page);
+      return page.goBack();
+    },
+  ],
 ]) {
   test(`discards settings when leaving with ${action} and reopening with Forward`, async ({
     page,
@@ -144,6 +161,7 @@ for (const [action, leaveSettings] of [
     await page.getByRole("button", { name: "Remove", exact: true }).click();
     await leaveSettings(page);
     await expect(page).not.toHaveURL(/modal=settings/);
+    await checkpointCoverage(page);
     await page.goForward();
     await expect(
       page.getByRole("textbox", { name: "Name", exact: true }),
@@ -181,6 +199,7 @@ for (const [recovery, recover] of [
     await page.route("**/assets/avatar/face/oval-skin.png", (route) =>
       failSprite ? route.abort() : route.continue(),
     );
+    await checkpointCoverage(page);
     await page.goto("/");
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await page.getByRole("link", { name: "Change", exact: true }).click();

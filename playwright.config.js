@@ -38,7 +38,7 @@ export default defineConfig({
   webServer: {
     command: "node --env-file=.env src/backend",
     url: E2E_ORIGIN,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && process.env.E2E_COVERAGE !== "1",
     stdout: "pipe",
     stderr: "pipe",
     gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },

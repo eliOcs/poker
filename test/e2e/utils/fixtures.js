@@ -30,8 +30,8 @@ function createPlayerFixture(name, contextOptions = {}) {
 
     const player = new PokerPlayer(context, page, name);
     await use(player);
-    if (!page.isClosed()) {
-      await stopCoverage(page);
+    if (!player.page.isClosed()) {
+      await stopCoverage(player.page);
     }
     await context.close().catch(() => {});
   };
@@ -44,6 +44,11 @@ function createPlayerFixture(name, contextOptions = {}) {
  * Enable debug logging: DEBUG_E2E=1 npm run test:e2e
  */
 export const test = base.extend({
+  page: async ({ page }, use) => {
+    await startCoverage(page);
+    await use(page);
+    if (!page.isClosed()) await stopCoverage(page);
+  },
   emailSink: [
     async ({}, use) => {
       await ensureEmailSinkDir();

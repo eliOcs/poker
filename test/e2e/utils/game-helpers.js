@@ -1,3 +1,4 @@
+import { checkpointCoverage } from "./coverage.js";
 const TOURNAMENT_SPEED_LABELS = {
   normal: "Normal",
   "semi-turbo": "Semi-Turbo",
@@ -21,6 +22,7 @@ function normalizeGameType(type) {
  */
 async function configureGameType(page, type, stakesIndex, buyInIndex, speed) {
   if (type === "mtt") {
+    await checkpointCoverage(page);
     await page.goto("/mtt");
     await page.locator("phg-tournaments").waitFor();
     if (buyInIndex !== undefined) {
@@ -104,6 +106,7 @@ export async function createGame(player, options = {}) {
   const page = player.page;
 
   if (type !== "mtt") {
+    await checkpointCoverage(page);
     await page.goto("/");
     await page.locator("phg-home").waitFor();
   }

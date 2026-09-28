@@ -31,7 +31,7 @@
     "test:coverage": "npm run test:backend:coverage && npm run test:frontend:coverage",
     "test:e2e": "playwright test",
     "test:e2e:coverage": "rm -rf coverage/e2e && E2E_COVERAGE=1 playwright test && npm run test:e2e:coverage:report",
-    "test:e2e:coverage:report": "c8 report --temp-directory coverage/e2e/tmp --reports-dir coverage/e2e --include 'src/**/*.js' --reporter text --reporter html --reporter json-summary",
+    "test:e2e:coverage:report": "c8 report --all --temp-directory coverage/e2e/tmp --reports-dir coverage/e2e --include 'src/**/*.js' --reporter text --reporter html --reporter json-summary && node scripts/report-css-coverage.js",
     "test:e2e:debug": "DEBUG=pw:api DEBUG_E2E=1 playwright test",
     "test:e2e:smoke": "playwright test test/e2e/smoke.spec.js",
     "test:frontend": "web-test-runner",

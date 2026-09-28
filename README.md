@@ -83,7 +83,7 @@ npm run test:ui-catalog:update  # Regenerate UI catalog screenshots (Linux)
 npm run test:ui-catalog:docker  # Run visual checks in Docker (local)
 npm run test:ui-catalog:update:docker # Regenerate shared screenshots in Docker
 npm run test:coverage           # Run backend + frontend coverage
-npm run test:e2e:coverage       # Run end-to-end coverage
+npm run test:e2e:coverage       # Run end-to-end JavaScript + CSS coverage
 npm run duplicates              # Check for code duplication (jscpd)
 npm run knip                    # Find unused files, dependencies, and exports
 npm run lint                    # ESLint + Stylelint (check only)
@@ -96,6 +96,22 @@ npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
 npm run avatar:sprites          # Export avatar sprites from the source XCF
 ```
+
+E2E coverage writes JavaScript HTML to `coverage/e2e/index.html` and CSS HTML to
+`coverage/e2e/css/index.html`, with a CSS JSON summary alongside it. CSS usage is
+merged across recorded pages and tests; all frontend stylesheets are included,
+including unloaded files. Coverage records rule usage, not individual declaration
+effectiveness. Uncovered text can include comments, whitespace, or styles for
+untested viewports and interactions; it does not prove that a style is dead.
+Use `npm run test:e2e:coverage:report` to regenerate reports from an existing run
+without changing source files. Coverage runs require their own server on port 8444.
+
+E2E tests must call `checkpointCoverage(page)` before `goto`, `reload`, `goBack`,
+or `goForward`, and `stopCoverage(page)` before closing a recorded page early.
+Checkpoints save JS and CSS usage before navigation destroys the old document's
+counters, then restart collection before the next document loads. The reports
+merge these segments. Browser-driven full navigations also need a checkpoint
+before the action that triggers them; collecting after navigation is too late.
 
 ### Visual checks
 

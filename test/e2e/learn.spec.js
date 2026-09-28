@@ -1,3 +1,4 @@
+import { checkpointCoverage } from "./utils/coverage.js";
 import { test, expect } from "./utils/fixtures.js";
 import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 
@@ -17,6 +18,7 @@ for (const navigationApi of [true, false]) {
       });
     }, navigationApi);
     const dealt = page.waitForResponse("**/api/learn/scenario");
+    await checkpointCoverage(page);
     await page.goto("/learn?source=practice");
     const scenario = await (await dealt).json();
     expect(scenario.expected).toBeUndefined();
@@ -90,11 +92,13 @@ for (const navigationApi of [true, false]) {
       result.opponentRange ? 169 : 0,
     );
     expect((await page.request.get(page.url())).status()).toBe(200);
+    await checkpointCoverage(page);
     await page.goBack();
     await expect(page).toHaveURL(/\/learn\?source=practice$/);
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(details).toBeFocused();
     await expect(page.locator(".learn-strategies")).toHaveText(strategy);
+    await checkpointCoverage(page);
     await page.goForward();
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page).toHaveURL(/modal=learn-details$/);
@@ -119,6 +123,7 @@ for (const navigationApi of [true, false]) {
       timeout: 10000,
     });
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
+    await checkpointCoverage(page);
     await page.reload();
     await expect(hero.locator(".stack")).toContainText("$");
     const invalidPreference = await page.request.put("/api/users/me", {

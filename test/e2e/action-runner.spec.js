@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { checkpointCoverage } from "./utils/coverage.js";
+import { test, expect } from "./utils/fixtures.js";
 import { watchPlayerActions } from "./utils/action-observer.js";
 import { startActionRunner } from "./utils/action-runner.js";
 import { PokerPlayer } from "./utils/poker-player.js";
@@ -14,6 +15,7 @@ test("action notifications follow decisions through renders and navigation", asy
       body: "<phg-game><phg-action-panel><button>Fold</button></phg-action-panel></phg-game>",
     }),
   );
+  await checkpointCoverage(page);
   await page.goto("/observer-test/first");
   const notifications = [];
   const stop = await watchPlayerActions(page, (ready) =>
@@ -42,6 +44,7 @@ test("action notifications follow decisions through renders and navigation", asy
         "<phg-action-panel><button>Fold</button></phg-action-panel>";
     });
     await expect.poll(() => notifications).toEqual([true, false, true]);
+    await checkpointCoverage(page);
     await page.goto("/observer-test/second");
     await expect.poll(() => notifications.filter(Boolean).length).toBe(3);
   } finally {

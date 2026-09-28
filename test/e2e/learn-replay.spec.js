@@ -1,3 +1,4 @@
+import { checkpointCoverage } from "./utils/coverage.js";
 import { test, expect } from "./utils/fixtures.js";
 import { createLearnReplay } from "../../src/backend/learn-replay.js";
 import { learnSituation } from "../../src/backend/learn-situations.js";
@@ -66,6 +67,7 @@ for (const [lesson, key, laterActions, foldedCount] of [
     await page.route("**/api/learn/scenario", (route) =>
       route.fulfill({ json: scenario }),
     );
+    await checkpointCoverage(page);
     await page.goto("/learn");
     const learn = page.locator("phg-learn");
     const choices = learn.getByRole("slider");

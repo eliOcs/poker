@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./utils/fixtures.js";
 import { PokerPlayer } from "./utils/poker-player.js";
 import { getAvailableActions } from "./utils/random-actions.js";
 

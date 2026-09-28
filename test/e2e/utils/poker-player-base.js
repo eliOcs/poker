@@ -1,3 +1,4 @@
+import { checkpointCoverage, stopCoverage } from "./coverage.js";
 /**
  * Base class for PokerPlayer: constructor, locator getters, and basic navigation.
  */
@@ -29,6 +30,7 @@ export class PokerPlayerBase {
    */
   async close() {
     if (!this.page.isClosed()) {
+      await stopCoverage(this.page);
       await this.page.close().catch(() => {});
     }
     await this.context.close().catch(() => {});
@@ -90,6 +92,7 @@ export class PokerPlayerBase {
       kind === "mtt"
         ? `/mtt/${tournamentId}/tables/${gameId}`
         : `/${kind}/${gameId}`;
+    await checkpointCoverage(this.page);
     await this.page.goto(path);
     await this.game.waitFor();
     await this.board.waitFor();
@@ -100,6 +103,7 @@ export class PokerPlayerBase {
    * @param {string} url
    */
   async joinGameByUrl(url) {
+    await checkpointCoverage(this.page);
     await this.page.goto(url);
     await this.game.waitFor();
     await this.board.waitFor();
@@ -110,6 +114,7 @@ export class PokerPlayerBase {
    * @param {string} url
    */
   async joinTournamentLobbyByUrl(url) {
+    await checkpointCoverage(this.page);
     await this.page.goto(url);
     await this.mttLobby.waitFor();
   }

@@ -1,4 +1,9 @@
 import { test, expect } from "./utils/fixtures.js";
+import {
+  checkpointCoverage,
+  startCoverage,
+  stopCoverage,
+} from "./utils/coverage.js";
 import { createGame } from "./utils/game-helpers.js";
 import { waitForLatestEmail } from "./utils/email.js";
 import { takeRandomSocialAction } from "./utils/random-social-actions.js";
@@ -11,6 +16,7 @@ test.describe("Poker Game Smoke Test", () => {
     player3,
   }) => {
     // === CREATE AVATAR (Player 1) ===
+    await checkpointCoverage(player1.page);
     await player1.page.goto("/");
     await player1.page.getByRole("button", { name: "Settings" }).click();
     await player1.page.getByRole("link", { name: "Change" }).click();
@@ -53,6 +59,7 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(player1.page).toHaveURL(/\/$/);
 
     await player1.page.getByRole("button", { name: "Settings" }).click();
+    await checkpointCoverage(player1.page);
     await player1.page.reload();
     await expect(
       player1.page.getByRole("heading", { name: "Settings" }),
@@ -222,6 +229,7 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.act("call");
 
     // P3 disconnects during their turn
+    await stopCoverage(player3.page);
     await player3.page.close();
 
     // P1 and P2 see P3 as disconnected
@@ -268,7 +276,9 @@ test.describe("Poker Game Smoke Test", () => {
       .url()
       .match(/\/(?:cash|sitngo)\/([a-z0-9]+)/)?.[1];
     const p3Page = await player3.context.newPage();
+    await startCoverage(p3Page);
     player3.page = p3Page;
+    await checkpointCoverage(player3.page);
     await player3.page.goto("/");
     await expect(player3.page).toHaveURL(new RegExp(`/cash/${gameId}$`));
     await player3.game.waitFor();
@@ -352,6 +362,7 @@ test.describe("Poker Game Smoke Test", () => {
     const profilePagePromise = player1.context.waitForEvent("page");
     await player1.game.locator(".drawer-account").click();
     const profilePage = await profilePagePromise;
+    await startCoverage(profilePage);
     await profilePage.waitForLoadState("domcontentloaded");
     expect(accountPath).toMatch(/^\/players\/[a-z0-9]+$/);
     await expect(profilePage).toHaveURL(new RegExp(`${accountPath}$`));
@@ -361,6 +372,7 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(profilePage).toHaveURL(
       /\/players\/[a-z0-9]+\?modal=settings$/,
     );
+    await checkpointCoverage(profilePage);
     await profilePage.reload();
     await expect(profilePage.locator("phg-player-profile")).toBeVisible();
     await expect(
@@ -369,6 +381,7 @@ test.describe("Poker Game Smoke Test", () => {
     await expect(
       profilePage.locator(".volume-slider").first().locator("label.active"),
     ).toHaveText("25%");
+    await stopCoverage(profilePage);
   });
 });
 

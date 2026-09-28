@@ -1,3 +1,4 @@
+import { checkpointCoverage } from "./coverage.js";
 import { expect } from "@playwright/test";
 import { waitForLatestEmail } from "./email.js";
 
@@ -42,6 +43,7 @@ async function completeSignUp(player, email, name) {
  * @param {string} email
  */
 export async function signUpTournamentCreator(player, email) {
+  await checkpointCoverage(player.page);
   await player.page.goto("/mtt");
   await player.page
     .getByRole("button", { name: "Create Tournament", exact: true })

@@ -1,3 +1,4 @@
+import { checkpointCoverage } from "./coverage.js";
 /**
  * Represents a player in the e2e test
  * All interactions use visible UI elements only - no component internal access
@@ -349,6 +350,7 @@ export class PokerPlayer extends PokerPlayerActions {
    * @param {string} gameId
    */
   async goToHistory(gameId) {
+    await checkpointCoverage(this.page);
     await this.page.goto(`/history/${gameId}`);
     await this.page.locator("phg-history").waitFor();
   }
