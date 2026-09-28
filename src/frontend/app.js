@@ -268,14 +268,6 @@ class App extends LitElement {
 
   // --- Game WebSocket Management ---
 
-  connectToGame(path) {
-    ws.connectToGame(this, path);
-  }
-
-  _reconnectIfNeeded() {
-    ws.reconnectIfNeeded(this);
-  }
-
   _resumeConnectionIfNeeded() {
     ws.resumeConnectionIfNeeded(this);
   }
