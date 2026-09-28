@@ -22,23 +22,6 @@ import * as Betting from "./betting.js";
  */
 
 /**
- * Sets a pre-action on a seat
- * @param {OccupiedSeat} seat
- * @param {'checkFold'|'callAmount'} type
- * @param {Cents} [amount]
- */
-export function setPreAction(seat, type, amount = undefined) {
-  if (type === "checkFold") {
-    seat.preAction = { type };
-    return;
-  }
-  if (amount === undefined) {
-    throw new Error("amount is required for callAmount pre-action");
-  }
-  seat.preAction = { type, amount };
-}
-
-/**
  * Clears pre-action from a seat
  * @param {OccupiedSeat} seat
  */

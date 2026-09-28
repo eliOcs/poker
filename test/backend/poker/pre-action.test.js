@@ -1,7 +1,6 @@
 import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import {
-  setPreAction,
   clearPreAction,
   resolvePreAction,
   invalidateCallPreActions,
@@ -10,29 +9,10 @@ import * as Seat from "../../../src/backend/poker/seat.js";
 import { createGameWithPlayers } from "./test-helpers.js";
 
 describe("pre-action", () => {
-  describe("setPreAction", () => {
-    it("sets checkFold pre-action on seat", () => {
-      const seat = Seat.occupied({ id: "p1" }, 1000);
-      setPreAction(seat, "checkFold");
-      assert.deepStrictEqual(seat.preAction, {
-        type: "checkFold",
-      });
-    });
-
-    it("sets callAmount pre-action with amount", () => {
-      const seat = Seat.occupied({ id: "p1" }, 1000);
-      setPreAction(seat, "callAmount", 200);
-      assert.deepStrictEqual(seat.preAction, {
-        type: "callAmount",
-        amount: 200,
-      });
-    });
-  });
-
   describe("clearPreAction", () => {
     it("clears pre-action from seat", () => {
       const seat = Seat.occupied({ id: "p1" }, 1000);
-      setPreAction(seat, "checkFold");
+      seat.preAction = { type: "checkFold" };
       clearPreAction(seat);
       assert.strictEqual(seat.preAction, undefined);
     });
