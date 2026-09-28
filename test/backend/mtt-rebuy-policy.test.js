@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import assert from "node:assert";
 import {
   calculatePrizePool,
-  getRemainingRebuys,
   getTotalAcceptedRebuys,
   isRebuyEligibleByCount,
 } from "../../src/backend/mtt-rebuy-policy.js";
@@ -48,10 +47,6 @@ describe("mtt rebuy policy", () => {
 
       for (let rebuysUsed = 0; rebuysUsed <= maxRebuys; rebuysUsed += 1) {
         entrant.rebuysUsed = rebuysUsed;
-        assert.equal(
-          getRemainingRebuys(tournament, entrant),
-          maxRebuys - rebuysUsed,
-        );
         assert.equal(
           isRebuyEligibleByCount(tournament, entrant),
           rebuysUsed < maxRebuys,

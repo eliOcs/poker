@@ -7,15 +7,6 @@ export const DEFAULT_MAX_REBUYS = 1;
 
 /**
  * @param {ManagedTournament} tournament
- * @param {TournamentEntrant} entrant
- * @returns {number}
- */
-export function getRemainingRebuys(tournament, entrant) {
-  return Math.max(0, tournament.maxRebuys - entrant.rebuysUsed);
-}
-
-/**
- * @param {ManagedTournament} tournament
  * @returns {number}
  */
 export function getTotalAcceptedRebuys(tournament) {
