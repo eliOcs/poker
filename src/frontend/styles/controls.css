@@ -112,27 +112,6 @@
   image-rendering: pixelated;
 }
 
-.form-control {
-  width: 100%;
-  padding: var(--space-md);
-  color: var(--color-fg-white);
-  font: inherit;
-  font-size: var(--font-md);
-  background: var(--color-bg-medium);
-  border: 3px solid var(--color-bg-dark);
-  outline: none;
-}
-
-.form-control:focus {
-  border-color: var(--form-control-focus-color, var(--color-secondary));
-  box-shadow: 0 0 0 1px var(--form-control-focus-color, var(--color-secondary));
-}
-
-.form-control[aria-invalid="true"] {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 1px var(--color-error);
-}
-
 :where(button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
