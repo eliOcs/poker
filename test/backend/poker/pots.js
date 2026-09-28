@@ -141,17 +141,6 @@ describe("pots", () => {
     });
   });
 
-  describe("getTotalPot", () => {
-    it("should sum all pots", () => {
-      const pots = [
-        { amount: 100, eligibleSeats: [0, 1] },
-        { amount: 200, eligibleSeats: [1] },
-      ];
-
-      assert.equal(Pots.getTotalPot(pots), 300);
-    });
-  });
-
   describe("awardPot", () => {
     it("should award pot to single winner", () => {
       const seats = [

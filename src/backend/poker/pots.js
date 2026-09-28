@@ -83,15 +83,6 @@ export function calculatePots(seats) {
 }
 
 /**
- * Calculates total pot (sum of all pots)
- * @param {Pot[]} pots
- * @returns {Cents}
- */
-export function getTotalPot(pots) {
-  return pots.reduce((sum, pot) => sum + pot.amount, 0);
-}
-
-/**
  * Awards a pot to winner(s), handling splits for ties
  * @param {Pot} pot - The pot to award
  * @param {number[]} winnerSeats - Seat indices of winners (can be multiple for split)
