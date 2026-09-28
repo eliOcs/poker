@@ -1,6 +1,6 @@
 import { getDisplayBigBlind } from "./currency.js";
 import { html, LitElement } from "lit";
-import { getMttPath, getHistoryPath, getTablePath } from "../shared/routes.js";
+import { getMttPath, getTablePath } from "../shared/routes.js";
 import * as Audio from "./audio.js";
 import "./card.js";
 import "./board.js";
@@ -226,18 +226,6 @@ export class Game extends LitElement {
         );
       }
     }
-  }
-
-  openHistory() {
-    if (!this.hasRecordedHands()) return;
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: {
-          path: getHistoryPath(this.gameId),
-        },
-        bubbles: true,
-      }),
-    );
   }
 
   hasRecordedHands() {
