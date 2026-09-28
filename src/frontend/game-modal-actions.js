@@ -1,14 +1,4 @@
 export const gameModalActions = {
-  openAccount() {
-    if (!this.user?.id) return;
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: `/players/${this.user.id}` },
-        bubbles: true,
-      }),
-    );
-  },
-
   openSettings() {
     this.dispatchEvent(new CustomEvent("open-settings", { bubbles: true }));
   },
