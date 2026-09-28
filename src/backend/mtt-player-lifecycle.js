@@ -1,5 +1,4 @@
 import * as Seat from "./poker/seat.js";
-import { countRemainingEntrants } from "./mtt-table-state.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -82,15 +81,4 @@ export function eliminateBustedEntrants(
       entrant.eliminatedAt = now();
       game.seats[seatIndex] = Seat.empty();
     });
-}
-
-/**
- * @param {ManagedTournament} tournament
- * @param {Game} game
- * @param {() => string} now
- */
-export function processTableAfterHand(tournament, game, now) {
-  const activeBefore = countRemainingEntrants(tournament);
-  const bustedEntrants = collectBustedEntrants(tournament, game);
-  eliminateBustedEntrants(game, bustedEntrants, activeBefore, now);
 }

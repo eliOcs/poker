@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "entry": [
+    "src/frontend/app.js",
+    // Match the Node and Web Test Runner test commands.
+    "test/backend/**/*.js",
+    "test/frontend/**/*.test.js",
+    "web-test-runner.config.js",
+    // Invoked by AWS Lambda.
+    "terraform/lambda/site-health/index.mjs",
+  ],
+  // Resolve browser URL imports using the static server's routes.
+  "paths": {
+    "/src/*": ["./src/*"],
+    "/fixtures.js": ["./test/frontend/fixtures/index.js"],
+  },
+  "playwright": {
+    "config": ["playwright.config.js", "playwright.ui-catalog.config.js"],
+  },
+  // System tools, plus c8's report subcommand (misidentified as a binary).
+  "ignoreBinaries": ["dot", "gimp", "magick", "report"],
+  // These declarations are live code even when only used within their module.
+  "ignoreExportsUsedInFile": true,
+}

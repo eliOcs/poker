@@ -158,7 +158,7 @@ function buildSummary(input) {
     type: input.type,
     flags: input.flags,
     speed: {
-      type: input.speed ?? Tournament.DEFAULT_MTT_SPEED,
+      type: input.speed ?? Tournament.DEFAULT_TOURNAMENT_SPEED,
       round_time: input.roundTimeTicks ?? Tournament.LEVEL_DURATION_TICKS,
     },
     prize_pool: toDollars(input.prizePool),

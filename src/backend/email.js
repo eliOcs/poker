@@ -1,5 +1,5 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import crypto from "node:crypto";
 import { renderSignInEmail } from "./sign-in-email.js";
@@ -14,12 +14,6 @@ function getFromEmail() {
 
 function getEmailSinkDir() {
   return process.env.EMAIL_SINK_DIR ?? "";
-}
-
-export async function cleanupEmailSink() {
-  const sinkDir = getEmailSinkDir();
-  if (!sinkDir || !existsSync(sinkDir)) return;
-  await rm(sinkDir, { recursive: true, force: true });
 }
 
 /**

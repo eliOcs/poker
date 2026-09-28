@@ -58,10 +58,6 @@ export const TOURNAMENT_SPEED_PRESETS = [
 /** @type {TournamentSpeed} */
 export const DEFAULT_TOURNAMENT_SPEED = "normal";
 
-// Backward-compatible names for stored MTT data and existing integrations.
-export const MTT_SPEED_PRESETS = TOURNAMENT_SPEED_PRESETS;
-export const DEFAULT_MTT_SPEED = DEFAULT_TOURNAMENT_SPEED;
-
 /** Average per-level blind growth used by entrant-responsive MTT schedules. */
 export const MTT_BLIND_GROWTH = 0.4;
 
@@ -89,9 +85,6 @@ export function getTournamentSpeedPreset(speed) {
   }
   return preset;
 }
-
-export const isValidMttSpeed = isValidTournamentSpeed;
-export const getMttSpeedPreset = getTournamentSpeedPreset;
 
 /**
  * Recovers a stable MTT speed from metadata without depending on its casing.
@@ -126,10 +119,6 @@ export const BREAK_AFTER_LEVELS = BLIND_LEVELS.filter(
   ({ level }) =>
     level % BREAK_INTERVAL_LEVELS === 0 && level < BLIND_LEVELS.length,
 ).map(({ level }) => level);
-
-/** Default playing time represented by the static tournament structure */
-export const DEFAULT_TOURNAMENT_DURATION_MINUTES =
-  (BLIND_LEVELS.length * LEVEL_DURATION_TICKS) / 60;
 
 /**
  * @typedef {object} TournamentSchedule

@@ -302,12 +302,13 @@ npm run test:ui-catalog:update:docker # Regenerate canonical UI catalog screensh
 npm run test:coverage           # Run unit tests with coverage reporting
 npm run test:e2e:coverage       # Run e2e tests with coverage reporting
 npm run duplicates              # Check for code duplication (jscpd)
+npm run knip                    # Find unused files, dependencies, and exports
 npm run lint                    # ESLint + Stylelint (check only)
 npm run format                  # Prettier (check only)
 npm run review                  # Semantic review of uncommitted changes with Codex
 npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
-npm run validate                # Run all checks (format, lint, typecheck, test)
+npm run validate                # Run all checks (including Knip and tests)
 npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
 npm run avatar:sprites          # Export avatar sprites from the source XCF
@@ -453,4 +454,5 @@ ECR tokens expire after 12 hours. If deploy fails with auth errors, the token ha
 - `@open-wc/testing`, `web-test-runner` - Frontend testing
 - `@playwright/test` - E2E and visual regression testing
 - `jscpd` - Code duplication detection
+- `knip` - Unused files, dependencies, and exports
 - `dependency-cruiser` - Dependency graph generation and architectural validation

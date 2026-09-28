@@ -1,9 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import {
-  parseMttSpeed,
-  parseTournamentSpeed,
-} from "../../src/backend/game-route-parsers.js";
+import { parseTournamentSpeed } from "../../src/backend/game-route-parsers.js";
 
 describe("parseTournamentSpeed", () => {
   it("accepts every speed wire value", () => {
@@ -24,9 +21,5 @@ describe("parseTournamentSpeed", () => {
         (error) => error.status === 400,
       );
     }
-  });
-
-  it("keeps the MTT parser alias for existing callers", () => {
-    assert.equal(parseMttSpeed({ speed: "turbo" }), "turbo");
   });
 });

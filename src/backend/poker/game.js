@@ -8,22 +8,16 @@ import { calculateBlindStructure } from "../../shared/blind-calculator.js";
 export {
   gameStateSnapshot,
   stopGameTick,
-  startGameTick,
   ensureGameTick,
   startHand,
   startHandAfterCountdown,
-  performAutoAction,
 } from "./game-engine.js";
-export { TIMER_INTERVAL, RUNOUT_DELAY_TICKS } from "./game-constants.js";
+export { RUNOUT_DELAY_TICKS } from "./game-constants.js";
 export {
   sitOutDisconnectedPlayers,
   autoStartNextHand,
 } from "./game-hand-lifecycle.js";
-export {
-  processGameFlow,
-  finishCollectBets,
-  dealRunoutStreet,
-} from "./game-flow.js";
+export { processGameFlow } from "./game-flow.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -296,7 +290,7 @@ export function createMttTable({
   tableName,
   startTime,
   level = 1,
-  speed = Tournament.DEFAULT_MTT_SPEED,
+  speed = Tournament.DEFAULT_TOURNAMENT_SPEED,
   schedule,
 }) {
   const tournamentSchedule = Tournament.copyTournamentSchedule(

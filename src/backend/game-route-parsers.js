@@ -77,5 +77,3 @@ export function parseTournamentSpeed(data) {
   }
   return speed;
 }
-
-export const parseMttSpeed = parseTournamentSpeed;

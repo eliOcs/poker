@@ -27,21 +27,6 @@ const ranks = /** @type {Rank[]} */ ([
 ]);
 
 /**
- * @param {Rank} rank
- * @param {Suit} suit
- * @returns {Card}
- */
-export function createCard(rank, suit) {
-  if (!ranks.includes(rank)) {
-    throw new Error("invalid rank");
-  }
-  if (!suits.includes(suit)) {
-    throw new Error("invalid suit");
-  }
-  return `${rank}${suit}`;
-}
-
-/**
  * @returns {Card[]}
  */
 export function create() {
@@ -78,14 +63,6 @@ export function getRank(card) {
  */
 export function getSuit(card) {
   return /** @type {Suit} */ (card.slice(-1));
-}
-
-/**
- * @param {Card|string} card
- * @returns {boolean}
- */
-export function isHidden(card) {
-  return card === HIDDEN;
 }
 
 /**

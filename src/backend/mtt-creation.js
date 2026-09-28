@@ -17,7 +17,7 @@ export function createManagedTournament({
   buyIn,
   tableSize,
   createdAt,
-  speed = Tournament.DEFAULT_MTT_SPEED,
+  speed = Tournament.DEFAULT_TOURNAMENT_SPEED,
   maxRebuys = DEFAULT_MAX_REBUYS,
   entryPeriodLevels = DEFAULT_ENTRY_PERIOD_LEVELS,
 }) {

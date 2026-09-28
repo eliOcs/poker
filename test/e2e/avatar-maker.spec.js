@@ -47,9 +47,14 @@ test("opens the avatar maker from settings and loads its sprites", async ({
   await expect(page).toHaveURL(/\/avatar$/);
   const avatarMaker = page.locator("phg-avatar-maker");
   await expect(avatarMaker).toBeVisible();
-  await avatarMaker.evaluate(
-    (element) => /** @type {any} */ (element).assetsReady,
-  );
+  // The lazy-loaded element can be visible before it is defined. The preview
+  // appears only after the component has initialized and loaded its sprites.
+  await expect(
+    avatarMaker.getByRole("img", {
+      name: "Preview of your customized avatar",
+      exact: true,
+    }),
+  ).toBeVisible();
 
   const loadedSprites = await page.evaluate(() =>
     performance

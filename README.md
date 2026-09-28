@@ -63,6 +63,11 @@ A web-based Texas Hold'em poker game with real-time multiplayer support.
 to provide the compiler API required by ESLint. This follows Microsoft's
 [side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0).
 
+`npm run knip` checks for unused files, dependencies, and exports, and runs in
+both validation and CI. `knip.jsonc` configures test and browser entry points,
+browser URL imports, and external system tools. Exports used within their own
+module are allowed; fully unused declarations are still reported.
+
 ### Commands
 
 ```bash
@@ -80,12 +85,13 @@ npm run test:ui-catalog:update:docker # Regenerate shared screenshots in Docker
 npm run test:coverage           # Run backend + frontend coverage
 npm run test:e2e:coverage       # Run end-to-end coverage
 npm run duplicates              # Check for code duplication (jscpd)
+npm run knip                    # Find unused files, dependencies, and exports
 npm run lint                    # ESLint + Stylelint (check only)
 npm run format                  # Prettier (check only)
 npm run review                  # Semantic review of uncommitted changes
 npm run fix                     # Auto-fix format + lint issues
 npm run typecheck               # TypeScript type checking
-npm run validate                # Run all checks (format, lint, typecheck, test)
+npm run validate                # Run all checks (including Knip and tests)
 npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
 npm run deps:check              # Validate architectural dependency rules
 npm run avatar:sprites          # Export avatar sprites from the source XCF

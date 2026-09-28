@@ -13,11 +13,7 @@ import {
   LIVE_MTT_TABLE_ROUTE,
 } from "../shared/routes.js";
 
-export {
-  parseBody,
-  parseCookies,
-  getOrCreateUser,
-} from "./http-route-utils.js";
+export { parseCookies, getOrCreateUser } from "./http-route-utils.js";
 export { logFrontendErrorReport } from "./client-error-reporting.js";
 
 /**

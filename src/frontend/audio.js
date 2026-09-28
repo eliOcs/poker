@@ -3,10 +3,6 @@ let audioContext = undefined;
 let volume = 0.75;
 let vibrationEnabled = true;
 
-export function getVolume() {
-  return volume;
-}
-
 export function setVolume(v) {
   volume = v;
 }

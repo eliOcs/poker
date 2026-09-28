@@ -3,9 +3,9 @@ import { formatCurrency } from "./currency.js";
 import { getHistoryPath, getTablePath } from "../shared/routes.js";
 import {
   calculatePrizesFromPool,
-  DEFAULT_MTT_SPEED,
+  DEFAULT_TOURNAMENT_SPEED,
   estimateScheduleBreakDurationMinutes,
-  getMttSpeedPreset,
+  getTournamentSpeedPreset,
 } from "../shared/tournament.js";
 import { renderTooltip } from "./tooltip.js";
 
@@ -55,7 +55,7 @@ export function formatPayoutTier(tournament) {
 }
 
 export function formatMttSpeed(speed) {
-  return getMttSpeedPreset(speed ?? DEFAULT_MTT_SPEED).label;
+  return getTournamentSpeedPreset(speed ?? DEFAULT_TOURNAMENT_SPEED).label;
 }
 
 function formatMinutes(minutes) {
