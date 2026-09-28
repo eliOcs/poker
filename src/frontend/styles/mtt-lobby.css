@@ -104,25 +104,6 @@
     align-items: start;
   }
 
-  .assignment {
-    display: grid;
-    gap: 12px;
-    padding: 14px;
-    border: 2px solid var(--color-primary);
-    background: color-mix(
-      in srgb,
-      var(--color-bg-medium) 75%,
-      var(--color-primary)
-    );
-  }
-
-  .assignment p,
-  .loading {
-    margin: 0;
-    font-size: var(--font-sm);
-    line-height: 1.8;
-  }
-
   .tables {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -186,6 +167,9 @@
   }
 
   .loading {
+    margin: 0;
+    font-size: var(--font-sm);
+    line-height: 1.8;
     padding: 18px;
     border: 2px solid var(--color-bg-dark);
     background: var(--color-bg-medium);
