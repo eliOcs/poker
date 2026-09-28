@@ -132,17 +132,6 @@
     }
   }
 
-  .sign-in-content input {
-    margin-bottom: var(--space-lg);
-  }
-
-  .sign-in-intro {
-    margin: 0 0 var(--space-lg);
-    color: var(--color-fg-light);
-    font-size: var(--font-sm);
-    line-height: 1.8;
-  }
-
   .collecting-chip {
     position: absolute;
     z-index: 10;
