@@ -259,10 +259,6 @@ export class Game extends LitElement {
     gameModalActions.openTournamentLevels.call(this);
   }
 
-  getCurrentPlayerName() {
-    return this.user?.name ?? "";
-  }
-
   getMySeatInfo() {
     const seatIndex = this.game.seats.findIndex(
       (s) => s.isCurrentPlayer && !s.empty,
