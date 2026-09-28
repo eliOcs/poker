@@ -119,33 +119,6 @@ describe("betting", () => {
     });
   });
 
-  describe("isBettingRoundComplete", () => {
-    beforeEach(() => {
-      Betting.startBettingRound(game, "flop");
-    });
-
-    it("should return true when only one player left", () => {
-      game.seats[0].folded = true;
-      game.seats[2].folded = true;
-      assert.equal(Betting.isBettingRoundComplete(game), true);
-    });
-
-    it("should return true when all remaining players are all-in", () => {
-      game.seats[0].allIn = true;
-      game.seats[2].allIn = true;
-      game.seats[4].allIn = true;
-      assert.equal(Betting.isBettingRoundComplete(game), true);
-    });
-
-    it("should return false when bets are not equal", () => {
-      game.seats[0].bet = 50;
-      game.seats[2].bet = 100;
-      game.seats[4].bet = 50;
-      game.hand.currentBet = 100;
-      assert.equal(Betting.isBettingRoundComplete(game), false);
-    });
-  });
-
   describe("startBettingRound", () => {
     it("should set phase", () => {
       Betting.startBettingRound(game, "flop");

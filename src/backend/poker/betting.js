@@ -153,45 +153,6 @@ export function getCallAmount(game, seatIndex) {
 }
 
 /**
- * Checks if all active (non-all-in) players have matched the current bet
- * @param {Game} game
- * @returns {boolean}
- */
-function allBetsMatched(game) {
-  for (const seat of game.seats) {
-    if (!Seat.isActive(seat)) continue;
-    const activeSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
-    if (activeSeat.allIn) continue;
-    if (activeSeat.bet !== game.hand.currentBet) return false;
-  }
-  return true;
-}
-
-/**
- * Checks if the betting round has cycled back to its starting point
- * @param {Game} game
- * @returns {boolean}
- */
-function isRoundCycleComplete(game) {
-  if (game.hand.lastRaiser !== -1) {
-    return game.hand.actingSeat === game.hand.lastRaiser;
-  }
-  return game.hand.actingSeat === -1;
-}
-
-/**
- * Checks if the betting round is complete
- * @param {Game} game
- * @returns {boolean}
- */
-export function isBettingRoundComplete(game) {
-  if (countActivePlayers(game) <= 1) return true;
-  if (countPlayersWhoCanAct(game) === 0) return true;
-  if (!allBetsMatched(game)) return false;
-  return isRoundCycleComplete(game);
-}
-
-/**
  * Initializes the betting round state
  * @param {Game} game
  * @param {Phase} phase
