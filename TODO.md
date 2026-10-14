@@ -30,7 +30,7 @@
 - graph of the evolution on tournament
 - Bounty option: (+10% buyin)
 - Ideas from: https://plaspokerleague.blogspot.com/, add to poker tournament summary the number of knockouts, the number of rebuys, announce next scheduled tournament, poll to select the best date.
-- improve styles from: https://www.pokerstarsreplayer.com/hands/090eb7d816
+- use Zod for validation (we get types and validation in sync if we used compiled schemas performance is ok)
 - use SSE instead of websockets when we are only communicating updates from the backend to the frontend (eg: hand history)
 - OLAP db to store logs (DuckDB)
 
