@@ -268,19 +268,7 @@ function shouldRevealAllCards(seat, seatIndex, playerSeatIndex, game) {
   }
 
   // Show at showdown or when cards were revealed at showdown
-  if ((!seat.folded && game.hand.phase === "showdown") || seat.cardsRevealed) {
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Creates a hidden card placeholder
- * @returns {HiddenCard}
- */
-function hiddenCard() {
-  return HIDDEN;
+  return (!seat.folded && game.hand.phase === "showdown") || seat.cardsRevealed;
 }
 
 /**
@@ -302,9 +290,7 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
 
   const shownCards = seat.shownCards;
   if (shownCards[0] || shownCards[1]) {
-    return seat.cards.map((card, index) =>
-      shownCards[index] ? card : hiddenCard(),
-    );
+    return seat.cards.map((card, index) => (shownCards[index] ? card : HIDDEN));
   }
 
   // Keep folded opponents' card backs while their decision is pending.
@@ -312,7 +298,7 @@ function getCardsForView(seat, revealAllCards, isOwnSeat) {
     return [];
   }
   // Show face-down cards for active opponents
-  return seat.cards.map(() => hiddenCard());
+  return seat.cards.map(() => HIDDEN);
 }
 
 /**
@@ -492,21 +478,14 @@ function getWaitingPhaseActions(seat, game) {
  * @returns {boolean}
  */
 function canAnyOpponentRespond(game, seatIndex) {
-  for (let i = 0; i < game.seats.length; i++) {
-    if (i === seatIndex) continue;
-    const seat = /** @type {import('./seat.js').Seat} */ (game.seats[i]);
-    if (
-      seat.empty ||
-      /** @type {import('./seat.js').OccupiedSeat} */ (seat).folded
-    )
-      continue;
-    // Opponent can respond if they have chips and aren't all-in
-    const oSeat = /** @type {import('./seat.js').OccupiedSeat} */ (seat);
-    if (oSeat.stack > 0 && !oSeat.allIn) {
-      return true;
-    }
-  }
-  return false;
+  return game.seats.some(
+    (seat, index) =>
+      index !== seatIndex &&
+      !seat.empty &&
+      !seat.folded &&
+      seat.stack > 0 &&
+      !seat.allIn,
+  );
 }
 
 /**
@@ -518,15 +497,14 @@ function canAnyOpponentRespond(game, seatIndex) {
 function addBasicActions(actions, toCall, playerStack) {
   if (toCall === 0) {
     actions.push({ action: "check" });
-  }
-  if (toCall > 0 && playerStack > 0) {
-    actions.push({
-      action: "call",
-      amount: Math.min(toCall, playerStack),
-      allIn: playerStack <= toCall,
-    });
-  }
-  if (toCall > 0) {
+  } else if (toCall > 0) {
+    if (playerStack > 0) {
+      actions.push({
+        action: "call",
+        amount: Math.min(toCall, playerStack),
+        allIn: playerStack <= toCall,
+      });
+    }
     actions.push({ action: "fold" });
   }
 }
@@ -611,14 +589,31 @@ function addRaiseAction(actions, seat, game) {
 }
 
 /**
+ * Gets the rebuy decision if any matching entry is unresolved.
+ * @param {Game} game
+ * @param {number} [seatIndex] - Omit to check all seats
+ * @returns {Game['pendingRebuyDecision']}
+ */
+function getUnresolvedRebuyDecision(game, seatIndex) {
+  const decision = game.pendingRebuyDecision;
+  return decision?.entries.some(
+    (entry) =>
+      entry.resolution === undefined &&
+      (seatIndex === undefined || entry.seatIndex === seatIndex),
+  )
+    ? decision
+    : undefined;
+}
+
+/**
  * Checks if call clock action is available
  * @param {Game} game
  * @param {number} playerSeatIndex
  * @returns {boolean}
  */
 function canCallClock(game, playerSeatIndex) {
-  const rebuyDecision = game.pendingRebuyDecision;
-  if (rebuyDecision?.entries.some((entry) => entry.resolution === undefined)) {
+  const rebuyDecision = getUnresolvedRebuyDecision(game);
+  if (rebuyDecision) {
     const ownDecision = rebuyDecision.entries.find(
       (entry) => entry.seatIndex === playerSeatIndex,
     );
@@ -674,10 +669,6 @@ function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
   return [];
 }
 
-function addFoldedActions(game, seat, actions) {
-  return actions.concat(getShowCardsActions(seat, game));
-}
-
 function getNotActingActions(game, seat, actions) {
   if (seat.sittingOut) {
     const cost = seat.missedBigBlind
@@ -685,7 +676,7 @@ function getNotActingActions(game, seat, actions) {
       : 0;
     actions.push({ action: "sitIn", cost });
   }
-  return addFoldedActions(game, seat, actions);
+  return actions.concat(getShowCardsActions(seat, game));
 }
 
 /**
@@ -766,10 +757,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     game,
   );
   const isOwnSeat = index === playerSeatIndex;
-  const isRebuyDecisionPending =
-    game.pendingRebuyDecision?.entries.some(
-      (entry) => entry.seatIndex === index && entry.resolution === undefined,
-    ) ?? false;
+  const isRebuyDecisionPending = !!getUnresolvedRebuyDecision(game, index);
 
   // Calculate hand rank only for visible cards of non-folded players
   const handRank =
@@ -840,11 +828,7 @@ function createTournamentView(game) {
  */
 export default function playerView(game, player) {
   const playerSeatIndex = findPlayerSeat(game, player.id);
-  const decisionClock = game.pendingRebuyDecision?.entries.some(
-    (entry) => entry.resolution === undefined,
-  )
-    ? game.pendingRebuyDecision.clock
-    : undefined;
+  const decisionClock = getUnresolvedRebuyDecision(game)?.clock;
   const actionClock = decisionClock ?? game.actionClock;
 
   const tournament = createTournamentView(game);

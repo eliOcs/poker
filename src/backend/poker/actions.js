@@ -157,16 +157,24 @@ export function buyIn(game, { seat, amount }) {
 // --- Betting Actions ---
 
 /**
+ * @param {Game} game
+ * @param {number} seat
+ * @returns {OccupiedSeat}
+ */
+function getActingSeat(game, seat) {
+  if (seat !== game.hand.actingSeat) {
+    throw new Error("not your turn");
+  }
+  return /** @type {OccupiedSeat} */ (game.seats[seat]);
+}
+
+/**
  * Player checks (passes without betting)
  * @param {Game} game
  * @param {{ seat: number }} options
  */
 export function check(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
   if (seatObj.bet !== game.hand.currentBet) {
     throw new Error("cannot check - there is a bet to call");
   }
@@ -181,11 +189,7 @@ export function check(game, { seat }) {
  * @param {{ seat: number, amount: Cents }} options
  */
 export function bet(game, { seat, amount }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
   if (game.hand.currentBet !== 0) {
     throw new Error("cannot bet - there is already a bet");
   }
@@ -219,11 +223,7 @@ export function bet(game, { seat, amount }) {
  * @param {{ seat: number }} options
  */
 export function call(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
 
   const toCall = Betting.getCallAmount(game, seat);
 
@@ -250,11 +250,7 @@ export function call(game, { seat }) {
  * @param {{ seat: number, amount: Cents }} options
  */
 export function raise(game, { seat, amount }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
 
   const minRaise = Betting.getMinRaise(game);
   if (amount < minRaise) {
@@ -291,11 +287,7 @@ export function raise(game, { seat, amount }) {
  * @param {{ seat: number }} options
  */
 export function fold(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
 
   seatObj.folded = true;
   seatObj.lastAction = "fold";
@@ -454,11 +446,7 @@ export function showBothCards(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function allIn(game, { seat }) {
-  const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
-
-  if (seat !== game.hand.actingSeat) {
-    throw new Error("not your turn");
-  }
+  const seatObj = getActingSeat(game, seat);
 
   const allInAmount = seatObj.stack;
   const newBet = seatObj.bet + allInAmount;
@@ -489,6 +477,19 @@ export function allIn(game, { seat }) {
 // --- Hand Flow ---
 
 /**
+ * @param {Game} game
+ * @param {import('./game.js').Phase} phase
+ */
+function resetHandState(game, phase) {
+  game.hand.phase = phase;
+  game.hand.collectedPot = 0;
+  game.hand.currentBet = 0;
+  game.hand.lastRaiser = -1;
+  game.hand.actingSeat = -1;
+  game.hand.lastRaiseSize = 0;
+}
+
+/**
  * Starts a new hand
  * @param {Game} game
  */
@@ -507,12 +508,7 @@ export function startHand(game) {
   game.board.cards = [];
 
   // Reset hand state
-  game.hand.phase = "preflop";
-  game.hand.collectedPot = 0;
-  game.hand.currentBet = 0;
-  game.hand.lastRaiser = -1;
-  game.hand.actingSeat = -1;
-  game.hand.lastRaiseSize = 0;
+  resetHandState(game, "preflop");
 
   // Reset each occupied seat for new hand
   for (const seat of game.seats) {
@@ -527,12 +523,7 @@ export function startHand(game) {
  * @param {Game} game
  */
 export function endHand(game) {
-  game.hand.phase = "waiting";
-  game.hand.collectedPot = 0;
-  game.hand.currentBet = 0;
-  game.hand.lastRaiser = -1;
-  game.hand.actingSeat = -1;
-  game.hand.lastRaiseSize = 0;
+  resetHandState(game, "waiting");
   delete game.runout;
 
   // Increment handsPlayed for all players who were dealt in (not sitting out)

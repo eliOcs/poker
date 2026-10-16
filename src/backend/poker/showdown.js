@@ -1,6 +1,7 @@
 import HandRankings from "./hand-rankings.js";
 import * as Pots from "./pots.js";
 import * as Seat from "./seat.js";
+import * as Betting from "./betting.js";
 import { MUCK_TIMEOUT_TICKS } from "./game-constants.js";
 
 /**
@@ -166,20 +167,6 @@ export function runShowdown(game) {
 }
 
 /**
- * Collects remaining bets into pot
- * @param {Game} game
- */
-function collectRemainingBets(game) {
-  for (const seat of game.seats) {
-    if (!seat.empty) {
-      game.hand.collectedPot += seat.bet;
-      seat.totalInvested += seat.bet;
-      seat.bet = 0;
-    }
-  }
-}
-
-/**
  * Processes pot results and builds winnings/cards maps
  * @param {PotResult[]} results
  * @param {Map<number, import('./deck.js').Card[]>} handsBySeat
@@ -242,7 +229,7 @@ function setFinalHandResults(game, winnings, winningCardsMap) {
  */
 export function* showdown(game) {
   game.hand.phase = "showdown";
-  collectRemainingBets(game);
+  Betting.collectBets(game);
 
   // Mark cards as revealed for all active players
   for (const seat of game.seats) {
