@@ -1,3 +1,4 @@
+import { calculateNetResult } from "./poker/hand-history/contributions.js";
 import * as Store from "./store.js";
 import * as Ranking from "./poker/ranking.js";
 import { recoverGameFromHistory } from "./poker/recovery.js";
@@ -7,15 +8,6 @@ import {
   toCents,
 } from "./poker/hand-history/io.js";
 import { getUserAvatarRevision } from "./avatar.js";
-
-const contributionActions = new Set([
-  "Post SB",
-  "Post BB",
-  "Post Ante",
-  "Bet",
-  "Raise",
-  "Call",
-]);
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -228,27 +220,6 @@ function findFirstSeenAt(hands) {
 }
 
 /**
- * @param {OHHHand} hand
- * @param {string} playerId
- * @returns {Cents}
- */
-function calculateNetResult(hand, playerId) {
-  const contributions =
-    buildContributionsByPlayer(hand.rounds).get(playerId) ?? 0;
-  let winnings = 0;
-
-  for (const pot of hand.pots) {
-    for (const win of pot.player_wins) {
-      if (win.player_id === playerId) {
-        winnings += toCents(win.win_amount);
-      }
-    }
-  }
-
-  return winnings - contributions;
-}
-
-/**
  * @param {string} tournamentId
  * @param {string} playerId
  * @param {string} [fallbackTableId]
@@ -427,38 +398,4 @@ function resolveGameType(hands) {
     return "sitngo";
   }
   return "cash";
-}
-
-/**
- * @param {OHHHand["rounds"]} rounds
- * @returns {Map<string, Cents>}
- */
-function buildContributionsByPlayer(rounds) {
-  /** @type {Map<string, Cents>} */
-  const contributions = new Map();
-
-  for (const round of rounds) {
-    /** @type {Map<string, Cents>} */
-    const roundTotals = new Map();
-
-    for (const action of round.actions) {
-      if (
-        !contributionActions.has(action.action) ||
-        action.amount === undefined
-      ) {
-        continue;
-      }
-
-      const actionAmount = toCents(action.amount);
-      const previousTotal = roundTotals.get(action.player_id) ?? 0;
-      const delta = Math.max(0, actionAmount - previousTotal);
-      roundTotals.set(action.player_id, Math.max(previousTotal, actionAmount));
-      contributions.set(
-        action.player_id,
-        (contributions.get(action.player_id) ?? 0) + delta,
-      );
-    }
-  }
-
-  return contributions;
 }

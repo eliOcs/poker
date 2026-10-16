@@ -1,3 +1,8 @@
+import {
+  incrementalContributionActions,
+  cumulativeContributionActions,
+} from "./contributions.js";
+
 /**
  * @typedef {import('./view.js').FilteredHand} FilteredHand
  * @typedef {import('./view.js').HistoryView} HistoryView
@@ -8,12 +13,6 @@
  * @typedef {"Preflop" | "Flop" | "Turn" | "River" | "Showdown"} ReplayStreet
  */
 
-const incrementalContributionActions = new Set([
-  "Post SB",
-  "Post BB",
-  "Post Ante",
-]);
-const cumulativeContributionActions = new Set(["Bet", "Raise", "Call"]);
 const nonContributionActions = new Set([
   "Check",
   "Fold",

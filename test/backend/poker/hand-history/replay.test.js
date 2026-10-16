@@ -329,7 +329,7 @@ describe("hand-history replay", () => {
 
     assert.throws(
       () => createReplay(hand),
-      /Replay contribution action Bet is missing an amount for player: player1/,
+      /[Cc]ontribution action Bet is missing an amount for player: player1/,
     );
   });
 

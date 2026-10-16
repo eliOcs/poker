@@ -1,3 +1,7 @@
+import {
+  buildContributionsByPlayer,
+  calculateNetResult,
+} from "./contributions.js";
 import { toCents } from "./io.js";
 import HandRankings from "../hand-rankings.js";
 
@@ -248,82 +252,6 @@ function getBoardCards(hand) {
     }
   }
   return boardCards;
-}
-
-const incrementalContributionActions = new Set([
-  "Post SB",
-  "Post BB",
-  "Post Ante",
-]);
-const cumulativeContributionActions = new Set(["Bet", "Raise", "Call"]);
-
-/**
- * Builds contributions from incremental forced bets and cumulative betting
- * actions. OHH Bet/Raise/Call amounts store the player's total committed for
- * the round, while posted blinds and antes are individual increments.
- * @param {HandRound[]} rounds
- * @param {(amount: number) => Cents} normalizeAmount
- * @returns {Map<string, Cents>}
- */
-function buildContributionsByPlayer(rounds, normalizeAmount) {
-  /** @type {Map<string, Cents>} */
-  const contributions = new Map();
-
-  for (const round of rounds) {
-    /** @type {Map<string, Cents>} */
-    const roundTotals = new Map();
-
-    for (const action of round.actions) {
-      if (action.amount === undefined) {
-        continue;
-      }
-
-      const actionAmount = normalizeAmount(action.amount);
-      const previousTotal = roundTotals.get(action.player_id) ?? 0;
-      let delta;
-      if (incrementalContributionActions.has(action.action)) {
-        delta = actionAmount;
-        roundTotals.set(action.player_id, previousTotal + actionAmount);
-      } else if (cumulativeContributionActions.has(action.action)) {
-        delta = Math.max(0, actionAmount - previousTotal);
-        roundTotals.set(
-          action.player_id,
-          Math.max(previousTotal, actionAmount),
-        );
-      } else {
-        continue;
-      }
-
-      const current = contributions.get(action.player_id) ?? 0;
-      contributions.set(action.player_id, current + delta);
-    }
-  }
-
-  return contributions;
-}
-
-/**
- * Calculates a player's net result (winnings - contributions)
- * @param {OHHHand} hand
- * @param {string} playerId
- * @returns {Cents}
- */
-function calculateNetResult(hand, playerId) {
-  const contributions =
-    buildContributionsByPlayer(hand.rounds, (amount) => toCents(amount)).get(
-      playerId,
-    ) ?? 0;
-
-  let winnings = 0;
-  for (const pot of hand.pots) {
-    for (const win of pot.player_wins) {
-      if (win.player_id === playerId) {
-        winnings += toCents(win.win_amount);
-      }
-    }
-  }
-
-  return winnings - contributions;
 }
 
 /**

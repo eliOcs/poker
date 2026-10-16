@@ -127,6 +127,46 @@ describe("player-profile", function () {
     assert.match(profile.lastSeenAt, /^\d{4}-\d{2}-\d{2} /);
   });
 
+  it("counts both an ante and a big blind in cash net winnings", async function () {
+    const hand = createHand(
+      "ante123",
+      1,
+      0.85,
+      [
+        {
+          action_number: 1,
+          player_id: "player1",
+          action: "Post Ante",
+          amount: 0.1,
+        },
+        {
+          action_number: 2,
+          player_id: "player2",
+          action: "Post SB",
+          amount: 0.25,
+        },
+        {
+          action_number: 3,
+          player_id: "player1",
+          action: "Post BB",
+          amount: 0.5,
+        },
+        { action_number: 4, player_id: "player2", action: "Fold" },
+      ],
+      [{ player_id: "player1", win_amount: 0.85, contributed_rake: 0 }],
+    );
+    hand.ante_amount = 0.1;
+    await writeHandToFile("ante123", hand);
+    recordHandPlayers(hand, "ante123");
+
+    const profile = await getPlayerProfile(new Map(), "player1");
+
+    assert.ok(profile);
+    // $0.85 won - $0.10 ante - $0.50 big blind = $0.25 net.
+    assert.strictEqual(profile.totalNetWinnings, 25);
+    assert.strictEqual(profile.recentGames[0].netWinnings, 25);
+  });
+
   it("returns undefined when player does not exist", async function () {
     const profile = await getPlayerProfile(new Map(), "missing");
     assert.strictEqual(profile, undefined);

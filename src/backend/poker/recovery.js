@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import * as Game from "./game.js";
 import * as Seat from "./seat.js";
+import { buildContributionsByPlayer } from "./hand-history/contributions.js";
 import {
   getDataDir,
   readTournamentSummary,
@@ -47,9 +48,6 @@ import * as logger from "../logger.js";
  * @property {Map<string, number>} handsPlayedByPlayer
  */
 
-const INCREMENTAL_ACTIONS = new Set(["Post SB", "Post BB", "Post Ante"]);
-const CUMULATIVE_ACTIONS = new Set(["Bet", "Raise", "Call"]);
-
 /**
  * @param {string} gameNumber
  * @returns {number}
@@ -87,59 +85,6 @@ function createStartingStacks(players = []) {
     stacks.set(player.id, cents(player.starting_stack));
   }
   return stacks;
-}
-
-/**
- * @param {Record<string, unknown>} action
- * @param {Map<string, number>} streetCommitted
- * @param {Map<string, number>} contributions
- */
-function applyActionContribution(action, streetCommitted, contributions) {
-  const playerId = /** @type {string|undefined} */ (action.player_id);
-  const amount = /** @type {number|undefined} */ (action.amount);
-  const actionName = /** @type {string|undefined} */ (action.action);
-
-  if (!playerId || typeof amount !== "number" || !actionName) {
-    return;
-  }
-
-  const amountInCents = cents(amount);
-  const previousCommit = streetCommitted.get(playerId) ?? 0;
-
-  if (INCREMENTAL_ACTIONS.has(actionName)) {
-    addToMapValue(contributions, playerId, amountInCents);
-    streetCommitted.set(playerId, previousCommit + amountInCents);
-    return;
-  }
-
-  if (!CUMULATIVE_ACTIONS.has(actionName)) {
-    return;
-  }
-
-  const delta = Math.max(0, amountInCents - previousCommit);
-  if (delta > 0) {
-    addToMapValue(contributions, playerId, delta);
-  }
-  streetCommitted.set(playerId, Math.max(previousCommit, amountInCents));
-}
-
-/**
- * @param {Array<{ actions?: Record<string, unknown>[] }>} rounds
- * @returns {Map<string, number>}
- */
-function collectContributions(rounds = []) {
-  /** @type {Map<string, number>} */
-  const contributions = new Map();
-
-  for (const round of rounds) {
-    /** @type {Map<string, number>} */
-    const streetCommitted = new Map();
-    for (const action of round.actions ?? []) {
-      applyActionContribution(action, streetCommitted, contributions);
-    }
-  }
-
-  return contributions;
 }
 
 /**
@@ -187,7 +132,7 @@ function buildEndingStacks(startingStacks, contributions, winnings) {
  */
 function calculateEndingStacksForHand(hand) {
   const startingStacks = createStartingStacks(hand.players);
-  const contributions = collectContributions(hand.rounds);
+  const contributions = buildContributionsByPlayer(hand.rounds, cents);
   const winnings = collectWinnings(hand.pots);
   return buildEndingStacks(startingStacks, contributions, winnings);
 }
