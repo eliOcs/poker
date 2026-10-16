@@ -110,7 +110,10 @@ async function signUpLateTournamentRegistrant(
     throw new Error(`${player.name} has no tournament view after registering`);
   }
   expect(snapshot.entrantCount).toBe(expectedEntrantCount);
-  expect(snapshot.prizePool).toBe(expectedPrizePool);
+  // Other players may rebuy between the pre-registration snapshot and this
+  // one, so the pool can only exceed the expectation by whole buy-ins.
+  expect(snapshot.prizePool).toBeGreaterThanOrEqual(expectedPrizePool);
+  expect((snapshot.prizePool - expectedPrizePool) % snapshot.buyIn).toBe(0);
   await expect(
     player.page.getByRole("button", { name: "Unregister", exact: true }),
   ).toHaveCount(0);
