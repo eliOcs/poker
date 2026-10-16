@@ -31,14 +31,27 @@ const userCreationRateLimiter = createRateLimiter({
  */
 function throwIfUserCreateRateLimited(req, log) {
   const clientIp = getClientIp(req);
+  throwIfHttpRateLimited(
+    () =>
+      userCreationRateLimiter.check(`ip:${clientIp}`, {
+        source: "user-create",
+      }),
+    log,
+    "userCreateRateLimit",
+  );
+}
+
+/**
+ * @param {() => import('./rate-limit.js').RateLimitResult} check
+ * @param {import('./logger.js').Log} log
+ * @param {'rateLimit'|'userCreateRateLimit'} contextKey
+ */
+export function throwIfHttpRateLimited(check, log, contextKey) {
   try {
-    const creationRateLimit = userCreationRateLimiter.check(`ip:${clientIp}`, {
-      source: "user-create",
-    });
-    log.context.userCreateRateLimit = creationRateLimit.context;
+    log.context[contextKey] = check().context;
   } catch (err) {
     if (err instanceof RateLimitError) {
-      log.context.userCreateRateLimit = err.rateLimit;
+      log.context[contextKey] = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
       body: { error: "Too many requests", status: 429 },

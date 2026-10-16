@@ -105,35 +105,50 @@ export function createRoutes(users, games, broadcast, services = {}) {
 }
 
 /**
+ * @param {Route["path"]} routePath
+ * @param {string} url
+ * @returns {{ matched: boolean, match?: RegExpMatchArray }}
+ */
+function matchRoutePath(routePath, url) {
+  if (typeof routePath === "string") {
+    return { matched: routePath === url };
+  }
+
+  const match = url.match(routePath);
+  return match ? { matched: true, match } : { matched: false };
+}
+
+/**
  * @param {Request} req
  * @param {Response} res
  * @param {Route[]} routes
+ * @param {Omit<RouteContext, 'req'|'res'|'match'>} [context]
  */
-export async function handleRequest(req, res, routes) {
+export async function handleRequest(
+  req,
+  res,
+  routes,
+  context = {
+    users: {},
+    games: new Map(),
+    broadcast: () => {},
+    log: createLog("http_request"),
+  },
+) {
   const pathname = new URL(req.url ?? "", "http://localhost").pathname;
   const method = req.method ?? "GET";
 
   for (const route of routes) {
     if (route.method !== method) continue;
 
-    /** @type {RegExpMatchArray|undefined} */
-    let match;
-    if (typeof route.path === "string") {
-      if (route.path !== pathname) continue;
-    } else {
-      const routeMatch = pathname.match(route.path);
-      if (!routeMatch) continue;
-      match = routeMatch;
-    }
+    const routeMatch = matchRoutePath(route.path, pathname);
+    if (!routeMatch.matched) continue;
 
     await route.handler({
+      ...context,
       req,
       res,
-      match,
-      users: {},
-      games: new Map(),
-      broadcast: () => {},
-      log: createLog("http_request"),
+      match: routeMatch.match,
     });
     return;
   }

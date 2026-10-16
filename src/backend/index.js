@@ -8,17 +8,13 @@ import {
 import * as logger from "./logger.js";
 import { createLog, emitLog } from "./logger.js";
 import * as Store from "./store.js";
-import { parseCookies, createRoutes } from "./http-routes.js";
-import {
-  createRateLimiter,
-  getClientIp,
-  RateLimitError,
-} from "./rate-limit.js";
+import { parseCookies, createRoutes, handleRequest } from "./http-routes.js";
+import { throwIfHttpRateLimited } from "./http-route-utils.js";
+import { createRateLimiter, getClientIp } from "./rate-limit.js";
 import { HttpError } from "./http-error.js";
 import { createGameBroadcaster } from "./game-broadcast.js";
 import { createWebSocketServer } from "./ws-server.js";
 import * as HandHistory from "./poker/hand-history/index.js";
-import { getFilePath, respondWithFile } from "./static-files.js";
 import { createMttManager } from "./mtt.js";
 import {
   cleanupOrphanGuestUsers,
@@ -196,79 +192,22 @@ async function resolveGameForUpgrade(user, gameId) {
 
 /**
  * @param {import('http').IncomingMessage} req
- * @param {import('./logger.js').Log} log
- */
-function throwIfRateLimitedHttpRequest(req, log) {
-  const key = getRequestRateLimitKey(req);
-  try {
-    const rateLimit = actionRateLimiter.check(key, { source: "http" });
-    log.context.rateLimit = rateLimit.context;
-  } catch (err) {
-    if (err instanceof RateLimitError) {
-      log.context.rateLimit = err.rateLimit;
-    }
-    throw new HttpError(429, "Too many requests", {
-      body: { error: "Too many requests", status: 429 },
-      headers: {
-        "retry-after": String(
-          err instanceof RateLimitError ? err.retryAfterSeconds : 1,
-        ),
-      },
-    });
-  }
-}
-
-/**
- * @param {import('./http-routes.js').Route["path"]} routePath
- * @param {string} url
- * @returns {{ matched: boolean, match?: RegExpMatchArray }}
- */
-function matchRoutePath(routePath, url) {
-  if (typeof routePath === "string") {
-    return { matched: routePath === url };
-  }
-
-  const match = url.match(routePath);
-  return match ? { matched: true, match } : { matched: false };
-}
-
-/**
- * @param {import('http').IncomingMessage} req
  * @param {import('http').ServerResponse} res
  * @param {import('./logger.js').Log} log
  */
-async function handleRequest(req, res, log) {
-  throwIfRateLimitedHttpRequest(req, log);
-
-  const pathname = new URL(req.url ?? "", "http://localhost").pathname;
-  const method = req.method ?? "GET";
-
-  for (const route of routes) {
-    if (route.method !== method) continue;
-
-    const routeMatch = matchRoutePath(route.path, pathname);
-    if (!routeMatch.matched) continue;
-
-    await route.handler({
-      req,
-      res,
-      match: routeMatch.match,
-      users,
-      games,
-      broadcast: broadcastGameStateMessage,
-      log,
-    });
-    return;
-  }
-
-  const filePath = getFilePath(pathname);
-  if (method === "GET" && filePath) {
-    respondWithFile(req, res, filePath);
-    return;
-  }
-
-  res.writeHead(404);
-  res.end();
+async function handleServerRequest(req, res, log) {
+  const key = getRequestRateLimitKey(req);
+  throwIfHttpRateLimited(
+    () => actionRateLimiter.check(key, { source: "http" }),
+    log,
+    "rateLimit",
+  );
+  await handleRequest(req, res, routes, {
+    users,
+    games,
+    broadcast: broadcastGameStateMessage,
+    log,
+  });
 }
 
 /**
@@ -306,7 +245,7 @@ server.on("request", (req, res) => {
   const log = createLog("http_request");
   log.context.request = { method, path: url };
 
-  handleRequest(req, res, log)
+  handleServerRequest(req, res, log)
     .catch((err) => {
       handleRequestError(res, log, err);
     })
