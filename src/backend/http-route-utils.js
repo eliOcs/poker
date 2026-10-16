@@ -42,13 +42,13 @@ function throwIfUserCreateRateLimited(req, log) {
 }
 
 /**
- * @param {() => import('./rate-limit.js').RateLimitResult} check
+ * @param {() => import('./rate-limit.js').RateLimitContext} check
  * @param {import('./logger.js').Log} log
  * @param {'rateLimit'|'userCreateRateLimit'} contextKey
  */
 export function throwIfHttpRateLimited(check, log, contextKey) {
   try {
-    log.context[contextKey] = check().context;
+    log.context[contextKey] = check();
   } catch (err) {
     if (err instanceof RateLimitError) {
       log.context[contextKey] = err.rateLimit;

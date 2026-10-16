@@ -43,11 +43,11 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      limiter.check("127.0.0.1", 0);
-      limiter.check("127.0.0.1", 100);
-      limiter.check("127.0.0.1", 200);
+      limiter.check("127.0.0.1", { now: 0 });
+      limiter.check("127.0.0.1", { now: 100 });
+      limiter.check("127.0.0.1", { now: 200 });
 
-      assert.throws(() => limiter.check("127.0.0.1", 300), {
+      assert.throws(() => limiter.check("127.0.0.1", { now: 300 }), {
         retryAfterSeconds: 1,
       });
     });
@@ -60,13 +60,13 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      limiter.check("127.0.0.1", 0);
-      limiter.check("127.0.0.1", 100);
-      assert.throws(() => limiter.check("127.0.0.1", 200), {
+      limiter.check("127.0.0.1", { now: 0 });
+      limiter.check("127.0.0.1", { now: 100 });
+      assert.throws(() => limiter.check("127.0.0.1", { now: 200 }), {
         message: "Too many requests",
       });
 
-      limiter.check("127.0.0.1", 1_101);
+      limiter.check("127.0.0.1", { now: 1_101 });
     });
 
     it("cleans up stale IP entries over time", () => {
@@ -77,11 +77,11 @@ describe("rate-limit", () => {
         ...silentLogger(),
       });
 
-      limiter.check("10.0.0.1", 0);
-      limiter.check("10.0.0.2", 0);
+      limiter.check("10.0.0.1", { now: 0 });
+      limiter.check("10.0.0.2", { now: 0 });
       assert.strictEqual(limiter.getEntryCount(), 2);
 
-      limiter.check("10.0.0.3", 500);
+      limiter.check("10.0.0.3", { now: 500 });
       assert.strictEqual(limiter.getEntryCount(), 1);
     });
 

@@ -340,10 +340,9 @@ export function createMessageHandler({
     }
 
     try {
-      const rateLimit = actionRateLimiter.check(playerRateLimitKey, {
+      log.context.rateLimit = actionRateLimiter.check(playerRateLimitKey, {
         source: "ws-action",
       });
-      log.context.rateLimit = rateLimit.context;
 
       const parsed = parseActionMessage(rawMessage);
       ({ actionId } = parsed);

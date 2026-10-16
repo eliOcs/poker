@@ -33,7 +33,7 @@ function createHandlerContext({
     actionRateLimiter: actionRateLimiter ?? {
       check(key, options) {
         rateLimitChecks.push({ key, options });
-        return { context: {} };
+        return {};
       },
     },
     broadcastGameMessage(message) {
@@ -85,7 +85,7 @@ describe("ws-message-handler", () => {
       playerRateLimitKey: "player:player-1",
       actionRateLimiter: {
         check() {
-          return { context: {} };
+          return {};
         },
       },
       broadcastGameMessage: () => ({ recipients: 0, maxPayloadBytes: 0 }),
@@ -231,7 +231,7 @@ describe("ws-message-handler", () => {
       actionRateLimiter: {
         check(key, options) {
           calls.push({ type: "rateLimit", key, options });
-          return { context: { remaining: 4 } };
+          return { remaining: 4 };
         },
       },
       handleManagedTableAction(player, game, action, args) {

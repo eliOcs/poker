@@ -54,7 +54,7 @@ function dispatchManagedAction(ctx, game, player, action) {
     gameId: game.id,
     player,
     playerRateLimitKey: `player:${player.id}`,
-    actionRateLimiter: { check: () => ({ context: {} }) },
+    actionRateLimiter: { check: () => ({}) },
     broadcastGameMessage: () => ({ recipients: 0, maxPayloadBytes: 0 }),
     broadcastGameStateMessage: () => {},
     handleManagedTableAction: ctx.manager.handleTableAction,
