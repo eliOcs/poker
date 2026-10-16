@@ -40,6 +40,7 @@ describe("Hand Rankings", function () {
         name: "flush",
         suit: "d",
         high: "Q",
+        ranks: ["Q", "T", "7", "4", "2"],
       });
     });
 
@@ -95,7 +96,12 @@ describe("Hand Rankings", function () {
           { name: "3 of a kind", of: "2", kickers: ["A", "5"] },
           { name: "2 pair", of: "J", and: "4", kicker: "9" },
           { name: "straight flush", suit: "h", from: "3", to: "7" },
-          { name: "flush", suit: "d", high: "Q" },
+          {
+            name: "flush",
+            suit: "d",
+            high: "Q",
+            ranks: ["Q", "T", "7", "4", "2"],
+          },
           { name: "4 of a kind", of: "K", kicker: "3" },
         ].sort(handRankings.compare),
         [
@@ -103,7 +109,12 @@ describe("Hand Rankings", function () {
           { name: "straight flush", suit: "h", from: "3", to: "7" },
           { name: "4 of a kind", of: "K", kicker: "3" },
           { name: "full house", of: "T", and: "3" },
-          { name: "flush", suit: "d", high: "Q" },
+          {
+            name: "flush",
+            suit: "d",
+            high: "Q",
+            ranks: ["Q", "T", "7", "4", "2"],
+          },
           { name: "3 of a kind", of: "2", kickers: ["A", "5"] },
           { name: "2 pair", of: "J", and: "4", kicker: "9" },
           { name: "pair", of: "4", kickers: ["J", "9", "3"] },
@@ -179,11 +190,53 @@ describe("Hand Rankings", function () {
       it("highest wins", function () {
         assert(
           handRankings.compare(
-            { name: "flush", suit: "d", high: "J" },
-            { name: "flush", suit: "d", high: "Q" },
+            {
+              name: "flush",
+              suit: "d",
+              high: "J",
+              ranks: ["J", "T", "7", "4", "2"],
+            },
+            {
+              name: "flush",
+              suit: "d",
+              high: "Q",
+              ranks: ["Q", "T", "7", "4", "2"],
+            },
           ) > 0,
         );
       });
+    });
+
+    it("flushes with the same top card compare the second card", function () {
+      const king = handRankings.calculate(["Ah", "Kh", "9h", "6h", "2h"]);
+      const queen = handRankings.calculate(["Ad", "Qd", "9d", "6d", "2d"]);
+      assert(handRankings.compare(king, queen) < 0);
+      assert(handRankings.compare(queen, king) > 0);
+    });
+
+    it("flushes with identical ranks tie regardless of suit", function () {
+      assert.equal(
+        handRankings.compare(
+          handRankings.calculate(["Ah", "Kh", "9h", "6h", "2h"]),
+          handRankings.calculate(["Ad", "Kd", "9d", "6d", "2d"]),
+        ),
+        0,
+      );
+    });
+
+    it("wheel straights rank below six-high straights", function () {
+      assert(
+        handRankings.compare(
+          handRankings.calculate(["Ah", "2d", "3h", "4h", "5h"]),
+          handRankings.calculate(["2h", "3d", "4h", "5h", "6h"]),
+        ) > 0,
+      );
+      assert(
+        handRankings.compare(
+          handRankings.calculate(["Ah", "2h", "3h", "4h", "5h"]),
+          handRankings.calculate(["2h", "3h", "4h", "5h", "6h"]),
+        ) > 0,
+      );
     });
 
     describe("3 of a kind", function () {
@@ -284,6 +337,28 @@ describe("Hand Rankings", function () {
   });
 
   describe("bestCombination", function () {
+    it("picks the best five of six suited cards", function () {
+      const result = handRankings.bestCombination([
+        "Ah",
+        "9h",
+        "6h",
+        "2h",
+        "3d",
+        "Kh",
+        "Qh",
+      ]);
+      assert.deepEqual(result.hand, {
+        name: "flush",
+        suit: "h",
+        high: "A",
+        ranks: ["A", "K", "Q", "9", "6"],
+      });
+      assert.deepEqual(
+        new Set(result.cards),
+        new Set(["Ah", "Kh", "Qh", "9h", "6h"]),
+      );
+    });
+
     it("should return the best hand of all the possible combinations", function () {
       const result = handRankings.bestCombination([
         "Qc",

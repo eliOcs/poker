@@ -40,6 +40,7 @@ import { getRank, getSuit } from "./deck.js";
  * @property {'flush'} name
  * @property {Suit} suit
  * @property {Rank} high
+ * @property {Rank[]} ranks - All five ranks, highest first
  */
 
 /**
@@ -155,17 +156,14 @@ function getStraight(cards) {
  */
 function getFlush(cards) {
   const suit = getSuit(/** @type {Card} */ (cards[0]));
-  let high = getRank(/** @type {Card} */ (cards[0]));
   for (let i = 1; i < cards.length; i += 1) {
     const card = /** @type {Card} */ (cards[i]);
     if (getSuit(card) !== suit) {
       return false;
     }
-    if (getRankValue(getRank(card)) > getRankValue(high)) {
-      high = getRank(card);
-    }
   }
-  return { name: "flush", suit, high };
+  const ranks = sortByRank(cards).map((card) => getRank(card));
+  return { name: "flush", suit, high: /** @type {Rank} */ (ranks[0]), ranks };
 }
 
 /**
@@ -305,6 +303,38 @@ function calculate(cards) {
   return getHighCard(cards);
 }
 
+/** @type {{ [Name in HandName]: (hand: Extract<EvaluatedHand, { name: Name }>) => Rank[] }} */
+const tiebreakRanks = {
+  "royal flush": () => [],
+  "straight flush": (h) => [h.to],
+  "4 of a kind": (h) => [h.of, h.kicker],
+  "full house": (h) => [h.of, h.and],
+  flush: (h) => h.ranks,
+  straight: (h) => [h.to],
+  "3 of a kind": (h) => [h.of, ...h.kickers],
+  "2 pair": (h) => [h.of, h.and, h.kicker],
+  pair: (h) => [h.of, ...h.kickers],
+  "high card": (h) => h.ranks,
+};
+
+/**
+ * Compares tiebreak ranks for hands of the same category, strongest first.
+ * @param {Rank[]} a
+ * @param {Rank[]} b
+ * @returns {number}
+ */
+function compareRanks(a, b) {
+  for (let i = 0; i < a.length; i += 1) {
+    const difference =
+      getRankValue(/** @type {Rank} */ (b[i])) -
+      getRankValue(/** @type {Rank} */ (a[i]));
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
+}
+
 const compare = {
   ranking: {
     "royal flush": 9,
@@ -319,101 +349,20 @@ const compare = {
     "high card": 0,
   },
 
+  /**
+   * @param {EvaluatedHand} a
+   * @param {EvaluatedHand} b
+   * @returns {number}
+   */
   any: function (a, b) {
-    if (a.name === b.name) {
-      return compare[a.name](a, b);
-    } else {
+    if (a.name !== b.name) {
       return compare.ranking[b.name] - compare.ranking[a.name];
     }
-  },
-
-  "royal flush": () => 0,
-
-  "straight flush": (a, b) => getRankValue(b.to) - getRankValue(a.to),
-
-  "4 of a kind": function (a, b) {
-    const quadrupletComparison = getRankValue(b.of) - getRankValue(a.of);
-    if (quadrupletComparison === 0) {
-      return getRankValue(b.kicker) - getRankValue(a.kicker);
-    } else {
-      return quadrupletComparison;
-    }
-  },
-
-  "full house": function (a, b) {
-    const tripletRankComparison = getRankValue(b.of) - getRankValue(a.of);
-    if (tripletRankComparison === 0) {
-      return getRankValue(b.and) - getRankValue(a.and);
-    } else {
-      return tripletRankComparison;
-    }
-  },
-
-  flush: (a, b) => getRankValue(b.high) - getRankValue(a.high),
-
-  straight: (a, b) => getRankValue(b.to) - getRankValue(a.to),
-
-  "3 of a kind": function (a, b) {
-    const tripletComparison = getRankValue(b.of) - getRankValue(a.of);
-    if (tripletComparison === 0) {
-      for (let i = 0; i < 2; i += 1) {
-        const kickerComparison =
-          getRankValue(b.kickers[i]) - getRankValue(a.kickers[i]);
-        if (kickerComparison === 0) {
-          continue;
-        } else {
-          return kickerComparison;
-        }
-      }
-      return 0;
-    } else {
-      return tripletComparison;
-    }
-  },
-
-  "2 pair": function (a, b) {
-    const firstPairComparison = getRankValue(b.of) - getRankValue(a.of);
-    if (firstPairComparison === 0) {
-      const secondHandComparison = getRankValue(b.and) - getRankValue(a.and);
-      if (secondHandComparison === 0) {
-        return getRankValue(b.kicker) - getRankValue(a.kicker);
-      } else {
-        return secondHandComparison;
-      }
-    } else {
-      return firstPairComparison;
-    }
-  },
-
-  pair: function (a, b) {
-    const pairComparison = getRankValue(b.of) - getRankValue(a.of);
-    if (pairComparison === 0) {
-      for (let i = 0; i < 3; i += 1) {
-        const kickerComparison =
-          getRankValue(b.kickers[i]) - getRankValue(a.kickers[i]);
-        if (kickerComparison === 0) {
-          continue;
-        } else {
-          return kickerComparison;
-        }
-      }
-      return 0;
-    } else {
-      return pairComparison;
-    }
-  },
-
-  "high card": function (a, b) {
-    for (let i = 0; i < 5; i += 1) {
-      const kickerComparison =
-        getRankValue(b.ranks[i]) - getRankValue(a.ranks[i]);
-      if (kickerComparison === 0) {
-        continue;
-      } else {
-        return kickerComparison;
-      }
-    }
-    return 0;
+    // Both hands match the selected category's rank extractor.
+    const ranks = /** @type {(hand: EvaluatedHand) => Rank[]} */ (
+      tiebreakRanks[a.name]
+    );
+    return compareRanks(ranks(a), ranks(b));
   },
 };
 
