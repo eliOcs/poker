@@ -8,6 +8,7 @@ import * as Player from "../../src/backend/poker/player.js";
 import * as Seat from "../../src/backend/poker/seat.js";
 import { getAvatarRevision } from "../../src/backend/avatar.js";
 import { createGameRoutes } from "../../src/backend/game-routes.js";
+import { createMttManager } from "../../src/backend/mtt.js";
 import { handleRequest } from "../../src/backend/http-routes.js";
 import { HttpError, handleRequestError } from "../../src/backend/http-error.js";
 import { createLog } from "../../src/backend/logger.js";
@@ -33,7 +34,7 @@ describe("avatar routes", () => {
       users,
       games,
       (gameId) => broadcasts.push(gameId),
-      {},
+      { mttManager: createMttManager({ games }) },
     );
     const server = http.createServer(async (req, res) => {
       const log = createLog("http_request");

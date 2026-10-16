@@ -1,6 +1,6 @@
 import * as HandHistory from "./poker/hand-history/index.js";
 import { HttpError } from "./http-error.js";
-import { getOrCreateUser } from "./http-route-utils.js";
+import { getOrCreateUser, routeParam } from "./http-route-utils.js";
 
 /**
  * @typedef {import('./http-route-utils.js').UserType} UserType
@@ -18,9 +18,7 @@ export function createHistoryRoutes(users) {
       method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)$/,
       handler: async ({ req, res, match, log }) => {
-        const tableId = /** @type {string} */ (
-          /** @type {RegExpMatchArray} */ (match)[1]
-        );
+        const tableId = routeParam(match);
         const user = getOrCreateUser(req, res, users, log);
 
         const hands = await HandHistory.getAllHands(tableId);
@@ -35,9 +33,8 @@ export function createHistoryRoutes(users) {
       method: "GET",
       path: /^\/api\/history\/([a-z0-9]+)\/(\d+)$/,
       handler: async ({ req, res, match, log }) => {
-        const m = /** @type {RegExpMatchArray} */ (match);
-        const tableId = /** @type {string} */ (m[1]);
-        const handNumber = parseInt(/** @type {string} */ (m[2]), 10);
+        const tableId = routeParam(match);
+        const handNumber = parseInt(routeParam(match, 2), 10);
         const user = getOrCreateUser(req, res, users, log);
 
         const hand = await HandHistory.getHand(tableId, handNumber);

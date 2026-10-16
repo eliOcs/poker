@@ -74,7 +74,9 @@ export function createRoutes(users, games, broadcast, services = {}) {
       },
     },
     spaPageRoute("/"),
-    ...createGameRoutes(users, games, broadcast, services),
+    ...createGameRoutes(users, games, broadcast, {
+      mttManager: services.mttManager,
+    }),
     ...createSignInRoutes({
       sendSignInEmail: services.sendSignInEmail,
       clientConnections: services.clientConnections,

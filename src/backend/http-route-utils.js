@@ -118,6 +118,18 @@ export function parseBody(req) {
 }
 
 /**
+ * Reads a required capture from a matched route.
+ * @param {RegExpMatchArray|undefined} match
+ * @param {number} [index]
+ * @returns {string}
+ */
+export function routeParam(match, index = 1) {
+  const value = match?.[index];
+  if (value === undefined) throw new Error("Missing route parameter");
+  return value;
+}
+
+/**
  * @param {string} rawCookies
  * @returns {Record<string, string>}
  */
