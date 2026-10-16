@@ -92,6 +92,55 @@ describe("game broadcaster", () => {
     );
   });
 
+  it("does not replay a player move to a socket that subscribes afterwards", () => {
+    const closingLobbySocket = createWs();
+    closingLobbySocket.readyState = 2;
+    const clientConnections = new Map([
+      [
+        closingLobbySocket,
+        {
+          user: { id: "p1", name: "Player 1" },
+          gameId: null,
+          tournamentId: "mtt1",
+        },
+      ],
+    ]);
+    const broadcaster = createGameBroadcaster(new Map(), clientConnections, {
+      getTournamentView: (tournamentId) => ({
+        id: tournamentId,
+        currentPlayer: { tableId: "table2" },
+      }),
+    });
+
+    // The player is reseated while switching from the lobby socket to a table
+    // socket, so no open socket receives the move.
+    broadcaster.broadcastTournamentStateMessage("mtt1", [
+      {
+        playerId: "p1",
+        tournamentId: "mtt1",
+        tableId: "table2",
+        tableName: "Table 2",
+      },
+    ]);
+    const tableSocket = createWs();
+    clientConnections.set(tableSocket, {
+      user: { id: "p1", name: "Player 1" },
+      gameId: "table1",
+      tournamentId: "mtt1",
+    });
+    broadcaster.broadcastTournamentStateMessage("mtt1");
+
+    assert.deepEqual(closingLobbySocket.sent, []);
+    assert.deepEqual(
+      tableSocket.sent.map((message) => message.type),
+      ["tournamentState"],
+    );
+    assert.equal(
+      tableSocket.sent[0].tournament.currentPlayer.tableId,
+      "table2",
+    );
+  });
+
   it("does not count clients whose send queue has exceeded the limit", () => {
     const slowSocket = createWs();
     slowSocket.bufferedAmount = 256 * 1024;

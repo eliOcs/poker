@@ -2,6 +2,7 @@ import { getTablePath, matchLiveRoute } from "../shared/routes.js";
 import { createFrontendErrorReport } from "./error-reporting.js";
 import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
+import { followMissedReseat } from "./app-mtt-routing.js";
 import { formatCurrency } from "./currency.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
@@ -147,6 +148,15 @@ function notifyTournamentLevelChange(app, game) {
   };
 }
 
+function handleTournamentState(app, tournament) {
+  const previousTableId = app._mttView?.currentPlayer?.tableId;
+  app._mttView = tournament;
+  app._mttLoading = false;
+  app._mttError = "";
+  followMissedReseat(app, previousTableId);
+  app._maybeRedirectMttRoute();
+}
+
 function handleTypedSocketMessage(app, data) {
   if (data.type === "pong") {
     resolveSocketHealthCheck(app, data.pingId);
@@ -174,10 +184,7 @@ function handleTypedSocketMessage(app, data) {
   }
 
   if (data.type === "tournamentState") {
-    app._mttView = data.tournament;
-    app._mttLoading = false;
-    app._mttError = "";
-    app._maybeRedirectMttRoute();
+    handleTournamentState(app, data.tournament);
     return true;
   }
 

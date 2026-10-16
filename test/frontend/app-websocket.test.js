@@ -6,6 +6,7 @@ import {
   resumeConnectionIfNeeded,
   sendToGame,
 } from "../../src/frontend/app-websocket.js";
+import { maybeRedirectMttRoute } from "../../src/frontend/app-mtt-routing.js";
 
 function createApp(path = "/cash/testgame") {
   return {
@@ -299,6 +300,48 @@ describe("app-websocket", () => {
       message: "Moved to Table 2",
       variant: "info",
     });
+  });
+
+  function createSeatedMttApp(path, ownTableId) {
+    const app = createApp(path);
+    app._mttTournamentId = "mtt123";
+    app._mttView = {
+      status: "running",
+      currentPlayer: { status: "seated", tableId: ownTableId },
+    };
+    app._maybeRedirectMttRoute = () => maybeRedirectMttRoute(app);
+    return app;
+  }
+
+  function simulateTournamentState(ownTableId) {
+    MockWebSocket.instances.at(-1).simulateMessage({
+      type: "tournamentState",
+      tournament: {
+        status: "running",
+        currentPlayer: { status: "seated", tableId: ownTableId },
+      },
+    });
+  }
+
+  it("follows a reseat whose move event was missed while switching sockets", () => {
+    // The player was redirected to table1, then reseated at table2 before the
+    // table1 socket subscribed, so the playerMoved event reached no socket.
+    // The new socket only receives the current tournament state.
+    const app = createSeatedMttApp("/mtt/mtt123/tables/table1", "table1");
+    connectToGame(app, app.path);
+
+    simulateTournamentState("table2");
+
+    expect(app.path).to.equal("/mtt/mtt123/tables/table2");
+  });
+
+  it("keeps a player watching another table when their own table changes", () => {
+    const app = createSeatedMttApp("/mtt/mtt123/tables/table3", "table1");
+    connectToGame(app, app.path);
+
+    simulateTournamentState("table2");
+
+    expect(app.path).to.equal("/mtt/mtt123/tables/table3");
   });
 
   for (const path of ["/sitngo/sng123", "/mtt/mtt123/tables/table1"]) {

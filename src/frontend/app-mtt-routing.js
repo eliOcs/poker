@@ -96,6 +96,30 @@ export function resolveMttRedirectPath(app, liveRoute) {
 }
 
 /**
+ * Follows a reseat whose playerMoved event was missed, e.g. while switching
+ * sockets. Only applies while viewing the player's previous own table, so
+ * players watching another table stay where they are.
+ * @param {any} app
+ * @param {string|undefined} previousTableId
+ */
+export function followMissedReseat(app, previousTableId) {
+  const { liveRoute } = parseAppPath(app.path);
+  const tableId = app._mttView.currentPlayer?.tableId;
+  if (
+    liveRoute?.kind !== "mtt_table" ||
+    liveRoute.tableId !== previousTableId ||
+    !tableId ||
+    tableId === previousTableId
+  ) {
+    return;
+  }
+
+  navigateApp(app, getTablePath("mtt", tableId, liveRoute.tournamentId), {
+    replace: true,
+  });
+}
+
+/**
  * Redirects the app to the correct MTT route if needed
  * @param {any} app
  */
