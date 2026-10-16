@@ -52,7 +52,7 @@ export function initialize(dbPath = undefined) {
 
 /** @param {SaveUserInput} user */
 export function saveUser(user) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
 
   const settingsJson = JSON.stringify(user.settings);
   const nameForDb = user.name ?? null;
@@ -74,15 +74,15 @@ export function saveUser(user) {
  * @returns {User|void}
  */
 export function loadUser(id) {
-  if (!db) throw new Error("Store not initialized");
-  if (!id) return;
+  const user = loadUserProfile(id);
+  if (!user) return;
 
-  const stmt = db.prepare(
-    "SELECT id, name, email, settings, created_at, updated_at FROM users WHERE id = ?",
-  );
-  const row = stmt.get(id);
-
-  return hydrateUserRow(row);
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    settings: user.settings,
+  };
 }
 
 /**
@@ -90,7 +90,7 @@ export function loadUser(id) {
  * @returns {User|void}
  */
 export function loadUserByEmail(email) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!email) return;
 
   const stmt = db.prepare(
@@ -106,7 +106,7 @@ export function loadUserByEmail(email) {
  * @returns {UserProfile|void}
  */
 export function loadUserProfile(id) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!id) return;
 
   const stmt = db.prepare(
@@ -131,9 +131,9 @@ export function loadUserProfile(id) {
  * @param {PlayerTableInput[]} entries
  */
 export function recordPlayerTableActivity(entries) {
-  const database = /** @type {DatabaseSync} */ (db);
-  runInTransaction(database, () => {
-    const stmt = database.prepare(`
+  const db = getDatabase();
+  runInTransaction(db, () => {
+    const stmt = db.prepare(`
       INSERT INTO player_tables (
         player_id, table_id, tournament_id, last_hand_number, last_played_at
       )
@@ -164,9 +164,9 @@ export function recordPlayerTableActivity(entries) {
  * @param {PlayerTournamentInput[]} entries
  */
 export function recordPlayerTournamentActivity(entries) {
-  const database = /** @type {DatabaseSync} */ (db);
-  runInTransaction(database, () => {
-    const stmt = database.prepare(`
+  const db = getDatabase();
+  runInTransaction(db, () => {
+    const stmt = db.prepare(`
       INSERT INTO player_tournaments (
         player_id, tournament_id, last_table_id, last_hand_number, last_played_at
       )
@@ -207,7 +207,7 @@ export function recordPlayerTournamentActivity(entries) {
  * @param {PlayerTournamentInput[]} [tournamentEntries]
  */
 export function recordHandActivity(tableEntries, tournamentEntries = []) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   runInTransaction(db, () => {
     recordPlayerTableActivity(tableEntries);
     recordPlayerTournamentActivity(tournamentEntries);
@@ -219,7 +219,7 @@ export function recordHandActivity(tableEntries, tournamentEntries = []) {
  * @returns {PlayerTableLink[]}
  */
 export function listPlayerTables(playerId) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!playerId) return [];
 
   const stmt = db.prepare(`
@@ -229,14 +229,7 @@ export function listPlayerTables(playerId) {
     ORDER BY last_played_at DESC, table_id DESC
   `);
 
-  return stmt.all(playerId).map((row) => ({
-    tableId: /** @type {Id} */ (row.table_id),
-    ...(row.tournament_id
-      ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
-      : {}),
-    lastHandNumber: /** @type {number} */ (row.last_hand_number),
-    lastPlayedAt: /** @type {string} */ (row.last_played_at),
-  }));
+  return stmt.all(playerId).map(toPlayerTableLink);
 }
 
 /**
@@ -244,7 +237,7 @@ export function listPlayerTables(playerId) {
  * @returns {PlayerTournamentLink[]}
  */
 export function listPlayerTournaments(playerId) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!playerId) return [];
 
   const stmt = db.prepare(`
@@ -254,12 +247,7 @@ export function listPlayerTournaments(playerId) {
     ORDER BY last_played_at DESC, tournament_id DESC
   `);
 
-  return stmt.all(playerId).map((row) => ({
-    tournamentId: /** @type {Id} */ (row.tournament_id),
-    lastTableId: /** @type {Id} */ (row.last_table_id),
-    lastHandNumber: /** @type {number} */ (row.last_hand_number),
-    lastPlayedAt: /** @type {string} */ (row.last_played_at),
-  }));
+  return stmt.all(playerId).map(toPlayerTournamentLink);
 }
 
 /**
@@ -268,7 +256,7 @@ export function listPlayerTournaments(playerId) {
  * @returns {PlayerTableLink[]}
  */
 export function listPlayerTablesForTournament(playerId, tournamentId) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!playerId || !tournamentId) return [];
 
   const stmt = db.prepare(`
@@ -278,14 +266,7 @@ export function listPlayerTablesForTournament(playerId, tournamentId) {
     ORDER BY last_played_at DESC, table_id DESC
   `);
 
-  return stmt.all(playerId, tournamentId).map((row) => ({
-    tableId: /** @type {Id} */ (row.table_id),
-    ...(row.tournament_id
-      ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
-      : {}),
-    lastHandNumber: /** @type {number} */ (row.last_hand_number),
-    lastPlayedAt: /** @type {string} */ (row.last_played_at),
-  }));
+  return stmt.all(playerId, tournamentId).map(toPlayerTableLink);
 }
 
 /**
@@ -293,7 +274,7 @@ export function listPlayerTablesForTournament(playerId, tournamentId) {
  * @returns {TournamentTableLink[]}
  */
 export function listTournamentTables(tournamentId) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (!tournamentId) return [];
 
   const stmt = db.prepare(`
@@ -320,30 +301,12 @@ export function listTournamentTables(tournamentId) {
  * @param {Id} toPlayerId
  */
 export function migratePlayerData(fromPlayerId, toPlayerId) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
   if (fromPlayerId === toPlayerId) {
     throw new Error("Cannot migrate player data to the same player id");
   }
 
-  const playerTableRows = /** @type {PlayerTableLink[]} */ (
-    db
-      .prepare(
-        `
-        SELECT table_id, tournament_id, last_hand_number, last_played_at
-        FROM player_tables
-        WHERE player_id = ?
-      `,
-      )
-      .all(fromPlayerId)
-      .map((row) => ({
-        tableId: /** @type {Id} */ (row.table_id),
-        ...(row.tournament_id
-          ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
-          : {}),
-        lastHandNumber: /** @type {number} */ (row.last_hand_number),
-        lastPlayedAt: /** @type {string} */ (row.last_played_at),
-      }))
-  );
+  const playerTableRows = listPlayerTables(fromPlayerId);
   recordPlayerTableActivity(
     playerTableRows.map((row) => ({
       playerId: toPlayerId,
@@ -355,23 +318,7 @@ export function migratePlayerData(fromPlayerId, toPlayerId) {
   );
   db.prepare("DELETE FROM player_tables WHERE player_id = ?").run(fromPlayerId);
 
-  const playerTournamentRows = /** @type {PlayerTournamentLink[]} */ (
-    db
-      .prepare(
-        `
-        SELECT tournament_id, last_table_id, last_hand_number, last_played_at
-        FROM player_tournaments
-        WHERE player_id = ?
-      `,
-      )
-      .all(fromPlayerId)
-      .map((row) => ({
-        tournamentId: /** @type {Id} */ (row.tournament_id),
-        lastTableId: /** @type {Id} */ (row.last_table_id),
-        lastHandNumber: /** @type {number} */ (row.last_hand_number),
-        lastPlayedAt: /** @type {string} */ (row.last_played_at),
-      }))
-  );
+  const playerTournamentRows = listPlayerTournaments(fromPlayerId);
   recordPlayerTournamentActivity(
     playerTournamentRows.map((row) => ({
       playerId: toPlayerId,
@@ -390,7 +337,7 @@ export function migratePlayerData(fromPlayerId, toPlayerId) {
  * @param {Id} id
  */
 export function deleteUser(id) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
 
   const stmt = db.prepare("DELETE FROM users WHERE id = ?");
   stmt.run(id);
@@ -402,7 +349,7 @@ export function deleteUser(id) {
  * @returns {Id[]}
  */
 export function deleteOrphanGuestUsersCreatedBefore(cutoff) {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
 
   const rows = db
     .prepare(
@@ -424,6 +371,34 @@ export function deleteOrphanGuestUsersCreatedBefore(cutoff) {
     .all(cutoff);
 
   return rows.map((row) => /** @type {Id} */ (row.id));
+}
+
+/**
+ * @param {Record<string, unknown>} row
+ * @returns {PlayerTableLink}
+ */
+function toPlayerTableLink(row) {
+  return {
+    tableId: /** @type {Id} */ (row.table_id),
+    ...(row.tournament_id
+      ? { tournamentId: /** @type {Id} */ (row.tournament_id) }
+      : {}),
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} row
+ * @returns {PlayerTournamentLink}
+ */
+function toPlayerTournamentLink(row) {
+  return {
+    tournamentId: /** @type {Id} */ (row.tournament_id),
+    lastTableId: /** @type {Id} */ (row.last_table_id),
+    lastHandNumber: /** @type {number} */ (row.last_hand_number),
+    lastPlayedAt: /** @type {string} */ (row.last_played_at),
+  };
 }
 
 /**
@@ -455,7 +430,7 @@ export function close() {
 
 /** @returns {number} */
 export function count() {
-  if (!db) throw new Error("Store not initialized");
+  const db = getDatabase();
 
   const stmt = db.prepare("SELECT COUNT(*) as count FROM users");
   const row = stmt.get();
