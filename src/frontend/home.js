@@ -1,3 +1,4 @@
+import { dispatchNavigate } from "./dispatch-navigate.js";
 import { html, LitElement } from "lit";
 import {
   PRESETS as STAKES_PRESETS,
@@ -11,7 +12,6 @@ import {
 import { getTablePath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
-  dispatchNavigate,
   getSelectedTournamentSpeed,
   postCreate,
   renderCreatePage,

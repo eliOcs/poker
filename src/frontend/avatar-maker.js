@@ -29,16 +29,31 @@ const TABS = [
   { id: "clothes", label: "Clothes", showStyles: false },
 ].map((tab) => ({ ...tab, types: getAvatarSpriteTypes(tab.id) }));
 
+const POSITION = {
+  key: "position",
+  label: "Position",
+  low: "Move up",
+  high: "Move down",
+};
+const HORIZONTAL_POSITION = {
+  key: "horizontalPosition",
+  label: "Horizontal position",
+  low: "Move left",
+  high: "Move right",
+};
+const SPACING = {
+  key: "spacing",
+  label: "Spacing",
+  low: "Move closer",
+  high: "Move apart",
+};
+const SIZE = { key: "size", label: "Size", low: "Smaller", high: "Bigger" };
+
 const ADJUSTMENTS = {
   face: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "horizontalPosition",
-      label: "Horizontal position",
-      low: "Move left",
-      high: "Move right",
-    },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
+    POSITION,
+    HORIZONTAL_POSITION,
+    SIZE,
     {
       key: "rotation",
       label: "Rotation",
@@ -47,75 +62,22 @@ const ADJUSTMENTS = {
     },
   ],
   eyes: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "spacing",
-      label: "Spacing",
-      low: "Move closer",
-      high: "Move apart",
-    },
+    POSITION,
+    SPACING,
     {
       key: "rotation",
       label: "Rotation",
       low: "Rotate outward",
       high: "Rotate inward",
     },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
+    SIZE,
   ],
-  eyebrows: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "spacing",
-      label: "Spacing",
-      low: "Move closer",
-      high: "Move apart",
-    },
-    { key: "size", label: "Size", low: "Thinner", high: "Thicker" },
-  ],
-  nose: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "horizontalPosition",
-      label: "Horizontal position",
-      low: "Move left",
-      high: "Move right",
-    },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
-  ],
-  mouth: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "horizontalPosition",
-      label: "Horizontal position",
-      low: "Move left",
-      high: "Move right",
-    },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
-  ],
-  ears: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "spacing",
-      label: "Spacing",
-      low: "Move closer",
-      high: "Move apart",
-    },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
-  ],
-  hair: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
-  ],
-  facialHair: [
-    { key: "position", label: "Position", low: "Move up", high: "Move down" },
-    {
-      key: "horizontalPosition",
-      label: "Horizontal position",
-      low: "Move left",
-      high: "Move right",
-    },
-    { key: "size", label: "Size", low: "Smaller", high: "Bigger" },
-  ],
+  eyebrows: [POSITION, SPACING, { ...SIZE, low: "Thinner", high: "Thicker" }],
+  nose: [POSITION, HORIZONTAL_POSITION, SIZE],
+  mouth: [POSITION, HORIZONTAL_POSITION, SIZE],
+  ears: [POSITION, SPACING, SIZE],
+  hair: [POSITION, SIZE],
+  facialHair: [POSITION, HORIZONTAL_POSITION, SIZE],
   clothes: [],
 };
 

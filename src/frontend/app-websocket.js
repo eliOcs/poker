@@ -60,16 +60,20 @@ function resolveSocketHealthCheck(app, pingId) {
   clearSocketHealthCheck(app, healthCheck.socket);
 }
 
-function restartConnection(app) {
-  if (!app._activeGamePath) return;
-  const path = app._activeGamePath;
-
+function closeCurrentSocket(app) {
   if (app._socket) {
     clearSocketHealthCheck(app, app._socket);
     app._intentionalSocketCloses.add(app._socket);
     app._socket.close();
     app._socket = undefined;
   }
+}
+
+function restartConnection(app) {
+  if (!app._activeGamePath) return;
+  const path = app._activeGamePath;
+
+  closeCurrentSocket(app);
 
   app._activeGameId = undefined;
   app._activeGamePath = undefined;
@@ -319,12 +323,7 @@ export function resumeConnectionIfNeeded(app) {
  * @param {any} app
  */
 export function disconnectFromGame(app) {
-  if (app._socket) {
-    clearSocketHealthCheck(app, app._socket);
-    app._intentionalSocketCloses.add(app._socket);
-    app._socket.close();
-    app._socket = undefined;
-  }
+  closeCurrentSocket(app);
   app._activeGameId = undefined;
   app._activeGamePath = undefined;
   app._socketHealthCheck = undefined;

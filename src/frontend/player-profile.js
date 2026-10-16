@@ -1,3 +1,4 @@
+import { dispatchNavigate } from "./dispatch-navigate.js";
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import { formatPlayerLabel } from "./player-label.js";
@@ -27,26 +28,14 @@ class PlayerProfile extends LitElement {
     const tournamentId = game.tournamentId ?? undefined;
 
     if (gameType === "mtt" && tournamentId) {
-      this.dispatchEvent(
-        new CustomEvent("navigate", {
-          detail: { path: getMttPath(tournamentId) },
-          bubbles: true,
-        }),
-      );
+      dispatchNavigate(this, getMttPath(tournamentId));
       return;
     }
 
     const tableId = game.tableId ?? game.lastTableId ?? game.gameId;
     if (!tableId) return;
 
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: {
-          path: getHistoryPath(tableId, game.lastHandNumber),
-        },
-        bubbles: true,
-      }),
-    );
+    dispatchNavigate(this, getHistoryPath(tableId, game.lastHandNumber));
   }
 
   render() {

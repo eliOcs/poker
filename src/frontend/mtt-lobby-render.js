@@ -355,6 +355,18 @@ export function renderTables({ tournament, tournamentId, onNavigate }) {
   `;
 }
 
+function renderEntrantCells(tournament, entrant) {
+  return html`
+    <td>${renderPlayerProfileLink(entrant)}</td>
+    <td>${formatEntrantStatus(entrant.status, tournament.status)}</td>
+    <td>${formatCurrency(entrant.stack)}</td>
+    <td>
+      ${entrant.tableId ? getTableName(tournament, entrant.tableId) : "\u2014"}
+    </td>
+    <td>${entrant.finishPosition ?? "\u2014"}</td>
+  `;
+}
+
 export function renderEntrantsTable(tournament) {
   if (!tournament) return "";
   if (tournament.entrants.length === 0) {
@@ -377,19 +389,7 @@ export function renderEntrantsTable(tournament) {
           ${tournament.entrants.map(
             (entrant) => html`
               <tr>
-                <td>${renderPlayerProfileLink(entrant)}</td>
-                <td>
-                  ${formatEntrantStatus(entrant.status, tournament.status)}
-                </td>
-                <td>${formatCurrency(entrant.stack)}</td>
-                <td>
-                  ${
-                    entrant.tableId
-                      ? getTableName(tournament, entrant.tableId)
-                      : "\u2014"
-                  }
-                </td>
-                <td>${entrant.finishPosition ?? "\u2014"}</td>
+                ${renderEntrantCells(tournament, entrant)}
               </tr>
             `,
           )}
@@ -424,19 +424,7 @@ export function renderStandingsTable(tournament) {
           ${tournament.standings.map(
             (entrant) => html`
               <tr>
-                <td>${renderPlayerProfileLink(entrant)}</td>
-                <td>
-                  ${formatEntrantStatus(entrant.status, tournament.status)}
-                </td>
-                <td>${formatCurrency(entrant.stack)}</td>
-                <td>
-                  ${
-                    entrant.tableId
-                      ? getTableName(tournament, entrant.tableId)
-                      : "\u2014"
-                  }
-                </td>
-                <td>${entrant.finishPosition ?? "\u2014"}</td>
+                ${renderEntrantCells(tournament, entrant)}
                 <td
                   class=${
                     entrant.netWinnings > 0

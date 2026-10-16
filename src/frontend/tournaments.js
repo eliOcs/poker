@@ -1,3 +1,4 @@
+import { dispatchNavigate } from "./dispatch-navigate.js";
 import { html, LitElement } from "lit";
 import {
   BUYIN_PRESETS,
@@ -7,7 +8,6 @@ import {
 import { getMttPath } from "../shared/routes.js";
 import {
   DEFAULT_TABLE_SIZE,
-  dispatchNavigate,
   getSelectedTournamentSpeed,
   postCreate,
   renderCreatePage,

@@ -197,19 +197,6 @@ export function renderTableSizeSelect({ selectedTableSize, onChange }) {
 }
 
 /**
- * @param {Element} target
- * @param {string} path
- */
-export function dispatchNavigate(target, path) {
-  target.dispatchEvent(
-    new CustomEvent("navigate", {
-      detail: { path },
-      bubbles: true,
-    }),
-  );
-}
-
-/**
  * @param {string} endpoint
  * @param {object} body
  * @returns {Promise<any>}

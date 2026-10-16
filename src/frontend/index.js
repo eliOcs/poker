@@ -1,3 +1,5 @@
+import { configureResponsiveDrawer } from "./responsive-drawer.js";
+import { dispatchNavigate } from "./dispatch-navigate.js";
 import { getDisplayBigBlind } from "./currency.js";
 import { html, LitElement } from "lit";
 import { getMttPath, getTablePath } from "../shared/routes.js";
@@ -79,29 +81,14 @@ export class Game extends LitElement {
     this.vibration = true;
     this._drawerOpen = false;
     this._copied = false;
-    this._onMediaChange = (e) => {
-      this._drawerOpen = e.matches;
-    };
-    Audio.setVolume(this.volume);
-    Audio.setVibrationEnabled(this.vibration);
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._mql = window.matchMedia(
+    /** @type {MediaQueryList | undefined} */
+    this._mql = undefined;
+    this.toggleDrawer = configureResponsiveDrawer(
+      this,
       "(min-width: 1000px) and (min-height: 600px)",
     );
-    this._mql.addEventListener("change", this._onMediaChange);
-    this._drawerOpen = this._mql.matches;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._mql?.removeEventListener("change", this._onMediaChange);
-  }
-
-  toggleDrawer() {
-    this._drawerOpen = !this._drawerOpen;
+    Audio.setVolume(this.volume);
+    Audio.setVibrationEnabled(this.vibration);
   }
 
   closeMobileDrawer() {
@@ -234,25 +221,14 @@ export class Game extends LitElement {
 
   openTournamentLobby() {
     if (this.gameKind !== "mtt" || !this.tournamentId) return;
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: {
-          path: getMttPath(this.tournamentId),
-          allowMttLobby: true,
-        },
-        bubbles: true,
-      }),
-    );
+    dispatchNavigate(this, getMttPath(this.tournamentId), {
+      allowMttLobby: true,
+    });
   }
 
   openTournamentTable(tableId) {
     if (this.gameKind !== "mtt" || !this.tournamentId) return;
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path: getTablePath("mtt", tableId, this.tournamentId) },
-        bubbles: true,
-      }),
-    );
+    dispatchNavigate(this, getTablePath("mtt", tableId, this.tournamentId));
   }
 
   openTournamentLevels() {

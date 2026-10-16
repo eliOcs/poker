@@ -1,3 +1,5 @@
+import { configureResponsiveDrawer } from "./responsive-drawer.js";
+import { dispatchNavigate } from "./dispatch-navigate.js";
 import { html, LitElement } from "lit";
 import { formatCurrency } from "./currency.js";
 import { getMttPath, getTablePath } from "../shared/routes.js";
@@ -45,25 +47,9 @@ class MttLobby extends LitElement {
     this.actionPending = false;
     this._copied = false;
     this._drawerOpen = false;
-    this._onMediaChange = (event) => {
-      this._drawerOpen = event.matches;
-    };
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._mql = window.matchMedia("(min-width: 800px)");
-    this._mql.addEventListener("change", this._onMediaChange);
-    this._drawerOpen = this._mql.matches;
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._mql?.removeEventListener("change", this._onMediaChange);
-  }
-
-  toggleDrawer() {
-    this._drawerOpen = !this._drawerOpen;
+    /** @type {MediaQueryList | undefined} */
+    this._mql = undefined;
+    this.toggleDrawer = configureResponsiveDrawer(this, "(min-width: 800px)");
   }
 
   openSettings() {
@@ -150,25 +136,14 @@ class MttLobby extends LitElement {
   }
 
   _navigate(path) {
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: { path },
-        bubbles: true,
-      }),
-    );
+    dispatchNavigate(this, path);
   }
 
   openLobby() {
     if (!this.tournamentId) return;
-    this.dispatchEvent(
-      new CustomEvent("navigate", {
-        detail: {
-          path: getMttPath(this.tournamentId),
-          allowMttLobby: true,
-        },
-        bubbles: true,
-      }),
-    );
+    dispatchNavigate(this, getMttPath(this.tournamentId), {
+      allowMttLobby: true,
+    });
   }
 
   openTable(tableId) {
