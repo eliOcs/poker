@@ -54,7 +54,6 @@ export function throwIfHttpRateLimited(check, log, contextKey) {
       log.context[contextKey] = err.rateLimit;
     }
     throw new HttpError(429, "Too many requests", {
-      body: { error: "Too many requests", status: 429 },
       headers: {
         "retry-after": String(
           err instanceof RateLimitError ? err.retryAfterSeconds : 1,
@@ -111,11 +110,7 @@ export function parseBody(req) {
       try {
         resolve(JSON.parse(body));
       } catch {
-        reject(
-          new HttpError(400, "Invalid JSON payload", {
-            body: { error: "Invalid JSON payload", status: 400 },
-          }),
-        );
+        reject(new HttpError(400, "Invalid JSON payload"));
       }
     });
     req.on("error", reject);
@@ -211,12 +206,8 @@ export function rethrowTournamentError(err) {
   const message =
     err instanceof Error ? err.message : "Unable to process tournament request";
   if (message === "tournament not found") {
-    throw new HttpError(404, message, {
-      body: { error: message, status: 404 },
-    });
+    throw new HttpError(404, message);
   }
 
-  throw new HttpError(400, message, {
-    body: { error: message, status: 400 },
-  });
+  throw new HttpError(400, message);
 }

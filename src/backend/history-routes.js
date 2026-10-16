@@ -42,9 +42,7 @@ export function createHistoryRoutes(users) {
 
         const hand = await HandHistory.getHand(tableId, handNumber);
         if (!hand) {
-          throw new HttpError(404, "Hand not found", {
-            body: { error: "Hand not found", status: 404 },
-          });
+          throw new HttpError(404, "Hand not found");
         }
 
         const filteredHand = HandHistory.filterHandForPlayer(hand, user.id);

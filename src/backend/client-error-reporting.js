@@ -23,17 +23,13 @@ function trimLogString(value, maxLength) {
  */
 export function logFrontendErrorReport(req, user, data) {
   if (!data || typeof data !== "object") {
-    throw new HttpError(400, "Invalid frontend error payload", {
-      body: { error: "Invalid frontend error payload", status: 400 },
-    });
+    throw new HttpError(400, "Invalid frontend error payload");
   }
   const payload = /** @type {Record<string, unknown>} */ (data);
 
   const message = trimLogString(payload.message, 500);
   if (!message) {
-    throw new HttpError(400, "Frontend error message is required", {
-      body: { error: "Frontend error message is required", status: 400 },
-    });
+    throw new HttpError(400, "Frontend error message is required");
   }
 
   const level = payload.level === "warn" ? "warn" : "error";

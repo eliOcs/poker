@@ -227,9 +227,7 @@ export function createSignInRoutes(services = {}) {
             : "/";
 
         if (!email || !isValidEmail(email)) {
-          throw new HttpError(400, "Valid email is required", {
-            body: { error: "Valid email is required", status: 400 },
-          });
+          throw new HttpError(400, "Valid email is required");
         }
 
         const token = createEmailSignInToken();
@@ -271,9 +269,7 @@ export function createSignInRoutes(services = {}) {
 
         const signIn = consumeEmailSignInToken(token);
         if (!signIn) {
-          throw new HttpError(400, "Invalid or expired sign-in link", {
-            body: { error: "Invalid or expired sign-in link", status: 400 },
-          });
+          throw new HttpError(400, "Invalid or expired sign-in link");
         }
 
         const returnPath = await completeSignIn(

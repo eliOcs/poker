@@ -11,7 +11,7 @@ import * as Store from "./store.js";
 import { parseCookies, createRoutes, handleRequest } from "./http-routes.js";
 import { throwIfHttpRateLimited } from "./http-route-utils.js";
 import { createRateLimiter, getClientIp } from "./rate-limit.js";
-import { HttpError } from "./http-error.js";
+import { handleRequestError } from "./http-error.js";
 import { createGameBroadcaster } from "./game-broadcast.js";
 import { createWebSocketServer } from "./ws-server.js";
 import * as HandHistory from "./poker/hand-history/index.js";
@@ -208,35 +208,6 @@ async function handleServerRequest(req, res, log) {
     broadcast: broadcastGameStateMessage,
     log,
   });
-}
-
-/**
- * @param {import('http').ServerResponse} res
- * @param {import('./logger.js').Log} log
- * @param {unknown} err
- */
-function handleRequestError(res, log, err) {
-  if (err instanceof HttpError) {
-    log.context.error = { message: err.message };
-    if (!res.headersSent) {
-      res.writeHead(err.status, {
-        "content-type": "application/json",
-        ...(err.headers ?? {}),
-      });
-      res.end(
-        JSON.stringify(err.body ?? { error: err.message, status: err.status }),
-      );
-    }
-    return;
-  }
-
-  if (err instanceof Error) {
-    log.context.error = { message: err.message };
-  }
-  if (!res.headersSent) {
-    res.writeHead(500, { "content-type": "application/json" });
-    res.end(JSON.stringify({ error: "Internal server error" }));
-  }
 }
 
 server.on("request", (req, res) => {

@@ -9,7 +9,8 @@ import * as Seat from "../../src/backend/poker/seat.js";
 import { getAvatarRevision } from "../../src/backend/avatar.js";
 import { createGameRoutes } from "../../src/backend/game-routes.js";
 import { handleRequest } from "../../src/backend/http-routes.js";
-import { HttpError } from "../../src/backend/http-error.js";
+import { HttpError, handleRequestError } from "../../src/backend/http-error.js";
+import { createLog } from "../../src/backend/logger.js";
 import { DEFAULT_AVATAR } from "../../src/shared/avatar.js";
 
 describe("avatar routes", () => {
@@ -35,12 +36,16 @@ describe("avatar routes", () => {
       {},
     );
     const server = http.createServer(async (req, res) => {
+      const log = createLog("http_request");
       try {
-        await handleRequest(req, res, routes);
+        await handleRequest(req, res, routes, {
+          users,
+          games,
+          broadcast: (gameId) => broadcasts.push(gameId),
+          log,
+        });
       } catch (error) {
-        if (!(error instanceof HttpError)) throw error;
-        res.writeHead(error.status, { "content-type": "application/json" });
-        res.end(JSON.stringify(error.body));
+        handleRequestError(res, log, error);
       }
     });
     server.listen(0, "127.0.0.1");
@@ -116,6 +121,10 @@ describe("avatar routes", () => {
         { headers: { cookie: `phg=${user.id}` } },
       );
       assert.equal(removedAvatarResponse.status, 404);
+      assert.equal(
+        await removedAvatarResponse.text(),
+        '{"error":"Avatar not found","status":404}',
+      );
     } finally {
       server.close();
       await once(server, "close");

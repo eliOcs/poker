@@ -106,18 +106,14 @@ function getRegistrationSeating(tournament) {
 
 function parseUserSettings(settings, updates) {
   if (!updates || typeof updates !== "object" || Array.isArray(updates)) {
-    throw new HttpError(400, "Invalid user settings", {
-      body: { error: "Invalid user settings", status: 400 },
-    });
+    throw new HttpError(400, "Invalid user settings");
   }
   const nextSettings = { ...settings, ...updates };
   if (
     "amountDisplay" in updates &&
     !["default", "currency", "bb"].includes(updates.amountDisplay)
   ) {
-    throw new HttpError(400, "Invalid amount display preference", {
-      body: { error: "Invalid amount display preference", status: 400 },
-    });
+    throw new HttpError(400, "Invalid amount display preference");
   }
   if (!("avatar" in updates)) return nextSettings;
 
@@ -360,9 +356,7 @@ export function createGameRoutes(users, games, broadcast, services) {
         );
         const avatar = Store.loadUserProfile(playerId)?.settings.avatar;
         if (!avatar) {
-          throw new HttpError(404, "Avatar not found", {
-            body: { error: "Avatar not found", status: 404 },
-          });
+          throw new HttpError(404, "Avatar not found");
         }
         respondWithAvatar(req, res, avatar);
       },
@@ -476,9 +470,7 @@ export function createGameRoutes(users, games, broadcast, services) {
         const profile = await getPlayerProfile(games, playerId);
 
         if (!profile) {
-          throw new HttpError(404, "Player not found", {
-            body: { error: "Player not found", status: 404 },
-          });
+          throw new HttpError(404, "Player not found");
         }
 
         respondWithJson(res, profile);
