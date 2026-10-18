@@ -125,56 +125,51 @@ class Board extends LitElement {
       : (this.hand?.collectedPot ?? this.hand?.totalPot ?? 0);
   }
 
-  renderDefaultView(cards) {
-    const phase = this.hand?.phase ?? "Waiting";
-    const displayedPot = this.displayedPot;
+  renderCurrentHandRank() {
     const currentPlayer = this.seats?.find(
       (seat) => !seat.empty && seat.isCurrentPlayer && !seat.folded,
     );
-    return html`
-      <div class="board-info">
-        <div class="phase">${phase}</div>
-        ${this.renderCommunityCards(cards)}
-        ${
-          currentPlayer?.handRank
-            ? html`<div class="current-hand-rank">
-                ${currentPlayer.handRank}
-              </div>`
-            : ""
-        }
-        ${
-          displayedPot > 0
-            ? html`<div class="pot">
-                <phg-chips .amount=${displayedPot}></phg-chips>
-                ${formatAmount(displayedPot, this.displayBigBlind)}
-              </div>`
-            : ""
-        }
-      </div>
-    `;
+    return currentPlayer?.handRank
+      ? html`<div class="current-hand-rank">${currentPlayer.handRank}</div>`
+      : "";
+  }
+
+  renderPot() {
+    const displayedPot = this.displayedPot;
+    return displayedPot > 0
+      ? html`<div class="pot">
+          <phg-chips .amount=${displayedPot}></phg-chips>
+          ${formatAmount(displayedPot, this.displayBigBlind)}
+        </div>`
+      : "";
+  }
+
+  renderBoardHeader() {
+    if (this.hasTournamentWinner() || this.winnerMessage) return "";
+    return html`<div class="phase">${this.hand?.phase ?? "Waiting"}</div>`;
+  }
+
+  renderBoardFooter() {
+    if (this.hasTournamentWinner()) return "";
+    if (this.winnerMessage) return this.renderWinnerMessage();
+    return html`${this.renderCurrentHandRank()} ${this.renderPot()}`;
   }
 
   render() {
-    const cards = this.board?.cards ?? [];
+    const showsCards = this.hasTournamentWinner() || this.winnerMessage;
+    if (!showsCards && this.hasCountdown()) return this.renderCountdownView();
+    if (!showsCards && this.tournament?.onBreak) return this.renderBreakView();
 
-    if (this.hasTournamentWinner()) {
-      return html`
-        ${this.renderTournamentWinner()}
-        <div class="board-info">${this.renderCommunityCards(cards)}</div>
-      `;
-    }
-
-    if (this.winnerMessage) {
-      return html`
-        <div class="board-info">
-          ${this.renderCommunityCards(cards)} ${this.renderWinnerMessage()}
-        </div>
-      `;
-    }
-
-    if (this.hasCountdown()) return this.renderCountdownView();
-    if (this.tournament?.onBreak) return this.renderBreakView();
-    return this.renderDefaultView(cards);
+    // Every view with community cards shares this template so Lit keeps the
+    // card elements; recreating them would replay the deal animation.
+    return html`
+      ${this.renderTournamentWinner()}
+      <div class="board-info">
+        ${this.renderBoardHeader()}
+        ${this.renderCommunityCards(this.board?.cards ?? [])}
+        ${this.renderBoardFooter()}
+      </div>
+    `;
   }
 }
 

@@ -190,5 +190,26 @@ describe("phg-board", () => {
       const cardElements = board.querySelectorAll("phg-card");
       expect(cardElements.length).to.equal(5);
     });
+
+    it("keeps the same community card elements so they do not replay the deal animation", async () => {
+      const board = await fixture(
+        html`<phg-board
+          .board=${{ cards: ["3s", "5s", "Qc", "Ah", "Td"] }}
+          .hand=${{ phase: "river" }}
+        ></phg-board>`,
+      );
+      const cardsBefore = [...board.querySelectorAll("phg-card")];
+
+      board.winnerMessage = {
+        playerName: "Bot 1",
+        handRank: "Pair of 5s",
+        amount: 100,
+      };
+      board.winningCards = ["5s"];
+      await board.updateComplete;
+
+      const cardsAfter = [...board.querySelectorAll("phg-card")];
+      expect(cardsAfter.every((card, i) => card === cardsBefore[i])).to.be.true;
+    });
   });
 });
