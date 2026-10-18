@@ -32,7 +32,7 @@ describe("pot bet presets", () => {
     );
     expect(element.querySelector(".pot").textContent).to.include("40 BB");
     expect(element.querySelector(".info-blinds").textContent).to.equal(
-      "0.5/1 BB",
+      "$2.50/$5",
     );
     const amount = panel.querySelector('input[type="number"]');
     expect(Number(amount.value)).to.equal(10);

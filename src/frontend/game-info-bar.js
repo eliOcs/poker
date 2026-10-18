@@ -1,5 +1,5 @@
 import { html } from "lit";
-import { formatCurrency, formatAmount } from "./currency.js";
+import { formatCurrency } from "./currency.js";
 
 /**
  * @typedef {import('../backend/poker/player-view.js').TournamentView} TournamentView
@@ -13,10 +13,13 @@ import { formatCurrency, formatAmount } from "./currency.js";
 
 const TABLE_SIZE_LABELS = { 2: "Heads-Up", 6: "6-Max", 9: "Full Ring" };
 
-function formatBlinds(blinds, displayBigBlind) {
-  return displayBigBlind
-    ? `${blinds.small / displayBigBlind}/${formatAmount(blinds.big, displayBigBlind)}`
-    : `${formatCurrency(blinds.small)}/${formatCurrency(blinds.big)}`;
+/**
+ * Blinds always show in currency, even when amounts display in big blinds.
+ * @param {InfoBarGame['blinds']} blinds
+ * @returns {string}
+ */
+function formatBlinds(blinds) {
+  return `${formatCurrency(blinds.small)}/${formatCurrency(blinds.big)}`;
 }
 
 /**
@@ -62,15 +65,9 @@ function getTournamentTimerCell(tournament) {
  * @param {InfoBarGame|undefined} game - The game state object
  * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
- * @param {number} [displayBigBlind]
  * @returns {import("lit").TemplateResult|string}
  */
-export function renderInfoBar(
-  game,
-  gameKind,
-  onOpenTournamentLevels,
-  displayBigBlind = 0,
-) {
+export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
   if (!game) return "";
   const sizeLabel = TABLE_SIZE_LABELS[game.seats.length] ?? "";
 
@@ -87,7 +84,7 @@ export function renderInfoBar(
   if (gameKind !== "learn") {
     cells.push(
       html`<span class="info-cell info-blinds"
-        >${formatBlinds(game.blinds, displayBigBlind)}</span
+        >${formatBlinds(game.blinds)}</span
       >`,
     );
   }

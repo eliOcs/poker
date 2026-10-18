@@ -423,14 +423,9 @@ export class Game extends LitElement {
           bustedPosition,
           isWinner,
         )}
-        ${renderInfoBar(
-          this.game,
-          this.gameKind,
-          () => {
-            this.openTournamentLevels();
-          },
-          this.displayBigBlind,
-        )}
+        ${renderInfoBar(this.game, this.gameKind, () => {
+          this.openTournamentLevels();
+        })}
         ${renderRankingModal(this)} ${renderTournamentLevelsModal(this)}
         ${renderEmoteModal(this)} ${renderChatModal(this)}
       </div>
