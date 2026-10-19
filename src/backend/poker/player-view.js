@@ -172,6 +172,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {string} [lastAction]
  * @property {Cents} [handResult]
  * @property {string} [handRank]
+ * @property {import('./hand-rankings.js').HandName} [handName] - Hand category of handRank
  * @property {Card[]} [winningCards] - The 5 cards forming the winning hand (only for winners)
  * @property {number} [bustedPosition] - Tournament finishing position
  * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action (own seat only)
@@ -345,9 +346,9 @@ function canShowCards(seat, phase) {
 /**
  * @param {Card[]} holeCards
  * @param {Card[]} boardCards
- * @returns {string|undefined}
+ * @returns {import('./hand-rankings.js').EvaluatedHand|undefined}
  */
-function calculateHandRank(holeCards, boardCards) {
+function evaluateVisibleHand(holeCards, boardCards) {
   if (holeCards.length < 2) {
     return;
   }
@@ -356,8 +357,7 @@ function calculateHandRank(holeCards, boardCards) {
 
   // Need at least 5 cards for a full hand evaluation
   if (allCards.length >= 5) {
-    const result = HandRankings.bestCombination(allCards);
-    return HandRankings.formatHand(result.hand);
+    return HandRankings.bestCombination(allCards).hand;
   }
 
   // For just hole cards (preflop), check for pair or high card
@@ -365,18 +365,14 @@ function calculateHandRank(holeCards, boardCards) {
     const rank0 = getRank(/** @type {Card} */ (holeCards[0]));
     const rank1 = getRank(/** @type {Card} */ (holeCards[1]));
     if (rank0 === rank1) {
-      /** @type {import('./hand-rankings.js').Pair} */
-      const hand = { name: "pair", of: rank0, kickers: [] };
-      return HandRankings.formatHand(hand);
+      return { name: "pair", of: rank0, kickers: [] };
     }
     // Show high card
     const highCard =
       HandRankings.getRankValue(rank0) > HandRankings.getRankValue(rank1)
         ? rank0
         : rank1;
-    /** @type {import('./hand-rankings.js').HighCard} */
-    const hand = { name: "high card", ranks: [highCard] };
-    return HandRankings.formatHand(hand);
+    return { name: "high card", ranks: [highCard] };
   }
 
   return;
@@ -760,9 +756,9 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
   const isRebuyDecisionPending = !!getUnresolvedRebuyDecision(game, index);
 
   // Calculate hand rank only for visible cards of non-folded players
-  const handRank =
+  const hand =
     revealAllCards && !seat.folded
-      ? calculateHandRank(seat.cards, game.board.cards)
+      ? evaluateVisibleHand(seat.cards, game.board.cards)
       : undefined;
 
   return {
@@ -780,7 +776,8 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     isActing: index === game.hand.actingSeat || isRebuyDecisionPending,
     lastAction: seat.lastAction,
     handResult: seat.handResult,
-    handRank,
+    handRank: hand && HandRankings.formatHand(hand),
+    handName: hand?.name,
     winningCards: seat.winningCards,
     bustedPosition: seat.bustedPosition,
     ...(isOwnSeat

@@ -130,7 +130,18 @@ class Board extends LitElement {
       (seat) => !seat.empty && seat.isCurrentPlayer && !seat.folded,
     );
     return currentPlayer?.handRank
-      ? html`<div class="current-hand-rank">${currentPlayer.handRank}</div>`
+      ? html`<button
+          type="button"
+          class="current-hand-rank"
+          title="Show hand rankings"
+          @click=${() => {
+            this.dispatchEvent(
+              new CustomEvent("show-hand-rankings", { bubbles: true }),
+            );
+          }}
+        >
+          ${currentPlayer.handRank}
+        </button>`
       : "";
   }
 

@@ -263,6 +263,27 @@ describe("Player View", function () {
       assert.ok(view.seats[0].handRank.includes("A"));
     });
 
+    it("names the hand category alongside the hand rank", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+
+      g.hand = {
+        phase: "preflop",
+        collectedPot: 0,
+        currentBet: 0,
+        actingSeat: -1,
+      };
+      g.seats[0].cards = ["7s", "7h"];
+      assert.equal(playerView(g, p1).seats[0].handName, "pair");
+
+      g.hand.phase = "flop";
+      g.board = { cards: ["7c", "Kd", "Kc"] };
+      const view = playerView(g, p1);
+      assert.equal(view.seats[0].handRank, "Full House, 7s over Ks");
+      assert.equal(view.seats[0].handName, "full house");
+    });
+
     it("calculates flush correctly with 7 cards", function () {
       const g = Game.create({ seats: 2 });
       const p1 = createPlayer();

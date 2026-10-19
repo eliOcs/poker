@@ -271,6 +271,27 @@ test.describe("table clearance", () => {
     await expect.poll(() => layoutProblems(page)).toEqual([]);
   });
 
+  test("the board hand rank opens the hand rankings for every table size", async ({
+    page,
+  }) => {
+    // Showdown tables replace the hand rank with the winner message.
+    for (const id of TABLE_SIZE_IDS.filter((id) => !id.endsWith("-showdown"))) {
+      await openTable(page, id);
+      for (const [width, height] of [
+        [390, 844],
+        [844, 390],
+        [1280, 720],
+      ]) {
+        await page.setViewportSize({ width, height });
+        // A real click fails if another table layer covers the label.
+        await page.locator(".current-hand-rank").click();
+        await expect(page.locator("phg-hand-rankings-panel")).toBeVisible();
+        await page.keyboard.press("Escape");
+        await expect(page.locator("phg-hand-rankings-panel")).toHaveCount(0);
+      }
+    }
+  });
+
   test("history shares the table's clearance", async ({ page }) => {
     await openTable(page, "history-replay-final");
     for (const [width, height] of [

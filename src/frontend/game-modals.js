@@ -32,6 +32,21 @@ export function renderRankingModal(game) {
   );
 }
 
+export function renderHandRankingsModal(game) {
+  if (!game.showHandRankings) return "";
+  return renderModal(
+    "Hand Rankings",
+    () => game.closeHandRankings(),
+    html`<phg-hand-rankings-panel
+      .handName=${
+        game.game?.seats.find(
+          (seat) => !seat.empty && seat.isCurrentPlayer && !seat.folded,
+        )?.handName
+      }
+    ></phg-hand-rankings-panel>`,
+  );
+}
+
 export function renderTournamentLevelsModal(game) {
   if (!game.showTournamentLevels) return "";
   return renderModal(

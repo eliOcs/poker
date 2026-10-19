@@ -11,6 +11,7 @@ import { visualSeat } from "./table-layout.js";
 import "./action-panel.js";
 import "./modal.js";
 import "./ranking-panel.js";
+import "./hand-rankings-panel.js";
 import "./tournament-levels-panel.js";
 import {
   snapshotBetPositions,
@@ -19,6 +20,7 @@ import {
 import { renderDrawer } from "./drawer.js";
 import {
   renderRankingModal,
+  renderHandRankingsModal,
   renderTournamentLevelsModal,
   renderEmoteModal,
   renderChatModal,
@@ -49,6 +51,7 @@ export class Game extends LitElement {
       socialAction: { type: Object },
       user: { type: Object },
       showRanking: { type: Boolean },
+      showHandRankings: { type: Boolean },
       showTournamentLevels: { type: Boolean },
       showEmotePicker: { type: Boolean },
       showChat: { type: Boolean },
@@ -74,6 +77,7 @@ export class Game extends LitElement {
     /** @type {User | undefined} */
     this.user = undefined;
     this.showRanking = false;
+    this.showHandRankings = false;
     this.showTournamentLevels = false;
     this.showEmotePicker = false;
     this.showChat = false;
@@ -388,6 +392,9 @@ export class Game extends LitElement {
               .winningCards=${this.getWinningCards()}
               .tournament=${this.game.tournament}
               .seats=${this.game.seats}
+              @show-hand-rankings=${() => {
+                gameModalActions.openHandRankings.call(this);
+              }}
             ></phg-board>
             <div id="seats" data-table-size="${this.game.seats.length}">
               ${this.game.seats.map((seat, i) =>
@@ -426,8 +433,9 @@ export class Game extends LitElement {
         ${renderInfoBar(this.game, this.gameKind, () => {
           this.openTournamentLevels();
         })}
-        ${renderRankingModal(this)} ${renderTournamentLevelsModal(this)}
-        ${renderEmoteModal(this)} ${renderChatModal(this)}
+        ${renderRankingModal(this)} ${renderHandRankingsModal(this)}
+        ${renderTournamentLevelsModal(this)} ${renderEmoteModal(this)}
+        ${renderChatModal(this)}
       </div>
     `;
   }

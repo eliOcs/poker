@@ -20,6 +20,14 @@ export const gameModalActions = {
     this.showRanking = false;
   },
 
+  openHandRankings() {
+    this.showHandRankings = true;
+  },
+
+  closeHandRankings() {
+    this.showHandRankings = false;
+  },
+
   openTournamentLevels() {
     if (!this.game?.tournament) return;
     this.showTournamentLevels = true;

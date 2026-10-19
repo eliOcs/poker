@@ -344,6 +344,7 @@ const GAME_TEST_CASES = {
             stack: 4700,
             cards: ["As", "Qs"],
             handRank: "Pair of Aces",
+            handName: "pair",
             actions: [{ action: "emote" }, { action: "chat" }],
           }),
           createPlayer("Alice", {
@@ -444,6 +445,7 @@ const TEST_CASES = {
   ...RANKING_MODAL_TEST_CASES,
   "game-rankings-modal-tooltip":
     RANKING_MODAL_TEST_CASES["game-rankings-modal"],
+  "game-hand-rankings-modal": GAME_TEST_CASES["game-turn"],
   ...TABLE_SIZE_TEST_CASES,
   ...ACTION_PANEL_TEST_CASES,
   ...EMAIL_TEST_CASES,

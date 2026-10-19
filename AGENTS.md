@@ -135,7 +135,8 @@ src/
     ├── icons.js              # SVG icon definitions
     ├── seat.js               # Player seat component
     ├── modal.js              # Modal dialog
-    ├── ranking-panel.js      # Hand rankings display
+    ├── ranking-panel.js      # Table standings display
+    ├── hand-rankings-panel.js # Poker hand strength reference
     ├── toast.js              # Toast notifications
     └── styles/               # Component and page stylesheets
 

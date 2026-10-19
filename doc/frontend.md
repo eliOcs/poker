@@ -84,18 +84,19 @@ labels or adding component-specific vertical offsets.
 
 ### Game Table
 
-| Component       | File                 | Description                         |
-| --------------- | -------------------- | ----------------------------------- |
-| Game Table      | `index.js`           | Main game view, orchestrates layout |
-| Game Layout     | `table-layout.js`    | Table layout positioning            |
-| Action Panel    | `action-panel.js`    | Fold / Call / Raise buttons         |
-| Board           | `board.js`           | Community cards display             |
-| Seat            | `seat.js`            | Player seat with stack and cards    |
-| Card            | `card.js`            | Single playing card                 |
-| Chips           | `chips.js`           | Chip stack visualization            |
-| Bet Collection  | `bet-collection.js`  | Animated bet gathering              |
-| Currency Slider | `currency-slider.js` | Slider for selecting bet amounts    |
-| Ranking Panel   | `ranking-panel.js`   | Hand rankings reference             |
+| Component       | File                     | Description                         |
+| --------------- | ------------------------ | ----------------------------------- |
+| Game Table      | `index.js`               | Main game view, orchestrates layout |
+| Game Layout     | `table-layout.js`        | Table layout positioning            |
+| Action Panel    | `action-panel.js`        | Fold / Call / Raise buttons         |
+| Board           | `board.js`               | Community cards display             |
+| Seat            | `seat.js`                | Player seat with stack and cards    |
+| Card            | `card.js`                | Single playing card                 |
+| Chips           | `chips.js`               | Chip stack visualization            |
+| Bet Collection  | `bet-collection.js`      | Animated bet gathering              |
+| Currency Slider | `currency-slider.js`     | Slider for selecting bet amounts    |
+| Ranking Panel   | `ranking-panel.js`       | Table standings by net winnings     |
+| Hand Rankings   | `hand-rankings-panel.js` | Poker hand strength reference       |
 
 `phg-table-layout` is shared by live games and hand history. It observes the
 space allocated by its parent and fits a logical 400 × 700 portrait or 800 × 400
@@ -129,7 +130,9 @@ Player panels reserve a fixed three-line height, with uniform text sizes and
 line spacing within each layout mode. Colors distinguish names, stacks, and
 actions. The countdown sits in the
 top-right corner without adding a text row, and the current player's hand rank
-appears beneath the community cards. Winner messages replace that board label
+appears beneath the community cards. Clicking it opens a hand rankings modal
+with example cards for every hand, fading the kickers, and highlights the row
+matching the seat's `handName` category from the server. Winner messages replace that board label
 at the end of a hand; replay panels use their rows for the result and ending stack.
 
 Live games reserve a fixed action-panel row: 172px below 800px viewport width,

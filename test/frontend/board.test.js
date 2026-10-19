@@ -99,6 +99,38 @@ describe("phg-board", () => {
     expect(board.querySelector(".pot").textContent.trim()).to.equal("$300");
   });
 
+  it("opens the hand rankings when the current hand rank is clicked", async () => {
+    const game = createMockGameAtFlop();
+    game.seats[0].handRank = "Pair of Aces";
+    game.seats[0].handName = "pair";
+    element.game = game;
+    await element.updateComplete;
+
+    const board = element.querySelector("phg-board");
+    await board.updateComplete;
+    expect(element.querySelector("phg-modal")).to.not.exist;
+
+    board.querySelector(".current-hand-rank").click();
+    await element.updateComplete;
+
+    const modal = element.querySelector("phg-modal");
+    await modal.updateComplete;
+    expect(modal.querySelector("h3").textContent).to.equal("Hand Rankings");
+    const hands = [...modal.querySelectorAll("li .hand-name")].map(
+      (name) => name.textContent,
+    );
+    expect(hands).to.have.length(10);
+    expect(hands[0]).to.equal("Royal Flush");
+    expect(hands.at(-1)).to.equal("High Card");
+    expect(modal.querySelector("li.current .hand-name").textContent).to.equal(
+      "Pair",
+    );
+
+    modal.querySelector(".modal-close").click();
+    await element.updateComplete;
+    expect(element.querySelector("phg-modal")).to.not.exist;
+  });
+
   it("hides pot amount when pot is 0", async () => {
     element.game = createMockGameState({
       hand: {

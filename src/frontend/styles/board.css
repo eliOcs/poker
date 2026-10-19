@@ -66,6 +66,21 @@
     color: var(--color-fg-white);
   }
 
+  .current-hand-rank {
+    /* Enlarge the tap target without moving the board layout. */
+    padding: var(--space-sm);
+    margin: calc(-1 * var(--space-sm));
+    font-family: inherit;
+    line-height: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .current-hand-rank:hover {
+    color: var(--color-primary);
+  }
+
   .winner-amount {
     font-size: var(--font-md);
     color: var(--color-success);

@@ -60,6 +60,8 @@ const routes = {
   "/styles/action-panel.css": "src/frontend/styles/action-panel.css",
   "/styles/currency-slider.css": "src/frontend/styles/currency-slider.css",
   "/styles/ranking-panel.css": "src/frontend/styles/ranking-panel.css",
+  "/styles/hand-rankings-panel.css":
+    "src/frontend/styles/hand-rankings-panel.css",
   "/styles/tournament-levels-panel.css":
     "src/frontend/styles/tournament-levels-panel.css",
   "/styles/edit-label.css": "src/frontend/styles/edit-label.css",

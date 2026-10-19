@@ -75,6 +75,13 @@
     display: grid;
     grid-template-columns: repeat(80, minmax(0, 1fr));
     grid-template-rows: repeat(40, minmax(0, 1fr));
+
+    /* The grid covers the board; only the seats themselves take clicks. */
+    pointer-events: none;
+  }
+
+  #seats > * {
+    pointer-events: auto;
   }
 
   :scope phg-seat {

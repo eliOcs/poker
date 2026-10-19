@@ -1,0 +1,105 @@
+@scope (phg-hand-rankings-panel) {
+  :where(:scope) {
+    display: block;
+  }
+
+  .hand-rankings {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .strength-axis {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .strength-axis svg {
+    flex: none;
+  }
+
+  .strength-axis svg:first-child {
+    color: var(--color-primary);
+  }
+
+  .axis-label {
+    writing-mode: vertical-rl;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .axis-label:first-of-type {
+    color: var(--color-primary);
+  }
+
+  .axis-line {
+    flex: 1;
+    width: 4px;
+
+    /* Hard stops give the pixel-art palette steps instead of a smooth fade. */
+    background: linear-gradient(
+      var(--color-primary) 0 20%,
+      color-mix(in srgb, var(--color-primary) 75%, var(--color-fg-muted)) 20%
+        40%,
+      color-mix(in srgb, var(--color-primary) 50%, var(--color-fg-muted)) 40%
+        60%,
+      color-mix(in srgb, var(--color-primary) 25%, var(--color-fg-muted)) 60%
+        80%,
+      var(--color-fg-muted) 80%
+    );
+  }
+
+  ol {
+    flex: 1;
+    display: grid;
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  li.current .hand-name {
+    color: var(--color-primary);
+  }
+
+  .hand-cards {
+    flex: none;
+    display: flex;
+    gap: var(--space-xs);
+  }
+
+  .kicker {
+    opacity: 0.35;
+  }
+
+  /* Fit all ten hands without scrolling on short desktop viewports. */
+  @media (width >= 800px) {
+    ol {
+      gap: var(--space-sm);
+    }
+
+    :scope phg-card[size] {
+      --card-width: 34px;
+      --card-height: 44px;
+      --card-font-size: 11px;
+      --card-rank-size: 11px;
+      --card-suit-size: 20px;
+    }
+  }
+
+  .hand-name {
+    font-size: var(--font-sm);
+    line-height: 1.4;
+    color: var(--color-fg-white);
+  }
+}
