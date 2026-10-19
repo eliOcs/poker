@@ -22,6 +22,9 @@ class Toast extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    // The top layer keeps toasts above modal dialogs.
+    this.popover = "manual";
+    this.showPopover();
     if (this.duration > 0) {
       this.dismissTimer = setTimeout(() => {
         this.dismiss();

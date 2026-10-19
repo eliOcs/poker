@@ -34,6 +34,14 @@ describe("phg-toast", () => {
     });
   });
 
+  it("shows in the top layer so open modals do not cover it", async () => {
+    const element = await fixture(
+      html`<phg-toast message="Unable to save settings"></phg-toast>`,
+    );
+
+    expect(element.matches(":popover-open")).to.equal(true);
+  });
+
   describe("message", () => {
     it("displays message from property", async () => {
       const element = await fixture(

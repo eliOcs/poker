@@ -328,7 +328,7 @@ function renderRangeDetails(view, scenario, result) {
   const hero = /** @type {import("../backend/learn-types.js").LearnSeat} */ (
     scenario.seats.find((seat) => seat.isCurrentPlayer)
   );
-  return html` <div class="learn-range-details" tabindex="-1" autofocus>
+  return html` <div class="learn-range-details">
     <div class="learn-range-legend" aria-label="Range legend">
       ${actions.map(
         (action) =>

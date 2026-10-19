@@ -14,10 +14,14 @@
 @scope (phg-toast) {
   :where(:scope) {
     position: fixed;
-    top: var(--space-lg);
-    left: 50%;
-    z-index: 1000;
+    inset: var(--space-lg) auto auto 50%;
     display: block;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    color: inherit;
+    background: none;
+    border: 0;
     transform: translateX(-50%);
   }
 
@@ -53,18 +57,8 @@
     display: block;
   }
 
-  .modal-overlay {
-    position: fixed;
-    z-index: 199;
-    inset: 0;
-    background: rgb(0 0 0 / 50%);
-  }
-
+  /* showModal() centers the dialog in the top layer above the page. */
   dialog.modal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    z-index: 200;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -72,14 +66,16 @@
     max-width: min(600px, 90vw);
     max-height: 90vh;
     padding: var(--space-lg);
-    margin: 0;
     overflow: hidden;
     color: inherit;
     font: inherit;
     background: var(--color-bg-light);
     border: var(--space-sm) solid var(--color-fg-muted);
     box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
-    transform: translate(-50%, -50%);
+  }
+
+  dialog.modal::backdrop {
+    background: rgb(0 0 0 / 50%);
   }
 
   .modal-header {
@@ -98,6 +94,11 @@
     padding: var(--space-sm);
     margin: calc(-1 * var(--space-sm));
     overflow: auto;
+  }
+
+  /* Focused on open as a starting point, not as a control. */
+  .modal-content:focus-visible {
+    outline: none;
   }
 
   h3 {

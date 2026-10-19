@@ -1,4 +1,5 @@
-import { fixture, expect, html } from "@open-wc/testing";
+import { fixture, fixtureSync, expect, html } from "@open-wc/testing";
+import { sendKeys, sendMouse } from "@web/test-runner-commands";
 import "../../src/frontend/modal.js";
 
 describe("phg-modal", () => {
@@ -30,11 +31,12 @@ describe("phg-modal", () => {
       expect(closeBtn).to.exist;
     });
 
-    it("has overlay", async () => {
+    it("opens as a modal dialog over an inert page", async () => {
       const element = await fixture(html`<phg-modal title="Test"></phg-modal>`);
 
-      const overlay = element.querySelector(".modal-overlay");
-      expect(overlay).to.exist;
+      const dialog = element.querySelector("dialog");
+      expect(dialog.matches(":modal")).to.equal(true);
+      expect(dialog.getAttribute("aria-label")).to.equal("Test");
     });
 
     it("keeps the close button visible while long content scrolls", async () => {
@@ -75,7 +77,23 @@ describe("phg-modal", () => {
       expect(closeEvent).to.exist;
     });
 
-    it("emits close event when overlay clicked", async () => {
+    it("emits close event when backdrop clicked", async () => {
+      let closeEvent = null;
+      await fixture(
+        html`<phg-modal
+          title="Test"
+          @close=${(e) => {
+            closeEvent = e;
+          }}
+        ></phg-modal>`,
+      );
+
+      await sendMouse({ type: "click", position: [2, 2] });
+
+      expect(closeEvent).to.exist;
+    });
+
+    it("stays open when a drag inside the dialog ends on the backdrop", async () => {
       let closeEvent = null;
       const element = await fixture(
         html`<phg-modal
@@ -85,47 +103,21 @@ describe("phg-modal", () => {
           }}
         ></phg-modal>`,
       );
+      const dialog = element.querySelector("dialog");
 
-      const overlay = element.querySelector(".modal-overlay");
-      overlay.click();
+      // A drag's click targets the nearest common ancestor: the dialog.
+      element
+        .querySelector("h3")
+        .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+      dialog.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, clientX: 2, clientY: 2 }),
+      );
 
-      expect(closeEvent).to.exist;
+      expect(closeEvent).to.be.null;
     });
 
     it("emits close event when ESC key pressed", async () => {
       let closeEvent = null;
-      await fixture(
-        html`<phg-modal
-          title="Test"
-          @close=${(e) => {
-            closeEvent = e;
-          }}
-        ></phg-modal>`,
-      );
-
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-
-      expect(closeEvent).to.exist;
-    });
-
-    it("does not emit close event for other keys", async () => {
-      let closeEvent = null;
-      await fixture(
-        html`<phg-modal
-          title="Test"
-          @close=${(e) => {
-            closeEvent = e;
-          }}
-        ></phg-modal>`,
-      );
-
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
-
-      expect(closeEvent).to.be.null;
-    });
-
-    it("removes keydown listener on disconnect", async () => {
-      let closeEvent = null;
       const element = await fixture(
         html`<phg-modal
           title="Test"
@@ -135,11 +127,54 @@ describe("phg-modal", () => {
         ></phg-modal>`,
       );
 
-      element.remove();
+      await sendKeys({ press: "Escape" });
 
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(closeEvent).to.exist;
+      // The owner removes the modal; Escape alone does not close it.
+      expect(element.querySelector("dialog").open).to.equal(true);
+    });
+  });
 
-      expect(closeEvent).to.be.null;
+  describe("focus", () => {
+    it("focuses the autofocus element when opened", async () => {
+      const element = await fixture(
+        html`<phg-modal
+          title="Test"
+          .content=${html`<button>First</button><input autofocus />`}
+        ></phg-modal>`,
+      );
+
+      expect(document.activeElement).to.equal(element.querySelector("input"));
+    });
+
+    it("focuses the content instead of the close button by default", async () => {
+      const element = await fixture(
+        html`<phg-modal
+          title="Test"
+          .content=${html`<button>First</button>`}
+        ></phg-modal>`,
+      );
+
+      expect(document.activeElement).to.equal(
+        element.querySelector(".modal-content"),
+      );
+    });
+
+    it("returns focus to the opener when removed", async () => {
+      const container = fixtureSync(
+        html`<div><button id="opener">Open</button></div>`,
+      );
+      const opener = container.querySelector("#opener");
+      opener.focus();
+      const modal = document.createElement("phg-modal");
+      modal.content = html`<input autofocus />`;
+      container.append(modal);
+      await modal.updateComplete;
+      expect(document.activeElement).to.equal(modal.querySelector("input"));
+
+      modal.remove();
+
+      expect(document.activeElement).to.equal(opener);
     });
   });
 });
