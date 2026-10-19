@@ -20,12 +20,21 @@ const BEARD_TYPES = new Set(["neckbeard", "beard", "beardCurly"]);
 const OVAL_FACE_PREVIEW_PARTS = new Set(["ears", "hair", "facialHair"]);
 const spriteCenters = new Map();
 const sharedPreviewScales = new Map();
-const tintCanvas = document.createElement("canvas");
-const previewCanvas = document.createElement("canvas");
-const boundsCanvas = document.createElement("canvas");
-tintCanvas.width = tintCanvas.height = PIXEL_SIZE;
-previewCanvas.width = previewCanvas.height = PIXEL_SIZE;
-boundsCanvas.width = boundsCanvas.height = PIXEL_SIZE;
+const tintContext = createSpriteContext();
+// getAlphaBounds reads these back, so keep them on the CPU instead of the GPU.
+const previewContext = createSpriteContext({ willReadFrequently: true });
+const boundsContext = createSpriteContext({ willReadFrequently: true });
+const tintCanvas = tintContext.canvas;
+const previewCanvas = previewContext.canvas;
+
+/** @param {CanvasRenderingContext2DSettings} [settings] */
+function createSpriteContext(settings) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = PIXEL_SIZE;
+  const context = canvas.getContext("2d", settings);
+  if (!context) throw new Error("Avatar sprite canvas context unavailable");
+  return context;
+}
 
 /**
  * @param {CanvasRenderingContext2D} context
@@ -73,10 +82,6 @@ export function drawSpritePartPreview(context, avatar, partId, type) {
     drawPreviewSkin(context, avatar.face.color);
   }
 
-  const previewContext = previewCanvas.getContext("2d");
-  if (!previewContext) {
-    throw new Error("Avatar sprite preview canvas context unavailable");
-  }
   previewContext.clearRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
   const previewAvatar = {
     ...avatar,
@@ -132,10 +137,7 @@ function getPreviewScale(partId, bounds) {
   const cachedScale = sharedPreviewScales.get(partId);
   if (cachedScale) return cachedScale;
 
-  const context = boundsCanvas.getContext("2d");
-  if (!context) {
-    throw new Error("Avatar sprite bounds canvas context unavailable");
-  }
+  const context = boundsContext;
   let spriteMaxWidth = 0;
   let spriteMaxHeight = 0;
   const part = AVATAR_SPRITE_PARTS[partId];
@@ -230,7 +232,7 @@ function getPartCenter(partId, type, direction) {
   if (cached) return cached;
 
   const sprite = AVATAR_SPRITE_PARTS[partId].styles[type];
-  const context = getBoundsContext();
+  const context = boundsContext;
   context.clearRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
   drawSpriteBoundsLayers(context, partId, type, sprite);
 
@@ -246,14 +248,6 @@ function getPartCenter(partId, type, direction) {
   };
   spriteCenters.set(id, center);
   return center;
-}
-
-function getBoundsContext() {
-  const context = boundsCanvas.getContext("2d");
-  if (!context) {
-    throw new Error("Avatar sprite bounds canvas context unavailable");
-  }
-  return context;
 }
 
 function drawSpriteBoundsLayers(context, partId, type, sprite) {
@@ -298,10 +292,6 @@ function getSpriteLayerImages(partId, type, role, direction = 0) {
 }
 
 function drawTintedLayer(context, image, color, direction) {
-  const tintContext = tintCanvas.getContext("2d");
-  if (!tintContext) {
-    throw new Error("Avatar sprite tint canvas context unavailable");
-  }
   tintContext.clearRect(0, 0, PIXEL_SIZE, PIXEL_SIZE);
   tintContext.globalCompositeOperation = "source-over";
   tintContext.drawImage(image, 0, 0);
