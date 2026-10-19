@@ -51,7 +51,19 @@ class Modal extends LitElement {
     return /** @type {HTMLDialogElement} */ (this.querySelector("dialog"));
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    // Lit renders only once, so a reconnected modal reopens itself.
+    if (this.hasUpdated) this.open();
+  }
+
   firstUpdated() {
+    this.open();
+  }
+
+  open() {
+    // The first render can run after the owner already removed the modal.
+    if (!this.isConnected) return;
     this.opener = document.activeElement;
     this.dialog.showModal();
     // Without an [autofocus] control, start at the top of the content rather
@@ -62,6 +74,8 @@ class Modal extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    // A removed dialog stays open but is no longer modal; reset it.
+    this.querySelector("dialog")?.close();
     // Removing the focused dialog leaves focus on the body.
     const focusLost =
       !document.activeElement || document.activeElement === document.body;

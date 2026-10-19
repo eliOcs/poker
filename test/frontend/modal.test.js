@@ -39,6 +39,26 @@ describe("phg-modal", () => {
       expect(dialog.getAttribute("aria-label")).to.equal("Test");
     });
 
+    it("tolerates removal before its first render", async () => {
+      const modal = document.createElement("phg-modal");
+      document.body.append(modal);
+      modal.remove();
+
+      await modal.updateComplete;
+
+      expect(modal.querySelector("dialog").open).to.equal(false);
+    });
+
+    it("reopens as a modal when moved in the document", async () => {
+      const element = await fixture(html`<phg-modal title="Test"></phg-modal>`);
+      const parent = element.parentElement;
+
+      element.remove();
+      parent.append(element);
+
+      expect(element.querySelector("dialog").matches(":modal")).to.equal(true);
+    });
+
     it("keeps the close button visible while long content scrolls", async () => {
       const element = await fixture(
         html`<phg-modal
