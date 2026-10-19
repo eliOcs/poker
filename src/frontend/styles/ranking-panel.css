@@ -6,9 +6,15 @@
   }
 
   .ranking-heading .tooltip {
+    left: 50%;
+    width: min(260px, 55vw);
+    translate: -50% 0;
+  }
+
+  th:last-child .ranking-heading .tooltip {
     right: 0;
     left: auto;
-    width: min(260px, 55vw);
+    translate: none;
   }
 
   .player-name {
