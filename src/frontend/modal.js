@@ -1,4 +1,5 @@
 import { html, LitElement } from "lit";
+import { ICONS } from "./icons.js";
 
 export function renderModal(title, onClose, content) {
   return html`<phg-modal
@@ -63,8 +64,9 @@ class Modal extends LitElement {
             class="modal-close"
             @click=${this.close}
             title="Close"
+            aria-label="Close"
           >
-            ✕
+            ${ICONS.close}
           </button>
         </div>
         <div class="modal-content">${this.content}</div>

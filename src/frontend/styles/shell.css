@@ -115,13 +115,15 @@
     padding: 0;
     margin: calc(-1 * var(--space-md));
     color: var(--color-fg-muted);
-    font: inherit;
-    font-size: 24px;
-    line-height: 1;
     cursor: pointer;
     background: none;
     border: 0;
     place-items: center;
+  }
+
+  .modal-close svg {
+    width: 16px;
+    height: 16px;
   }
 
   .modal-close:hover {
