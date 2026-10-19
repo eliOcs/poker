@@ -266,11 +266,11 @@
   transform: none;
 }
 
-.settings-content > input {
+:is(.settings-content, .sign-in-content) > input {
   margin-bottom: var(--space-lg);
 }
 
-.settings-content > label,
+:is(.settings-content, .sign-in-content) > label,
 .settings-content legend {
   display: block;
   margin-bottom: var(--space-md);
@@ -278,15 +278,19 @@
   font-size: var(--font-sm);
 }
 
-.sign-in-content label {
-  display: block;
-  margin-bottom: 0;
+.sign-in-content {
+  min-width: min(420px, 100%);
+}
+
+.sign-in-intro {
+  margin: 0 0 var(--space-lg);
   color: var(--color-fg-medium);
   font-size: var(--font-sm);
+  line-height: 1.8;
 }
 
 .sign-in-switch {
-  margin: var(--space-md) 0 0;
+  margin: var(--space-lg) 0 0;
   color: var(--color-fg-medium);
   font-size: var(--font-sm);
   text-align: center;

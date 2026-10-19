@@ -435,6 +435,25 @@ const GAME_TEST_CASES = {
         saveProfileSettings() {},
       },
     ),
+  "game-sign-up-modal": () =>
+    gameView(
+      createGame({
+        seats: [
+          createPlayer("You", {
+            isCurrentPlayer: true,
+            stack: 5000,
+          }),
+          createPlayer("Alice", { stack: 3000 }),
+          ...emptySeats(7),
+        ],
+      }),
+      {
+        user: { id: "player-you", name: "You", settings: {} },
+        _modal: "sign-up",
+        closeProfileSignUp() {},
+        openProfileSignIn() {},
+      },
+    ),
 };
 
 // Merge all test cases

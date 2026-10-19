@@ -35,16 +35,3 @@ phg-app .auth-status-card p {
   font-size: var(--font-sm);
   line-height: 1.8;
 }
-
-phg-app .sign-in-content {
-  display: grid;
-  gap: var(--space-md);
-  min-width: min(420px, 100%);
-}
-
-phg-app .sign-in-intro {
-  margin: 0 0 var(--space-md);
-  color: var(--color-fg-medium);
-  font-size: var(--font-sm);
-  line-height: 1.8;
-}

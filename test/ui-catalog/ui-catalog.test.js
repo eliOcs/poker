@@ -84,6 +84,7 @@ const TEST_CASES = [
   "game-hand-rankings-modal",
   "game-tournament-levels-modal",
   "game-settings-modal",
+  "game-sign-up-modal",
 
   // Email states
   "email-sign-in",
