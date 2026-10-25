@@ -149,8 +149,9 @@ open items:
 Ideas for an engine that is cheaper to run and good enough for recreational
 play:
 
-- **Fewer training iterations.** Compare 10M, 30M and 100M iterations against
-  a 200M baseline: fallback rate, win rate against `caller`, and memory.
+- **Training iterations.** Compare 10M, 30M and 100M iterations against a
+  200M baseline: fallback rate, strength and memory. Measured up to 100M; see
+  findings.
 - **Fewer card buckets.** For example 8 instead of 12, which means fewer
   infosets.
 - **Keep the compact `pluribus` bet menu.** It is the default, and the
@@ -162,7 +163,11 @@ play:
   With memory mapping, only the pages actually used stay resident.
 - **Precomputed card-bucket tables.** These avoid repeated equity
   calculations. The engine already has a `bucket-table` command for training.
-  Check whether serving can use the table too.
+  Check whether serving can use the table too. So far it is not needed for
+  speed: a bucket miss costs a few milliseconds of Monte Carlo once, then is
+  cached. The caches are bounded only by a 30M-entry cap, and river tables
+  by the roughly 134k canonical boards. A long-running server should cap
+  them lower, or memory-map the table like the strategies.
 - **Configurable bot strength.** For example a temperature on the strategy
   mix, or blueprints with different numbers of iterations.
 
@@ -182,6 +187,55 @@ iteration blueprint. ARM64 numbers are still to come.
   at p99, including the pipe round trip. Extrapolated, the 200M blueprint
   needs about 10 GB of RSS, which makes the compact serving format the main
   lever for hosting cost.
+- **The compact format removes memory as a constraint.** `compact` exports
+  the strategies sorted by infoset into blocks of 64 records:
+  - Each key stores only the part that differs from the previous key.
+  - Probabilities are quantized to bytes that sum to 255.
+  - A dense index of each block's first key lets a lookup binary-search the
+    blocks, then scan one.
+
+  The 20M blueprint shrinks from a 1.86 GB file and 4.5 GB of RSS to a
+  364 MB file, about 7.7 bytes per infoset, in 35 s. It is memory-mapped,
+  so `serve` is ready at once with 12 MB resident.
+
+  To simulate a small instance, `serve` ran in a container capped at 64 MB,
+  with page cache included and the file evicted beforehand. 3,000 hands
+  read in only about 55 MB of the file. Decisions took 0.09 ms at p50 and
+  0.9 ms at p99, with a worst case of 16 ms on local NVMe. EBS reads are
+  slower, but still far below what an instant bot can take.
+
+  Quantization costs nothing measurable. Playing the compact bot against
+  the hash-map version in paired matches gave −5 ±11 mbb/hand at 20M
+  iterations and +3 ±9 at 100M.
+
+  Keys sort by card bucket before history, so the preflop infosets that
+  serve about 92% of decisions are scattered through the file. Putting the
+  street first would group them, should the working set ever matter.
+
+- **More iterations pay off, because serving size barely grows.** All runs
+  used the same bucket table, on 12 cores, with training capped at 27 GB:
+
+  | Iterations | train time | train peak | stored infosets | compact file | unseen flop/turn/river | vs a 100M field (mbb/hand) |
+  | ---------- | ---------- | ---------- | --------------- | ------------ | ---------------------- | -------------------------- |
+  | 10M        | 36 s       | 12.2 GB    | 34.4M           | 266 MB       | 15% / 47% / 85%        | −2407 ±78                  |
+  | 20M        | 59 s       | 13.8 GB    | 47.3M           | 364 MB       | 6% / 26% / 57%         | −1730 ±74                  |
+  | 30M        | 90 s       | 22.4 GB    | 54.8M           | 420 MB       | 5% / 16% / 41%         | −990 ±69                   |
+  | 50M        | 159 s      | 23.8 GB    | 67.4M           | 515 MB       | 3% / 5% / 15%          | −607 ±66                   |
+  | 100M       | 365 s      | 25.6 GB    | 84.1M           | 639 MB       | 0.7% / 1.7% / 3.9%     | (field)                    |
+
+  Unseen rates come from 3,000 self-play hands at 100 BB. The last column
+  plays each bot as hero in a field of the 100M bot, paired against the 100M
+  bot in the same seat. A second 20M run with another seed scored −1590 ±73,
+  so training luck moves results by about 150 mbb/hand.
+
+  Ten times the iterations makes the served file only 2.4 times larger. The
+  strength curve has not flattened by 50M, and the postflop fallbacks that
+  make bots look passive nearly disappear by 100M. Serving cost therefore
+  hardly limits training; the training machine does. The 100M peak of
+  25.6 GB is the most a 32 GB machine can take, so 200M (the engine's
+  reference run) needs rented hardware. The depth results above used 20M
+  bots, so they compare undertrained bots with one another.
+
 - **The shadow must always be 100 BB deep.** The first fork kept each
   shadow stack at the real depth, capped at 100 BB. In self-play,
   check/call fallbacks then reached 74–99% postflop at 40, 150 and 250 BB.
