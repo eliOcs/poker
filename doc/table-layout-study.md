@@ -6,7 +6,7 @@ CSS Grid to describe seat placement and fit the composition to the actual space
 remaining after navigation and controls.
 
 This records the initial study and implementation proposal. The resulting shared
-layout is documented in [frontend.md](frontend.md).
+layout is documented in [the frontend README](../src/frontend/README.md#table-layout).
 
 The evidence comes from the public PokerStars Replayer browser bundles, browser
 inspection of the supplied hand, and measurements of our UI catalog in Chromium.

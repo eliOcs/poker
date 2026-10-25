@@ -1,226 +1,143 @@
-# Poker Home Games
+# Pluton Poker
 
-A web-based Texas Hold'em poker game with real-time multiplayer support.
+Texas Hold'em for home games, played in the browser in real time: cash games,
+Sit & Go and multi-table tournaments, hand histories and replays, pixel-art
+avatars, and a preflop trainer. Live at [plutonpoker.com](https://plutonpoker.com).
 
-## Quick Start
+This README is the entry point for humans and AI agents alike. Documentation
+explains the architecture and the reasons behind it; for specifics, read the
+code. Each area has its own README next to its code (see
+[Where things live](#where-things-live)).
 
-### Prerequisites
+## Quick start
 
-- Node.js 24+
+Requires Node.js 24+ and Git LFS (UI catalog baselines are LFS files).
 
-### Setup
+```bash
+npm install            # also points Git at the shared hooks in .githooks/
+cp .env.example .env
+npm start              # http://localhost:3000, restarts on backend changes
+```
 
-1. **Install dependencies**
+Locally, sign-in emails are written to `EMAIL_SINK_DIR` as JSON files instead
+of being sent through AWS SES. To play against bots, keep the server running,
+run `npm run test:game` (`-- --help` lists table size and bot count) and open
+the printed URL.
 
-   ```bash
-   npm install
-   ```
+## Principles
 
-2. **Create environment file**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-3. **Start the server**
-
-   ```bash
-   npm start
-   ```
-
-4. **Open in browser**
-   Navigate to http://localhost:3000
+- **Backend authority.** Every rule, timer and shuffle runs on the server. The
+  browser sends intents and renders the view it receives. Clients never
+  receive information they should not see, such as opponents' cards, so they
+  cannot cheat by inspecting it, and the rules are testable without a browser.
+- **Single instance, vertical scaling.** One Node process keeps all live games
+  in memory and stores data in SQLite and files on the instance disk. A
+  home-game site does not need a second machine. Without distributed state,
+  whole classes of bugs and operational work never come up. Scale the machine
+  up, not out.
+- **No build step, few dependencies.** Plain ES modules run as written in Node
+  and in the browser, where Lit is loaded through an import map. Native APIs
+  come first (`node:test`, `node:sqlite`, `crypto`). The code you read is the
+  code that runs, with no toolchain in between. Only current Node and evergreen
+  browsers are supported, so there are no polyfills.
+- **Types without compilation.** JavaScript is annotated with JSDoc and checked
+  by TypeScript. Model the domain so that illegal states are unrepresentable;
+  see [Domain types](doc/domain-types.md).
+- **Validate at boundaries, trust internally.** HTTP bodies, WebSocket
+  messages, files and database rows are validated where they enter. Inside,
+  static analysis carries the guarantees, so values are not re-checked.
+  Invalid internal state fails loudly instead of being silently ignored
+  ([review rule](scripts/review/rules.md)).
+- **Data and functions over classes.** State is plain objects, behavior is
+  functions over them, and mutations happen in few places. Composition beats
+  conditionals.
+- **Open record formats.** Hands are stored as
+  [Open Hand History](https://hh-specs.handhistory.org/) and tournaments as
+  [Open Tournament Summary](https://ts-specs.handhistory.org/), so the records
+  work with other poker tools and outlive this code.
+- **Money is integer cents.** Amounts are integers (`Cents`) to avoid
+  floating-point rounding in pots and splits. Conversion to dollars happens
+  only at the edges: UI formatting and the OHH/OTS files.
+- **Test behavior, not implementation.** Mock only at system edges. A refactor
+  that breaks tests without changing behavior shows the tests were wrong. See
+  [test/README.md](test/README.md).
+- **Pragmatic over perfect.** The simplest thing that works. Complexity costs
+  more than hardware.
 
 ## Architecture
 
-### Philosophy
+```
+Browser: Lit single-page app (src/frontend)
+   │  HTTP: pages, assets, JSON APIs (sessions, settings, history, lessons)
+   │  WebSocket: player intents up, per-player state down
+   ▼
+Node process (src/backend)
+   ├── in memory: live games and tournaments, cached users, sign-in tokens
+   ├── data/poker.db (SQLite): users and an index of who played where
+   └── data/*.ohh, data/*.ots: hand histories and tournament summaries
+```
 
-- **Pragmatic over perfect** — Simple solutions that work, no over-engineering
-- **Modern runtime only** — Targets latest Node.js (24+) and modern browsers (no polyfills)
-- **Minimal dependencies** — Use native APIs when possible (e.g., `node:test`, `crypto`)
-- **Backend authority** — All game logic runs server-side; frontend is a thin rendering layer
-- **Validate at boundaries, trust internally** — Runtime validation at system edges; static analysis internally
+A player action travels over the WebSocket. The server validates it, mutates
+the game, builds a separate view for every connected player, and pushes those
+views. A one-second server tick drives everything time-based: action clocks,
+countdowns, blind levels and runouts. The browser holds no game logic beyond
+presentation, which is why reconnecting or reloading always shows the correct
+state.
 
-### Tech Stack
+Hand history files are the system of record for play. SQLite holds accounts
+and lookup indices. Idle games are evicted from memory. After an eviction or a
+restart, a cash game or Sit & Go is rebuilt from its history file the next time
+someone connects to it.
 
-- **Backend**: Node.js with native ES modules, HTTP, WebSocket (`ws`)
-- **Frontend**: Lit web components installed via npm (no build step, served via importmap)
-- **Protocol**: WebSocket for real-time bidirectional communication
-- **Testing**: Node.js test runner, web-test-runner, Playwright
+## Where things live
 
-### Detailed Documentation
-
-- [Backend](doc/backend.md) — Communication model, game state, patterns, currency convention
-- [Frontend](doc/frontend.md) — Components, development workflow, UI catalog
-- [Avatars](doc/avatar.md) — Configuration, persistence, rendering, and sprite workflow
-- [Infrastructure](doc/infrastructure.md) — Server setup, deployment, storage, secrets
-- [AGENTS.md](AGENTS.md) — Full project context for AI assistants and contributors
+| Path                                             | What                                                                                                                                                          |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [src/backend](src/backend/README.md)             | Server, sessions, persistence, tournaments, lessons, logging                                                                                                  |
+| [src/backend/poker](src/backend/poker/README.md) | Poker rules, game engine, hand history                                                                                                                        |
+| [src/frontend](src/frontend/README.md)           | Lit UI: routing, table layout, styling                                                                                                                        |
+| `src/shared`                                     | Imported by both sides: routes, stakes, tournament structure, avatar schema                                                                                   |
+| [test](test/README.md)                           | Test strategy and suites                                                                                                                                      |
+| [test/ui-catalog](test/ui-catalog/README.md)     | Visual regression screenshots                                                                                                                                 |
+| [doc](doc/)                                      | Cross-cutting topics: [avatars](doc/avatar.md), [preflop lessons](doc/learn.md), [domain types](doc/domain-types.md), [infrastructure](doc/infrastructure.md) |
+| [scripts](scripts/)                              | Dev and ops tools                                                                                                                                             |
+| `config/`, `terraform/`, `Dockerfile`            | Deployment; see [infrastructure](doc/infrastructure.md)                                                                                                       |
 
 ## Development
 
-`npm run typecheck` uses the TypeScript 7 native compiler (`tsc`), installed as
-`@typescript/native`. The `typescript` dependency aliases `@typescript/typescript6`
-to provide the compiler API required by ESLint. This follows Microsoft's
+All commands are npm scripts in [package.json](package.json). The ones you
+need daily:
+
+```bash
+npm start              # dev server with --watch
+npm test               # backend + frontend unit tests
+npm run test:e2e       # Playwright end-to-end tests
+npm run fix            # Prettier + ESLint/Stylelint autofix
+npm run validate       # everything below; also the pre-commit hook
+```
+
+`npm run validate` runs formatting, linting, type checking, Knip (unused
+files, exports and dependencies), jscpd (duplication), dependency-cruiser
+(architectural rules: no cycles, no orphans, the frontend never imports the
+backend), unit tests, the e2e smoke test, the UI catalog in Docker, and
+`npm run review`. Docker must be running. The review step sends uncommitted
+changes to the Codex CLI and checks them against
+[semantic review rules](scripts/review/rules.md) that linters cannot express.
+CI runs the same checks except duplication, dependency rules and the review,
+and it runs the UI catalog natively on Ubuntu instead of in Docker.
+
+Type checking uses the TypeScript 7 native compiler (`@typescript/native`). The
+`typescript` dependency is an alias for TypeScript 6 because ESLint still needs
+its compiler API. This follows Microsoft's
 [side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6-0).
 
-`npm run knip` checks for unused files, dependencies, and exports, and runs in
-both validation and CI. `knip.jsonc` configures test and browser entry points,
-browser URL imports, and external system tools. Exports used within their own
-module are allowed; fully unused declarations are still reported.
+`npm run deps` regenerates the dependency graphs in `doc/deps-*.svg`.
 
-### Commands
+### Conventions
 
-```bash
-npm start                       # Run dev server with file watching
-npm test                        # Run all tests (backend + frontend)
-npm run test:backend            # Run backend unit tests (node:test)
-npm run test:frontend           # Run frontend component tests (web-test-runner)
-npm run test:e2e                # Run end-to-end tests (Playwright)
-npm run test:e2e:smoke          # Run the main end-to-end smoke flow
-npm run test:game               # Play with 5 randomized bots at a 6-seat table
-npm run test:ui-catalog         # Run visual regression tests
-npm run test:ui-catalog:update  # Regenerate UI catalog screenshots (Linux)
-npm run test:ui-catalog:docker  # Run visual checks in Docker (local)
-npm run test:ui-catalog:update:docker # Regenerate shared screenshots in Docker
-npm run test:coverage           # Run backend + frontend coverage
-npm run test:e2e:coverage       # Run end-to-end JavaScript + CSS coverage
-npm run duplicates              # Check for code duplication (jscpd)
-npm run knip                    # Find unused files, dependencies, and exports
-npm run lint                    # ESLint + Stylelint (check only)
-npm run format                  # Prettier (check only)
-npm run review                  # Semantic review of uncommitted changes
-npm run fix                     # Auto-fix format + lint issues
-npm run typecheck               # TypeScript type checking
-npm run validate                # Run all checks (including Knip and tests)
-npm run deps                    # Generate dependency graphs (doc/deps-*.svg)
-npm run deps:check              # Validate architectural dependency rules
-npm run avatar:sprites          # Export avatar sprites from the source XCF
-```
-
-E2E coverage writes JavaScript HTML to `coverage/e2e/index.html` and CSS HTML to
-`coverage/e2e/css/index.html`, with a CSS JSON summary alongside it. CSS usage is
-merged across recorded pages and tests; all frontend stylesheets are included,
-including unloaded files. Coverage records rule usage, not individual declaration
-effectiveness. Uncovered text can include comments, whitespace, or styles for
-untested viewports and interactions; it does not prove that a style is dead.
-Use `npm run test:e2e:coverage:report` to regenerate reports from an existing run
-without changing source files. Coverage runs require their own server on port 8444.
-
-E2E tests must call `checkpointCoverage(page)` before `goto`, `reload`, `goBack`,
-or `goForward`, and `stopCoverage(page)` before closing a recorded page early.
-Checkpoints save JS and CSS usage before navigation destroys the old document's
-counters, then restart collection before the next document loads. The reports
-merge these segments. Browser-driven full navigations also need a checkpoint
-before the action that triggers them; collecting after navigation is too late.
-
-### Visual checks
-
-For local checks on Linux and macOS, use Docker so installed fonts and local
-Fontconfig preferences do not change the screenshots:
-
-```bash
-npm run test:ui-catalog:docker
-npm run test:ui-catalog:update:docker
-```
-
-Docker must be running. `npm run validate` and the pre-commit hook use Docker
-for visual checks automatically, without an environment override.
-
-CI runs `npm run test:ui-catalog` directly on Ubuntu 24.04 with Node 24 and
-Chromium installed using `npx playwright install --with-deps chromium`. The CI
-visual job does not build or run a Docker image. Keep its Ubuntu release aligned
-with the Playwright image in `Dockerfile.ui-catalog`. The image also installs
-`fonts-dejavu-core` to match the runner's system fonts; these affect control text
-and fallback font metrics even when the page uses our bundled web font.
-
-The native commands remain available for local debugging. Use Docker for shared
-baseline updates and comparisons.
-
-### Playing against bots
-
-Start the server with `npm start`, then run `npm run test:game`. Open the game
-URL printed by the script to join. Bots have randomized avatars and occasionally
-chat and emote. Each bot uses the same notification-driven action queue as the
-stress test, including automatic buy-ins when its stack runs out.
-
-```bash
-npm run test:game -- --table-size 9 --players 8
-npm run test:game -- --table-size 2 --players 1
-npm run test:game -- --players 3
-npm run test:game -- --help
-```
-
-Table sizes are 2, 6, or 9. The bot count can be 1 through the table size;
-defaults remain 6 seats and 5 bots. With one bot, join an open seat and click
-Start Game. Press Ctrl+C to stop the bots.
-
-### Git Hooks
-
-A shared pre-commit hook runs `npm run validate` before each commit. It is configured automatically via the `prepare` script when running `npm install` (sets `core.hooksPath` to `.githooks/`).
-
-### Environment (.env)
-
-```
-DOMAIN=localhost
-PORT=3000
-APP_ORIGIN=http://localhost:3000
-EMAIL_SINK_DIR=./data/emails
-```
-
-Local sign-in emails are written as JSON files in `EMAIL_SINK_DIR` when running
-`npm start`. Remove that setting when you intentionally want to send through
-AWS SES.
-
-## Deployment
-
-Deployment uses [Kamal](https://kamal-deploy.org/) for zero-downtime deploys:
-
-- **Registry**: AWS ECR (eu-central-1)
-- **Server**: ARM64 (Graviton) instance
-- **SSL**: Let's Encrypt via Kamal proxy
-- **Domain**: plutonpoker.com
-
-### Prerequisites
-
-- [Kamal](https://kamal-deploy.org/docs/installation/) installed (`gem install kamal`)
-- AWS CLI configured with ECR access
-- SSH key for the deployment server (`~/.ssh/poker_ed25519`)
-
-### Commands
-
-```bash
-kamal deploy                   # Full deploy (build, push, deploy)
-kamal redeploy                 # Deploy without rebuilding
-kamal rollback                 # Rollback to previous version
-kamal app logs                 # View application logs
-kamal app exec -i 'sh'         # Shell into container
-```
-
-### Secrets
-
-The `.kamal/secrets` file generates the ECR password:
-
-```bash
-KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1 --profile personal)
-```
-
-ECR tokens expire after 12 hours. If deploy fails with auth errors, the token has expired.
-
-## Dependencies
-
-**Runtime** (keep minimal):
-
-- `ws` — WebSocket server
-- `lit` — Web components
-- `@lit/task` — Async Lit task controller
-- `@aws-sdk/client-ses` — Passwordless sign-in email delivery
-
-**Dev**:
-
-- `eslint`, `prettier`, `stylelint` — Code quality
-- `typescript` — Type checking (no compilation)
-- `@open-wc/testing`, `web-test-runner` — Frontend testing
-- `@playwright/test` — E2E and visual regression testing
-- `c8` — Backend and E2E coverage reporting
-- `jscpd` — Code duplication detection
-- `dependency-cruiser` — Dependency rules and graph generation
+- Prettier defaults; ES modules; `camelCase`; a file is named after its
+  primary export; tests mirror the source tree.
+- Keep docs at the right level. Explain structure and decisions in the README
+  closest to the code they concern. Do not restate what the code already says:
+  file listings, field lists and constants go stale. When a change alters an
+  architectural decision, update the README that describes it.

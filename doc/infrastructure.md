@@ -1,104 +1,77 @@
 # Infrastructure
 
-## Philosophy
+One ARM64 (Graviton) EC2 instance in `eu-central-1` runs one container at
+[plutonpoker.com](https://plutonpoker.com). There is no load balancer, no
+managed database and no cluster. The app keeps live games in memory and its
+data on local disk ([why](../README.md#principles)). Hardware is cheaper than
+the complexity of running more than one instance.
 
-Single instance, vertical scaling. One server, one process — no clustering, no load balancers, no distributed systems. SQLite for persistence, files stored directly on the instance disk. Scale the machine up, not out. Complexity costs more than hardware.
+| Concern       | Choice                                                    | Defined in                                  |
+| ------------- | --------------------------------------------------------- | ------------------------------------------- |
+| AWS resources | Terraform                                                 | `terraform/`                                |
+| Deploys       | [Kamal](https://kamal-deploy.org/), image in ECR          | `config/deploy.yml`, `Dockerfile`           |
+| TLS           | Let's Encrypt, terminated by kamal-proxy                  | `config/deploy.yml`                         |
+| Email         | AWS SES for sign-in links                                 | `terraform/main.tf`, `src/backend/email.js` |
+| CI / CD       | GitHub Actions: checks on push, deploy on manual dispatch | `.github/workflows/`                        |
 
-## Server
+## Provisioning
 
-- **Provider**: AWS (eu-central-1)
-- **Instance**: ARM64 (Graviton)
-- **Domain**: plutonpoker.com
-- **SSL**: Let's Encrypt via Kamal proxy
+Terraform manages the instance, an Elastic IP, Route 53 records (IPv4 and
+IPv6), the ECR repository, the SES domain identity (DKIM and a custom MAIL
+FROM domain), and IAM roles. One of those roles lets GitHub Actions deploy
+through OIDC, so the repository stores no long-lived AWS keys. Copy
+`terraform.tfvars.example` to `terraform.tfvars` before applying. The state
+file is local and ignored by Git.
 
-## Storage
+**Data** lives on a separate EBS volume, not the root disk. That separation
+lets the instance be replaced without touching the data. The volume is mounted
+at `/opt/poker/data`, which the container sees as `/app/data`. Docker waits for
+the mount, so the app never starts against an empty directory. Data Lifecycle
+Manager takes weekly snapshots of the volume and keeps the last four.
 
-- **Database**: SQLite — single-file, zero-config, embedded in the application process
-- **Files**: Stored directly on the instance disk (hand histories, etc.)
+**Monitoring.** A scheduled Lambda requests the site over HTTPS. When the site
+goes down or recovers, an email goes out through SNS. CloudWatch alarms
+(collected by the CloudWatch agent) also watch instance status checks, memory,
+disk, CPU and EBS saturation. These alarms have no actions configured, so they
+appear only in the CloudWatch console.
 
-## AWS SES
+## Deploying
 
-AWS Simple Email Service (SES) is used to send passwordless sign-in emails.
-
-- **Region**: `eu-central-1` (overridable via `AWS_REGION` env var)
-- **From address**: `no-reply@plutonpoker.com` (overridable via `SES_FROM_EMAIL` env var)
-- **Implementation**: `src/backend/email.js` — wraps `@aws-sdk/client-ses`
-
-**Development fallback**: Set `EMAIL_SINK_DIR` to a directory path and emails are written as JSON files instead of being sent via SES. Useful for local development and preview environments.
-
-## Deployment
-
-Deployment uses [Kamal](https://kamal-deploy.org/) for zero-downtime deploys with Docker containers pushed to AWS ECR.
-
-### Configuration Files
-
-```
-config/deploy.yml    # Kamal configuration
-.kamal/secrets       # Registry credentials (not committed)
-Dockerfile           # Container build
-```
-
-### Deploy Commands
-
-```bash
-kamal deploy         # Full deploy (build, push, deploy)
-kamal redeploy       # Deploy without rebuilding
-kamal rollback       # Rollback to previous version
-```
-
-### Logs & Debugging
+Deploys normally run from the **Deploy to Production** workflow, which builds
+the ARM64 image, pushes it to ECR and runs `kamal deploy`. To deploy from a
+workstation instead, you need Kamal, the AWS CLI with the `personal` profile,
+and the server's SSH key (`~/.ssh/poker_ed25519`):
 
 ```bash
-kamal app logs              # View application logs
-kamal app logs -f           # Follow logs
-kamal app exec -i 'sh'      # Shell into container
-kamal proxy logs            # View proxy logs
+kamal deploy          # build, push, deploy with zero downtime
+kamal rollback        # previous version
+kamal app logs -f     # follow application logs
+kamal app exec -i sh  # shell in the running container
 ```
 
-Application containers use Docker's `json-file` logging driver with ten 100 MB
-files, limiting retained logs to approximately 1 GB per container. Kamal limits
-the proxy container log to 10 MB separately.
+`.kamal/secrets` fetches a registry password with `aws ecr get-login-password`.
+ECR passwords expire after 12 hours, so an authentication error usually means
+yours has expired.
 
-Logging options apply when a container is created. Roll out a policy change with
-`kamal deploy` (or `kamal redeploy` for an already-published image), then verify
-the running application container:
+Logs are capped at about 1 GB per container (`json-file`, ten 100 MB files) so
+that they cannot fill the disk. Logging options apply only when a container is
+created, so a change to them takes effect on the next deploy. To debug a hand
+from production, use `npm run debug:prod:game` or the `debug-production-hand`
+skill in `.claude/skills/`.
 
-```bash
-kamal server exec 'docker inspect --format "{{json .HostConfig.LogConfig}}" $(docker ps -q --filter label=service=poker --filter label=role=web | head -n 1)'
-```
+## Configuration
 
-The expected application log configuration is `json-file` with `max-size=100m`
-and `max-file=10`. No Docker daemon restart or manual log deletion is required
-for this per-container policy.
+Environment variables, read at startup:
 
-### Infrastructure Management
-
-```bash
-kamal setup          # First-time server setup
-kamal proxy reboot   # Restart proxy (SSL issues)
-kamal app boot       # Start app without deploying
-```
-
-### Secrets
-
-The `.kamal/secrets` file generates the ECR password:
-
-```bash
-KAMAL_REGISTRY_PASSWORD=$(aws ecr get-login-password --region eu-central-1 --profile personal)
-```
-
-ECR tokens expire after 12 hours. If deploy fails with auth errors, the token has expired.
-
-### Environment Variables
-
-| Variable              | Description                                              |
-| --------------------- | -------------------------------------------------------- |
-| `NODE_ENV`            | `production` in deployed containers                      |
-| `APP_ORIGIN`          | Public origin (e.g. `https://plutonpoker.com`)           |
-| `DOMAIN`              | Domain name                                              |
-| `PORT`                | HTTP port (default `3000`)                               |
-| `LOG_FORMAT`          | `json` for structured logging in production              |
-| `TRUSTED_PROXY_CIDRS` | CIDRs to trust for `X-Forwarded-For`                     |
-| `AWS_REGION`          | AWS region for SES (default `eu-central-1`)              |
-| `SES_FROM_EMAIL`      | Sender address for sign-in emails                        |
-| `EMAIL_SINK_DIR`      | If set, writes emails to disk instead of sending via SES |
+| Variable                                          | Purpose                                                |
+| ------------------------------------------------- | ------------------------------------------------------ |
+| `PORT`, `HOST`                                    | Listen address                                         |
+| `APP_ORIGIN`, `DOMAIN`                            | Public origin, used in sign-in links                   |
+| `DATA_DIR`                                        | SQLite and history files (default `data`)              |
+| `LOG_FORMAT`, `LOG_LEVEL`                         | `json` in production                                   |
+| `TRUSTED_PROXY_CIDRS`                             | Proxies whose `X-Forwarded-For` is trusted             |
+| `AWS_REGION`, `SES_FROM_EMAIL`                    | Email delivery                                         |
+| `EMAIL_SINK_DIR`                                  | Write emails to files instead of SES (local and tests) |
+| `EMAIL_SIGN_IN_TTL_MINUTES`                       | Sign-in link lifetime                                  |
+| `GAME_INACTIVITY_MS`, `GAME_EVICTION_INTERVAL_MS` | When idle games leave memory                           |
+| `RNG_SEED`, `TIMER_SPEED`                         | Deterministic deals and faster clocks, for tests only  |
