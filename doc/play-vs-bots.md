@@ -124,34 +124,31 @@ better.
 
 ## Spike
 
-These questions must be answered before building, and the answers decide the
-open items:
+These questions had to be answered before building. The answers are in
+[Findings](#findings-so-far).
 
 1. Build the fork for ARM64 (Graviton) and add the `serve` protocol.
-2. Train a six-handed blueprint (about an hour on 16 cores for 200M
-   iterations, on rented hardware) and record its file size.
-3. Measure resident memory with the blueprint loaded normally and
-   memory-mapped, plus load time and per-decision latency, on candidate
-   Graviton instances. Production is a t4g.micro with 1 GB RAM, and the 200M
-   blueprint is about 4.3 GB.
-4. Check that the bots beat the engine's `caller` baseline. Watch for
-   obviously absurd play at stack depths other than 100 BB and when facing
+   _Done._
+2. Train a six-handed blueprint and record its size. _Done, up to 800M
+   iterations._
+3. Measure memory, load time and per-decision latency on Graviton. _Done._
+4. Check play quality, including stack depths other than 100 BB and
    off-menu sizes. The bar is "plausible to a recreational player", not
-   solver precision.
-5. Decide the instance type, and whether the cost justifies it. Otherwise,
-   find the smallest abstraction that still plays well.
+   solver precision. _Done with paired matches between blueprints instead
+   of the `caller` baseline. Off-menu sizes are still unmeasured._
+5. Decide the instance type. _The current t4g.micro serves even the 800M
+   blueprint, so no upgrade is needed._
 6. Decide packaging: where the fork lives, whether the Dockerfile gets a
    multi-stage Rust build, and where the blueprint is stored (it never goes
-   in this repository).
+   in this repository). _Open._
 
 ### Experiments
 
 Ideas for an engine that is cheaper to run and good enough for recreational
 play:
 
-- **Training iterations.** Compare 10M, 30M and 100M iterations against a
-  200M baseline: fallback rate, strength and memory. Measured up to 100M; see
-  findings.
+- **Training iterations.** Compare iteration counts by fallback rate,
+  strength and memory. Measured from 10M to 800M; see findings.
 - **Fewer card buckets.** For example 8 instead of 12, which means fewer
   infosets.
 - **Keep the compact `pluribus` bet menu.** It is the default, and the
@@ -173,8 +170,10 @@ play:
 
 ### Findings so far
 
-These are from a development machine (12 x86 cores, 32 GB) and a 20M
-iteration blueprint. ARM64 numbers are still to come.
+Most early findings come from a development machine (12 x86 cores, 32 GB)
+and a 20M iteration blueprint. Training from 200M up ran on an m7g.8xlarge
+(32 Graviton cores, 128 GB). Hosting was measured on a t4g.micro like
+production's.
 
 - **Training is cheaper than the engine's logs suggested.** With a bucket
   table (215 s to build, 152 MB), 20M iterations took 34 s at 592k
@@ -233,8 +232,59 @@ iteration blueprint. ARM64 numbers are still to come.
   make bots look passive nearly disappear by 100M. Serving cost therefore
   hardly limits training; the training machine does. The 100M peak of
   25.6 GB is the most a 32 GB machine can take, so 200M (the engine's
-  reference run) needs rented hardware. The depth results above used 20M
+  reference run) needs rented hardware. The depth results below used 20M
   bots, so they compare undertrained bots with one another.
+
+- **On Graviton, strength keeps improving up to 800M, while size levels
+  off.**
+
+  | Iterations | train time (32 cores) | train peak | stored infosets | compact file | vs an 800M field (mbb/hand, 4M hands) |
+  | ---------- | --------------------- | ---------- | --------------- | ------------ | ------------------------------------- |
+  | 100M       | (on x86)              | 25.6 GB    | 84.1M           | 639 MB       | −811 ±28                              |
+  | 200M       | 11 min                | 42.3 GB    | 99.4M           | 754 MB       | −424 ±25                              |
+  | 400M       | 28 min                | 44.4 GB    | 118.5M          | 896 MB       | −166 ±22                              |
+  | 800M       | 66 min                | 46.9 GB    | 140.3M          | 1,056 MB     | (field)                               |
+
+  A second 200M run with another seed scored −461 ±25. At this depth of
+  training, luck moves results by only about 40 mbb/hand, against about 150
+  at 20M, so the gaps above are real.
+
+  Each doubling of iterations still more than halves the gap to 800M. At
+  400M and up, check/call fallbacks are below 0.5% on every street. The
+  better-trained bots also see more flops: they shove preflop less often.
+  The 800M run cost about $1.70 of compute, and the whole Graviton session
+  about $4. Quantization still costs
+  nothing measurable at 800M: 0 ±4 mbb/hand.
+
+- **Bucketing is identical on x86 and ARM64.** A bucket table rebuilt on
+  Graviton has the same configuration, centroids and all 15,246,842
+  buckets as the x86 one; only the order of entries differs. Blueprints and
+  tables are portable between architectures. The engine builds on ARM64 in
+  under a minute, and its tests pass there.
+
+- **The current t4g.micro can host the bots, and the blueprint lives on
+  disk.** The micro (1 GB, EBS gp3) ran `serve` next to a process holding
+  550 MB, about production's peak memory use (40% on average, 58% at peak
+  over a week). Page caches were dropped before each run. `serve` itself
+  used 6–10 MB of anonymous memory, even after 30,000 hands with mixed
+  stack depths. The rest is page cache, which the kernel evicts first under
+  memory pressure.
+
+  | Blueprint | beside 550 MB: p50 / p99 / max | `serve` capped at 48 MB: p50 / p99 / max |
+  | --------- | ------------------------------ | ---------------------------------------- |
+  | 100M      | 0.08 / 2.4 / 16.5 ms           |                                          |
+  | 400M      | 0.08 / 2.4 / 17.9 ms           | 0.31 / 5.0 / 17.7 ms                     |
+  | 800M      | 0.08 / 2.5 / 18.6 ms           | 0.30 / 5.3 / 18.9 ms                     |
+
+  The 48 MB cap includes page cache, so most lookups read from EBS: at
+  worst a few pages of the index and one block. Bots may take up to a
+  second to decide, so this leaves headroom for blueprints far larger than
+  RAM. Serving size is now bounded by disk, at about $0.08 per GB-month.
+  Training cost and returns in strength bound it instead. That reopens
+  richer abstractions (finer bet menus for human off-menu sizes, more card
+  buckets) and blueprints for several stack depths. If lookups ever need to
+  be faster, loading the 24 MB block index into RAM would cap them at one
+  disk read.
 
 - **The shadow must always be 100 BB deep.** The first fork kept each
   shadow stack at the real depth, capped at 100 BB. In self-play,
@@ -301,5 +351,7 @@ improve on it later.
 - **Licensing.** The code is MIT-licensed, but pretrained blueprints are
   commercial, so we must train and keep our own. Upstream improvements reach
   the public repository only after a delay of about a year.
-- **Hosting cost.** The blueprint's memory footprint may force a
-  several-times larger instance for a single feature.
+- **Hosting cost.** _Resolved._ The memory-mapped compact format runs on the
+  current t4g.micro, next to the app. It shares the instance's memory, so
+  the app's growth eats into the blueprint's page cache. That costs latency
+  rather than failing, and latency has ample headroom.
