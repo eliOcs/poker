@@ -233,6 +233,14 @@ resource "aws_instance" "poker" {
 
     mount -a
     chown 1001:1001 "$MOUNT"
+
+    # Prevent containers from starting before the persistent data volume is mounted.
+    mkdir -p /etc/systemd/system/docker.service.d
+    cat > /etc/systemd/system/docker.service.d/poker-data-mount.conf <<'DOCKER'
+    [Unit]
+    RequiresMountsFor=/opt/poker/data
+    DOCKER
+    systemctl daemon-reload
   EOF
 
   root_block_device {
@@ -302,10 +310,6 @@ resource "aws_dlm_lifecycle_policy" "data_backup" {
 
       retain_rule {
         count = 4
-      }
-
-      tags_to_add = {
-        Name = "poker-data-weekly-backup"
       }
     }
   }
