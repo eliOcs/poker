@@ -166,8 +166,10 @@ These questions had to be answered before building. The answers are in
 3. Measure memory, load time and per-decision latency on Graviton. _Done._
 4. Check play quality, including stack depths other than 100 BB and
    off-menu sizes. The bar is "plausible to a recreational player", not
-   solver precision. _Done with paired matches between blueprints instead
-   of the `caller` baseline, and `offmenu-match` for off-menu sizes._
+   solver precision. _Done with paired matches between blueprints,
+   `offmenu-match` for off-menu sizes, best-response probes, scripted
+   opponents that play like human leaks, and a comparison with the lesson
+   charts._
 5. Decide the instance type. _The current t4g.micro serves even the 800M
    blueprint, so no upgrade is needed._
 6. Decide packaging: where the fork lives, whether the Dockerfile gets a
@@ -385,14 +387,60 @@ production's.
   leaks. The resizer also mistranslates its own bets, so a deliberate
   exploiter could win somewhat more.
 
+- **The bots are far less exploitable than folding every hand.** No
+  strategy can be proven correct here, so the evidence is a lower bound on
+  exploitability. `lbr` and `br` play an opponent that knows the bot's exact
+  strategy and picks the most profitable reply, heads-up between the blinds
+  of the six-handed game, with the bot's own bet sizes plus all-in. At 800M
+  iterations `br` wins +387 ±118 mbb/hand over 100k hands, and `lbr` +75
+  ±266 over 20k. Folding every hand loses 750. For scale, the strongest
+  abstraction-based bots of 2016 (Act1, Slumbot, Hyperborean) lost
+  2,597–4,020 mbb/hand to a comparable probe, and DeepStack, which searches in
+  real time, could not be exploited at all
+  ([Lisý and Bowling 2017](https://arxiv.org/abs/1612.07547),
+  [DeepStack](https://arxiv.org/abs/1701.01724)). Those were heads-up at
+  200 BB, where exploits pay more, and they faced off-menu sizes too, so
+  the comparison places the bots in a league rather than ranking them.
+
+- **The bots beat every simple exploit.** `eval --duplicate` seats the bot
+  against five scripted opponents and plays every deal from each seat, so
+  card luck cancels (1M hands each, mbb/hand):
+
+  | Opponents                        | bot's winrate |
+  | -------------------------------- | ------------- |
+  | Calling station                  | +3,356 ±143   |
+  | Maniac, always the largest raise | +3,235 ±196   |
+  | Shover, always all-in            | +3,340 ±165   |
+  | Push-fold with the top 20%       | +243 ±55      |
+  | Nit playing the top 6%           | +228 ±25      |
+
+  The exploits a curious human tries first are punished hardest. Push-fold
+  players and nits fold most hands, so less is there to win, but
+  23–24 BB/100 is still a very large winrate; a strong human regular wins about 5.
+
+- **Preflop the bots play a different style from the lesson charts.** The
+  55 charts from _Modern Poker Theory_ were compared with the blueprint's
+  preflop strategy through `serve`, using the histories the lessons replay.
+  Range sizes are close (LJ opens 17% in both, BTN 40% against 43%), and no
+  lookup fell back to check/call. But the bots limp strong hands from early
+  position (AA 29%, 88 48% from LJ), mix four open sizes, and play the
+  rarely reached 4-bet spots erratically. Only 1–38% of hands would pass
+  the lessons' own grading, depending on the spot. More training improves
+  everything except the limping, and dropping actions below 10% removes
+  most of the small noise. This is not a verdict on quality: the charts
+  come from a different solver that assumed rake, and preflop ranges only
+  make sense together with the postflop play that follows them, so a book
+  preflop grafted onto blueprint postflop would not be a fair opponent
+  either.
+
 ## Accepted tradeoffs
 
 These are known weaknesses that the MVP accepts. Each comes with the way to
 improve on it later.
 
-- **Engine strength.** The engine's own README reports a leak of about
-  +900 mbb/hand in six-handed play with search on, and a loss to Slumbot
-  heads-up. Blueprint-only play is weaker still. _Later:_ enable real-time
+- **Engine strength.** The bots are exploitable, by at least +387 mbb/hand
+  between the blinds (see [Findings](#findings-so-far)), though far less
+  than folding every hand. _Later:_ enable real-time
   search, and pull in upstream improvements as they are published. GPU
   training could make bigger abstractions affordable: GPU-CFR
   ([arXiv:2609.11923](https://arxiv.org/abs/2609.11923)) compiles the game
@@ -405,6 +453,11 @@ improve on it later.
   stacks are played as if 100 BB deep. A bot never puts more than 100 BB into
   a hand by choice. Past that it checks and calls, which a human can value-bet
   against. _Later:_ a deeper blueprint, chosen by effective stack, or search.
+- **Bots and lessons teach different preflop styles.** A learner may see a
+  bot limp aces from early position, which the preflop drill never does.
+  _Later:_ drop low-probability actions if paired matches show it costs no
+  strength, or average the preflop strategy over late iterations only, as
+  the postflop already is.
 - **Off-menu bet sizes.** Free sizing is translated onto the engine's menu,
   and without search an unusual size gets the strategy for a nearby size.
   Small bets just under a menu size win about 0.05 BB per hand against the
