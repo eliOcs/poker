@@ -258,7 +258,7 @@ resource "aws_instance" "poker" {
 # Persistent data volume (survives instance replacement)
 resource "aws_ebs_volume" "data" {
   availability_zone = aws_default_subnet.default.availability_zone
-  size              = 5
+  size              = 10
   type              = "gp3"
   encrypted         = true
 
