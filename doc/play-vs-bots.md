@@ -1,7 +1,7 @@
 # Play vs bots (spec)
 
-Status: draft spec, not implemented. The first step is a spike (see
-[Spike](#spike)) that decides hosting and packaging.
+Status: draft spec, not implemented. The spike (see [Spike](#spike)) is
+complete: it settled hosting, packaging and bot quality.
 
 `/learn` gains a second section next to the preflop drill: a six-handed cash
 table where the learner plays against five bots whose decisions come from the
@@ -61,8 +61,11 @@ better.
   as in the lessons.
 - **Free bet sizing, with action translation.** The learner gets the same
   slider and presets as at live tables. Any amount that is not on the engine's
-  bet menu is mapped onto the nearest menu sizes (pseudo-harmonic mapping)
-  before the bots consult the blueprint.
+  bet menu is mapped onto the log-nearest menu size before the bots consult
+  the blueprint. Randomized (pseudo-harmonic) mapping would be harder to
+  exploit, but it would need a seed in every request, and arbitrary sizes
+  measured as costing the human rather than the bots (see
+  [Findings](#findings-so-far)).
 - **Blueprint only, with no real-time search.** Decisions are table lookups:
   cheap enough for a small instance and fast enough for instant bots. The cost
   is weaker play off the menu and at stack depths other than 100 BB.
@@ -78,9 +81,16 @@ better.
   trails private development by about a year, and it does not accept pull
   requests. We fork it and add one long-lived command that loads the blueprint
   once and answers decision requests as JSON lines over stdin/stdout.
-- **A child process, not an addon.** Node spawns the engine as a subprocess.
-  The Node side needs no native build step, and an engine crash cannot take the
-  game server down with it.
+- **A child process, not an addon or a separate service.** Node spawns the
+  engine as a subprocess. The Node side needs no native build step, and an
+  engine crash cannot take the game server down with it. A separate container
+  (a Kamal accessory) would add a network protocol, supervision outside the
+  app and a second deploy procedure, for no extra isolation. The engine does
+  restart on every app deploy, but that is free: the memory-mapped blueprint
+  is ready at once, its pages stay in the kernel's page cache, and requests
+  are stateless. A service pays off only if the engine ever needs its own
+  machine, for example for real-time search. The line-based protocol can then
+  move behind a socket.
 - **The server stays the authority.** Each request carries only what that bot
   may know: its own cards, the board, starting stacks, the button and the
   hand's actions so far. Translation of bet sizes and stacks happens in the
@@ -118,6 +128,28 @@ better.
   healthy, the Learn entry is disabled with a notice. If the engine crashes
   mid-hand, the server restarts it, and the waiting bot checks if it can,
   otherwise folds.
+- **The fork is a public GitHub repository under `eliOcs`.** MIT allows it,
+  and a public repository needs no tokens to fetch and gets free ARM64 CI
+  runners. Vendoring Rust into this repository would bring in a toolchain.
+- **The fork's CI builds a static binary, and the Dockerfile downloads it.**
+  A tagged release in the fork builds an ARM64 binary for the musl target
+  inside `rust:alpine`. Statically linked musl has no runtime dependencies,
+  so it runs in `node:24-alpine` or any other image, and no libc version can
+  mismatch. The Dockerfile pins it with `ADD --checksum`. A multi-stage Rust
+  build here would run under QEMU, because deploys build ARM64 on x86, and
+  an LTO build under emulation takes tens of minutes on every cache miss. An
+  x86_64 binary in the same release serves local development.
+- **The blueprint lives on the data volume.** It is about 1 GB, too big for
+  the image and never in this repository. Each blueprint has its own file
+  name under `/opt/poker/data/engine/`, an env var in `config/deploy.yml`
+  selects one, and a script uploads new ones with rsync. A deploy can switch
+  blueprints and a rollback can switch back. The weekly snapshots back it up,
+  and it survives instance replacement. The volume grows from 5 to 10 GB, so
+  that two blueprints fit next to the data during a swap. Blueprints change
+  rarely, so S3 is not needed until training is automated. The compact
+  format carries a version header that `serve` checks at startup. A binary
+  and blueprint that do not match never report healthy, so the feature stays
+  hidden.
 - **Tests stop at the subprocess.** The engine process is the system edge.
   Unit and e2e tests use a fake engine that speaks the same protocol, and an
   optional contract test runs against the real binary when it is available.
@@ -135,12 +167,13 @@ These questions had to be answered before building. The answers are in
 4. Check play quality, including stack depths other than 100 BB and
    off-menu sizes. The bar is "plausible to a recreational player", not
    solver precision. _Done with paired matches between blueprints instead
-   of the `caller` baseline. Off-menu sizes are still unmeasured._
+   of the `caller` baseline, and `offmenu-match` for off-menu sizes._
 5. Decide the instance type. _The current t4g.micro serves even the 800M
    blueprint, so no upgrade is needed._
 6. Decide packaging: where the fork lives, whether the Dockerfile gets a
    multi-stage Rust build, and where the blueprint is stored (it never goes
-   in this repository). _Open._
+   in this repository). _Decided; see
+   [Engine integration](#engine-integration)._
 
 ### Experiments
 
@@ -160,9 +193,9 @@ play:
   With memory mapping, only the pages actually used stay resident.
 - **Precomputed card-bucket tables.** These avoid repeated equity
   calculations. The engine already has a `bucket-table` command for training.
-  Check whether serving can use the table too. So far it is not needed for
-  speed: a bucket miss costs a few milliseconds of Monte Carlo once, then is
-  cached. The caches are bounded only by a 30M-entry cap, and river tables
+  Serving does not need it: lazy bucketing now computes exactly the
+  table's values (see findings), and it is fast enough. A bucket miss costs
+  a few milliseconds of Monte Carlo once, then is cached. The caches are bounded only by a 30M-entry cap, and river tables
   by the roughly 134k canonical boards. A long-running server should cap
   them lower, or memory-map the table like the strategies.
 - **Configurable bot strength.** For example a temperature on the strategy
@@ -317,9 +350,40 @@ production's.
   same 20M iterations leave it less trained. These are bot-against-bot
   edges, far smaller than what a recreational player typically leaks.
 
-- **Card bucketing is deterministic.** It is seeded from the cards, not the
-  caller, so the same state always gets the same strategy. That makes
-  Node-side sampling the only randomness, as the design requires.
+- **Serving bucketed differently from training until fixed.** The bucket
+  table that training uses holds one value per suit-isomorphic class,
+  computed from its canonical representative. Without the table, as in
+  `serve`, a cache miss ran the Monte Carlo on whichever suit variant
+  arrived first, seeded from the canonical key, and stored that for the
+  whole class. `bucket-check` found 12.4% of flop hands and 7.5% of turn
+  hands in a different bucket from training. Which variant came first also
+  depended on thread timing and on earlier requests. The fork now runs the
+  Monte Carlo on the representative, which matches the table on every hand
+  checked and makes bucketing deterministic. The same state always gets the
+  same strategy, so Node-side sampling is the only randomness, as the design
+  requires. The matches above ran before the fix. Every side of a pairing
+  shared the skew, so the comparisons stand, but all the bots will play
+  slightly better than measured.
+
+- **Off-menu bet sizes cost the bots little.** `offmenu-match` lets one
+  seat play the 800M blueprint but resize every bet it makes, against a
+  field of the same blueprint that translates sizes to the log-nearest menu
+  size. Every deal is played twice with the same cards, once resized and
+  once on the menu.
+
+  | Resizing (4M hands)                           | gain for the resizer (mbb/hand) |
+  | --------------------------------------------- | ------------------------------- |
+  | Largest amount that still maps to the size    | −97 ±6                          |
+  | Smallest amount that still maps to the size   | +43 ±1                          |
+  | Log-uniform between the two (arbitrary sizes) | −13 ±4                          |
+  | Every bet a min-raise                         | +59 ±13                         |
+
+  Arbitrary sizes cost the human, not the bots. Betting just under a menu
+  size, or min-betting, wins 0.04–0.06 BB per hand, because the bots treat
+  the bet as larger and fold a little too often. That is about the gap
+  between two 800M training runs and a fraction of a recreational player's
+  leaks. The resizer also mistranslates its own bets, so a deliberate
+  exploiter could win somewhat more.
 
 ## Accepted tradeoffs
 
@@ -343,7 +407,8 @@ improve on it later.
   against. _Later:_ a deeper blueprint, chosen by effective stack, or search.
 - **Off-menu bet sizes.** Free sizing is translated onto the engine's menu,
   and without search an unusual size gets the strategy for a nearby size.
-  _Later:_ a finer bet menu (`wide`, `pluribus-fine-pre`), better
+  Small bets just under a menu size win about 0.05 BB per hand against the
+  bots. _Later:_ a finer bet menu (`wide`, `pluribus-fine-pre`), randomized
   translation, or search.
 
 ## Risks
