@@ -9,6 +9,7 @@ import { renderLearnFeedback } from "./learn-feedback.js";
 import { renderTooltip } from "./tooltip.js";
 import { renderInfoBar } from "./game-info-bar.js";
 import { renderBetPresets } from "./bet-presets.js";
+import { getChipDenomination } from "../shared/stakes.js";
 import {
   startLearnReplay,
   stopLearnReplay,
@@ -239,8 +240,11 @@ export class Learn extends LitElement {
     const hero = /** @type {import("../backend/learn-types.js").LearnSeat} */ (
       scenario.seats.find((seat) => seat.isCurrentPlayer)
     );
-    const min = scenario.minRaiseTo;
-    const max = hero.stack + hero.bet;
+    const range = {
+      min: scenario.minRaiseTo,
+      max: hero.stack + hero.bet,
+      step: getChipDenomination(small, big),
+    };
     /** @param {Cents} amount */
     const setAmount = (amount) => {
       this.betAmount = amount;
@@ -255,17 +259,16 @@ export class Learn extends LitElement {
             myBet: hero.bet,
             totalPot: scenario.seats.reduce((sum, seat) => sum + seat.bet, 0),
           },
-          min,
-          max,
+          range,
           setAmount,
         )}
         <phg-currency-slider
           .label=${this.displayBigBlind ? "Raise to (BB)" : "Raise to ($)"}
           .displayBigBlind=${this.displayBigBlind}
           .value=${this.betAmount}
-          .min=${min}
-          .max=${max}
-          .step=${small}
+          .min=${range.min}
+          .max=${range.max}
+          .step=${range.step}
           @value-changed=${(
             /** @type {CustomEvent<{value: number}>} */ event,
           ) => {

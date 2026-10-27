@@ -1,5 +1,6 @@
 import * as Seat from "./seat.js";
 import { nextIndex, findIndex } from "./circular-array.js";
+import { getChipDenomination } from "../../shared/stakes.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -127,6 +128,16 @@ export function getNextToAct(game) {
  */
 export function getMinBet(game) {
   return game.blinds.big;
+}
+
+/**
+ * Gets the table's smallest chip. Bets and raises move in multiples of it,
+ * except the minimum and an all-in.
+ * @param {Game} game
+ * @returns {Cents}
+ */
+export function getBetStep(game) {
+  return getChipDenomination(game.blinds.small, game.blinds.big);
 }
 
 /**

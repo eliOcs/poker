@@ -16,6 +16,10 @@ describe("pot bet presets", () => {
     const game = createMockGameAtFlop();
     game.blinds = { small: 250, big: 500 };
     game.seats[0].stack = 50000;
+    // The server's step at these blinds: the 50 chip, the largest dividing both
+    game.seats[0].actions = game.seats[0].actions.map((action) =>
+      action.action === "bet" ? { ...action, step: 50 } : action,
+    );
     game.seats[1].bet = 1250;
     element.game = game;
     element.user = {
@@ -92,7 +96,7 @@ describe("pot bet presets", () => {
       game.seats[0].actions = [
         { action: "fold" },
         { action: "call", amount: 5000 },
-        { action: "raise", min: 15000, max: 105000 },
+        { action: "raise", min: 15000, max: 105000, step: 50 },
       ];
       game.seats[1].bet = 10000;
       // Folded chips still belong to the pot.
@@ -156,7 +160,7 @@ describe("pot bet presets", () => {
     game.seats[0].actions = [
       { action: "fold" },
       { action: "call", amount: 5000 },
-      { action: "raise", min: 15000, max: 100000 },
+      { action: "raise", min: 15000, max: 100000, step: 50 },
     ];
     game.seats[1].bet = 10000;
     element.game = game;
@@ -172,7 +176,7 @@ describe("pot bet presets", () => {
     expect(panel.betAmount).to.equal(30000);
     findButtonByExactText(panel, "+").click();
     await panel.updateComplete;
-    expect(panel.betAmount).to.equal(30250);
+    expect(panel.betAmount).to.equal(30050);
     findButtonByExactText(panel, "-").click();
     await panel.updateComplete;
     expect(panel.betAmount).to.equal(30000);

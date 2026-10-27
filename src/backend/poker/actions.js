@@ -2,6 +2,7 @@ import * as Seat from "./seat.js";
 import * as Deck from "./deck.js";
 import * as Betting from "./betting.js";
 import { invalidateCallPreActions } from "./pre-action.js";
+import { snapToStep } from "../../shared/snap-to-step.js";
 import * as ActionClock from "./action-clock.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
@@ -184,6 +185,21 @@ export function check(game, { seat }) {
 }
 
 /**
+ * Rejects amounts the table's chips cannot make: between the bounds, a bet or
+ * raise must be a multiple of the smallest chip.
+ * @param {Game} game
+ * @param {Cents} amount
+ * @param {Cents} min
+ * @param {Cents} max
+ */
+function assertChipAmount(game, amount, min, max) {
+  const step = Betting.getBetStep(game);
+  if (snapToStep(amount, { min, max, step }) !== amount) {
+    throw new Error(`amount must be a multiple of ${step}`);
+  }
+}
+
+/**
  * Player places a bet
  * @param {Game} game
  * @param {{ seat: number, amount: Cents }} options
@@ -199,6 +215,7 @@ export function bet(game, { seat, amount }) {
   if (amount > seatObj.stack) {
     throw new Error("bet cannot exceed stack");
   }
+  assertChipAmount(game, amount, game.blinds.big, seatObj.stack);
 
   seatObj.stack -= amount;
   seatObj.bet = amount;
@@ -261,6 +278,7 @@ export function raise(game, { seat, amount }) {
   if (totalToAdd > seatObj.stack) {
     throw new Error("raise cannot exceed stack");
   }
+  assertChipAmount(game, amount, minRaise, seatObj.bet + seatObj.stack);
 
   const raiseSize = amount - game.hand.currentBet;
 

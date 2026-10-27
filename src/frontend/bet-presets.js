@@ -1,15 +1,23 @@
 import { html } from "lit";
+import { snapToStep } from "../shared/snap-to-step.js";
 
+/** @typedef {import("../shared/snap-to-step.js").StepRange} StepRange */
+
+/**
+ * @param {any} panel
+ * @param {StepRange} range - The amounts the server accepts
+ * @param {(value: number) => void} [onChange]
+ */
 export function renderBetPresets(
   panel,
-  min,
-  max,
+  range,
   onChange = (value) => {
     panel.betAmount = value;
   },
 ) {
   // Raise amounts are street totals. Call first, then raise by a fraction
   // of all chips in play, including that call and folded players' bets.
+  const { min, max } = range;
   const toCall = Math.max(0, panel.currentBet - panel.myBet);
   const potAfterCall = panel.totalPot + toCall;
   const presets =
@@ -38,7 +46,7 @@ export function renderBetPresets(
             class="button button--muted button--full-width"
             ?disabled=${raw > max}
             @click=${() => {
-              onChange(Math.max(min, Math.min(max, raw)));
+              onChange(snapToStep(raw, range));
             }}
           >
             <span class="pixel-label">${label}</span>

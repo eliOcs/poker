@@ -1,11 +1,13 @@
 import { html, LitElement } from "lit";
 import { formatDollars, formatAmount } from "./currency.js";
+import { snapToStep } from "../shared/snap-to-step.js";
 
 /**
  * Reusable currency slider component
  * - Displays dollars or big blinds in the number input
  * - Uses cents internally for precise calculations
- * - Emits value-changed events with cents
+ * - Emits value-changed events with cents, snapped to the bounds or a
+ *   multiple of the step between them
  * - Labeled handles display action frequencies in whole percentage points
  */
 class CurrencySlider extends LitElement {
@@ -18,7 +20,7 @@ class CurrencySlider extends LitElement {
       value: { type: Number }, // Current value in cents
       min: { type: Number }, // Min value in cents
       max: { type: Number }, // Max value in cents
-      step: { type: Number }, // Step for +/- buttons in cents
+      step: { type: Number }, // Values between min and max are multiples of it
       label: { type: String },
       handleLabel: { type: String },
       variant: { type: String },
@@ -38,16 +40,12 @@ class CurrencySlider extends LitElement {
     this.displayBigBlind = 0;
   }
 
-  _clamp(value) {
-    return Math.max(this.min, Math.min(this.max, value));
-  }
-
   _emitChange(newValue) {
-    const clamped = this._clamp(newValue);
-    if (clamped !== this.value) {
+    const snapped = snapToStep(newValue, this);
+    if (snapped !== this.value) {
       this.dispatchEvent(
         new CustomEvent("value-changed", {
-          detail: { value: clamped },
+          detail: { value: snapped },
           bubbles: true,
         }),
       );
@@ -63,10 +61,8 @@ class CurrencySlider extends LitElement {
   _handleRangeInput(e) {
     // Range is in cents
     let cents = parseInt(e.target.value) || 0;
-    // Snap to max if within one step (handles non-divisible max values)
-    if (this.max - cents < this.step && cents !== this.max) {
-      cents = this.max;
-    }
+    // The range's grid starts at min, so it stops short of a max off the grid
+    if (this.max - cents < this.step) cents = this.max;
     this._emitChange(cents);
   }
 

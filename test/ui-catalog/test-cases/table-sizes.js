@@ -34,7 +34,7 @@ function riverPlayer(index, hero, size) {
       ? [
           { action: "fold" },
           { action: "call", amount: 75 },
-          { action: "raise", min: 12650, max: 123456 + index * 100 },
+          { action: "raise", min: 12650, max: 123456 + index * 100, step: 25 },
         ]
       : [],
   });

@@ -1,5 +1,6 @@
 import { html } from "lit";
 import { renderBetPresets } from "./bet-presets.js";
+import { snapToStep } from "../shared/snap-to-step.js";
 import { formatCurrency, formatAmount } from "./currency.js";
 import { renderRebuyDecision } from "./action-panel-rebuy.js";
 import { ICONS } from "./icons.js";
@@ -179,21 +180,20 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
 
 function renderBettingSlider(panel, actionMap, betAction) {
   const isBet = (actionMap.bet ?? undefined) !== undefined;
-  const min = betAction.min;
-  const max = betAction.max;
+  const { min, max, step } = betAction;
   if (panel.betAmount < min) panel.betAmount = min;
-  const currentValue = Math.max(min, Math.min(max, panel.betAmount));
+  const currentValue = snapToStep(panel.betAmount, betAction);
   const isAllIn = currentValue >= max;
 
   return html`
     <div class="betting-panel">
-      ${renderBetPresets(panel, min, max)}
+      ${renderBetPresets(panel, betAction)}
       <phg-currency-slider
         .displayBigBlind=${panel.displayBigBlind}
         .value=${currentValue}
         .min=${min}
         .max=${max}
-        .step=${panel.smallBlind}
+        .step=${step}
         @value-changed=${(e) => (panel.betAmount = e.detail.value)}
       ></phg-currency-slider>
       <div class="action-row">

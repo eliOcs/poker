@@ -177,6 +177,13 @@ describe("Player View - Betting Actions", function () {
         raiseAction,
         "raise should be available when at least one opponent can respond",
       );
+      // The client snaps amounts with the step the server enforces.
+      assert.deepStrictEqual(raiseAction, {
+        action: "raise",
+        min: 1000,
+        max: 2000,
+        step: 25,
+      });
     });
   });
 });

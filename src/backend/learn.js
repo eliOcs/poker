@@ -10,6 +10,8 @@ import {
   LEARN_POSITIONS as POSITIONS,
 } from "./learn-situations.js";
 import { createLearnReplay } from "./learn-replay.js";
+import { getChipDenomination } from "../shared/stakes.js";
+import { snapToStep } from "../shared/snap-to-step.js";
 
 /**
  * @typedef {import('./learn-types.js').HandClass} HandClass
@@ -19,6 +21,9 @@ import { createLearnReplay } from "./learn-replay.js";
  * @typedef {import('./learn-types.js').LearnSituation} LearnSituation
  * @typedef {import('./poker/deck.js').Card} Card
  */
+
+/** Lessons show a $2.50/$5 table; raise sizes move in its smallest chip. */
+const LEARN_BLINDS = { small: 250, big: 500 };
 
 // Keep the reference chart keys internally; use familiar table labels for learners.
 const POSITION_LABELS = {
@@ -136,7 +141,7 @@ export function createLearnScenario() {
         : situation.history,
     currentBet: situation.currentBet * 500,
     minRaiseTo: situation.minRaiseTo * 500,
-    blinds: { small: 250, big: 500 },
+    blinds: LEARN_BLINDS,
     replay: [],
     seats: POSITIONS.map((name, i) => {
       const folded = hasFolded(name, i, hero, situation);
@@ -261,9 +266,28 @@ function validateRaiseTo(raiseTo, minimum) {
     typeof raiseTo !== "number" ||
     !Number.isFinite(raiseTo) ||
     raiseTo < minimum ||
-    raiseTo > 100
+    raiseTo > 100 ||
+    !isChipAmount(raiseTo, minimum)
   )
     invalidStrategy();
+}
+
+/**
+ * Whether the table's chips can make a raise size, as at a live table.
+ * @param {import('./learn-types.js').BigBlinds} raiseTo
+ * @param {import('./learn-types.js').BigBlinds} minimum
+ */
+function isChipAmount(raiseTo, minimum) {
+  const { small, big } = LEARN_BLINDS;
+  const cents = Math.round(raiseTo * big);
+  const range = {
+    min: minimum * big,
+    max: 100 * big,
+    step: getChipDenomination(small, big),
+  };
+  return (
+    Math.abs(cents / big - raiseTo) < 1e-9 && snapToStep(cents, range) === cents
+  );
 }
 
 /**

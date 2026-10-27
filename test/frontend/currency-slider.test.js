@@ -216,6 +216,30 @@ describe("phg-currency-slider", () => {
     expect(emittedValue).to.equal(100000);
   });
 
+  it("snaps typed amounts to the step, keeping odd bounds reachable", async () => {
+    // A raise after a short all-in: the minimum is off the 50-cent grid
+    const el = await fixture(
+      html`<phg-currency-slider
+        .value=${137}
+        .min=${137}
+        .max=${1013}
+        .step=${50}
+      ></phg-currency-slider>`,
+    );
+    const emitted = [];
+    el.addEventListener("value-changed", (e) => {
+      emitted.push(e.detail.value);
+      el.value = e.detail.value;
+    });
+    const numberInput = el.querySelector('input[type="number"]');
+    for (const typed of ["6.37", "1.40", "10.10"]) {
+      numberInput.value = typed;
+      numberInput.dispatchEvent(new Event("input"));
+    }
+
+    expect(emitted).to.deep.equal([650, 137, 1013]);
+  });
+
   it("snaps slider to max when max is not divisible by step", async () => {
     // Simulates a player with $12,125 stack and $100 step
     const el = await fixture(

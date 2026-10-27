@@ -254,7 +254,7 @@ test("grades exact mixes green, nearby mixes close, and wrong actions or sizes i
     [[0, 40, 60], 4, "close"],
     [[0, 55, 45], 4, "close"],
     [[0, 40, 60], 2, "close"],
-    [[0, 40, 60], 4.01, "incorrect"],
+    [[0, 40, 60], 4.1, "incorrect"],
   ]) {
     const result = evaluateLearnStrategy({ id: "SB-AA", frequencies, raiseTo });
     assert.equal(result.grade, grade);

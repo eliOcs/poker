@@ -203,7 +203,7 @@ const GAME_TEST_CASES = {
             actions: [
               { action: "fold" },
               { action: "call", amount: 50 },
-              { action: "raise", min: 100, max: 5000 },
+              { action: "raise", min: 100, max: 5000, step: 25 },
             ],
             handRank: "A High",
           }),
@@ -281,7 +281,7 @@ const GAME_TEST_CASES = {
             cards: ["As", "Ks"],
             actions: [
               { action: "check" },
-              { action: "bet", min: 50, max: 4950 },
+              { action: "bet", min: 50, max: 4950, step: 25 },
             ],
             handRank: "Two Pair, Aces and Kings",
           }),
@@ -311,7 +311,7 @@ const GAME_TEST_CASES = {
             actions: [
               { action: "fold" },
               { action: "call", amount: 200 },
-              { action: "raise", min: 400, max: 4800 },
+              { action: "raise", min: 400, max: 4800, step: 25 },
             ],
             handRank: "Flush Draw",
           }),

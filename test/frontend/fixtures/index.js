@@ -120,7 +120,7 @@ export function createMockGameWithPlayers() {
         ...mockOccupiedSeat,
         actions: [
           { action: "call", amount: 2500 }, // $25 in cents
-          { action: "raise", min: 10000, max: 100000 }, // $100-$1,000 in cents
+          { action: "raise", min: 10000, max: 100000, step: 2500 }, // $100-$1,000 in cents
           { action: "allIn", amount: 100000 }, // $1,000 in cents
           { action: "fold" },
         ],
@@ -146,7 +146,7 @@ export function createMockGameAtFlop() {
         bet: 0,
         actions: [
           { action: "check" },
-          { action: "bet", min: 5000, max: 100000 }, // $50-$1,000 in cents
+          { action: "bet", min: 5000, max: 100000, step: 2500 }, // $50-$1,000 in cents
           { action: "allIn", amount: 100000 }, // $1,000 in cents
         ],
       },

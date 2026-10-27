@@ -388,14 +388,14 @@ describe("Learn strategy flow", () => {
   });
 
   for (const [lesson, min, halfPot, pot, raiseTo] of [
-    [bigBlindScenario("LJ"), 4, 5.25, 8, 10],
-    [bigBlindScenario("LJ", "4BET"), 36, 46.25, 69.5, 100],
-    [bigBlindScenario("HJ"), 4, 5.25, 8, 10],
-    [bigBlindScenario("HJ", "4BET"), 36, 46.25, 69.5, 100],
-    [bigBlindScenario("CO"), 4, 5.25, 8, 10],
-    [bigBlindScenario("CO", "4BET"), 36, 46.25, 69.5, 100],
-    [bigBlindScenario("BTN"), 4, 5.25, 8, 10],
-    [bigBlindScenario("BTN", "4BET"), 36, 46.25, 69.5, 100],
+    [bigBlindScenario("LJ"), 4, 5.3, 8, 10],
+    [bigBlindScenario("LJ", "4BET"), 36, 46.3, 69.5, 100],
+    [bigBlindScenario("HJ"), 4, 5.3, 8, 10],
+    [bigBlindScenario("HJ", "4BET"), 36, 46.3, 69.5, 100],
+    [bigBlindScenario("CO"), 4, 5.3, 8, 10],
+    [bigBlindScenario("CO", "4BET"), 36, 46.3, 69.5, 100],
+    [bigBlindScenario("BTN"), 4, 5.3, 8, 10],
+    [bigBlindScenario("BTN", "4BET"), 36, 46.3, 69.5, 100],
     [bigBlindScenario("SB"), 5, 6, 9, 9],
     [bigBlindScenario("SB", "4BET"), 39, 48, 72, 100],
     [bigBlindScenario("SB", "LIMP_RAISE"), 22.5, 26, 39, 28],
@@ -407,34 +407,34 @@ describe("Learn strategy flow", () => {
     [smallBlindScenario("CO", true), 36, 46.5, 70, 100],
     [smallBlindScenario("BTN"), 4, 5.5, 8.5, 10],
     [smallBlindScenario("BTN", true), 36, 46.5, 70, 100],
-    [cutoffScenario("LJ"), 4, 5.75, 9, 8.5],
-    [buttonScenario("LJ"), 4, 5.75, 9, 8.5],
-    [buttonScenario("HJ"), 4, 5.75, 9, 8.5],
-    [buttonScenario("CO"), 4, 5.75, 9, 8.5],
-    [buttonScenario("LJ", true), 37.5, 46.75, 70.5, 100],
-    [buttonScenario("HJ", true), 37.5, 46.75, 70.5, 100],
-    [buttonScenario("CO", true), 37.5, 46.75, 70.5, 100],
-    [cutoffScenario("HJ"), 4, 5.75, 9, 8.5],
-    [cutoffScenario("LJ", true), 37.5, 46.75, 70.5, 100],
-    [cutoffScenario("HJ", true), 37.5, 46.75, 70.5, 100],
-    [hijackScenario(), 4, 5.75, 9, 8.5],
-    [hijackScenario(true), 37.5, 46.75, 70.5, 100],
+    [cutoffScenario("LJ"), 4, 5.8, 9, 8.5],
+    [buttonScenario("LJ"), 4, 5.8, 9, 8.5],
+    [buttonScenario("HJ"), 4, 5.8, 9, 8.5],
+    [buttonScenario("CO"), 4, 5.8, 9, 8.5],
+    [buttonScenario("LJ", true), 37.5, 46.8, 70.5, 100],
+    [buttonScenario("HJ", true), 37.5, 46.8, 70.5, 100],
+    [buttonScenario("CO", true), 37.5, 46.8, 70.5, 100],
+    [cutoffScenario("HJ"), 4, 5.8, 9, 8.5],
+    [cutoffScenario("LJ", true), 37.5, 46.8, 70.5, 100],
+    [cutoffScenario("HJ", true), 37.5, 46.8, 70.5, 100],
+    [hijackScenario(), 4, 5.8, 9, 8.5],
+    [hijackScenario(true), 37.5, 46.8, 70.5, 100],
     [followupScenario(), 6, 7, 10.5, 13],
     [followupScenario(true), 15, 18, 27, 24],
     [openFollowupScenario("BTN", "SB"), 17.5, 20.5, 31, 23],
-    [openFollowupScenario("BTN", "BB"), 17.5, 20.25, 30.5, 23],
-    [openFollowupScenario("CO", "BTN"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("BTN", "BB"), 17.5, 20.3, 30.5, 23],
+    [openFollowupScenario("CO", "BTN"), 14.5, 17.8, 27, 23],
     [openFollowupScenario("CO", "SB"), 17.5, 20.5, 31, 23],
-    [openFollowupScenario("CO", "BB"), 17.5, 20.25, 30.5, 23],
-    [openFollowupScenario("HJ", "CO"), 14.5, 17.75, 27, 23],
-    [openFollowupScenario("HJ", "BTN"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("CO", "BB"), 17.5, 20.3, 30.5, 23],
+    [openFollowupScenario("HJ", "CO"), 14.5, 17.8, 27, 23],
+    [openFollowupScenario("HJ", "BTN"), 14.5, 17.8, 27, 23],
     [openFollowupScenario("HJ", "SB"), 17.5, 20.5, 31, 23],
-    [openFollowupScenario("HJ", "BB"), 17.5, 20.25, 30.5, 23],
-    [openFollowupScenario("LJ", "HJ"), 14.5, 17.75, 27, 23],
-    [openFollowupScenario("LJ", "CO"), 14.5, 17.75, 27, 23],
-    [openFollowupScenario("LJ", "BTN"), 14.5, 17.75, 27, 23],
+    [openFollowupScenario("HJ", "BB"), 17.5, 20.3, 30.5, 23],
+    [openFollowupScenario("LJ", "HJ"), 14.5, 17.8, 27, 23],
+    [openFollowupScenario("LJ", "CO"), 14.5, 17.8, 27, 23],
+    [openFollowupScenario("LJ", "BTN"), 14.5, 17.8, 27, 23],
     [openFollowupScenario("LJ", "SB"), 17.5, 20.5, 31, 23],
-    [openFollowupScenario("LJ", "BB"), 17.5, 20.25, 30.5, 23],
+    [openFollowupScenario("LJ", "BB"), 17.5, 20.3, 30.5, 23],
   ]) {
     it(`supports legal sizing for ${lesson.title}`, async () => {
       const el = await fixture(html`<phg-learn></phg-learn>`);
@@ -446,7 +446,8 @@ describe("Learn strategy flow", () => {
       expect(Number(amount().min)).to.equal(min);
       expect(Number(amount().value)).to.equal(min);
       await button(el, "+");
-      expect(Number(amount().value)).to.equal(min + 0.5);
+      // One chip of 50 at 250/500 blinds is 0.1 BB.
+      expect(Number(amount().value)).to.equal((min * 500 + 50) / 500);
       await button(el, "-");
       expect(Number(amount().value)).to.equal(min);
       expect(

@@ -92,6 +92,26 @@ describe("betting actions", () => {
       );
     });
 
+    it("should throw when the bet is not a multiple of the smallest chip", () => {
+      game.hand.actingSeat = 2;
+      game.hand.currentBet = 0;
+
+      assert.throws(
+        () => Actions.bet(game, { seat: 2, amount: 60 }),
+        /multiple of 25/,
+      );
+    });
+
+    it("should accept an odd stack as a bet of everything", () => {
+      game.hand.actingSeat = 2;
+      game.hand.currentBet = 0;
+      game.seats[2].stack = 1010;
+
+      Actions.bet(game, { seat: 2, amount: 1010 });
+
+      assert.equal(game.seats[2].allIn, true);
+    });
+
     it("should set allIn when betting entire stack", () => {
       game.hand.actingSeat = 2;
       game.hand.currentBet = 0;
@@ -162,6 +182,33 @@ describe("betting actions", () => {
         () => Actions.raise(game, { seat: 2, amount: 120 }),
         /at least/,
       );
+    });
+
+    it("should throw when the raise is not a multiple of the smallest chip", () => {
+      game.hand.actingSeat = 2;
+      game.hand.currentBet = 50;
+      game.hand.lastRaiseSize = 50;
+      game.seats[2].bet = 0;
+
+      assert.throws(
+        () => Actions.raise(game, { seat: 2, amount: 160 }),
+        /multiple of 25/,
+      );
+    });
+
+    it("should allow the minimum raise over an odd short all-in, then whole chips", () => {
+      game.hand.actingSeat = 2;
+      game.hand.currentBet = 137;
+      game.hand.lastRaiseSize = 50;
+      game.seats[2].bet = 0;
+
+      assert.throws(
+        () => Actions.raise(game, { seat: 2, amount: 190 }),
+        /multiple of 25/,
+      );
+      Actions.raise(game, { seat: 2, amount: 187 });
+
+      assert.equal(game.hand.currentBet, 187);
     });
 
     it("should throw when raise exceeds stack", () => {

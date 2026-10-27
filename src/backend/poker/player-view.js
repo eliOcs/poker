@@ -56,6 +56,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {'bet'} action
  * @property {Cents} min
  * @property {Cents} max
+ * @property {Cents} step - Amounts between min and max are multiples of it
  */
 
 /**
@@ -63,6 +64,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {'raise'} action
  * @property {Cents} min
  * @property {Cents} max
+ * @property {Cents} step - Amounts between min and max are multiples of it
  */
 
 /**
@@ -530,6 +532,7 @@ function addAggressiveActions(
       action: "bet",
       min: Math.min(minBet, playerStack),
       max: playerStack,
+      step: Betting.getBetStep(game),
     });
   }
 
@@ -580,6 +583,7 @@ function addRaiseAction(actions, seat, game) {
       action: "raise",
       min: Math.min(minRaise, maxRaise),
       max: maxRaise,
+      step: Betting.getBetStep(game),
     });
   }
 }

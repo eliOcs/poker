@@ -139,7 +139,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             actions: [
               { action: "fold" },
               { action: "call", amount: 200 },
-              { action: "raise", min: 400, max: 4500 },
+              { action: "raise", min: 400, max: 4500, step: 25 },
             ],
             handRank: "Pair of Aces",
           }),
@@ -254,7 +254,7 @@ export const SPECIAL_GAME_TEST_CASES = {
             cards: ["Qh", "Jh"],
             actions: [
               { action: "check" },
-              { action: "bet", min: 50, max: 4900 },
+              { action: "bet", min: 50, max: 4900, step: 25 },
             ],
             handRank: "Q High",
           }),

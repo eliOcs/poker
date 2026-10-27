@@ -319,7 +319,7 @@ describe("phg-action-panel", () => {
           {
             ...mockOccupiedSeat,
             actions: [
-              { action: "raise", min: 10000, max: 100000 },
+              { action: "raise", min: 10000, max: 100000, step: 2500 },
               { action: "fold" },
             ],
           },
@@ -356,7 +356,7 @@ describe("phg-action-panel", () => {
             bet: 0,
             actions: [
               { action: "check" },
-              { action: "bet", min: 5000, max: 100000 },
+              { action: "bet", min: 5000, max: 100000, step: 2500 },
             ],
           },
           { ...mockOpponentSeat, bet: 0 },

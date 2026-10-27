@@ -369,7 +369,7 @@ describe("phg-action-panel", () => {
           {
             ...mockOccupiedSeat,
             actions: [
-              { action: "raise", min: 10000, max: 100000 },
+              { action: "raise", min: 10000, max: 100000, step: 2500 },
               { action: "fold" },
             ],
           },
@@ -404,7 +404,7 @@ describe("phg-action-panel", () => {
           {
             ...mockOccupiedSeat,
             actions: [
-              { action: "raise", min: 10000, max: 100000 },
+              { action: "raise", min: 10000, max: 100000, step: 2500 },
               { action: "fold" },
             ],
           },
@@ -565,7 +565,7 @@ describe("phg-action-panel", () => {
             ...mockOccupiedSeat,
             actions: [
               { action: "call", amount: 5000 }, // $50 in cents
-              { action: "raise", min: 20000, max: 100000 }, // $200-$1,000 in cents
+              { action: "raise", min: 20000, max: 100000, step: 2500 }, // $200-$1,000 in cents
               { action: "fold" },
             ],
           },

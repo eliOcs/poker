@@ -34,7 +34,7 @@ export const ACTION_PANEL_TEST_CASES = {
             actions: [
               { action: "fold" },
               { action: "call", amount: 500 },
-              { action: "raise", min: 500, max: 500 },
+              { action: "raise", min: 500, max: 500, step: 25 },
             ],
             handRank: "Pair of Jacks",
           }),

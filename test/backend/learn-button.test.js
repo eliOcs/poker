@@ -181,6 +181,8 @@ test("BTN feedback uses the actual opener and conditions 4-bets on the earlier o
       ["OPEN", 3.5],
       ["4BET", 37],
       ["4BET", 100.5],
+      // Between chips: the smallest chip at $2.50/$5 is 0.1 BB.
+      ["OPEN", 8.55],
     ])
       assert.throws(
         () =>

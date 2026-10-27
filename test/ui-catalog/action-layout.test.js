@@ -9,7 +9,12 @@ const show = [
   { action: "showBothCards", cards: ["As", "Kd"] },
 ];
 const states = [
-  { actions: [{ action: "check" }, { action: "bet", min: 50, max: 50000 }] },
+  {
+    actions: [
+      { action: "check" },
+      { action: "bet", min: 50, max: 50000, step: 25 },
+    ],
+  },
   {
     actions: [
       { action: "fold" },
