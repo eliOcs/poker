@@ -71,6 +71,7 @@ const routes = {
   "/fonts/press-start-2p.woff2": "src/frontend/fonts/press-start-2p.woff2",
   "/about": "src/frontend/index.html",
   "/avatar": "src/frontend/index.html",
+  "/learn": "src/frontend/index.html",
   "/release-notes": "src/frontend/index.html",
 };
 

@@ -91,14 +91,15 @@ Blind structures adapt to the number of entrants and the chosen speed
 
 ## Lessons
 
-`/learn` is a preflop trainer (`learn*.js`). The server deals a scenario and
-grades the submitted strategy against reference charts in `learn-ranges.json`.
-The answer is revealed only after the submission. Scenarios are stateless
-identifiers: no game, connection or stored progress is involved. The
-pre-decision action sequence also comes from the server as replay snapshots, so
-the browser never derives poker actions or answers itself. The charts come from
-a book; see [Preflop lessons](../../doc/learn.md) for their source, extraction
-and the teaching decisions.
+`/learn` lists two training modes. `/learn/preflop` is a preflop trainer
+(`learn*.js`). The server deals a scenario and grades the submitted strategy
+against reference charts in `learn-ranges.json`. The answer is revealed only
+after the submission. Scenarios are stateless identifiers: no game, connection
+or stored progress is involved. The pre-decision action sequence also comes from
+the server as replay snapshots, so the browser never derives poker actions or
+answers itself. The charts come from a book; see
+[Preflop lessons](../../doc/learn.md) for their source, extraction and the
+teaching decisions.
 
 ## Bot tables
 

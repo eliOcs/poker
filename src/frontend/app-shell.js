@@ -68,6 +68,8 @@ class AppShell extends LitElement {
     const playActive = this.path === "/";
     const aboutActive = this.path === "/about";
     const tournamentsActive = this.path === "/mtt";
+    const learnActive =
+      this.path === "/learn" || this.path.startsWith("/learn/");
     const releaseNotesActive = this.path === "/release-notes";
     const accountActive =
       !!this.user?.id &&
@@ -79,6 +81,7 @@ class AppShell extends LitElement {
           playActive,
           aboutActive,
           tournamentsActive,
+          learnActive,
           releaseNotesActive,
           accountActive,
         });

@@ -101,6 +101,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute("/mtt"),
     spaPageRoute("/about"),
     spaPageRoute("/learn"),
+    spaPageRoute("/learn/preflop"),
     ...createLearnRoutes(),
     spaPageRoute("/learn/bots"),
     spaPageRoute(LIVE_BOTS_ROUTE),

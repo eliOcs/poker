@@ -39,6 +39,7 @@ export function renderAppNavigationDrawer({
   playActive,
   aboutActive = false,
   tournamentsActive = false,
+  learnActive = false,
   releaseNotesActive = false,
   accountActive = false,
 }) {
@@ -53,14 +54,9 @@ export function renderAppNavigationDrawer({
       ${ICONS.tournament}
       <span>Tournaments</span>
     </a>
-    <a class=${drawerItemClass(view.path === "/learn")} href="/learn">
+    <a class=${drawerItemClass(learnActive)} href="/learn">
       ${ICONS.learn}
       <span>Learn</span>
-      <span class="drawer-badge">Beta</span>
-    </a>
-    <a class="drawer-item" href="/learn/bots">
-      ${ICONS.bot}
-      <span>Play bots</span>
       <span class="drawer-badge">Beta</span>
     </a>
     <a class=${drawerItemClass(releaseNotesActive)} href="/release-notes">

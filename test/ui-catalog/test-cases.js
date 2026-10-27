@@ -55,7 +55,7 @@ function avatarMakerView() {
 const GAME_TEST_CASES = {
   "learn-preflop": () =>
     html`<phg-app-shell
-      path="/learn"
+      path="/learn/preflop"
       .content=${html`<phg-learn
         .user=${{
           id: "learn-player",

@@ -1,8 +1,8 @@
 # Preflop lessons
 
-`/learn` teaches six-handed, 100 BB cash-game preflop strategy. The learner
-sees a hand play out to their decision at a normal table, chooses an action
-mix (and a raise size if raising), and gets graded feedback with an
+`/learn/preflop` teaches six-handed, 100 BB cash-game preflop strategy. The
+learner sees a hand play out to their decision at a normal table, chooses an
+action mix (and a raise size if raising), and gets graded feedback with an
 explanation and the reference ranges.
 
 ## Design

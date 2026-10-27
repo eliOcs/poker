@@ -159,7 +159,8 @@ export function renderShellPageView(app, page) {
     about: () => renderAboutView(),
     avatar: () => renderAvatarMakerView(app),
     home: () => renderHomeView(),
-    learn: () =>
+    learn: () => html`<phg-learn-modes></phg-learn-modes>`,
+    learn_preflop: () =>
       html`<phg-learn
         .user=${app.user}
         .rangeOpen=${app._modal === "learn-details"}

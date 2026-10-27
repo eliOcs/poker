@@ -68,7 +68,7 @@ for (const [lesson, key, laterActions, foldedCount] of [
       route.fulfill({ json: scenario }),
     );
     await checkpointCoverage(page);
-    await page.goto("/learn");
+    await page.goto("/learn/preflop");
     const learn = page.locator("phg-learn");
     const choices = learn.getByRole("slider");
     await expect(
@@ -125,12 +125,12 @@ for (const [lesson, key, laterActions, foldedCount] of [
 
     // Leaving during playback and returning starts a fresh sequence.
     const home = page.getByRole("link", { name: "Quick play", exact: true });
-    const learnLink = page.getByRole("link", {
-      name: "Learn Beta",
-      exact: true,
-    });
+    const openTrainer = async () => {
+      await page.getByRole("link", { name: "Learn Beta", exact: true }).click();
+      await page.getByRole("link", { name: /Preflop trainer/ }).click();
+    };
     await home.click();
-    await learnLink.click();
+    await openTrainer();
     await expect(
       learn.getByText("Playing to your turn", { exact: true }),
     ).toBeVisible();
@@ -138,7 +138,7 @@ for (const [lesson, key, laterActions, foldedCount] of [
     await home.click();
     await expect(learn).toHaveCount(0);
     await page.clock.runFor(10000);
-    await learnLink.click();
+    await openTrainer();
     await expect(
       learn.getByText("Playing to your turn", { exact: true }),
     ).toBeVisible();

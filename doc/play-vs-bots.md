@@ -4,10 +4,10 @@ Status: the MVP is built. The spike (see [Spike](#spike)) settled hosting,
 packaging and bot quality. How the code is organized is in the
 [backend README](../src/backend/README.md#bot-tables).
 
-`/learn` gains a second section next to the preflop drill: a six-handed cash
-table where the learner plays against five bots whose decisions come from the
-[noregrets](https://github.com/conorarmstrong/noregrets) engine, an MCCFR
-blueprint in the style of Pluribus.
+`/learn/bots` is the second training mode on `/learn`, next to the preflop
+trainer: a six-handed cash table where the learner plays against five bots whose
+decisions come from the [noregrets](https://github.com/conorarmstrong/noregrets)
+engine, an MCCFR blueprint in the style of Pluribus.
 
 ## MVP scope
 

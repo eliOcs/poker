@@ -3,6 +3,7 @@ import { Task, TaskStatus } from "@lit/task";
 import "./home.js";
 import "./learn.js";
 import "./play-bots.js";
+import "./learn-modes.js";
 import "./about.js";
 import "./tournaments.js";
 import "./index.js";

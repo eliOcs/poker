@@ -19,7 +19,7 @@ for (const navigationApi of [true, false]) {
     }, navigationApi);
     const dealt = page.waitForResponse("**/api/learn/scenario");
     await checkpointCoverage(page);
-    await page.goto("/learn?source=practice");
+    await page.goto("/learn/preflop?source=practice");
     const scenario = await (await dealt).json();
     expect(scenario.expected).toBeUndefined();
     expect(scenario.blinds).toEqual({ small: 250, big: 500 });
@@ -36,7 +36,9 @@ for (const navigationApi of [true, false]) {
     await raise.focus();
     await page.keyboard.press("End");
     await hero.press("Enter");
-    await expect(page).toHaveURL(/\/learn\?source=practice&modal=settings$/);
+    await expect(page).toHaveURL(
+      /\/learn\/preflop\?source=practice&modal=settings$/,
+    );
     const settings = page.getByRole("dialog");
     await settings
       .getByRole("textbox", { name: "Name", exact: true })
@@ -48,7 +50,7 @@ for (const navigationApi of [true, false]) {
       (await (await page.request.get("/api/users/me")).json()).settings
         .amountDisplay,
     ).toBe("currency");
-    await expect(page).toHaveURL(/\/learn\?source=practice$/);
+    await expect(page).toHaveURL(/\/learn\/preflop\?source=practice$/);
     await expect(hero.locator(".player-name")).toHaveText("Alex Updated");
     await expect(hero.locator("phg-avatar .avatar-empty")).toBeVisible();
     await expect(raise).toHaveValue("100");
@@ -78,7 +80,7 @@ for (const navigationApi of [true, false]) {
     const strategy = await page.locator(".learn-strategies").textContent();
     await details.click();
     await expect(page).toHaveURL(
-      /\/learn\?source=practice&modal=learn-details$/,
+      /\/learn\/preflop\?source=practice&modal=learn-details$/,
     );
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(
@@ -94,7 +96,7 @@ for (const navigationApi of [true, false]) {
     expect((await page.request.get(page.url())).status()).toBe(200);
     await checkpointCoverage(page);
     await page.goBack();
-    await expect(page).toHaveURL(/\/learn\?source=practice$/);
+    await expect(page).toHaveURL(/\/learn\/preflop\?source=practice$/);
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(details).toBeFocused();
     await expect(page.locator(".learn-strategies")).toHaveText(strategy);
@@ -104,12 +106,12 @@ for (const navigationApi of [true, false]) {
     await expect(page).toHaveURL(/modal=learn-details$/);
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page).toHaveURL(/\/learn\?source=practice$/);
+    await expect(page).toHaveURL(/\/learn\/preflop\?source=practice$/);
     await expect(details).toBeFocused();
     await details.click();
     await page.getByTitle("Close", { exact: true }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await expect(page).toHaveURL(/\/learn\?source=practice$/);
+    await expect(page).toHaveURL(/\/learn\/preflop\?source=practice$/);
     await expect(details).toBeFocused();
     const nextDeal = page.waitForResponse("**/api/learn/scenario");
     await page.getByRole("button", { name: "Next hand", exact: true }).click();

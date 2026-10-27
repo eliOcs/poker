@@ -7,7 +7,9 @@ test("plays hands against bots at a private table", async ({
   player2,
 }) => {
   const page = player1.page;
-  await page.goto("/learn/bots");
+  // The Learn page lists the training modes; one of them deals a bot table.
+  await page.goto("/learn");
+  await page.getByRole("link", { name: /Play vs bots/ }).click();
   await expect(page).toHaveURL(BOT_TABLE_URL);
   await expect(player1.game.locator("phg-seat")).toHaveCount(6);
   await expect(player1.game.locator("phg-seat .bot-badge")).toHaveCount(5);

@@ -363,6 +363,7 @@ for (const testCase of TEST_CASES) {
 // Static article pages
 for (const [path, selector] of [
   ["about", "phg-about"],
+  ["learn", "phg-learn-modes"],
   ["release-notes", "phg-release-notes"],
 ]) {
   test(path, async ({ page }) => {

@@ -125,7 +125,9 @@ describe("http-routes", () => {
     "/about?modal=settings",
     "/avatar?modal=settings",
     "/release-notes?modal=settings",
-    "/learn?source=practice&modal=learn-details",
+    "/learn",
+    "/learn/preflop?source=practice&modal=learn-details",
+    "/learn/bots",
     "/auth/email-sign-in/callback?token=abc123",
   ]) {
     it(`serves ${path} through the SPA`, async () => {

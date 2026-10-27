@@ -49,6 +49,23 @@ describe("phg-app-shell", () => {
     expect(aboutLink.classList.contains("active")).to.equal(true);
   });
 
+  for (const path of ["/learn", "/learn/preflop", "/learn/bots"]) {
+    it(`shows an active learn link when path is ${path}`, async () => {
+      const element = await fixture(
+        html`<phg-app-shell path=${path}></phg-app-shell>`,
+      );
+
+      element.drawerOpen = true;
+      await element.updateComplete;
+
+      const learnLink = Array.from(element.querySelectorAll("a")).find((link) =>
+        link.textContent.includes("Learn"),
+      );
+      expect(learnLink.getAttribute("href")).to.equal("/learn");
+      expect(learnLink.classList.contains("active")).to.equal(true);
+    });
+  }
+
   it("shows an active tournaments link when path is /mtt", async () => {
     const element = await fixture(
       html`<phg-app-shell path="/mtt"></phg-app-shell>`,

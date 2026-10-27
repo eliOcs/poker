@@ -16,6 +16,7 @@ const PLAYER_PROFILE_ROUTE = /^\/players\/([a-z0-9]+)$/;
 const STATIC_PAGE_BY_PATH = new Map([
   ["/about", "about"],
   ["/learn", "learn"],
+  ["/learn/preflop", "learn_preflop"],
   ["/learn/bots", "play_bots"],
   ["/avatar", "avatar"],
   ["/mtt", "tournaments"],
