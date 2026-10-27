@@ -653,6 +653,9 @@ function applyPendingSitOuts(game) {
  * @param {{ seat: number }} options
  */
 export function sitOut(game, { seat }) {
+  if (game.kind === "bots") {
+    throw new Error("bot tables have no clock to sit out from");
+  }
   const seatObj = /** @type {SeatType} */ (game.seats[seat]);
 
   if (seatObj.empty) {

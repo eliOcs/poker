@@ -268,10 +268,10 @@ describe("bot table", () => {
     assert.strictEqual(game.hand.actingSeat, 3);
   });
 
-  it("deals again once the learner sits back in", () => {
+  it("deals again once a disconnected learner sits back in", () => {
     game = createBotTable(LEARNER);
     delete game.countdown;
-    Actions.sitOut(game, { seat: 0 });
+    /** @type {any} */ (game.seats[0]).sittingOut = true;
     const { drive } = drivenTable(async () => {
       throw new Error("no decisions while waiting");
     }, game);

@@ -198,6 +198,18 @@ export class Game extends LitElement {
     this.send({ action: "leave", seat: seatIndex });
   }
 
+  /**
+   * Ends this bot table on the server, then returns to Learn. Home would
+   * redirect back to the table while the app is still connected to it.
+   */
+  async leaveBotTable() {
+    const response = await fetch("/api/learn/bots", { method: "DELETE" });
+    if (!response.ok) {
+      throw new Error(`leaving the bot table failed: ${response.status}`);
+    }
+    dispatchNavigate(this, "/learn", { replace: true });
+  }
+
   toggleSitOut() {
     const { seatIndex } = this.getMySeatInfo();
     if (seatIndex === -1) return;

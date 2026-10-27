@@ -12,7 +12,8 @@ import { createBotTable, isBotTableLearner } from "./bot-table.js";
  */
 
 /**
- * A learner keeps one bot table: opening a new one ends the previous one.
+ * A learner keeps one bot table: opening a new one ends the previous one, and
+ * leaving ends it.
  * @param {Map<Id, Game>} games
  * @param {Id} userId
  */
@@ -46,6 +47,15 @@ export function createBotRoutes(users, games, engine) {
         games.set(game.id, game);
         log.context.game = { type: "bots", id: game.id };
         respondWithJson(res, { id: game.id, type: "bots" });
+      },
+    },
+    {
+      method: "DELETE",
+      path: "/api/learn/bots",
+      handler: ({ req, res, log }) => {
+        const user = getOrCreateUser(req, res, users, log);
+        endBotTables(games, user.id);
+        respondWithJson(res, {});
       },
     },
   ];

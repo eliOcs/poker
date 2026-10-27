@@ -6,14 +6,20 @@ import { findActiveGamePath } from "../../src/backend/game-routes.js";
 import { HttpError } from "../../src/backend/http-error.js";
 
 const USER = { id: "learner1", name: "Alex", settings: {} };
+const OTHER = { id: "learner2", name: "Sam", settings: {} };
+const USERS = { [USER.id]: USER, [OTHER.id]: OTHER };
 
 /**
- * Opens a bot table as the user, the way the browser does.
+ * Calls the bot table route as a user, the way the browser does.
+ * @param {"POST"|"DELETE"} method
  * @param {Map<string, any>} games
  * @param {{ isReady: () => boolean }} engine
+ * @param {{ id: string }} [user]
  */
-function openBotTable(games, engine) {
-  const [route] = createBotRoutes({ [USER.id]: USER }, games, engine);
+function callBotRoute(method, games, engine, user = USER) {
+  const route = createBotRoutes(USERS, games, engine).find(
+    (candidate) => candidate.method === method,
+  );
   /** @type {{ status?: number, body?: any }} */
   const response = {};
   const res = {
@@ -26,11 +32,20 @@ function openBotTable(games, engine) {
     },
   };
   route.handler({
-    req: { headers: { cookie: `phg=${USER.id}` } },
+    req: { headers: { cookie: `phg=${user.id}` } },
     res,
     log: { context: {} },
   });
   return response;
+}
+
+/**
+ * @param {Map<string, any>} games
+ * @param {{ isReady: () => boolean }} engine
+ * @param {{ id: string }} [user]
+ */
+function openBotTable(games, engine, user) {
+  return callBotRoute("POST", games, engine, user);
 }
 
 describe("bot routes", () => {
@@ -56,6 +71,19 @@ describe("bot routes", () => {
 
     assert.deepStrictEqual([...games.keys()], [second]);
     assert.notStrictEqual(first, second);
+  });
+
+  it("ends the learner's table when they leave, and nobody else's", () => {
+    const games = new Map();
+    const engine = { isReady: () => true };
+    openBotTable(games, engine);
+    const other = openBotTable(games, engine, OTHER).body.id;
+
+    const response = callBotRoute("DELETE", games, engine);
+
+    assert.strictEqual(response.status, 200);
+    assert.deepStrictEqual([...games.keys()], [other]);
+    PokerGame.stopGameTick(games.get(other));
   });
 
   it("refuses while the engine is not ready", () => {

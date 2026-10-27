@@ -39,7 +39,7 @@ describe("bot table rules", () => {
     );
   });
 
-  it("lets nobody else sit and the learner not leave", () => {
+  it("lets nobody else sit, and the learner neither sit out nor give up the seat", () => {
     const game = createBotTable(LEARNER);
     game.seats[5] = Seat.empty();
 
@@ -47,7 +47,12 @@ describe("bot table rules", () => {
       () => Actions.sit(game, { seat: 5, player: { id: "other", name: "Bo" } }),
       /bot tables are private/,
     );
-    Actions.sitOut(game, { seat: 0 });
+    assert.throws(
+      () => Actions.sitOut(game, { seat: 0 }),
+      /no clock to sit out from/,
+    );
+    // Leaving ends the whole table (see the bot routes), never just the seat.
+    /** @type {any} */ (game.seats[0]).sittingOut = true;
     assert.throws(
       () => Actions.leave(game, { seat: 0 }),
       /cannot leave a bot table/,
@@ -57,7 +62,8 @@ describe("bot table rules", () => {
   it("offers neither sharing nor leaving", () => {
     const game = createBotTable(LEARNER);
     delete game.countdown;
-    Actions.sitOut(game, { seat: 0 });
+    // As when a disconnected learner is sat out
+    /** @type {any} */ (game.seats[0]).sittingOut = true;
 
     const seat = playerView(game, LEARNER).seats[0];
 

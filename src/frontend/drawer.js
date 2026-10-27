@@ -225,15 +225,20 @@ function renderTableDrawer(game, mainItems) {
 
 /**
  * A bot table is private and keeps no record, so it offers no rankings,
- * history or invite links. Sitting out pauses the deal; nobody leaves.
+ * history or invite links. With no clock there is nothing to sit out from:
+ * leaving ends the table.
  * @param {any} game
  */
 function renderBotsDrawer(game) {
-  const sitOutState = game._getSitOutState();
   return renderTableDrawer(
     game,
     html`
-      ${sitOutState === "sittingOut" ? "" : renderSitOutButton(game)}
+      <button
+        type="button"
+        @click=${handleDrawerAction(game, () => game.leaveBotTable())}
+      >
+        ${iconSitOut} Leave table
+      </button>
       <a href="/learn/bots">${ICONS.bot} New table</a>
       <a href="/learn">${ICONS.learn} Learn</a>
     `,

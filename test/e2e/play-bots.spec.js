@@ -26,7 +26,20 @@ test("plays hands against bots at a private table", async ({
   }).toPass({ timeout: 30_000, intervals: [100] });
 
   // Someone else with the link gets a table of their own, not this one.
-  await player2.page.goto(page.url());
+  const tableUrl = page.url();
+  await player2.page.goto(tableUrl);
   await expect(player2.page).toHaveURL(BOT_TABLE_URL);
-  expect(player2.page.url()).not.toBe(page.url());
+  expect(player2.page.url()).not.toBe(tableUrl);
+
+  // With no clock there is no sitting out: leaving ends the table.
+  await player1.openDrawer();
+  await expect(
+    player1.game.getByRole("button", { name: "Sit Out" }),
+  ).toHaveCount(0);
+  await player1.game.getByRole("button", { name: "Leave table" }).click();
+  await expect(page).toHaveURL(/\/learn$/);
+  await page.goto(tableUrl);
+  await expect(page.locator("phg-toast")).toContainText(
+    "That bot table has ended",
+  );
 });

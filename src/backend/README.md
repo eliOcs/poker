@@ -110,10 +110,13 @@ and showdown are the same code as everywhere else. What differs:
   SQLite. The table is evicted when idle like any game and is never recovered,
   so a restart ends it and the browser deals a new one.
 - **Private.** Only the seated learner may connect, nobody else can sit, and
-  the learner cannot leave the seat. Opening a new table ends the old one.
-- **Always 100 BB, always six.** Every stack is reset to 100 BB after each
-  hand, and a hand is dealt only while all six seats play, so sitting out
-  pauses the table.
+  the learner cannot give up the seat. Leaving (`DELETE /api/learn/bots`) or
+  opening a new table ends the table.
+- **Always 100 BB, always six, no clock.** Every stack is reset to 100 BB
+  after each hand, and a hand is dealt only while all six seats play. With no
+  action clock there is nothing to sit out from, so the learner cannot sit
+  out; a disconnect still sits them out, which pauses the table until they
+  sit back in.
 - **Bots act on broadcasts.** Every state broadcast runs the bot driver. When
   a bot is to act, it asks the engine once for that decision, samples the
   returned mix with the game's RNG and applies the action through the same

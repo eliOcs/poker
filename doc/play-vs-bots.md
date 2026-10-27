@@ -39,8 +39,10 @@ better.
   played bots is still cleaned up like one who never played. The table
   survives a dropped connection or a reload, so a flaky mobile network does
   not end a hand. A disconnected learner is sat out at the next hand, which
-  pauses the table, and the idle table is evicted like any game. A server
-  restart, or opening a new table, ends it.
+  pauses the table, and the idle table is evicted like any game. Leaving, a
+  server restart or opening a new table ends it. There is no sitting out:
+  with no action clock, the learner can take any time they need, so the
+  table menu offers leaving instead.
 - **The live game engine is reused, without persistence.** The table is a
   real in-memory cash game with the same WebSocket protocol and table UI.
   Betting, pots and showdown rules stay in one place. Bot seats are driven by
