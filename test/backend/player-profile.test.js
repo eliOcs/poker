@@ -7,7 +7,7 @@ import { getPlayerProfile } from "../../src/backend/player-profile.js";
 import { writeHandToFile } from "../../src/backend/poker/hand-history/io.js";
 import * as Game from "../../src/backend/poker/game.js";
 import * as Seat from "../../src/backend/poker/seat.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 import {
   createHand,
   recordHandPlayers,
@@ -28,7 +28,7 @@ describe("player-profile", function () {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   it("aggregates hand totals and online status", async function () {

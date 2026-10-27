@@ -5,7 +5,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import * as Store from "../../src/backend/store.js";
 import { DEFAULT_SETTINGS } from "../../src/backend/user.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 
 // Use unique directory per test to avoid parallel test conflicts
 let testDataDir;
@@ -22,7 +22,7 @@ describe("store", function () {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   describe("initialize", function () {

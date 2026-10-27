@@ -18,7 +18,7 @@
     "config": ["playwright.config.js", "playwright.ui-catalog.config.js"],
   },
   // System tools, plus c8's report subcommand (misidentified as a binary).
-  "ignoreBinaries": ["dot", "gimp", "magick", "report"],
+  "ignoreBinaries": ["dot", "gimp", "magick", "mktemp", "report"],
   // These declarations are live code even when only used within their module.
   "ignoreExportsUsedInFile": true,
 }

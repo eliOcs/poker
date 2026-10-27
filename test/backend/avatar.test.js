@@ -4,7 +4,7 @@ import { rm } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import * as Store from "../../src/backend/store.js";
 import { DEFAULT_SETTINGS } from "../../src/backend/user.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 import {
   AVATAR_SCHEMA_VERSION,
   AVATAR_TYPES,
@@ -69,7 +69,6 @@ describe("avatar configuration", () => {
 
 describe("stored avatar configurations", () => {
   let directory;
-  const originalDataDir = process.env.DATA_DIR;
   beforeEach(async () => {
     directory = await createTempDataDir();
     process.env.DATA_DIR = directory;
@@ -78,8 +77,7 @@ describe("stored avatar configurations", () => {
   afterEach(async () => {
     Store.close();
     await rm(directory, { recursive: true });
-    if (originalDataDir === undefined) delete process.env.DATA_DIR;
-    else process.env.DATA_DIR = originalDataDir;
+    restoreDataDir();
   });
 
   function insertStoredAvatar(id, avatar) {

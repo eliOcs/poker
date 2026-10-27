@@ -8,7 +8,7 @@ import * as Game from "../../../../src/backend/poker/game.js";
 import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
-import { createTempDataDir } from "../../temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "../../temp-data-dir.js";
 
 let testDataDir;
 
@@ -40,7 +40,7 @@ describe("hand-history-view", function () {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
   describe("getAllHands", function () {
     it("returns empty array for non-existent game", async function () {
@@ -50,7 +50,7 @@ describe("hand-history-view", function () {
       const hands = await HandHistory.getAllHands("nonexistent");
       assert.deepStrictEqual(hands, []);
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("returns all hands from file", async function () {
@@ -75,7 +75,7 @@ describe("hand-history-view", function () {
       assert.strictEqual(hands[0].game_number, `${game.id}-1`);
       assert.strictEqual(hands[1].game_number, `${game.id}-2`);
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
   });
 
@@ -106,7 +106,7 @@ describe("hand-history-view", function () {
       assert.strictEqual(parsed.ohh.spec_version, "1.4.7");
       assert.strictEqual(parsed.ohh.site_name, "Pluton Poker");
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("appends multiple hands to same file", async function () {
@@ -136,7 +136,7 @@ describe("hand-history-view", function () {
       assert.strictEqual(hand1.game_number, `${game.id}-1`);
       assert.strictEqual(hand2.game_number, `${game.id}-2`);
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("rewrites player ids in persisted hand history", async function () {
@@ -180,7 +180,7 @@ describe("hand-history-view", function () {
         "registered-player",
       );
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("throws when rewriting hand history to the same player id", async function () {
@@ -199,7 +199,7 @@ describe("hand-history-view", function () {
         /same player id/,
       );
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
   });
 });

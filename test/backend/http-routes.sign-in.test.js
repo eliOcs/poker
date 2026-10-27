@@ -8,7 +8,7 @@ import { clearEmailSignInTokens } from "../../src/backend/sign-in.js";
 import * as Store from "../../src/backend/store.js";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import * as Seat from "../../src/backend/poker/seat.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 
 let testDataDir;
 
@@ -67,7 +67,7 @@ describe("http-routes sign in", () => {
 
   afterEach(async () => {
     delete process.env.APP_ORIGIN;
-    delete process.env.DATA_DIR;
+    restoreDataDir();
     clearEmailSignInTokens();
     Store.close();
     if (existsSync(testDataDir)) {

@@ -1,12 +1,15 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
-import { existsSync, readFileSync, rmSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import * as TournamentSummary from "../../../src/backend/poker/tournament-summary.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Tournament from "../../../src/shared/tournament.js";
-import { toDollars } from "../../../src/backend/poker/hand-history/io.js";
+import {
+  getDataDir,
+  toDollars,
+} from "../../../src/backend/poker/hand-history/io.js";
 
 describe("tournament-summary", () => {
   let game;
@@ -113,16 +116,6 @@ describe("tournament-summary", () => {
   });
 
   describe("finalizeTournament", () => {
-    const testDataDir = "data";
-
-    afterEach(() => {
-      // Clean up test file
-      const otsFilePath = `${testDataDir}/${game.id}.ots`;
-      if (existsSync(otsFilePath)) {
-        rmSync(otsFilePath);
-      }
-    });
-
     it("should clean up recorder after finalization", async () => {
       TournamentSummary.startTournament(game);
 
@@ -161,15 +154,10 @@ describe("tournament-summary", () => {
       game.seats[2].stack = 0;
       game.tournament.winner = 0;
 
-      // Ensure data dir exists
-      if (!existsSync(testDataDir)) {
-        mkdirSync(testDataDir, { recursive: true });
-      }
-
       await TournamentSummary.finalizeTournament(game);
 
       // Verify file exists
-      const otsFilePath = `${testDataDir}/${game.id}.ots`;
+      const otsFilePath = `${getDataDir()}/${game.id}.ots`;
       assert.ok(existsSync(otsFilePath), "OTS file should exist");
 
       // Verify file content
@@ -235,15 +223,6 @@ describe("tournament-summary", () => {
   });
 
   describe("integration with endHand and autoStartNextHand", () => {
-    const testDataDir = "data";
-
-    afterEach(() => {
-      const otsFilePath = `${testDataDir}/${game.id}.ots`;
-      if (existsSync(otsFilePath)) {
-        rmSync(otsFilePath);
-      }
-    });
-
     it("should record 2nd place elimination before finalizing (regression test)", async () => {
       // This tests the bug where checkWinner ran during a hand (while a player
       // was all-in with stack 0) and finalized the tournament BEFORE endHand
@@ -293,17 +272,13 @@ describe("tournament-summary", () => {
 
       // Verify winner detection and finalization
       // (autoStartNextHand calls finalizeTournament which is fire-and-forget)
-      if (!existsSync(testDataDir)) {
-        mkdirSync(testDataDir, { recursive: true });
-      }
-
       // Directly call finalizeTournament to test the OTS output
       // (autoStartNextHand would do this but we need to await it)
       game.tournament.winner = 0; // Set winner as autoStartNextHand would
       await TournamentSummary.finalizeTournament(game);
 
       // Verify OTS file has all 3 finishes
-      const otsFilePath = `${testDataDir}/${game.id}.ots`;
+      const otsFilePath = `${getDataDir()}/${game.id}.ots`;
       assert.ok(existsSync(otsFilePath), "OTS file should exist");
 
       const content = readFileSync(otsFilePath, "utf-8");

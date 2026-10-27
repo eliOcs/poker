@@ -8,7 +8,7 @@ import {
   writeHandToFile,
   writeTournamentSummary,
 } from "../../src/backend/poker/hand-history/io.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 import {
   createHand,
   recordHandPlayers,
@@ -29,7 +29,7 @@ describe("player-profile history", function () {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   it("uses final tournament payout from summary when available", async function () {

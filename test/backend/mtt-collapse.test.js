@@ -12,7 +12,7 @@ import {
   FINAL_TABLE_NAME,
   createMttContext,
 } from "./mtt-test-context.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 
 async function waitForTournamentSummary(tournamentId) {
   for (let i = 0; i < 20; i += 1) {
@@ -181,7 +181,7 @@ describe("mtt-manager table collapse", () => {
         },
       ]);
     } finally {
-      delete process.env.DATA_DIR;
+      restoreDataDir();
       if (existsSync(dataDir)) {
         await rm(dataDir, { recursive: true });
       }

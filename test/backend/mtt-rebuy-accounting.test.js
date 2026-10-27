@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { createMttContext, createUser } from "./mtt-test-context.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 import { readTournamentSummary } from "../../src/backend/poker/hand-history/io.js";
 import { finalizeManagedTournament } from "../../src/backend/poker/tournament-summary.js";
 
@@ -22,7 +22,7 @@ describe("mtt rebuy accounting", () => {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   /**

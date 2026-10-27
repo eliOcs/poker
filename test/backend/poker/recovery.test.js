@@ -4,7 +4,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { recoverGameFromHistory } from "../../../src/backend/poker/recovery.js";
 import * as Game from "../../../src/backend/poker/game.js";
-import { createTempDataDir } from "../temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "../temp-data-dir.js";
 
 let testDataDir;
 
@@ -29,7 +29,7 @@ describe("game recovery", () => {
   });
 
   afterEach(async () => {
-    delete process.env.DATA_DIR;
+    restoreDataDir();
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true, force: true });
     }

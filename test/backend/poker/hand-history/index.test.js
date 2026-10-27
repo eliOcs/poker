@@ -8,7 +8,7 @@ import * as User from "../../../../src/backend/user.js";
 import * as Player from "../../../../src/backend/poker/player.js";
 import * as Seat from "../../../../src/backend/poker/seat.js";
 import * as Tournament from "../../../../src/shared/tournament.js";
-import { createTempDataDir } from "../../temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "../../temp-data-dir.js";
 
 let testDataDir;
 
@@ -46,7 +46,7 @@ describe("hand-history", function () {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   describe("getRecorder", function () {
@@ -329,7 +329,7 @@ describe("hand-history", function () {
       assert.strictEqual(showdownActions[0].action, "Shows Cards");
       assert.strictEqual(showdownActions[1].action, "Shows Cards");
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("does not create duplicate rounds when a player voluntarily shows cards mid-hand", async function () {
@@ -405,7 +405,7 @@ describe("hand-history", function () {
       const showAction = flopActions.find((a) => a.action === "Shows Cards");
       assert.ok(showAction, "voluntary show should appear in the Flop round");
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("records split pot win amounts correctly with remainder", async function () {
@@ -456,7 +456,7 @@ describe("hand-history", function () {
       assert.strictEqual(wins[1].win_amount, 0.33); // 33 cents
       assert.strictEqual(wins[2].win_amount, 0.33); // 33 cents
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
   });
 
@@ -481,7 +481,7 @@ describe("hand-history", function () {
       assert.strictEqual(HandHistory.getCacheSize(), 1);
 
       // Restore
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
 
     it("retrieves hand from cache", async function () {
@@ -500,7 +500,7 @@ describe("hand-history", function () {
       assert.ok(hand);
       assert.strictEqual(hand.game_number, `${game.id}-1`);
 
-      delete process.env.DATA_DIR;
+      restoreDataDir();
     });
   });
 });

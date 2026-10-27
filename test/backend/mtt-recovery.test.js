@@ -9,7 +9,7 @@ import {
   writeHandToFile,
   writeTournamentSummary,
 } from "../../src/backend/poker/hand-history/io.js";
-import { createTempDataDir } from "./temp-data-dir.js";
+import { createTempDataDir, restoreDataDir } from "./temp-data-dir.js";
 
 let testDataDir;
 
@@ -26,7 +26,7 @@ describe("mtt recovery", () => {
     if (existsSync(testDataDir)) {
       await rm(testDataDir, { recursive: true });
     }
-    delete process.env.DATA_DIR;
+    restoreDataDir();
   });
 
   it("rebuilds a finished tournament lobby from an OTS summary", async () => {
