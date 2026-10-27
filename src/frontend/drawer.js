@@ -239,8 +239,6 @@ function renderBotsDrawer(game) {
       >
         ${iconSitOut} Leave table
       </button>
-      <a href="/learn/bots">${ICONS.bot} New table</a>
-      <a href="/learn">${ICONS.learn} Learn</a>
     `,
   );
 }

@@ -33,11 +33,15 @@ test("plays hands against bots at a private table", async ({
   await expect(player2.page).toHaveURL(BOT_TABLE_URL);
   expect(player2.page.url()).not.toBe(tableUrl);
 
-  // With no clock there is no sitting out: leaving ends the table.
+  // With no clock there is no sitting out: leaving ends the table, and it is
+  // the drawer's only table action.
   await player1.openDrawer();
   await expect(
     player1.game.getByRole("button", { name: "Sit Out" }),
   ).toHaveCount(0);
+  for (const name of ["New table", "Learn"]) {
+    await expect(player1.game.getByRole("link", { name })).toHaveCount(0);
+  }
   await player1.game.getByRole("button", { name: "Leave table" }).click();
   await expect(page).toHaveURL(/\/learn$/);
   await page.goto(tableUrl);
