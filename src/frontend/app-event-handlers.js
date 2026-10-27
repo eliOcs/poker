@@ -39,10 +39,12 @@ export function initAppEventHandlers(app) {
   };
   app._handleNavigate = (e) => {
     const detail =
-      /** @type {CustomEvent<{ path: string, allowMttLobby?: boolean }>} */ (e)
-        .detail;
+      /** @type {CustomEvent<{ path: string, allowMttLobby?: boolean, replace?: boolean }>} */ (
+        e
+      ).detail;
     navigateApp(app, detail.path, {
       allowMttLobby: detail.allowMttLobby === true,
+      replace: detail.replace === true,
     });
   };
   app._handleToast = (e) => {

@@ -221,6 +221,33 @@ export const DEFAULT_AVATAR = {
 };
 
 /**
+ * A random avatar. Like the avatar maker's randomize button, it moves each
+ * adjustment at most one step from the default, which keeps faces tidy.
+ *
+ * @param {() => number} random - Returns a number in [0, 1)
+ * @returns {AvatarConfiguration}
+ */
+export function randomAvatar(random) {
+  /** @param {readonly any[]} values */
+  const pick = (values) => values[Math.floor(random() * values.length)];
+  /** @type {Record<string, any>} */
+  const avatar = { schemaVersion: AVATAR_SCHEMA_VERSION };
+  for (const [partId, schema] of Object.entries(PART_SCHEMAS)) {
+    avatar[partId] = Object.fromEntries(
+      Object.entries(schema).map(([property, allowed]) => [
+        property,
+        pick(
+          allowed.filter(
+            (value) => typeof value !== "number" || Math.abs(value) <= 1,
+          ),
+        ),
+      ]),
+    );
+  }
+  return /** @type {AvatarConfiguration} */ (avatar);
+}
+
+/**
  * Validates avatar input and returns a canonical object with stable key order.
  * Legacy configurations without schemaVersion are upgraded to the current schema.
  *

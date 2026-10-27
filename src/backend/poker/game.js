@@ -123,7 +123,8 @@ export { processGameFlow } from "./game-flow.js";
  * @typedef {GameBase & { kind: "cash" }} CashGame
  * @typedef {GameBase & { kind: "sitngo" }} SitAndGoGame
  * @typedef {GameBase & { kind: "mtt", tournamentId: import('../id.js').Id }} MttGame
- * @typedef {CashGame|SitAndGoGame|MttGame} Game
+ * @typedef {GameBase & { kind: "bots" }} BotsGame - A learner's private table against engine bots; never persisted
+ * @typedef {CashGame|SitAndGoGame|MttGame|BotsGame} Game
  *
  * @typedef {object} BaseGameOptions
  * @property {number} [seats] - Number of seats
@@ -133,7 +134,8 @@ export { processGameFlow } from "./game-flow.js";
  * @typedef {BaseGameOptions & { kind?: "cash" }} CashGameOptions
  * @typedef {BaseGameOptions & { kind: "sitngo" }} SitAndGoGameOptions
  * @typedef {BaseGameOptions & { kind: "mtt", tournamentId: import('../id.js').Id }} MttGameOptions
- * @typedef {CashGameOptions|SitAndGoGameOptions|MttGameOptions} GameOptions
+ * @typedef {BaseGameOptions & { kind: "bots" }} BotsGameOptions
+ * @typedef {CashGameOptions|SitAndGoGameOptions|MttGameOptions|BotsGameOptions} GameOptions
  */
 
 /**

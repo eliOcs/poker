@@ -34,6 +34,7 @@ import {
   RANKING_MODAL_TEST_CASES,
 } from "./test-cases/game-special.js";
 import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
+import { BOT_TABLE_TEST_CASES } from "./test-cases/game-bots.js";
 import { ACTION_PANEL_TEST_CASES } from "./test-cases/action-panel.js";
 import { MTT_LOBBY_TEST_CASES } from "./test-cases/mtt-lobby.js";
 
@@ -466,6 +467,7 @@ const TEST_CASES = {
     RANKING_MODAL_TEST_CASES["game-rankings-modal"],
   "game-hand-rankings-modal": GAME_TEST_CASES["game-turn"],
   ...TABLE_SIZE_TEST_CASES,
+  ...BOT_TABLE_TEST_CASES,
   ...ACTION_PANEL_TEST_CASES,
   ...EMAIL_TEST_CASES,
   ...HISTORY_TEST_CASES,

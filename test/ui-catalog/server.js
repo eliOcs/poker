@@ -30,6 +30,7 @@ const routes = {
   "/test-cases/game-helpers.js": "test/ui-catalog/test-cases/game-helpers.js",
   "/test-cases/game-special.js": "test/ui-catalog/test-cases/game-special.js",
   "/test-cases/table-sizes.js": "test/ui-catalog/test-cases/table-sizes.js",
+  "/test-cases/game-bots.js": "test/ui-catalog/test-cases/game-bots.js",
   "/test-cases/action-panel.js": "test/ui-catalog/test-cases/action-panel.js",
   "/test-cases/mtt-lobby.js": "test/ui-catalog/test-cases/mtt-lobby.js",
   "/test-cases/mtt-lobby-fixtures.js":

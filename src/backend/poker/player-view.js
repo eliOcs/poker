@@ -1,10 +1,7 @@
 import * as Betting from "./betting.js";
 import * as Seat from "./seat.js";
 import * as ActionClock from "./action-clock.js";
-import {
-  countAlivePlayersWithChips,
-  countPlayersWithChips,
-} from "./actions.js";
+import { canDealHand } from "./actions.js";
 import * as TournamentTick from "./tournament-tick.js";
 import HandRankings from "./hand-rankings.js";
 import * as Ranking from "./ranking.js";
@@ -401,11 +398,10 @@ function getSittingOutActions(seat, game, isTournament, showActions) {
   // Always allow sitting in - if player can't afford the big blind, they go all-in
   const cost = seat.missedBigBlind ? Math.min(game.blinds.big, seat.stack) : 0;
   actions.push({ action: "sitIn", cost });
-  if (!isTournament || game.handNumber === 0) {
+  if (game.kind !== "bots" && (!isTournament || game.handNumber === 0)) {
     actions.push({ action: "leave" });
   }
-  if (game.handNumber === 0) actions.push({ action: "share" });
-  return actions.concat(showActions);
+  return actions.concat(getShareActions(game), showActions);
 }
 
 /**
@@ -430,15 +426,24 @@ function getEmptyStackWaitingActions(game, isTournament, showActions) {
  * @returns {boolean}
  */
 function canStartWaitingHand(game) {
-  const playersWithChips = game.tournament?.active
-    ? countAlivePlayersWithChips(game)
-    : countPlayersWithChips(game);
   return (
     game.tournament?.kind !== "mtt" &&
     game.countdown === undefined &&
-    playersWithChips >= 2 &&
+    canDealHand(game) &&
     !game.tournament?.onBreak
   );
+}
+
+/**
+ * Inviting others makes sense only before the first hand, and never at a
+ * private bot table.
+ * @param {Game} game
+ * @returns {PlayerAction[]}
+ */
+function getShareActions(game) {
+  return game.handNumber === 0 && game.kind !== "bots"
+    ? [{ action: "share" }]
+    : [];
 }
 
 /**
@@ -464,8 +469,7 @@ function getWaitingPhaseActions(seat, game) {
   if (canStartWaitingHand(game)) {
     actions.push({ action: "start" });
   }
-  if (game.handNumber === 0) actions.push({ action: "share" });
-  return actions.concat(showActions);
+  return actions.concat(getShareActions(game), showActions);
 }
 
 /**

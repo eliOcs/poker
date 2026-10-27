@@ -313,6 +313,30 @@ export const ICONS = {
       d="M9 5h7v6h6v2h-6v6H9v4H2v-2h5v-6H2v-2h7v4h5V7H9v4H2V9h5V3H2V1h7v4Z"
     />
   </svg>`,
+  bot: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M11 1h2v3h-2zM4 4h16v2H4zM4 18h16v2H4zM2 6h2v12H2zm18 0h2v12h-2zM0 10h2v4H0zm22 0h2v4h-2zM7 9h3v3H7zm7 0h3v3h-3zm-6 5h8v2H8z"
+    />
+  </svg>`,
+  learn: svg`<svg
+    width="1em"
+    height="1em"
+    fill="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M2 3h9v2H2zM0 19h11v2H0zM13 3h9v2h-9zm0 16h11v2H13zM11 5h2v18h-2zM0 5h2v14H0zm22 0h2v14h-2zm-7 2h5v2h-5zM4 7h5v2H4zm11 4h5v2h-5zM4 11h3v2H4zm11 4h2v2h-2zM4 15h5v2H4z"
+    />
+  </svg>`,
   levels: svg`<svg
     width="1em"
     height="1em"

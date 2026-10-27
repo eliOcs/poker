@@ -2,16 +2,6 @@ import { html } from "lit";
 import { ICONS } from "./icons.js";
 import "./navigation-drawer.js";
 
-const iconLearn = html`<svg
-  xmlns="http://www.w3.org/2000/svg"
-  fill="currentColor"
-  viewBox="0 0 24 24"
->
-  <path
-    d="M2 3h9v2H2zM0 19h11v2H0zM13 3h9v2h-9zm0 16h11v2H13zM11 5h2v18h-2zM0 5h2v14H0zm22 0h2v14h-2zm-7 2h5v2h-5zM4 7h5v2H4zm11 4h5v2h-5zM4 11h3v2H4zm11 4h2v2h-2zM4 15h5v2H4z"
-  ></path>
-</svg>`;
-
 const iconReleaseNotes = html`<svg viewBox="0 0 24 24">
   <rect x="8" y="2" width="12" height="2" />
   <rect x="6" y="4" width="2" height="16" />
@@ -64,8 +54,13 @@ export function renderAppNavigationDrawer({
       <span>Tournaments</span>
     </a>
     <a class=${drawerItemClass(view.path === "/learn")} href="/learn">
-      ${iconLearn}
+      ${ICONS.learn}
       <span>Learn</span>
+      <span class="drawer-badge">Beta</span>
+    </a>
+    <a class="drawer-item" href="/learn/bots">
+      ${ICONS.bot}
+      <span>Play bots</span>
       <span class="drawer-badge">Beta</span>
     </a>
     <a class=${drawerItemClass(releaseNotesActive)} href="/release-notes">

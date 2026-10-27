@@ -143,7 +143,7 @@ phg-home .radio-group input[type="radio"]:checked {
   border-color: var(--color-secondary);
 }
 
-:is(phg-about, phg-release-notes) {
+:is(phg-about, phg-release-notes, phg-play-bots) {
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -152,7 +152,7 @@ phg-home .radio-group input[type="radio"]:checked {
   background: var(--color-bg-medium);
 }
 
-:is(phg-about, phg-release-notes) > .main {
+:is(phg-about, phg-release-notes, phg-play-bots) > .main {
   flex: 1;
   min-width: 0;
   padding: clamp(20px, 4vw, 48px);
@@ -263,7 +263,7 @@ phg-home .radio-group input[type="radio"]:checked {
     flex-direction: column;
   }
 
-  :is(phg-about, phg-release-notes) > .main {
+  :is(phg-about, phg-release-notes, phg-play-bots) > .main {
     padding: 56px var(--space-md) var(--space-md);
   }
 }

@@ -1,3 +1,5 @@
+import { clearRecorder } from "./poker/hand-history/index.js";
+
 /**
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./user.js').User} UserType
@@ -152,6 +154,7 @@ export function createInactiveGameEvictor(
         delete game.tickTimer;
       }
       games.delete(gameId);
+      clearRecorder(gameId);
       trackedByGameId.delete(gameId);
       evictedCount += 1;
       evictedGameIds.push(gameId);

@@ -1,7 +1,8 @@
 # Play vs bots (spec)
 
-Status: draft spec, not implemented. The spike (see [Spike](#spike)) is
-complete: it settled hosting, packaging and bot quality.
+Status: the MVP is built. The spike (see [Spike](#spike)) settled hosting,
+packaging and bot quality. How the code is organized is in the
+[backend README](../src/backend/README.md#bot-tables).
 
 `/learn` gains a second section next to the preflop drill: a six-handed cash
 table where the learner plays against five bots whose decisions come from the
@@ -35,23 +36,28 @@ better.
   free of bot results.
 - **Ephemeral, and no account needed.** The table runs under the usual guest
   session. No OHH file and no SQLite rows are written, so a guest who only
-  played bots is still cleaned up like one who never played. The table ends
-  when the learner disconnects or reloads, and a server restart ends it too.
+  played bots is still cleaned up like one who never played. The table
+  survives a dropped connection or a reload, so a flaky mobile network does
+  not end a hand. A disconnected learner is sat out at the next hand, which
+  pauses the table, and the idle table is evicted like any game. A server
+  restart, or opening a new table, ends it.
 - **The live game engine is reused, without persistence.** The table is a
   real in-memory cash game with the same WebSocket protocol and table UI.
   Betting, pots and showdown rules stay in one place. Bot seats are driven by
   the server when the action reaches them. The game needs a way to opt out of
   hand-history persistence and recovery, because otherwise history files are
   the system of record.
-- **Stacks are topped up to 100 BB every hand.** Before each hand, anyone
-  below 100 BB, bot or learner, is refilled to 100 BB. Winners keep their
-  deeper stacks, so nobody busts and no rebuy prompt is needed. A blueprint
-  is solved for a single stack depth, which is baked into its game rather than
-  stored in its keys. At another depth, the same action history means a
-  different amount behind, so different play is correct. Topping up removes
-  short stacks, the only depth with a measured cost (see
-  [Findings](#findings-so-far)). Deep stacks are played as 100 BB and
-  measured no cost. Multiple depths would need either one blueprint per
+- **Every stack is reset to 100 BB every hand.** Before each hand, every
+  stack, bot or learner, goes back to 100 BB, so nobody busts and no rebuy
+  prompt is needed. A blueprint is solved for a single stack depth, which is
+  baked into its game rather than stored in its keys. At another depth, the
+  same action history means a different amount behind, so different play is
+  correct. Short stacks have a measured cost (see
+  [Findings](#findings-so-far)). Deep stacks measured none, but they look
+  broken: the first build let winners keep their chips, and a bot at 103 BB
+  "shoved" by raising to 100 BB and keeping 3 BB behind, then could only check
+  or call. The learner's winnings carry no weight at a private practice table,
+  so resetting costs nothing. Multiple depths would need either one blueprint per
   depth, with memory adding up and the right one chosen per bot from its
   effective stack, or a depth-aware blueprint whose infosets multiply and
   get less training each. Both stay possible behind the same protocol if a
@@ -123,11 +129,11 @@ better.
 - **One engine process for all tables.** Blueprint lookups are cheap, so one
   process takes requests in order. If profiling ever shows queueing, add a
   small pool.
-- **The feature is hidden until the engine is ready.** Loading a
-  multi-gigabyte blueprint takes time. Until the engine reports that it is
-  healthy, the Learn entry is disabled with a notice. If the engine crashes
-  mid-hand, the server restarts it, and the waiting bot checks if it can,
-  otherwise folds.
+- **No table until the engine is ready.** Until the engine reports that it
+  is healthy, opening a table shows a notice instead. A drawer entry that
+  stays visible keeps the client simple, and the memory-mapped blueprint is
+  ready at once anyway. If the engine crashes mid-hand, the server restarts
+  it, and the waiting bot checks if it can, otherwise folds.
 - **The fork is a public GitHub repository under `eliOcs`.** MIT allows it,
   and a public repository needs no tokens to fetch and gets free ARM64 CI
   runners. Vendoring Rust into this repository would bring in a toolchain.
@@ -433,6 +439,15 @@ production's.
   preflop grafted onto blueprint postflop would not be a fair opponent
   either.
 
+- **Playing the real engine found a betting bug in every game.** A contract
+  run played 1,000 hands against the 800M blueprint, with a learner acting at
+  random. The engine rejected requests after an all-in that was too small to
+  count as a full raise. When action came back round to the previous
+  raiser, the table closed the betting round, although that player still
+  owed the difference. The engine was right. With the fix, the same run made
+  7,672 decisions without an error. About 13% of lookups were capped,
+  because the random learner gives its chips away and the bots get deep.
+
 ## Accepted tradeoffs
 
 These are known weaknesses that the MVP accepts. Each comes with the way to
@@ -449,10 +464,6 @@ improve on it later.
   version is faster. Its approach targets full-width CFR, so adapting this
   engine's sampled MCCFR, which keeps its tables in a hash map, would be a
   redesign rather than a port. No code is published.
-- **Deep stacks.** Top-ups keep every stack at 100 BB or more, and deeper
-  stacks are played as if 100 BB deep. A bot never puts more than 100 BB into
-  a hand by choice. Past that it checks and calls, which a human can value-bet
-  against. _Later:_ a deeper blueprint, chosen by effective stack, or search.
 - **Bots and lessons teach different preflop styles.** A learner may see a
   bot limp aces from early position, which the preflop drill never does.
   _Later:_ drop low-probability actions if paired matches show it costs no

@@ -3,10 +3,13 @@ import { createLog } from "./logger.js";
 import { createSignInRoutes } from "./sign-in-routes.js";
 import { createGameRoutes } from "./game-routes.js";
 import { createLearnRoutes } from "./learn-routes.js";
+import { createBotRoutes } from "./bot-routes.js";
+import { UNAVAILABLE_BOT_ENGINE } from "./bot-engine.js";
 import { createHistoryRoutes } from "./history-routes.js";
 import { getOrCreateUser, parseBody } from "./http-route-utils.js";
 import {
   HISTORY_ROUTE,
+  LIVE_BOTS_ROUTE,
   LIVE_CASH_ROUTE,
   LIVE_SITNGO_ROUTE,
   LIVE_MTT_ROUTE,
@@ -99,6 +102,13 @@ export function createRoutes(users, games, broadcast, services = {}) {
     spaPageRoute("/about"),
     spaPageRoute("/learn"),
     ...createLearnRoutes(),
+    spaPageRoute("/learn/bots"),
+    spaPageRoute(LIVE_BOTS_ROUTE),
+    ...createBotRoutes(
+      users,
+      games,
+      services.botEngine ?? UNAVAILABLE_BOT_ENGINE,
+    ),
     spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),
     spaPageRoute("/auth/email-sign-in/callback"),

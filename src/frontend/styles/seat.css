@@ -126,6 +126,15 @@
     min-width: 0;
   }
 
+  .bot-badge {
+    flex: 0 0 auto;
+    padding: 1px 2px;
+    color: var(--color-fg-white);
+    background: var(--color-secondary);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
   .player-info phg-avatar {
     width: var(--seat-avatar-size);
     height: var(--seat-avatar-size);

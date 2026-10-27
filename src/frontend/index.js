@@ -353,7 +353,11 @@ export class Game extends LitElement {
   }
 
   get displayBigBlind() {
-    return getDisplayBigBlind(this.user?.settings, this.game?.blinds?.big);
+    return getDisplayBigBlind(
+      this.user?.settings,
+      this.game?.blinds?.big,
+      this.gameKind === "bots",
+    );
   }
 
   renderLoading() {
@@ -375,6 +379,7 @@ export class Game extends LitElement {
     const isSeated = this.isPlayerSeated();
     const canSit =
       this.gameKind !== "mtt" &&
+      this.gameKind !== "bots" &&
       !isSeated &&
       this.game.seats.some((s) => s.empty);
 

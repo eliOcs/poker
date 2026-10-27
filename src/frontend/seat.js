@@ -265,6 +265,7 @@ class Seat extends LitElement {
       <span class="player-name"
         >${player?.name ?? `Seat ${this.seatNumber + 1}`}</span
       >
+      ${player?.bot ? html`<span class="bot-badge">Bot</span>` : ""}
     </div>`;
   }
 

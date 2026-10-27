@@ -215,10 +215,7 @@ export function startHand(game) {
     ? finalizePendingHandHistory(game)
     : undefined;
 
-  const playersWithChips = game.tournament?.active
-    ? Actions.countAlivePlayersWithChips(game)
-    : Actions.countPlayersWithChips(game);
-  if (playersWithChips < 2) {
+  if (!Actions.canDealHand(game)) {
     return handData;
   }
 

@@ -72,6 +72,7 @@ function resolveGameId(liveRoute) {
   if (
     liveRoute.kind === "cash" ||
     liveRoute.kind === "sitngo" ||
+    liveRoute.kind === "bots" ||
     liveRoute.kind === "mtt_table"
   ) {
     return liveRoute.tableId;
@@ -98,7 +99,7 @@ function resolveTournamentId(liveRoute) {
  *   user: UserType|undefined,
  *   gameId: string|undefined,
  *   tournamentId: string|undefined,
- *   liveKind: "cash"|"sitngo"|"mtt"|"mtt_table"|undefined,
+ *   liveKind: "cash"|"sitngo"|"bots"|"mtt"|"mtt_table"|undefined,
  * }}
  */
 function getUpgradeSession(users, request) {

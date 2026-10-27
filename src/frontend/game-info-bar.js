@@ -39,6 +39,7 @@ function formatTime(seconds) {
  */
 function getTypeLabel(gameKind, game) {
   if (gameKind === "learn") return "Preflop";
+  if (gameKind === "bots") return "Bots";
   if (gameKind === "mtt") return "Tournament";
   if (gameKind === "sitngo" || game?.tournament) {
     return "Sit & Go";
@@ -63,7 +64,7 @@ function getTournamentTimerCell(tournament) {
 
 /**
  * @param {InfoBarGame|undefined} game - The game state object
- * @param {string} gameKind - The game kind (cash, sitngo, mtt, learn)
+ * @param {string} gameKind - The game kind (cash, sitngo, bots, mtt, learn)
  * @param {() => void} [onOpenTournamentLevels]
  * @returns {import("lit").TemplateResult|string}
  */
@@ -81,7 +82,8 @@ export function renderInfoBar(game, gameKind, onOpenTournamentLevels) {
     html`<span class="info-cell info-size">${sizeLabel}</span>`,
   ].filter(Boolean);
 
-  if (gameKind !== "learn") {
+  // Lessons and bot tables count in big blinds, so the stake means nothing.
+  if (gameKind !== "learn" && gameKind !== "bots") {
     cells.push(
       html`<span class="info-cell info-blinds"
         >${formatBlinds(game.blinds)}</span

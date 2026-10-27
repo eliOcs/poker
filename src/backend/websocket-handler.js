@@ -13,6 +13,7 @@ import { finalizePendingHandHistory } from "./poker/game-hand-lifecycle.js";
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/seat.js').OccupiedSeat} OccupiedSeat
  * @typedef {import('./poker/game-hand-lifecycle.js').FinalizedHand} FinalizedHand
+ * @typedef {import('./poker/game.js').BroadcastHandler} BroadcastHandler
  */
 
 export const BETTING_ACTIONS = [
@@ -149,4 +150,39 @@ export function processPokerAction(game, player, action, args) {
   }
 
   return handlePostAction(action, game);
+}
+
+/**
+ * Applies a player's action, then broadcasts the result: the finished hand,
+ * if this action ended one, and the new state.
+ * @param {Game} game
+ * @param {PlayerType} player
+ * @param {string} action
+ * @param {Record<string, unknown>} args
+ * @param {BroadcastHandler} broadcastGameMessage
+ * @returns {{ recipients: number, maxPayloadBytes: number }} stats of the state broadcast
+ */
+export function applyGameAction(
+  game,
+  player,
+  action,
+  args,
+  broadcastGameMessage,
+) {
+  const handData = processPokerAction(game, player, action, args);
+  if (handData) {
+    broadcastGameMessage({
+      type: "handEnded",
+      gameId: game.id,
+      handNumber: handData.handNumber,
+      potResults: handData.potResults,
+      historyHand: handData.historyHand,
+    });
+  }
+  const broadcast = broadcastGameMessage({
+    type: "gameState",
+    gameId: game.id,
+  });
+  PokerGame.ensureGameTick(game, broadcastGameMessage);
+  return broadcast;
 }

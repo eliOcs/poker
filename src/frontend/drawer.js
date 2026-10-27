@@ -136,7 +136,6 @@ function renderMttDrawer(game) {
 function renderCashDrawer(game) {
   const hasRecordedHands = game.hasRecordedHands();
   const historyPath = getHistoryPath(game.gameId);
-  const isSignedIn = !!game.user?.email;
   const mainItems = html`
     <button
       type="button"
@@ -174,6 +173,15 @@ function renderCashDrawer(game) {
         : ""
     }
   `;
+  return renderTableDrawer(game, mainItems);
+}
+
+/**
+ * @param {any} game
+ * @param {import("lit").TemplateResult} mainItems
+ */
+function renderTableDrawer(game, mainItems) {
+  const isSignedIn = !!game.user?.email;
   const footerItems = html`
     ${
       isSignedIn
@@ -215,9 +223,29 @@ function renderCashDrawer(game) {
   ></phg-navigation-drawer>`;
 }
 
+/**
+ * A bot table is private and keeps no record, so it offers no rankings,
+ * history or invite links. Sitting out pauses the deal; nobody leaves.
+ * @param {any} game
+ */
+function renderBotsDrawer(game) {
+  const sitOutState = game._getSitOutState();
+  return renderTableDrawer(
+    game,
+    html`
+      ${sitOutState === "sittingOut" ? "" : renderSitOutButton(game)}
+      <a href="/learn/bots">${ICONS.bot} New table</a>
+      <a href="/learn">${ICONS.learn} Learn</a>
+    `,
+  );
+}
+
 export function renderDrawer(game) {
   if (game.gameKind === "mtt") {
     return renderMttDrawer(game);
+  }
+  if (game.gameKind === "bots") {
+    return renderBotsDrawer(game);
   }
   return renderCashDrawer(game);
 }

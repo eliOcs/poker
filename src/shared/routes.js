@@ -3,9 +3,9 @@
  */
 
 /**
- * @typedef {"cash"|"sitngo"} TableKind
- * @typedef {"cash"|"sitngo"|"mtt"} LiveTableKind
- * @typedef {{ kind: "cash", tableId: string } | { kind: "sitngo", tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string }} ResourceRoute
+ * @typedef {"cash"|"sitngo"|"bots"} TableKind
+ * @typedef {"cash"|"sitngo"|"bots"|"mtt"} LiveTableKind
+ * @typedef {{ kind: "cash", tableId: string } | { kind: "sitngo", tableId: string } | { kind: "bots", tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string }} ResourceRoute
  */
 
 const ID_RE = "[a-z0-9]+";
@@ -14,6 +14,8 @@ const ID_RE = "[a-z0-9]+";
 export const LIVE_CASH_ROUTE = new RegExp(`^/cash/(${ID_RE})$`);
 /** @type {RegExp} */
 export const LIVE_SITNGO_ROUTE = new RegExp(`^/sitngo/(${ID_RE})$`);
+/** @type {RegExp} */
+export const LIVE_BOTS_ROUTE = new RegExp(`^/learn/bots/(${ID_RE})$`);
 /** @type {RegExp} */
 export const LIVE_MTT_ROUTE = new RegExp(`^/mtt/(${ID_RE})$`);
 /** @type {RegExp} */
@@ -33,6 +35,7 @@ export const HISTORY_ROUTE = new RegExp(`^/history/(${ID_RE})(?:/(\\d+))?$`);
 export function getTablePath(kind, tableId, tournamentId = undefined) {
   if (kind === "cash") return `/cash/${tableId}`;
   if (kind === "sitngo") return `/sitngo/${tableId}`;
+  if (kind === "bots") return `/learn/bots/${tableId}`;
   if (!tournamentId) {
     throw new Error("tournamentId is required for MTT table routes");
   }
@@ -60,8 +63,8 @@ export function getHistoryPath(tableId, handNumber = undefined) {
 /**
  * @param {string} path
  * @param {RegExp} route
- * @param {"cash"|"sitngo"} kind
- * @returns {{ kind: "cash"|"sitngo", tableId: string }|undefined}
+ * @param {TableKind} kind
+ * @returns {{ kind: TableKind, tableId: string }|undefined}
  */
 function matchSingleTableRoute(path, route, kind) {
   const match = path.match(route);
@@ -100,7 +103,7 @@ function matchTournamentTableRoute(path, route) {
 
 /**
  * @param {string} path
- * @returns {{ kind: "cash"|"sitngo", tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string } | undefined}
+ * @returns {{ kind: TableKind, tableId: string } | { kind: "mtt", tournamentId: string, tableId?: undefined } | { kind: "mtt_table", tournamentId: string, tableId: string } | undefined}
  */
 export function matchLiveRoute(path) {
   const cashRoute = matchSingleTableRoute(path, LIVE_CASH_ROUTE, "cash");
@@ -108,6 +111,9 @@ export function matchLiveRoute(path) {
 
   const sitngoRoute = matchSingleTableRoute(path, LIVE_SITNGO_ROUTE, "sitngo");
   if (sitngoRoute) return sitngoRoute;
+
+  const botsRoute = matchSingleTableRoute(path, LIVE_BOTS_ROUTE, "bots");
+  if (botsRoute) return botsRoute;
 
   const mttTableRoute = matchTournamentTableRoute(path, LIVE_MTT_TABLE_ROUTE);
   if (mttTableRoute) return mttTableRoute;

@@ -6,7 +6,11 @@ import { snapToStep } from "../../shared/snap-to-step.js";
 import * as ActionClock from "./action-clock.js";
 import * as TournamentSummary from "./tournament-summary.js";
 import * as TournamentTick from "./tournament-tick.js";
-import { MUCK_TIMEOUT_TICKS, SHOW_CARDS_TICKS } from "./game-constants.js";
+import {
+  BOT_TABLE_STACK_BIG_BLINDS,
+  MUCK_TIMEOUT_TICKS,
+  SHOW_CARDS_TICKS,
+} from "./game-constants.js";
 
 // Re-export dealing functions for backward compatibility
 export {
@@ -43,6 +47,23 @@ export function countPlayersWithChips(game) {
  */
 export function countAlivePlayersWithChips(game) {
   return game.seats.filter((seat) => !seat.empty && seat.stack > 0).length;
+}
+
+/**
+ * Whether the next hand can be dealt. A bot table deals only while every seat
+ * plays: the bots never play on without the learner, and the engine always
+ * gets the six-handed game it was trained for.
+ * @param {Game} game
+ * @returns {boolean}
+ */
+export function canDealHand(game) {
+  if (game.kind === "bots") {
+    return countPlayersWithChips(game) === game.seats.length;
+  }
+  const playersWithChips = game.tournament?.active
+    ? countAlivePlayersWithChips(game)
+    : countPlayersWithChips(game);
+  return playersWithChips >= 2;
 }
 
 /**
@@ -89,6 +110,9 @@ function resolveSeatForSit(game, requestedSeat) {
  * @param {string} mttMessage
  */
 function assertTableEntryOpen(game, mttMessage) {
+  if (game.kind === "bots") {
+    throw new Error("bot tables are private");
+  }
   if (game.tournament?.kind === "mtt") {
     throw new Error(mttMessage);
   }
@@ -544,6 +568,8 @@ export function endHand(game) {
   resetHandState(game, "waiting");
   delete game.runout;
 
+  resetBotTableStacks(game);
+
   // Increment handsPlayed for all players who were dealt in (not sitting out)
   for (const seat of game.seats) {
     if (!seat.empty && !seat.sittingOut) {
@@ -571,6 +597,19 @@ export function endHand(game) {
 
   // Start pending break if timer expired during this hand
   TournamentTick.startPendingBreak(game);
+}
+
+/**
+ * At a bot table, resets every stack to the table depth, so nobody busts and
+ * the blueprint always plays the depth it was trained for.
+ * @param {Game} game
+ */
+function resetBotTableStacks(game) {
+  if (game.kind !== "bots") return;
+  const stack = BOT_TABLE_STACK_BIG_BLINDS * game.blinds.big;
+  for (const seat of game.seats) {
+    if (!seat.empty) seat.stack = stack;
+  }
 }
 
 /**
@@ -699,6 +738,9 @@ export function sitIn(game, { seat }) {
  * @param {{ seat: number }} options
  */
 export function leave(game, { seat }) {
+  if (game.kind === "bots") {
+    throw new Error("cannot leave a bot table");
+  }
   if (game.tournament?.kind === "mtt") {
     throw new Error("table seating is managed by the tournament");
   }

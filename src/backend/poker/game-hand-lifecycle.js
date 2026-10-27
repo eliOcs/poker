@@ -75,7 +75,7 @@ export function autoStartNextHand(game) {
     return handData;
   }
 
-  if (playersWithChips >= 2) {
+  if (Actions.canDealHand(game)) {
     game.countdown = 5;
     return;
   }

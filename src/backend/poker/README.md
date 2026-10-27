@@ -47,7 +47,7 @@ denomination that divides both blinds, as at a live table. The minimum raise
 and an all-in are the exceptions, because a short all-in or a split pot can
 leave amounts off that grid. One function, `snapToStep` in `src/shared`,
 defines the rule: the server rejects any amount it would change, and the
-client snaps to it, so neither side can produce an amount the other
+client and the bots snap to it, so no side can produce an amount the other
 refuses.
 
 Seats form a ring; iteration wraps with modulo (`circular-array.js`).

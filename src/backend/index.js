@@ -20,6 +20,8 @@ import {
   cleanupOrphanGuestUsers,
   GUEST_CLEANUP_INTERVAL_MS,
 } from "./guest-user-cleanup.js";
+import { createBotEngine, UNAVAILABLE_BOT_ENGINE } from "./bot-engine.js";
+import { createBotDriver, isBotTableLearner } from "./bot-table.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -54,6 +56,15 @@ const {
 });
 
 let mttManager;
+
+const { BOT_ENGINE_PATH, BOT_BLUEPRINT_PATH } = process.env;
+const botEngine =
+  BOT_ENGINE_PATH && BOT_BLUEPRINT_PATH
+    ? createBotEngine({
+        command: BOT_ENGINE_PATH,
+        args: ["serve", "--blueprint", BOT_BLUEPRINT_PATH],
+      })
+    : UNAVAILABLE_BOT_ENGINE;
 
 /**
  * @param {Game} game
@@ -103,7 +114,8 @@ function recordFinalizedHand(game, handData) {
 function broadcastGameMessage(message) {
   if (message.type === "handEnded") {
     const game = games.get(message.gameId);
-    if (game) {
+    // Bot tables are ephemeral: their hands are never recorded.
+    if (game && game.kind !== "bots") {
       if (game.kind === "mtt" && mttManager) {
         mttManager.handleHandFinalized(game);
       }
@@ -115,8 +127,15 @@ function broadcastGameMessage(message) {
     }
     return { recipients: 0, maxPayloadBytes: 0 };
   }
+  // Before the broadcast, so the view already shows what the bots start.
+  if (message.type === "gameState") driveBots(message.gameId);
   return rawBroadcastGameMessage(message);
 }
+const driveBots = createBotDriver({
+  engine: botEngine,
+  games,
+  broadcast: broadcastGameMessage,
+});
 mttManager = createMttManager({
   games,
   broadcastTableState: broadcastGameStateMessage,
@@ -128,6 +147,7 @@ mttManager = createMttManager({
 const routes = createRoutes(users, games, broadcastGameStateMessage, {
   clientConnections,
   mttManager,
+  botEngine,
 });
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -162,6 +182,13 @@ async function resolveGameForUpgrade(user, gameId) {
 
   const existingGame = games.get(gameId);
   if (existingGame) {
+    // A bot table is private to its learner.
+    if (
+      existingGame.kind === "bots" &&
+      !isBotTableLearner(existingGame, user.id)
+    ) {
+      return;
+    }
     return existingGame;
   }
 
@@ -296,6 +323,7 @@ async function gracefulShutdown(signal) {
   games.clear();
 
   mttManager?.close();
+  botEngine.close();
   Store.close();
   logger.info("shutdown complete");
   process.exit(0);

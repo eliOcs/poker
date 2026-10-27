@@ -10,7 +10,7 @@ import * as logger from "../logger.js";
  * @param {number} seed
  * @returns {() => number} Returns number in [0, 1)
  */
-function mulberry32(seed) {
+export function mulberry32(seed) {
   return function () {
     let t = (seed += 0x6d2b79f5);
     t = Math.imul(t ^ (t >>> 15), t | 1);

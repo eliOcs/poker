@@ -9,6 +9,7 @@
  * @property {Id} id - Player unique identifier
  * @property {string|undefined} name - Player display name
  * @property {string} [avatarRevision] - Hash of the public avatar configuration
+ * @property {true} [bot] - Decisions come from the bot engine, not a person
  */
 
 /**

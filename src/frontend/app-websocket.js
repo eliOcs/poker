@@ -405,12 +405,18 @@ export function reportFrontendError(app, error) {
  */
 export function handleGameNotFound(app) {
   const liveRoute = matchLiveRoute(app.path);
+  disconnectFromGame(app);
+  // Bot tables live only in memory, so a restart ends them. Deal a new one.
+  if (liveRoute?.kind === "bots") {
+    app.toast = { message: "That bot table has ended", variant: "info" };
+    navigateApp(app, "/learn/bots", { replace: true });
+    return;
+  }
   app.toast = {
     message:
       liveRoute?.kind === "mtt" ? "Tournament not found" : "Game not found",
     variant: "error",
   };
-  disconnectFromGame(app);
   navigateApp(app, "/", { replace: true });
 }
 

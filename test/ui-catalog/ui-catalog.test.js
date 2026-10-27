@@ -56,6 +56,7 @@ const TEST_CASES = [
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
+  "game-bots-table",
 
   // Action panel states
   "action-all-in",

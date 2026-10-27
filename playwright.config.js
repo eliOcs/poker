@@ -41,6 +41,9 @@ function server(name, port, seed) {
       TIMER_SPEED: process.env.TIMER_SPEED || "10",
       DATA_DIR: `test-results/runtime-data/${name}`,
       EMAIL_SINK_DIR: process.env.E2E_EMAIL_DIR,
+      // A stand-in engine that always checks or calls; see test/README.md.
+      BOT_ENGINE_PATH: "test/fake-bot-engine.js",
+      BOT_BLUEPRINT_PATH: "none",
       ...(COVERAGE && { NODE_V8_COVERAGE: "coverage/e2e/tmp" }),
     },
   };

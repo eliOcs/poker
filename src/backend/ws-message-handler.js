@@ -1,7 +1,7 @@
 import * as Player from "./poker/player.js";
 import * as PokerGame from "./poker/game.js";
 import { createLog, emitLog, getSessionPlayerLogContext } from "./logger.js";
-import { processPokerAction } from "./websocket-handler.js";
+import { applyGameAction } from "./websocket-handler.js";
 import { RateLimitError } from "./rate-limit.js";
 import { sendWebSocketJson } from "./ws-json.js";
 
@@ -122,42 +122,21 @@ function handlePreAction(game, user, action, args, broadcastGameState, gameId) {
 }
 
 /**
- * @param {(message: BroadcastMessage) => void} broadcastGameMessage
- * @param {string} gameId
- * @param {import('./poker/game-hand-lifecycle.js').FinalizedHand} handData
- */
-function broadcastHandEnded(broadcastGameMessage, gameId, handData) {
-  broadcastGameMessage({
-    type: "handEnded",
-    gameId,
-    handNumber: handData.handNumber,
-    potResults: handData.potResults,
-    historyHand: handData.historyHand,
-  });
-}
-
-/**
  * @param {Game} game
  * @param {import('./poker/seat.js').Player} player
  * @param {string} action
  * @param {Record<string, unknown>} args
- * @param {string} gameId
  * @param {(message: BroadcastMessage) => { recipients: number, maxPayloadBytes: number }} broadcastGameMessage
  * @returns {{ broadcast: { recipients: number, maxPayloadBytes: number }, gameSnapshot: ReturnType<typeof import('./poker/game-engine.js').gameStateSnapshot> }}
  */
-function handleGameAction(
-  game,
-  player,
-  action,
-  args,
-  gameId,
-  broadcastGameMessage,
-) {
-  const handData = processPokerAction(game, player, action, args);
-  if (handData) broadcastHandEnded(broadcastGameMessage, gameId, handData);
-
-  const broadcast = broadcastGameMessage({ type: "gameState", gameId });
-  PokerGame.ensureGameTick(game, broadcastGameMessage);
+function handleGameAction(game, player, action, args, broadcastGameMessage) {
+  const broadcast = applyGameAction(
+    game,
+    player,
+    action,
+    args,
+    broadcastGameMessage,
+  );
   return { broadcast, gameSnapshot: PokerGame.gameStateSnapshot(game) };
 }
 
@@ -293,7 +272,6 @@ function dispatchGameAction({
     player,
     action,
     args,
-    gameId,
     broadcastGameMessage,
   );
   Object.assign(log.context, {

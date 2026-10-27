@@ -25,7 +25,7 @@ export function renderToast(app) {
 
 /**
  * @param {any} app
- * @param {{ kind: "cash"|"sitngo"|"mtt_table", tableId: string, tournamentId?: string }} liveRoute
+ * @param {{ kind: "cash"|"sitngo"|"bots"|"mtt_table", tableId: string, tournamentId?: string }} liveRoute
  */
 export function renderGameView(app, liveRoute) {
   const gameKind = liveRoute.kind === "mtt_table" ? "mtt" : liveRoute.kind;
@@ -172,6 +172,7 @@ export function renderShellPageView(app, page) {
         }}
       ></phg-learn>`,
     mtt_lobby: () => renderMttLobbyView(app),
+    play_bots: () => html`<phg-play-bots></phg-play-bots>`,
     player_profile: () => renderPlayerProfileView(app),
     release_notes: () => renderReleaseNotesView(),
     tournaments: () => renderTournamentsView(app),

@@ -12,6 +12,7 @@ import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
 import { canonicalizeAvatar } from "../shared/avatar.js";
 import { getAvatarRevision } from "./avatar.js";
+import { getBotAvatar } from "./bot-roster.js";
 import {
   getOrCreateUser,
   parseBody,
@@ -54,6 +55,8 @@ export function findActiveGamePath(games, userId) {
  * @returns {boolean}
  */
 function isActiveGameForUser(game, userId) {
+  // A bot table is practice, not a game to send the player back to.
+  if (game.kind === "bots") return false;
   const seat = findOccupiedSeatForUser(game, userId);
   return game.running && !!seat;
 }
@@ -354,7 +357,9 @@ export function createGameRoutes(users, games, broadcast, services) {
       handler: ({ req, res, match, log }) => {
         getOrCreateUser(req, res, users, log);
         const playerId = routeParam(match);
-        const avatar = Store.loadUserProfile(playerId)?.settings.avatar;
+        const avatar =
+          getBotAvatar(playerId) ??
+          Store.loadUserProfile(playerId)?.settings.avatar;
         if (!avatar) {
           throw new HttpError(404, "Avatar not found");
         }

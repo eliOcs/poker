@@ -100,6 +100,33 @@ the browser never derives poker actions or answers itself. The charts come from
 a book; see [Preflop lessons](../../doc/learn.md) for their source, extraction
 and the teaching decisions.
 
+## Bot tables
+
+"Play vs bots" (`bot-*.js`) gives a learner a private six-handed table against
+five bots. It is an ordinary in-memory game of kind `bots`, so betting, pots
+and showdown are the same code as everywhere else. What differs:
+
+- **Nothing is recorded.** Finished hands are not written to OHH files or
+  SQLite. The table is evicted when idle like any game and is never recovered,
+  so a restart ends it and the browser deals a new one.
+- **Private.** Only the seated learner may connect, nobody else can sit, and
+  the learner cannot leave the seat. Opening a new table ends the old one.
+- **Always 100 BB, always six.** Every stack is reset to 100 BB after each
+  hand, and a hand is dealt only while all six seats play, so sitting out
+  pauses the table.
+- **Bots act on broadcasts.** Every state broadcast runs the bot driver. When
+  a bot is to act, it asks the engine once for that decision, samples the
+  returned mix with the game's RNG and applies the action through the same
+  path as a WebSocket action. If the engine fails, the bot checks or folds.
+
+The engine (`bot-engine.js`) is the noregrets `serve` command, run as one
+child process that answers JSON lines. Each request describes the whole hand
+so far, built from the hand-history recorder, so the engine keeps no table
+state and a crash loses nothing; it restarts with growing delays. Until it
+reports ready, opening a table answers 503. Bot identities and their avatars
+come from a fixed roster (`bot-roster.js`). The design and its tradeoffs are
+in [Play vs bots](../../doc/play-vs-bots.md).
+
 ## Avatars
 
 Users store an avatar configuration in their settings. Broadcasts carry only a
@@ -120,6 +147,7 @@ unit makes filtering by table, player or hand trivial.
 | `ws_action`      | WebSocket message |
 | `timer_action`   | game tick         |
 | `hand`           | poker hand        |
+| `bot_action`     | bot decision      |
 | `eviction_sweep` | eviction run      |
 
 The hand log lives on `game.handLog` and spans many messages and ticks. One-off

@@ -116,7 +116,8 @@
     z-index: auto;
   }
 
-  :scope .player-name {
+  :scope .player-name,
+  :scope .bot-badge {
     position: relative;
     z-index: 1;
   }

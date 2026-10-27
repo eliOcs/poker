@@ -4,12 +4,19 @@ import {
   matchLiveRoute,
 } from "../shared/routes.js";
 
-const CONNECTABLE_LIVE_KINDS = new Set(["cash", "sitngo", "mtt", "mtt_table"]);
-const TABLE_LIVE_KINDS = new Set(["cash", "sitngo", "mtt_table"]);
+const CONNECTABLE_LIVE_KINDS = new Set([
+  "cash",
+  "sitngo",
+  "bots",
+  "mtt",
+  "mtt_table",
+]);
+const TABLE_LIVE_KINDS = new Set(["cash", "sitngo", "bots", "mtt_table"]);
 const PLAYER_PROFILE_ROUTE = /^\/players\/([a-z0-9]+)$/;
 const STATIC_PAGE_BY_PATH = new Map([
   ["/about", "about"],
   ["/learn", "learn"],
+  ["/learn/bots", "play_bots"],
   ["/avatar", "avatar"],
   ["/mtt", "tournaments"],
   ["/release-notes", "release_notes"],
