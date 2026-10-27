@@ -29,6 +29,16 @@ at `/opt/poker/data`, which the container sees as `/app/data`. Docker waits for
 the mount, so the app never starts against an empty directory. Data Lifecycle
 Manager takes weekly snapshots of the volume and keeps the last four.
 
+**Bot engine.** The image includes the
+[noregrets fork](https://github.com/eliOcs/noregrets)'s static binary,
+downloaded from a tagged release and pinned by checksum in the `Dockerfile`.
+Its blueprint is too big for the image and lives on the data volume under
+`engine/`. `npm run upload:blueprint -- <file.nrc>` copies one there, and
+`BOT_BLUEPRINT_PATH` in `config/deploy.yml` picks one by file name, so a
+deploy switches blueprints and a rollback switches back. Without a readable
+blueprint, the bots are unavailable and the rest of the site is unaffected.
+See [Play vs bots](play-vs-bots.md#engine-integration).
+
 **Monitoring.** A scheduled Lambda requests the site over HTTPS. When the site
 goes down or recovers, an email goes out through SNS. CloudWatch alarms
 (collected by the CloudWatch agent) also watch instance status checks, memory,
@@ -74,4 +84,5 @@ Environment variables, read at startup:
 | `EMAIL_SINK_DIR`                                  | Write emails to files instead of SES (local and tests) |
 | `EMAIL_SIGN_IN_TTL_MINUTES`                       | Sign-in link lifetime                                  |
 | `GAME_INACTIVITY_MS`, `GAME_EVICTION_INTERVAL_MS` | When idle games leave memory                           |
+| `BOT_ENGINE_PATH`, `BOT_BLUEPRINT_PATH`           | Bot engine binary and blueprint; bots are off if unset |
 | `RNG_SEED`, `TIMER_SPEED`                         | Deterministic deals and faster clocks, for tests only  |
