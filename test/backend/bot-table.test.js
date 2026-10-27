@@ -1,6 +1,7 @@
 import { describe, it, afterEach } from "node:test";
 import assert from "node:assert";
 import { setTimeout as delay } from "node:timers/promises";
+import { stripVTControlCharacters } from "node:util";
 import * as PokerGame from "../../src/backend/poker/game.js";
 import * as Actions from "../../src/backend/poker/actions.js";
 import { finishCollectBets } from "../../src/backend/poker/game-flow.js";
@@ -228,6 +229,42 @@ describe("bot table", () => {
       game.seats.slice(3).map((seat) => !seat.empty && seat.bet),
       [100, 100, 100],
     );
+  });
+
+  it("logs each decision with all a replay needs", async (t) => {
+    const consoleLog = t.mock.method(console, "log", () => {});
+    game = dealtTable();
+    const strategy = [
+      { type: "fold", p: 0.25 },
+      { type: "raise", to: 250, p: 0.75 },
+    ];
+    const { requests, drive } = drivenTable(
+      async () => ({ strategy, source: "blueprint" }),
+      game,
+    );
+
+    drive(game.id);
+    await waitFor(() => game?.hand.actingSeat === 0);
+
+    const engines = consoleLog.mock.calls
+      .map((call) => stripVTControlCharacters(String(call.arguments[0])))
+      .filter((line) => line.includes(" bot_action "))
+      .map((line) => {
+        const field = line.split(" ").find((f) => f.startsWith("engine="));
+        return JSON.parse(/** @type {string} */ (field).slice(7));
+      });
+    assert.deepStrictEqual(
+      engines.map((engine) => engine.request),
+      requests,
+    );
+    for (const engine of engines) {
+      assert.deepStrictEqual(engine.strategy, strategy);
+      assert.strictEqual(engine.source, "blueprint");
+      assert.deepStrictEqual(
+        engine.choice,
+        sampleStrategy(strategy, engine.sample),
+      );
+    }
   });
 
   it("checks, or folds when it cannot, if the engine fails", async () => {

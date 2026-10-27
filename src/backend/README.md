@@ -109,7 +109,10 @@ and showdown are the same code as everywhere else. What differs:
 
 - **Nothing is recorded.** Finished hands are not written to OHH files or
   SQLite. The table is evicted when idle like any game and is never recovered,
-  so a restart ends it and the browser deals a new one.
+  so a restart ends it and the browser deals a new one. Instead, each
+  `bot_action` log line carries the engine request, the strategy it returned
+  and the sampled draw. The table id is in the page URL, and a request
+  replayed through `noregrets serve` shows the same strategy again.
 - **Private.** Only the seated learner may connect, nobody else can sit, and
   the learner cannot give up the seat. Leaving (`DELETE /api/learn/bots`) or
   opening a new table ends the table.

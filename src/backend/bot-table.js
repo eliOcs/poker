@@ -211,9 +211,20 @@ export function createBotDriver({ engine, games, broadcast }) {
     /** @type {EngineChoice|undefined} */
     let choice;
     try {
-      const decision = await engine.decide(buildEngineRequest(game, seatIndex));
-      choice = sampleStrategy(decision.strategy, random());
-      log.context.engine = { source: decision.source, choice };
+      // Hands at bot tables are not recorded, so the log keeps all a replay
+      // needs: the request, the strategy it got and the sampled draw.
+      const request = buildEngineRequest(game, seatIndex);
+      log.context.engine = { request };
+      const decision = await engine.decide(request);
+      const sample = random();
+      choice = sampleStrategy(decision.strategy, sample);
+      log.context.engine = {
+        request,
+        source: decision.source,
+        strategy: decision.strategy,
+        sample,
+        choice,
+      };
     } catch (err) {
       log.context.error = { message: err.message };
     }
