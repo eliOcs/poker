@@ -359,5 +359,32 @@ describe("betting actions", () => {
       Actions.check(game, { seat: 2 });
       assert.equal(game.hand.actingSeat, 0);
     });
+
+    it("should give the last raiser the chance to call a short all-in", () => {
+      // Flop, first to act is seat 2. A full re-raise over 400 needs 700.
+      game.seats[4].stack = 600;
+      Actions.bet(game, { seat: 2, amount: 400 });
+      Actions.allIn(game, { seat: 4 });
+      Actions.call(game, { seat: 0 });
+
+      assert.equal(game.hand.actingSeat, 2);
+      Actions.call(game, { seat: 2 });
+      assert.equal(game.hand.actingSeat, -1);
+      assert.deepEqual(
+        [0, 2, 4].map((seat) => game.seats[seat].bet),
+        [600, 600, 600],
+      );
+    });
+
+    it("should end the round once everyone has acted and matched the bet", () => {
+      Actions.check(game, { seat: 2 });
+      Actions.bet(game, { seat: 4, amount: 100 });
+      Actions.call(game, { seat: 0 });
+      assert.equal(game.hand.actingSeat, 2);
+
+      Actions.call(game, { seat: 2 });
+
+      assert.equal(game.hand.actingSeat, -1);
+    });
   });
 });

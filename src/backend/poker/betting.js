@@ -229,14 +229,22 @@ export function advanceAction(game) {
     return;
   }
 
-  // Find next player to act
-  const next = getNextToAct(game);
-
-  // Check if we've come full circle back to the raiser
-  if (game.hand.lastRaiser !== -1 && next === game.hand.lastRaiser) {
+  // The round is over once everyone who can still act has acted in it and
+  // matched the bet. Coming back round to the last raiser is not enough: an
+  // all-in smaller than a full raise leaves the raiser chips to call.
+  if (
+    game.seats.every(
+      (seat) =>
+        !Seat.canAct(seat) ||
+        (seat.lastAction !== undefined && seat.bet === game.hand.currentBet),
+    )
+  ) {
     game.hand.actingSeat = -1;
     return;
   }
+
+  // Find next player to act
+  const next = getNextToAct(game);
 
   // If lastRaiser can't act (folded or all-in), update it to the next player.
   // This ensures the round will end when action returns to them.
