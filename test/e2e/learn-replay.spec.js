@@ -127,7 +127,7 @@ for (const [lesson, key, laterActions, foldedCount] of [
     const home = page.getByRole("link", { name: "Quick play", exact: true });
     const openTrainer = async () => {
       await page.getByRole("link", { name: "Learn Beta", exact: true }).click();
-      await page.getByRole("link", { name: /Preflop trainer/ }).click();
+      await page.getByRole("link", { name: "Start training" }).click();
     };
     await home.click();
     await openTrainer();

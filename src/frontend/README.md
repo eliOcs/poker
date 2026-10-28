@@ -21,6 +21,10 @@ compression well enough that bundling would buy little here.
 Components render into the light DOM (`createRenderRoot() { return this; }`)
 and are styled by ordinary global stylesheets. `app.css` imports
 `base.css` (design tokens and resets) and one file per area in `styles/`.
+Pages share one of three looks. Prose (About, Release Notes) is a plain
+article column. The create pages (Quick play, Tournaments) are a centred form
+under the logo. Every other page is an app page: framed panels with an
+eyebrow over the title, and dark tiles inside, styled once in `shell.css`.
 Shadow DOM was used originally and removed. Its isolation protects
 independently distributed components, which this app does not have, and it
 cost a lot: shared CSS had to be imported into every component, parents could

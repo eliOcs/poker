@@ -7,12 +7,14 @@ const MODES = [
     icon: ICONS.learn,
     title: "Preflop trainer",
     text: "Decide how to play a hand before the flop, then compare your mix and sizing with the reference charts.",
+    action: "Start training",
   },
   {
     href: "/learn/bots",
     icon: ICONS.bot,
     title: "Play vs bots",
     text: "Play full hands at a private six-handed table against five bots. There is no clock, so take your time.",
+    action: "Take a seat",
   },
 ];
 
@@ -23,21 +25,27 @@ class LearnModes extends LitElement {
   }
 
   render() {
-    return html`<main class="main">
-      <article class="static-article">
-        <h1>Learn</h1>
-        <p>Two ways to practise, free and with no account needed.</p>
-        <nav class="learn-modes" aria-label="Training modes">
-          ${MODES.map(
-            ({ href, icon, title, text }) =>
-              html`<a class="learn-mode" href=${href}>
-                <span class="learn-mode-title">${icon} ${title}</span>
-                <span class="learn-mode-text">${text}</span>
-              </a>`,
-          )}
-        </nav>
-      </article>
-    </main>`;
+    return html`<div class="main">
+      <div class="content">
+        <section class="panel">
+          <div class="eyebrow">Learn</div>
+          <h1>Training modes</h1>
+          <p class="intro">
+            Two ways to practice, free and with no account needed.
+          </p>
+          <div class="modes">
+            ${MODES.map(
+              ({ href, icon, title, text, action }) =>
+                html`<article class="mode">
+                  <h2>${icon} ${title}</h2>
+                  <p>${text}</p>
+                  <a class="button" href=${href}>${action}</a>
+                </article>`,
+            )}
+          </div>
+        </section>
+      </div>
+    </div>`;
   }
 }
 

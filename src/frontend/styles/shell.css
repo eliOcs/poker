@@ -348,7 +348,9 @@
   }
 }
 
-@scope (:is(phg-mtt-lobby, phg-player-profile, phg-avatar-maker)) {
+@scope (
+  :is(phg-mtt-lobby, phg-player-profile, phg-avatar-maker, phg-learn-modes)
+) {
   :scope {
     display: flex;
     flex-direction: column;
@@ -384,6 +386,26 @@
     background: var(--color-bg-light);
     border: var(--space-sm) solid var(--color-fg-muted);
     box-shadow: var(--space-md) var(--space-md) 0 var(--color-bg-dark);
+  }
+
+  .eyebrow {
+    font-size: var(--font-sm);
+    color: var(--color-primary);
+  }
+
+  h1,
+  h2 {
+    margin: 0;
+    color: var(--color-fg-white);
+  }
+
+  h1 {
+    font-size: clamp(18px, 3vw, 28px);
+    line-height: 1.4;
+  }
+
+  h2 {
+    font-size: var(--font-md);
   }
 
   .section {

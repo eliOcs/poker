@@ -3,11 +3,6 @@
     --data-table-min-width: 720px;
   }
 
-  .eyebrow {
-    font-size: var(--font-sm);
-    color: var(--color-primary);
-  }
-
   .header {
     display: flex;
     align-items: center;
@@ -33,13 +28,6 @@
   .identity {
     display: grid;
     gap: 6px;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: clamp(18px, 3vw, 28px);
-    line-height: 1.4;
-    color: var(--color-fg-white);
   }
 
   .player-id {
@@ -82,12 +70,6 @@
 
   .value.negative {
     color: var(--color-error);
-  }
-
-  h2 {
-    margin: 0;
-    font-size: var(--font-md);
-    color: var(--color-fg-white);
   }
 
   tbody tr {

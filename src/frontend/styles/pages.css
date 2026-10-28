@@ -143,7 +143,7 @@ phg-home .radio-group input[type="radio"]:checked {
   border-color: var(--color-secondary);
 }
 
-:is(phg-about, phg-release-notes, phg-play-bots, phg-learn-modes) {
+:is(phg-about, phg-release-notes, phg-play-bots) {
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -152,7 +152,7 @@ phg-home .radio-group input[type="radio"]:checked {
   background: var(--color-bg-medium);
 }
 
-:is(phg-about, phg-release-notes, phg-play-bots, phg-learn-modes) > .main {
+:is(phg-about, phg-release-notes, phg-play-bots) > .main {
   flex: 1;
   min-width: 0;
   padding: clamp(20px, 4vw, 48px);
@@ -241,40 +241,6 @@ phg-home .radio-group input[type="radio"]:checked {
   color: var(--color-fg-white);
 }
 
-.learn-modes {
-  display: grid;
-  gap: calc(var(--space-lg) * 1.5);
-}
-
-.static-article a.learn-mode {
-  display: grid;
-  gap: var(--space-md);
-  padding: calc(var(--space-lg) * 1.5);
-  color: var(--color-fg-light);
-  text-decoration: none;
-  background: var(--color-bg-light);
-  border: 2px solid var(--color-secondary);
-}
-
-.static-article a.learn-mode:is(:hover, :focus-visible) {
-  color: var(--color-fg-light);
-  border-color: var(--color-primary);
-}
-
-.learn-mode-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  color: var(--color-fg-strong);
-  font-size: var(--font-md);
-}
-
-.learn-mode-title svg {
-  flex: none;
-  width: 1.5em;
-  height: 1.5em;
-}
-
 @media (width >= 600px) {
   :is(phg-home, phg-tournaments) .logo {
     width: 60%;
@@ -297,7 +263,7 @@ phg-home .radio-group input[type="radio"]:checked {
     flex-direction: column;
   }
 
-  :is(phg-about, phg-release-notes, phg-play-bots, phg-learn-modes) > .main {
+  :is(phg-about, phg-release-notes, phg-play-bots) > .main {
     padding: 56px var(--space-md) var(--space-md);
   }
 }

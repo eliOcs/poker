@@ -1,0 +1,57 @@
+@scope (phg-learn-modes) {
+  :scope {
+    height: 100%;
+    min-height: 100dvh;
+  }
+
+  p {
+    margin: 0;
+    font-size: var(--font-sm);
+    line-height: 1.8;
+  }
+
+  .modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .mode {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 10px;
+    padding: 14px;
+    background: var(--color-bg-medium);
+    border: 2px solid var(--color-bg-dark);
+  }
+
+  .mode h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .mode h2 svg {
+    flex: none;
+    width: 1.5em;
+    height: 1.5em;
+  }
+
+  .mode p {
+    color: var(--color-fg-muted);
+  }
+
+  .mode .button {
+    justify-self: start;
+  }
+
+  @media (width < 600px) {
+    .main {
+      padding: 56px var(--space-md) var(--space-md);
+    }
+
+    .panel {
+      padding: var(--space-md);
+    }
+  }
+}
