@@ -441,6 +441,21 @@ production's.
   preflop grafted onto blueprint postflop would not be a fair opponent
   either.
 
+- **Past 800M, more training stops paying, and premium hands still
+  shove.** Players saw the bots move all-in over a 3 BB open far too often.
+  A rented 96-core Graviton machine trained the same recipe to 1.6B
+  iterations, and a second run to 800M with the pruning threshold scaled to
+  the run length. Neither beat 800M on `lbr` or `br`, which matches the
+  plateau the engine's author recorded past 500M; agreement with Pluribus's
+  logged decisions rose only from 77.4% to 78.6% preflop. Facing a 3 BB
+  open, KK–TT and AK jam 100 BB about half the time in every blueprint,
+  although the menu offers re-raises to 6, 9.1 and 15.4 BB. The average
+  strategy also keeps a residue of 0.4–2.4% on every action, so a KJo jams
+  2.4% of the time. The fork's `compact --steps 20` rounds each share to the
+  nearest 5%, which removes the residue and leaves the premium jams. The
+  served blueprint is the 800M one rounded this way. The whole session cost
+  about $6; the details are in the fork's `BASELINES.md`.
+
 - **Playing the real engine found a betting bug in every game.** A contract
   run played 1,000 hands against the 800M blueprint, with a learner acting at
   random. The engine rejected requests after an all-in that was too small to
@@ -457,8 +472,10 @@ improve on it later.
 
 - **Engine strength.** The bots are exploitable, by at least +387 mbb/hand
   between the blinds (see [Findings](#findings-so-far)), though far less
-  than folding every hand. _Later:_ enable real-time
-  search, and pull in upstream improvements as they are published. GPU
+  than folding every hand, and premium hands jam preflop far too often.
+  More iterations of the same recipe do not fix either. _Later:_ enable
+  real-time search, and pull in upstream improvements as they are
+  published. GPU
   training could make bigger abstractions affordable: GPU-CFR
   ([arXiv:2609.11923](https://arxiv.org/abs/2609.11923)) compiles the game
   into static dataflow and replays each CFR iteration as a CUDA graph. It
