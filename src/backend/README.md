@@ -71,9 +71,9 @@ state lives in memory and in OTS files, and `tournament_id` in the activity
 tables is only a grouping key.
 
 **Recovery.** Games idle for an hour are evicted from memory
-(`game-eviction.js`). When someone connects to a cash game or Sit & Go that is
-not in memory, after an eviction or a restart, `poker/recovery.js` rebuilds it
-from its hand history. Finished MTTs are rebuilt from their OTS summary for
+(`game-eviction.js`). When someone connects to a cash game, Sit & Go or bot
+table that is not in memory, after an eviction or a restart,
+`poker/recovery.js` rebuilds it from its hand history. Finished MTTs are rebuilt from their OTS summary for
 viewing. A running MTT is not restored after a restart.
 
 ## Tournaments
@@ -107,20 +107,27 @@ teaching decisions.
 five bots. It is an ordinary in-memory game of kind `bots`, so betting, pots
 and showdown are the same code as everywhere else. What differs:
 
-- **Nothing is recorded.** Finished hands are not written to OHH files or
-  SQLite, so rankings and history stay free of bot results, and a guest who
-  only played bots is cleaned up like any other. The table is evicted when idle like any game and is never recovered,
-  so a restart ends it and the browser deals a new one. Instead, each
+- **Recorded, but kept off profiles.** Hands are written to the table's OHH
+  file like any other, so the table has rankings with BB/100 and a hand
+  history. Only the learner gets an activity row, which sign-in merges like
+  any other; bots are not users. Player profiles skip bot tables: practice
+  against bots is not a result against people. An evicted or restarted bot
+  table is rebuilt from its history when the learner opens its URL again;
+  recovery recognizes it by the roster's bot ids, which are therefore
+  permanent. The hand history cannot say how a bot chose, so each
   `bot_action` log line carries the engine request, the strategy it returned
-  and the sampled draw. The table id is in the page URL, and a request
-  replayed through `noregrets serve` shows the same strategy again.
+  and the sampled draw. A request replayed through `noregrets serve` shows
+  the same strategy again.
 - **Private.** Only the seated learner may connect, nobody else can sit, and
   the learner cannot give up the seat. Leaving (`DELETE /api/learn/bots`) or
-  opening a new table ends the table.
+  opening a new table ends the live table, after recording the hand that just
+  ended; its URL resumes it from its history.
 - **Always 100 BB, always six, no clock.** Every stack is reset to 100 BB
   after each hand, because a blueprint is solved for one depth: short stacks
   measurably weakened the bots, and deep ones looked broken (a bot "shoved"
-  100 BB and kept the rest behind). The fork can serve extra blueprints for
+  100 BB and kept the rest behind). The reset counts as a top-up or a
+  cash-out in the seat's buy-in, so the rankings still show the session's
+  net result. The fork can serve extra blueprints for
   other depths (`serve --also`) if a short-stack mode is ever wanted. A hand is dealt only while all six seats play. With no
   action clock there is nothing to sit out from, so the learner cannot sit
   out; a disconnect still sits them out, which pauses the table until they

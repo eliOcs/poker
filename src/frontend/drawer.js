@@ -133,10 +133,13 @@ function renderMttDrawer(game) {
   });
 }
 
-function renderCashDrawer(game) {
+/**
+ * Rankings and history open once a hand has been played.
+ * @param {any} game
+ */
+function renderRecordItems(game) {
   const hasRecordedHands = game.hasRecordedHands();
-  const historyPath = getHistoryPath(game.gameId);
-  const mainItems = html`
+  return html`
     <button
       type="button"
       ?disabled=${!hasRecordedHands}
@@ -144,7 +147,15 @@ function renderCashDrawer(game) {
     >
       ${iconRankings} Rankings
     </button>
-    ${renderHistoryItem(hasRecordedHands ? historyPath : undefined)}
+    ${renderHistoryItem(
+      hasRecordedHands ? getHistoryPath(game.gameId) : undefined,
+    )}
+  `;
+}
+
+function renderCashDrawer(game) {
+  const mainItems = html`
+    ${renderRecordItems(game)}
     ${
       game.game?.tournament
         ? html`<button
@@ -224,15 +235,15 @@ function renderTableDrawer(game, mainItems) {
 }
 
 /**
- * A bot table is private and keeps no record, so it offers no rankings,
- * history or invite links. With no clock there is nothing to sit out from:
- * leaving ends the table.
+ * A bot table is private, so it offers no invite links. With no clock there
+ * is nothing to sit out from: leaving ends the table.
  * @param {any} game
  */
 function renderBotsDrawer(game) {
   return renderTableDrawer(
     game,
     html`
+      ${renderRecordItems(game)}
       <button
         type="button"
         @click=${handleDrawerAction(game, () => game.leaveBotTable())}

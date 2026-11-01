@@ -37,7 +37,6 @@
   - reveal the bots' strategy mix and cards after each hand
   - grade the learner's decisions on every street against the engine
   - hint button showing the engine's recommendation before acting
-  - save hand histories and track win rate (BB/100) against the bots
   - human-like bot delays and an optional action clock
   - real-time search, once a search setup is less exploitable than the
     blueprint alone (none is yet)

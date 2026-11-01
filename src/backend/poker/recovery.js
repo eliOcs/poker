@@ -2,7 +2,12 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import * as Game from "./game.js";
 import * as Seat from "./seat.js";
-import { buildContributionsByPlayer } from "./hand-history/contributions.js";
+import * as Actions from "./actions.js";
+import { BOT_TABLE_STACK_BIG_BLINDS } from "./game-constants.js";
+import {
+  buildContributionsByPlayer,
+  calculateNetResult,
+} from "./hand-history/contributions.js";
 import {
   getDataDir,
   readTournamentSummary,
@@ -10,6 +15,7 @@ import {
 } from "./hand-history/io.js";
 import * as Tournament from "../../shared/tournament.js";
 import * as logger from "../logger.js";
+import { findBot, isBotTableHand } from "../bot-roster.js";
 
 /**
  * @typedef {import('./game.js').Game} PokerGame
@@ -521,6 +527,54 @@ async function readHandsFromFile(gameId) {
 }
 
 /**
+ * Rebuilds a bot table with the learner and the bots of its last hand. Every
+ * stack starts at the table depth, as after any hand there, and the buy-in
+ * carries the session's net result for the rankings. The first hand's
+ * countdown is set, as at a new table.
+ * @param {string} gameId
+ * @param {OHHHand[]} hands
+ * @param {OHHHand} lastHand
+ * @returns {PokerGame}
+ */
+function rebuildBotTable(gameId, hands, lastHand) {
+  const blinds = getBlindsFromHand(lastHand);
+  const game = Game.create({
+    kind: "bots",
+    seats: lastHand.table_size,
+    blinds,
+    tableName: lastHand.table_name,
+  });
+  game.id = gameId;
+  game.handNumber = parseHandNumber(lastHand.game_number);
+  const stack = BOT_TABLE_STACK_BIG_BLINDS * blinds.big;
+
+  for (const { id, seat, name } of lastHand.players) {
+    const bot = findBot(id);
+    const played = hands.filter((hand) =>
+      hand.players.some((player) => player.id === id),
+    );
+    const net = played.reduce(
+      (total, hand) => total + calculateNetResult(hand, id),
+      0,
+    );
+    game.seats[seat - 1] = {
+      ...Seat.occupied(
+        bot ? { ...bot.player } : { id, name: name ?? undefined },
+        stack,
+      ),
+      totalBuyIn: stack - net,
+      handsPlayed: played.length,
+      // Bots never connect; the learner is away until they open the table.
+      disconnected: !bot,
+    };
+  }
+
+  game.button = getRecordedButton(game.seats.length, lastHand.dealer_seat);
+  Actions.start(game);
+  return game;
+}
+
+/**
  * Rebuilds a game from parsed hand history.
  *
  * @param {string} gameId
@@ -532,6 +586,7 @@ export function rebuildGameFromHistory(gameId, hands, summary) {
   if (hands.length === 0) return;
 
   const lastHand = /** @type {OHHHand} */ (hands[hands.length - 1]);
+  if (isBotTableHand(lastHand)) return rebuildBotTable(gameId, hands, lastHand);
   const recoveredSeats = buildRecoveredSeatStates(hands);
   const playersInLastHand = new Set(
     lastHand.players.map((player) => player.id),

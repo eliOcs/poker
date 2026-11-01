@@ -42,10 +42,31 @@ test("plays hands against bots at a private table", async ({
   for (const name of ["New table", "Learn"]) {
     await expect(player1.game.getByRole("link", { name })).toHaveCount(0);
   }
+
+  // The table keeps a record: rankings in big blinds, with a BB/100 column,
+  // and the hand history.
+  await player1.game.getByRole("button", { name: "Rankings" }).click();
+  const rankings = player1.game.locator("phg-ranking-panel");
+  await expect(rankings.locator("thead")).toContainText("BB/100");
+  await expect(rankings.locator("tbody tr")).toHaveCount(6);
+  await expect(rankings.locator("tbody tr").first()).toContainText("BB");
+  await page.keyboard.press("Escape");
+  await player1.openHistory();
+  await player1.waitForHistoryLoaded();
+  expect(await player1.getHistoryHandCount()).toBeGreaterThanOrEqual(2);
+  await page.goBack();
+  await expect(page).toHaveURL(tableUrl);
+
+  await player1.openDrawer();
   await player1.game.getByRole("button", { name: "Leave table" }).click();
   await expect(page).toHaveURL(/\/learn$/);
+
+  // Its URL resumes the table from its recorded hands, and it deals on.
+  // The hand in progress at leaving was never recorded, so it is dealt anew.
   await page.goto(tableUrl);
-  await expect(page.locator("phg-toast")).toContainText(
-    "That bot table has ended",
-  );
+  await expect(player1.game.locator("phg-seat .bot-badge")).toHaveCount(5);
+  await expect(page).toHaveURL(tableUrl);
+  await expect
+    .poll(() => player1.getServerHandNumber(), { timeout: 15_000 })
+    .toBeGreaterThanOrEqual(3);
 });

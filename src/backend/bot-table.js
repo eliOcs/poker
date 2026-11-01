@@ -72,10 +72,9 @@ export function createBotTable(learner) {
   });
   const stack = BOT_TABLE_STACK_BIG_BLINDS * BLINDS.big;
   const bots = shuffled(BOTS).slice(0, TABLE_SIZE - 1);
-  game.seats = [
-    Seat.occupied(learner, stack),
-    ...bots.map((bot) => Seat.occupied({ ...bot.player }, stack)),
-  ];
+  game.seats = [learner, ...bots.map((bot) => ({ ...bot.player }))].map(
+    (player) => ({ ...Seat.occupied(player, stack), totalBuyIn: stack }),
+  );
   game.button = Math.floor(random() * TABLE_SIZE);
   Actions.start(game);
   return game;
@@ -211,8 +210,9 @@ export function createBotDriver({ engine, games, broadcast }) {
     /** @type {EngineChoice|undefined} */
     let choice;
     try {
-      // Hands at bot tables are not recorded, so the log keeps all a replay
-      // needs: the request, the strategy it got and the sampled draw.
+      // The hand history has the actions but not how the bot chose, so the
+      // log keeps all a replay needs: the request, the strategy it got and
+      // the sampled draw.
       const request = buildEngineRequest(game, seatIndex);
       log.context.engine = { request };
       const decision = await engine.decide(request);

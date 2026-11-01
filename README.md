@@ -86,8 +86,8 @@ state.
 
 Hand history files are the system of record for play. SQLite holds accounts
 and lookup indices. Idle games are evicted from memory. After an eviction or a
-restart, a cash game or Sit & Go is rebuilt from its history file the next time
-someone connects to it.
+restart, a cash game, Sit & Go or bot table is rebuilt from its history file
+the next time someone connects to it.
 
 ## Where things live
 

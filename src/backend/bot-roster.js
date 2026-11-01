@@ -25,7 +25,9 @@ const NAMES = [
 /**
  * The bots a table draws its opponents from. Each keeps the same generated
  * avatar for good, so a bot looks the same at every table and after restarts.
- * Ids are shorter than generated user ids, so they never collide.
+ * Ids are shorter than generated user ids, so they never collide. Ids are
+ * permanent: hand histories name the bots by id, and recovery tells a bot
+ * table by them, so a bot may join the roster but never leave it.
  * @type {ReadonlyArray<{ player: Player, avatar: AvatarConfiguration }>}
  */
 export const BOTS = NAMES.map((name, index) => {
@@ -43,8 +45,25 @@ export const BOTS = NAMES.map((name, index) => {
 
 /**
  * @param {string} playerId
+ * @returns {(typeof BOTS)[number]|undefined}
+ */
+export function findBot(playerId) {
+  return BOTS.find((bot) => bot.player.id === playerId);
+}
+
+/**
+ * @param {string} playerId
  * @returns {AvatarConfiguration|undefined}
  */
 export function getBotAvatar(playerId) {
-  return BOTS.find((bot) => bot.player.id === playerId)?.avatar;
+  return findBot(playerId)?.avatar;
+}
+
+/**
+ * Bots sit only at bot tables, so a hand with a bot is a bot table hand.
+ * @param {{ players: ReadonlyArray<{ id: string }> }} hand
+ * @returns {boolean}
+ */
+export function isBotTableHand(hand) {
+  return hand.players.some((player) => findBot(player.id) !== undefined);
 }

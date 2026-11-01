@@ -22,6 +22,7 @@ import {
 } from "./guest-user-cleanup.js";
 import { createBotEngine, UNAVAILABLE_BOT_ENGINE } from "./bot-engine.js";
 import { createBotDriver, isBotTableLearner } from "./bot-table.js";
+import { findBot } from "./bot-roster.js";
 
 /**
  * @typedef {import('./user.js').User} UserType
@@ -77,7 +78,9 @@ function recordFinalizedHand(game, handData) {
 
   handPromise
     .then((hand) => {
-      const tableEntries = hand.players.map((player) => ({
+      // Bots are not users: nobody looks up the tables they played.
+      const players = hand.players.filter((player) => !findBot(player.id));
+      const tableEntries = players.map((player) => ({
         playerId: player.id,
         tableId: game.id,
         ...(game.kind === "mtt" ? { tournamentId: game.tournamentId } : {}),
@@ -86,7 +89,7 @@ function recordFinalizedHand(game, handData) {
       }));
       const tournamentEntries =
         game.kind === "mtt"
-          ? hand.players.map((player) => ({
+          ? players.map((player) => ({
               playerId: player.id,
               tournamentId: game.tournamentId,
               lastTableId: game.id,
@@ -114,8 +117,7 @@ function recordFinalizedHand(game, handData) {
 function broadcastGameMessage(message) {
   if (message.type === "handEnded") {
     const game = games.get(message.gameId);
-    // Bot tables are ephemeral: their hands are never recorded.
-    if (game && game.kind !== "bots") {
+    if (game) {
       if (game.kind === "mtt" && mttManager) {
         mttManager.handleHandFinalized(game);
       }
@@ -148,6 +150,7 @@ const routes = createRoutes(users, games, broadcastGameStateMessage, {
   clientConnections,
   mttManager,
   botEngine,
+  broadcastGameMessage,
 });
 
 const RATE_LIMIT_BLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -171,6 +174,16 @@ function getRequestRateLimitKey(req) {
 }
 
 /**
+ * A bot table is private to its learner.
+ * @param {Game} game
+ * @param {UserType} user
+ * @returns {boolean}
+ */
+function isOpenTo(game, user) {
+  return game.kind !== "bots" || isBotTableLearner(game, user.id);
+}
+
+/**
  * @param {UserType|undefined} user
  * @param {Id|undefined} gameId
  * @returns {Promise<Game|void>}
@@ -182,14 +195,7 @@ async function resolveGameForUpgrade(user, gameId) {
 
   const existingGame = games.get(gameId);
   if (existingGame) {
-    // A bot table is private to its learner.
-    if (
-      existingGame.kind === "bots" &&
-      !isBotTableLearner(existingGame, user.id)
-    ) {
-      return;
-    }
-    return existingGame;
+    return isOpenTo(existingGame, user) ? existingGame : undefined;
   }
 
   const recoveredGame = await recoverGameFromHistory(gameId).catch((err) => {
@@ -202,7 +208,7 @@ async function resolveGameForUpgrade(user, gameId) {
   if (!recoveredGame) {
     return;
   }
-  if (recoveredGame.kind === "mtt") {
+  if (recoveredGame.kind === "mtt" || !isOpenTo(recoveredGame, user)) {
     return;
   }
 

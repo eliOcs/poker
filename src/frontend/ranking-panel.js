@@ -1,5 +1,5 @@
 import { html, LitElement } from "lit";
-import { formatCurrency } from "./currency.js";
+import { formatAmount } from "./currency.js";
 import { renderTooltip } from "./tooltip.js";
 
 class RankingPanel extends LitElement {
@@ -11,6 +11,7 @@ class RankingPanel extends LitElement {
     return {
       rankings: { type: Array },
       tournament: { type: Object },
+      displayBigBlind: { type: Number },
     };
   }
 
@@ -18,13 +19,12 @@ class RankingPanel extends LitElement {
     super();
     this.rankings = [];
     this.tournament = undefined;
+    this.displayBigBlind = 0;
   }
 
   formatNet(value) {
-    if (value >= 0) {
-      return `+${formatCurrency(value)}`;
-    }
-    return `-${formatCurrency(Math.abs(value))}`;
+    const amount = formatAmount(Math.abs(value), this.displayBigBlind);
+    return value >= 0 ? `+${amount}` : `-${amount}`;
   }
 
   formatWinRate(value) {
@@ -92,7 +92,9 @@ class RankingPanel extends LitElement {
                 </td>
                 ${
                   isTournament
-                    ? html`<td>${formatCurrency(r.stack)}</td>
+                    ? html`<td>
+                          ${formatAmount(r.stack, this.displayBigBlind)}
+                        </td>
                         <td class="${this.getValueClass(r.netWinnings)}">
                           ${this.formatNet(r.netWinnings)}
                         </td>`

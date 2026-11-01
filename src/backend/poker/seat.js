@@ -29,7 +29,7 @@
  * @property {Cents} stack - Chips behind (not in pot)
  * @property {Cents} bet - Current bet in this betting round
  * @property {Cents} totalInvested - Total chips put in pot this hand (for side pots)
- * @property {Cents} totalBuyIn - Cumulative buy-ins for this session (for ranking)
+ * @property {Cents} totalBuyIn - Chips brought to the table this session, net of what a bot table's reset takes off (for ranking)
  * @property {number} handsPlayed - Number of hands played this session (for ranking)
  * @property {Card[]} cards - Hole cards
  * @property {boolean} folded - Has folded this hand

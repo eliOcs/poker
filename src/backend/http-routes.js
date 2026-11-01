@@ -109,6 +109,7 @@ export function createRoutes(users, games, broadcast, services = {}) {
       users,
       games,
       services.botEngine ?? UNAVAILABLE_BOT_ENGINE,
+      services.broadcastGameMessage,
     ),
     spaPageRoute("/avatar"),
     spaPageRoute("/release-notes"),

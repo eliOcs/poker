@@ -28,6 +28,7 @@ export function renderRankingModal(game) {
     html`<phg-ranking-panel
       .rankings=${game.game?.rankings ?? []}
       .tournament=${game.game?.tournament}
+      .displayBigBlind=${game.displayBigBlind}
     ></phg-ranking-panel>`,
   );
 }

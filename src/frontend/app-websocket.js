@@ -406,7 +406,7 @@ export function reportFrontendError(app, error) {
 export function handleGameNotFound(app) {
   const liveRoute = matchLiveRoute(app.path);
   disconnectFromGame(app);
-  // Bot tables live only in memory, so a restart ends them. Deal a new one.
+  // A bot table with no recorded hand cannot be rebuilt. Deal a new one.
   if (liveRoute?.kind === "bots") {
     app.toast = { message: "That bot table has ended", variant: "info" };
     navigateApp(app, "/learn/bots", { replace: true });

@@ -601,14 +601,18 @@ export function endHand(game) {
 
 /**
  * At a bot table, resets every stack to the table depth, so nobody busts and
- * the blueprint always plays the depth it was trained for.
+ * the blueprint always plays the depth it was trained for. The reset tops a
+ * loser up and takes a winner's profit off the table, and the buy-in records
+ * both, so the stack minus the buy-in stays the session's net result.
  * @param {Game} game
  */
 function resetBotTableStacks(game) {
   if (game.kind !== "bots") return;
   const stack = BOT_TABLE_STACK_BIG_BLINDS * game.blinds.big;
   for (const seat of game.seats) {
-    if (!seat.empty) seat.stack = stack;
+    if (seat.empty) continue;
+    seat.totalBuyIn += stack - seat.stack;
+    seat.stack = stack;
   }
 }
 

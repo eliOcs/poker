@@ -8,6 +8,7 @@ import {
   toCents,
 } from "./poker/hand-history/io.js";
 import { getUserAvatarRevision } from "./avatar.js";
+import { isBotTableHand } from "./bot-roster.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
@@ -285,6 +286,8 @@ function listPlayerHistoryTables(playerId) {
  */
 async function summarizeTableHistory(tableLink, playerId) {
   const hands = await readHandsFromFile(tableLink.tableId);
+  // Practice against bots is not a result: profiles show games with people.
+  if (hands.some(isBotTableHand)) return;
   const playerHands = hands.filter((hand) =>
     hand.players.some((player) => player.id === playerId),
   );

@@ -123,7 +123,7 @@ export { processGameFlow } from "./game-flow.js";
  * @typedef {GameBase & { kind: "cash" }} CashGame
  * @typedef {GameBase & { kind: "sitngo" }} SitAndGoGame
  * @typedef {GameBase & { kind: "mtt", tournamentId: import('../id.js').Id }} MttGame
- * @typedef {GameBase & { kind: "bots" }} BotsGame - A learner's private table against engine bots; never persisted
+ * @typedef {GameBase & { kind: "bots" }} BotsGame - A learner's private table against engine bots
  * @typedef {CashGame|SitAndGoGame|MttGame|BotsGame} Game
  *
  * @typedef {object} BaseGameOptions

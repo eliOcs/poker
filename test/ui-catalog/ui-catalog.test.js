@@ -82,6 +82,7 @@ const TEST_CASES = [
   "game-rankings-modal",
   "game-rankings-modal-tooltip",
   "game-rankings-modal-tournament",
+  "game-bots-rankings-modal",
   "game-hand-rankings-modal",
   "game-tournament-levels-modal",
   "game-settings-modal",
@@ -181,6 +182,7 @@ async function prepareTestCase(testCase, page, component) {
     "game-rankings-modal": { showRanking: true },
     "game-rankings-modal-tooltip": { showRanking: true },
     "game-rankings-modal-tournament": { showRanking: true },
+    "game-bots-rankings-modal": { showRanking: true },
     "game-hand-rankings-modal": { showHandRankings: true },
     "game-tournament-levels-modal": { showTournamentLevels: true },
   }[testCase];
