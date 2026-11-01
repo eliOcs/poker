@@ -18,8 +18,9 @@ SSH_KEY="${SSH_KEY/#\~/$HOME}"
 REMOTE_DIR="/opt/poker/data/engine"
 
 # The volume belongs to the container's user, so the remote side writes with
-# sudo. The container only reads blueprints.
-rsync --progress --partial --chmod=D755,F644 \
+# sudo. The container only reads blueprints. --copy-links sends the file a
+# symlink points to; without it rsync skips the link and still exits 0.
+rsync --progress --partial --copy-links --chmod=D755,F644 \
   -e "ssh -i $SSH_KEY" \
   --rsync-path="sudo mkdir -p $REMOTE_DIR && sudo rsync" \
   "$1" "$SSH_USER@$HOST:$REMOTE_DIR/"
