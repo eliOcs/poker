@@ -69,8 +69,12 @@ factor fits that surface into whatever space remains after the navigation and
 controls. Fixed logical coordinates make the layout predictable at any size.
 The seat positions for 2, 6 and 9 players are explicit CSS Grid placements
 (`styles/table-layout.css`), not computed geometry, with a separate region
-reserved for the board. The design came out of a
-[layout study](../../doc/table-layout-study.md).
+reserved for the board. This replaced viewport media queries and
+percentages, which shrank the table but not its fixed-size seats and cards, so
+on phones the side seats overlapped the board. Grid placement alone does not
+prevent that; the clearance has to be designed in logical coordinates and then
+scaled as a whole. `test/ui-catalog/table-layout.test.js` asserts that
+clearance across sizes, orientations and history.
 
 - `data-seat` is the server's seat index. Actions always use it.
   `data-slot` is the visual position, rotated so the local player sits at the

@@ -33,7 +33,7 @@
 - use Zod for validation (we get types and validation in sync if we used compiled schemas performance is ok)
 - use SSE instead of websockets when we are only communicating updates from the backend to the frontend (eg: hand history)
 - OLAP db to store logs (DuckDB)
-- Play vs bots (doc/play-vs-bots.md) follow-ups:
+- Play vs bots follow-ups:
   - reveal the bots' strategy mix and cards after each hand
   - grade the learner's decisions on every street against the engine
   - hint button showing the engine's recommendation before acting

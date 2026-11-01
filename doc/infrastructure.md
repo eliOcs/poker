@@ -37,7 +37,12 @@ Its blueprint is too big for the image and lives on the data volume under
 `BOT_BLUEPRINT_PATH` in `config/deploy.yml` picks one by file name, so a
 deploy switches blueprints and a rollback switches back. Without a readable
 blueprint, the bots are unavailable and the rest of the site is unaffected.
-See [Play vs bots](play-vs-bots.md#engine-integration).
+The binary is downloaded rather than built here because deploys build ARM64
+on x86, and an LTO Rust build under QEMU takes tens of minutes. We train our
+own blueprints because upstream's pretrained ones are commercially licensed.
+The blueprint is memory-mapped, so the t4g.micro serves it from page cache:
+app memory growth costs bot latency, which has ample headroom, rather than
+failing. The data volume fits two blueprints during a swap.
 
 **Monitoring.** A scheduled Lambda requests the site over HTTPS. When the site
 goes down or recovers, an email goes out through SNS. CloudWatch alarms

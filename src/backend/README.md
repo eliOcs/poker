@@ -108,7 +108,8 @@ five bots. It is an ordinary in-memory game of kind `bots`, so betting, pots
 and showdown are the same code as everywhere else. What differs:
 
 - **Nothing is recorded.** Finished hands are not written to OHH files or
-  SQLite. The table is evicted when idle like any game and is never recovered,
+  SQLite, so rankings and history stay free of bot results, and a guest who
+  only played bots is cleaned up like any other. The table is evicted when idle like any game and is never recovered,
   so a restart ends it and the browser deals a new one. Instead, each
   `bot_action` log line carries the engine request, the strategy it returned
   and the sampled draw. The table id is in the page URL, and a request
@@ -117,22 +118,44 @@ and showdown are the same code as everywhere else. What differs:
   the learner cannot give up the seat. Leaving (`DELETE /api/learn/bots`) or
   opening a new table ends the table.
 - **Always 100 BB, always six, no clock.** Every stack is reset to 100 BB
-  after each hand, and a hand is dealt only while all six seats play. With no
+  after each hand, because a blueprint is solved for one depth: short stacks
+  measurably weakened the bots, and deep ones looked broken (a bot "shoved"
+  100 BB and kept the rest behind). The fork can serve extra blueprints for
+  other depths (`serve --also`) if a short-stack mode is ever wanted. A hand is dealt only while all six seats play. With no
   action clock there is nothing to sit out from, so the learner cannot sit
   out; a disconnect still sits them out, which pauses the table until they
   sit back in.
 - **Bots act on broadcasts.** Every state broadcast runs the bot driver. When
   a bot is to act, it asks the engine once for that decision, samples the
-  returned mix with the game's RNG and applies the action through the same
+  returned mix with the game's RNG (so `RNG_SEED` keeps e2e runs
+  reproducible) and applies the action through the same
   path as a WebSocket action. If the engine fails, the bot checks or folds.
 
-The engine (`bot-engine.js`) is the noregrets `serve` command, blueprint
-only, run as one child process that answers JSON lines. Each request describes the whole hand
-so far, built from the hand-history recorder, so the engine keeps no table
-state and a crash loses nothing; it restarts with growing delays. Until it
-reports ready, opening a table answers 503. Bot identities and their avatars
-come from a fixed roster (`bot-roster.js`). The design and its tradeoffs are
-in [Play vs bots](../../doc/play-vs-bots.md).
+The engine (`bot-engine.js`) is the `serve` command of our
+[noregrets fork](https://github.com/eliOcs/noregrets), an MCCFR blueprint in
+the style of Pluribus, run as one child process that answers JSON lines. A
+child process needs no native build, and an engine crash cannot take the
+server down; a separate service only pays off if the engine ever needs its
+own machine. Each request describes the whole hand so far, built from the
+hand-history recorder, so the engine keeps no table state and a crash loses
+nothing; it restarts with growing delays. Until it reports ready, opening a
+table answers 503. Bot identities and their avatars come from a fixed roster
+(`bot-roster.js`).
+
+The bots are good enough for recreational players, not unbeatable, and the UI
+never calls them "GTO":
+
+- **Blueprint only.** Real-time search was measured as more exploitable than
+  the blueprint alone, against a probe that models the search.
+- **Off-menu bet sizes** are mapped by the fork to the log-nearest size on the
+  engine's bet menu. Arbitrary sizes cost the human, not the bots; betting
+  just under a menu size wins about 0.05 BB per hand.
+- **Preflop differs from the lessons.** The blueprint comes from another
+  solver than the lesson charts, and it sometimes limps strong hands from
+  early position.
+
+Bot quality is improved inside the fork, behind the same protocol; its
+`BASELINES.md` records the measurements.
 
 ## Avatars
 

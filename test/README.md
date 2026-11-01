@@ -26,8 +26,7 @@ Pick the cheapest layer that can observe the behavior.
 - **The bot engine** is a system edge. Tests use `test/fake-bot-engine.js`,
   which speaks the same protocol and always checks or calls; the e2e server
   runs it too. Changes to how requests are built should also be played
-  against the real binary and a blueprint (see
-  [Play vs bots](../doc/play-vs-bots.md)), which catches disagreements about
+  against the real binary and a blueprint, which catches disagreements about
   the rules that the fake cannot.
 - **UI catalog** cases set up states directly. Interactions belong in
   component or e2e tests, and poker calculations in backend tests.
