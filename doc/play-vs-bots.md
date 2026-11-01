@@ -74,9 +74,12 @@ better.
   exploit, but it would need a seed in every request, and arbitrary sizes
   measured as costing the human rather than the bots (see
   [Findings](#findings-so-far)).
-- **Blueprint only, with no real-time search.** Decisions are table lookups:
-  cheap enough for a small instance and fast enough for instant bots. The cost
-  is weaker play off the menu and at stack depths other than 100 BB.
+- **Blueprint only, with no real-time search.** Decisions are table lookups
+  in `it-800m-r.nrc`, the 800M blueprint with a re-solved preflop merged in:
+  cheap enough for a small instance and fast enough for instant bots. Search
+  was measured and rejected: against a probe that models the search, every
+  search setup was more exploitable than the blueprint alone (see
+  [Findings](#findings-so-far)). The cost is weaker play off the menu.
 - **Labelled as bots, not "GTO".** Bots get generated pixel avatars and names
   with a visible bot badge. The UI calls the section something like "Play vs
   bots". The engine approximates equilibrium play, and its own results show it
@@ -453,8 +456,27 @@ production's.
   strategy also keeps a residue of 0.4–2.4% on every action, so a KJo jams
   2.4% of the time. The fork's `compact --steps 20` rounds each share to the
   nearest 5%, which removes the residue and leaves the premium jams. The
-  served blueprint is the 800M one rounded this way. The whole session cost
-  about $6; the details are in the fork's `BASELINES.md`.
+  whole session cost about $6; the details are in the fork's `BASELINES.md`.
+
+- **The served blueprint: the 800M one with a re-solved preflop.**
+  `it-800m-r.nrc` is the 800M blueprint with a re-solved preflop merged in
+  and the bucket table stored inside: one 1.3 GB file. The re-solved
+  preflop removes most premium jams (2–9% instead of 33–48%) and the junk
+  cold-calls behind them, at no measured cost in exploitability (multiway
+  +93 ±137, heads-up +24 ±121 mbb/hand against the plain 800M blueprint,
+  neither significant). Agreement with Pluribus's preflop drops 0.9 points.
+  Its multiway exploitability bound is +659 mbb/hand at 100 BB, the lowest
+  of anything measured that can be served.
+
+- **Search looked better only until the probe modelled it.** Earlier gates
+  had the probe assume the bots play the blueprint, and search seemed to cut
+  the multiway bound by 268 mbb/hand. A probe that runs the bot's own search
+  for every hand it might hold and exploits that found the opposite (8 seeds
+  each, 100 BB): search with the safety gadget +298, with plain Bayesian
+  ranges +585, and as `serve --search` runs it +762 mbb/hand more
+  exploitable than the blueprint alone. The search best-responds to ranges
+  built as if everyone played the blueprint, and anyone who plays otherwise
+  exploits it. The details are in the fork's `BASELINES.md` (1 Nov 2026).
 
 - **Playing the real engine found a betting bug in every game.** A contract
   run played 1,000 hands against the 800M blueprint, with a learner acting at
@@ -473,8 +495,10 @@ improve on it later.
 - **Engine strength.** The bots are exploitable, by at least +387 mbb/hand
   between the blinds (see [Findings](#findings-so-far)), though far less
   than folding every hand, and premium hands jam preflop far too often.
-  More iterations of the same recipe do not fix either. _Later:_ enable
-  real-time search, and pull in upstream improvements as they are
+  More iterations of the same recipe do not fix either, and search as built
+  makes the bots more exploitable, not less. _Later:_ a better training
+  recipe (the fork's current work), search only once it beats the blueprint
+  against a probe that models it, and upstream improvements as they are
   published. GPU
   training could make bigger abstractions affordable: GPU-CFR
   ([arXiv:2609.11923](https://arxiv.org/abs/2609.11923)) compiles the game

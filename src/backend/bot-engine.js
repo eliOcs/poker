@@ -7,7 +7,7 @@ import * as logger from "./logger.js";
  * @typedef {import('./poker/deck.js').Card} Card
  * @typedef {{ type: "fold" } | { type: "call" } | { type: "raise", to: Cents }} EngineAction - `call` also checks; `to` is the total street commitment
  * @typedef {EngineAction & { p: number }} EngineChoice
- * @typedef {"blueprint"|"unseen"|"capped"} EngineSource
+ * @typedef {"blueprint"|"unseen"|"capped"|"search"} EngineSource
  * @typedef {{ strategy: EngineChoice[], source: EngineSource }} EngineDecision
  *
  * @typedef {object} EngineRequest
@@ -28,7 +28,7 @@ import * as logger from "./logger.js";
 const REQUEST_TIMEOUT_MS = 5000;
 const FIRST_RESTART_DELAY_MS = 1000;
 const MAX_RESTART_DELAY_MS = 60_000;
-const SOURCES = ["blueprint", "unseen", "capped"];
+const SOURCES = ["blueprint", "unseen", "capped", "search"];
 
 /**
  * @param {unknown} value

@@ -36,7 +36,7 @@ env:
     # The bot engine ships in the image; blueprints live on the data volume
     # (npm run upload:blueprint). Pick one by file name.
     BOT_ENGINE_PATH: /usr/local/bin/noregrets
-    BOT_BLUEPRINT_PATH: /app/data/engine/it-800m-s20.nrc
+    BOT_BLUEPRINT_PATH: /app/data/engine/it-800m-r.nrc
 
 # Keep at most approximately 1 GB of logs for each application container.
 logging:

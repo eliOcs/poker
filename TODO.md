@@ -39,7 +39,8 @@
   - hint button showing the engine's recommendation before acting
   - save hand histories and track win rate (BB/100) against the bots
   - human-like bot delays and an optional action clock
-  - real-time search for stronger postflop play
+  - real-time search, once a search setup is less exploitable than the
+    blueprint alone (none is yet)
 
 ## Hand Rank modal [WIP]
 

@@ -4,16 +4,16 @@
 # it needs no libc from this image. Each architecture has its own checksum;
 # BuildKit builds only the stage the target needs.
 ARG TARGETARCH
-ARG ENGINE_RELEASE=https://github.com/eliOcs/noregrets/releases/download/v0.1.0
+ARG ENGINE_RELEASE=https://github.com/eliOcs/noregrets/releases/download/v0.3.1
 
 FROM scratch AS engine-arm64
 ARG ENGINE_RELEASE
-ADD --checksum=sha256:06d4cde7fae3962c68cac3cb3b9834a83e9d29b029339c542d39cc2429692632 \
+ADD --checksum=sha256:8cab3b8083ab483f8e91ebb1f5b1b6ae201951d380d772d88366642eec683ca7 \
   ${ENGINE_RELEASE}/noregrets-aarch64-linux-musl /noregrets
 
 FROM scratch AS engine-amd64
 ARG ENGINE_RELEASE
-ADD --checksum=sha256:a597bad743fe75891ee579d1d3d84ffb5c15bfb97c78d18ce2c167e15b6aea52 \
+ADD --checksum=sha256:522889d870f08a92e813e731bcd401cfcdafbef120fec4e15358074ecad7a007 \
   ${ENGINE_RELEASE}/noregrets-x86_64-linux-musl /noregrets
 
 FROM engine-${TARGETARCH} AS engine

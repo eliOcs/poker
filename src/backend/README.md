@@ -126,8 +126,8 @@ and showdown are the same code as everywhere else. What differs:
   returned mix with the game's RNG and applies the action through the same
   path as a WebSocket action. If the engine fails, the bot checks or folds.
 
-The engine (`bot-engine.js`) is the noregrets `serve` command, run as one
-child process that answers JSON lines. Each request describes the whole hand
+The engine (`bot-engine.js`) is the noregrets `serve` command, blueprint
+only, run as one child process that answers JSON lines. Each request describes the whole hand
 so far, built from the hand-history recorder, so the engine keeps no table
 state and a crash loses nothing; it restarts with growing delays. Until it
 reports ready, opening a table answers 503. Bot identities and their avatars
