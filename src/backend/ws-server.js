@@ -1,7 +1,7 @@
 import { WebSocketServer } from "ws";
 import * as Player from "./poker/player.js";
 import * as logger from "./logger.js";
-import { getSessionPlayerLogContext } from "./logger.js";
+import { getConnectionLogContext } from "./ws-json.js";
 import { parseCookies } from "./http-routes.js";
 import { RateLimitError } from "./rate-limit.js";
 import { matchLiveRoute } from "../shared/routes.js";
@@ -252,11 +252,9 @@ function createConnectionHandler({
     initialTournamentMessage,
   ) {
     const playerRateLimitKey = `player:${user.id}`;
-    clientConnections.set(ws, { user, gameId, tournamentId });
-    logger.info("ws connected", {
-      game: { tableId: gameId, ...(tournamentId && { tournamentId }) },
-      ...getSessionPlayerLogContext(user),
-    });
+    const conn = { user, gameId, tournamentId };
+    clientConnections.set(ws, conn);
+    logger.info("ws connected", getConnectionLogContext(conn));
 
     const player = Player.fromUser(user);
     if (game && gameId) {
@@ -271,17 +269,9 @@ function createConnectionHandler({
     }
 
     ws.on("close", () => {
-      const conn = clientConnections.get(ws);
-      clientConnections.delete(ws);
-      if (!conn) return;
+      if (!clientConnections.delete(ws)) return;
 
-      logger.info("ws disconnected", {
-        game: {
-          tableId: conn.gameId,
-          ...(conn.tournamentId && { tournamentId: conn.tournamentId }),
-        },
-        ...getSessionPlayerLogContext(conn.user),
-      });
+      logger.info("ws disconnected", getConnectionLogContext(conn));
 
       handlePlayerDisconnected(
         conn,
@@ -299,6 +289,7 @@ function createConnectionHandler({
         user,
         game,
         gameId,
+        conn,
         player,
         playerRateLimitKey,
         actionRateLimiter,
@@ -308,10 +299,10 @@ function createConnectionHandler({
       }),
     );
 
-    sendInitialTournamentMessage(ws, initialTournamentMessage);
+    sendInitialTournamentMessage(ws, conn, initialTournamentMessage);
 
     if (game) {
-      sendInitialGameView(ws, game, player, broadcastGameMessage);
+      sendInitialGameView(ws, conn, game, player, broadcastGameMessage);
     }
   }
 
@@ -338,11 +329,7 @@ export function createWebSocketServer(params) {
     onTimeout(ws) {
       const conn = clientConnections.get(ws);
       logger.warn("ws heartbeat timeout", {
-        game: {
-          tableId: conn?.gameId,
-          ...(conn?.tournamentId && { tournamentId: conn.tournamentId }),
-        },
-        ...(conn ? getSessionPlayerLogContext(conn.user) : {}),
+        ...(conn && getConnectionLogContext(conn)),
       });
     },
   });

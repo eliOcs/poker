@@ -127,22 +127,34 @@ export function handlePlayerDisconnected(
 /**
  * Sends the initial tournament state message to the client.
  * @param {import("ws").WebSocket} ws
+ * @param {import("./ws-json.js").ClientConn} conn
  * @param {unknown|undefined} initialTournamentMessage
  */
-export function sendInitialTournamentMessage(ws, initialTournamentMessage) {
+export function sendInitialTournamentMessage(
+  ws,
+  conn,
+  initialTournamentMessage,
+) {
   if (initialTournamentMessage) {
-    sendWebSocketJson(ws, initialTournamentMessage);
+    sendWebSocketJson(ws, conn, initialTournamentMessage);
   }
 }
 
 /**
  * Sends the initial game state view to the connected client.
  * @param {import("ws").WebSocket} ws
+ * @param {import("./ws-json.js").ClientConn} conn
  * @param {Game} game
  * @param {import("./poker/seat.js").Player} player
  * @param {WebSocketServerParams["broadcastGameMessage"]} broadcastGameMessage
  */
-export function sendInitialGameView(ws, game, player, broadcastGameMessage) {
-  sendWebSocketJson(ws, playerView(game, player));
+export function sendInitialGameView(
+  ws,
+  conn,
+  game,
+  player,
+  broadcastGameMessage,
+) {
+  sendWebSocketJson(ws, conn, playerView(game, player));
   PokerGame.ensureGameTick(game, broadcastGameMessage);
 }

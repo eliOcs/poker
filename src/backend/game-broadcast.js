@@ -6,7 +6,7 @@ import { sendWebSocketJson } from "./ws-json.js";
  * @typedef {import('./user.js').User} UserType
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/game.js').BroadcastMessage} BroadcastMessage
- * @typedef {{ user: UserType, gameId?: string, tournamentId?: string }} ClientConn
+ * @typedef {import('./ws-json.js').ClientConn} ClientConn
  * @typedef {{ recipients: number, maxPayloadBytes: number }} BroadcastStats
  * @typedef {import('./mtt-seating.js').PlayerMovedEvent} PlayerMovedEvent
  * @typedef {{ type: "tournamentState", tournament: unknown }} TournamentStateMessage
@@ -61,7 +61,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
     forEachGameClient(gameId, (ws, conn) => {
       const message = buildMessage(conn);
       if (message !== undefined) {
-        const { sent, payloadBytes } = sendWebSocketJson(ws, message);
+        const { sent, payloadBytes } = sendWebSocketJson(ws, conn, message);
         if (!sent) return;
         recipients += 1;
         maxPayloadBytes = Math.max(maxPayloadBytes, payloadBytes);
@@ -192,7 +192,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
 
         const playerMove = playerMovesById.get(conn.user.id);
         if (playerMove) {
-          const moveResult = sendWebSocketJson(ws, {
+          const moveResult = sendWebSocketJson(ws, conn, {
             type: "playerMoved",
             tournamentId: playerMove.tournamentId,
             tableId: playerMove.tableId,
@@ -201,7 +201,7 @@ export function createGameBroadcaster(games, clientConnections, options = {}) {
           if (!moveResult.sent) return;
           maxPayloadBytes = Math.max(maxPayloadBytes, moveResult.payloadBytes);
         }
-        const { sent, payloadBytes } = sendWebSocketJson(ws, {
+        const { sent, payloadBytes } = sendWebSocketJson(ws, conn, {
           type: "tournamentState",
           tournament,
         });

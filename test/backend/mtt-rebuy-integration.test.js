@@ -52,6 +52,7 @@ function dispatchManagedAction(ctx, game, player, action) {
     user: createUser(player.id, player.name),
     game,
     gameId: game.id,
+    conn: { user: createUser(player.id, player.name), gameId: game.id },
     player,
     playerRateLimitKey: `player:${player.id}`,
     actionRateLimiter: { check: () => ({}) },

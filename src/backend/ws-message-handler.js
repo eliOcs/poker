@@ -187,21 +187,23 @@ function parsePingId(args) {
 
 /**
  * @param {import("ws").WebSocket} ws
+ * @param {import("./ws-json.js").ClientConn} conn
  * @param {string|undefined} actionId
  * @param {boolean} accepted
  */
-function sendActionResult(ws, actionId, accepted) {
+function sendActionResult(ws, conn, actionId, accepted) {
   if (!actionId) return;
-  sendWebSocketJson(ws, { type: "actionResult", actionId, accepted });
+  sendWebSocketJson(ws, conn, { type: "actionResult", actionId, accepted });
 }
 
 /**
  * @param {import("ws").WebSocket} ws
+ * @param {import("./ws-json.js").ClientConn} conn
  * @param {string|undefined} actionId
  * @param {string} message
  */
-function sendActionError(ws, actionId, message) {
-  sendWebSocketJson(ws, {
+function sendActionError(ws, conn, actionId, message) {
+  sendWebSocketJson(ws, conn, {
     ...(actionId && { type: "actionResult", actionId, accepted: false }),
     error: { message },
   });
@@ -286,6 +288,7 @@ function dispatchGameAction({
  *   user: UserType,
  *   game: Game|undefined,
  *   gameId: string|undefined,
+ *   conn: import("./ws-json.js").ClientConn,
  *   player: import("./poker/seat.js").Player,
  *   playerRateLimitKey: string,
  *   actionRateLimiter: WebSocketServerParams["actionRateLimiter"],
@@ -300,6 +303,7 @@ export function createMessageHandler({
   user,
   game,
   gameId,
+  conn,
   player,
   playerRateLimitKey,
   actionRateLimiter,
@@ -333,13 +337,17 @@ export function createMessageHandler({
 
       if (action === "ping") {
         const pingId = parsePingId(args);
-        sendWebSocketJson(ws, { type: "pong", ...(pingId && { pingId }) });
+        sendWebSocketJson(ws, conn, {
+          type: "pong",
+          ...(pingId && { pingId }),
+        });
         return;
       }
 
       if (!game || !gameId) {
         sendActionError(
           ws,
+          conn,
           actionId,
           "game actions are unavailable on tournament lobby connections",
         );
@@ -358,13 +366,13 @@ export function createMessageHandler({
         broadcastGameStateMessage,
         handleManagedTableAction,
       });
-      sendActionResult(ws, actionId, true);
+      sendActionResult(ws, conn, actionId, true);
     } catch (err) {
       if (err instanceof RateLimitError) {
         log.context.rateLimit = err.rateLimit;
       }
       log.context.error = { message: err.message };
-      sendActionError(ws, actionId, err.message);
+      sendActionError(ws, conn, actionId, err.message);
     } finally {
       emitLog(log);
     }

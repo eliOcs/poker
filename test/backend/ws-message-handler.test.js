@@ -28,6 +28,7 @@ function createHandlerContext({
     user,
     game,
     gameId: game?.id,
+    conn: { user, gameId: game?.id },
     player,
     playerRateLimitKey: `player:${player.id}`,
     actionRateLimiter: actionRateLimiter ?? {
@@ -81,6 +82,7 @@ describe("ws-message-handler", () => {
       user: { id: "player-1", name: "Player 1" },
       game: null,
       gameId: null,
+      conn: { user: { id: "player-1", name: "Player 1" } },
       player: { id: "player-1", name: "Player 1" },
       playerRateLimitKey: "player:player-1",
       actionRateLimiter: {
