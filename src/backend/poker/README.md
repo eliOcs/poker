@@ -57,7 +57,10 @@ Seats form a ring; iteration wraps with modulo (`circular-array.js`).
 ## Player views
 
 `player-view.js` turns the game into what one seat may see. Opponents' hole
-cards are hidden unless shown at showdown. Only the viewer receives their
+cards are hidden unless shown at showdown or voluntarily shown. A player who
+folds may choose to show, but the cards stay hidden until the hand ends, and to
+the players still in it the choice looks the same as a muck: seeing a folded
+hand would change how they play the rest of it. Only the viewer receives their
 available actions, with legal bet ranges and their chip step. Both the hiding and the computation
 of legal moves happen on the server, so the client cannot reveal hidden cards
 or attempt illegal moves.

@@ -263,15 +263,20 @@ describe("betting actions", () => {
   });
 
   describe("show cards", () => {
-    it("should allow showing one card after folding", () => {
+    it("should hold back one card shown after folding until the hand ends", () => {
       game.hand.actingSeat = 2;
       game.seats[2].bet = 50;
       game.seats[2].cards = ["As", "Kh"];
       Actions.fold(game, { seat: 2 });
 
-      const shown = Actions.showCard1(game, { seat: 2 });
+      assert.deepEqual(Actions.showCard1(game, { seat: 2 }), []);
+      assert.equal(game.seats[2].muckDecision, undefined);
+      assert.deepEqual(game.seats[2].shownCards, [false, false]);
 
-      assert.deepEqual(shown, ["As"]);
+      Actions.endHand(game);
+      const [reveal] = Actions.revealPendingShows(game);
+
+      assert.deepEqual(reveal?.cards, ["As"]);
       assert.equal(game.seats[2].shownCards[0], true);
       assert.equal(game.seats[2].shownCards[1], false);
       assert.equal(game.seats[2].cardsRevealed, false);

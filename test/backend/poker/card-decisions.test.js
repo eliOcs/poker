@@ -102,45 +102,62 @@ describe("card decision visibility", () => {
     });
   }
 
-  for (const phase of ["preflop", "flop", "waiting"]) {
-    for (const [action, visibleCards] of [
-      ["showCard1", ["As", "??"]],
-      ["showCard2", ["??", "Kh"]],
-      ["showBothCards", holeCards],
-    ]) {
-      it(`displays ${action} for five ticks when chosen during ${phase}`, () => {
-        game.hand.phase = phase;
-        if (phase === "waiting") {
-          winUncontested();
-        } else {
-          Actions.fold(game, { seat: 0 });
-        }
-        game.hand.actingSeat = -1;
-        // The reveal gets a full display window even after deciding late.
-        for (let i = 0; i < 4; i += 1) tick(game);
+  for (const [action, visibleCards] of [
+    ["showCard1", ["As", "??"]],
+    ["showCard2", ["??", "Kh"]],
+    ["showBothCards", holeCards],
+  ]) {
+    it(`displays ${action} for five ticks when chosen after the hand`, () => {
+      winUncontested();
+      // The reveal gets a full display window even after deciding late.
+      for (let i = 0; i < 4; i += 1) tick(game);
 
-        Actions[action](game, { seat: 0 });
+      Actions[action](game, { seat: 0 });
+      assertCardsVisibleToOthers(visibleCards);
+      for (let i = 0; i < 4; i += 1) {
+        assert.equal(shouldTickBeRunning(game), true);
+        tick(game);
         assertCardsVisibleToOthers(visibleCards);
-        for (let i = 0; i < 4; i += 1) {
-          assert.equal(shouldTickBeRunning(game), true);
-          tick(game);
-          assertCardsVisibleToOthers(visibleCards);
-        }
+      }
 
-        const result = tick(game);
-        assert.equal(result.shouldBroadcast, true);
-        assert.equal(result.autoMuckSeats, undefined);
-        assert.equal(shouldTickBeRunning(game), false);
+      const result = tick(game);
+      assert.equal(result.shouldBroadcast, true);
+      assert.equal(result.autoMuckSeats, undefined);
+      assert.equal(shouldTickBeRunning(game), false);
+      assertCardsVisibleToOthers([]);
+      assert.throws(() => Actions.showBothCards(game, { seat: 0 }));
+    });
+
+    it(`holds back ${action} chosen mid-hand until the hand ends`, () => {
+      Actions.fold(game, { seat: 0 });
+      game.hand.phase = "flop";
+
+      assert.deepEqual(Actions[action](game, { seat: 0 }), []);
+      for (let i = 0; i < 6; i += 1) {
         assertCardsVisibleToOthers([]);
-        assert.throws(() => Actions.showBothCards(game, { seat: 0 }));
-        game.hand.phase = "showdown";
-        assertCardsVisibleToOthers([]);
-      });
-    }
+        tick(game);
+      }
+      assert.throws(() => Actions.showBothCards(game, { seat: 0 }));
+      assert.throws(() => Actions.muck(game, { seat: 0 }));
+
+      Actions.endHand(game);
+      assertCardsVisibleToOthers([]);
+      const [reveal] = Actions.revealPendingShows(game);
+      assert.deepEqual(
+        reveal?.cards,
+        visibleCards.filter((card) => card !== "??"),
+      );
+      for (let i = 0; i < 5; i += 1) {
+        assertCardsVisibleToOthers(visibleCards);
+        tick(game);
+      }
+      assertCardsVisibleToOthers([]);
+      assert.deepEqual(Actions.revealPendingShows(game), []);
+    });
   }
 
   it("clears the previous reveal timer before the next hand", () => {
-    Actions.fold(game, { seat: 0 });
+    winUncontested();
     Actions.showCard1(game, { seat: 0 });
     tick(game);
 

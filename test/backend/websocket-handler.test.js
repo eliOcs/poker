@@ -9,6 +9,7 @@ import * as PokerActions from "../../src/backend/poker/actions.js";
 import * as Seat from "../../src/backend/poker/seat.js";
 import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
 import * as Store from "../../src/backend/store.js";
+import playerView from "../../src/backend/poker/player-view.js";
 import { createTestGame } from "./poker/test-helpers.js";
 
 describe("websocket-handler", () => {
@@ -179,10 +180,11 @@ describe("websocket-handler", () => {
   });
 
   describe("show card actions", () => {
-    it("records shown cards in hand history", () => {
-      const game = createTestGame({ seats: 2 });
+    it("holds back a folded player's show until the hand ends", () => {
+      const game = createTestGame({ seats: 3 });
       const player = { id: "p1", name: "Alice" };
       const opponent = { id: "p2", name: "Bob" };
+      const other = { id: "p3", name: "Carol" };
       game.seats[0] = {
         ...Seat.occupied(player, 1000),
         cards: ["As", "Kh"],
@@ -190,28 +192,41 @@ describe("websocket-handler", () => {
         totalInvested: 25,
         muckDecision: { remainingTicks: 5 },
       };
-      game.seats[1] = Seat.occupied(opponent, 1000);
-      game.hand = {
-        phase: "flop",
-        collectedPot: 0,
-        currentBet: 0,
-        lastRaiser: -1,
-        actingSeat: 1,
-        lastRaiseSize: 0,
-      };
+      game.seats[1] = { ...Seat.occupied(opponent, 1000), cards: ["2c", "3d"] };
+      game.seats[2] = { ...Seat.occupied(other, 1000), cards: ["4h", "5s"] };
+      game.hand.phase = "flop";
+      game.hand.actingSeat = 1;
       game.handNumber = 1;
 
       HandHistory.clearRecorder(game.id);
       HandHistory.startHand(game);
+      const showActions = () =>
+        HandHistory.getRecorder(game.id).actions.filter(
+          (a) => a.action === "Shows Cards",
+        );
 
       processPokerAction(game, player, "showCard1", { seat: 0 });
 
-      const recorder = HandHistory.getRecorder(game.id);
-      const showAction = recorder.actions.find(
-        (a) => a.action === "Shows Cards",
+      assert.deepStrictEqual(showActions(), []);
+      assert.deepStrictEqual(playerView(game, opponent).seats[0].cards, []);
+      assert.deepStrictEqual(
+        playerView(game, player).seats[0].actions.filter(({ action }) =>
+          ["muck", "showCard1"].includes(action),
+        ),
+        [],
       );
-      assert.ok(showAction);
-      assert.deepStrictEqual(showAction.cards, ["As"]);
+
+      processPokerAction(game, opponent, "fold", { seat: 1 });
+
+      assert.strictEqual(game.hand.phase, "waiting");
+      assert.deepStrictEqual(
+        showActions().map((a) => [a.player_id, a.cards]),
+        [["p1", ["As"]]],
+      );
+      assert.deepStrictEqual(playerView(game, opponent).seats[0].cards, [
+        "As",
+        "??",
+      ]);
 
       HandHistory.clearRecorder(game.id);
     });

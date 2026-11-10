@@ -340,13 +340,15 @@ export function fold(game, { seat }) {
 }
 
 /**
- * Reveals selected hole cards for a seat and returns only newly revealed cards
+ * Shows selected hole cards for a seat. A folded player's cards stay hidden
+ * while the hand is still being played, so the reveal cannot influence the
+ * players left in it; they are revealed when the hand ends.
  * @param {Game} game
  * @param {number} seat
  * @param {number[]} cardIndexes
- * @returns {import('./deck.js').Card[]}
+ * @returns {import('./deck.js').Card[]} cards revealed now; empty when held back
  */
-function revealHoleCards(game, seat, cardIndexes) {
+function showHoleCards(game, seat, cardIndexes) {
   const seatRaw = /** @type {SeatType} */ (game.seats[seat]);
   if (seatRaw.empty) {
     throw new Error("seat is empty");
@@ -354,19 +356,41 @@ function revealHoleCards(game, seat, cardIndexes) {
 
   const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
   assertCanRevealHoleCards(seatObj, game.hand.phase);
-  const validIndexes = getValidRevealIndexes(cardIndexes);
-  const newlyShown = revealSelectedHoleCards(seatObj, validIndexes);
+  const selection = getSelectedHoleCards(cardIndexes);
+  delete seatObj.muckDecision;
 
-  if (newlyShown.length === 0) {
-    throw new Error("selected cards already shown");
+  if (game.hand.phase !== "waiting") {
+    seatObj.pendingShow = selection;
+    return [];
   }
+  return revealHoleCards(seatObj, selection);
+}
 
-  if (seatObj.shownCards[0] && seatObj.shownCards[1]) {
-    seatObj.cardsRevealed = true;
+/**
+ * Reveals the shows that folded players chose while the hand was running.
+ * @param {Game} game
+ * @returns {{ seat: OccupiedSeat, cards: import('./deck.js').Card[] }[]}
+ */
+export function revealPendingShows(game) {
+  const reveals = [];
+  for (const seat of game.seats) {
+    if (seat.empty || !seat.pendingShow) continue;
+    reveals.push({ seat, cards: revealHoleCards(seat, seat.pendingShow) });
+    delete seat.pendingShow;
   }
+  return reveals;
+}
+
+/**
+ * @param {OccupiedSeat} seatObj
+ * @param {[boolean, boolean]} selection
+ * @returns {import('./deck.js').Card[]} the revealed cards
+ */
+function revealHoleCards(seatObj, selection) {
+  seatObj.shownCards = selection;
+  seatObj.cardsRevealed = selection[0] && selection[1];
   seatObj.shownCardsTicks = SHOW_CARDS_TICKS;
-
-  return newlyShown;
+  return seatObj.cards.filter((_, index) => selection[index]);
 }
 
 /**
@@ -374,7 +398,11 @@ function revealHoleCards(game, seat, cardIndexes) {
  * @param {string|undefined} phase
  */
 function assertCanRevealHoleCards(seatObj, phase) {
-  if (seatObj.cardsRevealed || seatObj.shownCards.some(Boolean)) {
+  if (
+    seatObj.cardsRevealed ||
+    seatObj.shownCards.some(Boolean) ||
+    seatObj.pendingShow
+  ) {
     throw new Error("show cards choice already made");
   }
 
@@ -393,39 +421,15 @@ function assertCanRevealHoleCards(seatObj, phase) {
 
 /**
  * @param {number[]} cardIndexes
- * @returns {number[]}
+ * @returns {[boolean, boolean]} which hole cards are selected
  */
-function getValidRevealIndexes(cardIndexes) {
-  const uniqueIndexes = [...new Set(cardIndexes)];
-  const validIndexes = uniqueIndexes.filter((i) => i === 0 || i === 1);
-  if (validIndexes.length === 0) {
+function getSelectedHoleCards(cardIndexes) {
+  /** @type {[boolean, boolean]} */
+  const selection = [cardIndexes.includes(0), cardIndexes.includes(1)];
+  if (!selection[0] && !selection[1]) {
     throw new Error("no valid card selected");
   }
-  return validIndexes;
-}
-
-/**
- * @param {OccupiedSeat} seatObj
- * @param {number[]} indexes
- * @returns {import('./deck.js').Card[]}
- */
-function revealSelectedHoleCards(seatObj, indexes) {
-  /** @type {import('./deck.js').Card[]} */
-  const newlyShown = [];
-  const shownCards = seatObj.shownCards;
-  seatObj.shownCards = shownCards;
-
-  for (const i of indexes) {
-    const card = seatObj.cards[i];
-    if (card && !shownCards[i]) {
-      shownCards[i] = true;
-      newlyShown.push(card);
-    }
-  }
-
-  delete seatObj.muckDecision;
-
-  return newlyShown;
+  return selection;
 }
 
 /**
@@ -458,7 +462,7 @@ export function muck(game, { seat }) {
  * @returns {import('./deck.js').Card[]}
  */
 export function showCard1(game, { seat }) {
-  return revealHoleCards(game, seat, [0]);
+  return showHoleCards(game, seat, [0]);
 }
 
 /**
@@ -468,7 +472,7 @@ export function showCard1(game, { seat }) {
  * @returns {import('./deck.js').Card[]}
  */
 export function showCard2(game, { seat }) {
-  return revealHoleCards(game, seat, [1]);
+  return showHoleCards(game, seat, [1]);
 }
 
 /**
@@ -478,7 +482,7 @@ export function showCard2(game, { seat }) {
  * @returns {import('./deck.js').Card[]}
  */
 export function showBothCards(game, { seat }) {
-  return revealHoleCards(game, seat, [0, 1]);
+  return showHoleCards(game, seat, [0, 1]);
 }
 
 /**

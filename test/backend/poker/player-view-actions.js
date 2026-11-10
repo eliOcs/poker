@@ -204,6 +204,10 @@ describe("Player View", function () {
             );
             assert.throws(() => Actions[action](g, { seat: 0 }));
           }
+          if (folded) {
+            Actions.endHand(g);
+            Actions.revealPendingShows(g);
+          }
           assert.deepEqual(g.seats[0].shownCards, shownCards);
           assert.equal(g.seats[0].cardsRevealed, choice === "showBothCards");
         });

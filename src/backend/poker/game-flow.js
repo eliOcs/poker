@@ -94,8 +94,20 @@ function handleFoldWin(game) {
     logHandEnded(game, winnerName, "fold", result.amount);
   }
 
-  Actions.endHand(game);
+  finishHand(game);
   return autoStartNextHand(game);
+}
+
+/**
+ * Ends the hand, then reveals and records the cards folded players chose to
+ * show while it was running.
+ * @param {Game} game
+ */
+function finishHand(game) {
+  Actions.endHand(game);
+  for (const { seat, cards } of Actions.revealPendingShows(game)) {
+    HandHistory.recordShowdown(game.id, seat.player.id, cards, true);
+  }
 }
 
 /**
@@ -148,7 +160,7 @@ function handleShowdown(game) {
   }
 
   game.pendingHandHistory = potResults;
-  Actions.endHand(game);
+  finishHand(game);
   return autoStartNextHand(game);
 }
 
