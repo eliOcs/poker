@@ -23,16 +23,10 @@
     gap: var(--space-lg);
   }
 
-  /* When the hand is cleared, the cards turn face down (0.4s), then the board
-     and its result vanish. */
+  /* When the hand is cleared, the cards turn face down, then the board and
+     its result vanish. */
   .board-info.leaving {
-    animation: leave-table 0s 400ms forwards;
-  }
-
-  @keyframes leave-table {
-    to {
-      visibility: hidden;
-    }
+    animation: leave-table 0s var(--card-flip-duration) forwards;
   }
 
   .community-cards {

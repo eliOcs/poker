@@ -57,11 +57,11 @@ class Card extends LitElement {
       const prev = this._prevCard;
       this._prevCard = this.card;
       const isFace = (card) => Boolean(card) && card !== "??";
-      if (isFace(this.card)) this._faceCard = this.card;
       if (prev === "??" && isFace(this.card)) {
         this._flipping = true;
       } else if (isFace(prev) && this.card === "??") {
         // Turning face down: the front keeps its face until it turns away.
+        this._faceCard = prev;
         this._flipping = true;
       } else if (!prev && this.card) {
         this._dealing = true;

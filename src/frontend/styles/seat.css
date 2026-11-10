@@ -207,15 +207,9 @@
     top: -50px;
   }
 
-  /* When the hand is cleared, cards turn face down (0.4s), then vanish. */
+  /* When the hand is cleared, cards turn face down, then vanish. */
   .hole-cards.leaving phg-card {
-    animation: leave-table 0s 400ms forwards;
-  }
-
-  @keyframes leave-table {
-    to {
-      visibility: hidden;
-    }
+    animation: leave-table 0s var(--card-flip-duration) forwards;
   }
 
   /* A card the player shows rises above the rest of the hand. */

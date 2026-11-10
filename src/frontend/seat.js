@@ -6,7 +6,6 @@ import {
   formatHandResult,
   getResultClass,
   getHoleCardState,
-  getDisplayedHoleCards,
 } from "./seat-utils.js";
 import { getLeavingCards } from "./leaving-cards.js";
 import "./card.js";
@@ -105,7 +104,7 @@ class Seat extends LitElement {
     // one ends it, even if the animation never got to run.
     const wasLeaving = Boolean(this._leavingCards);
     this._leavingCards = getLeavingCards(
-      getDisplayedHoleCards(changedProperties.get("seat")),
+      changedProperties.get("seat")?.cards,
       this.seat?.cards,
     );
     if (wasLeaving && !this._leavingCards) this._cardSet++;
@@ -288,7 +287,6 @@ class Seat extends LitElement {
    * @param {number} index
    */
   _handleCardChoiceKeydown(event, index) {
-    if (!this.seat?.cardChoice?.open) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     this._toggleShowCard(index);

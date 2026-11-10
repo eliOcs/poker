@@ -34,6 +34,9 @@
   --color-fg-light: #e0e0e8;
   --color-fg-white: #f0f0f0;
 
+  /* A card turning over; what follows a flip waits this long. */
+  --card-flip-duration: 0.4s;
+
   color: var(--color-fg-medium);
   background: var(--color-bg-dark);
   font-family: "Press Start 2P", monospace;
@@ -44,6 +47,13 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Cards cleared off the table vanish once they have turned face down. */
+@keyframes leave-table {
+  to {
+    visibility: hidden;
+  }
 }
 
 /* Press Start 2P's visible glyphs sit above the center of its font metrics.

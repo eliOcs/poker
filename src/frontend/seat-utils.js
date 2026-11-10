@@ -62,14 +62,3 @@ export function getDealTurns(seats, button) {
   }
   return turns.map((turn) => ({ turn, players }));
 }
-
-/**
- * The hole cards as the seat shows them, with the player's own unshown cards
- * face down once their show-or-muck choice settles.
- * @param {{ cards?: string[], cardChoice?: { show: [boolean, boolean], open: boolean } }|undefined} seat
- */
-export function getDisplayedHoleCards(seat) {
-  return seat?.cards?.map(
-    (card, index) => getHoleCardState(card, seat.cardChoice, index).card,
-  );
-}
