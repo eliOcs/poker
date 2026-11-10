@@ -43,7 +43,7 @@ describe("phg-action-panel", () => {
     globalThis.WebSocket = MockWebSocket;
   });
   describe("user interactions", () => {
-    it("calls send() with seat and amount when Buy In clicked", async () => {
+    it("calls send() with the amount when Buy In clicked", async () => {
       element.game = createMockGameWithBuyIn();
       await element.updateComplete;
 
@@ -60,11 +60,10 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("buyIn");
-      expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
 
-    it("calls send() with seat when Check clicked", async () => {
+    it("calls send() when Check clicked", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
@@ -81,10 +80,9 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("check");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
-    it("calls send() with seat when Call clicked", async () => {
+    it("calls send() when Call clicked", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
@@ -101,10 +99,9 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("call");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
-    it("calls send() with seat when Fold clicked", async () => {
+    it("calls send() when Fold clicked", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
@@ -121,10 +118,9 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("fold");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
-    it("calls send() with seat when Show card button is clicked", async () => {
+    it("calls send() when Show card button is clicked", async () => {
       element.game = createMockGameState({
         hand: {
           phase: "waiting",
@@ -166,10 +162,9 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("showCard1");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
-    it("calls send() with seat when Muck is clicked", async () => {
+    it("calls send() when Muck is clicked", async () => {
       element.game = createMockGameState({
         hand: { phase: "flop", collectedPot: 0, currentBet: 0, actingSeat: 1 },
         seats: [
@@ -202,10 +197,10 @@ describe("phg-action-panel", () => {
 
       findButtonByExactText(actionPanel, "Muck").click();
 
-      expect(sentMessage).to.deep.equal({ action: "muck", seat: 0 });
+      expect(sentMessage).to.deep.equal({ action: "muck" });
     });
 
-    it("calls send() with seat and amount when Bet clicked", async () => {
+    it("calls send() with the amount when Bet clicked", async () => {
       element.game = createMockGameAtFlop();
       await element.updateComplete;
 
@@ -222,11 +217,10 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("bet");
-      expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
 
-    it("calls send() with seat and amount when Raise clicked", async () => {
+    it("calls send() with the amount when Raise clicked", async () => {
       element.game = createMockGameWithPlayers();
       await element.updateComplete;
 
@@ -243,7 +237,6 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("raise");
-      expect(sentMessage.seat).to.be.a("number");
       expect(sentMessage.amount).to.be.a("number");
     });
 
@@ -265,7 +258,6 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("allIn");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
     it("calls send() with allIn action when standalone All-In is clicked", async () => {
@@ -309,7 +301,6 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("allIn");
-      expect(sentMessage.seat).to.be.a("number");
     });
 
     it("updates betAmount when slider changed", async () => {
@@ -450,7 +441,7 @@ describe("phg-action-panel", () => {
       expect(sitInButton.textContent).to.include("Sit In");
     });
 
-    it("calls send() with seat when Sit In clicked", async () => {
+    it("calls send() when Sit In clicked", async () => {
       element.game = createMockGameState({
         seats: [
           mockSittingOutSeat,
@@ -476,7 +467,6 @@ describe("phg-action-panel", () => {
 
       expect(sentMessage).to.exist;
       expect(sentMessage.action).to.equal("sitIn");
-      expect(sentMessage.seat).to.be.a("number");
     });
   });
 

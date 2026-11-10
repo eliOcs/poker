@@ -68,7 +68,6 @@ function renderBuyIn(panel, action) {
           @click=${() =>
             panel.sendAction({
               action: "buyIn",
-              seat: panel.seatIndex,
               amount: bbCount,
             })}
         >
@@ -89,8 +88,7 @@ function renderSitInLeave(panel, actionMap) {
           ? html`<button
               type="button"
               class="button button--muted button--full-width"
-              @click=${() =>
-                panel.sendAction({ action: "leave", seat: panel.seatIndex })}
+              @click=${() => panel.sendAction({ action: "leave" })}
             >
               Leave Table
             </button>`
@@ -101,8 +99,7 @@ function renderSitInLeave(panel, actionMap) {
           ? html`<button
               type="button"
               class="button button--success button--full-width"
-              @click=${() =>
-                panel.sendAction({ action: "sitIn", seat: panel.seatIndex })}
+              @click=${() => panel.sendAction({ action: "sitIn" })}
             >
               Sit In
             </button>`
@@ -119,8 +116,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
         ? html`<button
             type="button"
             class="button button--danger button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: "fold", seat: panel.seatIndex })}
+            @click=${() => panel.sendAction({ action: "fold" })}
           >
             Fold
           </button>`
@@ -131,8 +127,7 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
         ? html`<button
             type="button"
             class="button button--success button--full-width"
-            @click=${() =>
-              panel.sendAction({ action: "check", seat: panel.seatIndex })}
+            @click=${() => panel.sendAction({ action: "check" })}
           >
             Check
           </button>`
@@ -146,7 +141,6 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
             @click=${() =>
               panel.sendAction({
                 action: actionMap.call.allIn ? "allIn" : "call",
-                seat: panel.seatIndex,
               })}
           >
             <span class="stacked"
@@ -162,10 +156,9 @@ function renderBettingButtons(panel, actionMap, isBet, currentValue, isAllIn) {
       @click=${() =>
         panel.sendAction(
           isAllIn
-            ? { action: "allIn", seat: panel.seatIndex }
+            ? { action: "allIn" }
             : {
                 action: isBet ? "bet" : "raise",
-                seat: panel.seatIndex,
                 amount: currentValue,
               },
         )}
@@ -210,8 +203,7 @@ function renderSimpleActions(panel, actionMap) {
       html`<button
         type="button"
         class="button button--danger button--full-width"
-        @click=${() =>
-          panel.sendAction({ action: "fold", seat: panel.seatIndex })}
+        @click=${() => panel.sendAction({ action: "fold" })}
       >
         Fold
       </button>`,
@@ -222,8 +214,7 @@ function renderSimpleActions(panel, actionMap) {
       html`<button
         type="button"
         class="button button--success button--full-width"
-        @click=${() =>
-          panel.sendAction({ action: "check", seat: panel.seatIndex })}
+        @click=${() => panel.sendAction({ action: "check" })}
       >
         Check
       </button>`,
@@ -237,7 +228,6 @@ function renderSimpleActions(panel, actionMap) {
         @click=${() =>
           panel.sendAction({
             action: actionMap.call.allIn ? "allIn" : "call",
-            seat: panel.seatIndex,
           })}
       >
         <span class="stacked"
@@ -252,8 +242,7 @@ function renderSimpleActions(panel, actionMap) {
       html`<button
         type="button"
         class="button button--primary button--full-width"
-        @click=${() =>
-          panel.sendAction({ action: "allIn", seat: panel.seatIndex })}
+        @click=${() => panel.sendAction({ action: "allIn" })}
       >
         <span class="stacked"
           >All-In
@@ -272,8 +261,7 @@ function renderCallClockButton(panel) {
     type="button"
     class="button button--warning button--full-width"
     style="--button-icon-size: 24px; --button-content-gap: var(--space-md);"
-    @click=${() =>
-      panel.sendAction({ action: "callClock", seat: panel.seatIndex })}
+    @click=${() => panel.sendAction({ action: "callClock" })}
   >
     <span class="button__icon">${ICONS.clock}</span>Call the clock
   </button>`;

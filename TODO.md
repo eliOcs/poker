@@ -1,10 +1,11 @@
 # To do
 
+- bug: users can't buy in in cash game while the hand is on going
+- bug: why was I only allowed check option: http://localhost:3000/history/mwarcup2bed9/12
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
 - chat history
 - be more obvious of the tournament breaks
-- show cards only at the end of the hand
 - while all in allow to show hands
 - tourney stats
 - on PC there is more space so social actions could be on the side

@@ -196,7 +196,7 @@ export class Game extends LitElement {
   leaveTable() {
     const { seatIndex } = this.getMySeatInfo();
     if (seatIndex === -1) return;
-    this.send({ action: "leave", seat: seatIndex });
+    this.send({ action: "leave" });
   }
 
   /**
@@ -217,9 +217,9 @@ export class Game extends LitElement {
     const seat = this.game.seats[seatIndex];
 
     if (seat.pendingSitOut) {
-      this.send({ action: "cancelSitOut", seat: seatIndex });
+      this.send({ action: "cancelSitOut" });
     } else {
-      this.send({ action: "sitOut", seat: seatIndex });
+      this.send({ action: "sitOut" });
       const phase = this.game.hand?.phase;
       if (phase && phase !== "waiting" && !seat.folded) {
         this.dispatchEvent(
@@ -444,7 +444,6 @@ export class Game extends LitElement {
                         event.stopPropagation();
                         this.send({
                           action: "toggleShowCard",
-                          seat: i,
                           card: event.detail.index,
                         });
                       }}

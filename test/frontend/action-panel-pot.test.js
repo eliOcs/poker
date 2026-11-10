@@ -48,7 +48,7 @@ describe("pot bet presets", () => {
       sent = event.detail;
     });
     findButtonByExactText(panel, "Bet 12.5 BB").click();
-    expect(sent).to.deep.equal({ action: "bet", seat: 0, amount: 6250 });
+    expect(sent).to.deep.equal({ action: "bet", amount: 6250 });
     element.user = {
       ...element.user,
       settings: { ...element.user.settings, amountDisplay: "default" },
@@ -117,7 +117,7 @@ describe("pot bet presets", () => {
       [...panel.querySelectorAll("button")]
         .find((button) => button.textContent.includes("Raise to"))
         .click();
-      expect(sent).to.deep.equal({ action: "raise", seat: 0, amount });
+      expect(sent).to.deep.equal({ action: "raise", amount });
     });
   }
 

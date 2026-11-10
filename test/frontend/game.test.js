@@ -173,7 +173,7 @@ describe("phg-game", () => {
     );
     const action = oneEvent(element, "game-action");
     findButtonByText(panel, "Fold").click();
-    expect((await action).detail).to.include({ action: "fold", seat: 5 });
+    expect((await action).detail).to.deep.equal({ action: "fold" });
   });
 
   describe("settings", () => {

@@ -57,7 +57,7 @@ describe("phg-seat card choice", () => {
       settingsRequested = true;
     });
     cards[1].click();
-    expect(sent).to.deep.equal({ action: "toggleShowCard", seat: 0, card: 1 });
+    expect(sent).to.deep.equal({ action: "toggleShowCard", card: 1 });
     expect(settingsRequested).to.be.false;
 
     // Once settled, the cards still show the choice but no longer toggle.
