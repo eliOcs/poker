@@ -273,6 +273,8 @@ export function startHand(game) {
   game.hand.currentBet = game.blinds.big;
   ActionClock.reset(game.actionClock);
   executePreActions(game);
+  // All-in blinds can leave nobody a decision: collect the bets and run out.
+  if (game.hand.actingSeat === -1) processGameFlow(game);
   return handData;
 }
 

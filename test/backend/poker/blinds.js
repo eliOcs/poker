@@ -11,7 +11,7 @@ import {
   call,
   fold,
 } from "../../../src/backend/poker/actions.js";
-import { drainGenerator } from "./test-helpers.js";
+import { drainGenerator, setupPreflop } from "./test-helpers.js";
 
 /** Helper to create a test player */
 function createPlayer() {
@@ -42,6 +42,80 @@ describe("blinds", function () {
     b.next();
     assert.equal(g.seats[1].bet, 50);
     assert.equal(g.seats[1].stack, 50000 - 50); // Stack reduced
+  });
+});
+
+describe("blinds that take a whole stack", function () {
+  let game;
+
+  /**
+   * Heads-up: seat 0 is the button and posts the small blind, seat 1 posts
+   * the big blind.
+   * @param {{ buttonStack: number, bigBlindStack: number }} stacks
+   */
+  function seatHeadsUp({ buttonStack, bigBlindStack }) {
+    game = Game.create({ seats: 2, blinds: { ante: 0, small: 25, big: 50 } });
+    sit(game, { seat: 0, player: createPlayer() });
+    buyIn(game, { seat: 0, amount: 20 });
+    sit(game, { seat: 1, player: createPlayer() });
+    buyIn(game, { seat: 1, amount: 20 });
+    game.seats[0].stack = buttonStack;
+    game.seats[1].stack = bigBlindStack;
+    game.button = 0;
+  }
+
+  it("puts the player all-in when the big blind takes their whole stack", function () {
+    seatHeadsUp({ buttonStack: 1000, bigBlindStack: 50 });
+
+    setupPreflop(game);
+
+    assert.equal(game.seats[1].stack, 0);
+    assert.equal(game.seats[1].allIn, true);
+  });
+
+  it("puts the player all-in when the small blind takes their whole stack", function () {
+    seatHeadsUp({ buttonStack: 25, bigBlindStack: 1000 });
+
+    setupPreflop(game);
+
+    assert.equal(game.seats[0].stack, 0);
+    assert.equal(game.seats[0].allIn, true);
+  });
+
+  it("does not ask an all-in big blind to act after the small blind calls", function () {
+    seatHeadsUp({ buttonStack: 1000, bigBlindStack: 50 });
+    setupPreflop(game);
+
+    call(game, { seat: 0 });
+
+    assert.equal(
+      game.hand.actingSeat,
+      -1,
+      "the big blind has no chips left, so the board should run out",
+    );
+  });
+
+  it("does not ask an all-in small blind to act", function () {
+    seatHeadsUp({ buttonStack: 20, bigBlindStack: 1000 });
+
+    setupPreflop(game);
+
+    assert.equal(
+      game.hand.actingSeat,
+      -1,
+      "the small blind has no chips left and the big blind has nobody to bet against",
+    );
+  });
+
+  it("moves on to the runout when the blinds leave nobody a decision", function () {
+    seatHeadsUp({ buttonStack: 20, bigBlindStack: 1000 });
+
+    Game.startHand(game);
+
+    assert.ok(
+      game.collectingBets,
+      "the hand should collect the blinds and run out, not wait for a player",
+    );
   });
 });
 

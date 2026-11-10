@@ -189,10 +189,9 @@ export function startBettingRound(game, phase) {
     game.hand.lastRaiseSize = game.blinds.big;
   }
 
-  // If only one player can act and all others are all-in, auto-complete the round.
-  // There's no point in forcing them to check when no one can respond to a bet.
-  const playersWhoCanAct = countPlayersWhoCanAct(game);
-  if (playersWhoCanAct <= 1) {
+  // With at most one player able to act, nobody can respond to a bet, so the
+  // round is over unless that player still has a blind to call.
+  if (countPlayersWhoCanAct(game) <= 1 && !hasBetToCall(game, firstActor)) {
     game.hand.actingSeat = -1;
     game.hand.lastRaiser = -1;
     return;
@@ -204,6 +203,20 @@ export function startBettingRound(game, phase) {
   // For preflop, this gives BB their "option" to check or raise.
   // For postflop, this ends the round after everyone checks.
   game.hand.lastRaiser = firstActor;
+}
+
+/**
+ * Whether a seat has put in less than someone else this round.
+ * @param {Game} game
+ * @param {number} seatIndex - Seat index, or -1 for none
+ * @returns {boolean}
+ */
+function hasBetToCall(game, seatIndex) {
+  if (seatIndex === -1) return false;
+  const { bet } = /** @type {import('./seat.js').OccupiedSeat} */ (
+    game.seats[seatIndex]
+  );
+  return game.seats.some((other) => !other.empty && other.bet > bet);
 }
 
 /**

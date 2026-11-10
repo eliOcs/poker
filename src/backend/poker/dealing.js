@@ -42,19 +42,27 @@ export function* blinds(game) {
   const sbSeat = Betting.getSmallBlindSeat(game);
   const bbSeat = Betting.getBigBlindSeat(game);
 
-  // Post small blind
-  const sbPlayer = /** @type {OccupiedSeat} */ (game.seats[sbSeat]);
-  const sbAmount = Math.min(game.blinds.small, sbPlayer.stack);
-  sbPlayer.bet = sbAmount;
-  sbPlayer.stack -= sbAmount;
+  postBlind(
+    /** @type {OccupiedSeat} */ (game.seats[sbSeat]),
+    game.blinds.small,
+  );
   yield;
 
-  // Post big blind
-  const bbPlayer = /** @type {OccupiedSeat} */ (game.seats[bbSeat]);
-  const bbAmount = Math.min(game.blinds.big, bbPlayer.stack);
-  bbPlayer.bet = bbAmount;
-  bbPlayer.stack -= bbAmount;
+  postBlind(/** @type {OccupiedSeat} */ (game.seats[bbSeat]), game.blinds.big);
   yield;
+}
+
+/**
+ * Posts a blind, or the whole stack if it is short, which puts the player
+ * all-in before any action.
+ * @param {OccupiedSeat} seat
+ * @param {import('./types.js').Cents} blind
+ */
+function postBlind(seat, blind) {
+  const amount = Math.min(blind, seat.stack);
+  seat.bet = amount;
+  seat.stack -= amount;
+  if (seat.stack === 0) seat.allIn = true;
 }
 
 /**
