@@ -336,6 +336,43 @@ describe("websocket-handler", () => {
       HandHistory.clearRecorder(game.id);
     });
 
+    it("acts only on the sender's own seat", () => {
+      const game = foldMidHand();
+      // Bob tries to act for Alice and for Carol, whose turn it is not.
+      assert.throws(() =>
+        processPokerAction(game, bob, "toggleShowCard", { seat: 0, card: 0 }),
+      );
+      assert.throws(() =>
+        processPokerAction(game, bob, "showBothCards", { seat: 0 }),
+      );
+      assert.deepStrictEqual(game.seats[0].pendingShow, [false, false]);
+
+      game.hand.actingSeat = 2;
+      assert.throws(
+        () => processPokerAction(game, bob, "fold", { seat: 2 }),
+        /not your turn/,
+      );
+      assert.strictEqual(game.seats[2].folded, false);
+      HandHistory.clearRecorder(game.id);
+    });
+
+    it("rejects actions that are not a player's to send", () => {
+      const game = foldMidHand();
+      for (const action of ["resolvePendingShows", "endHand", "startHand"]) {
+        assert.throws(
+          () => processPokerAction(game, bob, action, {}),
+          /unknown action/,
+        );
+      }
+      assert.strictEqual(game.hand.phase, "flop");
+      assert.throws(
+        () =>
+          processPokerAction(game, { id: "spectator" }, "fold", { seat: 1 }),
+        /not seated/,
+      );
+      HandHistory.clearRecorder(game.id);
+    });
+
     it("records a muck after the hand right away", () => {
       const game = createTestGame({ seats: 2 });
       const player = { id: "p1", name: "Alice" };

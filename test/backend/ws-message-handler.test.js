@@ -223,7 +223,7 @@ describe("ws-message-handler", () => {
 
     assert.equal(ctx.broadcasts.length, 0);
     assert.equal(ctx.ws.sent.length, 1);
-    assert.match(ctx.ws.sent[0].error.message, /not a function/);
+    assert.match(ctx.ws.sent[0].error.message, /unknown action: unknownAction/);
   });
 
   it("rate limits and canonically logs handled actions", (t) => {

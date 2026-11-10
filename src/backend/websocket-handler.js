@@ -27,6 +27,46 @@ export const BETTING_ACTIONS = [
 
 export const SHOW_CARD_ACTIONS = ["showCard1", "showCard2", "showBothCards"];
 
+/**
+ * Actions a player may send. The rest of the actions module drives the game
+ * from the server and must not be reachable from a message.
+ */
+const PLAYER_ACTIONS = new Set([
+  ...BETTING_ACTIONS,
+  ...SHOW_CARD_ACTIONS,
+  "muck",
+  "toggleShowCard",
+  "sit",
+  "buyIn",
+  "start",
+  "sitOut",
+  "cancelSitOut",
+  "sitIn",
+  "leave",
+  "callClock",
+]);
+
+/**
+ * Builds the arguments for a player's action. The seat is always the
+ * sender's own, never one named in the message, so nobody can act for
+ * another player.
+ * @param {PlayerType} player
+ * @param {string} action
+ * @param {Record<string, unknown>} args
+ * @param {number} seatIndex - the sender's seat, -1 when not seated
+ */
+function getPlayerActionArgs(player, action, args, seatIndex) {
+  if (!PLAYER_ACTIONS.has(action)) {
+    throw new Error(`unknown action: ${action}`);
+  }
+  // Client joins always take the first available seat.
+  if (action === "sit") return { player };
+  if (seatIndex === -1) {
+    throw new Error("not seated at this table");
+  }
+  return { ...args, player, seat: seatIndex };
+}
+
 export { classifyAllInAction, recordBettingAction };
 
 /**
@@ -119,8 +159,7 @@ export function processPokerAction(game, player, action, args) {
   const { seatIndex, seatBefore, betBefore, currentBetBefore } =
     getSeatStateBefore(game, player);
 
-  // Client joins always take the first available seat.
-  const actionArgs = action === "sit" ? { player } : { player, ...args };
+  const actionArgs = getPlayerActionArgs(player, action, args, seatIndex);
   const actionResult = PokerActions[action](game, actionArgs);
 
   if (BETTING_ACTIONS.includes(action) && seatBefore) {

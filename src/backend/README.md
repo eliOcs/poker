@@ -19,7 +19,10 @@ Every route handler receives the request's canonical log (see
 
 **WebSocket** (`ws` package) connections attach to one game or one tournament
 when they upgrade. Clients send JSON intents with an `action` field;
-`ws-message-handler.js` validates and executes them. The server pushes:
+`ws-message-handler.js` validates and executes them. A player can only send
+the actions listed in `websocket-handler.js`, and an action always applies to
+the sender's own seat, whatever seat the message names, so nobody can act for
+another player. The server pushes:
 
 - `gameState`: a view built separately for each player (see
   [player views](poker/README.md#player-views)). It is sent whenever the game
