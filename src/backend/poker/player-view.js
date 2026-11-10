@@ -429,6 +429,17 @@ function getEmptyStackWaitingActions(game, isTournament, showActions) {
 }
 
 /**
+ * The countdown shows only before a table's first hand. Later, the pause
+ * between hands is not counted down: the finished hand stays on the table,
+ * then the table clears for the next deal.
+ * @param {Game} game
+ * @returns {number|undefined}
+ */
+function getVisibleCountdown(game) {
+  return game.handNumber === 0 ? game.countdown : undefined;
+}
+
+/**
  * @param {Game} game
  * @returns {boolean}
  */
@@ -882,7 +893,7 @@ export default function playerView(game, player) {
       clockRemaining: ActionClock.getRemaining(actionClock),
       collectingBets: !!game.collectingBets?.active,
     },
-    countdown: game.countdown,
+    countdown: getVisibleCountdown(game),
     winnerMessage: game.winnerMessage,
     rankings: Ranking.computeRankings(game),
     tournament,

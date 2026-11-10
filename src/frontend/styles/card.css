@@ -120,12 +120,10 @@
     }
   }
 
-  .dealing .card.back {
-    animation: deal-in 0.3s ease-out;
-  }
-
+  /* Until its turn in the deal, a card waits edge-on, out of sight. */
+  .dealing .card.back,
   .dealing.flipped .card.front {
-    animation: deal-in 0.3s ease-out;
+    animation: deal-in 0.3s ease-out var(--deal-delay, 0s) backwards;
   }
 
   .card.placeholder {

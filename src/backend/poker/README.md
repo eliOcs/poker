@@ -17,7 +17,8 @@ A few modules form the **runtime** that drives those rules:
   starts hands, records history and emits broadcast events.
 - `game-tick.js` is pure despite its role. Given a game, it advances counters
   and returns a `TickResult` describing what should happen next: deal the next
-  street, auto-fold a timed-out player, start a hand. The engine then performs
+  street, auto-fold a timed-out player, clear the finished hand off the table,
+  start a hand. The engine then performs
   those effects. Separating the decision from the effect keeps all time-based
   behavior testable without fake timers.
 - `hand-history/` records the hand as it happens and appends it to disk when

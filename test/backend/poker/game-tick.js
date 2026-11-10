@@ -3,6 +3,7 @@ import assert from "node:assert";
 import * as Game from "../../../src/backend/poker/game.js";
 import * as Betting from "../../../src/backend/poker/betting.js";
 import * as ActionClock from "../../../src/backend/poker/action-clock.js";
+import * as Actions from "../../../src/backend/poker/actions.js";
 import {
   tick,
   shouldTickBeRunning,
@@ -37,6 +38,37 @@ describe("game-tick", () => {
         assert.strictEqual(game.countdown, undefined);
         assert.strictEqual(result.startHand, true);
         assert.strictEqual(result.shouldBroadcast, true);
+      });
+
+      it("takes the finished hand off the table for the countdown's last second", () => {
+        Game.startHand(game);
+        Actions.fold(game, { seat: game.hand.actingSeat });
+        Game.processGameFlow(game);
+        assert.strictEqual(game.countdown, 5);
+        const stacks = game.seats.map((seat) => !seat.empty && seat.stack);
+
+        while (game.countdown > 2) tick(game);
+        assert.ok(game.winnerMessage, "the result shows while counting down");
+        assert.ok(game.seats.some((seat) => !seat.empty && seat.folded));
+
+        assert.strictEqual(tick(game).clearTable, true);
+        Game.clearTable(game);
+        assert.strictEqual(game.countdown, 1);
+        assert.deepStrictEqual(game.board.cards, []);
+        assert.strictEqual(game.winnerMessage, undefined);
+        for (const seat of game.seats) {
+          if (seat.empty) continue;
+          assert.deepStrictEqual(seat.cards, []);
+          assert.strictEqual(seat.folded, false);
+          assert.strictEqual(seat.handResult, undefined);
+        }
+        assert.deepStrictEqual(
+          game.seats.map((seat) => !seat.empty && seat.stack),
+          stacks,
+        );
+
+        const result = tick(game);
+        assert.strictEqual(result.startHand, true);
       });
 
       it("should not trigger startHand when countdown is above 0", () => {

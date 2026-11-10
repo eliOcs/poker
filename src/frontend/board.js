@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
 import { formatAmount } from "./currency.js";
+import { getLeavingCards } from "./leaving-cards.js";
 import "./card.js";
 import "./chips.js";
 
@@ -13,6 +14,7 @@ class Board extends LitElement {
       board: { type: Object },
       hand: { type: Object },
       countdown: { type: Number },
+      handNumber: { type: Number },
       winnerMessage: { type: Object },
       winningCards: { type: Array },
       noAnimation: { type: Boolean },
@@ -27,12 +29,29 @@ class Board extends LitElement {
     this.board = undefined;
     this.hand = undefined;
     this.countdown = undefined;
+    this.handNumber = 0;
     this.winnerMessage = undefined;
     this.winningCards = undefined;
     this.noAnimation = false;
     this.displayBigBlind = 0;
     this.tournament = undefined;
     this.seats = undefined;
+    /** @type {{ cards: string[], winnerMessage: any }|undefined} The cleared hand, fading out */
+    this._leaving = undefined;
+  }
+
+  willUpdate(changed) {
+    if (!changed.has("board") || this.noAnimation) return;
+    // Only the update that clears the cards starts them leaving; any later
+    // one ends it, even if the animation never got to run.
+    const cards = getLeavingCards(
+      changed.get("board")?.cards,
+      this.board?.cards,
+    );
+    const winnerMessage = changed.has("winnerMessage")
+      ? changed.get("winnerMessage")
+      : this.winnerMessage;
+    this._leaving = cards && { cards, winnerMessage };
   }
 
   getTournamentWinnerName() {
@@ -77,8 +96,8 @@ class Board extends LitElement {
     `;
   }
 
-  renderWinnerMessage() {
-    const { playerName, handRank, amount, isSplit } = this.winnerMessage;
+  renderWinnerMessage(winnerMessage) {
+    const { playerName, handRank, amount, isSplit } = winnerMessage;
     return html`
       <div class="winner-message">
         <div class="winner-name">
@@ -155,32 +174,62 @@ class Board extends LitElement {
       : "";
   }
 
-  renderBoardHeader() {
-    if (this.hasTournamentWinner() || this.winnerMessage) return "";
+  renderBoardHeader(winnerMessage) {
+    if (this.hasTournamentWinner() || winnerMessage) return "";
+    // Between hands the table is simply clear until the next deal.
+    if (this.hand?.phase === "waiting" && this.handNumber > 0) return "";
     return html`<div class="phase">${this.hand?.phase ?? "Waiting"}</div>`;
   }
 
-  renderBoardFooter() {
+  renderBoardFooter(winnerMessage) {
     if (this.hasTournamentWinner()) return "";
-    if (this.winnerMessage) return this.renderWinnerMessage();
+    if (winnerMessage) return this.renderWinnerMessage(winnerMessage);
     return html`${this.renderCurrentHandRank()} ${this.renderPot()}`;
   }
 
+  /**
+   * Every view with community cards shares this template so Lit keeps the
+   * card elements; recreating them would replay the deal animation.
+   * @param {string[]} cards
+   * @param {any} winnerMessage
+   * @param {boolean} leaving - the hand is being cleared and fades out
+   */
+  renderBoardInfo(cards, winnerMessage, leaving) {
+    return html`
+      ${this.renderTournamentWinner()}
+      <div
+        class="board-info ${leaving ? "leaving" : ""}"
+        @animationend=${(/** @type {AnimationEvent} */ event) => {
+          if (event.animationName !== "leave-table") return;
+          this._leaving = undefined;
+          this.requestUpdate();
+        }}
+      >
+        ${this.renderBoardHeader(winnerMessage)}
+        ${this.renderCommunityCards(cards)}
+        ${this.renderBoardFooter(winnerMessage)}
+      </div>
+    `;
+  }
+
   render() {
+    if (this._leaving) {
+      // The cleared hand's cards turn face down before the board fades.
+      const { cards, winnerMessage } = this._leaving;
+      return this.renderBoardInfo(
+        cards.map(() => "??"),
+        winnerMessage,
+        true,
+      );
+    }
     const showsCards = this.hasTournamentWinner() || this.winnerMessage;
     if (!showsCards && this.hasCountdown()) return this.renderCountdownView();
     if (!showsCards && this.tournament?.onBreak) return this.renderBreakView();
-
-    // Every view with community cards shares this template so Lit keeps the
-    // card elements; recreating them would replay the deal animation.
-    return html`
-      ${this.renderTournamentWinner()}
-      <div class="board-info">
-        ${this.renderBoardHeader()}
-        ${this.renderCommunityCards(this.board?.cards ?? [])}
-        ${this.renderBoardFooter()}
-      </div>
-    `;
+    return this.renderBoardInfo(
+      this.board?.cards ?? [],
+      this.winnerMessage,
+      false,
+    );
   }
 }
 

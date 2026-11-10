@@ -45,3 +45,31 @@ export function getHoleCardState(card, choice, index) {
     },
   };
 }
+
+/**
+ * Each seat's turn in a round of the deal, which goes one card at a time
+ * around the table starting left of the button.
+ * @param {{ cards?: string[] }[]} seats
+ * @param {number} button
+ * @returns {{ turn: number, players: number }[]} turn is -1 for a seat dealt out
+ */
+export function getDealTurns(seats, button) {
+  const turns = seats.map(() => -1);
+  let players = 0;
+  for (let step = 1; step <= seats.length; step++) {
+    const index = (button + step) % seats.length;
+    if (seats[index]?.cards?.length) turns[index] = players++;
+  }
+  return turns.map((turn) => ({ turn, players }));
+}
+
+/**
+ * The hole cards as the seat shows them, with the player's own unshown cards
+ * face down once their show-or-muck choice settles.
+ * @param {{ cards?: string[], cardChoice?: { show: [boolean, boolean], open: boolean } }|undefined} seat
+ */
+export function getDisplayedHoleCards(seat) {
+  return seat?.cards?.map(
+    (card, index) => getHoleCardState(card, seat.cardChoice, index).card,
+  );
+}

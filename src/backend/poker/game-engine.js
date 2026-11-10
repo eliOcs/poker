@@ -11,7 +11,10 @@ import {
   autoFoldSittingOutActingPlayers,
   executePreActions,
 } from "./game-runtime-helpers.js";
-import { finalizePendingHandHistory } from "./game-hand-lifecycle.js";
+import {
+  clearTable,
+  finalizePendingHandHistory,
+} from "./game-hand-lifecycle.js";
 import {
   processGameFlow,
   finishCollectBets,
@@ -108,6 +111,17 @@ function recordAutoMucks(game, seatIndexes) {
 }
 
 /**
+ * Clears the table for the countdown's last second, then starts the hand.
+ * @param {Game} game
+ * @param {import('./game-tick.js').TickResult} result
+ * @param {BroadcastHandler} onBroadcast
+ */
+function handleCountdown(game, result, onBroadcast) {
+  if (result.clearTable) clearTable(game);
+  if (result.startHand) startHandAfterCountdown(game, onBroadcast);
+}
+
+/**
  * @param {Game} game
  * @param {BroadcastHandler} onBroadcast
  */
@@ -131,7 +145,7 @@ export function startGameTick(game, onBroadcast) {
     Object.assign(timerLog.context, { game: gameContext });
 
     recordAutoMucks(game, result.autoMuckSeats ?? []);
-    if (result.startHand) startHandAfterCountdown(game, onBroadcast);
+    handleCountdown(game, result, onBroadcast);
     if (result.autoActionSeat !== undefined) {
       emitHandEnded(
         game,

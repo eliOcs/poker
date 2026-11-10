@@ -92,12 +92,10 @@ export function occupied(player, stack = 0, sittingOut = false) {
 }
 
 /**
- * Resets seat state for a new hand (keeps player and stack)
+ * Takes a finished hand off the seat: its cards, how it played and its result.
  * @param {OccupiedSeat} seat
  */
-export function resetForNewHand(seat) {
-  seat.bet = 0;
-  seat.totalInvested = 0;
+export function clearHand(seat) {
   seat.cards = [];
   seat.folded = false;
   seat.allIn = false;
@@ -110,6 +108,16 @@ export function resetForNewHand(seat) {
   delete seat.muckDecision;
   delete seat.pendingShow;
   delete seat.mucked;
+}
+
+/**
+ * Resets seat state for a new hand (keeps player and stack)
+ * @param {OccupiedSeat} seat
+ */
+export function resetForNewHand(seat) {
+  clearHand(seat);
+  seat.bet = 0;
+  seat.totalInvested = 0;
   delete seat.preAction;
   // If sitting out, mark as having missed big blind
   if (seat.sittingOut) {

@@ -17,6 +17,7 @@ export { RUNOUT_DELAY_TICKS } from "./game-constants.js";
 export {
   sitOutDisconnectedPlayers,
   autoStartNextHand,
+  clearTable,
 } from "./game-hand-lifecycle.js";
 export { processGameFlow } from "./game-flow.js";
 

@@ -1,5 +1,6 @@
 import * as Actions from "./actions.js";
 import * as HandHistory from "./hand-history/index.js";
+import * as Seat from "./seat.js";
 import * as TournamentSummary from "./tournament-summary.js";
 
 /**
@@ -33,6 +34,19 @@ export function finalizePendingHandHistory(game) {
     potResults,
     historyHand: HandHistory.captureHand(game, potResults, handNumber),
   };
+}
+
+/**
+ * Takes the finished hand off the table just before the next one, so players
+ * see the cards go before new ones arrive.
+ * @param {Game} game
+ */
+export function clearTable(game) {
+  game.board.cards = [];
+  delete game.winnerMessage;
+  for (const seat of game.seats) {
+    if (!seat.empty) Seat.clearHand(seat);
+  }
 }
 
 /**

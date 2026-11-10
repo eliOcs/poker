@@ -17,6 +17,7 @@ import * as TournamentTick from "./tournament-tick.js";
 /**
  * @typedef {Object} TickResult
  * @property {boolean} shouldBroadcast - Whether to broadcast state to clients
+ * @property {boolean} clearTable - Whether to take the finished hand off the table
  * @property {boolean} startHand - Whether to start a new hand
  * @property {number} [autoActionSeat] - Seat index to auto-action (check/fold)
  * @property {'clock'} [autoActionReason] - Why auto-action triggered
@@ -40,6 +41,8 @@ function handleCountdown(game, result) {
   game.countdown -= 1;
   result.shouldBroadcast = true;
 
+  // The last second shows an empty table, so the next deal starts afresh.
+  if (game.countdown === 1) result.clearTable = true;
   if (game.countdown <= 0) {
     delete game.countdown;
     result.startHand = true;
@@ -69,6 +72,7 @@ function handleClockExpiry(game, actingSeat, result) {
 function createTickResult() {
   return {
     shouldBroadcast: false,
+    clearTable: false,
     startHand: false,
     tournamentLevelChanged: false,
     tournamentBreakStarted: false,

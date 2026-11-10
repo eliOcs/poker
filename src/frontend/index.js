@@ -8,6 +8,7 @@ import "./card.js";
 import "./board.js";
 import "./seat.js";
 import { visualSeat } from "./table-layout.js";
+import { getDealTurns } from "./seat-utils.js";
 import "./action-panel.js";
 import "./modal.js";
 import "./ranking-panel.js";
@@ -394,6 +395,7 @@ export class Game extends LitElement {
       this.gameKind !== "bots" &&
       !isSeated &&
       this.game.seats.some((s) => s.empty);
+    const dealTurns = getDealTurns(this.game.seats, this.game.button);
 
     return html`
       ${renderDrawer(this)}
@@ -405,6 +407,7 @@ export class Game extends LitElement {
               .board=${this.game.board}
               .hand=${this.game.hand}
               .countdown=${this.game.countdown}
+              .handNumber=${this.game.handNumber}
               .winnerMessage=${this.game.winnerMessage}
               .winningCards=${this.getWinningCards()}
               .tournament=${this.game.tournament}
@@ -424,6 +427,7 @@ export class Game extends LitElement {
                       .seat=${seat}
                       .displayBigBlind=${this.displayBigBlind}
                       .seatNumber=${i}
+                      .deal=${dealTurns[i]}
                       .isButton=${this.game.button === i}
                       .hideBet=${!!this.game.hand?.collectingBets}
                       .clockRemaining=${

@@ -6,7 +6,7 @@ import * as Player from "../../../src/backend/poker/player.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import { collectBets } from "../../../src/backend/poker/betting.js";
 import playerView from "../../../src/backend/poker/player-view.js";
-import { setupPreflop } from "./test-helpers.js";
+import { createHeadsUpGame, setupPreflop } from "./test-helpers.js";
 
 /** Helper to create a test player */
 function createPlayer() {
@@ -75,6 +75,30 @@ describe("Player View", function () {
         assert.equal(seats[opener].lastAction, undefined);
         assert.equal(seats[reraiser].lastAction, "raise");
       }
+    });
+  });
+
+  describe("countdown", function () {
+    it("shows the countdown before the first hand", () => {
+      const game = createHeadsUpGame();
+      Actions.start(game);
+
+      const view = playerView(game, game.seats[0].player);
+
+      assert.equal(view.countdown, 5);
+    });
+
+    it("does not count down between hands, also once the table clears", () => {
+      const game = createHeadsUpGame();
+      const player = game.seats[0].player;
+      Game.startHand(game);
+      Actions.fold(game, { seat: game.hand.actingSeat });
+      Game.processGameFlow(game);
+      assert.equal(game.countdown, 5);
+
+      assert.equal(playerView(game, player).countdown, undefined);
+      Game.clearTable(game);
+      assert.equal(playerView(game, player).countdown, undefined);
     });
   });
 
