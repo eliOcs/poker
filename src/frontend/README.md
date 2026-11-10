@@ -57,7 +57,14 @@ properties.
 - **WebSocket.** There is one connection per page, opened for the current game
   or tournament. Each game action carries an ID that the server acknowledges.
   If the acknowledgement is missing or does not match, the app reconnects to
-  resync rather than guessing at state.
+  resync rather than guessing at state. Leaving the table for its hand
+  history or the avatar editor keeps the connection, so the player stays
+  present and is told when it is their turn.
+- **Toasts** stack in one top-layer container. Event messages are app state
+  (`app-toasts.js`): each expires on a timer and the oldest give way past
+  three. A toast that reflects ongoing state, such as "Your turn to act", is
+  derived from that state on each render instead of being shown and hidden,
+  so it cannot outlive what it describes.
 - **Errors** in the browser are reported to the backend
   (`error-reporting.js`), which logs them.
 

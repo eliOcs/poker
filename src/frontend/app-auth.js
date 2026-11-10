@@ -1,3 +1,5 @@
+import { showToast } from "./app-toasts.js";
+
 /**
  * @param {any} app
  * @param {string} email
@@ -11,22 +13,22 @@ export async function requestSignIn(app, email, returnPath) {
       body: JSON.stringify({ email, returnPath }),
     });
     if (res.ok) {
-      app.toast = {
+      showToast(app, {
         message: "Sign-in link sent",
         variant: "success",
-      };
+      });
       return;
     }
 
     const data = await res.json().catch(() => undefined);
-    app.toast = {
+    showToast(app, {
       message: data?.error ?? "Unable to send sign-in link",
       variant: "error",
-    };
+    });
   } catch {
-    app.toast = {
+    showToast(app, {
       message: "Unable to send sign-in link",
       variant: "error",
-    };
+    });
   }
 }

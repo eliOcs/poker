@@ -4,6 +4,8 @@ import { isHistoryRouteForTableId } from "./app-route-state.js";
 import { navigateApp } from "./app-navigation.js";
 import { followMissedReseat } from "./app-mtt-routing.js";
 import { formatCurrency } from "./currency.js";
+import * as Audio from "./audio.js";
+import { showToast } from "./app-toasts.js";
 
 const RESUME_SOCKET_HEALTH_TIMEOUT_MS = 1500;
 const ACTION_RESULT_TIMEOUT_MS = 3000;
@@ -23,20 +25,20 @@ function startPendingGameActionTimeout(app, socket, actionId) {
     if (app._socket !== socket || app._pendingGameActionId !== actionId) {
       return;
     }
-    app.toast = {
+    showToast(app, {
       message: "Reconnecting to sync the game",
       variant: "error",
-    };
+    });
     restartConnection(app);
   }, ACTION_RESULT_TIMEOUT_MS);
 }
 
 function resolvePendingGameAction(app, actionId) {
   if (typeof actionId !== "string" || app._pendingGameActionId !== actionId) {
-    app.toast = {
+    showToast(app, {
       message: "Game connection was out of sync",
       variant: "error",
-    };
+    });
     restartConnection(app);
     return;
   }
@@ -142,10 +144,42 @@ function notifyTournamentLevelChange(app, game) {
 
   const { small, big, ante } = game.blinds;
   const anteMessage = ante > 0 ? ` · Ante ${formatCurrency(ante)}` : "";
-  app.toast = {
+  showToast(app, {
     message: `Level ${tournament.level} · Blinds ${formatCurrency(small)}/${formatCurrency(big)}${anteMessage}`,
     variant: "info",
-  };
+  });
+}
+
+/**
+ * Whether the viewer holds a seat and is the one to act.
+ * @param {import('../backend/poker/player-view.js').PlayerView} game
+ * @returns {boolean}
+ */
+export function isOwnTurn(game) {
+  const { actingSeat } = game.hand;
+  return (
+    actingSeat !== -1 &&
+    actingSeat ===
+      game.seats.findIndex((seat) => !seat.empty && seat.isCurrentPlayer)
+  );
+}
+
+/**
+ * Plays the table's turn alert for a player away from the table, such as in
+ * the avatar editor. The table view alerts on its own.
+ * @param {any} app
+ * @param {import('../backend/poker/player-view.js').PlayerView} game
+ */
+function alertTurnAwayFromTable(app, game) {
+  if (
+    matchLiveRoute(app.path) ||
+    !isOwnTurn(game) ||
+    (app.game && isOwnTurn(app.game))
+  ) {
+    return;
+  }
+  Audio.playTurnSound();
+  Audio.playTurnVibration();
 }
 
 function handleTournamentState(app, tournament) {
@@ -189,10 +223,10 @@ function handleTypedSocketMessage(app, data) {
   }
 
   if (data.type === "playerMoved") {
-    app.toast = {
+    showToast(app, {
       message: `Moved to ${data.tableName}`,
       variant: "info",
-    };
+    });
     navigateApp(app, getTablePath("mtt", data.tableId, data.tournamentId), {
       replace: true,
     });
@@ -246,7 +280,7 @@ export function connectToGame(app, path) {
       if (app._pendingGameActionId) {
         resolvePendingGameAction(app, data.actionId);
       }
-      app.toast = { message: data.error.message, variant: "error" };
+      showToast(app, { message: data.error.message, variant: "error" });
       return;
     }
 
@@ -255,6 +289,7 @@ export function connectToGame(app, path) {
     }
 
     notifyTournamentLevelChange(app, data);
+    alertTurnAwayFromTable(app, data);
     app.game = data;
   };
 
@@ -350,10 +385,10 @@ export function sendToGame(app, message) {
 
   const correlated = !UNCORRELATED_ACTIONS.has(message.action);
   if (correlated && app._pendingGameActionId) {
-    app.toast = {
+    showToast(app, {
       message: "Waiting for the previous game action",
       variant: "info",
-    };
+    });
     return;
   }
 
@@ -366,10 +401,10 @@ export function sendToGame(app, message) {
   try {
     socket.send(JSON.stringify({ ...message, ...(actionId && { actionId }) }));
   } catch {
-    app.toast = {
+    showToast(app, {
       message: "Reconnecting to sync the game",
       variant: "error",
-    };
+    });
     restartConnection(app);
     return;
   }
@@ -408,15 +443,15 @@ export function handleGameNotFound(app) {
   disconnectFromGame(app);
   // A bot table with no recorded hand cannot be rebuilt. Deal a new one.
   if (liveRoute?.kind === "bots") {
-    app.toast = { message: "That bot table has ended", variant: "info" };
+    showToast(app, { message: "That bot table has ended", variant: "info" });
     navigateApp(app, "/learn/bots", { replace: true });
     return;
   }
-  app.toast = {
+  showToast(app, {
     message:
       liveRoute?.kind === "mtt" ? "Tournament not found" : "Game not found",
     variant: "error",
-  };
+  });
   navigateApp(app, "/", { replace: true });
 }
 

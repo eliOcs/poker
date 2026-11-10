@@ -6,7 +6,8 @@
  */
 
 import { mockEmptySeat } from "/fixtures.js";
-import { renderGameView } from "/src/frontend/app-render.js";
+import { html } from "lit";
+import { renderGameView, renderToastStack } from "/src/frontend/app-render.js";
 
 // === HELPER FACTORIES ===
 
@@ -45,16 +46,17 @@ export function gameViewWithToast(
   toastVariant = "error",
 ) {
   const gameKind = gameState.tournament ? "sitngo" : "cash";
-  return renderGameView(
-    {
-      toast: { message: toastMessage, variant: toastVariant, duration: 0 },
-      game: gameState,
-      gameConnectionStatus: "connected",
-      socialAction: undefined,
-      user: undefined,
-    },
-    { kind: gameKind, tableId: "test123" },
-  );
+  const app = {
+    toasts: [{ message: toastMessage, variant: toastVariant }],
+    game: gameState,
+    gameConnectionStatus: "connected",
+    socialAction: undefined,
+    user: undefined,
+  };
+  return html`${renderToastStack(app, false)}${renderGameView(app, {
+    kind: gameKind,
+    tableId: "test123",
+  })}`;
 }
 
 // Base game state factory

@@ -13,9 +13,12 @@ import "/src/frontend/learn.js";
 import "/src/frontend/tournaments.js";
 import "/src/frontend/history.js";
 import "/src/frontend/player-profile.js";
-import "/src/frontend/toast.js";
+import "/src/frontend/toasts.js";
 import "/src/frontend/app-shell.js";
-import { renderShellPageView } from "/src/frontend/app-render.js";
+import {
+  renderShellPageView,
+  renderToastStack,
+} from "/src/frontend/app-render.js";
 import { DEFAULT_AVATAR } from "/src/shared/avatar.js";
 import "/src/frontend/avatar-maker.js";
 import { HISTORY_TEST_CASES } from "./test-cases-history.js";
@@ -80,6 +83,28 @@ const GAME_TEST_CASES = {
   "avatar-maker-hair": avatarMakerView,
   "avatar-maker-facial-hair": avatarMakerView,
   "avatar-maker-clothes": avatarMakerView,
+  "avatar-maker-turn-toast": () => {
+    // The turn toast stays on top of any other toast.
+    const app = {
+      path: "/avatar",
+      user: null,
+      toasts: [{ message: "Unable to save settings", variant: "error" }],
+      _activeGamePath: "/cash/test123",
+      game: createGame({
+        hand: {
+          phase: "preflop",
+          collectedPot: 0,
+          currentBet: 0,
+          actingSeat: 0,
+        },
+        seats: [createPlayer("You", { isCurrentPlayer: true }), emptySeat],
+      }),
+    };
+    return html`${renderToastStack(app, true)}${renderShellPageView(
+      app,
+      "avatar",
+    )}`;
+  },
 
   // === LANDING PAGE ===
   "landing-page": () => shellPageView("/", "home"),

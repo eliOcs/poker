@@ -1,6 +1,7 @@
 import { getTablePath } from "../shared/routes.js";
 import { navigateApp } from "./app-navigation.js";
 import { parseAppPath } from "./app-route-state.js";
+import { showToast } from "./app-toasts.js";
 
 /**
  * Syncs MTT route state when the live route changes
@@ -153,15 +154,15 @@ export async function performMttAction(app, action) {
     app._mttView = data;
     app._mttError = "";
     if (isQueuedRegistration(action, data)) {
-      app.toast = {
+      showToast(app, {
         message: "Registered. Waiting for a table.",
         variant: "info",
-      };
+      });
     }
     maybeRedirectMttRoute(app);
   } catch (err) {
     const error = /** @type {Error} */ (err);
-    app.toast = { message: error.message, variant: "error" };
+    showToast(app, { message: error.message, variant: "error" });
   } finally {
     app._mttActionPending = false;
   }
@@ -190,7 +191,7 @@ export async function renameMttTournament(app, name) {
     app._mttError = "";
   } catch (err) {
     const error = /** @type {Error} */ (err);
-    app.toast = { message: error.message, variant: "error" };
+    showToast(app, { message: error.message, variant: "error" });
   } finally {
     app._mttActionPending = false;
   }

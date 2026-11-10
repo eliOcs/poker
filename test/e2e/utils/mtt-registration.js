@@ -119,7 +119,7 @@ async function signUpLateTournamentRegistrant(
   ).toHaveCount(0);
 
   if (!snapshot.currentPlayer.tableId) {
-    await expect(player.page.locator("phg-toast")).toContainText(
+    await expect(player.page.locator("phg-toasts")).toContainText(
       "Registered. Waiting for a table.",
     );
   }

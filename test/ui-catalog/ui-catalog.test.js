@@ -17,6 +17,7 @@ const TEST_CASES = [
   "avatar-maker-hair",
   "avatar-maker-facial-hair",
   "avatar-maker-clothes",
+  "avatar-maker-turn-toast",
 
   // Landing page
   "landing-page",
@@ -119,6 +120,8 @@ const TEST_CASES = [
 ];
 
 function getComponentSelector(testCase) {
+  // The toast is fixed over the page, outside the editor element.
+  if (testCase === "avatar-maker-turn-toast") return "phg-app-shell";
   if (testCase.startsWith("avatar-maker")) return "phg-avatar-maker";
   if (testCase.startsWith("email-")) return ".email-preview";
   if (

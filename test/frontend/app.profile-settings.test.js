@@ -221,14 +221,14 @@ describe("phg-app profile settings", () => {
     saveBtn.click();
     await waitUntil(
       () =>
-        element.toast?.message === "Settings saved" &&
+        element.toasts.at(-1)?.message === "Settings saved" &&
         !element.querySelector("phg-modal"),
       "Saving settings should close the modal and show a success toast",
       { timeout: 2000 },
     );
 
     expect(element.querySelector("phg-modal")).to.not.exist;
-    expect(element.toast).to.deep.include({
+    expect(element.toasts.at(-1)).to.deep.include({
       message: "Settings saved",
       variant: "success",
     });
@@ -251,7 +251,7 @@ describe("phg-app profile settings", () => {
     saveBtn.click();
     await waitUntil(
       () =>
-        element.toast?.message === "Settings saved" &&
+        element.toasts.at(-1)?.message === "Settings saved" &&
         !element.querySelector("phg-modal"),
       "Saving settings should close the modal and show a success toast",
       { timeout: 2000 },
@@ -283,7 +283,7 @@ describe("phg-app profile settings", () => {
     element.querySelector("button.button--action").click();
     await waitUntil(
       () =>
-        element.toast?.message === "Settings saved" &&
+        element.toasts.at(-1)?.message === "Settings saved" &&
         !element.querySelector("phg-modal"),
       "Saving settings should close the modal and show a success toast",
       { timeout: 2000 },
@@ -312,10 +312,10 @@ describe("profile response failures", () => {
     const element = await fixture(html`<phg-app></phg-app>`);
     await waitUntil(() =>
       element
-        .querySelector("phg-toast")
+        .querySelector("phg-toasts")
         ?.textContent.includes("Unable to load profile"),
     );
-    expect(element.querySelector("phg-toast").variant).to.equal("error");
+    expect(element.querySelector("phg-toasts .toast--error")).to.exist;
   });
 
   for (const [failure, response] of [
@@ -352,19 +352,19 @@ describe("profile response failures", () => {
 
       await waitUntil(() =>
         element
-          .querySelector("phg-toast")
+          .querySelector("phg-toasts")
           ?.textContent.includes("Unable to save settings"),
       );
       expect(element.querySelector('input[name="name"]').value).to.equal(
         "Draft name",
       );
-      expect(element.querySelector("phg-toast").variant).to.equal("error");
+      expect(element.querySelector("phg-toasts .toast--error")).to.exist;
 
       failUpdate = false;
       element.querySelector("form.settings-content").requestSubmit();
       await waitUntil(() =>
         element
-          .querySelector("phg-toast")
+          .querySelector("phg-toasts")
           ?.textContent.includes("Settings saved"),
       );
       expect(element.querySelector("form.settings-content")).to.equal(null);

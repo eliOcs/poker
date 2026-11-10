@@ -1,5 +1,4 @@
 import { html } from "lit";
-import { renderAuthStatus } from "./app-auth-status.js";
 import { renderProfileSettingsModal } from "./app-profile-settings.js";
 import {
   renderProfileSignInModal,
@@ -7,20 +6,34 @@ import {
 } from "./app-sign-in-modal.js";
 import { DEFAULT_AVATAR } from "./avatar-maker-data.js";
 import { openAppModal, closeAppModal } from "./app-navigation.js";
+import { isOwnTurn } from "./app-websocket.js";
+import { dismissToast } from "./app-toasts.js";
 
 /**
+ * Pages away from the table keep its connection, so a player there sees when
+ * it is their turn until they act or the turn passes. That toast follows the
+ * game state, so it cannot be dismissed and does not expire.
  * @param {any} app
+ * @param {boolean} awayFromTable
  */
-export function renderToast(app) {
-  if (!app.toast) return "";
-  return html`
-    <phg-toast
-      variant=${app.toast.variant ?? "info"}
-      .duration=${app.toast.duration ?? 3000}
-      .message=${app.toast.message}
-      @dismiss=${app.dismissToast}
-    ></phg-toast>
-  `;
+export function renderToastStack(app, awayFromTable) {
+  /** @type {import('./toasts.js').Toast[]} */
+  const turnToasts =
+    awayFromTable && app.game && isOwnTurn(app.game)
+      ? [
+          {
+            message: "Your turn to act",
+            variant: "warning",
+            action: { label: "Back to table", href: app._activeGamePath },
+          },
+        ]
+      : [];
+  return html`<phg-toasts
+    .toasts=${[...turnToasts, ...app.toasts]}
+    @dismiss=${(/** @type {CustomEvent} */ event) => {
+      dismissToast(app, event.detail);
+    }}
+  ></phg-toasts>`;
 }
 
 /**
@@ -29,7 +42,7 @@ export function renderToast(app) {
  */
 export function renderGameView(app, liveRoute) {
   const gameKind = liveRoute.kind === "mtt_table" ? "mtt" : liveRoute.kind;
-  return html`${renderToast(app)}<phg-game
+  return html`<phg-game
       .gameId=${liveRoute.tableId}
       .gameKind=${gameKind}
       .tournamentId=${
@@ -63,15 +76,15 @@ export function renderHistoryView(app, historyRoute) {
   const listData = app._historyListTask.value;
   const handData = app._historyHandTask.value;
 
-  return html`${renderToast(app)}<phg-history
-      .gameId=${historyRoute.tableId}
-      .handNumber=${app._historyHandNumber}
-      .hand=${handData?.hand}
-      .view=${handData?.view}
-      .replay=${handData?.replay}
-      .handList=${listData?.hands}
-      .playerId=${listData?.playerId}
-    ></phg-history>`;
+  return html`<phg-history
+    .gameId=${historyRoute.tableId}
+    .handNumber=${app._historyHandNumber}
+    .hand=${handData?.hand}
+    .view=${handData?.view}
+    .replay=${handData?.replay}
+    .handList=${listData?.hands}
+    .playerId=${listData?.playerId}
+  ></phg-history>`;
 }
 
 /**
@@ -140,7 +153,7 @@ export function renderAvatarMakerView(app) {
  * @param {{ navigationRenderer?: ((shell: any) => import("lit").TemplateResult|string) }} [options]
  */
 export function renderShellView(app, content, options = {}) {
-  return html`${renderToast(app)}<phg-app-shell
+  return html`<phg-app-shell
       .user=${app.user}
       .path=${app.path}
       .navigationRenderer=${options.navigationRenderer ?? undefined}
@@ -184,11 +197,4 @@ export function renderShellPageView(app, page) {
       ? () => ""
       : undefined,
   });
-}
-
-/**
- * @param {any} app
- */
-export function renderAuthStatusView(app) {
-  return html`${renderToast(app)}${renderAuthStatus()}`;
 }

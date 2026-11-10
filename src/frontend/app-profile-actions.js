@@ -1,4 +1,5 @@
 import { closeAppModal, openAppModal } from "./app-navigation.js";
+import { showToast } from "./app-toasts.js";
 
 /** @param {any} app */
 export function syncProfileDraft(app) {
@@ -48,11 +49,11 @@ export const appProfileActions = {
       },
     });
     if (!saved) {
-      this.toast = { message: "Unable to save settings", variant: "error" };
+      showToast(this, { message: "Unable to save settings", variant: "error" });
       return;
     }
     this.closeProfileSettings();
-    this.toast = { message: "Settings saved", variant: "success" };
+    showToast(this, { message: "Settings saved", variant: "success" });
   },
 
   closeAvatarMaker() {

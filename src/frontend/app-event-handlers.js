@@ -10,6 +10,7 @@ import {
   navigateApp,
   supportsNavigationApi,
 } from "./app-navigation.js";
+import { showToast } from "./app-toasts.js";
 
 function getCurrentReturnPath() {
   const url = new URL(window.location.href);
@@ -48,7 +49,10 @@ export function initAppEventHandlers(app) {
     });
   };
   app._handleToast = (e) => {
-    app.toast = /** @type {CustomEvent<object>} */ (e).detail;
+    showToast(
+      app,
+      /** @type {CustomEvent<import('./toasts.js').Toast>} */ (e).detail,
+    );
   };
   app._handleHandSelect = (e) => {
     const detail = /** @type {CustomEvent<{ handNumber: number }>} */ (e)

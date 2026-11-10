@@ -1,4 +1,4 @@
-import { LitElement } from "lit";
+import { html, LitElement } from "lit";
 import { Task, TaskStatus } from "@lit/task";
 import "./home.js";
 import "./learn.js";
@@ -12,7 +12,7 @@ import "./mtt-lobby.js";
 import "./player-profile.js";
 import "./release-notes.js";
 import "./app-shell.js";
-import "./toast.js";
+import "./toasts.js";
 import "./modal.js";
 import {
   connectAppEventHandlers,
@@ -23,8 +23,9 @@ import {
   renderGameView,
   renderHistoryView,
   renderShellPageView,
-  renderAuthStatusView,
+  renderToastStack,
 } from "./app-render.js";
+import { renderAuthStatus } from "./app-auth-status.js";
 import {
   getHistoryApiBase,
   getHistoryPath,
@@ -39,6 +40,7 @@ import { appSignInActions } from "./app-sign-in-actions.js";
 import { appProfileActions, syncProfileDraft } from "./app-profile-actions.js";
 import { getAppModal, navigateApp } from "./app-navigation.js";
 import { canonicalizeAvatar } from "../shared/avatar.js";
+import { showToast } from "./app-toasts.js";
 
 class App extends LitElement {
   createRenderRoot() {
@@ -48,7 +50,7 @@ class App extends LitElement {
   static get properties() {
     return {
       path: { type: String },
-      toast: { type: Object },
+      toasts: { type: Array },
       // User state (fetched via HTTP)
       user: { type: Object },
       // Game state (managed here, passed to phg-game)
@@ -79,7 +81,8 @@ class App extends LitElement {
   constructor() {
     super();
     this.path = window.location.pathname;
-    this.toast = undefined;
+    /** @type {import('./toasts.js').Toast[]} */
+    this.toasts = [];
     // User state
     this.user = undefined;
     // Game state
@@ -140,7 +143,7 @@ class App extends LitElement {
 
     const token = url.searchParams.get("token") ?? "";
     if (!token) {
-      this.toast = { message: "Unable to sign in", variant: "error" };
+      showToast(this, { message: "Unable to sign in", variant: "error" });
       navigateApp(this, "/", { replace: true });
       return;
     }
@@ -155,10 +158,13 @@ class App extends LitElement {
       if (!res.ok) throw new Error("Invalid or expired sign-in link");
       const data = await res.json();
       returnTo = this._normalizeCallbackReturnPath(data?.returnPath ?? "/");
-      this.toast = { message: "Signed in successfully", variant: "success" };
+      showToast(this, {
+        message: "Signed in successfully",
+        variant: "success",
+      });
       await this._fetchUser();
     } catch {
-      this.toast = { message: "Unable to sign in", variant: "error" };
+      showToast(this, { message: "Unable to sign in", variant: "error" });
     }
 
     const nextUrl = new URL(returnTo, window.location.origin);
@@ -228,7 +234,7 @@ class App extends LitElement {
       }
     } catch (error) {
       this.reportFrontendError(error);
-      this.toast = { message: "Unable to load profile", variant: "error" };
+      showToast(this, { message: "Unable to load profile", variant: "error" });
     }
   }
 
@@ -288,10 +294,6 @@ class App extends LitElement {
 
   handleGameNotFound() {
     ws.handleGameNotFound(this);
-  }
-
-  dismissToast() {
-    this.toast = undefined;
   }
 
   handleHandSelect(handNumber) {
@@ -387,19 +389,19 @@ class App extends LitElement {
   _handleTaskErrors() {
     if (this._historyListTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyListTask.error);
-      this.toast = { message: error.message, variant: "error" };
+      showToast(this, { message: error.message, variant: "error" });
       navigateApp(this, this._activeGamePath ?? "/", { replace: true });
     }
 
     if (this._historyHandTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._historyHandTask.error);
-      this.toast = { message: error.message, variant: "error" };
+      showToast(this, { message: error.message, variant: "error" });
       navigateApp(this, this._activeGamePath ?? "/", { replace: true });
     }
 
     if (this._playerProfileTask.status === TaskStatus.ERROR) {
       const error = /** @type {Error} */ (this._playerProfileTask.error);
-      this.toast = { message: error.message, variant: "error" };
+      showToast(this, { message: error.message, variant: "error" });
       navigateApp(this, "/", { replace: true });
     }
   }
@@ -430,7 +432,12 @@ class App extends LitElement {
 
   _getConnectionResourcePath(route) {
     if (route.resourcePath) return route.resourcePath;
-    if (isHistoryRouteForTableId(this.path, this._activeGameId)) {
+    // Leaving the table for its history or the avatar editor keeps the
+    // player connected, so they stay present and hear about their turn.
+    if (
+      route.page === "avatar" ||
+      isHistoryRouteForTableId(this.path, this._activeGameId)
+    ) {
       return this._activeGamePath;
     }
     return undefined;
@@ -445,11 +452,10 @@ class App extends LitElement {
       this.user ? this._getConnectionResourcePath(route) : undefined,
     );
 
-    if (this._isSignInCallbackRoute()) {
-      return renderAuthStatusView(this);
-    }
-
-    return this._renderRoute(route);
+    const page = this._isSignInCallbackRoute()
+      ? renderAuthStatus()
+      : this._renderRoute(route);
+    return html`${renderToastStack(this, !route.liveRoute)}${page}`;
   }
 }
 

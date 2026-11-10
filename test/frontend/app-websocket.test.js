@@ -11,7 +11,7 @@ import { maybeRedirectMttRoute } from "../../src/frontend/app-mtt-routing.js";
 function createApp(path = "/cash/testgame") {
   return {
     path,
-    toast: null,
+    toasts: [],
     game: null,
     socialAction: null,
     gameConnectionStatus: "disconnected",
@@ -29,6 +29,28 @@ function createApp(path = "/cash/testgame") {
       this._allowMttLobby = allowMttLobby;
     },
   };
+}
+
+/**
+ * A table view with no one acting, for tests that only care about other fields.
+ * @param {object} [overrides]
+ */
+function gameView(overrides = {}) {
+  return { hand: { actingSeat: -1 }, seats: [], ...overrides };
+}
+
+/**
+ * A table view where `actingSeat` acts and the viewer sits at seat 1.
+ * @param {number} actingSeat
+ */
+function turnView(actingSeat) {
+  return gameView({
+    hand: { actingSeat },
+    seats: [
+      { empty: false, isCurrentPlayer: false },
+      { empty: false, isCurrentPlayer: true },
+    ],
+  });
 }
 
 describe("app-websocket", () => {
@@ -177,7 +199,7 @@ describe("app-websocket", () => {
       const first = MockWebSocket.instances.at(-1);
       resumeConnectionIfNeeded(app);
 
-      first.simulateMessage({ seats: [] });
+      first.simulateMessage(gameView());
       expect(clearedTimeouts).to.deep.equal([]);
 
       scheduledCallbacks[0]();
@@ -200,10 +222,12 @@ describe("app-websocket", () => {
     expect(socket.sent[0]).to.include({ action: "call", seat: 0 });
     expect(socket.sent[0].actionId).to.be.a("string");
     expect(app.gameActionPending).to.equal(true);
-    expect(app.toast).to.deep.equal({
-      message: "Waiting for the previous game action",
-      variant: "info",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "Waiting for the previous game action",
+        variant: "info",
+      },
+    ]);
 
     socket.simulateMessage({
       type: "actionResult",
@@ -228,10 +252,12 @@ describe("app-websocket", () => {
 
     expect(MockWebSocket.instances).to.have.length(2);
     expect(app._socket).to.equal(MockWebSocket.instances[1]);
-    expect(app.toast).to.deep.equal({
-      message: "Game connection was out of sync",
-      variant: "error",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "Game connection was out of sync",
+        variant: "error",
+      },
+    ]);
   });
 
   it("reconnects visibly when an action acknowledgement times out", () => {
@@ -258,10 +284,12 @@ describe("app-websocket", () => {
       expect(MockWebSocket.instances).to.have.length(2);
       expect(app._socket).to.equal(MockWebSocket.instances[1]);
       expect(app.gameActionPending).to.equal(false);
-      expect(app.toast).to.deep.equal({
-        message: "Reconnecting to sync the game",
-        variant: "error",
-      });
+      expect(app.toasts).to.deep.equal([
+        {
+          message: "Reconnecting to sync the game",
+          variant: "error",
+        },
+      ]);
       expect(first.readyState).to.equal(MockWebSocket.CLOSED);
     } finally {
       globalThis.setTimeout = originalSetTimeout;
@@ -281,7 +309,7 @@ describe("app-websocket", () => {
     expect(app._activeGamePath).to.equal("/cash/testgame");
     expect(app._socket).to.equal(socket);
     expect(app.gameConnectionStatus).to.equal("connecting");
-    expect(app.toast).to.equal(null);
+    expect(app.toasts).to.deep.equal([]);
   });
 
   it("redirects to the new tournament table when the backend sends a player move event", () => {
@@ -296,10 +324,12 @@ describe("app-websocket", () => {
     });
 
     expect(app.path).to.equal("/mtt/mtt123/tables/table2");
-    expect(app.toast).to.deep.equal({
-      message: "Moved to Table 2",
-      variant: "info",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "Moved to Table 2",
+        variant: "info",
+      },
+    ]);
   });
 
   function createSeatedMttApp(path, ownTableId) {
@@ -349,50 +379,56 @@ describe("app-websocket", () => {
       const app = createApp(path);
       connectToGame(app, path);
       const socket = MockWebSocket.instances.at(-1);
-      const game = {
+      const game = gameView({
         tournament: { level: 1, onBreak: false },
         blinds: { small: 1000, big: 2000, ante: 0 },
-      };
+      });
       socket.simulateMessage(game);
-      expect(app.toast).to.equal(null);
+      expect(app.toasts).to.deep.equal([]);
 
-      const nextLevel = {
+      const nextLevel = gameView({
         tournament: { level: 2, onBreak: false },
         blinds: { small: 1500, big: 3000, ante: 0 },
-      };
-      socket.simulateMessage(nextLevel);
-      expect(app.toast).to.deep.equal({
-        message: "Level 2 · Blinds $15/$30",
-        variant: "info",
       });
+      socket.simulateMessage(nextLevel);
+      expect(app.toasts).to.deep.equal([
+        {
+          message: "Level 2 · Blinds $15/$30",
+          variant: "info",
+        },
+      ]);
       expect(app.game).to.deep.equal(nextLevel);
 
-      app.toast = null;
+      app.toasts = [];
       socket.simulateMessage(nextLevel);
       socket.simulateMessage({
         ...nextLevel,
         tournament: { level: 2, onBreak: true },
       });
-      expect(app.toast).to.equal(null);
+      expect(app.toasts).to.deep.equal([]);
 
-      socket.simulateMessage({
-        tournament: { level: 3, onBreak: false },
-        blinds: { small: 2000, big: 4000, ante: 500 },
-      });
-      expect(app.toast).to.deep.equal({
-        message: "Level 3 · Blinds $20/$40 · Ante $5",
-        variant: "info",
-      });
+      socket.simulateMessage(
+        gameView({
+          tournament: { level: 3, onBreak: false },
+          blinds: { small: 2000, big: 4000, ante: 500 },
+        }),
+      );
+      expect(app.toasts).to.deep.equal([
+        {
+          message: "Level 3 · Blinds $20/$40 · Ante $5",
+          variant: "info",
+        },
+      ]);
     });
   }
 
   it("does not announce levels on reconnect or when moving to another table", () => {
     const app = createApp("/mtt/mtt123/tables/table1");
     connectToGame(app, app.path);
-    const game = {
+    const game = gameView({
       tournament: { level: 2 },
       blinds: { small: 1500, big: 3000, ante: 0 },
-    };
+    });
     MockWebSocket.instances.at(-1).simulateMessage(game);
     MockWebSocket.instances.at(-1).close();
     reconnectIfNeeded(app);
@@ -400,7 +436,7 @@ describe("app-websocket", () => {
       ...game,
       tournament: { level: 3 },
     });
-    expect(app.toast).to.equal(null);
+    expect(app.toasts).to.deep.equal([]);
 
     MockWebSocket.instances.at(-1).simulateMessage({
       type: "playerMoved",
@@ -413,33 +449,95 @@ describe("app-websocket", () => {
       ...game,
       tournament: { level: 4 },
     });
-    expect(app.toast).to.deep.equal({
-      message: "Moved to Table 2",
-      variant: "info",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "Moved to Table 2",
+        variant: "info",
+      },
+    ]);
   });
 
   it("does not announce cash blind changes or levels while viewing history", () => {
     const app = createApp();
     connectToGame(app, app.path);
     const socket = MockWebSocket.instances.at(-1);
-    socket.simulateMessage({ blinds: { small: 100, big: 200, ante: 0 } });
-    socket.simulateMessage({ blinds: { small: 200, big: 400, ante: 0 } });
-    expect(app.toast).to.equal(null);
+    socket.simulateMessage(
+      gameView({ blinds: { small: 100, big: 200, ante: 0 } }),
+    );
+    socket.simulateMessage(
+      gameView({ blinds: { small: 200, big: 400, ante: 0 } }),
+    );
+    expect(app.toasts).to.deep.equal([]);
 
     app.path = "/sitngo/sng123";
     connectToGame(app, app.path);
     const tournamentSocket = MockWebSocket.instances.at(-1);
-    const game = {
+    const game = gameView({
       tournament: { level: 1 },
       blinds: { small: 1000, big: 2000, ante: 0 },
-    };
+    });
     tournamentSocket.simulateMessage(game);
     app.path = "/history/sng123";
     tournamentSocket.simulateMessage({
       ...game,
       tournament: { level: 2 },
     });
-    expect(app.toast).to.equal(null);
+    expect(app.toasts).to.deep.equal([]);
+  });
+
+  describe("turn alert away from the table", () => {
+    const originalVibrate = Object.getOwnPropertyDescriptor(
+      navigator,
+      "vibrate",
+    );
+    /** @type {number[]} */
+    let vibrations;
+
+    beforeEach(() => {
+      vibrations = [];
+      Object.defineProperty(navigator, "vibrate", {
+        configurable: true,
+        value: (pattern) => vibrations.push(Number(pattern)),
+      });
+    });
+
+    afterEach(() => {
+      if (originalVibrate) {
+        Object.defineProperty(navigator, "vibrate", originalVibrate);
+      } else {
+        delete navigator.vibrate;
+      }
+    });
+
+    for (const path of ["/avatar", "/history/testgame"]) {
+      it(`alerts a player at ${path} once when it becomes their turn`, () => {
+        const app = createApp();
+        connectToGame(app, app.path);
+        const socket = MockWebSocket.instances.at(-1);
+        socket.simulateMessage(turnView(0));
+        app.path = path;
+
+        // Spectating between hands: no seat of their own and no one acting.
+        socket.simulateMessage(gameView());
+        expect(vibrations).to.deep.equal([]);
+
+        socket.simulateMessage(turnView(1));
+        socket.simulateMessage(turnView(1));
+        expect(vibrations).to.deep.equal([120]);
+
+        socket.simulateMessage(turnView(0));
+        socket.simulateMessage(turnView(1));
+        expect(vibrations).to.deep.equal([120, 120]);
+      });
+    }
+
+    it("leaves the alert to the table while it is shown", () => {
+      const app = createApp();
+      connectToGame(app, app.path);
+      const socket = MockWebSocket.instances.at(-1);
+      socket.simulateMessage(turnView(0));
+      socket.simulateMessage(turnView(1));
+      expect(vibrations).to.deep.equal([]);
+    });
   });
 });

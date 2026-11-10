@@ -3,6 +3,16 @@ import { OriginalFetch } from "./setup.js";
 import { createMockTournamentView } from "./app-test-helpers.js";
 import "../../src/frontend/app.js";
 
+/** @param {any} element */
+const lastToast = (element) => element.toasts.at(-1);
+
+/**
+ * @param {any} element
+ * @param {string} message
+ */
+const waitForToast = (element, message) =>
+  waitUntil(() => lastToast(element)?.message === message, { timeout: 2000 });
+
 describe("phg-app sign in", () => {
   const originalLocation = window.location.href;
 
@@ -42,11 +52,9 @@ describe("phg-app sign in", () => {
       }),
     );
 
-    await waitUntil(() => element.toast?.message === "Sign-in link sent", {
-      timeout: 2000,
-    });
+    await waitForToast(element, "Sign-in link sent");
 
-    expect(element.toast).to.deep.include({
+    expect(lastToast(element)).to.deep.include({
       message: "Sign-in link sent",
       variant: "success",
     });
@@ -112,9 +120,7 @@ describe("phg-app sign in", () => {
 
     modal.querySelector("form").requestSubmit();
 
-    await waitUntil(() => element.toast?.message === "Sign-in link sent", {
-      timeout: 2000,
-    });
+    await waitForToast(element, "Sign-in link sent");
 
     expect(userUpdateBody).to.deep.equal({
       name: "Guest Name",
@@ -159,12 +165,9 @@ describe("phg-app sign in", () => {
       }),
     );
 
-    await waitUntil(
-      () => element.toast?.message === "Unable to send sign-in link",
-      { timeout: 2000 },
-    );
+    await waitForToast(element, "Unable to send sign-in link");
 
-    expect(element.toast).to.deep.include({
+    expect(lastToast(element)).to.deep.include({
       message: "Unable to send sign-in link",
       variant: "error",
     });
@@ -196,11 +199,9 @@ describe("phg-app sign in", () => {
 
     const element = await fixture(html`<phg-app></phg-app>`);
 
-    await waitUntil(() => element.toast?.message === "Signed in successfully", {
-      timeout: 2000,
-    });
+    await waitForToast(element, "Signed in successfully");
 
-    expect(element.toast).to.deep.include({
+    expect(lastToast(element)).to.deep.include({
       message: "Signed in successfully",
       variant: "success",
     });
@@ -307,11 +308,9 @@ describe("phg-app sign in", () => {
 
     const element = await fixture(html`<phg-app></phg-app>`);
 
-    await waitUntil(() => element.toast?.message === "Unable to sign in", {
-      timeout: 2000,
-    });
+    await waitForToast(element, "Unable to sign in");
 
-    expect(element.toast).to.deep.include({
+    expect(lastToast(element)).to.deep.include({
       message: "Unable to sign in",
       variant: "error",
     });
@@ -337,11 +336,9 @@ describe("phg-app sign in", () => {
 
     const element = await fixture(html`<phg-app></phg-app>`);
 
-    await waitUntil(() => element.toast?.message === "Unable to sign in", {
-      timeout: 2000,
-    });
+    await waitForToast(element, "Unable to sign in");
 
-    expect(element.toast).to.deep.include({
+    expect(lastToast(element)).to.deep.include({
       message: "Unable to sign in",
       variant: "error",
     });

@@ -11,23 +11,27 @@
   background: var(--color-bg-medium);
 }
 
-@scope (phg-toast) {
+@scope (phg-toasts) {
   :where(:scope) {
     position: fixed;
-    inset: var(--space-lg) auto auto 50%;
-    display: block;
+    inset: var(--space-lg) 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: center;
+    width: fit-content;
+
+    /* Leaves the corners free for the menu button and the table header. */
+    max-width: 50vw;
     padding: 0;
-    margin: 0;
+    margin: 0 auto;
     overflow: visible;
     color: inherit;
     background: none;
     border: 0;
-    transform: translateX(-50%);
   }
 
   .toast {
-    max-width: 90vw;
-    padding: var(--space-md) var(--space-lg);
     color: var(--color-fg-white);
     font-size: var(--font-sm);
     text-align: center;
@@ -35,19 +39,32 @@
     box-shadow: var(--space-sm) var(--space-sm) 0 var(--color-bg-dark);
   }
 
-  :scope[variant="error"] .toast {
+  .toast__content {
+    display: block;
+    padding: var(--space-md) var(--space-lg);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .toast__action {
+    display: block;
+    margin-top: var(--space-sm);
+    text-decoration: underline;
+  }
+
+  .toast--error {
     background-color: var(--color-error);
   }
 
-  :scope[variant="success"] .toast {
+  .toast--success {
     background-color: var(--color-success);
   }
 
-  :scope[variant="warning"] .toast {
+  .toast--warning {
     background-color: var(--color-warning);
   }
 
-  :scope[variant="info"] .toast {
+  .toast--info {
     background-color: var(--color-accent);
   }
 }

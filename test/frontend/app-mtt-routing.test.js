@@ -10,6 +10,7 @@ function createRunningMttApp() {
     path: "/mtt/mtt123/tables/table2",
     _allowMttLobby: false,
     _mttTournamentId: "mtt123",
+    toasts: [],
     _mttView: {
       status: "running",
       currentPlayer: {
@@ -66,10 +67,12 @@ describe("app-mtt-routing", () => {
 
     await performMttAction(app, "register");
 
-    expect(app.toast).to.deep.equal({
-      message: "Registered. Waiting for a table.",
-      variant: "info",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "Registered. Waiting for a table.",
+        variant: "info",
+      },
+    ]);
     expect(app.path).to.equal("/mtt/mtt123");
   });
 
@@ -77,7 +80,6 @@ describe("app-mtt-routing", () => {
     const app = createRunningMttApp();
     app.path = "/mtt/mtt123";
     app._allowMttLobby = true;
-    app.toast = undefined;
     app._setMttLobbyOverride = (allowMttLobby) => {
       app._allowMttLobby = allowMttLobby;
     };
@@ -91,7 +93,7 @@ describe("app-mtt-routing", () => {
 
     await performMttAction(app, "register");
 
-    expect(app.toast).to.be.undefined;
+    expect(app.toasts).to.deep.equal([]);
     expect(app.path).to.equal("/mtt/mtt123");
   });
 
@@ -104,9 +106,11 @@ describe("app-mtt-routing", () => {
 
     await performMttAction(app, "register");
 
-    expect(app.toast).to.deep.equal({
-      message: "registration is closed",
-      variant: "error",
-    });
+    expect(app.toasts).to.deep.equal([
+      {
+        message: "registration is closed",
+        variant: "error",
+      },
+    ]);
   });
 });
