@@ -114,6 +114,30 @@ describe("leaving cards", () => {
     expect(boardInfo.textContent.trim()).to.equal("");
   });
 
+  it("keeps the result of a hand folded preflop until its cards are gone", async () => {
+    const foldedPreflop = {
+      ...tableBetweenHands({ cards: true }),
+      board: { cards: [] },
+    };
+    element.game = foldedPreflop;
+    await element.updateComplete;
+
+    element.game = tableBetweenHands({ cards: false });
+    await element.updateComplete;
+
+    const board = element.querySelector("phg-board .board-info");
+    expect(board.classList.contains("leaving")).to.be.true;
+    expect(board.textContent).to.include("Bob wins!");
+
+    for (const leaving of element.querySelectorAll(".leaving")) {
+      endLeaving(leaving);
+    }
+    await element.querySelector("phg-board").updateComplete;
+    expect(
+      element.querySelector("phg-board .board-info").textContent.trim(),
+    ).to.equal("");
+  });
+
   it("deals the next hand into new cards even if the old ones never left", async () => {
     element.game = tableBetweenHands({ cards: true });
     await element.updateComplete;

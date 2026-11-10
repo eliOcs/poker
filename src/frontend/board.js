@@ -1,8 +1,22 @@
 import { html, LitElement } from "lit";
 import { formatAmount } from "./currency.js";
-import { getLeavingCards } from "./leaving-cards.js";
+import { animatesLeaving } from "./leaving-cards.js";
 import "./card.js";
 import "./chips.js";
+
+/**
+ * Whether an update took the finished hand off the board: its cards or its
+ * result were there, and now neither is. A hand folded preflop leaves only
+ * its result.
+ * @param {{ cards: string[], winnerMessage: any }} before
+ * @param {{ board?: { cards?: string[] }, winnerMessage?: any }} after
+ */
+function isHandCleared(before, after) {
+  const hadHand = before.cards.length > 0 || Boolean(before.winnerMessage);
+  const hasHand =
+    Boolean(after.board?.cards?.length) || Boolean(after.winnerMessage);
+  return hadHand && !hasHand && animatesLeaving();
+}
 
 class Board extends LitElement {
   createRenderRoot() {
@@ -36,22 +50,22 @@ class Board extends LitElement {
     this.displayBigBlind = 0;
     this.tournament = undefined;
     this.seats = undefined;
-    /** @type {{ cards: string[], winnerMessage: any }|undefined} The cleared hand, fading out */
+    /** @type {{ cards: string[], winnerMessage: any }|undefined} The cleared hand, leaving */
     this._leaving = undefined;
   }
 
   willUpdate(changed) {
     if (!changed.has("board") || this.noAnimation) return;
-    // Only the update that clears the cards starts them leaving; any later
-    // one ends it, even if the animation never got to run.
-    const cards = getLeavingCards(
-      changed.get("board")?.cards,
-      this.board?.cards,
-    );
-    const winnerMessage = changed.has("winnerMessage")
-      ? changed.get("winnerMessage")
-      : this.winnerMessage;
-    this._leaving = cards && { cards, winnerMessage };
+    // Only the update that clears the hand starts it leaving; any later one
+    // ends it, even if the animation never got to run.
+    /** @type {{ cards: string[], winnerMessage: any }} */
+    const before = {
+      cards: changed.get("board")?.cards ?? [],
+      winnerMessage: changed.has("winnerMessage")
+        ? changed.get("winnerMessage")
+        : this.winnerMessage,
+    };
+    this._leaving = isHandCleared(before, this) ? before : undefined;
   }
 
   getTournamentWinnerName() {

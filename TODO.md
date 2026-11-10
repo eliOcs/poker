@@ -1,5 +1,6 @@
 # To do
 
+- ux: a user can register to a tournament on the phone and then try to play from the computer and don't notice that he isn't sign in
 - bug: users can't buy in in cash game while the hand is on going
 - bug: why was I only allowed check option: http://localhost:3000/history/mwarcup2bed9/12
 - Finished tournament show winners more clearly
