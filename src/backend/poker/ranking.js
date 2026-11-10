@@ -1,4 +1,4 @@
-import { calculatePrizes } from "../../shared/tournament.js";
+import { calculatePrizesFromPool } from "../../shared/tournament.js";
 
 /**
  * @typedef {import('./types.js').Cents} Cents
@@ -20,36 +20,42 @@ import { calculatePrizes } from "../../shared/tournament.js";
  */
 
 /**
- * Tournament ranking comparator.
- * Non-busted players rank ahead of busted players.
- * Busted players are ordered by bustedPosition (2nd before 3rd, etc).
- * @param {PlayerRanking} a
- * @param {PlayerRanking} b
- * @returns {number}
+ * @typedef {object} TournamentEntry
+ * @property {Cents} stack - Chips now; zero once out
+ * @property {number} entries - Buy-ins paid: the first plus every rebuy
+ * @property {number} [finishPosition] - Set once the player is out (or won)
  */
-function compareTournamentRankings(a, b) {
-  const aBusted = a.bustedPosition !== undefined;
-  const bBusted = b.bustedPosition !== undefined;
-  const aPosition = a.bustedPosition;
-  const bPosition = b.bustedPosition;
 
-  if (
-    aBusted &&
-    bBusted &&
-    aPosition !== undefined &&
-    bPosition !== undefined &&
-    aPosition !== bPosition
-  ) {
-    return aPosition - bPosition;
-  } else if (aBusted !== bBusted) {
-    return aBusted ? 1 : -1;
-  }
+/**
+ * Ranks a tournament field and projects each player's result. Players still
+ * in rank by stack, ahead of those out, who keep their finish position; ties
+ * keep the given order. The pool is every buy-in paid, and a player's net is
+ * the prize for their place minus the buy-ins they paid. Lobby standings,
+ * table rankings and profiles all read tournament results from here.
+ * @template {TournamentEntry} T
+ * @param {T[]} field - Everyone who entered
+ * @param {Cents} buyIn
+ * @returns {Array<T & { netWinnings: Cents }>}
+ */
+export function rankTournamentField(field, buyIn) {
+  const ranked = [...field].sort((a, b) => {
+    if (a.finishPosition === undefined && b.finishPosition === undefined) {
+      return b.stack - a.stack;
+    }
+    if (a.finishPosition === undefined) return -1;
+    if (b.finishPosition === undefined) return 1;
+    return a.finishPosition - b.finishPosition;
+  });
+  const entries = field.reduce((total, entry) => total + entry.entries, 0);
+  const prizes = calculatePrizesFromPool(field.length, buyIn * entries);
+  const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
 
-  if (a.stack !== b.stack) {
-    return b.stack - a.stack;
-  }
-
-  return a.seatIndex - b.seatIndex;
+  return ranked.map((entry, index) => ({
+    ...entry,
+    netWinnings:
+      (prizeByPosition.get(entry.finishPosition ?? index + 1) ?? 0) -
+      buyIn * entry.entries,
+  }));
 }
 
 /**
@@ -89,26 +95,21 @@ export function computeRankings(game) {
     });
   }
 
-  // Tournaments: sort by alive stack, then busted finish position
-  // Cash games: sort by net winnings (highest first)
+  if (game.tournament?.kind === "mtt") {
+    // A table holds part of the field: the tournament ranks it (mtt-view.js).
+    return [];
+  }
   if (game.tournament?.active) {
-    rankings.sort(compareTournamentRankings);
-
-    if (game.tournament.kind !== "mtt") {
-      const prizes = calculatePrizes(rankings.length, game.tournament.buyIn);
-      const prizeByPosition = new Map(
-        prizes.map((p) => [p.position, p.amount]),
-      );
-
-      for (let i = 0; i < rankings.length; i++) {
-        const prize = prizeByPosition.get(i + 1) ?? 0;
-        /** @type {(typeof rankings)[number]} */ (rankings[i]).netWinnings =
-          prize - game.tournament.buyIn;
-      }
-    }
-  } else {
-    rankings.sort((a, b) => b.netWinnings - a.netWinnings);
+    const field = rankings.map((ranking) => ({
+      ranking,
+      stack: ranking.stack,
+      entries: 1,
+      finishPosition: ranking.bustedPosition,
+    }));
+    return rankTournamentField(field, game.tournament.buyIn).map(
+      ({ ranking, netWinnings }) => ({ ...ranking, netWinnings }),
+    );
   }
 
-  return rankings;
+  return rankings.sort((a, b) => b.netWinnings - a.netWinnings);
 }

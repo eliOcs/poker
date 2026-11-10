@@ -106,7 +106,11 @@ describe("player-profile history", function () {
       ],
     });
 
-    const profile = await getPlayerProfile(new Map(), "player1");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "player1",
+      () => undefined,
+    );
 
     assert.ok(profile);
     assert.strictEqual(profile.totalNetWinnings, 100);
@@ -207,7 +211,11 @@ describe("player-profile history", function () {
     recordHandPlayers(hand1, "gamec789");
     recordHandPlayers(hand3, "gamec789");
 
-    const profile = await getPlayerProfile(new Map(), "player1");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "player1",
+      () => undefined,
+    );
 
     assert.ok(profile);
     assert.deepStrictEqual(profile.recentGames, [
@@ -339,7 +347,11 @@ describe("player-profile history", function () {
       ],
     });
 
-    const profile = await getPlayerProfile(new Map(), "player1");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "player1",
+      () => undefined,
+    );
 
     assert.ok(profile);
     assert.equal(profile.totalHands, 2);

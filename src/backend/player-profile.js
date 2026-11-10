@@ -9,12 +9,14 @@ import {
 } from "./poker/hand-history/io.js";
 import { getUserAvatarRevision } from "./avatar.js";
 import { isBotTableHand } from "./bot-roster.js";
+import { getTournamentNetWinnings } from "./mtt-view.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
  * @typedef {import('./poker/hand-history/index.js').OHHHand} OHHHand
  * @typedef {import('./poker/types.js').Cents} Cents
  * @typedef {import('./id.js').Id} Id
+ * @typedef {(tournamentId: string) => import('./mtt.js').ManagedTournament|undefined} GetLiveTournament
  */
 
 /**
@@ -45,11 +47,12 @@ import { isBotTableHand } from "./bot-roster.js";
 /**
  * @param {Map<string, Game>} games
  * @param {string} playerId
+ * @param {GetLiveTournament} getLiveTournament - Running MTTs, which only memory holds
  * @returns {Promise<PlayerProfile|void>}
  */
-export async function getPlayerProfile(games, playerId) {
+export async function getPlayerProfile(games, playerId, getLiveTournament) {
   const user = Store.loadUserProfile(playerId);
-  const totals = await summarizePlayerHistory(playerId);
+  const totals = await summarizePlayerHistory(playerId, getLiveTournament);
 
   if (!user && totals.totalHands === 0) return;
 
@@ -111,9 +114,10 @@ function isPlayerOnline(games, playerId) {
 
 /**
  * @param {string} playerId
+ * @param {GetLiveTournament} getLiveTournament
  * @returns {Promise<{ totalNetWinnings: Cents, totalHands: number, hands: OHHHand[], recentGames: RecentGame[] }>}
  */
-async function summarizePlayerHistory(playerId) {
+async function summarizePlayerHistory(playerId, getLiveTournament) {
   /** @type {OHHHand[]} */
   const matchingHands = [];
   let totalNetWinnings = 0;
@@ -132,7 +136,11 @@ async function summarizePlayerHistory(playerId) {
       continue;
     }
 
-    const summary = await summarizeTableHistory(tableLink, playerId);
+    const summary = await summarizeTableHistory(
+      tableLink,
+      playerId,
+      getLiveTournament,
+    );
     if (!summary) continue;
 
     matchingHands.push(...summary.hands);
@@ -141,7 +149,11 @@ async function summarizePlayerHistory(playerId) {
   }
 
   for (const tournamentLink of mttTournamentLinks) {
-    const summary = await summarizeMttHistory(tournamentLink, playerId);
+    const summary = await summarizeMttHistory(
+      tournamentLink,
+      playerId,
+      getLiveTournament,
+    );
     if (!summary) continue;
 
     matchingHands.push(...summary.hands);
@@ -221,22 +233,41 @@ function findFirstSeenAt(hands) {
 }
 
 /**
+ * A finished MTT's result is in its summary. A running one lives only in
+ * memory, not in its tables' histories, so it reports the lobby's projection.
  * @param {string} tournamentId
  * @param {string} playerId
- * @param {string} [fallbackTableId]
+ * @param {GetLiveTournament} getLiveTournament
  * @returns {Promise<Cents>}
  */
-async function calculateTournamentNetResult(
+async function calculateMttNetResult(
   tournamentId,
   playerId,
-  fallbackTableId = tournamentId,
+  getLiveTournament,
 ) {
   const summary = await readTournamentSummary(tournamentId);
   if (summary) {
     return calculateTournamentSummaryNetResult(summary, playerId);
   }
 
-  const game = await recoverGameFromHistory(fallbackTableId);
+  // A restart ends a running MTT without a summary: it has no result.
+  const tournament = getLiveTournament(tournamentId);
+  return tournament ? getTournamentNetWinnings(tournament, playerId) : 0;
+}
+
+/**
+ * A Sit & Go is its one table, so a running one is rebuilt from its history.
+ * @param {string} tableId
+ * @param {string} playerId
+ * @returns {Promise<Cents>}
+ */
+async function calculateSitAndGoNetResult(tableId, playerId) {
+  const summary = await readTournamentSummary(tableId);
+  if (summary) {
+    return calculateTournamentSummaryNetResult(summary, playerId);
+  }
+
+  const game = await recoverGameFromHistory(tableId);
   if (!game?.tournament?.active) {
     return 0;
   }
@@ -280,11 +311,43 @@ function listPlayerHistoryTables(playerId) {
 }
 
 /**
+ * @param {RecentGame["gameType"]} gameType
+ * @param {Store.PlayerTableLink} tableLink
+ * @param {OHHHand[]} playerHands
+ * @param {Id} playerId
+ * @param {GetLiveTournament} getLiveTournament
+ * @returns {Promise<Cents>}
+ */
+async function calculateTableNetResult(
+  gameType,
+  tableLink,
+  playerHands,
+  playerId,
+  getLiveTournament,
+) {
+  if (gameType === "cash") {
+    return playerHands.reduce(
+      (total, hand) => total + calculateNetResult(hand, playerId),
+      0,
+    );
+  }
+  if (gameType === "mtt" && tableLink.tournamentId) {
+    return calculateMttNetResult(
+      tableLink.tournamentId,
+      playerId,
+      getLiveTournament,
+    );
+  }
+  return calculateSitAndGoNetResult(tableLink.tableId, playerId);
+}
+
+/**
  * @param {Store.PlayerTableLink} tableLink
  * @param {Id} playerId
+ * @param {GetLiveTournament} getLiveTournament
  * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|void>}
  */
-async function summarizeTableHistory(tableLink, playerId) {
+async function summarizeTableHistory(tableLink, playerId, getLiveTournament) {
   const hands = await readHandsFromFile(tableLink.tableId);
   // Practice against bots is not a result: profiles show games with people.
   if (hands.some(isBotTableHand)) return;
@@ -297,17 +360,13 @@ async function summarizeTableHistory(tableLink, playerId) {
   if (!lastPlayedHand) return;
 
   const gameType = resolveGameType(playerHands);
-  const netWinnings =
-    gameType === "cash"
-      ? playerHands.reduce(
-          (total, hand) => total + calculateNetResult(hand, playerId),
-          0,
-        )
-      : await calculateTournamentNetResult(
-          tableLink.tournamentId ?? tableLink.tableId,
-          playerId,
-          tableLink.tableId,
-        );
+  const netWinnings = await calculateTableNetResult(
+    gameType,
+    tableLink,
+    playerHands,
+    playerId,
+    getLiveTournament,
+  );
 
   return {
     hands: playerHands,
@@ -333,9 +392,14 @@ async function summarizeTableHistory(tableLink, playerId) {
 /**
  * @param {Store.PlayerTournamentLink} tournamentLink
  * @param {Id} playerId
+ * @param {GetLiveTournament} getLiveTournament
  * @returns {Promise<{ hands: OHHHand[], recentGame: RecentGame }|void>}
  */
-async function summarizeMttHistory(tournamentLink, playerId) {
+async function summarizeMttHistory(
+  tournamentLink,
+  playerId,
+  getLiveTournament,
+) {
   const tableLinks = Store.listPlayerTablesForTournament(
     playerId,
     tournamentLink.tournamentId,
@@ -372,10 +436,10 @@ async function summarizeMttHistory(tournamentLink, playerId) {
       tableId: tournamentLink.lastTableId,
       tournamentId: tournamentLink.tournamentId,
       gameType: "mtt",
-      netWinnings: await calculateTournamentNetResult(
+      netWinnings: await calculateMttNetResult(
         tournamentLink.tournamentId,
         playerId,
-        tournamentLink.lastTableId,
+        getLiveTournament,
       ),
       handsPlayed: playerHands.length,
       lastPlayedAt: tournamentLink.lastPlayedAt,

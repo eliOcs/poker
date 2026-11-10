@@ -394,14 +394,12 @@ function getWinnerSeatIndex(game, summary) {
  * @param {Map<number, RecoveredSeatState>} recoveredSeats
  * @param {Set<string>} playersInLastHand
  * @param {boolean} isTournament
- * @param {number} tournamentInitialStack
  */
 function applyRecoveredSeats(
   game,
   recoveredSeats,
   playersInLastHand,
   isTournament,
-  tournamentInitialStack,
 ) {
   for (let i = 0; i < game.seats.length; i += 1) {
     const recoveredSeat = recoveredSeats.get(i);
@@ -411,9 +409,7 @@ function applyRecoveredSeats(
       { id: recoveredSeat.playerId, name: recoveredSeat.name },
       recoveredSeat.stack,
     );
-    occupied.totalBuyIn = isTournament
-      ? tournamentInitialStack
-      : recoveredSeat.totalBuyIn;
+    occupied.totalBuyIn = isTournament ? 0 : recoveredSeat.totalBuyIn;
     occupied.handsPlayed = recoveredSeat.handsPlayed;
     occupied.disconnected = true;
     occupied.sittingOut =
@@ -427,7 +423,7 @@ function applyRecoveredSeats(
  * @param {string} gameId
  * @param {OHHHand} lastHand
  * @param {OTSSummary|void} summary
- * @returns {{ game: PokerGame, isTournament: boolean, blinds: { ante: number, small: number, big: number }, tournamentInitialStack: number }}
+ * @returns {{ game: PokerGame, isTournament: boolean, blinds: { ante: number, small: number, big: number } }}
  */
 function createGameShell(gameId, lastHand, summary) {
   const tableSize = lastHand.table_size;
@@ -435,7 +431,6 @@ function createGameShell(gameId, lastHand, summary) {
   const isTournament = Boolean(
     lastHand.tournament ?? lastHand.tournament_info ?? summary,
   );
-  const tournamentInitialStack = getTournamentInitialStack(lastHand, summary);
 
   let game;
   if (isTournament) {
@@ -454,7 +449,7 @@ function createGameShell(gameId, lastHand, summary) {
   game.handNumber = parseHandNumber(lastHand.game_number);
   game.blinds = blinds;
 
-  return { game, isTournament, blinds, tournamentInitialStack };
+  return { game, isTournament, blinds };
 }
 
 /**
@@ -591,16 +586,13 @@ export function rebuildGameFromHistory(gameId, hands, summary) {
   const playersInLastHand = new Set(
     lastHand.players.map((player) => player.id),
   );
-  const { game, isTournament, blinds, tournamentInitialStack } =
-    createGameShell(gameId, lastHand, summary);
-
-  applyRecoveredSeats(
-    game,
-    recoveredSeats,
-    playersInLastHand,
-    isTournament,
-    tournamentInitialStack,
+  const { game, isTournament, blinds } = createGameShell(
+    gameId,
+    lastHand,
+    summary,
   );
+
+  applyRecoveredSeats(game, recoveredSeats, playersInLastHand, isTournament);
 
   game.button = getRecordedButton(game.seats.length, lastHand.dealer_seat);
   applyTournamentState(game, lastHand, summary, blinds);

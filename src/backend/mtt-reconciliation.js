@@ -271,7 +271,7 @@ function seatWaitingEntrants(tournament, games, changedTables, playerMoves) {
     if (!destination) return;
 
     const seatIndex = findAvailableSeat(destination.game, tournament);
-    seatEntrantAtTable(tournament, destination.game, entrant, seatIndex);
+    seatEntrantAtTable(destination.game, entrant, seatIndex);
     changedTables.add(destination.game.id);
     playerMoves.push({
       playerId: entrant.playerId,

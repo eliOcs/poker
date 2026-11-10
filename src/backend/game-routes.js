@@ -445,7 +445,11 @@ export function createGameRoutes(users, games, broadcast, services) {
       handler: async ({ req, res, match, log }) => {
         getOrCreateUser(req, res, users, log);
         const playerId = routeParam(match);
-        const profile = await getPlayerProfile(games, playerId);
+        const profile = await getPlayerProfile(
+          games,
+          playerId,
+          services.mttManager.getTournament,
+        );
 
         if (!profile) {
           throw new HttpError(404, "Player not found");

@@ -36,7 +36,7 @@ export function createStartingTables(tournament, createTable, ensureTableTick) {
     for (let seatIndex = 0; seatIndex < tableSize; seatIndex += 1) {
       const entrant = entrants[entrantIndex];
       if (!entrant) break;
-      seatEntrantAtTable(tournament, game, entrant, seatIndex);
+      seatEntrantAtTable(game, entrant, seatIndex);
       entrantIndex += 1;
     }
     syncWaitingTableState(tournament, game, ensureTableTick);

@@ -110,12 +110,11 @@ export function findAvailableSeat(game, tournament) {
 }
 
 /**
- * @param {ManagedTournament} tournament
  * @param {Game} game
  * @param {TournamentEntrant} entrant
  * @param {number} seatIndex
  */
-export function seatEntrantAtTable(tournament, game, entrant, seatIndex) {
+export function seatEntrantAtTable(game, entrant, seatIndex) {
   const seatedPlayer = Seat.occupied(
     {
       id: entrant.playerId,
@@ -127,7 +126,6 @@ export function seatEntrantAtTable(tournament, game, entrant, seatIndex) {
     entrant.stack,
     false,
   );
-  seatedPlayer.totalBuyIn = tournament.initialStack;
   seatedPlayer.handsPlayed = entrant.handsPlayed;
   seatedPlayer.disconnected = false;
   game.seats[seatIndex] = seatedPlayer;
@@ -196,7 +194,6 @@ export function movePlayer(
     sourceSeat.stack,
     false,
   );
-  movedSeat.totalBuyIn = sourceSeat.totalBuyIn;
   movedSeat.handsPlayed = sourceSeat.handsPlayed;
   movedSeat.disconnected = false;
 

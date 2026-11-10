@@ -96,7 +96,7 @@ describe("player-profile", function () {
     game.seats[0] = Seat.occupied({ id: "player1", name: "Alice" }, 1000);
     const games = new Map([[game.id, game]]);
 
-    const profile = await getPlayerProfile(games, "player1");
+    const profile = await getPlayerProfile(games, "player1", () => undefined);
 
     assert.ok(profile);
     assert.strictEqual(profile.name, "Alice");
@@ -159,7 +159,11 @@ describe("player-profile", function () {
     await writeHandToFile("ante123", hand);
     recordHandPlayers(hand, "ante123");
 
-    const profile = await getPlayerProfile(new Map(), "player1");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "player1",
+      () => undefined,
+    );
 
     assert.ok(profile);
     // $0.85 won - $0.10 ante - $0.50 big blind = $0.25 net.
@@ -168,7 +172,11 @@ describe("player-profile", function () {
   });
 
   it("returns undefined when player does not exist", async function () {
-    const profile = await getPlayerProfile(new Map(), "missing");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "missing",
+      () => undefined,
+    );
     assert.strictEqual(profile, undefined);
   });
 
@@ -257,7 +265,11 @@ describe("player-profile", function () {
     await writeHandToFile("tour123", tournamentHand);
     recordHandPlayers(tournamentHand, "tour123");
 
-    const profile = await getPlayerProfile(new Map(), "player1");
+    const profile = await getPlayerProfile(
+      new Map(),
+      "player1",
+      () => undefined,
+    );
 
     assert.ok(profile);
     assert.strictEqual(profile.totalHands, 1);

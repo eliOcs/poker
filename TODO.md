@@ -1,7 +1,6 @@
 # To do
 
 - Finished tournament show winners more clearly
-- Net calculations during while tournament is ongoing don't take into account rebuys?
 - show rebuys in tournament lobby
 - clear the player previous action in seat when it is the players turn again
 - chat history

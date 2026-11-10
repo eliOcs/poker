@@ -151,7 +151,6 @@ export function sit(game, { seat: requestedSeat, player }) {
   if (game.tournament?.active) {
     const seatObj = /** @type {OccupiedSeat} */ (game.seats[seat]);
     seatObj.stack = game.tournament.initialStack;
-    seatObj.totalBuyIn = game.tournament.initialStack;
     seatObj.sittingOut = false;
   }
 }

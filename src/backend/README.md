@@ -89,6 +89,16 @@ modules each own one policy or lifecycle step, and `mtt.js` orchestrates them.
 Blind structures adapt to the number of entrants and the chosen speed
 (`tournament-schedule.js`, `src/shared/tournament.js`).
 
+A tournament **result** is the prize for a player's place minus every buy-in
+they paid, rebuys included. One function projects it while play goes on
+(`rankTournamentField` in `poker/ranking.js`). A Sit & Go feeds it the table's
+seats. An MTT feeds it the tournament's entrants, because one table holds only
+part of the field. Running results come from live state: lobby standings and
+profiles read the same projection. A running MTT exists only in memory. Its
+hand histories cannot rebuild it. Once a tournament finishes, its OTS summary
+is the record. Chips brought to the table (`totalBuyIn`) only rank cash and bot
+tables.
+
 ## Lessons
 
 `/learn` lists two training modes. `/learn/preflop` is a preflop trainer

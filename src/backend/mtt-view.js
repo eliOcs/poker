@@ -1,5 +1,6 @@
 import * as Tournament from "../shared/tournament.js";
 import { calculatePrizePool } from "./mtt-rebuy-policy.js";
+import { rankTournamentField } from "./poker/ranking.js";
 import {
   countActivePlayers,
   isTableReadyForNextHand,
@@ -9,6 +10,7 @@ import { isEntryPeriodOpen } from "./mtt-entry-policy.js";
 
 /**
  * @typedef {import('./poker/game.js').Game} Game
+ * @typedef {import('./poker/types.js').Cents} Cents
  * @typedef {import('./mtt.js').ManagedTournament} ManagedTournament
  * @typedef {import('./mtt.js').TournamentEntrant} TournamentEntrant
  * @typedef {import('./mtt.js').ManagedTournamentView} ManagedTournamentView
@@ -38,57 +40,46 @@ function buildEntrants(tournament) {
 }
 
 /**
- * @param {ManagedTournamentViewEntrant} entrant
- * @returns {number}
+ * The field in standing order; once play starts, each entry carries the net
+ * result its place would pay.
+ * @param {ManagedTournament} tournament
+ * @returns {ManagedTournamentViewEntrant[]}
  */
-function getStandingBucket(entrant) {
-  if (entrant.status === "winner") return 0;
-  if (entrant.status === "seated") return 1;
-  if (entrant.status === "registered") return 2;
-  return 3;
+function buildStandings(tournament) {
+  const entrants = buildEntrants(tournament);
+  if (tournament.status === "registration") return entrants;
+
+  const field = entrants.map((entrant) => ({
+    entrant,
+    stack: entrant.stack,
+    entries:
+      1 +
+      /** @type {TournamentEntrant} */ (
+        tournament.entrants.get(entrant.playerId)
+      ).rebuysUsed,
+    finishPosition: entrant.finishPosition,
+  }));
+  return rankTournamentField(field, tournament.buyIn).map(
+    ({ entrant, netWinnings }) => ({ ...entrant, netWinnings }),
+  );
 }
 
 /**
+ * A started tournament's projected net result for one of its entrants.
  * @param {ManagedTournament} tournament
- * @param {number} prizePool
- * @returns {ManagedTournamentViewEntrant[]}
+ * @param {string} playerId
+ * @returns {Cents}
  */
-function buildStandings(tournament, prizePool) {
-  const standings = buildEntrants(tournament).sort((a, b) => {
-    const bucketCompare = getStandingBucket(a) - getStandingBucket(b);
-    if (bucketCompare !== 0) return bucketCompare;
-
-    if (
-      a.finishPosition !== undefined &&
-      b.finishPosition !== undefined &&
-      a.finishPosition !== b.finishPosition
-    ) {
-      return a.finishPosition - b.finishPosition;
-    }
-
-    if (a.stack !== b.stack) {
-      return b.stack - a.stack;
-    }
-
-    return a.playerId.localeCompare(b.playerId);
-  });
-
-  if (tournament.status !== "registration") {
-    const playerCount = tournament.entrants.size;
-    const prizes = Tournament.calculatePrizesFromPool(playerCount, prizePool);
-    const prizeByPosition = new Map(prizes.map((p) => [p.position, p.amount]));
-
-    for (let i = 0; i < standings.length; i++) {
-      const entry = /** @type {ManagedTournamentViewEntrant} */ (standings[i]);
-      const position = entry.finishPosition ?? i + 1;
-      const prize = prizeByPosition.get(position) ?? 0;
-      const rebuysUsed =
-        tournament.entrants.get(entry.playerId)?.rebuysUsed ?? 0;
-      entry.netWinnings = prize - tournament.buyIn * (1 + rebuysUsed);
-    }
+export function getTournamentNetWinnings(tournament, playerId) {
+  const netWinnings = buildStandings(tournament).find(
+    (entrant) => entrant.playerId === playerId,
+  )?.netWinnings;
+  if (netWinnings === undefined) {
+    throw new Error(
+      `tournament ${tournament.id} has no result for player ${playerId}`,
+    );
   }
-
-  return standings;
+  return netWinnings;
 }
 
 /**
@@ -157,7 +148,7 @@ export function buildTournamentView(tournament, games, playerId) {
   const entrant = tournament.entrants.get(playerId);
   const entrants = buildEntrants(tournament);
   const prizePool = calculatePrizePool(tournament);
-  const standings = buildStandings(tournament, prizePool);
+  const standings = buildStandings(tournament);
   const tables = buildTables(tournament, games);
   return {
     id: tournament.id,

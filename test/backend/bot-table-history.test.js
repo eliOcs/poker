@@ -142,7 +142,11 @@ describe("bot table history", () => {
       },
     ]);
 
-    const profile = await getPlayerProfile(new Map(), LEARNER.id);
+    const profile = await getPlayerProfile(
+      new Map(),
+      LEARNER.id,
+      () => undefined,
+    );
 
     assert.strictEqual(profile, undefined);
   });
