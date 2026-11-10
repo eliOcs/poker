@@ -29,6 +29,8 @@ every timer uniformly, and tests can advance time by calling `tick`.
 
 **Randomness** goes through `rng.js`. In production it uses `Math.random`. With
 `RNG_SEED`, it uses a seeded generator so that tests replay the same deals.
+Every new table restarts that generator, so a table's deals do not depend on
+the tests that ran before it on the same server.
 
 ## Actions
 

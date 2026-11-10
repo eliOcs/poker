@@ -19,16 +19,22 @@ export function mulberry32(seed) {
   };
 }
 
+const seed = parseInt(process.env.RNG_SEED ?? "", 10);
+
 /** @type {() => number} */
 let random = Math.random;
 
-// If RNG_SEED is set, use seeded PRNG
-if (process.env.RNG_SEED) {
-  const seed = parseInt(process.env.RNG_SEED, 10);
-  if (!isNaN(seed)) {
-    random = mulberry32(seed);
-    logger.debug("using seeded PRNG", { seed });
-  }
+/**
+ * With RNG_SEED, starts the seeded stream over. Each new table does this, so
+ * its deals do not depend on what else ran on the server before it.
+ */
+export function restartSeededRandom() {
+  if (!isNaN(seed)) random = mulberry32(seed);
+}
+
+if (!isNaN(seed)) {
+  restartSeededRandom();
+  logger.debug("using seeded PRNG", { seed });
 }
 
 export { random };

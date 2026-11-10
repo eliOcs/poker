@@ -2,6 +2,7 @@ import * as Id from "../id.js";
 import * as ActionClock from "./action-clock.js";
 import * as Deck from "./deck.js";
 import * as Seat from "./seat.js";
+import { restartSeededRandom } from "./rng.js";
 import * as Tournament from "../../shared/tournament.js";
 import { calculateTournamentSchedule } from "../tournament-schedule.js";
 import { calculateBlindStructure } from "../../shared/blind-calculator.js";
@@ -166,6 +167,7 @@ export function create(options = {}) {
     tableName = undefined,
   } = options;
   const id = Id.generate();
+  restartSeededRandom();
   /** @type {Seat[]} */
   const seats = [];
   for (let i = 0; i < numberOfSeats; i += 1) {

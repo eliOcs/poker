@@ -55,6 +55,8 @@ const stressServer = server("stress", 8445, process.env.STRESS_RNG_SEED);
 export default defineConfig({
   testDir: "./test/e2e",
   timeout: 60000,
+  // Seeded deals replay only one test at a time: each new table restarts the
+  // server's shared generator (src/backend/poker/rng.js).
   workers: 1,
   reporter: "list",
 
