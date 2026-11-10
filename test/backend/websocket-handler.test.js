@@ -225,10 +225,10 @@ describe("websocket-handler", () => {
       processPokerAction(game, alice, "showBothCards", { seat: 0 });
       processPokerAction(game, alice, "toggleShowCard", { seat: 0, card: 0 });
 
-      assert.deepStrictEqual(playerView(game, alice).seats[0].pendingShow, [
-        false,
-        true,
-      ]);
+      assert.deepStrictEqual(playerView(game, alice).seats[0].cardChoice, {
+        show: [false, true],
+        open: true,
+      });
       assert.deepStrictEqual(playerView(game, bob).seats[0].cards, []);
       assert.deepStrictEqual(showdownRecords(game), []);
 
@@ -285,7 +285,7 @@ describe("websocket-handler", () => {
       endHand(game);
 
       assert.strictEqual(
-        playerView(game, alice).seats[0].pendingShow,
+        playerView(game, alice).seats[0].cardChoice,
         undefined,
       );
       assert.ok(aliceActions(game).includes("showCard1"));

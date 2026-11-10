@@ -5,6 +5,7 @@ import {
   formatPosition,
   formatHandResult,
   getResultClass,
+  getHoleCardState,
 } from "./seat-utils.js";
 import "./card.js";
 import "./chips.js";
@@ -51,33 +52,15 @@ class Seat extends LitElement {
     this._handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") this._clearBubbles();
     };
-    this._handleSeatClick = () => {
-      if (!this.settingsEnabled || !this.seat?.isCurrentPlayer) return;
-      this.dispatchEvent(
-        new CustomEvent("seat-settings", {
-          bubbles: true,
-        }),
-      );
-    };
-    this._handleSeatKeydown = (event) => {
-      if (!this.settingsEnabled || !this.seat?.isCurrentPlayer) return;
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      this._handleSeatClick();
-    };
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this.addEventListener("click", this._handleSeatClick);
-    this.addEventListener("keydown", this._handleSeatKeydown);
     document.addEventListener("visibilitychange", this._handleVisibilityChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this.removeEventListener("click", this._handleSeatClick);
-    this.removeEventListener("keydown", this._handleSeatKeydown);
     document.removeEventListener(
       "visibilitychange",
       this._handleVisibilityChange,
@@ -98,7 +81,6 @@ class Seat extends LitElement {
     ["busted", (s) => (s?.bustedPosition ?? undefined) !== undefined],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
-    ["choosing-cards", (s) => Boolean(s?.pendingShow)],
     [
       "winner",
       (s) => Boolean(s?.isWinner) || (s?.netResult ?? s?.handResult) > 0,
@@ -114,15 +96,6 @@ class Seat extends LitElement {
         cls,
         cls === "empty" ? isEmpty : !isEmpty && condition(this.seat),
       );
-    }
-    if (this.settingsEnabled && !isEmpty && this.seat?.isCurrentPlayer) {
-      this.setAttribute("role", "button");
-      this.setAttribute("tabindex", "0");
-      this.setAttribute("aria-label", "Open settings");
-    } else {
-      this.removeAttribute("role");
-      this.removeAttribute("tabindex");
-      this.removeAttribute("aria-label");
     }
   }
 
@@ -273,12 +246,10 @@ class Seat extends LitElement {
   /**
    * After folding, each hole card toggles between shown and mucked. Nothing
    * reaches the table until the hand ends, so the choice stays open.
-   * @param {Event} event
    * @param {number} index
    */
-  _toggleShowCard(event, index) {
-    if (!this.seat?.pendingShow) return;
-    event.stopPropagation();
+  _toggleShowCard(index) {
+    if (!this.seat?.cardChoice?.open) return;
     this.dispatchEvent(
       new CustomEvent("toggle-show-card", {
         bubbles: true,
@@ -293,44 +264,54 @@ class Seat extends LitElement {
    * @param {number} index
    */
   _handleCardChoiceKeydown(event, index) {
-    if (!this.seat?.pendingShow) return;
-    event.stopPropagation();
+    if (!this.seat?.cardChoice?.open) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    this._toggleShowCard(event, index);
+    this._toggleShowCard(index);
   }
 
   /**
-   * The card element itself becomes the toggle, so entering or leaving the
-   * choice never replaces it and replays its deal animation.
+   * Marks which cards the player shows, and while the choice is open
+   * the card element itself becomes the toggle, so it is never replaced and
+   * never replays its deal animation.
    * @param {string} card
    * @param {number} index
    */
   _renderHoleCard(card, index) {
-    const pendingShow = this.seat.pendingShow;
-    const shown = pendingShow?.[index];
-    const side = index === 0 ? "left" : "right";
+    const choice = getHoleCardState(card, this.seat.cardChoice, index);
     return html`<phg-card
-      class=${
-        pendingShow ? `card-choice${shown ? " card-choice--shown" : ""}` : ""
-      }
-      role=${pendingShow ? "button" : nothing}
-      tabindex=${pendingShow ? "0" : nothing}
-      aria-pressed=${pendingShow ? String(shown) : nothing}
-      aria-label=${
-        pendingShow ? `Show ${side} card when the hand ends` : nothing
-      }
-      @click=${(/** @type {Event} */ event) => {
-        this._toggleShowCard(event, index);
+      class=${choice.className}
+      role=${choice.toggle?.role ?? nothing}
+      tabindex=${choice.toggle?.tabindex ?? nothing}
+      aria-pressed=${choice.toggle?.pressed ?? nothing}
+      aria-label=${choice.toggle?.label ?? nothing}
+      @click=${() => {
+        this._toggleShowCard(index);
       }}
       @keydown=${(/** @type {KeyboardEvent} */ event) => {
         this._handleCardChoiceKeydown(event, index);
       }}
-      .card=${card}
+      .card=${choice.card}
       ?winning=${this.seat.winningCards?.includes(card)}
       ?noAnimation=${this.noAnimation}
       size="large"
     ></phg-card>`;
+  }
+
+  /**
+   * Your own player panel opens settings. It is a button of its own over the
+   * panel, so clicking your cards or chips does not open settings.
+   */
+  _renderSettingsButton() {
+    if (!this.settingsEnabled || !this.seat?.isCurrentPlayer) return "";
+    return html`<button
+      type="button"
+      class="seat-settings"
+      aria-label="Open settings"
+      @click=${() => {
+        this.dispatchEvent(new CustomEvent("seat-settings", { bubbles: true }));
+      }}
+    ></button>`;
   }
 
   render() {
@@ -351,6 +332,7 @@ class Seat extends LitElement {
           )}
         </div>
       </div>
+      ${this._renderSettingsButton()}
       ${
         this._activeEmote
           ? html`<div class="emote-bubble">${this._activeEmote}</div>`

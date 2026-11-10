@@ -91,12 +91,15 @@
     border-color: var(--color-highlight);
   }
 
-  :scope.current-player {
+  /* Covers the player panel exactly, above its content. */
+  .seat-settings {
+    position: absolute;
+    inset: var(--seat-panel-top, 0) 0 var(--seat-panel-bottom, 0);
+    z-index: 1;
+    padding: 0;
     cursor: pointer;
-  }
-
-  :scope:focus {
-    outline: none;
+    background: none;
+    border: 0;
   }
 
   :scope.winner .seat-content::before {
@@ -204,33 +207,21 @@
     top: -50px;
   }
 
-  /* Choosing which folded cards to show: only the text dims, so a card
-     picked to show stays at full strength. */
-  :scope.folded.choosing-cards .seat-content {
-    opacity: 1;
-  }
-
-  :scope.folded.choosing-cards .seat-content > :not(.hole-cards) {
-    opacity: 0.6;
-  }
-
+  /* A card the player shows rises above the rest of the hand. */
   .card-choice {
+    transition: transform 120ms ease;
+  }
+
+  .card-choice--shown {
+    transform: translateY(-6px);
+  }
+
+  .card-choice--open {
     cursor: pointer;
-    filter: grayscale(1) brightness(0.55);
-    transform: translateY(4px);
-    transition:
-      filter 120ms ease,
-      transform 120ms ease;
   }
 
-  .card-choice:hover {
-    filter: grayscale(0.5) brightness(0.8);
-  }
-
-  .card-choice--shown,
-  .card-choice--shown:hover {
-    filter: none;
-    transform: translateY(-4px);
+  .card-choice--open:not(.card-choice--shown):hover {
+    transform: translateY(-2px);
   }
 
   @media (prefers-reduced-motion: reduce) {

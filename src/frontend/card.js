@@ -46,6 +46,8 @@ class Card extends LitElement {
     this.noAnimation = false;
     this.size = "large";
     this._prevCard = undefined;
+    /** @type {string|undefined} The last face shown, kept while turning face down */
+    this._faceCard = undefined;
     this._flipping = false;
     this._dealing = false;
   }
@@ -54,7 +56,12 @@ class Card extends LitElement {
     if (changed.has("card") && !this.noAnimation) {
       const prev = this._prevCard;
       this._prevCard = this.card;
-      if (prev === "??" && this.card && this.card !== "??") {
+      const isFace = (card) => Boolean(card) && card !== "??";
+      if (isFace(this.card)) this._faceCard = this.card;
+      if (prev === "??" && isFace(this.card)) {
+        this._flipping = true;
+      } else if (isFace(prev) && this.card === "??") {
+        // Turning face down: the front keeps its face until it turns away.
         this._flipping = true;
       } else if (!prev && this.card) {
         this._dealing = true;
@@ -106,6 +113,25 @@ class Card extends LitElement {
     `;
   }
 
+  /**
+   * @param {string|undefined} face - the card on the front; none while face down
+   */
+  _renderFront(face) {
+    if (!face || face === "??") {
+      return { frontClasses: "card front", frontContent: undefined };
+    }
+    const rank = face.slice(0, -1);
+    const suit = face.slice(-1);
+    const color = suit === "h" || suit === "d" ? "red" : "black";
+    return {
+      frontClasses: `card front ${color}${this.winning ? " winning" : ""}`,
+      frontContent: html`
+        <span class="rank">${RANK_DISPLAY[rank]}</span>
+        <span class="suit">${SUIT_SYMBOLS[suit]}</span>
+      `,
+    };
+  }
+
   render() {
     if (!this.card) {
       return html`<span class="card placeholder"></span>`;
@@ -119,20 +145,8 @@ class Card extends LitElement {
     const isFlipped = !isHidden;
     const wrapperClasses = `card-wrapper${isFlipped ? " flipped" : ""}${this._flipping ? " flipping" : ""}${this._dealing ? " dealing" : ""}`;
 
-    /** @type {import("lit").TemplateResult | undefined} */
-    let frontContent = undefined;
-    let frontClasses = "card front";
-    if (!isHidden) {
-      const rank = this.card.slice(0, -1);
-      const suit = this.card.slice(-1);
-      const isRed = suit === "h" || suit === "d";
-      frontClasses += isRed ? " red" : " black";
-      if (this.winning) frontClasses += " winning";
-      frontContent = html`
-        <span class="rank">${RANK_DISPLAY[rank]}</span>
-        <span class="suit">${SUIT_SYMBOLS[suit]}</span>
-      `;
-    }
+    const face = isHidden && this._flipping ? this._faceCard : this.card;
+    const { frontClasses, frontContent } = this._renderFront(face);
 
     return html`
       <span class="${wrapperClasses}">

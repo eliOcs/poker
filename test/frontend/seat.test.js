@@ -1,4 +1,5 @@
 import { fixture, expect, html, oneEvent } from "@open-wc/testing";
+import { sendKeys } from "@web/test-runner-commands";
 import {
   MockWebSocket,
   createMockGameState,
@@ -63,20 +64,20 @@ describe("phg-seat", () => {
     expect(foundOccupied).to.be.true;
   });
 
-  it("requests the shared settings modal when current player seat is clicked", async () => {
+  it("opens the shared settings modal from the current player's panel", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
     const seat = element.querySelector("phg-seat.current-player");
     await seat.updateComplete;
     const eventPromise = oneEvent(element, "open-settings");
-    seat.click();
+    seat.querySelector('button[aria-label="Open settings"]').click();
 
     const event = await eventPromise;
     expect(event.type).to.equal("open-settings");
   });
 
-  it("opens settings from keyboard on current player seat", async () => {
+  it("opens settings from the keyboard on the current player's panel", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;
 
@@ -84,10 +85,30 @@ describe("phg-seat", () => {
     await seat.updateComplete;
     const eventPromise = oneEvent(seat, "seat-settings");
 
-    seat.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    seat.querySelector('button[aria-label="Open settings"]').focus();
+    await sendKeys({ press: "Enter" });
 
     const event = await eventPromise;
     expect(event.type).to.equal("seat-settings");
+  });
+
+  it("does not open settings from the current player's cards", async () => {
+    element.game = createMockGameWithPlayers();
+    await element.updateComplete;
+
+    const seat = element.querySelector("phg-seat.current-player");
+    await seat.updateComplete;
+    let settingsRequested = false;
+    seat.addEventListener("seat-settings", () => {
+      settingsRequested = true;
+    });
+
+    const cards = seat.querySelectorAll(".hole-cards phg-card");
+    expect(cards.length).to.be.greaterThan(0);
+    for (const card of cards) card.click();
+    seat.click();
+
+    expect(settingsRequested).to.be.false;
   });
 
   it("displays 'Seat N' fallback for opponents with no name", async () => {
@@ -316,47 +337,6 @@ describe("phg-seat", () => {
     const seats = element.querySelectorAll("phg-seat");
     await seats[0].updateComplete;
     expect(seats[0].classList.contains("folded")).to.be.true;
-  });
-
-  it("turns folded cards into show toggles without redealing them", async () => {
-    const otherSeats = [1, 2, 3, 4, 5].map((seat) => ({
-      ...mockEmptySeat,
-      actions: [{ action: "sit", seat }],
-    }));
-    const folded = { ...mockFoldedSeat, isCurrentPlayer: true };
-    element.game = createMockGameState({ seats: [folded, ...otherSeats] });
-    await element.updateComplete;
-    const seat = element.querySelectorAll("phg-seat")[0];
-    await seat.updateComplete;
-    const cardsBefore = [...seat.querySelectorAll(".hole-cards phg-card")];
-
-    element.game = createMockGameState({
-      seats: [{ ...folded, pendingShow: [true, false] }, ...otherSeats],
-    });
-    await element.updateComplete;
-    await seat.updateComplete;
-
-    const cards = [...seat.querySelectorAll(".hole-cards phg-card")];
-    expect(cards).to.have.length(2);
-    cards.forEach((card, index) => {
-      expect(card === cardsBefore[index], "card element was replaced").to.be
-        .true;
-    });
-    expect(
-      cards.map((card) => card.getAttribute("aria-pressed")),
-    ).to.deep.equal(["true", "false"]);
-
-    let sent;
-    let settingsRequested = false;
-    element.addEventListener("game-action", (event) => {
-      sent = event.detail;
-    });
-    seat.addEventListener("seat-settings", () => {
-      settingsRequested = true;
-    });
-    cards[1].click();
-    expect(sent).to.deep.equal({ action: "toggleShowCard", seat: 0, card: 1 });
-    expect(settingsRequested).to.be.false;
   });
 
   it("applies .acting class when seat.isActing is true", async () => {

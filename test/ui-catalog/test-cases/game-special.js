@@ -11,6 +11,7 @@ import {
   createGame,
   createPlayer,
 } from "./game-helpers.js";
+import { CARD_CHOICE_TEST_CASES } from "./card-choice.js";
 import { createDefaultTournamentSchedule } from "../../../src/shared/tournament.js";
 
 // === SPECIAL GAME STATE TEST CASES ===
@@ -161,48 +162,7 @@ export const SPECIAL_GAME_TEST_CASES = {
       }),
     ),
 
-  "game-folded-card-choice": () =>
-    gameView(
-      createGame({
-        button: 1,
-        hand: {
-          phase: "turn",
-          collectedPot: 800,
-          currentBet: 200,
-          actingSeat: 2,
-        },
-        board: { cards: ["Ah", "Kd", "7c", "3s"] },
-        seats: [
-          createPlayer("You", {
-            isCurrentPlayer: true,
-            folded: true,
-            stack: 4300,
-            cards: ["As", "Qs"],
-            pendingShow: [true, false],
-            actions: [
-              { action: "emote" },
-              { action: "chat" },
-              { action: "muck" },
-              { action: "showCard1", cards: ["As"] },
-              { action: "showCard2", cards: ["Qs"] },
-              { action: "showBothCards", cards: ["As", "Qs"] },
-            ],
-          }),
-          createPlayer("Alice", {
-            stack: 2600,
-            bet: 200,
-            cards: ["??", "??"],
-            lastAction: "Bet $200",
-          }),
-          createPlayer("Bob", {
-            isActing: true,
-            stack: 2800,
-            cards: ["??", "??"],
-          }),
-          ...emptySeats(6),
-        ],
-      }),
-    ),
+  ...CARD_CHOICE_TEST_CASES,
 
   "game-clock-called": () =>
     gameView(
@@ -500,6 +460,7 @@ export const SPECIAL_GAME_IDS = [
   "game-all-in-situation",
   "game-with-folded-players",
   "game-folded-card-choice",
+  "game-folded-card-choice-showdown",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",

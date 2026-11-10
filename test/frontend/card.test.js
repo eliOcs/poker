@@ -216,4 +216,25 @@ describe("phg-card", () => {
       expect(getComputedStyle(card).transform).to.equal("none");
     }
   });
+
+  it("turns face down by flipping with its face still on the front", async () => {
+    const card = document.createElement("phg-card");
+    card.card = "As";
+    element.replaceChildren(card);
+    await card.updateComplete;
+
+    card.card = "??";
+    await card.updateComplete;
+
+    const wrapper = card.querySelector(".card-wrapper");
+    expect(wrapper.classList.contains("flipping")).to.be.true;
+    expect(wrapper.classList.contains("flipped")).to.be.false;
+    expect(card.querySelector(".card.front .rank").textContent).to.equal("A");
+
+    card.querySelector(".card.front").dispatchEvent(new Event("transitionend"));
+    await card.updateComplete;
+    expect(card.querySelector(".card-wrapper").classList.contains("flipping"))
+      .to.be.false;
+    expect(card.querySelector(".card.front .rank")).to.be.null;
+  });
 });

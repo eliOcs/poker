@@ -176,7 +176,13 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} [bustedPosition] - Tournament finishing position
  * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action (own seat only)
  * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
- * @property {[boolean, boolean]} [pendingShow] - Hole cards shown after folding that the table sees when the hand ends (own seat only)
+ * @property {CardChoiceView} [cardChoice] - The player's show-or-muck choice (own seat only)
+ */
+
+/**
+ * @typedef {object} CardChoiceView
+ * @property {[boolean, boolean]} show - Which hole cards are, or will be, shown
+ * @property {boolean} open - Whether the choice can still change
  */
 
 /**
@@ -747,6 +753,21 @@ function getAvailableActions(game, seatIndex, playerSeatIndex) {
 }
 
 /**
+ * The owner's show-or-muck choice, while it is open and after it settles,
+ * so they can still see which cards the table saw.
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @returns {CardChoiceView|undefined}
+ */
+function getCardChoice(seat) {
+  if (seat.pendingShow) return { show: seat.pendingShow, open: true };
+  if (seat.mucked) return { show: [false, false], open: false };
+  if (seat.shownCards[0] || seat.shownCards[1]) {
+    return { show: seat.shownCards, open: false };
+  }
+  return undefined;
+}
+
+/**
  * Creates a view for an occupied seat
  * @param {import('./seat.js').OccupiedSeat} seat
  * @param {number} index
@@ -795,7 +816,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
       ? {
           preAction: seat.preAction,
           pendingSitOut: seat.pendingSitOut,
-          pendingShow: seat.pendingShow,
+          cardChoice: getCardChoice(seat),
         }
       : {}),
   };

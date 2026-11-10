@@ -157,21 +157,34 @@ describe("card decision visibility", () => {
     });
   }
 
-  it("tells only the owner which held-back cards will be shown", () => {
+  it("tells only the owner which cards they show, before and after the hand", () => {
     Actions.fold(game, { seat: 0 });
     Actions.showCard2(game, { seat: 0 });
 
-    assert.deepEqual(playerView(game, owner).seats[0].pendingShow, [
-      false,
-      true,
-    ]);
+    const ownChoice = () => playerView(game, owner).seats[0].cardChoice;
+    assert.deepEqual(ownChoice(), { show: [false, true], open: true });
     for (const viewer of [opponent, spectator]) {
-      assert.equal(playerView(game, viewer).seats[0].pendingShow, undefined);
+      assert.equal(playerView(game, viewer).seats[0].cardChoice, undefined);
     }
 
     Actions.endHand(game);
     Actions.resolvePendingShows(game);
-    assert.equal(playerView(game, owner).seats[0].pendingShow, undefined);
+    assert.deepEqual(ownChoice(), { show: [false, true], open: false });
+    for (const viewer of [opponent, spectator]) {
+      assert.equal(playerView(game, viewer).seats[0].cardChoice, undefined);
+    }
+  });
+
+  it("keeps showing the owner a settled muck", () => {
+    Actions.fold(game, { seat: 0 });
+    Actions.muck(game, { seat: 0 });
+    Actions.endHand(game);
+    Actions.resolvePendingShows(game);
+
+    assert.deepEqual(playerView(game, owner).seats[0].cardChoice, {
+      show: [false, false],
+      open: false,
+    });
   });
 
   it("clears the previous reveal timer before the next hand", () => {

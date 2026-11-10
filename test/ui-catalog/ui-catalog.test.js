@@ -55,6 +55,7 @@ const TEST_CASES = [
   "game-all-in-situation",
   "game-with-folded-players",
   "game-folded-card-choice",
+  "game-folded-card-choice-showdown",
   "game-clock-called",
   "game-sitting-out",
   "game-disconnected-player",
