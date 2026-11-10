@@ -2,7 +2,6 @@
 
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
-- clear the player previous action in seat when it is the players turn again
 - chat history
 - be more obvious of the tournament breaks
 - while users are setting their profile they don't get notified they have to play the hand and appear as disconnected

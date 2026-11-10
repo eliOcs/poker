@@ -782,7 +782,9 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
     actions: getAvailableActions(game, index, playerSeatIndex),
     isCurrentPlayer: index === playerSeatIndex,
     isActing: index === game.hand.actingSeat || isRebuyDecisionPending,
-    lastAction: seat.lastAction,
+    // A player facing a raise is deciding again, so their earlier action in
+    // the round no longer describes them.
+    lastAction: index === game.hand.actingSeat ? undefined : seat.lastAction,
     handResult: seat.handResult,
     handRank: hand && HandRankings.formatHand(hand),
     handName: hand?.name,

@@ -6,6 +6,7 @@ import * as Player from "../../../src/backend/poker/player.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import { collectBets } from "../../../src/backend/poker/betting.js";
 import playerView from "../../../src/backend/poker/player-view.js";
+import { setupPreflop } from "./test-helpers.js";
 
 /** Helper to create a test player */
 function createPlayer() {
@@ -51,6 +52,29 @@ describe("Player View", function () {
       const p2View = playerView(g, p2);
       assert.deepEqual(p2View.seats[0].actions, []);
       assert.deepEqual(p2View.seats[1].actions, [{ action: "sit", seat: 1 }]);
+    });
+
+    it("hides the last action of a player who must act again", function () {
+      const g = Game.create({ seats: 2 });
+      const p1 = createPlayer();
+      const p2 = createPlayer();
+      Actions.sit(g, { seat: 0, player: p1 });
+      Actions.sit(g, { seat: 1, player: p2 });
+      Actions.buyIn(g, { seat: 0, amount: 100 });
+      Actions.buyIn(g, { seat: 1, amount: 100 });
+      setupPreflop(g);
+
+      const opener = g.hand.actingSeat;
+      Actions.raise(g, { seat: opener, amount: 150 });
+      const reraiser = g.hand.actingSeat;
+      Actions.raise(g, { seat: reraiser, amount: 450 });
+      assert.equal(g.hand.actingSeat, opener);
+
+      for (const viewer of [p1, p2]) {
+        const seats = playerView(g, viewer).seats;
+        assert.equal(seats[opener].lastAction, undefined);
+        assert.equal(seats[reraiser].lastAction, "raise");
+      }
     });
   });
 
