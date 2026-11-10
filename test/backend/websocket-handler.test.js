@@ -10,6 +10,7 @@ import * as Seat from "../../src/backend/poker/seat.js";
 import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
 import * as Store from "../../src/backend/store.js";
 import playerView from "../../src/backend/poker/player-view.js";
+import { tick } from "../../src/backend/poker/game-tick.js";
 import { createTestGame } from "./poker/test-helpers.js";
 
 describe("websocket-handler", () => {
@@ -180,58 +181,162 @@ describe("websocket-handler", () => {
   });
 
   describe("show card actions", () => {
-    it("holds back a folded player's show until the hand ends", () => {
-      const game = createTestGame({ seats: 3 });
-      const player = { id: "p1", name: "Alice" };
-      const opponent = { id: "p2", name: "Bob" };
-      const other = { id: "p3", name: "Carol" };
-      game.seats[0] = {
-        ...Seat.occupied(player, 1000),
-        cards: ["As", "Kh"],
-        folded: true,
-        totalInvested: 25,
-        muckDecision: { remainingTicks: 5 },
-      };
-      game.seats[1] = { ...Seat.occupied(opponent, 1000), cards: ["2c", "3d"] };
-      game.seats[2] = { ...Seat.occupied(other, 1000), cards: ["4h", "5s"] };
-      game.hand.phase = "flop";
-      game.hand.actingSeat = 1;
-      game.handNumber = 1;
+    const alice = { id: "p1", name: "Alice" };
+    const bob = { id: "p2", name: "Bob" };
+    const carol = { id: "p3", name: "Carol" };
 
+    /** Alice folds on the flop after investing; Bob and Carol play on. */
+    function foldMidHand() {
+      const game = createTestGame({ seats: 3 });
+      game.seats[0] = {
+        ...Seat.occupied(alice, 1000),
+        cards: ["As", "Kh"],
+        totalInvested: 25,
+      };
+      game.seats[1] = { ...Seat.occupied(bob, 1000), cards: ["2c", "3d"] };
+      game.seats[2] = { ...Seat.occupied(carol, 1000), cards: ["4h", "5s"] };
+      game.hand.phase = "flop";
+      game.hand.actingSeat = 0;
+      game.handNumber = 1;
       HandHistory.clearRecorder(game.id);
       HandHistory.startHand(game);
-      const showActions = () =>
-        HandHistory.getRecorder(game.id).actions.filter(
-          (a) => a.action === "Shows Cards",
-        );
+      processPokerAction(game, alice, "fold", { seat: 0 });
+      return game;
+    }
 
-      processPokerAction(game, player, "showCard1", { seat: 0 });
-
-      assert.deepStrictEqual(showActions(), []);
-      assert.deepStrictEqual(playerView(game, opponent).seats[0].cards, []);
-      assert.deepStrictEqual(
-        playerView(game, player).seats[0].actions.filter(({ action }) =>
-          ["muck", "showCard1"].includes(action),
-        ),
-        [],
-      );
-
-      processPokerAction(game, opponent, "fold", { seat: 1 });
-
+    function endHand(game) {
+      processPokerAction(game, bob, "fold", { seat: 1 });
       assert.strictEqual(game.hand.phase, "waiting");
-      assert.deepStrictEqual(
-        showActions().map((a) => [a.player_id, a.cards]),
-        [["p1", ["As"]]],
-      );
-      assert.deepStrictEqual(playerView(game, opponent).seats[0].cards, [
-        "As",
-        "??",
-      ]);
+    }
 
+    function showdownRecords(game) {
+      return HandHistory.getRecorder(game.id)
+        .actions.filter((a) => /Shows|Mucks/.test(a.action))
+        .map((a) => [a.player_id, a.action, a.cards]);
+    }
+
+    function aliceActions(game) {
+      return playerView(game, alice).seats[0].actions.map((a) => a.action);
+    }
+
+    it("lets a folded player change which cards to show until the hand ends", () => {
+      const game = foldMidHand();
+
+      processPokerAction(game, alice, "showBothCards", { seat: 0 });
+      processPokerAction(game, alice, "toggleShowCard", { seat: 0, card: 0 });
+
+      assert.deepStrictEqual(playerView(game, alice).seats[0].pendingShow, [
+        false,
+        true,
+      ]);
+      assert.deepStrictEqual(playerView(game, bob).seats[0].cards, []);
+      assert.deepStrictEqual(showdownRecords(game), []);
+
+      endHand(game);
+
+      assert.deepStrictEqual(showdownRecords(game), [
+        ["p1", "Shows Cards", ["Kh"]],
+      ]);
+      assert.deepStrictEqual(playerView(game, bob).seats[0].cards, [
+        "??",
+        "Kh",
+      ]);
       HandHistory.clearRecorder(game.id);
     });
 
-    it("records an explicit muck in hand history", () => {
+    it("closes the menu once a card is picked on the table", () => {
+      const game = foldMidHand();
+      assert.ok(aliceActions(game).includes("muck"));
+
+      processPokerAction(game, alice, "toggleShowCard", { seat: 0, card: 1 });
+
+      assert.ok(!aliceActions(game).includes("muck"));
+      assert.ok(!aliceActions(game).includes("showBothCards"));
+      endHand(game);
+      assert.deepStrictEqual(showdownRecords(game), [
+        ["p1", "Shows Cards", ["Kh"]],
+      ]);
+      HandHistory.clearRecorder(game.id);
+    });
+
+    for (const decision of ["muck", "timeout"]) {
+      it(`records a mid-hand ${decision} when the hand ends`, () => {
+        const game = foldMidHand();
+
+        if (decision === "muck") {
+          processPokerAction(game, alice, "muck", { seat: 0 });
+        } else {
+          for (let i = 0; i < 5; i += 1) tick(game);
+        }
+
+        assert.deepStrictEqual(aliceActions(game).includes("muck"), false);
+        assert.deepStrictEqual(showdownRecords(game), []);
+        endHand(game);
+        assert.deepStrictEqual(showdownRecords(game), [
+          ["p1", "Mucks Cards", undefined],
+        ]);
+        assert.deepStrictEqual(playerView(game, bob).seats[0].cards, []);
+        HandHistory.clearRecorder(game.id);
+      });
+    }
+
+    it("keeps an unanswered menu open after the hand ends", () => {
+      const game = foldMidHand();
+      endHand(game);
+
+      assert.strictEqual(
+        playerView(game, alice).seats[0].pendingShow,
+        undefined,
+      );
+      assert.ok(aliceActions(game).includes("showCard1"));
+      assert.deepStrictEqual(showdownRecords(game), []);
+
+      processPokerAction(game, alice, "showCard1", { seat: 0 });
+
+      assert.deepStrictEqual(playerView(game, bob).seats[0].cards, [
+        "As",
+        "??",
+      ]);
+      assert.deepStrictEqual(showdownRecords(game), [
+        ["p1", "Shows Cards", ["As"]],
+      ]);
+      HandHistory.clearRecorder(game.id);
+    });
+
+    it("rejects card toggles outside a folded player's held choice", () => {
+      const game = foldMidHand();
+      for (const card of [2, "1", undefined]) {
+        assert.throws(
+          () =>
+            processPokerAction(game, alice, "toggleShowCard", {
+              seat: 0,
+              card,
+            }),
+          /card must be 0 or 1/,
+        );
+      }
+      assert.throws(
+        () =>
+          processPokerAction(game, carol, "toggleShowCard", {
+            seat: 2,
+            card: 0,
+          }),
+        /after folding mid-hand/,
+      );
+
+      endHand(game);
+      assert.throws(
+        () =>
+          processPokerAction(game, alice, "toggleShowCard", {
+            seat: 0,
+            card: 0,
+          }),
+        /after folding mid-hand/,
+      );
+      HandHistory.clearRecorder(game.id);
+    });
+
+    it("records a muck after the hand right away", () => {
       const game = createTestGame({ seats: 2 });
       const player = { id: "p1", name: "Alice" };
       const opponent = { id: "p2", name: "Bob" };
@@ -242,8 +347,7 @@ describe("websocket-handler", () => {
         muckDecision: { remainingTicks: 5 },
       };
       game.seats[1] = Seat.occupied(opponent, 1000);
-      game.hand.phase = "flop";
-      game.hand.actingSeat = 1;
+      game.hand.phase = "waiting";
       game.handNumber = 1;
 
       HandHistory.clearRecorder(game.id);

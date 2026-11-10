@@ -1,6 +1,7 @@
 /**
  * Stands in for the server so the folded card choice can be tried in the
- * catalog: the Muck/Show menu and the cards both update the choice.
+ * catalog: the Muck/Show menu and the cards both update the choice, and the
+ * menu closes once a choice is made, as the server does.
  * @param {HTMLElement} root
  */
 export function simulateCardChoice(root) {
@@ -26,15 +27,14 @@ export function simulateCardChoice(root) {
       ],
     };
   };
-  root.addEventListener("toggle-show-card", (event) => {
-    setPendingShow((pendingShow) =>
-      pendingShow.map((shown, index) =>
-        index === event.detail.index ? !shown : shown,
-      ),
-    );
-  });
   root.addEventListener("game-action", (event) => {
-    const choice = choices[event.detail.action];
+    const { action, card } = event.detail;
+    if (action === "toggleShowCard") {
+      setPendingShow((pendingShow) =>
+        pendingShow.map((shown, index) => (index === card ? !shown : shown)),
+      );
+    }
+    const choice = choices[action];
     if (choice) setPendingShow(() => choice);
   });
 }

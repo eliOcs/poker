@@ -274,7 +274,7 @@ describe("betting actions", () => {
       assert.deepEqual(game.seats[2].shownCards, [false, false]);
 
       Actions.endHand(game);
-      const [reveal] = Actions.revealPendingShows(game);
+      const [reveal] = Actions.resolvePendingShows(game);
 
       assert.deepEqual(reveal?.cards, ["As"]);
       assert.equal(game.seats[2].shownCards[0], true);

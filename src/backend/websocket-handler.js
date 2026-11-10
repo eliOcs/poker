@@ -135,21 +135,32 @@ export function processPokerAction(game, player, action, args) {
     );
   }
 
+  recordCardDecision(game, player, action, seatBefore, actionResult);
+
+  return handlePostAction(action, game);
+}
+
+/**
+ * Records a show or muck that took effect right away. One held until the hand
+ * ends is recorded then.
+ * @param {Game} game
+ * @param {PlayerType} player
+ * @param {string} action
+ * @param {OccupiedSeat|undefined} seat
+ * @param {unknown} actionResult - the cards a show revealed
+ */
+function recordCardDecision(game, player, action, seat, actionResult) {
+  if (!seat) return;
   if (
     SHOW_CARD_ACTIONS.includes(action) &&
-    seatBefore &&
     Array.isArray(actionResult) &&
     actionResult.length > 0
   ) {
     HandHistory.recordShowdown(game.id, player.id, actionResult, true);
   }
-
-  if (action === "muck") {
-    const muckedSeat = /** @type {OccupiedSeat} */ (seatBefore);
-    HandHistory.recordShowdown(game.id, player.id, muckedSeat.cards, false);
+  if (action === "muck" && seat.mucked) {
+    HandHistory.recordShowdown(game.id, player.id, seat.cards, false);
   }
-
-  return handlePostAction(action, game);
 }
 
 /**

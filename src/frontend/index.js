@@ -434,6 +434,16 @@ export class Game extends LitElement {
                       @seat-settings=${() => {
                         gameModalActions.openSettings.call(this);
                       }}
+                      @toggle-show-card=${(
+                        /** @type {CustomEvent<{ index: number }>} */ event,
+                      ) => {
+                        event.stopPropagation();
+                        this.send({
+                          action: "toggleShowCard",
+                          seat: i,
+                          card: event.detail.index,
+                        });
+                      }}
                     ></phg-seat>`,
               )}
             </div>

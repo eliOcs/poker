@@ -178,6 +178,19 @@ export function buyIn(game, { seat, amount }) {
   }
 }
 
+/**
+ * @param {Game} game
+ * @param {number} seat
+ * @returns {OccupiedSeat}
+ */
+function getOccupiedSeat(game, seat) {
+  const seatObj = /** @type {SeatType|undefined} */ (game.seats[seat]);
+  if (!seatObj || seatObj.empty) {
+    throw new Error("seat is empty");
+  }
+  return seatObj;
+}
+
 // --- Betting Actions ---
 
 /**
@@ -334,6 +347,7 @@ export function fold(game, { seat }) {
   seatObj.lastAction = "fold";
   if (Seat.hasInvestedInPot(seatObj)) {
     seatObj.muckDecision = { remainingTicks: MUCK_TIMEOUT_TICKS };
+    seatObj.pendingShow = [false, false];
   }
 
   Betting.advanceAction(game);
@@ -342,24 +356,19 @@ export function fold(game, { seat }) {
 /**
  * Shows selected hole cards for a seat. A folded player's cards stay hidden
  * while the hand is still being played, so the reveal cannot influence the
- * players left in it; they are revealed when the hand ends.
+ * players left in it: the choice is held, open to change, until the hand ends.
  * @param {Game} game
  * @param {number} seat
  * @param {number[]} cardIndexes
  * @returns {import('./deck.js').Card[]} cards revealed now; empty when held back
  */
 function showHoleCards(game, seat, cardIndexes) {
-  const seatRaw = /** @type {SeatType} */ (game.seats[seat]);
-  if (seatRaw.empty) {
-    throw new Error("seat is empty");
-  }
-
-  const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
+  const seatObj = getOccupiedSeat(game, seat);
   assertCanRevealHoleCards(seatObj, game.hand.phase);
   const selection = getSelectedHoleCards(cardIndexes);
   delete seatObj.muckDecision;
 
-  if (game.hand.phase !== "waiting") {
+  if (seatObj.pendingShow) {
     seatObj.pendingShow = selection;
     return [];
   }
@@ -367,18 +376,49 @@ function showHoleCards(game, seat, cardIndexes) {
 }
 
 /**
- * Reveals the shows that folded players chose while the hand was running.
+ * Flips one hole card between shown and mucked in a folded player's held
+ * choice. The choice stays open until the hand ends.
  * @param {Game} game
- * @returns {{ seat: OccupiedSeat, cards: import('./deck.js').Card[] }[]}
+ * @param {{ seat: number, card: unknown }} options
  */
-export function revealPendingShows(game) {
-  const reveals = [];
+export function toggleShowCard(game, { seat, card }) {
+  const seatObj = getOccupiedSeat(game, seat);
+  const pendingShow = seatObj.pendingShow;
+  if (!pendingShow) {
+    throw new Error("can only choose cards to show after folding mid-hand");
+  }
+  if (card !== 0 && card !== 1) {
+    throw new Error("card must be 0 or 1");
+  }
+
+  pendingShow[card] = !pendingShow[card];
+  delete seatObj.muckDecision;
+}
+
+/**
+ * Settles the choices folded players held while the hand ran: chosen cards
+ * are revealed, a hand with none chosen is mucked. A player still deciding
+ * through the show-or-muck menu keeps deciding after the hand.
+ * @param {Game} game
+ * @returns {{ seat: OccupiedSeat, shows: boolean, cards: import('./deck.js').Card[] }[]}
+ */
+export function resolvePendingShows(game) {
+  const results = [];
   for (const seat of game.seats) {
     if (seat.empty || !seat.pendingShow) continue;
-    reveals.push({ seat, cards: revealHoleCards(seat, seat.pendingShow) });
+    const selection = seat.pendingShow;
     delete seat.pendingShow;
+
+    if (selection[0] || selection[1]) {
+      delete seat.muckDecision;
+      const cards = revealHoleCards(seat, selection);
+      results.push({ seat, shows: true, cards });
+    } else if (!seat.muckDecision) {
+      seat.mucked = true;
+      results.push({ seat, shows: false, cards: seat.cards });
+    }
   }
-  return reveals;
+  return results;
 }
 
 /**
@@ -398,11 +438,7 @@ function revealHoleCards(seatObj, selection) {
  * @param {string|undefined} phase
  */
 function assertCanRevealHoleCards(seatObj, phase) {
-  if (
-    seatObj.cardsRevealed ||
-    seatObj.shownCards.some(Boolean) ||
-    seatObj.pendingShow
-  ) {
+  if (seatObj.cardsRevealed || seatObj.shownCards.some(Boolean)) {
     throw new Error("show cards choice already made");
   }
 
@@ -438,12 +474,7 @@ function getSelectedHoleCards(cardIndexes) {
  * @param {{ seat: number }} options
  */
 export function muck(game, { seat }) {
-  const seatRaw = /** @type {SeatType} */ (game.seats[seat]);
-  if (seatRaw.empty) {
-    throw new Error("seat is empty");
-  }
-
-  const seatObj = /** @type {OccupiedSeat} */ (seatRaw);
+  const seatObj = getOccupiedSeat(game, seat);
   if (
     !seatObj.muckDecision ||
     (!seatObj.folded && game.hand.phase !== "waiting")
@@ -452,7 +483,12 @@ export function muck(game, { seat }) {
   }
 
   delete seatObj.muckDecision;
-  seatObj.mucked = true;
+  if (seatObj.pendingShow) {
+    // Held until the hand ends, like a show, so it can still change.
+    seatObj.pendingShow = [false, false];
+  } else {
+    seatObj.mucked = true;
+  }
 }
 
 /**

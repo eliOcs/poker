@@ -346,16 +346,16 @@ describe("phg-seat", () => {
       cards.map((card) => card.getAttribute("aria-pressed")),
     ).to.deep.equal(["true", "false"]);
 
-    let toggled;
+    let sent;
     let settingsRequested = false;
-    seat.addEventListener("toggle-show-card", (event) => {
-      toggled = event.detail.index;
+    element.addEventListener("game-action", (event) => {
+      sent = event.detail;
     });
     seat.addEventListener("seat-settings", () => {
       settingsRequested = true;
     });
     cards[1].click();
-    expect(toggled).to.equal(1);
+    expect(sent).to.deep.equal({ action: "toggleShowCard", seat: 0, card: 1 });
     expect(settingsRequested).to.be.false;
   });
 

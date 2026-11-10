@@ -186,6 +186,8 @@ function handleMuckDecisions(game, result) {
     result.shouldBroadcast = true;
     if (seat.muckDecision.remainingTicks <= 0) {
       delete seat.muckDecision;
+      // A held choice stays open until the hand ends; only the menu closes.
+      if (seat.pendingShow) continue;
       seat.mucked = true;
       (result.autoMuckSeats ??= []).push(seatIndex);
     }

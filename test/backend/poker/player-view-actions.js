@@ -206,7 +206,7 @@ describe("Player View", function () {
           }
           if (folded) {
             Actions.endHand(g);
-            Actions.revealPendingShows(g);
+            Actions.resolvePendingShows(g);
           }
           assert.deepEqual(g.seats[0].shownCards, shownCards);
           assert.equal(g.seats[0].cardsRevealed, choice === "showBothCards");

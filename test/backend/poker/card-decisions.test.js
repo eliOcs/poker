@@ -93,7 +93,8 @@ describe("card decision visibility", () => {
       if (decision === "muck") {
         Actions.muck(game, { seat: 0 });
       } else {
-        assert.deepEqual(tick(game).autoMuckSeats, [0]);
+        // Mid-hand, the muck waits for the hand to end.
+        assert.equal(tick(game).autoMuckSeats, undefined);
       }
 
       assertCardsVisibleToOthers([]);
@@ -142,7 +143,7 @@ describe("card decision visibility", () => {
 
       Actions.endHand(game);
       assertCardsVisibleToOthers([]);
-      const [reveal] = Actions.revealPendingShows(game);
+      const [reveal] = Actions.resolvePendingShows(game);
       assert.deepEqual(
         reveal?.cards,
         visibleCards.filter((card) => card !== "??"),
@@ -152,7 +153,7 @@ describe("card decision visibility", () => {
         tick(game);
       }
       assertCardsVisibleToOthers([]);
-      assert.deepEqual(Actions.revealPendingShows(game), []);
+      assert.deepEqual(Actions.resolvePendingShows(game), []);
     });
   }
 
@@ -169,7 +170,7 @@ describe("card decision visibility", () => {
     }
 
     Actions.endHand(game);
-    Actions.revealPendingShows(game);
+    Actions.resolvePendingShows(game);
     assert.equal(playerView(game, owner).seats[0].pendingShow, undefined);
   });
 

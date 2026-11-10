@@ -45,7 +45,7 @@
  * @property {[boolean, boolean]} shownCards - Which individual hole cards were voluntarily shown
  * @property {number} [shownCardsTicks] - Ticks left to display voluntarily shown cards; zero hides them
  * @property {PendingMuckDecision} [muckDecision] - Pending show-or-muck choice after folding or winning uncontested
- * @property {[boolean, boolean]} [pendingShow] - Hole cards a folded player chose to show, held back until the hand ends
+ * @property {[boolean, boolean]} [pendingShow] - After an invested fold, which hole cards to show once the hand ends; open to change until then
  * @property {boolean} [mucked] - Cards were discarded without being shown
  * @property {number} [bustedPosition] - Tournament finishing position (e.g., 6 for 6th place)
  * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action for when turn arrives
