@@ -318,6 +318,47 @@ describe("phg-seat", () => {
     expect(seats[0].classList.contains("folded")).to.be.true;
   });
 
+  it("turns folded cards into show toggles without redealing them", async () => {
+    const otherSeats = [1, 2, 3, 4, 5].map((seat) => ({
+      ...mockEmptySeat,
+      actions: [{ action: "sit", seat }],
+    }));
+    const folded = { ...mockFoldedSeat, isCurrentPlayer: true };
+    element.game = createMockGameState({ seats: [folded, ...otherSeats] });
+    await element.updateComplete;
+    const seat = element.querySelectorAll("phg-seat")[0];
+    await seat.updateComplete;
+    const cardsBefore = [...seat.querySelectorAll(".hole-cards phg-card")];
+
+    element.game = createMockGameState({
+      seats: [{ ...folded, pendingShow: [true, false] }, ...otherSeats],
+    });
+    await element.updateComplete;
+    await seat.updateComplete;
+
+    const cards = [...seat.querySelectorAll(".hole-cards phg-card")];
+    expect(cards).to.have.length(2);
+    cards.forEach((card, index) => {
+      expect(card === cardsBefore[index], "card element was replaced").to.be
+        .true;
+    });
+    expect(
+      cards.map((card) => card.getAttribute("aria-pressed")),
+    ).to.deep.equal(["true", "false"]);
+
+    let toggled;
+    let settingsRequested = false;
+    seat.addEventListener("toggle-show-card", (event) => {
+      toggled = event.detail.index;
+    });
+    seat.addEventListener("seat-settings", () => {
+      settingsRequested = true;
+    });
+    cards[1].click();
+    expect(toggled).to.equal(1);
+    expect(settingsRequested).to.be.false;
+  });
+
   it("applies .acting class when seat.isActing is true", async () => {
     element.game = createMockGameWithPlayers();
     await element.updateComplete;

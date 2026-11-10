@@ -204,6 +204,41 @@
     top: -50px;
   }
 
+  /* Choosing which folded cards to show: only the text dims, so a card
+     picked to show stays at full strength. */
+  :scope.folded.choosing-cards .seat-content {
+    opacity: 1;
+  }
+
+  :scope.folded.choosing-cards .seat-content > :not(.hole-cards) {
+    opacity: 0.6;
+  }
+
+  .card-choice {
+    cursor: pointer;
+    filter: grayscale(1) brightness(0.55);
+    transform: translateY(4px);
+    transition:
+      filter 120ms ease,
+      transform 120ms ease;
+  }
+
+  .card-choice:hover {
+    filter: grayscale(0.5) brightness(0.8);
+  }
+
+  .card-choice--shown,
+  .card-choice--shown:hover {
+    filter: none;
+    transform: translateY(-4px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-choice {
+      transition: none;
+    }
+  }
+
   @media (width >= 800px) {
     .hole-cards {
       gap: var(--space-md);

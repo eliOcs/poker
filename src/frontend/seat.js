@@ -1,4 +1,4 @@
-import { html, LitElement } from "lit";
+import { html, LitElement, nothing } from "lit";
 import { formatAmount } from "./currency.js";
 import { ICONS } from "./icons.js";
 import {
@@ -98,6 +98,7 @@ class Seat extends LitElement {
     ["busted", (s) => (s?.bustedPosition ?? undefined) !== undefined],
     ["disconnected", (s) => s?.disconnected],
     ["current-player", (s) => s?.isCurrentPlayer],
+    ["choosing-cards", (s) => Boolean(s?.pendingShow)],
     [
       "winner",
       (s) => Boolean(s?.isWinner) || (s?.netResult ?? s?.handResult) > 0,
@@ -269,6 +270,69 @@ class Seat extends LitElement {
     </div>`;
   }
 
+  /**
+   * After folding, each hole card toggles between shown and mucked. Nothing
+   * reaches the table until the hand ends, so the choice stays open.
+   * @param {Event} event
+   * @param {number} index
+   */
+  _toggleShowCard(event, index) {
+    if (!this.seat?.pendingShow) return;
+    event.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent("toggle-show-card", {
+        bubbles: true,
+        composed: true,
+        detail: { index },
+      }),
+    );
+  }
+
+  /**
+   * @param {KeyboardEvent} event
+   * @param {number} index
+   */
+  _handleCardChoiceKeydown(event, index) {
+    if (!this.seat?.pendingShow) return;
+    event.stopPropagation();
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    this._toggleShowCard(event, index);
+  }
+
+  /**
+   * The card element itself becomes the toggle, so entering or leaving the
+   * choice never replaces it and replays its deal animation.
+   * @param {string} card
+   * @param {number} index
+   */
+  _renderHoleCard(card, index) {
+    const pendingShow = this.seat.pendingShow;
+    const shown = pendingShow?.[index];
+    const side = index === 0 ? "left" : "right";
+    return html`<phg-card
+      class=${
+        pendingShow ? `card-choice${shown ? " card-choice--shown" : ""}` : ""
+      }
+      role=${pendingShow ? "button" : nothing}
+      tabindex=${pendingShow ? "0" : nothing}
+      aria-pressed=${pendingShow ? String(shown) : nothing}
+      aria-label=${
+        pendingShow ? `Show ${side} card when the hand ends` : nothing
+      }
+      @click=${(/** @type {Event} */ event) => {
+        this._toggleShowCard(event, index);
+      }}
+      @keydown=${(/** @type {KeyboardEvent} */ event) => {
+        this._handleCardChoiceKeydown(event, index);
+      }}
+      .card=${card}
+      ?winning=${this.seat.winningCards?.includes(card)}
+      ?noAnimation=${this.noAnimation}
+      size="large"
+    ></phg-card>`;
+  }
+
   render() {
     if (!this.seat || this.seat.empty) return "";
 
@@ -282,14 +346,8 @@ class Seat extends LitElement {
             this.seat.cards?.some((card) => card !== "??") ? "revealed" : ""
           }"
         >
-          ${this.seat.cards?.map(
-            (card) =>
-              html`<phg-card
-                .card=${card}
-                ?winning=${this.seat.winningCards?.includes(card)}
-                ?noAnimation=${this.noAnimation}
-                size="large"
-              ></phg-card>`,
+          ${this.seat.cards?.map((card, index) =>
+            this._renderHoleCard(card, index),
           )}
         </div>
       </div>

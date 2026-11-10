@@ -36,6 +36,7 @@ import {
   SPECIAL_GAME_TEST_CASES,
   RANKING_MODAL_TEST_CASES,
 } from "./test-cases/game-special.js";
+import { simulateCardChoice } from "./test-cases/card-choice.js";
 import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
 import { BOT_TABLE_TEST_CASES } from "./test-cases/game-bots.js";
 import { ACTION_PANEL_TEST_CASES } from "./test-cases/action-panel.js";
@@ -521,6 +522,8 @@ async function init() {
   }
 
   render(testCase(), root);
+
+  if (testId === "game-folded-card-choice") simulateCardChoice(root);
 
   if (testId === "table-6max" || testId === "table-full-ring") {
     const game = root.querySelector("phg-game");

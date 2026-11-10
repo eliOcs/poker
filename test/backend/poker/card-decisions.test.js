@@ -156,6 +156,23 @@ describe("card decision visibility", () => {
     });
   }
 
+  it("tells only the owner which held-back cards will be shown", () => {
+    Actions.fold(game, { seat: 0 });
+    Actions.showCard2(game, { seat: 0 });
+
+    assert.deepEqual(playerView(game, owner).seats[0].pendingShow, [
+      false,
+      true,
+    ]);
+    for (const viewer of [opponent, spectator]) {
+      assert.equal(playerView(game, viewer).seats[0].pendingShow, undefined);
+    }
+
+    Actions.endHand(game);
+    Actions.revealPendingShows(game);
+    assert.equal(playerView(game, owner).seats[0].pendingShow, undefined);
+  });
+
   it("clears the previous reveal timer before the next hand", () => {
     winUncontested();
     Actions.showCard1(game, { seat: 0 });

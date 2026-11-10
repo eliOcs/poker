@@ -176,6 +176,7 @@ import { HIDDEN, getRank } from "./deck.js";
  * @property {number} [bustedPosition] - Tournament finishing position
  * @property {import('./pre-action.js').PreAction} [preAction] - Pre-selected action (own seat only)
  * @property {boolean} [pendingSitOut] - Whether player has pending sit-out (own seat only)
+ * @property {[boolean, boolean]} [pendingShow] - Hole cards shown after folding that the table sees when the hand ends (own seat only)
  */
 
 /**
@@ -794,6 +795,7 @@ function createOccupiedSeatView(seat, index, playerSeatIndex, game) {
       ? {
           preAction: seat.preAction,
           pendingSitOut: seat.pendingSitOut,
+          pendingShow: seat.pendingShow,
         }
       : {}),
   };

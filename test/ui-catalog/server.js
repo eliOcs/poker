@@ -29,6 +29,7 @@ const routes = {
   "/test-cases-email.js": "test/ui-catalog/test-cases-email.js",
   "/test-cases/game-helpers.js": "test/ui-catalog/test-cases/game-helpers.js",
   "/test-cases/game-special.js": "test/ui-catalog/test-cases/game-special.js",
+  "/test-cases/card-choice.js": "test/ui-catalog/test-cases/card-choice.js",
   "/test-cases/table-sizes.js": "test/ui-catalog/test-cases/table-sizes.js",
   "/test-cases/game-bots.js": "test/ui-catalog/test-cases/game-bots.js",
   "/test-cases/action-panel.js": "test/ui-catalog/test-cases/action-panel.js",
