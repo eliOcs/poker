@@ -354,8 +354,12 @@ class MttLobby extends LitElement {
                     ${renderActions({
                       tournament,
                       tournamentId: this.tournamentId,
+                      isGuest: !this.user?.email,
                       actionPending: this.actionPending,
                       onMttAction,
+                      onSignIn: () => {
+                        this.openSignIn();
+                      },
                       onNavigate,
                       onCopyLink: copyLink,
                       copied: this._copied,

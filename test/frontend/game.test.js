@@ -5,6 +5,7 @@ import {
   createMockGameState,
   createMockGameAtFlop,
   createMockTournamentGameState,
+  mockOpponentSeat,
 } from "./setup.js";
 
 // Helper to find button.button by text content
@@ -112,6 +113,83 @@ describe("phg-game", () => {
         path: "/mtt/mtt123?action=register",
         allowMttLobby: true,
       });
+    });
+
+    it("tells a spectator they are watching, so they do not wait for a seat that is not theirs", async () => {
+      element.game = createMockGameState();
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.user = { email: "player@example.com", settings: {} };
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        actions: { canRegister: false },
+      };
+      await element.updateComplete;
+      const panel = element.querySelector("phg-action-panel");
+      await panel.updateComplete;
+
+      expect(panel.querySelector(".waiting").textContent.trim()).to.equal(
+        "Watching",
+      );
+      expect(findButtonByText(panel, "Sign in")).to.be.null;
+    });
+
+    it("offers a spectating guest to sign in, since their seat may belong to an account signed in on another device", async () => {
+      element.game = createMockGameState();
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        actions: { canRegister: false },
+      };
+      await element.updateComplete;
+      const panel = element.querySelector("phg-action-panel");
+      await panel.updateComplete;
+
+      expect(panel.querySelector(".waiting").textContent.trim()).to.equal(
+        "Watching as a guest",
+      );
+      const signIn = oneEvent(element, "open-sign-in");
+      findButtonByText(panel, "Already registered? Sign in").click();
+      await signIn;
+    });
+
+    it("tells a spectating guest whether to sign in or register by asking if they already registered", async () => {
+      element.game = createMockGameState();
+      element.gameKind = "mtt";
+      element.tournamentId = "mtt123";
+      element.mttTournament = {
+        status: "running",
+        tables: [],
+        actions: { canRegister: true },
+      };
+      await element.updateComplete;
+      const panel = element.querySelector("phg-action-panel");
+      await panel.updateComplete;
+
+      const labels = [...panel.querySelectorAll("button.button")].map(
+        (button) => button.textContent.trim(),
+      );
+      expect(labels).to.deep.equal([
+        "Late Register",
+        "Already registered? Sign in",
+      ]);
+    });
+
+    it("offers a guest watching a full cash table to sign in to play", async () => {
+      element.game = createMockGameState({
+        seats: Array.from({ length: 6 }, () => mockOpponentSeat),
+      });
+      element.gameKind = "cash";
+      await element.updateComplete;
+      const panel = element.querySelector("phg-action-panel");
+      await panel.updateComplete;
+
+      const signIn = oneEvent(element, "open-sign-in");
+      findButtonByText(panel, "Sign in to play").click();
+      await signIn;
     });
 
     it("emits only one game-action event per action (no double-send)", async () => {

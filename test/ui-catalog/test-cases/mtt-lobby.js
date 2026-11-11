@@ -27,6 +27,7 @@ export const MTT_LOBBY_TEST_CASES = {
 
   "mtt-lobby-registration-can-register": () =>
     mttLobbyView({
+      user: null,
       tournament: makeBaseTournament({
         entrants: [makeEntrant("owner1", "Alice")],
         standings: [makeEntrant("owner1", "Alice")],

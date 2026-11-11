@@ -69,6 +69,9 @@ const TEST_CASES = [
   "action-pre-fold-and-call",
   "action-tournament-winner",
   "action-tournament-busted",
+  "action-spectating",
+  "action-spectating-guest",
+  "action-spectating-guest-late-register",
 
   // Table sizes
   "table-heads-up",
@@ -104,6 +107,7 @@ const TEST_CASES = [
   "mtt-lobby-running-can-late-register",
   "mtt-lobby-running-late-register-tooltip",
   "mtt-lobby-running-waiting-for-table",
+  "mtt-lobby-running-registration-closed-guest",
   "mtt-lobby-running-on-break",
   "mtt-lobby-running-pending-break",
   "mtt-lobby-running-multiple-tables",

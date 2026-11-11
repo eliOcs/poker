@@ -6,6 +6,10 @@ import { renderRebuyDecision } from "./action-panel-rebuy.js";
 import { ICONS } from "./icons.js";
 import { formatPosition } from "./action-panel-format.js";
 import { renderShowButtons } from "./action-panel-show.js";
+import {
+  renderRegisterButton,
+  renderSignInButton,
+} from "./registration-buttons.js";
 
 function buildActionMap(actions) {
   const actionMap = {};
@@ -32,6 +36,42 @@ function renderWaitingForPlayers(panel) {
             >
               ${panel.buyIn ? `Sit ${formatCurrency(panel.buyIn)}` : "Sit"}
             </button>`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderWatching(panel) {
+  return html`
+    <div class="waiting-panel">
+      <span class="waiting"
+        >${panel.isGuest ? "Watching as a guest" : "Watching"}</span
+      >
+      ${
+        panel.registerLabel
+          ? renderRegisterButton({
+              label: panel.registerLabel,
+              disabled: false,
+              onRegister: () => {
+                panel.dispatchEvent(
+                  new CustomEvent("register-tournament", { bubbles: true }),
+                );
+              },
+            })
+          : ""
+      }
+      ${
+        panel.isGuest
+          ? renderSignInButton({
+              requiresRegistration: panel.requiresRegistration,
+              registrationOpen: !!panel.registerLabel,
+              onSignIn: () => {
+                panel.dispatchEvent(
+                  new CustomEvent("open-sign-in", { bubbles: true }),
+                );
+              },
+            })
           : ""
       }
     </div>
@@ -438,6 +478,13 @@ function renderForActionMap(panel, actionMap) {
   return renderWaitingActions(panel, actionMap);
 }
 
+function renderWithoutActions(panel) {
+  if (panel.seatIndex === -1 && !panel.canSit) return renderWatching(panel);
+  if (panel.canSit || panel.seatedCount < 2)
+    return renderWaitingForPlayers(panel);
+  return html`<span class="waiting">Waiting for your turn...</span>`;
+}
+
 function renderTournamentResult(panel) {
   if (panel.isWinner) {
     return html`<span class="waiting tournament-result winner"
@@ -471,10 +518,7 @@ export function renderActionPanel(panel) {
   }
 
   if (!panel.actions || panel.actions.length === 0) {
-    if (panel.canSit || panel.seatedCount < 2)
-      return renderWaitingForPlayers(panel);
-    if (panel.seatIndex === -1) return html``;
-    return html`<span class="waiting">Waiting for your turn...</span>`;
+    return renderWithoutActions(panel);
   }
 
   return renderForActionMap(panel, buildActionMap(panel.actions));

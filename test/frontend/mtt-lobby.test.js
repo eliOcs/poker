@@ -1,75 +1,6 @@
 import { aTimeout, fixture, expect, html, oneEvent } from "@open-wc/testing";
 import "../../src/frontend/mtt-lobby.js";
-
-function createTournamentView() {
-  return {
-    id: "mtt123",
-    name: "Friday Deepstack",
-    status: "running",
-    ownerId: "owner",
-    owner: { id: "owner", name: "Owner" },
-    buyIn: 500,
-    prizePool: 500,
-    maxRebuys: 1,
-    entryPeriodLevels: 4,
-    entryPeriodOpen: true,
-    tableSize: 6,
-    speed: "normal",
-    durationMinutes: 260,
-    levelDurationTicks: 1200,
-    level: 2,
-    timeToNextLevel: 90,
-    onBreak: false,
-    pendingBreak: false,
-    createdAt: "2026-03-14T10:00:00.000Z",
-    startedAt: "2026-03-14T10:05:00.000Z",
-    endedAt: null,
-    entrants: [
-      {
-        playerId: "owner",
-        name: "Owner",
-        status: "seated",
-        stack: 1500,
-        tableId: "table1",
-        seatIndex: 0,
-        finishPosition: null,
-      },
-    ],
-    standings: [
-      {
-        playerId: "owner",
-        name: "Owner",
-        status: "seated",
-        stack: 1500,
-        tableId: "table1",
-        seatIndex: 0,
-        finishPosition: null,
-      },
-    ],
-    tables: [
-      {
-        tableId: "table1",
-        tableName: "Table 1",
-        playerCount: 6,
-        handNumber: 4,
-        waiting: false,
-        closed: false,
-      },
-    ],
-    currentPlayer: {
-      isOwner: true,
-      status: "seated",
-      tableId: "table1",
-      seatIndex: 0,
-    },
-    actions: {
-      canRegister: false,
-      canUnregister: false,
-      canStart: false,
-      canRename: true,
-    },
-  };
-}
+import { createTournamentView } from "./mtt-lobby-test-helpers.js";
 
 describe("phg-mtt-lobby", () => {
   const originalLocation = window.location.href;
@@ -375,7 +306,11 @@ describe("phg-mtt-lobby", () => {
     };
 
     const element = await fixture(html`
-      <phg-mtt-lobby tournament-id="mtt123" .tournament=${view}></phg-mtt-lobby>
+      <phg-mtt-lobby
+        tournament-id="mtt123"
+        .tournament=${view}
+        .user=${{ email: "owner@example.com" }}
+      ></phg-mtt-lobby>
     `);
 
     const buttons = element.querySelectorAll(".action-row button.button");
@@ -385,72 +320,6 @@ describe("phg-mtt-lobby", () => {
 
     const event = await oneEvent(element, "mtt-action");
     expect(event.detail).to.deep.equal({ action: "unregister" });
-  });
-
-  it("opens sign-up instead of registering when the user has no email", async () => {
-    const view = createTournamentView();
-    view.status = "registration";
-    view.currentPlayer = {
-      isOwner: false,
-      status: "not_registered",
-      tableId: null,
-      seatIndex: null,
-    };
-    view.actions = {
-      canRegister: true,
-      canUnregister: false,
-      canStart: false,
-      canRename: false,
-    };
-
-    const element = await fixture(html`
-      <phg-mtt-lobby
-        tournament-id="mtt123"
-        .tournament=${view}
-        .user=${{ name: "Guest" }}
-      ></phg-mtt-lobby>
-    `);
-
-    setTimeout(() => {
-      element.querySelector(".action-row button.button").click();
-    });
-
-    const event = await oneEvent(element, "open-sign-up");
-    expect(event).to.exist;
-    expect(window.location.pathname).to.equal("/mtt/mtt123");
-    expect(window.location.search).to.equal("?action=register");
-  });
-
-  it("allows signed-up users to register from the lobby controls", async () => {
-    const view = createTournamentView();
-    view.status = "registration";
-    view.currentPlayer = {
-      isOwner: false,
-      status: "not_registered",
-      tableId: null,
-      seatIndex: null,
-    };
-    view.actions = {
-      canRegister: true,
-      canUnregister: false,
-      canStart: false,
-      canRename: false,
-    };
-
-    const element = await fixture(html`
-      <phg-mtt-lobby
-        tournament-id="mtt123"
-        .tournament=${view}
-        .user=${{ email: "player@example.com" }}
-      ></phg-mtt-lobby>
-    `);
-
-    setTimeout(() => {
-      element.querySelector(".action-row button.button").click();
-    });
-
-    const event = await oneEvent(element, "mtt-action");
-    expect(event.detail).to.deep.equal({ action: "register" });
   });
 
   it("dispatches rename requests from the editable title", async () => {

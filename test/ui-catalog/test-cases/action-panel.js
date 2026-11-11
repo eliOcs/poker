@@ -8,9 +8,54 @@
 import {
   emptySeats,
   gameView,
+  mttTableView,
   createGame,
   createPlayer,
 } from "./game-helpers.js";
+
+// A running MTT table watched by someone without a seat at it
+function spectatedMttTable() {
+  return createGame({
+    tournament: { level: 3, timeToNextLevel: 240, onBreak: false },
+    button: 0,
+    hand: {
+      phase: "flop",
+      collectedPot: 300,
+      currentBet: 100,
+      actingSeat: 1,
+    },
+    board: { cards: ["Jh", "Td", "5c"] },
+    seats: [
+      createPlayer("Alice", {
+        stack: 2900,
+        bet: 100,
+        cards: ["??", "??"],
+        lastAction: "Bet $100",
+      }),
+      createPlayer("Bob", {
+        isActing: true,
+        stack: 3100,
+        cards: ["??", "??"],
+      }),
+      createPlayer("Carol", { stack: 2500, cards: ["??", "??"] }),
+      ...emptySeats(6),
+    ],
+  });
+}
+
+/** @param {boolean} canRegister */
+function runningMtt(canRegister) {
+  return {
+    status: "running",
+    tables: [],
+    actions: {
+      canRegister,
+      canUnregister: false,
+      canStart: false,
+      canRename: false,
+    },
+  };
+}
 
 export const ACTION_PANEL_TEST_CASES = {
   // Raise where max equals current value — shows "All-In" button
@@ -247,4 +292,18 @@ export const ACTION_PANEL_TEST_CASES = {
         ],
       }),
     ),
+
+  // Spectator signed in on this device — "Watching"
+  "action-spectating": () =>
+    mttTableView(spectatedMttTable(), runningMtt(false), {
+      user: { email: "player@example.com", settings: {} },
+    }),
+
+  // Guest spectator, possibly seated from another device — offer sign-in
+  "action-spectating-guest": () =>
+    mttTableView(spectatedMttTable(), runningMtt(false)),
+
+  // Guest spectator while late registration is open — sign in or register
+  "action-spectating-guest-late-register": () =>
+    mttTableView(spectatedMttTable(), runningMtt(true)),
 };

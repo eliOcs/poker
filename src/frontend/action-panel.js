@@ -32,6 +32,9 @@ class ActionPanel extends LitElement {
       inHand: { type: Boolean },
       connectionStatus: { type: String },
       actionPending: { type: Boolean },
+      isGuest: { type: Boolean },
+      requiresRegistration: { type: Boolean },
+      registerLabel: { type: String },
     };
   }
 
@@ -58,6 +61,9 @@ class ActionPanel extends LitElement {
     this.inHand = false;
     this.connectionStatus = "connected";
     this.actionPending = false;
+    this.isGuest = false;
+    this.requiresRegistration = false;
+    this.registerLabel = "";
     this._lastActionType = undefined;
     this._lastActionTime = 0;
   }

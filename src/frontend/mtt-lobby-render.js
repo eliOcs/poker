@@ -8,6 +8,10 @@ import {
   getTournamentSpeedPreset,
 } from "../shared/tournament.js";
 import { renderTooltip } from "./tooltip.js";
+import {
+  renderRegisterButton,
+  renderSignInButton,
+} from "./registration-buttons.js";
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
@@ -156,42 +160,58 @@ function renderMyTableAction({ tournament, tournamentId, onNavigate }) {
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
  */
-function renderRegistrationActions({ tournament, actionPending, onMttAction }) {
-  const { actions } = tournament;
+function renderRegisterAction({ tournament, actionPending, onMttAction }) {
   const isLateRegistration = tournament.status === "running";
+  const registerButton = renderRegisterButton({
+    label: isLateRegistration ? "Late Register" : "Register",
+    disabled: actionPending,
+    onRegister: () => {
+      onMttAction("register");
+    },
+  });
+  if (!isLateRegistration) return registerButton;
+
+  return html`<div class="late-registration-control">
+    ${registerButton}
+    ${renderTooltip({
+      id: "late-registration-tooltip",
+      triggerLabel: "Late registration details",
+      content: html`Late registration is allowed through level
+      ${tournament.entryPeriodLevels}.`,
+    })}
+  </div>`;
+}
+
+/**
+ * @param {object} params
+ * @param {import('../backend/mtt.js').ManagedTournamentView} params.tournament
+ * @param {boolean} params.isGuest
+ * @param {boolean} params.actionPending
+ * @param {(action: string) => void} params.onMttAction
+ * @param {() => void} params.onSignIn
+ */
+function renderRegistrationActions({
+  tournament,
+  isGuest,
+  actionPending,
+  onMttAction,
+  onSignIn,
+}) {
+  const { actions } = tournament;
 
   return html`
     ${
       actions.canRegister
-        ? isLateRegistration
-          ? html`<div class="late-registration-control">
-              <button
-                type="button"
-                class="button button--primary"
-                ?disabled=${actionPending}
-                @click=${() => {
-                  onMttAction("register");
-                }}
-              >
-                Late Register
-              </button>
-              ${renderTooltip({
-                id: "late-registration-tooltip",
-                triggerLabel: "Late registration details",
-                content: html`Late registration is allowed through level
-                ${tournament.entryPeriodLevels}.`,
-              })}
-            </div>`
-          : html`<button
-              type="button"
-              class="button button--primary"
-              ?disabled=${actionPending}
-              @click=${() => {
-                onMttAction("register");
-              }}
-            >
-              Register
-            </button>`
+        ? renderRegisterAction({ tournament, actionPending, onMttAction })
+        : ""
+    }
+    ${
+      isGuest && tournament.status !== "finished"
+        ? renderSignInButton({
+            requiresRegistration: true,
+            registrationOpen: actions.canRegister,
+            onSignIn,
+          })
         : ""
     }
     ${
@@ -236,8 +256,10 @@ function renderTournamentActions({ actions, actionPending, onMttAction }) {
  * @param {object} params
  * @param {import('../backend/mtt.js').ManagedTournamentView|undefined} params.tournament
  * @param {string} params.tournamentId
+ * @param {boolean} params.isGuest
  * @param {boolean} params.actionPending
  * @param {(action: string) => void} params.onMttAction
+ * @param {() => void} params.onSignIn
  * @param {(path: string) => void} params.onNavigate
  * @param {() => void} params.onCopyLink
  * @param {boolean} params.copied
@@ -246,8 +268,10 @@ function renderTournamentActions({ actions, actionPending, onMttAction }) {
 export function renderActions({
   tournament,
   tournamentId,
+  isGuest,
   actionPending,
   onMttAction,
+  onSignIn,
   onNavigate,
   onCopyLink,
   copied,
@@ -261,8 +285,10 @@ export function renderActions({
       ${renderMyTableAction({ tournament, tournamentId, onNavigate })}
       ${renderRegistrationActions({
         tournament,
+        isGuest,
         actionPending,
         onMttAction,
+        onSignIn,
       })}
       ${renderTournamentActions({ actions, actionPending, onMttAction })}
       <button

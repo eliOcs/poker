@@ -1,6 +1,9 @@
 # To do
 
-- ux: a user can register to a tournament on the phone and then try to play from the computer and don't notice that he isn't sign in
+- Email registered players when an MTT or Sit & Go starts, with a sign-in link that opens their table, so playing from another device creates the session there:
+  - link to a stable route (e.g. `/mtt/<id>/my-table`) that redirects to the player's current table, since tables break and rebalance
+  - an expired or used link opens the lobby with the sign-in modal and the email prefilled
+- MTT start countdown: 60 seconds instead of 5
 - bug: users can't buy in in cash game while the hand is on going
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
@@ -11,7 +14,6 @@
 - on PC there is more space so social actions could be on the side
 - explain how to play poker
 - People don't notice who won the hand
-- Send notification when MTT starts
 - Sidepot bets
 - https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
 - hand strength modal

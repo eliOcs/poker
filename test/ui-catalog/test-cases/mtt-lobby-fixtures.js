@@ -2,8 +2,16 @@ import { renderShellPageView } from "/src/frontend/app-render.js";
 
 export const BASE_CREATED_AT = "2026-01-15T10:00:00.000Z";
 
+export const SIGNED_IN_USER = {
+  id: "you",
+  name: "You",
+  email: "you@example.com",
+  settings: { volume: 0, vibration: false },
+};
+
 export function mttLobbyView({
   tournament = null,
+  user = SIGNED_IN_USER,
   loading = false,
   error = "",
   actionPending = false,
@@ -11,7 +19,7 @@ export function mttLobbyView({
   return renderShellPageView(
     {
       path: "/mtt/t1abc123",
-      user: null,
+      user,
       _mttTournamentId: "t1abc123",
       _mttView: tournament,
       _mttLoading: loading,

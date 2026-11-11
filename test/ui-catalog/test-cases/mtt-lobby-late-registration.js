@@ -6,7 +6,10 @@ import {
   mttLobbyView,
 } from "./mtt-lobby-fixtures.js";
 
-function makeLateRegistrationTournament({ queued = false } = {}) {
+function makeLateRegistrationTournament({
+  queued = false,
+  entryPeriodOpen = true,
+} = {}) {
   const entrants = [
     makeEntrant("owner1", "Alice", {
       status: "seated",
@@ -35,7 +38,7 @@ function makeLateRegistrationTournament({ queued = false } = {}) {
 
   return makeBaseTournament({
     status: "running",
-    entryPeriodOpen: true,
+    entryPeriodOpen,
     startedAt: BASE_CREATED_AT,
     level: 2,
     timeToNextLevel: 240,
@@ -50,7 +53,7 @@ function makeLateRegistrationTournament({ queued = false } = {}) {
       finishPosition: null,
     },
     actions: {
-      canRegister: !queued,
+      canRegister: entryPeriodOpen && !queued,
       canUnregister: false,
       canStart: false,
     },
@@ -59,10 +62,16 @@ function makeLateRegistrationTournament({ queued = false } = {}) {
 
 export const LATE_REGISTRATION_MTT_LOBBY_TEST_CASES = {
   "mtt-lobby-running-can-late-register": () =>
-    mttLobbyView({ tournament: makeLateRegistrationTournament() }),
+    mttLobbyView({ user: null, tournament: makeLateRegistrationTournament() }),
 
   "mtt-lobby-running-late-register-tooltip": () =>
-    mttLobbyView({ tournament: makeLateRegistrationTournament() }),
+    mttLobbyView({ user: null, tournament: makeLateRegistrationTournament() }),
+
+  "mtt-lobby-running-registration-closed-guest": () =>
+    mttLobbyView({
+      user: null,
+      tournament: makeLateRegistrationTournament({ entryPeriodOpen: false }),
+    }),
 
   "mtt-lobby-running-waiting-for-table": () =>
     mttLobbyView({

@@ -16,6 +16,24 @@ function registerTournament(host) {
 }
 
 /**
+ * @param {import('./index.js').Game} host
+ * @returns {boolean}
+ */
+function isGuest(host) {
+  return !host.user?.email;
+}
+
+/**
+ * @param {import('./index.js').Game} host
+ * @returns {string}
+ */
+function getRegisterLabel(host) {
+  const tournament = host.gameKind === "mtt" ? host.mttTournament : undefined;
+  if (!tournament?.actions?.canRegister) return "";
+  return tournament.status === "running" ? "Late Register" : "Register";
+}
+
+/**
  * @param {import('../backend/poker/player-view.js').PlayerView} game - The game state object
  * @param {number} seatIndex
  * @returns {boolean}
@@ -56,7 +74,7 @@ function getPreActionProps(game, seatIndex) {
  * @param {boolean} isWinner
  * @returns {import("lit").TemplateResult}
  */
-function renderTableActionPanel(
+export function renderActionPanel(
   host,
   actions,
   seatIndex,
@@ -86,52 +104,14 @@ function renderTableActionPanel(
     .inHand=${pre.inHand}
     .connectionStatus=${host.connectionStatus}
     .actionPending=${host.actionPending}
+    .isGuest=${isGuest(host)}
+    .requiresRegistration=${host.gameKind === "mtt"}
+    .registerLabel=${getRegisterLabel(host)}
     @game-action=${host.handleGameAction}
+    @register-tournament=${() => {
+      registerTournament(host);
+    }}
     @open-emote-picker=${host.openEmotePicker}
     @open-chat=${host.openChat}
   ></phg-action-panel>`;
-}
-
-function renderRegistration(host) {
-  if (!host.mttTournament?.actions?.canRegister) return html``;
-  return html`<div class="waiting-panel">
-    <button
-      type="button"
-      class="button button--primary"
-      ?disabled=${host.actionPending}
-      @click=${() => {
-        registerTournament(host);
-      }}
-    >
-      ${host.mttTournament.status === "running" ? "Late Register" : "Register"}
-    </button>
-  </div>`;
-}
-
-/** @type {typeof renderTableActionPanel} */
-export function renderActionPanel(
-  host,
-  actions,
-  seatIndex,
-  canSit,
-  bustedPosition,
-  isWinner,
-) {
-  if (
-    host.gameKind === "mtt" &&
-    seatIndex === -1 &&
-    !bustedPosition &&
-    !isWinner &&
-    host.connectionStatus === "connected"
-  ) {
-    return renderRegistration(host);
-  }
-  return renderTableActionPanel(
-    host,
-    actions,
-    seatIndex,
-    canSit,
-    bustedPosition,
-    isWinner,
-  );
 }

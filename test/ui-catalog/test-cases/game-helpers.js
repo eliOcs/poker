@@ -39,6 +39,21 @@ export function gameView(gameState, appOverrides = {}) {
   );
 }
 
+// Helper to create an MTT table component with mock data
+export function mttTableView(gameState, mttView, appOverrides = {}) {
+  return renderGameView(
+    {
+      game: gameState,
+      gameConnectionStatus: "connected",
+      socialAction: undefined,
+      user: undefined,
+      _mttView: mttView,
+      ...appOverrides,
+    },
+    { kind: "mtt_table", tableId: "test123", tournamentId: "t1abc123" },
+  );
+}
+
 // Helper to show a game with a toast overlay
 export function gameViewWithToast(
   gameState,

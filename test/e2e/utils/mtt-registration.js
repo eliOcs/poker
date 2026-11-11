@@ -57,7 +57,9 @@ export async function signUpTournamentCreator(player, email) {
  * @param {string} email
  */
 export async function signUpTournamentRegistrant(player, email) {
-  await player.mttLobby.getByRole("button", { name: "Register" }).click();
+  await player.mttLobby
+    .getByRole("button", { name: "Register", exact: true })
+    .click();
   await completeSignUp(player, email, player.name);
   await player.mttLobby.waitFor();
   await player.mttLobby.getByRole("button", { name: "Unregister" }).waitFor();
