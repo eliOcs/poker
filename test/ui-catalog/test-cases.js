@@ -1,12 +1,10 @@
-/* global window, document */
 /**
  * UI Catalog Test Cases - Full Game States
  *
- * Renders complete game views with mock data based on query params.
- * URL format: ?test=<test-id>
+ * Each case renders one UI state with mock data.
  */
 
-import { html, render } from "lit";
+import { html } from "lit";
 import "/src/frontend/index.js";
 import "/src/frontend/home.js";
 import "/src/frontend/learn.js";
@@ -36,7 +34,6 @@ import {
   SPECIAL_GAME_TEST_CASES,
   RANKING_MODAL_TEST_CASES,
 } from "./test-cases/game-special.js";
-import { simulateCardChoice } from "./test-cases/card-choice.js";
 import { TABLE_SIZE_TEST_CASES } from "./test-cases/table-sizes.js";
 import { BOT_TABLE_TEST_CASES } from "./test-cases/game-bots.js";
 import { ACTION_PANEL_TEST_CASES } from "./test-cases/action-panel.js";
@@ -483,8 +480,7 @@ const GAME_TEST_CASES = {
     ),
 };
 
-// Merge all test cases
-const TEST_CASES = {
+export const TEST_CASES = {
   ...GAME_TEST_CASES,
   "game-amounts-bb": GAME_TEST_CASES["game-flop-facing-bet"],
   ...SPECIAL_GAME_TEST_CASES,
@@ -499,40 +495,3 @@ const TEST_CASES = {
   ...HISTORY_TEST_CASES,
   ...MTT_LOBBY_TEST_CASES,
 };
-
-// Export test case IDs for Playwright
-export const TEST_CASE_IDS = Object.keys(TEST_CASES);
-
-// Parse query params and render
-async function init() {
-  const params = new URLSearchParams(window.location.search);
-  const testId = params.get("test");
-  const root = document.getElementById("root");
-
-  if (!testId) {
-    root.innerHTML = `<div style="color: #c0c0d0; padding: 20px; font-family: monospace;">No test case specified. <a href="/" style="color: #36c;">View catalog</a></div>`;
-    return;
-  }
-
-  const testCase = TEST_CASES[testId];
-
-  if (!testCase) {
-    root.innerHTML = `<div style="color: red; padding: 20px;">Unknown test case: ${testId}</div>`;
-    return;
-  }
-
-  render(testCase(), root);
-
-  if (testId === "game-folded-card-choice") simulateCardChoice(root);
-
-  if (testId === "table-6max" || testId === "table-full-ring") {
-    const game = root.querySelector("phg-game");
-    await game.updateComplete;
-    // Show every marker together for spacing inspection in these fixtures.
-    const seats = [...game.querySelectorAll("phg-seat")];
-    for (const seat of seats) seat.isButton = true;
-    await Promise.all(seats.map((seat) => seat.updateComplete));
-  }
-}
-
-init();

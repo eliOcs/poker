@@ -23,6 +23,8 @@ const routes = {
   "/": "test/ui-catalog/index.html",
   "/test.html": "test/ui-catalog/test.html",
   "/test-cases.js": "test/ui-catalog/test-cases.js",
+  "/test-page.js": "test/ui-catalog/test-page.js",
+  "/catalog-index.js": "test/ui-catalog/catalog-index.js",
   "/test-cases-history.js": "test/ui-catalog/test-cases-history.js",
   "/test-cases/history-extended.js":
     "test/ui-catalog/test-cases/history-extended.js",

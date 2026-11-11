@@ -5,7 +5,6 @@ import { verifyGameScenario } from "./catalog-game.js";
 
 test.describe.configure({ mode: "parallel" });
 
-// Test case IDs (keep in sync with test-cases.js)
 const TEST_CASES = [
   // Avatar maker
   "avatar-maker",
@@ -371,6 +370,28 @@ for (const testCase of TEST_CASES) {
     await captureMttDetails(testCase, page, component);
   });
 }
+
+const SCREENSHOTTED_BY_LEARN_SPEC = ["learn-preflop"];
+
+test("screenshots every case the index page lists, and no other", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const links = page.locator('#test-cases a[href^="/test.html?test="]');
+  await links.first().waitFor();
+
+  const listed = await links.evaluateAll((anchors) =>
+    anchors.map((anchor) =>
+      new URL(/** @type {HTMLAnchorElement} */ (anchor).href).searchParams.get(
+        "test",
+      ),
+    ),
+  );
+
+  expect(listed.toSorted()).toEqual(
+    [...TEST_CASES, ...SCREENSHOTTED_BY_LEARN_SPEC].toSorted(),
+  );
+});
 
 // Static article pages
 for (const [path, selector] of [

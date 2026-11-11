@@ -5,6 +5,7 @@ One representative case per distinct element and visual state. Before adding a c
 - Name cases after visual states. Different hands, positions, amounts or explanations do not need separate screenshots unless they expose a distinct layout issue, such as overflow.
 - Set up states directly. Keep interactions in component/E2E tests and poker rules, calculations and explanation content in backend tests.
 - Use `waitForAvatars` when capturing avatars.
+- The index page lists every case defined in `test-cases.js`, grouped by the first word of its id. It is generated, so a new case needs no index entry, but it does need a screenshot: a test fails when the cases the index lists and the cases screenshotted differ.
 
 ## Baselines
 
