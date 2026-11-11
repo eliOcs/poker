@@ -7,7 +7,7 @@ function registerTournament(host) {
       detail: host.user?.email
         ? { action: "register" }
         : {
-            path: `${getMttPath(host.tournamentId)}?action=register`,
+            path: `${getMttPath(host.tournamentId)}?action=register&modal=sign-up`,
             allowMttLobby: true,
           },
       bubbles: true,

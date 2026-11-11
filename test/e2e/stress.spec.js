@@ -3,6 +3,8 @@ import { test, expect } from "./utils/fixtures.js";
 import { createGame, renameTournamentInLobby } from "./utils/game-helpers.js";
 import {
   allLateRegistrationsAssigned,
+  continueAsGuestOnAnotherDevice,
+  openTableFromStartEmail,
   processLateRegistrations,
   signUpTournamentCreator,
   signUpTournamentRegistrant,
@@ -445,21 +447,36 @@ test.describe("Tournament E2E", () => {
     );
     console.log("All eleven players saved randomized avatars");
 
+    const registrantEmails = preStartRegistrants.map(
+      (_, index) => `stress-player-${index + 2}-${Date.now()}@example.com`,
+    );
     await Promise.all(
-      preStartRegistrants.map(async (player, index) => {
-        await signUpTournamentRegistrant(
-          player,
-          `stress-player-${index + 2}-${Date.now()}@example.com`,
-        );
-      }),
+      preStartRegistrants.map((player, index) =>
+        signUpTournamentRegistrant(player, registrantEmails[index]),
+      ),
     );
     console.log("Nine starting players signed up and registered");
 
+    const startEmailPlayer = player9;
+    await continueAsGuestOnAnotherDevice(startEmailPlayer, tournamentUrl);
+    console.log("Player 9 reopened the lobby as a guest on another device");
+
+    const startedAt = Date.now();
     await player1.startTournament();
     await Promise.all(
-      startingPlayers.map((player) => player.waitForTournamentTable()),
+      startingPlayers.map((player) =>
+        player === startEmailPlayer
+          ? openTableFromStartEmail(
+              player,
+              registrantEmails[preStartRegistrants.indexOf(player)],
+              startedAt,
+            )
+          : player.waitForTournamentTable(),
+      ),
     );
-    console.log("Tournament started and nine players reached a table");
+    console.log(
+      "Tournament started and nine players reached a table, Player 9 through the start email",
+    );
 
     await waitForUnstableTournamentRecovery(player2, connectionFaults);
     console.log("Player 2 recovered from the injected connection interruption");
@@ -498,6 +515,7 @@ test.describe("Tournament E2E", () => {
       lateRegistrations: [
         {
           playerIndex: 9,
+          entry: "lobby",
           targetLevel: 2,
           expectedEntrantCount: 10,
           registered: false,
@@ -506,6 +524,7 @@ test.describe("Tournament E2E", () => {
         },
         {
           playerIndex: 10,
+          entry: "watched table",
           targetLevel: 3,
           expectedEntrantCount: 11,
           registered: false,

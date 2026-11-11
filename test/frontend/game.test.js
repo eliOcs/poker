@@ -97,7 +97,7 @@ describe("phg-game", () => {
       expect(findButtonByText(element, "Register")).to.be.null;
     });
 
-    it("routes MTT guest registration through the lobby sign-up flow", async () => {
+    it("opens sign-up in the lobby when a guest late-registers from a table, so one click starts registering", async () => {
       element.game = createMockGameState();
       element.gameKind = "mtt";
       element.tournamentId = "mtt123";
@@ -110,7 +110,7 @@ describe("phg-game", () => {
       const navigation = oneEvent(element, "navigate");
       findButtonByText(element, "Late Register").click();
       expect((await navigation).detail).to.deep.equal({
-        path: "/mtt/mtt123?action=register",
+        path: "/mtt/mtt123?action=register&modal=sign-up",
         allowMttLobby: true,
       });
     });
