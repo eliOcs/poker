@@ -393,12 +393,8 @@ function evaluateVisibleHand(holeCards, boardCards) {
  * @returns {PlayerAction[]}
  */
 function getSittingOutActions(seat, game, isTournament, showActions) {
-  // Cash game player who sat but hasn't bought in yet
-  if (!isTournament && seat.stack === 0) {
-    return [
-      { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
-      ...showActions,
-    ];
+  if (needsCashBuyIn(seat, game)) {
+    return [getBuyInAction(game), ...showActions];
   }
   /** @type {PlayerAction[]} */
   const actions = [];
@@ -422,10 +418,28 @@ function getEmptyStackWaitingActions(game, isTournament, showActions) {
     return showActions;
   }
 
-  return [
-    { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big },
-    ...showActions,
-  ];
+  return [getBuyInAction(game), ...showActions];
+}
+
+/**
+ * A cash player without chips who is out of the hand: just seated, or busted
+ * in an earlier hand.
+ * @param {import('./seat.js').OccupiedSeat} seat
+ * @param {Game} game
+ * @returns {boolean}
+ */
+function needsCashBuyIn(seat, game) {
+  return (
+    game.tournament?.active !== true && seat.sittingOut && seat.stack === 0
+  );
+}
+
+/**
+ * @param {Game} game
+ * @returns {PlayerAction}
+ */
+function getBuyInAction(game) {
+  return { action: "buyIn", min: 20, max: 100, bigBlind: game.blinds.big };
 }
 
 /**
@@ -692,6 +706,12 @@ function getEmptySeatActions(game, seatIndex, playerSeatIndex) {
 }
 
 function getNotActingActions(game, seat, actions) {
+  if (needsCashBuyIn(seat, game)) {
+    return actions.concat(
+      getBuyInAction(game),
+      getShowCardsActions(seat, game),
+    );
+  }
   if (seat.sittingOut) {
     const cost = seat.missedBigBlind
       ? Math.min(game.blinds.big, seat.stack)

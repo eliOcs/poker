@@ -11,7 +11,7 @@ import * as HandHistory from "../../src/backend/poker/hand-history/index.js";
 import * as Store from "../../src/backend/store.js";
 import playerView from "../../src/backend/poker/player-view.js";
 import { tick } from "../../src/backend/poker/game-tick.js";
-import { createTestGame } from "./poker/test-helpers.js";
+import { createTestGame, setupPreflop } from "./poker/test-helpers.js";
 
 describe("websocket-handler", () => {
   beforeEach(() => {
@@ -398,6 +398,57 @@ describe("websocket-handler", () => {
       assert.ok(muckAction);
       assert.strictEqual(game.seats[0].muckDecision, undefined);
 
+      HandHistory.clearRecorder(game.id);
+    });
+  });
+
+  describe("buying in during a hand", () => {
+    const alice = { id: "p1", name: "Alice" };
+    const bob = { id: "p2", name: "Bob" };
+    const carol = { id: "p3", name: "Carol" };
+
+    function startHeadsUpHand() {
+      const game = createTestGame({ seats: 3 });
+      for (const player of [alice, bob]) {
+        processPokerAction(game, player, "sit", {});
+        processPokerAction(game, player, "buyIn", { amount: 50 });
+      }
+      game.handNumber = 1;
+      HandHistory.clearRecorder(game.id);
+      HandHistory.startHand(game);
+      setupPreflop(game);
+      return game;
+    }
+
+    afterEach(() => {
+      HandHistory.clearCache();
+    });
+
+    it("lets a player who sits down mid-hand buy in and deals them into the next hand", () => {
+      const game = startHeadsUpHand();
+      processPokerAction(game, carol, "sit", {});
+      processPokerAction(game, carol, "buyIn", { amount: 50 });
+
+      assert.strictEqual(game.seats[2].stack, 2500);
+      assert.deepStrictEqual(game.seats[2].cards, []);
+
+      const actingPlayer = game.seats[game.hand.actingSeat].player;
+      processPokerAction(game, actingPlayer, "fold", {});
+      assert.strictEqual(game.hand.phase, "waiting");
+      assert.strictEqual(game.seats[2].stack, 2500);
+      HandHistory.clearRecorder(game.id);
+
+      setupPreflop(game);
+      assert.strictEqual(game.seats[2].cards.length, 2);
+    });
+
+    it("rejects a buy-in from a player in the hand", () => {
+      const game = startHeadsUpHand();
+
+      assert.throws(
+        () => processPokerAction(game, alice, "buyIn", { amount: 50 }),
+        /cannot buy in while playing a hand/,
+      );
       HandHistory.clearRecorder(game.id);
     });
   });

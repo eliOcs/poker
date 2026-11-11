@@ -200,8 +200,17 @@ test.describe("Poker Game Smoke Test", () => {
     await player2.act("check");
 
     // === HAND 3: All-in (P1=SB, P2=BB) ===
+    await player1.waitForHandStart();
     await expect(holeCards(player1)).toHaveCount(2);
     await expect(holeCards(player2)).toHaveCount(2);
+
+    // P3 joins mid-hand: buys in now, sits this hand out, is dealt the next
+    await player3.sitAnywhere();
+    await player3.buyIn(20);
+    await expect(player3.mySeat.locator(".stack")).toHaveText("$2");
+    await expect(player3.board.locator(".phase")).toHaveText(/preflop/i);
+    await expect(holeCards(player3)).toHaveCount(0);
+    await player3.setName("Player 3");
 
     // Preflop: SB goes all-in, BB calls. Earlier hand winners determine
     // whether calling uses BB's whole stack and is labeled All-In.
@@ -212,11 +221,6 @@ test.describe("Poker Game Smoke Test", () => {
 
     // Wait for all-in runout to complete (5 board cards)
     await expect(boardCards).toHaveCount(5);
-
-    // P3 sits and buys in during the runout, before the hand ends and auto-start fires
-    await player3.sitAnywhere();
-    await player3.buyIn(20);
-    await player3.setName("Player 3");
 
     // === DISCONNECT / CALL CLOCK / RECONNECT ===
     await expect(boardCards).toHaveCount(0);

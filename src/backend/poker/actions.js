@@ -166,15 +166,17 @@ export function buyIn(game, { seat, amount }) {
     throw new Error("buy-in not allowed in tournaments");
   }
 
-  const seatObj = /** @type {SeatType} */ (game.seats[seat]);
-  if (!seatObj.empty) {
-    const occupiedSeat = /** @type {OccupiedSeat} */ (seatObj);
-    const chipAmount = game.blinds.big * amount;
-    occupiedSeat.stack += chipAmount;
-    occupiedSeat.totalBuyIn += chipAmount;
-    occupiedSeat.sittingOut = false;
-  } else {
-    throw new Error("seat is empty");
+  const occupiedSeat = getOccupiedSeat(game, seat);
+  const handInProgress = game.hand.phase !== "waiting";
+  if (handInProgress && !occupiedSeat.sittingOut) {
+    throw new Error("cannot buy in while playing a hand");
+  }
+  const chipAmount = game.blinds.big * amount;
+  occupiedSeat.stack += chipAmount;
+  occupiedSeat.totalBuyIn += chipAmount;
+  occupiedSeat.sittingOut = false;
+  if (handInProgress) {
+    occupiedSeat.folded = true;
   }
 }
 

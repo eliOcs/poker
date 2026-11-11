@@ -5,6 +5,7 @@ import * as User from "../../../src/backend/user.js";
 import * as Player from "../../../src/backend/poker/player.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import playerView from "../../../src/backend/poker/player-view.js";
+import { setupPreflop, sitAndBuyInPlayers } from "./test-helpers.js";
 
 function createPlayer() {
   return Player.fromUser(User.create());
@@ -357,6 +358,23 @@ describe("Player View", function () {
       assert.ok(
         sitInAction,
         "sitIn should be available for sitting out player regardless of stack size",
+      );
+    });
+  });
+
+  describe("buyIn action", function () {
+    it("is offered to a player who sits down at a cash table while a hand is in progress", function () {
+      const g = Game.create({ seats: 3 });
+      const latecomer = createPlayer();
+      sitAndBuyInPlayers(g, [0, 1], 50);
+      setupPreflop(g);
+
+      Actions.sit(g, { seat: 2, player: latecomer });
+
+      const actions = playerView(g, latecomer).seats[2].actions;
+      assert.ok(
+        actions.some((a) => a.action === "buyIn"),
+        `buyIn should be offered mid-hand, got: ${actions.map((a) => a.action).join(", ")}`,
       );
     });
   });
