@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
+import { reservePort } from "./test/reserve-port.js";
 
-const UI_CATALOG_PORT = 8445;
+// A free port, so tests never reuse a catalog server started for browsing.
+const UI_CATALOG_PORT = await reservePort("UI_CATALOG_PORT");
 const UI_CATALOG_WORKERS = Number(process.env.UI_CATALOG_WORKERS || 4);
 
 export default defineConfig({
@@ -38,7 +40,7 @@ export default defineConfig({
   webServer: {
     command: "npm run start:ui-catalog",
     url: `http://localhost:${UI_CATALOG_PORT}`,
-    reuseExistingServer: !process.env.CI,
+    env: { UI_CATALOG_PORT: String(UI_CATALOG_PORT) },
     stdout: "pipe",
     stderr: "pipe",
   },

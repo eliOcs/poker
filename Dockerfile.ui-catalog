@@ -17,5 +17,6 @@ COPY src ./src
 COPY test/ui-catalog ./test/ui-catalog
 COPY test/frontend/fixtures ./test/frontend/fixtures
 COPY playwright.ui-catalog.config.js ./
+COPY test/reserve-port.js ./test/
 
 CMD ["npm", "run", "test:ui-catalog"]

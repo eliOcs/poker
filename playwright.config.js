@@ -1,5 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 import { randomInt } from "node:crypto";
+import { reservePort } from "./test/reserve-port.js";
 
 const STRESS_TESTS = /stress.*\.spec\.js$/;
 const COVERAGE = process.env.E2E_COVERAGE === "1";
@@ -16,7 +17,8 @@ if (!process.env.STRESS_RNG_SEED) {
 }
 
 /**
- * Dedicated server per project, on its own port, so dev servers keep running.
+ * Dedicated server per project, on a free port, so it never collides with a
+ * dev server, a UI catalog server or another run.
  * @param {string} name
  * @param {number} port
  * @param {string} seed
@@ -26,7 +28,6 @@ function server(name, port, seed) {
   return {
     command: "node --env-file=.env src/backend",
     url,
-    reuseExistingServer: !process.env.CI && !COVERAGE,
     stdout: "pipe",
     // SIGTERM lets the server flush state and V8 coverage before exiting.
     gracefulShutdown: { signal: "SIGTERM", timeout: 5000 },
@@ -49,8 +50,16 @@ function server(name, port, seed) {
   };
 }
 
-const e2eServer = server("e2e", 8444, process.env.RNG_SEED || "12345");
-const stressServer = server("stress", 8445, process.env.STRESS_RNG_SEED);
+const e2eServer = server(
+  "e2e",
+  await reservePort("E2E_PORT"),
+  process.env.RNG_SEED || "12345",
+);
+const stressServer = server(
+  "stress",
+  await reservePort("STRESS_E2E_PORT"),
+  process.env.STRESS_RNG_SEED,
+);
 
 export default defineConfig({
   testDir: "./test/e2e",

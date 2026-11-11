@@ -2,6 +2,7 @@
 !package.json
 !package-lock.json
 !playwright.ui-catalog.config.js
+!test/reserve-port.js
 !src
 !src/**
 !test

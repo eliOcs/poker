@@ -34,8 +34,10 @@ Pick the cheapest layer that can observe the behavior.
 ## End-to-end
 
 `playwright.config.js` starts a dedicated server for each project, with its own
-port and its own data directory under `test-results/runtime-data/`. A running
-dev server is never affected.
+data directory under `test-results/runtime-data/`, on a free port chosen for
+the run. A fixed port let a run reuse whatever server already listened there,
+such as a UI catalog opened for browsing, so every run starts its own; the UI
+catalog tests do the same. A running dev server is never affected.
 
 - `chromium` runs every spec except the stress tests. It uses a fixed
   `RNG_SEED`, so deals are deterministic. `smoke.spec.js` is scripted for the
