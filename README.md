@@ -61,6 +61,12 @@ the printed URL.
 - **Test behavior, not implementation.** Mock only at system edges. A refactor
   that breaks tests without changing behavior shows the tests were wrong. See
   [test/README.md](test/README.md).
+- **Names and tests explain behavior, not comments.** Name variables and
+  functions so the code says what it does. The reason a behavior exists and
+  the cases it must handle belong in tests whose names state them: a test
+  proves the behavior and fails when it drifts, a comment does neither. Keep
+  comments for what neither can express, such as a constraint imposed from
+  outside the code.
 - **Pragmatic over perfect.** The simplest thing that works. Complexity costs
   more than hardware.
 
