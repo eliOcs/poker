@@ -238,6 +238,26 @@ describe("mtt-manager", () => {
     assert.equal(game.tableName, FINAL_TABLE_NAME);
   });
 
+  it("gives players a minute to reach their tables before the first hand", () => {
+    const tournamentId = ctx.manager.createTournament({
+      owner: createUser("owner", "Owner"),
+      buyIn: 500,
+      tableSize: 6,
+    });
+    for (let i = 2; i <= 9; i += 1) {
+      ctx.manager.registerPlayer(tournamentId, createUser(`p${i}`));
+    }
+
+    ctx.manager.startTournament(tournamentId, "owner");
+
+    const tournament = ctx.manager.getTournament(tournamentId);
+    assert.ok(tournament);
+    assert.deepEqual(
+      tournament.tables.map((table) => ctx.games.get(table.tableId)?.countdown),
+      [60, 60],
+    );
+  });
+
   it("creates balanced tables and propagates global blind levels", () => {
     const tournamentId = ctx.manager.createTournament({
       owner: createUser("owner", "Owner"),

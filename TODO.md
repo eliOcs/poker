@@ -1,7 +1,8 @@
 # To do
 
-- MTT start countdown: 60 seconds instead of 5
 - bug: users can't buy in in cash game while the hand is on going
+- bug: allow sit in in the middle of the hand
+- bug: when sit out shows waiting for your turn
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
 - chat history
@@ -11,17 +12,12 @@
 - on PC there is more space so social actions could be on the side
 - explain how to play poker
 - People don't notice who won the hand
-- Sidepot bets
+- Sidepot bets are actually not shown on the table
 - https://micrologics.org/blog/sqlite-in-production-optimizing-wal-mode-concurrency-and-vfs-layers-for-low-latency-app-servers
-- hand strength modal
-- delayed showed cards to end of the hand
-- setting to show amount of big blinds instead of cash
 - Poker club: invite members, members notified of events.
 - Seasons: allow grouping games into a seasson to get aggregate results
 - Events: schedule, track assistance, notify
 - background on pot numbers
-- allow sit in in the middle of the hand
-- when sit out shows waiting for your turn
 - keyboard short cuts for buttons on desktop: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/kbd, inspiration fizzy
 - on your turn player card border animated
 - Dealer button out of player card

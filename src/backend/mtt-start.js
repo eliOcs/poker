@@ -1,6 +1,8 @@
 import { seatEntrantAtTable } from "./mtt-seating.js";
 import { syncWaitingTableState } from "./mtt-table-state.js";
 
+const START_COUNTDOWN_SECONDS = 60;
+
 /**
  * @param {import('./mtt.js').ManagedTournament} tournament
  * @param {number} entrantCount
@@ -39,7 +41,12 @@ export function createStartingTables(tournament, createTable, ensureTableTick) {
       seatEntrantAtTable(game, entrant, seatIndex);
       entrantIndex += 1;
     }
-    syncWaitingTableState(tournament, game, ensureTableTick);
+    syncWaitingTableState(
+      tournament,
+      game,
+      ensureTableTick,
+      START_COUNTDOWN_SECONDS,
+    );
   }
 
   return createdTableIds;

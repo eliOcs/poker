@@ -152,12 +152,20 @@ export function resetClosedTable(game) {
   }
 }
 
+const NEXT_HAND_COUNTDOWN_SECONDS = 5;
+
 /**
  * @param {ManagedTournament} tournament
  * @param {Game} game
  * @param {(game: Game) => void} ensureTableTick
+ * @param {number} [countdownSeconds]
  */
-export function syncWaitingTableState(tournament, game, ensureTableTick) {
+export function syncWaitingTableState(
+  tournament,
+  game,
+  ensureTableTick,
+  countdownSeconds = NEXT_HAND_COUNTDOWN_SECONDS,
+) {
   applyTournamentStateToTable(tournament, game);
 
   if (!isTableReadyForNextHand(game)) {
@@ -178,7 +186,7 @@ export function syncWaitingTableState(tournament, game, ensureTableTick) {
     typeof game.countdown !== "number" &&
     game.startingNextHand !== true
   ) {
-    game.countdown = 5;
+    game.countdown = countdownSeconds;
   } else if (countActivePlayers(game) < 2) {
     delete game.startingNextHand;
     delete game.countdown;

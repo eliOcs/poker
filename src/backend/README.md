@@ -102,6 +102,10 @@ table is an ordinary game of kind `mtt`. The manager handles registration,
 seating, rebuys and the blind clock, and responds to the end of every hand. It
 eliminates busted players, then breaks or rebalances tables. The `mtt-*.js`
 modules each own one policy or lifecycle step, and `mtt.js` orchestrates them.
+The starting tables count down a minute before the first hand, so players who
+learn of the start from its email have time to reach their table; the blind
+clock already runs, as in a live tournament. Tables formed later, after a
+break or a rebalance, wait only a few seconds.
 Blind structures adapt to the number of entrants and the chosen speed
 (`tournament-schedule.js`, `src/shared/tournament.js`).
 

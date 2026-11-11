@@ -195,7 +195,7 @@ const GAME_TEST_CASES = {
   "game-countdown": () =>
     gameView(
       createGame({
-        countdown: 3,
+        countdown: 60,
         button: 2,
         seats: [
           ...emptySeats(2),
