@@ -53,6 +53,19 @@ Sign-in tokens are short-lived and kept in memory. On a single instance this is
 enough: a restart only invalidates links that have not been used yet. Old
 guests that never played a hand are deleted periodically.
 
+When an MTT starts, every other registered player gets an email
+(`tournament-start-emails.js`) whose sign-in link leads back to it. An MTT
+takes time to gather its players, so they often register on one device and
+play on another, where they are guests; the link signs in whichever device
+opens it. The link points at the lobby rather than a table because the lobby
+sends a seated player on to their current table, and tables break and
+rebalance. A player did not ask for this link, so it neither replaces nor is
+replaced by the link they requested last. Once it has expired or been used,
+it still carries the tournament and the email, so the page asks the player to
+sign in again from the tournament. A Sit & Go sends no email: it is quick,
+needs no account, and its players are at the table when someone presses
+Start.
+
 ## Persistence
 
 | Store                    | Holds                                                           | Why                                                                                 |

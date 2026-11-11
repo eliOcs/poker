@@ -28,6 +28,15 @@ export function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+/** @returns {string} */
+export function getAppOrigin() {
+  const appOrigin = process.env.APP_ORIGIN?.replace(/\/$/, "");
+  if (!appOrigin) {
+    throw new Error("APP_ORIGIN is required for email sign-in links");
+  }
+  return appOrigin;
+}
+
 export function createEmailSignInToken() {
   return crypto.randomBytes(32).toString("base64url");
 }
@@ -63,11 +72,16 @@ export function getEmailSignInExpiry(now = new Date()) {
 /**
  * @param {string} origin
  * @param {string} token
+ * @param {{ path: string, email: string }} [fallback]
  * @returns {string}
  */
-export function buildEmailSignInUrl(origin, token) {
+export function buildEmailSignInUrl(origin, token, fallback) {
   const url = new URL("/auth/email-sign-in/callback", origin);
   url.searchParams.set("token", token);
+  if (fallback) {
+    url.searchParams.set("fallback", fallback.path);
+    url.searchParams.set("email", fallback.email);
+  }
   return url.toString();
 }
 
@@ -98,6 +112,24 @@ export function saveEmailSignInToken({
     userId,
     email,
     expiresAt: entry.expiresAt,
+    returnPath,
+  });
+}
+
+/**
+ * @param {{ token: string, userId: string, email: string, expiresAt: string, returnPath: string }} params
+ */
+export function saveUnrequestedEmailSignInToken({
+  token,
+  userId,
+  email,
+  expiresAt,
+  returnPath,
+}) {
+  tokensByValue.set(token, {
+    userId,
+    email,
+    expiresAt: Date.parse(expiresAt),
     returnPath,
   });
 }

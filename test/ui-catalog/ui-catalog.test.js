@@ -96,6 +96,7 @@ const TEST_CASES = [
 
   // Email states
   "email-sign-in",
+  "email-tournament-start",
 
   // MTT lobby states
   "mtt-lobby-loading",

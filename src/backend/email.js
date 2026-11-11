@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import crypto from "node:crypto";
 import { renderSignInEmail } from "./sign-in-email.js";
+import { renderTournamentStartEmail } from "./tournament-start-email.js";
 
 const sesClient = new SESClient({
   region: process.env.AWS_REGION ?? "eu-central-1",
@@ -17,7 +18,7 @@ function getEmailSinkDir() {
 }
 
 /**
- * @param {{ toEmail: string, appOrigin: string, signInUrl: string, expiresInMinutes: number, subject: string, html: string, text: string }} email
+ * @param {{ toEmail: string, subject: string, html: string, text: string } & Record<string, unknown>} email
  */
 async function writeEmailToSink(email) {
   const sinkDir = getEmailSinkDir();
@@ -41,32 +42,16 @@ async function writeEmailToSink(email) {
 }
 
 /**
- * @param {{ toEmail: string, appOrigin: string, signInUrl: string, expiresInMinutes: number }} params
+ * @param {string} kind
+ * @param {{ toEmail: string } & Record<string, unknown>} params
+ * @param {{ subject: string, html: string, text: string }} email
  */
-export async function sendSignInEmail({
-  toEmail,
-  appOrigin,
-  signInUrl,
-  expiresInMinutes,
-}) {
-  const email = renderSignInEmail({
-    appOrigin,
-    signInUrl,
-    expiresInMinutes,
-  });
-
+async function deliverEmail(kind, params, email) {
+  const { toEmail } = params;
   if (getEmailSinkDir()) {
-    const sink = await writeEmailToSink({
-      toEmail,
-      appOrigin,
-      signInUrl,
-      expiresInMinutes,
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-    });
+    const sink = await writeEmailToSink({ ...params, ...email });
     return {
-      kind: "sign_in",
+      kind,
       provider: sink.provider,
       toEmail,
       sinkFileName: sink.sinkFileName,
@@ -98,9 +83,23 @@ export async function sendSignInEmail({
     }),
   );
 
-  return {
-    kind: "sign_in",
-    provider: "ses",
-    toEmail,
-  };
+  return { kind, provider: "ses", toEmail };
+}
+
+/**
+ * @param {{ toEmail: string, appOrigin: string, signInUrl: string, expiresInMinutes: number }} params
+ */
+export async function sendSignInEmail(params) {
+  return deliverEmail("sign_in", params, renderSignInEmail(params));
+}
+
+/**
+ * @param {{ toEmail: string, appOrigin: string, tournamentName: string, signInUrl: string, expiresInMinutes: number }} params
+ */
+export async function sendTournamentStartEmail(params) {
+  return deliverEmail(
+    "tournament_start",
+    params,
+    renderTournamentStartEmail(params),
+  );
 }

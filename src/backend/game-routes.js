@@ -10,6 +10,8 @@ import {
 } from "./game-route-parsers.js";
 import { logFrontendErrorReport } from "./client-error-reporting.js";
 import { getTablePath } from "../shared/routes.js";
+import { sendTournamentStartEmail } from "./email.js";
+import { emailMttStart } from "./tournament-start-emails.js";
 import { canonicalizeAvatar } from "../shared/avatar.js";
 import { getAvatarRevision } from "./avatar.js";
 import { getBotAvatar } from "./bot-roster.js";
@@ -184,10 +186,15 @@ function respondWithAvatar(req, res, avatar) {
  * @param {Record<string, UserType>} users
  * @param {Map<Id, Game>} games
  * @param {(gameId: Id) => void} broadcast
- * @param {{ mttManager: ReturnType<typeof import('./mtt.js').createMttManager> }} services
+ * @param {{
+ *   mttManager: ReturnType<typeof import('./mtt.js').createMttManager>,
+ *   sendTournamentStartEmail?: typeof sendTournamentStartEmail,
+ * }} services
  * @returns {import('./http-routes.js').Route[]}
  */
 export function createGameRoutes(users, games, broadcast, services) {
+  const sendStartEmail =
+    services.sendTournamentStartEmail ?? sendTournamentStartEmail;
   return [
     {
       method: "GET",
@@ -436,6 +443,7 @@ export function createGameRoutes(users, games, broadcast, services) {
             user.id,
           );
           respondWithJson(res, tournament);
+          void emailMttStart(tournament, user.id, users, sendStartEmail);
         });
       },
     },

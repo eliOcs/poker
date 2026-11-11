@@ -1,8 +1,5 @@
 # To do
 
-- Email registered players when an MTT or Sit & Go starts, with a sign-in link that opens their table, so playing from another device creates the session there:
-  - link to a stable route (e.g. `/mtt/<id>/my-table`) that redirects to the player's current table, since tables break and rebalance
-  - an expired or used link opens the lobby with the sign-in modal and the email prefilled
 - MTT start countdown: 60 seconds instead of 5
 - bug: users can't buy in in cash game while the hand is on going
 - Finished tournament show winners more clearly

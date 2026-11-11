@@ -7,6 +7,7 @@ import {
   buildEmailSignInUrl,
   consumeEmailSignInToken,
   createEmailSignInToken,
+  getAppOrigin,
   getEmailSignInExpiry,
   isValidEmail,
   normalizeEmail,
@@ -18,15 +19,6 @@ import { DEFAULT_SETTINGS } from "./user.js";
 /**
  * @typedef {import('./id.js').Id} Id
  */
-
-/** @returns {string} */
-function getAppOrigin() {
-  const appOrigin = process.env.APP_ORIGIN?.replace(/\/$/, "");
-  if (!appOrigin) {
-    throw new Error("APP_ORIGIN is required for email sign-in links");
-  }
-  return appOrigin;
-}
 
 /**
  * @param {Map<Id, import('./poker/game.js').Game>} games

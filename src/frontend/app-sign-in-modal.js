@@ -6,6 +6,7 @@ class AppSignInModal extends LitElement {
     return {
       mode: { type: String },
       prefillName: { type: String, attribute: "prefill-name" },
+      prefillEmail: { type: String, attribute: "prefill-email" },
       _emailInvalid: { state: true },
       _nameInvalid: { state: true },
     };
@@ -15,6 +16,7 @@ class AppSignInModal extends LitElement {
     super();
     this.mode = "sign-in";
     this.prefillName = "";
+    this.prefillEmail = "";
     this._emailInvalid = false;
     this._nameInvalid = false;
   }
@@ -135,6 +137,7 @@ class AppSignInModal extends LitElement {
           ?required=${true}
           aria-invalid=${this._emailInvalid ? "true" : "false"}
           ?autofocus=${!isSignUp}
+          .value=${this.prefillEmail}
           @input=${() => {
             this.clearValidation();
           }}
@@ -184,6 +187,7 @@ export function renderProfileSignInModal(app) {
   if (app._modal !== "sign-in") return "";
   return html`<phg-app-sign-in-modal
     mode="sign-in"
+    .prefillEmail=${app._signInPrefillEmail ?? ""}
     @close=${() => app.closeProfileSignIn()}
     @switch-mode=${() => {
       app.openProfileSignUp({ replace: true });

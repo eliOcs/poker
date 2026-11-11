@@ -117,6 +117,7 @@ class App extends LitElement {
     this._settingsAvatar = undefined;
     this._settingsDraftActive = false;
     this._signInCallbackHandled = false;
+    this._signInPrefillEmail = "";
     initAppEventHandlers(this);
   }
 
@@ -148,7 +149,7 @@ class App extends LitElement {
       return;
     }
 
-    let returnTo = "/";
+    let returnTo;
     try {
       const res = await fetch("/api/sign-in-links/verify", {
         method: "POST",
@@ -164,12 +165,37 @@ class App extends LitElement {
       });
       await this._fetchUser();
     } catch {
-      showToast(this, { message: "Unable to sign in", variant: "error" });
+      returnTo = this._handleFailedSignInLink(url);
     }
 
     const nextUrl = new URL(returnTo, window.location.origin);
     const nextPath = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
     navigateApp(this, nextPath, { replace: true });
+  }
+
+  /**
+   * @param {URL} url
+   * @returns {string}
+   */
+  _handleFailedSignInLink(url) {
+    const fallback = url.searchParams.get("fallback");
+    const email = url.searchParams.get("email");
+    if (!fallback || !email) {
+      showToast(this, { message: "Unable to sign in", variant: "error" });
+      return "/";
+    }
+
+    showToast(this, {
+      message: "This link has expired or was already used. Sign in again.",
+      variant: "error",
+    });
+    this._signInPrefillEmail = email;
+    const retryUrl = new URL(
+      this._normalizeCallbackReturnPath(fallback),
+      window.location.origin,
+    );
+    retryUrl.searchParams.set("modal", "sign-in");
+    return `${retryUrl.pathname}${retryUrl.search}`;
   }
 
   // --- History Tasks ---
