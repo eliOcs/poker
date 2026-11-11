@@ -1,8 +1,6 @@
 # To do
 
-- bug: users can't buy in in cash game while the hand is on going
-- bug: allow sit in in the middle of the hand
-- bug: when sit out shows waiting for your turn
+- bug: on sit out shows waiting for your turn
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
 - chat history

@@ -4,6 +4,7 @@ import * as Game from "../../../src/backend/poker/game.js";
 import * as Seat from "../../../src/backend/poker/seat.js";
 import * as Actions from "../../../src/backend/poker/actions.js";
 import * as Ranking from "../../../src/backend/poker/ranking.js";
+import { setupPreflop } from "./test-helpers.js";
 
 describe("ranking", () => {
   let game;
@@ -44,6 +45,7 @@ describe("ranking", () => {
     it("should increment handsPlayed at end of hand", () => {
       game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 1000);
       game.seats[2] = Seat.occupied({ id: "p2", name: "Bob" }, 1000);
+      setupPreflop(game);
 
       Actions.endHand(game);
 
@@ -54,12 +56,27 @@ describe("ranking", () => {
     it("should not increment for sitting out players", () => {
       game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 1000);
       game.seats[2] = Seat.occupied({ id: "p2", name: "Bob" }, 1000);
-      game.seats[2].sittingOut = true;
+      game.seats[4] = Seat.occupied({ id: "p3", name: "Carol" }, 1000, true);
+      setupPreflop(game);
 
       Actions.endHand(game);
 
       assert.equal(game.seats[0].handsPlayed, 1);
-      assert.equal(game.seats[2].handsPlayed, 0);
+      assert.equal(game.seats[4].handsPlayed, 0);
+    });
+
+    it("counts the hand for a player who folded and sat out during it", () => {
+      game.seats[0] = Seat.occupied({ id: "p1", name: "Alice" }, 1000);
+      game.seats[2] = Seat.occupied({ id: "p2", name: "Bob" }, 1000);
+      game.seats[4] = Seat.occupied({ id: "p3", name: "Carol" }, 1000);
+      setupPreflop(game);
+      const folder = game.hand.actingSeat;
+
+      Actions.fold(game, { seat: folder });
+      Actions.sitOut(game, { seat: folder });
+      Actions.endHand(game);
+
+      assert.equal(game.seats[folder].handsPlayed, 1);
     });
 
     it("should preserve handsPlayed across hands", () => {

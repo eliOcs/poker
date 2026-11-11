@@ -611,9 +611,8 @@ export function endHand(game) {
 
   resetBotTableStacks(game);
 
-  // Increment handsPlayed for all players who were dealt in (not sitting out)
   for (const seat of game.seats) {
-    if (!seat.empty && !seat.sittingOut) {
+    if (!seat.empty && seat.cards.length > 0) {
       seat.handsPlayed++;
     }
   }

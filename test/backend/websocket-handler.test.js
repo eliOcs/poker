@@ -442,6 +442,21 @@ describe("websocket-handler", () => {
       assert.strictEqual(game.seats[2].cards.length, 2);
     });
 
+    it("counts the hand as played only for the players dealt into it", () => {
+      const game = startHeadsUpHand();
+      processPokerAction(game, carol, "sit", {});
+      processPokerAction(game, carol, "buyIn", { amount: 50 });
+
+      const actingPlayer = game.seats[game.hand.actingSeat].player;
+      processPokerAction(game, actingPlayer, "fold", {});
+
+      assert.deepStrictEqual(
+        game.seats.map((seat) => seat.handsPlayed),
+        [1, 1, 0],
+      );
+      HandHistory.clearRecorder(game.id);
+    });
+
     it("rejects a buy-in from a player in the hand", () => {
       const game = startHeadsUpHand();
 
