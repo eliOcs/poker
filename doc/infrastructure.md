@@ -61,7 +61,10 @@ appear only in the CloudWatch console.
 ## Deploying
 
 Deploys normally run from the **Deploy to Production** workflow, which builds
-the ARM64 image, pushes it to ECR and runs `kamal deploy`. To deploy from a
+the ARM64 image, pushes it to ECR and runs `kamal deploy`. Kamal runs where the
+deploy starts, not on the server: it drives Docker there over SSH and starts
+both kamal-proxy and the app as containers, so the server needs only Docker
+and SSH access. To deploy from a
 workstation instead, you need Kamal, the AWS CLI with the `personal` profile,
 and the server's SSH key (`~/.ssh/poker_ed25519`):
 
