@@ -11,7 +11,7 @@ code. Each area has its own README next to its code (see
 
 ## Quick start
 
-Requires Node.js 24+ and Git LFS (UI catalog baselines are LFS files).
+Requires Node.js 26+ and Git LFS (UI catalog baselines are LFS files).
 
 ```bash
 npm install            # also points Git at the shared hooks in .githooks/

@@ -18,7 +18,7 @@ ADD --checksum=sha256:522889d870f08a92e813e731bcd401cfcdafbef120fec4e15358074eca
 
 FROM engine-${TARGETARCH} AS engine
 
-FROM node:24-alpine
+FROM node:26-alpine
 WORKDIR /app
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001 -G nodejs

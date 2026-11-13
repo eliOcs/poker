@@ -47,7 +47,7 @@ resource "aws_lambda_function" "site_health" {
   filename         = data.archive_file.site_health.output_path
   source_code_hash = data.archive_file.site_health.output_base64sha256
   role             = aws_iam_role.site_health.arn
-  runtime          = "nodejs24.x"
+  runtime          = "nodejs26.x"
   handler          = "index.handler"
   architectures    = ["arm64"]
   memory_size      = 128

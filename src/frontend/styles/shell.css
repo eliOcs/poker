@@ -345,13 +345,13 @@
     color: var(--color-primary);
   }
 
-  .drawer-section > :is(a, button):disabled {
+  .drawer-section > button:disabled {
     color: var(--color-fg-muted);
     cursor: default;
     opacity: 0.5;
   }
 
-  .drawer-section > :is(a, button):disabled:hover {
+  .drawer-section > button:disabled:hover {
     color: var(--color-fg-muted);
     background: none;
   }
