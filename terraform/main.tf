@@ -194,9 +194,9 @@ resource "aws_iam_role_policy" "poker_ec2_ses" {
 }
 
 # EC2 Instance (Graviton t4g.micro)
-# AMI: Ubuntu 24.04 ARM64 (eu-central-1, 2026-02-18)
+# AMI: Ubuntu 26.04 ARM64 (eu-central-1, 2026-11-05)
 resource "aws_instance" "poker" {
-  ami                    = "ami-052b310a8f0d76968"
+  ami                    = "ami-058fbda2f1296906b"
   instance_type          = "t4g.micro"
   monitoring             = true
   iam_instance_profile   = aws_iam_instance_profile.poker.name
@@ -208,14 +208,17 @@ resource "aws_instance" "poker" {
   user_data = <<-EOF
     #!/bin/bash
     MOUNT=/opt/poker/data
-    DEVICE=""
+    DEVICE=/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.data.id, "-", "")}
 
-    if [ -b /dev/nvme1n1 ]; then
-      DEVICE=/dev/nvme1n1
-    elif [ -b /dev/xvdf ]; then
-      DEVICE=/dev/xvdf
-    else
-      echo "Data volume device not found" >&2
+    # Terraform attaches the data volume only after the instance exists, so on
+    # a fresh instance it appears some time after first boot.
+    for _ in $(seq 120); do
+      [ -b "$DEVICE" ] && break
+      sleep 5
+    done
+
+    if [ ! -b "$DEVICE" ]; then
+      echo "Data volume $DEVICE not found" >&2
       exit 1
     fi
 
