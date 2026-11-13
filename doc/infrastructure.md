@@ -29,6 +29,14 @@ at `/opt/poker/data`, which the container sees as `/app/data`. Docker waits for
 the mount, so the app never starts against an empty directory. Data Lifecycle
 Manager takes weekly snapshots of the volume and keeps the last four.
 
+**The instance is disposable.** Its first-boot script
+(`terraform/user-data.sh.tftpl`) mounts the data volume, installs Docker and
+the CloudWatch agent, and nothing is configured on the server by hand.
+Changing the script or the AMI replaces the instance: Terraform stops it so the
+volume unmounts cleanly, starts a fresh one and reattaches the volume. The
+Elastic IP keeps the IPv4 address; the IPv6 address and SSH host key change.
+After a replacement, run **Deploy to Production** to start the app on it.
+
 **Bot engine.** The image includes the
 [noregrets fork](https://github.com/eliOcs/noregrets)'s static binary,
 downloaded from a tagged release and pinned by checksum in the `Dockerfile`.

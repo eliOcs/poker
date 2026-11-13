@@ -16,13 +16,8 @@ locals {
       volume_id = aws_ebs_volume.data.id
     }
   }
-}
 
-resource "aws_ssm_parameter" "cloudwatch_agent_config" {
-  name        = "AmazonCloudWatch-poker"
-  description = "CloudWatch Agent configuration for the poker server"
-  type        = "String"
-  value = jsonencode({
+  cloudwatch_agent_config = jsonencode({
     agent = {
       metrics_collection_interval = 60
       run_as_user                 = "root"
@@ -46,51 +41,6 @@ resource "aws_ssm_parameter" "cloudwatch_agent_config" {
       }
     }
   })
-}
-
-resource "aws_ssm_association" "install_cloudwatch_agent" {
-  association_name = "poker-install-cloudwatch-agent"
-  name             = "AWS-ConfigureAWSPackage"
-
-  parameters = {
-    action           = "Install"
-    name             = "AmazonCloudWatchAgent"
-    installationType = "In-place update"
-  }
-
-  targets {
-    key    = "InstanceIds"
-    values = [aws_instance.poker.id]
-  }
-
-  wait_for_success_timeout_seconds = 600
-
-  depends_on = [
-    aws_iam_role_policy_attachment.poker_ec2_ssm,
-    aws_iam_role_policy_attachment.poker_ec2_cloudwatch_agent,
-  ]
-}
-
-resource "aws_ssm_association" "configure_cloudwatch_agent" {
-  association_name = "poker-configure-cloudwatch-agent"
-  name             = "AmazonCloudWatch-ManageAgent"
-
-  parameters = {
-    action                        = "configure"
-    mode                          = "ec2"
-    optionalConfigurationSource   = "ssm"
-    optionalConfigurationLocation = aws_ssm_parameter.cloudwatch_agent_config.name
-    optionalRestart               = "yes"
-  }
-
-  targets {
-    key    = "InstanceIds"
-    values = [aws_instance.poker.id]
-  }
-
-  wait_for_success_timeout_seconds = 600
-
-  depends_on = [aws_ssm_association.install_cloudwatch_agent]
 }
 
 resource "aws_cloudwatch_metric_alarm" "status_check_failed" {
@@ -121,8 +71,6 @@ resource "aws_cloudwatch_metric_alarm" "high_memory" {
   threshold           = 85
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "breaching"
-
-  depends_on = [aws_ssm_association.configure_cloudwatch_agent]
 }
 
 resource "aws_cloudwatch_metric_alarm" "low_disk_space" {
@@ -144,8 +92,6 @@ resource "aws_cloudwatch_metric_alarm" "low_disk_space" {
   threshold           = 75
   comparison_operator = "GreaterThanOrEqualToThreshold"
   treat_missing_data  = "breaching"
-
-  depends_on = [aws_ssm_association.configure_cloudwatch_agent]
 }
 
 resource "aws_cloudwatch_metric_alarm" "sustained_cpu" {

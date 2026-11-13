@@ -205,46 +205,11 @@ resource "aws_instance" "poker" {
   subnet_id              = aws_default_subnet.default.id
   ipv6_address_count     = 1
 
-  user_data = <<-EOF
-    #!/bin/bash
-    MOUNT=/opt/poker/data
-    DEVICE=/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${replace(aws_ebs_volume.data.id, "-", "")}
-
-    # Terraform attaches the data volume only after the instance exists, so on
-    # a fresh instance it appears some time after first boot.
-    for _ in $(seq 120); do
-      [ -b "$DEVICE" ] && break
-      sleep 5
-    done
-
-    if [ ! -b "$DEVICE" ]; then
-      echo "Data volume $DEVICE not found" >&2
-      exit 1
-    fi
-
-    # Only format if not already formatted
-    if ! blkid "$DEVICE"; then
-      mkfs.ext4 "$DEVICE"
-    fi
-
-    UUID=$(blkid -s UUID -o value "$DEVICE")
-    mkdir -p "$MOUNT"
-
-    # Keep exactly one mount entry for the app data directory.
-    sed -i "\\# $MOUNT #d" /etc/fstab
-    echo "UUID=$UUID $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
-
-    mount -a
-    chown 1001:1001 "$MOUNT"
-
-    # Prevent containers from starting before the persistent data volume is mounted.
-    mkdir -p /etc/systemd/system/docker.service.d
-    cat > /etc/systemd/system/docker.service.d/poker-data-mount.conf <<'DOCKER'
-    [Unit]
-    RequiresMountsFor=/opt/poker/data
-    DOCKER
-    systemctl daemon-reload
-  EOF
+  user_data = templatefile("${path.module}/user-data.sh.tftpl", {
+    data_volume_serial      = replace(aws_ebs_volume.data.id, "-", "")
+    cloudwatch_agent_config = local.cloudwatch_agent_config
+  })
+  user_data_replace_on_change = true
 
   root_block_device {
     volume_size           = 20
@@ -324,6 +289,9 @@ resource "aws_volume_attachment" "data" {
   device_name = "/dev/xvdf"
   volume_id   = aws_ebs_volume.data.id
   instance_id = aws_instance.poker.id
+
+  # Shut down cleanly so the volume is unmounted before it is detached.
+  stop_instance_before_detaching = true
 }
 
 # Elastic IP

@@ -1,0 +1,53 @@
+#!/bin/bash
+# First-boot setup of the poker server. Everything here runs once per
+# instance, so a change replaces the instance rather than patching it.
+set -euo pipefail
+
+MOUNT=/opt/poker/data
+DEVICE=/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${data_volume_serial}
+
+# Terraform attaches the data volume only after the instance exists, so on
+# a fresh instance it appears some time after first boot.
+udevadm wait --timeout=600 "$DEVICE" || {
+  echo "Data volume $DEVICE not found" >&2
+  exit 1
+}
+
+# Only format if not already formatted
+if ! blkid "$DEVICE"; then
+  mkfs.ext4 "$DEVICE"
+fi
+
+UUID=$(blkid -s UUID -o value "$DEVICE")
+mkdir -p "$MOUNT"
+
+# Keep exactly one mount entry for the app data directory.
+sed -i "\\# $MOUNT #d" /etc/fstab
+echo "UUID=$UUID $MOUNT ext4 defaults,nofail 0 2" >> /etc/fstab
+
+mount -a
+chown 1001:1001 "$MOUNT"
+
+# Prevent containers from starting before the persistent data volume is mounted.
+mkdir -p /etc/systemd/system/docker.service.d
+cat > /etc/systemd/system/docker.service.d/poker-data-mount.conf <<'DOCKER'
+[Unit]
+RequiresMountsFor=/opt/poker/data
+DOCKER
+systemctl daemon-reload
+
+# Unattended upgrades may hold the package lock on first boot.
+echo 'DPkg::Lock::Timeout "600";' > /etc/apt/apt.conf.d/90poker-lock-timeout
+
+# Kamal deploys as ubuntu and expects Docker to be there.
+curl -fsSL https://get.docker.com | sh
+usermod -aG docker ubuntu
+
+AGENT_DEB=/tmp/amazon-cloudwatch-agent.deb
+AGENT_CONFIG=/opt/aws/amazon-cloudwatch-agent/etc/poker.json
+curl -fsSLo "$AGENT_DEB" https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+apt-get install -y "$AGENT_DEB"
+cat > "$AGENT_CONFIG" <<'CONFIG'
+${cloudwatch_agent_config}
+CONFIG
+amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c "file:$AGENT_CONFIG"
