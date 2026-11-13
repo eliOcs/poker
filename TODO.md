@@ -1,6 +1,5 @@
 # To do
 
-- bug: on sit out shows waiting for your turn
 - Finished tournament show winners more clearly
 - show rebuys in tournament lobby
 - chat history
